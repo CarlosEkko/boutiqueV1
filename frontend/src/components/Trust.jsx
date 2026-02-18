@@ -27,7 +27,7 @@ const Trust = () => {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="mb-2">
-                <span className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent group-hover:scale-110 inline-block transition-transform duration-300">
+                <span className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent group-hover:scale-110 inline-block transition-transform duration-300">
                   {stat.value}
                 </span>
               </div>
@@ -38,7 +38,7 @@ const Trust = () => {
 
         {/* Trust Factors */}
         <div className="max-w-3xl mx-auto mb-16 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
             Why the Elite
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
               Choose Kryptobox
@@ -64,7 +64,7 @@ const Trust = () => {
                     <IconComponent className="text-amber-400" size={28} />
                   </div>
 
-                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                  <h3 className="text-xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
                     {factor.title}
                   </h3>
                   <p className="text-gray-400 text-sm leading-relaxed">

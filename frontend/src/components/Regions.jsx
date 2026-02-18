@@ -12,7 +12,7 @@ const Regions = () => {
           <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
             Global Presence
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
             Serving Excellence
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
               Across Three Continents
@@ -41,7 +41,7 @@ const Regions = () => {
                 </div>
 
                 {/* Region Name */}
-                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                <h3 className="text-2xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
                   {region.name}
                 </h3>
 

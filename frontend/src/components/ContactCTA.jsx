@@ -60,7 +60,7 @@ const ContactCTA = () => {
                     </div>
                   </div>
 
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
                     {ctaData.title}
                   </h2>
                   <p className="text-amber-100/90 mb-6 leading-relaxed">
@@ -155,7 +155,7 @@ const ContactCTA = () => {
                       <div className="w-20 h-20 bg-gradient-to-br from-amber-600/20 to-amber-700/20 rounded-full flex items-center justify-center mb-6 animate-scale-in">
                         <CheckCircle2 className="text-amber-400" size={40} />
                       </div>
-                      <h3 className="text-2xl font-bold text-white mb-3">
+                      <h3 className="text-2xl font-light text-white mb-3">
                         Request Received
                       </h3>
                       <p className="text-gray-400 max-w-sm">

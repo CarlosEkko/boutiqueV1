@@ -32,7 +32,7 @@ const Hero = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight animate-fade-in-up">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extralight leading-tight animate-fade-in-up tracking-wide">
             <span className="block text-white mb-2">{heroData.title}</span>
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent animate-shimmer">
               {heroData.subtitle}
