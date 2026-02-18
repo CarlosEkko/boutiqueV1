@@ -1,11 +1,75 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { heroData } from '../mock';
+import gsap from 'gsap';
 
 const Hero = () => {
+  const heroRef = useRef(null);
+  const titleRef = useRef(null);
+  const subtitleRef = useRef(null);
+  const descriptionRef = useRef(null);
+  const ctaRef = useRef(null);
+  const trustRef = useRef(null);
+  const badgeRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Badge animation
+      tl.fromTo(
+        badgeRef.current,
+        { opacity: 0, y: -30 },
+        { opacity: 1, y: 0, duration: 0.8 }
+      );
+
+      // Title animation with stagger
+      tl.fromTo(
+        titleRef.current.children,
+        { opacity: 0, y: 50, rotateX: -15 },
+        { opacity: 1, y: 0, rotateX: 0, duration: 1, stagger: 0.2 },
+        '-=0.4'
+      );
+
+      // Subtitle shimmer effect
+      tl.fromTo(
+        subtitleRef.current,
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 1 },
+        '-=0.6'
+      );
+
+      // Description
+      tl.fromTo(
+        descriptionRef.current,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8 },
+        '-=0.4'
+      );
+
+      // CTA buttons
+      tl.fromTo(
+        ctaRef.current.children,
+        { opacity: 0, y: 20, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.15 },
+        '-=0.3'
+      );
+
+      // Trust indicators
+      tl.fromTo(
+        trustRef.current.children,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.1 },
+        '-=0.2'
+      );
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <div
@@ -24,7 +88,7 @@ const Hero = () => {
       <div className="relative z-20 container mx-auto px-6 text-center">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-amber-700/30 animate-fade-in">
+          <div ref={badgeRef} className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-amber-700/30">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
             <span className="text-amber-200 text-sm tracking-wider font-medium">
               EXCLUSIVE ACCESS • INSTITUTIONAL GRADE
@@ -32,20 +96,20 @@ const Hero = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extralight leading-tight animate-fade-in-up tracking-wide">
+          <h1 ref={titleRef} className="text-5xl md:text-7xl lg:text-8xl font-extralight leading-tight tracking-wide">
             <span className="block text-white mb-2">{heroData.title}</span>
-            <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent animate-shimmer">
+            <span ref={subtitleRef} className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
               {heroData.subtitle}
             </span>
           </h1>
 
           {/* Description */}
-          <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200">
+          <p ref={descriptionRef} className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
             {heroData.description}
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-fade-in-up animation-delay-400">
+          <div ref={ctaRef} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Button
               size="lg"
               className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-2xl shadow-amber-900/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
@@ -63,7 +127,7 @@ const Hero = () => {
           </div>
 
           {/* Trust indicators */}
-          <div className="pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 animate-fade-in-up animation-delay-600">
+          <div ref={trustRef} className="pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400">
             <div className="flex items-center space-x-2">
               <div className="w-1 h-1 bg-amber-400 rounded-full" />
               <span>Licensed & Regulated</span>

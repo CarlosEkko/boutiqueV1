@@ -41,12 +41,12 @@ const Header = () => {
           </a>
 
           {/* Desktop Navigation - Center */}
-          <div className="hidden lg:flex items-center justify-center flex-1 space-x-12">
+          <div className="hidden lg:flex items-center justify-center flex-1 space-x-16">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="text-gray-300 hover:text-amber-400 transition-colors duration-300 text-sm tracking-wide font-medium"
+                className="text-gray-300 hover:text-amber-400 transition-colors duration-300 text-base tracking-wide font-medium"
               >
                 {link.name}
               </a>
