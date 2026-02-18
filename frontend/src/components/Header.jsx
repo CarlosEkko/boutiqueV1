@@ -2,22 +2,49 @@ import React, { useState } from 'react';
 import { Menu, X, Globe } from 'lucide-react';
 import { Button } from './ui/button';
 import CryptoTicker from './CryptoTicker';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState('EN');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navLinks = [
-    { name: 'Products', href: '#products' },
-    { name: 'Why Us', href: '#trust' },
-    { name: 'Regions', href: '#regions' },
-    { name: 'Contact', href: '#contact' }
+    { name: 'Products', href: '/#products', external: false },
+    { name: 'Crypto ATM', href: '/crypto-atm', external: false },
+    { name: 'Why Us', href: '/#trust', external: false },
+    { name: 'Regions', href: '/#regions', external: false },
+    { name: 'Contact', href: '/#contact', external: false }
   ];
 
   const languages = [
     { code: 'EN', name: 'English', flag: '🇬🇧' },
     { code: 'AR', name: 'العربية', flag: '🇸🇦' }
   ];
+
+  const handleNavClick = (e, href) => {
+    e.preventDefault();
+    if (href.startsWith('/#')) {
+      if (location.pathname !== '/') {
+        navigate('/');
+        setTimeout(() => {
+          const element = document.querySelector(href.substring(1));
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        const element = document.querySelector(href.substring(1));
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    } else {
+      navigate(href);
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header className="relative bg-black/95 backdrop-blur-sm border-b border-amber-900/20">
@@ -31,7 +58,7 @@ const Header = () => {
       <nav className="container mx-auto px-6 py-5">
         <div className="flex items-center justify-between">
           {/* Logo - Left */}
-          <a href="#" className="flex items-center space-x-2 group">
+          <a href="/" onClick={(e) => handleNavClick(e, '/')} className="flex items-center space-x-2 group cursor-pointer">
             <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
               <span className="text-black font-bold text-xl">K</span>
             </div>
@@ -46,7 +73,8 @@ const Header = () => {
               <a
                 key={link.name}
                 href={link.href}
-                className="text-gray-300 hover:text-amber-400 transition-colors duration-300 text-base tracking-wide font-medium"
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="text-gray-300 hover:text-amber-400 transition-colors duration-300 text-base tracking-wide font-medium cursor-pointer"
               >
                 {link.name}
               </a>
@@ -78,6 +106,7 @@ const Header = () => {
             </div>
 
             <Button
+              onClick={() => navigate('/#contact')}
               className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300"
             >
               Request Access
@@ -100,8 +129,8 @@ const Header = () => {
               <a
                 key={link.name}
                 href={link.href}
-                className="block text-gray-300 hover:text-amber-400 transition-colors duration-300"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="block text-gray-300 hover:text-amber-400 transition-colors duration-300 cursor-pointer"
               >
                 {link.name}
               </a>
@@ -132,7 +161,13 @@ const Header = () => {
               ))}
             </div>
 
-            <Button className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white">
+            <Button 
+              onClick={() => {
+                navigate('/#contact');
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white"
+            >
               Request Access
             </Button>
           </div>
