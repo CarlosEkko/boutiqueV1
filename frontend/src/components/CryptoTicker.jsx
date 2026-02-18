@@ -1,62 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
+// Mock crypto data (will be replaced with backend API later)
+const mockCryptoData = [
+  {
+    symbol: 'BTC',
+    name: 'Bitcoin',
+    price: 94250,
+    change: 2.45
+  },
+  {
+    symbol: 'ETH',
+    name: 'Ethereum',
+    price: 3580,
+    change: 1.82
+  },
+  {
+    symbol: 'ADA',
+    name: 'Cardano',
+    price: 0.89,
+    change: -0.56
+  },
+  {
+    symbol: 'SOL',
+    name: 'Solana',
+    price: 142.30,
+    change: 3.21
+  },
+  {
+    symbol: 'XRP',
+    name: 'Ripple',
+    price: 2.18,
+    change: -1.15
+  }
+];
+
 const CryptoTicker = () => {
-  const [cryptoData, setCryptoData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cryptoData, setCryptoData] = useState(mockCryptoData);
+  const [loading, setLoading] = useState(false);
 
-  const fetchCryptoPrices = async () => {
-    try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano,solana,ripple&vs_currencies=usd&include_24hr_change=true'
-      );
-      const data = await response.json();
-      
-      const formattedData = [
-        {
-          symbol: 'BTC',
-          name: 'Bitcoin',
-          price: data.bitcoin.usd,
-          change: data.bitcoin.usd_24h_change
-        },
-        {
-          symbol: 'ETH',
-          name: 'Ethereum',
-          price: data.ethereum.usd,
-          change: data.ethereum.usd_24h_change
-        },
-        {
-          symbol: 'ADA',
-          name: 'Cardano',
-          price: data.cardano.usd,
-          change: data.cardano.usd_24h_change
-        },
-        {
-          symbol: 'SOL',
-          name: 'Solana',
-          price: data.solana.usd,
-          change: data.solana.usd_24h_change
-        },
-        {
-          symbol: 'XRP',
-          name: 'Ripple',
-          price: data.ripple.usd,
-          change: data.ripple.usd_24h_change
-        }
-      ];
-      
-      setCryptoData(formattedData);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching crypto prices:', error);
-      setLoading(false);
-    }
-  };
-
+  // Simulate price updates every 5 seconds
   useEffect(() => {
-    fetchCryptoPrices();
-    // Update every 60 seconds
-    const interval = setInterval(fetchCryptoPrices, 60000);
+    const interval = setInterval(() => {
+      setCryptoData(prevData =>
+        prevData.map(crypto => ({
+          ...crypto,
+          price: crypto.price * (1 + (Math.random() - 0.5) * 0.002), // ±0.1% change
+          change: crypto.change + (Math.random() - 0.5) * 0.2 // Small change variation
+        }))
+      );
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
