@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
+import CryptoTicker from './CryptoTicker';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,6 +30,13 @@ const Header = () => {
           : 'bg-transparent'
       }`}
     >
+      {/* Crypto Ticker Bar */}
+      <div className="bg-black/60 backdrop-blur-sm border-b border-amber-900/10 py-2">
+        <div className="container mx-auto px-6">
+          <CryptoTicker />
+        </div>
+      </div>
+
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}

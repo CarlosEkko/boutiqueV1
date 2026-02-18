@@ -218,6 +218,31 @@ button, a, input, textarea {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+
+/* Crypto Ticker Animation */
+.crypto-ticker-container {
+    width: 100%;
+}
+
+.crypto-ticker-track {
+    display: flex;
+    animation: scroll-ticker 40s linear infinite;
+}
+
+@keyframes scroll-ticker {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.crypto-ticker-track:hover {
+    animation-play-state: paused;
+}
+
+
     [data-debug-wrapper="true"] {
         display: contents !important;
     }
