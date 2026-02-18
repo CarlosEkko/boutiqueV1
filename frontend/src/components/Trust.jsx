@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
 import { trustFactors, stats } from '../mock';
 import { ShieldCheck, Lock, Crown, Globe } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const iconMap = {
   'shield-check': ShieldCheck,
@@ -11,8 +15,124 @@ const iconMap = {
 };
 
 const Trust = () => {
+  const sectionRef = useRef(null);
+  const statsRef = useRef([]);
+  const headerRef = useRef(null);
+  const cardsRef = useRef([]);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Stats counter animation
+      statsRef.current.forEach((stat, index) => {
+        gsap.fromTo(
+          stat,
+          { opacity: 0, scale: 0.5, y: 30 },
+          {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            duration: 0.8,
+            delay: index * 0.1,
+            ease: 'back.out(1.7)',
+            scrollTrigger: {
+              trigger: stat,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse'
+            }
+          }
+        );
+      });
+
+      // Header animation
+      gsap.fromTo(
+        headerRef.current.children,
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          stagger: 0.2,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: headerRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      );
+
+      // Cards animation
+      cardsRef.current.forEach((card, index) => {
+        gsap.fromTo(
+          card,
+          {
+            opacity: 0,
+            y: 80,
+            rotateX: -20,
+            scale: 0.8
+          },
+          {
+            opacity: 1,
+            y: 0,
+            rotateX: 0,
+            scale: 1,
+            duration: 0.8,
+            delay: index * 0.1,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse'
+            }
+          }
+        );
+
+        // Hover animation
+        card.addEventListener('mouseenter', () => {
+          gsap.to(card, {
+            y: -15,
+            scale: 1.05,
+            duration: 0.4,
+            ease: 'power2.out'
+          });
+          
+          const icon = card.querySelector('.trust-icon');
+          if (icon) {
+            gsap.to(icon, {
+              rotation: 360,
+              scale: 1.2,
+              duration: 0.6,
+              ease: 'back.out(1.7)'
+            });
+          }
+        });
+
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            y: 0,
+            scale: 1,
+            duration: 0.4,
+            ease: 'power2.out'
+          });
+          
+          const icon = card.querySelector('.trust-icon');
+          if (icon) {
+            gsap.to(icon, {
+              rotation: 0,
+              scale: 1,
+              duration: 0.4,
+              ease: 'power2.out'
+            });
+          }
+        });
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="trust" className="py-24 bg-black relative overflow-hidden">
+    <section ref={sectionRef} id="trust" className="py-24 bg-black relative overflow-hidden">
       {/* Ambient background elements */}
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
@@ -23,11 +143,11 @@ const Trust = () => {
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="text-center group animate-fade-in-up"
-              style={{ animationDelay: `${index * 100}ms` }}
+              ref={(el) => (statsRef.current[index] = el)}
+              className="text-center group"
             >
               <div className="mb-2">
-                <span className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent group-hover:scale-110 inline-block transition-transform duration-300">
+                <span className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent inline-block">
                   {stat.value}
                 </span>
               </div>
@@ -37,7 +157,7 @@ const Trust = () => {
         </div>
 
         {/* Trust Factors */}
-        <div className="max-w-3xl mx-auto mb-16 text-center">
+        <div ref={headerRef} className="max-w-3xl mx-auto mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
             Why the Elite
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
@@ -55,12 +175,12 @@ const Trust = () => {
             return (
               <Card
                 key={factor.id}
-                className="group bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-amber-600/50 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-amber-900/20 animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
+                ref={(el) => (cardsRef.current[index] = el)}
+                className="group bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-amber-600/50 backdrop-blur-sm transition-all duration-500 hover:shadow-xl hover:shadow-amber-900/20"
               >
                 <CardContent className="p-6 text-center">
                   {/* Icon */}
-                  <div className="mb-4 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <div className="trust-icon mb-4 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 transition-all duration-500">
                     <IconComponent className="text-amber-400" size={28} />
                   </div>
 
