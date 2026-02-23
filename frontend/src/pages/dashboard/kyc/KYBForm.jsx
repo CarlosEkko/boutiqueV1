@@ -471,7 +471,7 @@ const KYBForm = () => {
             {/* Existing Representatives */}
             {representatives.length > 0 && (
               <div className="space-y-3">
-                <h4 className="text-white font-medium">Representantes Adicionados</h4>
+                <h4 className="text-white font-medium">{t('kyc.kybForm.representatives.addedReps')}</h4>
                 {representatives.map((rep, index) => (
                   <div key={rep.id || index} className="bg-zinc-800 rounded-lg p-4 flex justify-between items-center">
                     <div>
@@ -489,11 +489,11 @@ const KYBForm = () => {
 
             {/* Add New Representative */}
             <div className="border border-zinc-700 rounded-lg p-4 space-y-4">
-              <h4 className="text-white font-medium">Adicionar Representante</h4>
+              <h4 className="text-white font-medium">{t('kyc.kybForm.representatives.addRepresentative')}</h4>
               
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nome Completo *</Label>
+                  <Label>{t('kyc.kybForm.representatives.fullName')} *</Label>
                   <Input
                     value={newRep.full_name}
                     onChange={(e) => setNewRep({...newRep, full_name: e.target.value})}
@@ -503,7 +503,7 @@ const KYBForm = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cargo *</Label>
+                  <Label>{t('kyc.kybForm.representatives.role')} *</Label>
                   <Input
                     value={newRep.role}
                     onChange={(e) => setNewRep({...newRep, role: e.target.value})}
@@ -516,7 +516,7 @@ const KYBForm = () => {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Data de Nascimento</Label>
+                  <Label>{t('kyc.kybForm.representatives.dateOfBirth')}</Label>
                   <Input
                     type="date"
                     value={newRep.date_of_birth}
@@ -525,7 +525,7 @@ const KYBForm = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nacionalidade</Label>
+                  <Label>{t('kyc.kybForm.representatives.nationality')}</Label>
                   <Input
                     value={newRep.nationality}
                     onChange={(e) => setNewRep({...newRep, nationality: e.target.value})}
@@ -543,12 +543,12 @@ const KYBForm = () => {
                     onChange={(e) => setNewRep({...newRep, is_ubo: e.target.checked})}
                     className="w-4 h-4 accent-amber-500"
                   />
-                  <span className="text-sm text-gray-400">Beneficiário Efetivo (UBO)</span>
+                  <span className="text-sm text-gray-400">{t('kyc.kybForm.representatives.isUbo')}</span>
                 </label>
                 
                 {newRep.is_ubo && (
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm">% Participação</Label>
+                    <Label className="text-sm">{t('kyc.kybForm.representatives.ownershipPercentage')}</Label>
                     <Input
                       type="number"
                       min="25"
@@ -570,7 +570,7 @@ const KYBForm = () => {
                 data-testid="add-representative-btn"
               >
                 {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
-                Adicionar Representante
+                {t('kyc.kybForm.representatives.add')}
               </Button>
             </div>
 
@@ -581,14 +581,14 @@ const KYBForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={() => setCurrentStep(3)}
                 disabled={representatives.length === 0}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
               >
-                Continuar
+                {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
               </Button>
             </div>
