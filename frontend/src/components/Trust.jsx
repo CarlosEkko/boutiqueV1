@@ -1,10 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from './ui/card';
-import { trustFactors, stats } from '../mock';
 import { ShieldCheck, Lock, Crown, Globe } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import GlowText from './GlowText';
 import { useLanguage } from '../i18n';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -27,6 +25,7 @@ const Trust = () => {
     const ctx = gsap.context(() => {
       // Stats counter animation
       statsRef.current.forEach((stat, index) => {
+        if (!stat) return;
         gsap.fromTo(
           stat,
           { opacity: 0, scale: 0.5, y: 30 },
@@ -47,25 +46,28 @@ const Trust = () => {
       });
 
       // Header animation
-      gsap.fromTo(
-        headerRef.current.children,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-          stagger: 0.2,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: headerRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse'
+      if (headerRef.current) {
+        gsap.fromTo(
+          headerRef.current.children,
+          { opacity: 0, y: 50 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            stagger: 0.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: headerRef.current,
+              start: 'top 80%',
+              toggleActions: 'play none none reverse'
+            }
           }
-        }
-      );
+        );
+      }
 
       // Cards animation
       cardsRef.current.forEach((card, index) => {
+        if (!card) return;
         gsap.fromTo(
           card,
           { opacity: 0, y: 50, scale: 0.95 },
@@ -129,29 +131,13 @@ const Trust = () => {
         {/* Trust Factors */}
         <div ref={headerRef} className="max-w-3xl mx-auto mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-            <GlowText 
-              text={t('trust.title')} 
-              as="span"
-              stagger={0.05}
-              glowColor="rgba(255, 255, 255, 0.8)"
-            />
+            {t('trust.title')}
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
-              <GlowText 
-                text={t('trust.titleHighlight')} 
-                stagger={0.05}
-                delay={0.5}
-                glowColor="rgba(217, 119, 6, 0.9)"
-              />
+              {t('trust.titleHighlight')}
             </span>
           </h2>
           <p className="text-gray-400 text-lg">
-            <GlowText 
-              text={t('trust.description')} 
-              stagger={0.02}
-              delay={1}
-              duration={0.5}
-              glowColor="rgba(156, 163, 175, 0.8)"
-            />
+            {t('trust.description')}
           </p>
         </div>
 
