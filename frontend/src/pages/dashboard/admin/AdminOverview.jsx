@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
-import { Card, CardContent } from '../../components/ui/card';
+import { useAuth } from '../../../context/AuthContext';
+import { Card, CardContent } from '../../../components/ui/card';
 import { 
   Users, 
   TrendingUp, 
