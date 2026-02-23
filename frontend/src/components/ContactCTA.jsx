@@ -4,11 +4,12 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ctaData } from '../mock';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../i18n';
 
 const ContactCTA = () => {
+  const { t, isRTL } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,7 +30,7 @@ const ContactCTA = () => {
     // Mock submission
     console.log('Form submitted:', formData);
     setSubmitted(true);
-    toast.success('Request submitted successfully! Our team will contact you within 24 hours.');
+    toast.success(isRTL ? 'تم إرسال الطلب بنجاح!' : 'Request submitted successfully!');
     
     setTimeout(() => {
       setSubmitted(false);
@@ -38,7 +39,7 @@ const ContactCTA = () => {
   };
 
   return (
-    <section id="contact" className="py-24 bg-black relative overflow-hidden">
+    <section id="contact" className={`py-24 bg-black relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Dramatic background glow */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-full">
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-3xl" />
@@ -48,42 +49,40 @@ const ContactCTA = () => {
         <div className="max-w-4xl mx-auto">
           <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-800/30 backdrop-blur-xl overflow-hidden">
             <CardContent className="p-0">
-              <div className="grid md:grid-cols-5 gap-0">
+              <div className={`grid md:grid-cols-5 gap-0 ${isRTL ? 'md:grid-flow-dense' : ''}`}>
                 {/* Left side - CTA Text */}
-                <div className="md:col-span-2 bg-gradient-to-br from-amber-950/50 to-amber-900/30 p-8 md:p-10 flex flex-col justify-center border-r border-amber-800/20">
+                <div className={`md:col-span-2 bg-gradient-to-br from-amber-950/50 to-amber-900/30 p-8 md:p-10 flex flex-col justify-center ${isRTL ? 'border-l md:col-start-4' : 'border-r'} border-amber-800/20`}>
                   <div className="mb-6">
-                    <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-amber-600/20 border border-amber-600/30 mb-4">
+                    <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-4 py-2 rounded-full bg-amber-600/20 border border-amber-600/30 mb-4`}>
                       <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
                       <span className="text-amber-200 text-xs tracking-wider font-medium">
-                        EXCLUSIVE
+                        {t('contact.badge')}
                       </span>
                     </div>
                   </div>
 
                   <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
-                    {ctaData.title}
+                    {t('contact.title')}
+                    <span className="text-amber-400 block">{t('contact.titleHighlight')}</span>
                   </h2>
-                  <p className="text-amber-100/90 mb-6 leading-relaxed">
-                    {ctaData.subtitle}
-                  </p>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    {ctaData.description}
+                    {t('contact.description')}
                   </p>
 
                   <div className="mt-8 pt-6 border-t border-amber-800/30">
                     <p className="text-xs text-amber-200/70 italic">
-                      {ctaData.note}
+                      {t('contact.form.disclaimer')}
                     </p>
                   </div>
                 </div>
 
                 {/* Right side - Form */}
-                <div className="md:col-span-3 p-8 md:p-10">
+                <div className={`md:col-span-3 p-8 md:p-10 ${isRTL ? 'md:col-start-1' : ''}`}>
                   {!submitted ? (
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-gray-300">
-                          Full Name *
+                          {t('contact.form.fullName')} *
                         </Label>
                         <Input
                           id="name"
@@ -93,12 +92,13 @@ const ContactCTA = () => {
                           required
                           className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="John Doe"
+                          dir={isRTL ? 'rtl' : 'ltr'}
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-gray-300">
-                          Email Address *
+                          {t('contact.form.email')} *
                         </Label>
                         <Input
                           id="email"
@@ -109,12 +109,13 @@ const ContactCTA = () => {
                           required
                           className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="john@company.com"
+                          dir="ltr"
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="company" className="text-gray-300">
-                          Company / Organization
+                          {t('contact.form.phone')}
                         </Label>
                         <Input
                           id="company"
@@ -122,13 +123,14 @@ const ContactCTA = () => {
                           value={formData.company}
                           onChange={handleChange}
                           className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
-                          placeholder="Your Company Ltd"
+                          placeholder="+351 123 456 789"
+                          dir="ltr"
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="message" className="text-gray-300">
-                          Tell us about your needs
+                          {t('contact.form.message')}
                         </Label>
                         <Textarea
                           id="message"
@@ -137,7 +139,8 @@ const ContactCTA = () => {
                           onChange={handleChange}
                           rows={4}
                           className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 resize-none transition-colors duration-300"
-                          placeholder="I'm interested in..."
+                          placeholder={isRTL ? 'أخبرنا عن احتياجاتك...' : 'Tell us about your needs...'}
+                          dir={isRTL ? 'rtl' : 'ltr'}
                         />
                       </div>
 
@@ -146,8 +149,8 @@ const ContactCTA = () => {
                         size="lg"
                         className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 group"
                       >
-                        Submit Request
-                        <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" size={20} />
+                        {t('contact.form.submit')}
+                        <ArrowRight className={`${isRTL ? 'mr-2 rotate-180 group-hover:-translate-x-1' : 'ml-2 group-hover:translate-x-1'} transition-transform duration-300`} size={20} />
                       </Button>
                     </form>
                   ) : (
@@ -156,10 +159,12 @@ const ContactCTA = () => {
                         <CheckCircle2 className="text-amber-400" size={40} />
                       </div>
                       <h3 className="text-2xl font-light text-white mb-3">
-                        Request Received
+                        {isRTL ? 'تم استلام الطلب' : 'Request Received'}
                       </h3>
                       <p className="text-gray-400 max-w-sm">
-                        Thank you for your interest. Our team will review your request and contact you shortly.
+                        {isRTL 
+                          ? 'شكراً لاهتمامك. سيقوم فريقنا بمراجعة طلبك والتواصل معك قريباً.'
+                          : 'Thank you for your interest. Our team will review your request and contact you shortly.'}
                       </p>
                     </div>
                   )}
