@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
@@ -22,18 +23,19 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const STEPS = [
-  { id: 'company_info', label: 'Dados da Empresa', icon: Building2 },
-  { id: 'company_documents', label: 'Documentos', icon: FileText },
-  { id: 'representatives', label: 'Representantes', icon: Users },
-  { id: 'address_proof', label: 'Comprovativo', icon: MapPin },
-];
-
 const KYBForm = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState([]);
+
+  const STEPS = [
+    { id: 'company_info', label: t('kyc.kybForm.steps.companyInfo'), icon: Building2 },
+    { id: 'company_documents', label: t('kyc.kybForm.steps.documents'), icon: FileText },
+    { id: 'representatives', label: t('kyc.kybForm.steps.representatives'), icon: Users },
+    { id: 'address_proof', label: t('kyc.kybForm.steps.addressProof'), icon: MapPin },
+  ];
   
   // Form data
   const [companyInfo, setCompanyInfo] = useState({
