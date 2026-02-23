@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { 
   Shield, 
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminKYC = () => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('kyc');
   const [pendingKYC, setPendingKYC] = useState([]);
   const [pendingKYB, setPendingKYB] = useState([]);
@@ -44,7 +46,7 @@ const AdminKYC = () => {
       setPendingKYB(kybRes.data);
     } catch (error) {
       console.error('Error fetching verifications:', error);
-      toast.error('Erro ao carregar verificações');
+      toast.error('Error');
     } finally {
       setLoading(false);
     }
