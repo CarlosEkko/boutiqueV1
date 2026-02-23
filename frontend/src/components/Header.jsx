@@ -19,10 +19,11 @@ const Header = () => {
 
   const navLinks = [
     { name: t('nav.home'), href: '/' },
-    { name: t('nav.products'), href: '/#products' },
+    { name: t('nav.markets'), href: '/markets' },
+    { name: t('nav.trading'), href: '/trading' },
+    { name: t('nav.earn'), href: '/earn' },
+    { name: t('nav.institutional'), href: '/institutional' },
     { name: t('nav.cryptoAtm'), href: '/crypto-atm' },
-    { name: t('nav.whyUs'), href: '/#trust' },
-    { name: t('nav.regions'), href: '/#regions' },
     { name: t('nav.contact'), href: '/#contact' }
   ];
 
