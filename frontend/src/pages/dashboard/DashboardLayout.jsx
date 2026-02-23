@@ -152,7 +152,7 @@ const DashboardLayout = () => {
               <span className="text-black font-bold">K</span>
             </div>
             <span className="text-lg font-light text-white">
-              <span className="text-amber-400">Krypto</span>box
+              <span className="text-amber-400">KB</span>EX
             </span>
           </NavLink>
           <button
