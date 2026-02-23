@@ -166,11 +166,11 @@ const HeroV2 = () => {
             letters,
             {
               opacity: 0,
-              textShadow: '0px 0px 1px rgba(217, 119, 6, 0.1)'
+              textShadow: '0px 0px 1px rgba(165, 122, 80, 0.1)'
             },
             {
               opacity: 0.9,
-              textShadow: '0px 0px 20px rgba(217, 119, 6, 0.0)',
+              textShadow: '0px 0px 20px rgba(165, 122, 80, 0.0)',
               duration: 0.5,
               stagger: 0.03,
               ease: 'power2.out',
@@ -269,7 +269,7 @@ const HeroV2 = () => {
           className="absolute text-6xl md:text-8xl lg:text-9xl font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
-            textShadow: '0px 0px 1px rgba(217, 119, 6, 0.8)'
+            textShadow: '0px 0px 1px rgba(165, 122, 80, 0.8)'
           }}
         >
           Sophisticated
@@ -281,7 +281,7 @@ const HeroV2 = () => {
           className="absolute text-7xl md:text-9xl lg:text-[11rem] font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
-            textShadow: '0px 0px 2px rgba(217, 119, 6, 0.8)'
+            textShadow: '0px 0px 2px rgba(165, 122, 80, 0.8)'
           }}
         >
           INVESTORS
@@ -295,7 +295,7 @@ const HeroV2 = () => {
           >
             <h1 
               className="text-4xl md:text-6xl lg:text-7xl font-extralight text-gold-400 tracking-widest uppercase mb-4"
-              style={{ textShadow: '0px 0px 1px rgba(217, 119, 6, 0.8)' }}
+              style={{ textShadow: '0px 0px 1px rgba(165, 122, 80, 0.8)' }}
             >
               {splitTextIntoSpans('KBEX')}
             </h1>
@@ -381,7 +381,7 @@ const HeroV2 = () => {
       <style>{`
         .hero-letter {
           color: transparent;
-          text-shadow: 0px 0px 1px rgba(217, 119, 6, 0.8);
+          text-shadow: 0px 0px 1px rgba(165, 122, 80, 0.8);
         }
       `}</style>
     </section>

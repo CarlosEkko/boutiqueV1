@@ -55,7 +55,7 @@ const AdminOverview = () => {
             {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
           </div>
           <div className={`w-14 h-14 rounded-full bg-${color?.replace('text-', '')}/20 flex items-center justify-center`} 
-               style={{ backgroundColor: color ? `${color.replace('text-', '')}20` : 'rgba(217, 119, 6, 0.2)' }}>
+               style={{ backgroundColor: color ? `${color.replace('text-', '')}20` : 'rgba(165, 122, 80, 0.2)' }}>
             <Icon className={color || 'text-gold-400'} size={28} />
           </div>
         </div>

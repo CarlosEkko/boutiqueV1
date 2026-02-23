@@ -24,13 +24,13 @@ const Hero = () => {
           opacity: 0,
           scale: 1.3,
           filter: 'blur(40px)',
-          textShadow: '0px 0px 40px rgba(217, 119, 6, 0.8)'
+          textShadow: '0px 0px 40px rgba(165, 122, 80, 0.8)'
         },
         {
           opacity: 1,
           scale: 1,
           filter: 'blur(0px)',
-          textShadow: '0px 0px 1px rgba(217, 119, 6, 0.3)',
+          textShadow: '0px 0px 1px rgba(165, 122, 80, 0.3)',
           duration: 1,
           ease: 'power3.out'
         }
@@ -41,7 +41,7 @@ const Hero = () => {
           opacity: 0,
           scale: 0,
           filter: 'blur(50px)',
-          textShadow: '0px 0px 50px rgba(217, 119, 6, 0.8)',
+          textShadow: '0px 0px 50px rgba(165, 122, 80, 0.8)',
           duration: 0.8,
           ease: 'power3.in'
         },
@@ -87,13 +87,13 @@ const Hero = () => {
           opacity: 0,
           scale: 1.3,
           filter: 'blur(40px)',
-          textShadow: '0px 0px 40px rgba(217, 119, 6, 1)'
+          textShadow: '0px 0px 40px rgba(165, 122, 80, 1)'
         },
         {
           opacity: 1,
           scale: 1,
           filter: 'blur(0px)',
-          textShadow: '0px 0px 2px rgba(217, 119, 6, 0.5)',
+          textShadow: '0px 0px 2px rgba(165, 122, 80, 0.5)',
           duration: 1,
           ease: 'power3.out'
         },
@@ -105,7 +105,7 @@ const Hero = () => {
           opacity: 0,
           scale: 0,
           filter: 'blur(50px)',
-          textShadow: '0px 0px 50px rgba(217, 119, 6, 1)',
+          textShadow: '0px 0px 50px rgba(165, 122, 80, 1)',
           duration: 0.8,
           ease: 'power3.in'
         },
@@ -119,13 +119,13 @@ const Hero = () => {
           opacity: 0,
           scale: 1.5,
           filter: 'blur(60px)',
-          textShadow: '0px 0px 60px rgba(217, 119, 6, 1)'
+          textShadow: '0px 0px 60px rgba(165, 122, 80, 1)'
         },
         {
           opacity: 1,
           scale: 1,
           filter: 'blur(0px)',
-          textShadow: '0px 0px 3px rgba(217, 119, 6, 0.6)',
+          textShadow: '0px 0px 3px rgba(165, 122, 80, 0.6)',
           duration: 1.2,
           ease: 'power3.out'
         },

@@ -340,7 +340,7 @@ const CryptoATMPage = () => {
           gsap.to(location, {
             y: -15,
             scale: 1.05,
-            boxShadow: '0 20px 60px rgba(217, 119, 6, 0.3)',
+            boxShadow: '0 20px 60px rgba(165, 122, 80, 0.3)',
             duration: 0.4,
             ease: 'power2.out'
           });
@@ -350,7 +350,7 @@ const CryptoATMPage = () => {
           gsap.to(location, {
             y: 0,
             scale: 1,
-            boxShadow: '0 0 0 rgba(217, 119, 6, 0)',
+            boxShadow: '0 0 0 rgba(165, 122, 80, 0)',
             duration: 0.4,
             ease: 'power2.out'
           });

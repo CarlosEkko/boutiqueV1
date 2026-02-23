@@ -142,7 +142,7 @@ const Trust = () => {
                 text={t('trust.titleHighlight')} 
                 stagger={0.06}
                 delay={0.3}
-                glowColor="rgba(217, 119, 6, 0.9)"
+                glowColor="rgba(165, 122, 80, 0.9)"
               />
             </span>
           </h2>
