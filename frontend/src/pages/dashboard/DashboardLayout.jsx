@@ -163,9 +163,22 @@ const DashboardLayout = () => {
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16">
           <nav className="p-4 space-y-2">
-            {navItems.map((item) => (
+            {/* User Navigation */}
+            <p className="px-4 text-xs text-gray-500 uppercase mb-2">Portfolio</p>
+            {userNavItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
+            
+            {/* Admin Navigation */}
+            {isAdmin && (
+              <div className="pt-4 mt-4 border-t border-amber-900/20">
+                <p className="px-4 text-xs text-amber-500 uppercase mb-2">Admin</p>
+                {adminNavItems.map((item) => (
+                  <NavItem key={item.to} {...item} />
+                ))}
+              </div>
+            )}
+            
             <Button
               onClick={handleLogout}
               variant="ghost"
