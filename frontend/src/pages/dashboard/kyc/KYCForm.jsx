@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
@@ -21,19 +22,20 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const STEPS = [
-  { id: 'personal_info', label: 'Dados Pessoais', icon: User },
-  { id: 'id_document', label: 'Documento ID', icon: FileText },
-  { id: 'selfie', label: 'Selfie', icon: Camera },
-  { id: 'proof_of_address', label: 'Morada', icon: MapPin },
-];
-
 const KYCForm = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [kycData, setKycData] = useState(null);
   const [uploadedDocs, setUploadedDocs] = useState([]);
+
+  const STEPS = [
+    { id: 'personal_info', label: t('kyc.form.steps.personalInfo'), icon: User },
+    { id: 'id_document', label: t('kyc.form.steps.idDocument'), icon: FileText },
+    { id: 'selfie', label: t('kyc.form.steps.selfie'), icon: Camera },
+    { id: 'proof_of_address', label: t('kyc.form.steps.proofAddress'), icon: MapPin },
+  ];
   
   // Form data
   const [personalInfo, setPersonalInfo] = useState({
