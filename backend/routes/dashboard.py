@@ -144,7 +144,7 @@ async def get_wallet_details(
 
 # ==================== TRANSACTIONS ====================
 
-@router.get("/transactions", response_model=List[dict])
+@router.get("/transactions")
 async def get_transactions(
     type: Optional[TransactionType] = None,
     currency: Optional[str] = None,
