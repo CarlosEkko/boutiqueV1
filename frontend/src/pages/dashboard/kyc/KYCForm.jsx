@@ -130,10 +130,10 @@ const KYCForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Dados pessoais guardados');
+      toast.success(t('kyc.form.upload.uploadSuccess'));
       setCurrentStep(1);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao guardar dados');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -151,9 +151,9 @@ const KYCForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Informação do documento guardada');
+      toast.success(t('kyc.form.saveInfo'));
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao guardar informação');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ const KYCForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Documento carregado com sucesso');
+      toast.success(t('kyc.form.upload.uploadSuccess'));
       fetchDocuments();
       
       // Auto advance step based on document type
