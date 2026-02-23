@@ -110,9 +110,9 @@ const KYCStatus = () => {
     <div className="space-y-8" data-testid="kyc-status-page">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-light text-white mb-2">Verificação de Identidade</h1>
+        <h1 className="text-2xl font-light text-white mb-2">{t('kyc.status.title')}</h1>
         <p className="text-gray-400">
-          Complete a verificação KYC/KYB para desbloquear todas as funcionalidades da plataforma
+          {t('kyc.status.subtitle')}
         </p>
       </div>
 
@@ -129,8 +129,8 @@ const KYCStatus = () => {
                 <User className={kycConfig.color} size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-white">KYC Individual</h3>
-                <p className="text-sm text-gray-400">Para pessoas físicas</p>
+                <h3 className="text-lg font-medium text-white">{t('kyc.status.kycIndividual')}</h3>
+                <p className="text-sm text-gray-400">{t('kyc.status.forIndividuals')}</p>
               </div>
             </div>
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${kycConfig.bgColor}`}>
@@ -140,21 +140,21 @@ const KYCStatus = () => {
           </div>
 
           <p className="text-gray-400 text-sm mb-6">
-            Verificação de identidade pessoal. Necessário para operações até €15.000/mês.
+            {t('kyc.status.kycDescription')}
           </p>
 
           <div className="space-y-3 mb-6">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <FileText size={16} />
-              <span>Documento de identificação (Passaporte, CC ou CNH)</span>
+              <span>{t('kyc.status.documents.idDocument')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <Upload size={16} />
-              <span>Selfie com documento</span>
+              <span>{t('kyc.status.documents.selfieWithId')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <FileText size={16} />
-              <span>Comprovativo de morada</span>
+              <span>{t('kyc.status.documents.proofOfAddress')}</span>
             </div>
           </div>
 
@@ -164,7 +164,7 @@ const KYCStatus = () => {
               className="w-full bg-amber-600 hover:bg-amber-700 text-black"
               data-testid="start-kyc-btn"
             >
-              Iniciar KYC
+              {t('kyc.status.startKyc')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           )}
@@ -175,7 +175,7 @@ const KYCStatus = () => {
               className="w-full bg-blue-600 hover:bg-blue-700"
               data-testid="continue-kyc-btn"
             >
-              Continuar Verificação
+              {t('kyc.status.continueVerification')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           )}
