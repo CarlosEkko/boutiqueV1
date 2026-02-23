@@ -65,7 +65,12 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 ### ✅ Frontend MVP (February 16, 2025)
 
 #### Components Created
-1. **Header.jsx** - Fixed navigation with logo, menu links, CTA button, language selector (EN/AR UI)
+1. **Header.jsx** - Overlay menu with magnetic cursor effect (inspired by CodePen iamryanyu)
+   - Hamburger icon that transforms to X
+   - Fullscreen dark overlay with circular reveal animation
+   - Navigation links with Inter font (light weight, tracking)
+   - Custom magnetic cursor effect (amber dot follows mouse, scales on hover)
+   - Active link indicator with amber underline
 2. **CryptoTicker.jsx** - Live scrolling crypto price ticker (MOCK DATA)
 3. **Hero.jsx** - Original hero component (replaced)
 4. **HeroV2.jsx** - ✅ NEW: Advanced cinematic hero with sequential text animations
