@@ -90,7 +90,7 @@ const DashboardLayout = () => {
               </div>
               {sidebarOpen && (
                 <span className="text-xl font-light text-white">
-                  <span className="text-amber-400">Krypto</span>box
+                  <span className="text-amber-400">KB</span>EX
                 </span>
               )}
             </NavLink>
