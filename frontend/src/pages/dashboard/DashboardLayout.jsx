@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -24,28 +25,29 @@ import { useState } from 'react';
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAdmin = user?.is_admin;
 
   const userNavItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
-    { to: '/dashboard/wallets', icon: Wallet, label: 'Wallets' },
-    { to: '/dashboard/transactions', icon: History, label: 'Transactions' },
-    { to: '/dashboard/investments', icon: TrendingUp, label: 'Investments' },
-    { to: '/dashboard/roi', icon: PieChart, label: 'ROI' },
-    { to: '/dashboard/transparency', icon: Shield, label: 'Transparency' },
-    { to: '/dashboard/kyc', icon: UserCheck, label: 'Verificação KYC' },
+    { to: '/dashboard', icon: LayoutDashboard, label: t('dashboard.nav.overview'), end: true },
+    { to: '/dashboard/wallets', icon: Wallet, label: t('dashboard.nav.wallets') },
+    { to: '/dashboard/transactions', icon: History, label: t('dashboard.nav.transactions') },
+    { to: '/dashboard/investments', icon: TrendingUp, label: t('dashboard.nav.investments') },
+    { to: '/dashboard/roi', icon: PieChart, label: t('dashboard.nav.roi') },
+    { to: '/dashboard/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
+    { to: '/dashboard/kyc', icon: UserCheck, label: t('dashboard.nav.kycVerification') },
   ];
 
   const adminNavItems = [
-    { to: '/dashboard/admin', icon: BarChart3, label: 'Admin Overview', end: true },
-    { to: '/dashboard/admin/users', icon: Users, label: 'Users' },
-    { to: '/dashboard/admin/kyc', icon: UserCheck, label: 'KYC/KYB' },
-    { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: 'Opportunities' },
-    { to: '/dashboard/admin/transparency', icon: Shield, label: 'Transparency' },
-    { to: '/dashboard/admin/invites', icon: Gift, label: 'Invite Codes' },
+    { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
+    { to: '/dashboard/admin/users', icon: Users, label: t('dashboard.nav.users') },
+    { to: '/dashboard/admin/kyc', icon: UserCheck, label: t('dashboard.nav.kycKyb') },
+    { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: t('dashboard.nav.opportunities') },
+    { to: '/dashboard/admin/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
+    { to: '/dashboard/admin/invites', icon: Gift, label: t('dashboard.nav.inviteCodes') },
   ];
 
   const handleLogout = () => {
