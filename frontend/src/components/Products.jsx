@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import GlowText from './GlowText';
 import { useLanguage } from '../i18n';
+import translations from '../i18n/translations';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,7 +15,21 @@ const Products = () => {
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const cardsRef = useRef([]);
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+
+  // Get translated products
+  const translatedProducts = translations[language]?.products?.items || products.map((p, i) => ({
+    title: p.title,
+    description: p.description,
+    features: p.features
+  }));
+
+  // Merge with images from mock
+  const productsWithImages = translatedProducts.map((item, index) => ({
+    ...item,
+    id: index + 1,
+    image: products[index]?.image || ''
+  }));
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -38,6 +53,7 @@ const Products = () => {
 
       // Cards stagger animation
       cardsRef.current.forEach((card, index) => {
+        if (!card) return;
         gsap.fromTo(
           card,
           {
@@ -65,7 +81,7 @@ const Products = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [language]);
 
   return (
     <section ref={sectionRef} id="products" className={`py-24 bg-black relative ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -111,7 +127,7 @@ const Products = () => {
 
         {/* Products Grid */}
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {products.map((product, index) => (
+          {productsWithImages.map((product, index) => (
             <Card
               key={product.id}
               ref={(el) => (cardsRef.current[index] = el)}
