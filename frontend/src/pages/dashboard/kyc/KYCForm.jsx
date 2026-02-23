@@ -260,12 +260,11 @@ const KYCForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Morada *</Label>
+              <Label htmlFor="address">{t('kyc.form.personalInfo.address')} *</Label>
               <Input
                 id="address"
                 value={personalInfo.address}
                 onChange={(e) => setPersonalInfo({...personalInfo, address: e.target.value})}
-                placeholder="Rua das Flores, 123"
                 className="bg-zinc-800 border-zinc-700"
                 data-testid="input-address"
               />
@@ -273,23 +272,21 @@ const KYCForm = () => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">Cidade *</Label>
+                <Label htmlFor="city">{t('kyc.form.personalInfo.city')} *</Label>
                 <Input
                   id="city"
                   value={personalInfo.city}
                   onChange={(e) => setPersonalInfo({...personalInfo, city: e.target.value})}
-                  placeholder="Lisboa"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-city"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="postal_code">Código Postal *</Label>
+                <Label htmlFor="postal_code">{t('kyc.form.personalInfo.postalCode')} *</Label>
                 <Input
                   id="postal_code"
                   value={personalInfo.postal_code}
                   onChange={(e) => setPersonalInfo({...personalInfo, postal_code: e.target.value})}
-                  placeholder="1000-001"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-postal"
                 />
@@ -303,7 +300,7 @@ const KYCForm = () => {
               data-testid="submit-personal-info"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Continuar
+              {t('kyc.form.continue')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           </div>
@@ -314,7 +311,7 @@ const KYCForm = () => {
           <div className="space-y-6" data-testid="id-document-step">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="document_type">Tipo de Documento *</Label>
+                <Label htmlFor="document_type">{t('kyc.form.idDocument.documentType')} *</Label>
                 <select
                   id="document_type"
                   value={idDocument.document_type}
@@ -322,18 +319,17 @@ const KYCForm = () => {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white"
                   data-testid="select-doc-type"
                 >
-                  <option value="passport">Passaporte</option>
-                  <option value="id_card">Cartão de Cidadão</option>
-                  <option value="drivers_license">Carta de Condução</option>
+                  <option value="passport">{t('kyc.form.idDocument.passport')}</option>
+                  <option value="id_card">{t('kyc.form.idDocument.idCard')}</option>
+                  <option value="drivers_license">{t('kyc.form.idDocument.driversLicense')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="document_number">Número do Documento *</Label>
+                <Label htmlFor="document_number">{t('kyc.form.idDocument.documentNumber')} *</Label>
                 <Input
                   id="document_number"
                   value={idDocument.document_number}
                   onChange={(e) => setIdDocument({...idDocument, document_number: e.target.value})}
-                  placeholder="123456789"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-doc-number"
                 />
