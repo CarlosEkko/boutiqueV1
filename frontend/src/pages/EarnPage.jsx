@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { 
@@ -19,7 +19,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 
 const EarnPage = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('flexible');
   const [selectedAsset, setSelectedAsset] = useState(null);
 

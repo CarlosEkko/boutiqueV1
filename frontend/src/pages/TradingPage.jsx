@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { 
@@ -18,7 +18,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 
 const TradingPage = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [orderType, setOrderType] = useState('limit');
   const [side, setSide] = useState('buy');
