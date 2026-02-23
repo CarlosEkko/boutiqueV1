@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime, timezone
-from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB
+from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -25,13 +25,42 @@ async def register(user_data: UserCreate):
             detail="Email already registered"
         )
     
+    # Validate invite code if provided
+    invited_by = None
+    if user_data.invite_code:
+        invite = await db.invite_codes.find_one({
+            "code": user_data.invite_code,
+            "is_active": True
+        }, {"_id": 0})
+        
+        if not invite:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired invite code"
+            )
+        
+        if invite.get("uses", 0) >= invite.get("max_uses", 1):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invite code has reached maximum uses"
+            )
+        
+        # Increment invite code usage
+        await db.invite_codes.update_one(
+            {"code": user_data.invite_code},
+            {"$inc": {"uses": 1}}
+        )
+        invited_by = invite.get("created_by")
+    
     # Create user object
     user_in_db = UserInDB(
         email=user_data.email,
         name=user_data.name,
         phone=user_data.phone,
         country=user_data.country,
-        hashed_password=get_password_hash(user_data.password)
+        hashed_password=get_password_hash(user_data.password),
+        invite_code_used=user_data.invite_code,
+        invited_by=invited_by
     )
     
     # Convert to dict for MongoDB
@@ -54,7 +83,10 @@ async def register(user_data: UserCreate):
         country=user_in_db.country,
         created_at=user_in_db.created_at,
         updated_at=user_in_db.updated_at,
-        is_active=user_in_db.is_active
+        is_active=user_in_db.is_active,
+        is_approved=user_in_db.is_approved,
+        kyc_status=user_in_db.kyc_status,
+        membership_level=user_in_db.membership_level
     )
     
     return TokenResponse(
