@@ -7,6 +7,10 @@ const translations = {
     nav: {
       home: 'Home',
       products: 'Products',
+      markets: 'Markets',
+      trading: 'Trading',
+      earn: 'Earn',
+      institutional: 'Institutional',
       cryptoAtm: 'Crypto ATM',
       whyUs: 'Why Us',
       regions: 'Regions',
@@ -513,6 +517,10 @@ const translations = {
     nav: {
       home: 'Início',
       products: 'Produtos',
+      markets: 'Mercados',
+      trading: 'Trading',
+      earn: 'Ganhos',
+      institutional: 'Institucional',
       cryptoAtm: 'Crypto ATM',
       whyUs: 'Porquê Nós',
       regions: 'Regiões',
@@ -1019,6 +1027,10 @@ const translations = {
     nav: {
       home: 'الرئيسية',
       products: 'المنتجات',
+      markets: 'الأسواق',
+      trading: 'التداول',
+      earn: 'الأرباح',
+      institutional: 'المؤسسي',
       cryptoAtm: 'صراف العملات المشفرة',
       whyUs: 'لماذا نحن',
       regions: 'المناطق',
