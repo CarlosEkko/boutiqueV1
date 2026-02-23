@@ -266,7 +266,7 @@ const HeroV2 = () => {
         {/* Frame 3 */}
         <h1
           ref={frame3Ref}
-          className="absolute text-6xl md:text-8xl lg:text-9xl font-extralight text-amber-400 opacity-0 text-center px-4"
+          className="absolute text-6xl md:text-8xl lg:text-9xl font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
             textShadow: '0px 0px 1px rgba(217, 119, 6, 0.8)'
@@ -278,7 +278,7 @@ const HeroV2 = () => {
         {/* Frame 4 */}
         <h1
           ref={frame4Ref}
-          className="absolute text-7xl md:text-9xl lg:text-[11rem] font-extralight text-amber-400 opacity-0 text-center px-4"
+          className="absolute text-7xl md:text-9xl lg:text-[11rem] font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
             textShadow: '0px 0px 2px rgba(217, 119, 6, 0.8)'
@@ -294,7 +294,7 @@ const HeroV2 = () => {
             className="absolute text-center px-4"
           >
             <h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-extralight text-amber-400 tracking-widest uppercase mb-4"
+              className="text-4xl md:text-6xl lg:text-7xl font-extralight text-gold-400 tracking-widest uppercase mb-4"
               style={{ textShadow: '0px 0px 1px rgba(217, 119, 6, 0.8)' }}
             >
               {splitTextIntoSpans('KBEX')}
@@ -318,8 +318,8 @@ const HeroV2 = () => {
         >
           <div className="max-w-5xl mx-auto space-y-8">
             {/* Badge */}
-            <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-amber-700/30`}>
-              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-gold-600/30`}>
+              <div className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
               <span className="text-amber-200 text-sm tracking-wider font-medium">
                 {t('hero.badge')}
               </span>
@@ -328,7 +328,7 @@ const HeroV2 = () => {
             {/* Final title - TRANSLATED */}
             <h1 className="text-5xl md:text-7xl font-extralight text-white leading-tight tracking-wide">
               {t('hero.title')}
-              <span className="block text-amber-400 mt-2">
+              <span className="block text-gold-400 mt-2">
                 {t('hero.subtitle')}
               </span>
             </h1>
@@ -342,7 +342,7 @@ const HeroV2 = () => {
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-2xl shadow-amber-900/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-2xl shadow-amber-900/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-primary"
               >
                 {t('hero.ctaPrimary')}
@@ -351,7 +351,7 @@ const HeroV2 = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-amber-600/50 text-amber-200 hover:bg-amber-950/30 hover:border-amber-500 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
+                className="border-2 border-gold-500/50 text-amber-200 hover:bg-amber-950/30 hover:border-gold-400 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-secondary"
               >
                 {t('hero.ctaSecondary')}
@@ -361,15 +361,15 @@ const HeroV2 = () => {
             {/* Trust indicators - TRANSLATED */}
             <div className={`pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
-                <div className="w-1 h-1 bg-amber-400 rounded-full" />
+                <div className="w-1 h-1 bg-gold-400 rounded-full" />
                 <span>{t('hero.trustLicensed')}</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
-                <div className="w-1 h-1 bg-amber-400 rounded-full" />
+                <div className="w-1 h-1 bg-gold-400 rounded-full" />
                 <span>{t('hero.trustSecurity')}</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
-                <div className="w-1 h-1 bg-amber-400 rounded-full" />
+                <div className="w-1 h-1 bg-gold-400 rounded-full" />
                 <span>{t('hero.trustAuc')}</span>
               </div>
             </div>

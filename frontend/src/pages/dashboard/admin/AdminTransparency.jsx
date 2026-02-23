@@ -127,7 +127,7 @@ const AdminTransparency = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -146,7 +146,7 @@ const AdminTransparency = () => {
           onClick={() => setActiveTab('wallets')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'wallets'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -157,7 +157,7 @@ const AdminTransparency = () => {
           onClick={() => setActiveTab('reports')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'reports'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -172,7 +172,7 @@ const AdminTransparency = () => {
           <div className="flex justify-end">
             <Button 
               onClick={() => setShowWalletForm(!showWalletForm)}
-              className="bg-amber-600 hover:bg-amber-500"
+              className="bg-gold-500 hover:bg-gold-400"
             >
               <Plus size={18} className="mr-2" />
               {showWalletForm ? 'Cancel' : 'Add Public Wallet'}
@@ -246,7 +246,7 @@ const AdminTransparency = () => {
                   </div>
 
                   <div className="flex items-end">
-                    <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500">
+                    <Button type="submit" className="w-full bg-gold-500 hover:bg-gold-400">
                       Add Wallet
                     </Button>
                   </div>
@@ -263,15 +263,15 @@ const AdminTransparency = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                          <span className="text-amber-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+                        <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                          <span className="text-gold-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="text-white font-medium">{wallet.asset_name}</p>
                             <Badge className="bg-zinc-700 text-gray-300">{wallet.label}</Badge>
                           </div>
-                          <p className="text-lg text-amber-400">{wallet.balance.toLocaleString()} {wallet.asset_id}</p>
+                          <p className="text-lg text-gold-400">{wallet.balance.toLocaleString()} {wallet.asset_id}</p>
                         </div>
                       </div>
 
@@ -281,7 +281,7 @@ const AdminTransparency = () => {
                         </code>
                         <button
                           onClick={() => copyAddress(wallet.address)}
-                          className="p-2 text-gray-400 hover:text-amber-400"
+                          className="p-2 text-gray-400 hover:text-gold-400"
                         >
                           <Copy size={18} />
                         </button>
@@ -289,7 +289,7 @@ const AdminTransparency = () => {
                           href={`https://blockchain.info/address/${wallet.address}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gray-400 hover:text-amber-400"
+                          className="p-2 text-gray-400 hover:text-gold-400"
                         >
                           <ExternalLink size={18} />
                         </a>
@@ -317,7 +317,7 @@ const AdminTransparency = () => {
           <div className="flex justify-end">
             <Button 
               onClick={() => setShowReportForm(!showReportForm)}
-              className="bg-amber-600 hover:bg-amber-500"
+              className="bg-gold-500 hover:bg-gold-400"
             >
               <Plus size={18} className="mr-2" />
               {showReportForm ? 'Cancel' : 'Add Report'}
@@ -388,7 +388,7 @@ const AdminTransparency = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500">
+                    <Button type="submit" className="w-full bg-gold-500 hover:bg-gold-400">
                       Add Report
                     </Button>
                   </div>
@@ -427,7 +427,7 @@ const AdminTransparency = () => {
                           href={report.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-amber-400 hover:text-amber-300 bg-amber-600/20 rounded-lg"
+                          className="p-2 text-gold-400 hover:text-amber-300 bg-gold-500/20 rounded-lg"
                         >
                           <ExternalLink size={18} />
                         </a>

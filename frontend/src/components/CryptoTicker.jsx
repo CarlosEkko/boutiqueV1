@@ -132,7 +132,7 @@ const CryptoTicker = () => {
             e.stopPropagation();
             setShowFiatDropdown(!showFiatDropdown);
           }}
-          className="flex items-center space-x-1 px-2 py-1 bg-zinc-900/80 border border-amber-900/30 rounded text-xs text-amber-400 hover:border-amber-600/50 transition-colors"
+          className="flex items-center space-x-1 px-2 py-1 bg-zinc-900/80 border border-amber-900/30 rounded text-xs text-gold-400 hover:border-gold-500/50 transition-colors"
           data-testid="fiat-selector"
         >
           <span className="font-medium">{selectedFiat}</span>
@@ -150,7 +150,7 @@ const CryptoTicker = () => {
                 }}
                 className={`block w-full px-3 py-1.5 text-xs text-left transition-colors ${
                   selectedFiat === currency
-                    ? 'bg-amber-900/30 text-amber-400'
+                    ? 'bg-amber-900/30 text-gold-400'
                     : 'text-gray-300 hover:bg-zinc-800'
                 }`}
                 data-testid={`fiat-option-${currency.toLowerCase()}`}
@@ -178,7 +178,7 @@ const CryptoTicker = () => {
             key={`${crypto.symbol}-${index}`}
             className="flex items-center space-x-2 whitespace-nowrap"
           >
-            <span className="text-amber-400 font-medium text-sm tracking-wide font-['Inter']">
+            <span className="text-gold-400 font-medium text-sm tracking-wide font-['Inter']">
               {crypto.symbol}/{selectedFiat}
             </span>
             <span className="text-white text-sm font-light font-['Inter']">

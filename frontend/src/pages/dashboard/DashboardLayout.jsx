@@ -63,7 +63,7 @@ const DashboardLayout = () => {
       className={({ isActive }) =>
         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
           isActive
-            ? 'bg-amber-600/20 text-amber-400 border-l-2 border-amber-500'
+            ? 'bg-gold-500/20 text-gold-400 border-l-2 border-gold-400'
             : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
         }`
       }
@@ -85,12 +85,12 @@ const DashboardLayout = () => {
         <div className="p-6 border-b border-amber-900/20">
           <div className="flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
                 <span className="text-black font-bold text-xl">K</span>
               </div>
               {sidebarOpen && (
                 <span className="text-xl font-light text-white">
-                  <span className="text-amber-400">KB</span>EX
+                  <span className="text-gold-400">KB</span>EX
                 </span>
               )}
             </NavLink>
@@ -116,7 +116,7 @@ const DashboardLayout = () => {
           {/* Admin Navigation - Only visible to admins */}
           {isAdmin && (
             <div className="pt-4 border-t border-amber-900/20">
-              {sidebarOpen && <p className="px-4 text-xs text-amber-500 uppercase mb-2">{t('dashboard.layout.admin')}</p>}
+              {sidebarOpen && <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>}
               {adminNavItems.map((item) => (
                 <NavItem key={item.to} {...item} />
               ))}
@@ -130,7 +130,7 @@ const DashboardLayout = () => {
             <div className="mb-4 px-4">
               <p className="text-sm text-gray-400">{t('dashboard.layout.loggedInAs')}</p>
               <p className="text-white font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-amber-400">{user?.membership_level || 'Standard'}</p>
+              <p className="text-xs text-gold-400">{user?.membership_level || 'Standard'}</p>
             </div>
           )}
           <Button
@@ -148,11 +148,11 @@ const DashboardLayout = () => {
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-amber-900/20 px-4 py-3">
         <div className="flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
               <span className="text-black font-bold">K</span>
             </div>
             <span className="text-lg font-light text-white">
-              <span className="text-amber-400">KB</span>EX
+              <span className="text-gold-400">KB</span>EX
             </span>
           </NavLink>
           <button
@@ -177,7 +177,7 @@ const DashboardLayout = () => {
             {/* Admin Navigation */}
             {isAdmin && (
               <div className="pt-4 mt-4 border-t border-amber-900/20">
-                <p className="px-4 text-xs text-amber-500 uppercase mb-2">{t('dashboard.layout.admin')}</p>
+                <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>
                 {adminNavItems.map((item) => (
                   <NavItem key={item.to} {...item} />
                 ))}

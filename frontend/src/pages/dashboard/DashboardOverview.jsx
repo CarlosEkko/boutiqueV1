@@ -48,7 +48,7 @@ const DashboardOverview = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -58,22 +58,22 @@ const DashboardOverview = () => {
       <div className="max-w-2xl mx-auto mt-12">
         <Card className="bg-zinc-900/50 border-amber-900/30">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-600/20 flex items-center justify-center">
-              <Clock className="text-amber-400" size={32} />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold-500/20 flex items-center justify-center">
+              <Clock className="text-gold-400" size={32} />
             </div>
             <h2 className="text-2xl font-light text-white mb-2">Account Pending Approval</h2>
             <p className="text-gray-400 mb-6">
               Your account is currently under review. Our team will verify your information and approve your access shortly.
             </p>
             <div className="space-y-3 text-left bg-zinc-800/50 rounded-lg p-4">
-              <h3 className="text-amber-400 font-medium">What's next?</h3>
+              <h3 className="text-gold-400 font-medium">What's next?</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li className="flex items-start gap-2">
                   <CheckCircle size={16} className="text-green-500 mt-0.5" />
                   Account created successfully
                 </li>
                 <li className="flex items-start gap-2">
-                  <Clock size={16} className="text-amber-400 mt-0.5" />
+                  <Clock size={16} className="text-gold-400 mt-0.5" />
                   Pending admin approval (24-48 hours)
                 </li>
                 <li className="flex items-start gap-2">
@@ -111,7 +111,7 @@ const DashboardOverview = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-light text-white">
-            Welcome back, <span className="text-amber-400">{user?.name?.split(' ')[0]}</span>
+            Welcome back, <span className="text-gold-400">{user?.name?.split(' ')[0]}</span>
           </h1>
           <p className="text-gray-400 mt-1">Here's your portfolio overview</p>
         </div>
@@ -119,11 +119,11 @@ const DashboardOverview = () => {
           <Badge className={`${
             overview?.kyc_status === 'approved' 
               ? 'bg-green-900/30 text-green-400' 
-              : 'bg-amber-900/30 text-amber-400'
+              : 'bg-amber-900/30 text-gold-400'
           }`}>
             KYC: {overview?.kyc_status || 'Not Started'}
           </Badge>
-          <Badge className="bg-amber-600/20 text-amber-400">
+          <Badge className="bg-gold-500/20 text-gold-400">
             {overview?.membership_level || 'Standard'}
           </Badge>
         </div>
@@ -140,8 +140,8 @@ const DashboardOverview = () => {
                   {formatCurrency(overview?.total_portfolio_value)}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                <PieChart className="text-amber-400" size={24} />
+              <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                <PieChart className="text-gold-400" size={24} />
               </div>
             </div>
           </CardContent>
@@ -209,7 +209,7 @@ const DashboardOverview = () => {
                 {overview.wallet_allocation.map((asset, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center text-amber-400 font-medium">
+                      <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-400 font-medium">
                         {asset.asset?.slice(0, 2)}
                       </div>
                       <div>

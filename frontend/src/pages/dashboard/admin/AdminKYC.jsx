@@ -94,7 +94,7 @@ const AdminKYC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">...</div>
+        <div className="text-gold-400">...</div>
       </div>
     );
   }
@@ -114,7 +114,7 @@ const AdminKYC = () => {
               onClick={() => setActiveTab('kyc')}
               variant={activeTab === 'kyc' ? 'default' : 'ghost'}
               size="sm"
-              className={activeTab === 'kyc' ? 'bg-amber-600 text-black' : 'text-gray-400'}
+              className={activeTab === 'kyc' ? 'bg-gold-500 text-black' : 'text-gray-400'}
               data-testid="tab-kyc"
             >
               <User size={16} className="mr-2" />
@@ -124,7 +124,7 @@ const AdminKYC = () => {
               onClick={() => setActiveTab('kyb')}
               variant={activeTab === 'kyb' ? 'default' : 'ghost'}
               size="sm"
-              className={activeTab === 'kyb' ? 'bg-amber-600 text-black' : 'text-gray-400'}
+              className={activeTab === 'kyb' ? 'bg-gold-500 text-black' : 'text-gray-400'}
               data-testid="tab-kyb"
             >
               <Building2 size={16} className="mr-2" />
@@ -149,7 +149,7 @@ const AdminKYC = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-amber-400 mb-2">
+          <div className="flex items-center gap-2 text-gold-400 mb-2">
             <Clock size={18} />
             <span className="text-sm">{t('kyc.admin.pending')}</span>
           </div>
@@ -250,15 +250,15 @@ const VerificationCard = ({
             </h3>
             <p className="text-sm text-gray-400">{item.user?.email}</p>
             {!isKYC && (
-              <p className="text-xs text-amber-400">{t('kyc.admin.nipc')}: {item.registration_number}</p>
+              <p className="text-xs text-gold-400">{t('kyc.admin.nipc')}: {item.registration_number}</p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10">
-            <Clock size={14} className="text-amber-400" />
-            <span className="text-sm text-amber-400">{t('kyc.admin.pending')}</span>
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gold-400/10">
+            <Clock size={14} className="text-gold-400" />
+            <span className="text-sm text-gold-400">{t('kyc.admin.pending')}</span>
           </div>
           <div className="text-gray-400">
             {item.documents?.length || 0} {t('kyc.admin.docs')}
@@ -273,7 +273,7 @@ const VerificationCard = ({
           {/* Personal/Company Info */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h4 className="text-amber-400 font-medium mb-3">
+              <h4 className="text-gold-400 font-medium mb-3">
                 {isKYC ? t('kyc.admin.personalData') : t('kyc.admin.companyData')}
               </h4>
               <div className="space-y-2 text-sm">
@@ -302,7 +302,7 @@ const VerificationCard = ({
             {/* ID Document Info (KYC only) */}
             {isKYC && item.id_document_type && (
               <div>
-                <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.idDocument')}</h4>
+                <h4 className="text-gold-400 font-medium mb-3">{t('kyc.admin.idDocument')}</h4>
                 <div className="space-y-2 text-sm">
                   <InfoRow label={t('kyc.admin.documentType')} value={formatDocType(item.id_document_type)} />
                   <InfoRow label={t('kyc.admin.documentNumber')} value={item.id_document_number} />
@@ -315,14 +315,14 @@ const VerificationCard = ({
             {/* Representatives (KYB only) */}
             {!isKYC && item.representatives?.length > 0 && (
               <div>
-                <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.representatives')}</h4>
+                <h4 className="text-gold-400 font-medium mb-3">{t('kyc.admin.representatives')}</h4>
                 <div className="space-y-3">
                   {item.representatives.map((rep, index) => (
                     <div key={index} className="bg-zinc-800/50 rounded-lg p-3">
                       <p className="text-white font-medium">{rep.full_name}</p>
                       <p className="text-sm text-gray-400">{rep.role}</p>
                       {rep.is_ubo && (
-                        <span className="text-xs text-amber-400">UBO - {rep.ownership_percentage}%</span>
+                        <span className="text-xs text-gold-400">UBO - {rep.ownership_percentage}%</span>
                       )}
                     </div>
                   ))}
@@ -333,7 +333,7 @@ const VerificationCard = ({
 
           {/* Documents */}
           <div>
-            <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.submittedDocuments')}</h4>
+            <h4 className="text-gold-400 font-medium mb-3">{t('kyc.admin.submittedDocuments')}</h4>
             {item.documents?.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {item.documents.map((doc) => (
@@ -352,7 +352,7 @@ const VerificationCard = ({
                       href={`${API_URL}${doc.file_url}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-amber-400 hover:text-amber-300"
+                      className="text-gold-400 hover:text-amber-300"
                     >
                       <ExternalLink size={18} />
                     </a>

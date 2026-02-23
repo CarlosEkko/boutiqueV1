@@ -226,7 +226,7 @@ const Header = () => {
           ref={cursorPointerRef}
           className="c-cursor__pointer fixed w-[14px] h-[14px] -left-[7px] -top-[7px] z-[9999] opacity-0"
         >
-          <div className="cursor-dot absolute w-full h-full bg-amber-500 rounded-full shadow-[0_0_15px_rgba(217,119,6,0.8),0_0_30px_rgba(217,119,6,0.4)] transition-transform duration-300 ease-[cubic-bezier(0.165,0.84,0.44,1)]" />
+          <div className="cursor-dot absolute w-full h-full bg-gold-400 rounded-full shadow-[0_0_15px_rgba(217,119,6,0.8),0_0_30px_rgba(217,119,6,0.4)] transition-transform duration-300 ease-[cubic-bezier(0.165,0.84,0.44,1)]" />
         </div>
       </div>
 
@@ -252,11 +252,11 @@ const Header = () => {
               >
                 <span className="inline-block">
                   <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
-                    <div className="w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+                    <div className="w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
                       <span className="text-black font-bold text-lg md:text-xl font-['Inter']">K</span>
                     </div>
                     <span className="text-xl md:text-2xl font-light text-white font-['Inter']">
-                      <span className="text-amber-400">KB</span>EX.io
+                      <span className="text-gold-400">KB</span>EX.io
                     </span>
                   </div>
                 </span>
@@ -293,15 +293,15 @@ const Header = () => {
             {/* Right Side - Language & CTA (Desktop) */}
             <div className={`hidden md:flex items-center space-x-4 ${isRTL ? 'float-left ml-[70px]' : 'float-right mr-[70px]'} mt-[24px]`}>
               {/* Language Selector */}
-              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-3 py-2 rounded-lg bg-zinc-900/50 border border-amber-900/20 hover:border-amber-700/40 transition-colors duration-300`}>
-                <Globe size={16} className="text-amber-400" />
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-3 py-2 rounded-lg bg-zinc-900/50 border border-amber-900/20 hover:border-gold-600/40 transition-colors duration-300`}>
+                <Globe size={16} className="text-gold-400" />
                 {languages.map((lang, index) => (
                   <React.Fragment key={lang.code}>
                     <button
                       onClick={() => handleLanguageChange(lang.code)}
                       className={`text-sm font-['Inter'] transition-colors duration-300 ${
                         language === lang.code
-                          ? 'text-amber-400 font-medium'
+                          ? 'text-gold-400 font-medium'
                           : 'text-gray-400 hover:text-gray-300'
                       }`}
                       data-testid={`lang-${lang.code.toLowerCase()}`}
@@ -320,7 +320,7 @@ const Header = () => {
                 <Button
                   onClick={() => navigate('/dashboard')}
                   variant="outline"
-                  className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
                   data-testid="header-dashboard-btn"
                 >
                   <User size={18} className="mr-2" />
@@ -330,7 +330,7 @@ const Header = () => {
                 <Button
                   onClick={() => navigate('/auth')}
                   variant="outline"
-                  className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
                   data-testid="header-login-btn"
                 >
                   <LogIn size={18} className="mr-2" />
@@ -340,7 +340,7 @@ const Header = () => {
 
               <Button
                 onClick={(e) => handleNavClick(e, '/#contact')}
-                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 font-['Inter']"
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 font-['Inter']"
                 data-testid="header-cta"
               >
                 {t('nav.requestAccess')}
@@ -405,7 +405,7 @@ const Header = () => {
                 >
                   <span className="inline-block pointer-events-none">{link.name}</span>
                   <span 
-                    className={`nav-underline absolute bottom-[5px] ${isRTL ? 'right-1/2' : 'left-1/2'} h-[3px] bg-amber-500 transition-all duration-300 ${
+                    className={`nav-underline absolute bottom-[5px] ${isRTL ? 'right-1/2' : 'left-1/2'} h-[3px] bg-gold-400 transition-all duration-300 ${
                       isActiveLink(link.href) 
                         ? `w-full ${isRTL ? 'right-0' : 'left-0'}` 
                         : 'w-0'
@@ -424,14 +424,14 @@ const Header = () => {
             style={{ transitionDelay: isNavOpen ? '1.3s' : '0s' }}
           >
             <div className={`flex items-center justify-center ${isRTL ? 'space-x-reverse' : ''} space-x-4 mb-6`}>
-              <Globe size={18} className="text-amber-400" />
+              <Globe size={18} className="text-gold-400" />
               {languages.map((lang, index) => (
                 <React.Fragment key={lang.code}>
                   <button
                     onClick={() => handleLanguageChange(lang.code)}
                     className={`text-lg font-['Inter'] transition-colors duration-300 ${
                       language === lang.code
-                        ? 'text-amber-400 font-medium'
+                        ? 'text-gold-400 font-medium'
                         : 'text-gray-400 hover:text-gray-300'
                     }`}
                   >
@@ -445,7 +445,7 @@ const Header = () => {
             </div>
             <Button
               onClick={(e) => handleNavClick(e, '/#contact')}
-              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 px-8 py-3 text-lg font-['Inter']"
+              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-amber-900/30 px-8 py-3 text-lg font-['Inter']"
             >
               {t('nav.requestAccess')}
             </Button>

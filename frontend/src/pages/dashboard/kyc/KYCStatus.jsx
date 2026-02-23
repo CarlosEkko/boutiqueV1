@@ -69,9 +69,9 @@ const KYCStatus = () => {
         label: t('kyc.status.inProgress')
       },
       pending_review: {
-        color: 'text-amber-400',
-        bgColor: 'bg-amber-500/10',
-        borderColor: 'border-amber-500/30',
+        color: 'text-gold-400',
+        bgColor: 'bg-gold-400/10',
+        borderColor: 'border-gold-400/30',
         icon: Clock,
         label: t('kyc.status.pendingReview')
       },
@@ -96,7 +96,7 @@ const KYCStatus = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">...</div>
+        <div className="text-gold-400">...</div>
       </div>
     );
   }
@@ -161,7 +161,7 @@ const KYCStatus = () => {
           {kycStatus === 'not_started' && (
             <Button 
               onClick={() => startVerification('kyc')}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-black"
+              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
               data-testid="start-kyc-btn"
             >
               {t('kyc.status.startKyc')}
@@ -181,7 +181,7 @@ const KYCStatus = () => {
           )}
 
           {kycStatus === 'pending_review' && (
-            <div className="text-center text-amber-400 text-sm">
+            <div className="text-center text-gold-400 text-sm">
               {t('kyc.status.estimatedTime')}
             </div>
           )}
@@ -252,7 +252,7 @@ const KYCStatus = () => {
           {kybStatus === 'not_started' && (
             <Button 
               onClick={() => startVerification('kyb')}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-black"
+              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
               data-testid="start-kyb-btn"
             >
               {t('kyc.status.startKyb')}
@@ -272,7 +272,7 @@ const KYCStatus = () => {
           )}
 
           {kybStatus === 'pending_review' && (
-            <div className="text-center text-amber-400 text-sm">
+            <div className="text-center text-gold-400 text-sm">
               {t('kyc.status.estimatedTimeKyb')}
             </div>
           )}
@@ -304,8 +304,8 @@ const KYCStatus = () => {
       {/* Info Section */}
       <div className="bg-zinc-900/30 border border-amber-900/20 rounded-xl p-6">
         <div className="flex items-start gap-4">
-          <div className="p-2 bg-amber-500/10 rounded-lg">
-            <Shield className="text-amber-400" size={24} />
+          <div className="p-2 bg-gold-400/10 rounded-lg">
+            <Shield className="text-gold-400" size={24} />
           </div>
           <div>
             <h3 className="text-white font-medium mb-2">{t('kyc.status.whyVerify')}</h3>

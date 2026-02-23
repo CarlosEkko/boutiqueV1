@@ -84,7 +84,7 @@ const AdminInvites = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -119,7 +119,7 @@ const AdminInvites = () => {
                 className="bg-zinc-800 border-amber-900/30 text-white mt-1"
               />
             </div>
-            <Button onClick={createInvite} className="bg-amber-600 hover:bg-amber-500">
+            <Button onClick={createInvite} className="bg-gold-500 hover:bg-gold-400">
               <Plus size={18} className="mr-2" />
               Generate Code
             </Button>
@@ -129,7 +129,7 @@ const AdminInvites = () => {
 
       {/* Active Invites */}
       <div>
-        <h2 className="text-lg text-amber-400 mb-4 flex items-center gap-2">
+        <h2 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
           <CheckCircle size={20} /> Active Codes ({activeInvites.length})
         </h2>
         
@@ -139,11 +139,11 @@ const AdminInvites = () => {
               <Card key={invite.id} className="bg-zinc-900/50 border-amber-900/20">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <code className="text-xl font-mono text-amber-400">{invite.code}</code>
+                    <code className="text-xl font-mono text-gold-400">{invite.code}</code>
                     <div className="flex gap-1">
                       <button
                         onClick={() => copyCode(invite.code)}
-                        className="p-2 text-gray-400 hover:text-amber-400"
+                        className="p-2 text-gray-400 hover:text-gold-400"
                       >
                         <Copy size={16} />
                       </button>
@@ -163,7 +163,7 @@ const AdminInvites = () => {
                     </div>
                     <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-amber-600 rounded-full"
+                        className="h-full bg-gold-500 rounded-full"
                         style={{ width: `${(invite.uses / invite.max_uses) * 100}%` }}
                       />
                     </div>

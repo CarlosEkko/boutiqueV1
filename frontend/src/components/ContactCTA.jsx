@@ -42,7 +42,7 @@ const ContactCTA = () => {
     <section id="contact" className={`py-24 bg-black relative overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Dramatic background glow */}
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-full h-full">
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500/10 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
@@ -53,8 +53,8 @@ const ContactCTA = () => {
                 {/* Left side - CTA Text */}
                 <div className={`md:col-span-2 bg-gradient-to-br from-amber-950/50 to-amber-900/30 p-8 md:p-10 flex flex-col justify-center ${isRTL ? 'border-l md:col-start-4' : 'border-r'} border-amber-800/20`}>
                   <div className="mb-6">
-                    <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-4 py-2 rounded-full bg-amber-600/20 border border-amber-600/30 mb-4`}>
-                      <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                    <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-4 py-2 rounded-full bg-gold-500/20 border border-gold-500/30 mb-4`}>
+                      <div className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
                       <span className="text-amber-200 text-xs tracking-wider font-medium">
                         {t('contact.badge')}
                       </span>
@@ -63,7 +63,7 @@ const ContactCTA = () => {
 
                   <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
                     {t('contact.title')}
-                    <span className="text-amber-400 block">{t('contact.titleHighlight')}</span>
+                    <span className="text-gold-400 block">{t('contact.titleHighlight')}</span>
                   </h2>
                   <p className="text-gray-400 text-sm leading-relaxed">
                     {t('contact.description')}
@@ -90,7 +90,7 @@ const ContactCTA = () => {
                           value={formData.name}
                           onChange={handleChange}
                           required
-                          className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
+                          className="bg-zinc-900/50 border-amber-900/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="John Doe"
                           dir={isRTL ? 'rtl' : 'ltr'}
                         />
@@ -107,7 +107,7 @@ const ContactCTA = () => {
                           value={formData.email}
                           onChange={handleChange}
                           required
-                          className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
+                          className="bg-zinc-900/50 border-amber-900/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="john@company.com"
                           dir="ltr"
                         />
@@ -122,7 +122,7 @@ const ContactCTA = () => {
                           name="company"
                           value={formData.company}
                           onChange={handleChange}
-                          className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 transition-colors duration-300"
+                          className="bg-zinc-900/50 border-amber-900/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="+351 123 456 789"
                           dir="ltr"
                         />
@@ -138,7 +138,7 @@ const ContactCTA = () => {
                           value={formData.message}
                           onChange={handleChange}
                           rows={4}
-                          className="bg-zinc-900/50 border-amber-900/30 focus:border-amber-600 text-white placeholder:text-gray-500 resize-none transition-colors duration-300"
+                          className="bg-zinc-900/50 border-amber-900/30 focus:border-gold-500 text-white placeholder:text-gray-500 resize-none transition-colors duration-300"
                           placeholder={isRTL ? 'أخبرنا عن احتياجاتك...' : 'Tell us about your needs...'}
                           dir={isRTL ? 'rtl' : 'ltr'}
                         />
@@ -147,7 +147,7 @@ const ContactCTA = () => {
                       <Button
                         type="submit"
                         size="lg"
-                        className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 group"
+                        className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 group"
                       >
                         {t('contact.form.submit')}
                         <ArrowRight className={`${isRTL ? 'mr-2 rotate-180 group-hover:-translate-x-1' : 'ml-2 group-hover:translate-x-1'} transition-transform duration-300`} size={20} />
@@ -155,8 +155,8 @@ const ContactCTA = () => {
                     </form>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full py-12 text-center animate-fade-in">
-                      <div className="w-20 h-20 bg-gradient-to-br from-amber-600/20 to-amber-700/20 rounded-full flex items-center justify-center mb-6 animate-scale-in">
-                        <CheckCircle2 className="text-amber-400" size={40} />
+                      <div className="w-20 h-20 bg-gradient-to-br from-gold-500/20 to-gold-600/20 rounded-full flex items-center justify-center mb-6 animate-scale-in">
+                        <CheckCircle2 className="text-gold-400" size={40} />
                       </div>
                       <h3 className="text-2xl font-light text-white mb-3">
                         {isRTL ? 'تم استلام الطلب' : 'Request Received'}

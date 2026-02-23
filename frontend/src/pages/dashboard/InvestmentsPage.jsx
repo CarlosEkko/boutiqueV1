@@ -49,7 +49,7 @@ const InvestmentsPage = () => {
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case 'low': return 'bg-green-900/30 text-green-400';
-      case 'medium': return 'bg-amber-900/30 text-amber-400';
+      case 'medium': return 'bg-amber-900/30 text-gold-400';
       case 'high': return 'bg-red-900/30 text-red-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
@@ -59,7 +59,7 @@ const InvestmentsPage = () => {
     switch (status) {
       case 'active': return 'bg-green-900/30 text-green-400';
       case 'completed': return 'bg-blue-900/30 text-blue-400';
-      case 'open': return 'bg-amber-900/30 text-amber-400';
+      case 'open': return 'bg-amber-900/30 text-gold-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
   };
@@ -67,7 +67,7 @@ const InvestmentsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -86,7 +86,7 @@ const InvestmentsPage = () => {
           onClick={() => setActiveTab('opportunities')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'opportunities'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -96,7 +96,7 @@ const InvestmentsPage = () => {
           onClick={() => setActiveTab('my')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'my'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -114,7 +114,7 @@ const InvestmentsPage = () => {
               return (
                 <Card 
                   key={opp.id}
-                  className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-amber-600/50 transition-all"
+                  className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 transition-all"
                 >
                   <CardContent className="p-6">
                     {/* Header */}
@@ -143,7 +143,7 @@ const InvestmentsPage = () => {
                         <p className="text-xs text-gray-400 mt-1">Expected ROI</p>
                       </div>
                       <div className="bg-zinc-800/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-amber-400">
+                        <div className="flex items-center gap-2 text-gold-400">
                           <Clock size={16} />
                           <span className="text-2xl font-light">{opp.duration_days}</span>
                         </div>
@@ -166,7 +166,7 @@ const InvestmentsPage = () => {
                       </div>
                       <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full"
+                          className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -177,7 +177,7 @@ const InvestmentsPage = () => {
 
                     {/* Action */}
                     <Button 
-                      className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+                      className="w-full bg-gold-500 hover:bg-gold-400 text-white"
                       disabled={opp.status !== 'open'}
                     >
                       {opp.status === 'open' ? 'Invest Now' : 'Closed'}
@@ -213,8 +213,8 @@ const InvestmentsPage = () => {
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                        <TrendingUp className="text-amber-400" size={24} />
+                      <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                        <TrendingUp className="text-gold-400" size={24} />
                       </div>
                       <div>
                         <h3 className="text-lg text-white">{inv.opportunity?.name || 'Investment'}</h3>

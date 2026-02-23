@@ -63,7 +63,7 @@ const TransparencyPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -77,11 +77,11 @@ const TransparencyPage = () => {
       </div>
 
       {/* Trust Banner */}
-      <Card className="bg-gradient-to-r from-amber-900/20 to-amber-600/10 border-amber-600/30">
+      <Card className="bg-gradient-to-r from-amber-900/20 to-gold-500/10 border-gold-500/30">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center flex-shrink-0">
-              <Shield className="text-amber-400" size={24} />
+            <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center flex-shrink-0">
+              <Shield className="text-gold-400" size={24} />
             </div>
             <div>
               <h3 className="text-xl text-white mb-2">Committed to Transparency</h3>
@@ -100,7 +100,7 @@ const TransparencyPage = () => {
           onClick={() => setActiveTab('reserves')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'reserves'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -110,7 +110,7 @@ const TransparencyPage = () => {
           onClick={() => setActiveTab('reports')}
           className={`px-4 py-2 rounded-lg transition-colors ${
             activeTab === 'reports'
-              ? 'bg-amber-600/20 text-amber-400'
+              ? 'bg-gold-500/20 text-gold-400'
               : 'text-gray-400 hover:text-white'
           }`}
         >
@@ -128,7 +128,7 @@ const TransparencyPage = () => {
                 <Card key={asset} className="bg-zinc-900/50 border-amber-900/20">
                   <CardContent className="p-4 text-center">
                     <p className="text-2xl font-light text-white">{balance.toLocaleString()}</p>
-                    <p className="text-amber-400 font-medium">{asset}</p>
+                    <p className="text-gold-400 font-medium">{asset}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -139,7 +139,7 @@ const TransparencyPage = () => {
           <Card className="bg-zinc-900/50 border-amber-900/20">
             <CardHeader>
               <CardTitle className="text-white font-light flex items-center gap-2">
-                <Wallet size={20} className="text-amber-400" />
+                <Wallet size={20} className="text-gold-400" />
                 Public Wallet Addresses
               </CardTitle>
             </CardHeader>
@@ -152,8 +152,8 @@ const TransparencyPage = () => {
                       className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-zinc-800/50 rounded-lg"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                          <span className="text-amber-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+                        <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                          <span className="text-gold-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
@@ -172,7 +172,7 @@ const TransparencyPage = () => {
                         </code>
                         <button
                           onClick={() => copyAddress(wallet.address)}
-                          className="p-2 text-gray-400 hover:text-amber-400 transition-colors"
+                          className="p-2 text-gray-400 hover:text-gold-400 transition-colors"
                         >
                           <Copy size={16} />
                         </button>
@@ -180,7 +180,7 @@ const TransparencyPage = () => {
                           href={`https://blockchain.info/address/${wallet.address}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gray-400 hover:text-amber-400 transition-colors"
+                          className="p-2 text-gray-400 hover:text-gold-400 transition-colors"
                         >
                           <ExternalLink size={16} />
                         </a>
@@ -237,7 +237,7 @@ const TransparencyPage = () => {
                           ? 'bg-green-900/30 text-green-400'
                           : report.type === 'proof_of_reserves'
                           ? 'bg-blue-900/30 text-blue-400'
-                          : 'bg-amber-900/30 text-amber-400'
+                          : 'bg-amber-900/30 text-gold-400'
                       }`}>
                         {report.type?.replace('_', ' ')}
                       </Badge>
@@ -246,7 +246,7 @@ const TransparencyPage = () => {
                           href={report.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-amber-400 hover:text-amber-300 bg-amber-600/20 rounded-lg"
+                          className="p-2 text-gold-400 hover:text-amber-300 bg-gold-500/20 rounded-lg"
                         >
                           <ExternalLink size={18} />
                         </a>

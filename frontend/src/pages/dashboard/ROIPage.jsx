@@ -46,7 +46,7 @@ const ROIPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -98,12 +98,12 @@ const ROIPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-400">Realized Returns</p>
-                <p className="text-2xl font-light text-amber-400 mt-1">
+                <p className="text-2xl font-light text-gold-400 mt-1">
                   {formatCurrency(roiData?.total_actual_returns)}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                <TrendingUp className="text-amber-400" size={24} />
+              <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                <TrendingUp className="text-gold-400" size={24} />
               </div>
             </div>
           </CardContent>
@@ -167,11 +167,11 @@ const ROIPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-400">Realized ROI</span>
-                  <span className="text-amber-400">{roiData?.realized_roi_percentage?.toFixed(2)}%</span>
+                  <span className="text-gold-400">{roiData?.realized_roi_percentage?.toFixed(2)}%</span>
                 </div>
                 <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full"
+                    className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full"
                     style={{ width: `${Math.min(roiData?.realized_roi_percentage || 0, 100)}%` }}
                   />
                 </div>
@@ -209,7 +209,7 @@ const ROIPage = () => {
                       <td className="py-4 px-4 text-right text-green-400">
                         +{inv.expected_return?.toFixed(2)} {inv.currency}
                       </td>
-                      <td className="py-4 px-4 text-right text-amber-400">
+                      <td className="py-4 px-4 text-right text-gold-400">
                         {inv.roi_percentage?.toFixed(2)}%
                       </td>
                       <td className="py-4 px-4 text-center">

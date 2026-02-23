@@ -118,7 +118,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-amber-400 text-lg">Loading...</div>
+        <div className="text-gold-400 text-lg">Loading...</div>
       </div>
     );
   }
@@ -135,7 +135,7 @@ const ProfilePage = () => {
         <div className="flex justify-between items-center mb-8">
           <Link 
             to="/" 
-            className="flex items-center gap-2 text-gray-400 hover:text-amber-400 transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-gold-400 transition-colors"
             data-testid="back-to-home"
           >
             <ArrowLeft size={20} />
@@ -145,7 +145,7 @@ const ProfilePage = () => {
           <Button
             onClick={handleLogout}
             variant="outline"
-            className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300"
+            className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300"
             data-testid="logout-button"
           >
             <LogOut size={18} className="mr-2" />
@@ -158,8 +158,8 @@ const ProfilePage = () => {
           <CardHeader className="text-center pb-4">
             {/* Avatar */}
             <div className="flex justify-center mb-4">
-              <Avatar className="w-24 h-24 bg-gradient-to-br from-amber-600 to-amber-700">
-                <AvatarFallback className="text-2xl text-white bg-gradient-to-br from-amber-600 to-amber-700">
+              <Avatar className="w-24 h-24 bg-gradient-to-br from-gold-500 to-gold-600">
+                <AvatarFallback className="text-2xl text-white bg-gradient-to-br from-gold-500 to-gold-600">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
@@ -198,7 +198,7 @@ const ProfilePage = () => {
                     onClick={handleSave}
                     disabled={saving}
                     size="sm"
-                    className="bg-amber-600 hover:bg-amber-500 text-white"
+                    className="bg-gold-500 hover:bg-gold-400 text-white"
                     data-testid="save-profile-button"
                   >
                     <Save size={16} className="mr-1" />
@@ -210,7 +210,7 @@ const ProfilePage = () => {
                   onClick={() => setEditing(true)}
                   variant="outline"
                   size="sm"
-                  className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30"
+                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30"
                   data-testid="edit-profile-button"
                 >
                   <Edit2 size={16} className="mr-1" />
@@ -224,7 +224,7 @@ const ProfilePage = () => {
               {/* Name */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <User size={16} className="text-amber-500" />
+                  <User size={16} className="text-gold-400" />
                   {t('profile.fullName') || 'Full Name'}
                 </Label>
                 {editing ? (
@@ -232,7 +232,7 @@ const ProfilePage = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-amber-500"
+                    className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
                     data-testid="profile-name-input"
                   />
                 ) : (
@@ -243,7 +243,7 @@ const ProfilePage = () => {
               {/* Email - readonly */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Mail size={16} className="text-amber-500" />
+                  <Mail size={16} className="text-gold-400" />
                   {t('profile.email') || 'Email'}
                 </Label>
                 <p className="text-white py-2 px-3 bg-zinc-800/30 rounded-md flex items-center justify-between">
@@ -255,7 +255,7 @@ const ProfilePage = () => {
               {/* Phone */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Phone size={16} className="text-amber-500" />
+                  <Phone size={16} className="text-gold-400" />
                   {t('profile.phone') || 'Phone Number'}
                 </Label>
                 {editing ? (
@@ -264,7 +264,7 @@ const ProfilePage = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+351 912 345 678"
-                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-amber-500"
+                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                     data-testid="profile-phone-input"
                   />
                 ) : (
@@ -277,13 +277,13 @@ const ProfilePage = () => {
               {/* Country */}
               <div className="space-y-2">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Globe size={16} className="text-amber-500" />
+                  <Globe size={16} className="text-gold-400" />
                   {t('profile.country') || 'Country'}
                 </Label>
                 {editing ? (
                   <Select value={formData.country} onValueChange={handleCountryChange}>
                     <SelectTrigger 
-                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-amber-500"
+                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
                       data-testid="profile-country-select"
                     >
                       <SelectValue placeholder={t('profile.selectCountry') || 'Select your country'} />
@@ -312,7 +312,7 @@ const ProfilePage = () => {
               {/* Member since */}
               <div className="space-y-2 pt-4 border-t border-amber-900/20">
                 <Label className="text-gray-300 flex items-center gap-2">
-                  <Calendar size={16} className="text-amber-500" />
+                  <Calendar size={16} className="text-gold-400" />
                   {t('profile.memberSince') || 'Member Since'}
                 </Label>
                 <p className="text-white py-2 px-3 bg-zinc-800/30 rounded-md">

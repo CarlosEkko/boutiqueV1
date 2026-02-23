@@ -303,7 +303,7 @@ const KYCIndividual = () => {
             <Button 
               onClick={submitPersonalInfo} 
               disabled={loading}
-              className="w-full bg-amber-600 hover:bg-amber-500"
+              className="w-full bg-gold-500 hover:bg-gold-400"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
               Save & Continue
@@ -357,7 +357,7 @@ const KYCIndividual = () => {
               </div>
             </div>
             
-            <Button onClick={submitIdDocument} disabled={loading} variant="outline" className="w-full border-amber-900/30 text-amber-400">
+            <Button onClick={submitIdDocument} disabled={loading} variant="outline" className="w-full border-amber-900/30 text-gold-400">
               Save Document Info
             </Button>
 
@@ -383,7 +383,7 @@ const KYCIndividual = () => {
                   <Button 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="bg-amber-600 hover:bg-amber-500"
+                    className="bg-gold-500 hover:bg-gold-400"
                   >
                     {uploading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Upload size={18} className="mr-2" />}
                     Select File
@@ -395,7 +395,7 @@ const KYCIndividual = () => {
             {idDoc && (
               <Button 
                 onClick={() => setCurrentStep(2)}
-                className="w-full bg-amber-600 hover:bg-amber-500"
+                className="w-full bg-gold-500 hover:bg-gold-400"
               >
                 Continue
                 <ArrowRight size={18} className="ml-2" />
@@ -439,7 +439,7 @@ const KYCIndividual = () => {
                   <Button 
                     onClick={() => document.getElementById('selfie-input')?.click()}
                     disabled={uploading}
-                    className="bg-amber-600 hover:bg-amber-500"
+                    className="bg-gold-500 hover:bg-gold-400"
                   >
                     {uploading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Camera size={18} className="mr-2" />}
                     Take/Upload Selfie
@@ -451,7 +451,7 @@ const KYCIndividual = () => {
             {selfieDoc && (
               <Button 
                 onClick={() => setCurrentStep(3)}
-                className="w-full bg-amber-600 hover:bg-amber-500"
+                className="w-full bg-gold-500 hover:bg-gold-400"
               >
                 Continue
                 <ArrowRight size={18} className="ml-2" />
@@ -495,7 +495,7 @@ const KYCIndividual = () => {
                   <Button 
                     onClick={() => document.getElementById('liveness-input')?.click()}
                     disabled={uploading}
-                    className="bg-amber-600 hover:bg-amber-500"
+                    className="bg-gold-500 hover:bg-gold-400"
                   >
                     {uploading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Video size={18} className="mr-2" />}
                     Upload Video
@@ -507,7 +507,7 @@ const KYCIndividual = () => {
             {livenessDoc && (
               <Button 
                 onClick={() => setCurrentStep(4)}
-                className="w-full bg-amber-600 hover:bg-amber-500"
+                className="w-full bg-gold-500 hover:bg-gold-400"
               >
                 Continue
                 <ArrowRight size={18} className="ml-2" />
@@ -551,7 +551,7 @@ const KYCIndividual = () => {
                   <Button 
                     onClick={() => document.getElementById('address-input')?.click()}
                     disabled={uploading}
-                    className="bg-amber-600 hover:bg-amber-500"
+                    className="bg-gold-500 hover:bg-gold-400"
                   >
                     {uploading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Upload size={18} className="mr-2" />}
                     Upload Document
@@ -610,7 +610,7 @@ const KYCIndividual = () => {
               <div className="flex flex-col items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                   isCompleted ? 'bg-green-600' :
-                  isCurrent ? 'bg-amber-600' :
+                  isCurrent ? 'bg-gold-500' :
                   'bg-zinc-800'
                 }`}>
                   {isCompleted ? (
@@ -620,7 +620,7 @@ const KYCIndividual = () => {
                   )}
                 </div>
                 <span className={`text-xs mt-2 hidden md:block ${
-                  isCurrent ? 'text-amber-400' : 'text-gray-500'
+                  isCurrent ? 'text-gold-400' : 'text-gray-500'
                 }`}>
                   {step.label}
                 </span>
@@ -639,7 +639,7 @@ const KYCIndividual = () => {
       <Card className="bg-zinc-900/50 border-amber-900/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-3">
-            {React.createElement(STEPS[currentStep].icon, { size: 24, className: 'text-amber-400' })}
+            {React.createElement(STEPS[currentStep].icon, { size: 24, className: 'text-gold-400' })}
             {STEPS[currentStep].label}
           </CardTitle>
         </CardHeader>

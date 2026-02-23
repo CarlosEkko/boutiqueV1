@@ -61,7 +61,7 @@ const WalletsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="animate-spin text-amber-400" size={32} />
+        <RefreshCw className="animate-spin text-gold-400" size={32} />
       </div>
     );
   }
@@ -75,7 +75,7 @@ const WalletsPage = () => {
           <p className="text-gray-400 mt-1">Manage your cryptocurrency wallets</p>
         </div>
         <Button 
-          className="bg-amber-600 hover:bg-amber-500 text-white"
+          className="bg-gold-500 hover:bg-gold-400 text-white"
           disabled
         >
           <Plus size={18} className="mr-2" />
@@ -92,15 +92,15 @@ const WalletsPage = () => {
             return (
               <Card 
                 key={wallet.id}
-                className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-amber-600/50 transition-all cursor-pointer"
+                className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 transition-all cursor-pointer"
                 onClick={() => setSelectedWallet(wallet)}
               >
                 <CardContent className="p-6">
                   {/* Asset Header */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-600/30 to-amber-700/30 flex items-center justify-center">
-                        <span className="text-amber-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-500/30 to-gold-600/30 flex items-center justify-center">
+                        <span className="text-gold-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
                       </div>
                       <div>
                         <h3 className="text-white font-medium">{wallet.asset_name}</h3>
@@ -133,11 +133,11 @@ const WalletsPage = () => {
                             e.stopPropagation();
                             copyAddress(wallet.address);
                           }}
-                          className="p-1.5 text-gray-400 hover:text-amber-400 transition-colors"
+                          className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors"
                         >
                           <Copy size={14} />
                         </button>
-                        <button className="p-1.5 text-gray-400 hover:text-amber-400 transition-colors">
+                        <button className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors">
                           <QrCode size={14} />
                         </button>
                       </div>
@@ -152,7 +152,7 @@ const WalletsPage = () => {
                     </div>
                     <div>
                       <p className="text-gray-400">Pending</p>
-                      <p className="text-amber-400">{formatBalance(wallet.pending_balance, wallet.asset_id)}</p>
+                      <p className="text-gold-400">{formatBalance(wallet.pending_balance, wallet.asset_id)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -184,8 +184,8 @@ const WalletsPage = () => {
           >
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center">
-                  <span className="text-amber-400 font-bold">{selectedWallet.asset_id?.slice(0, 2)}</span>
+                <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+                  <span className="text-gold-400 font-bold">{selectedWallet.asset_id?.slice(0, 2)}</span>
                 </div>
                 {selectedWallet.asset_name} Wallet
               </CardTitle>
@@ -204,7 +204,7 @@ const WalletsPage = () => {
                   <p className="text-white font-mono text-sm break-all">{selectedWallet.address}</p>
                   <button
                     onClick={() => copyAddress(selectedWallet.address)}
-                    className="ml-2 p-2 text-amber-400 hover:text-amber-300"
+                    className="ml-2 p-2 text-gold-400 hover:text-amber-300"
                   >
                     <Copy size={18} />
                   </button>
@@ -215,7 +215,7 @@ const WalletsPage = () => {
                 <Button className="flex-1 bg-green-600 hover:bg-green-500" disabled>
                   Deposit
                 </Button>
-                <Button className="flex-1 bg-amber-600 hover:bg-amber-500" disabled>
+                <Button className="flex-1 bg-gold-500 hover:bg-gold-400" disabled>
                   Withdraw
                 </Button>
               </div>

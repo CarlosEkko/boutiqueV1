@@ -388,7 +388,7 @@ const KYBForm = () => {
             <Button 
               onClick={handleCompanyInfoSubmit}
               disabled={loading || !companyInfo.company_name || !companyInfo.registration_number}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-black"
+              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
               data-testid="submit-company-info"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
@@ -401,8 +401,8 @@ const KYBForm = () => {
       case 1:
         return (
           <div className="space-y-6" data-testid="company-documents-step">
-            <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.documents.requiredDocs')}</h4>
+            <div className="bg-zinc-800/50 border border-gold-400/30 rounded-lg p-4">
+              <h4 className="text-gold-400 font-medium mb-2">{t('kyc.kybForm.documents.requiredDocs')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 {t('kyc.kybForm.documents.docsList').map((doc, index) => (
                   <li key={index}>• {doc}</li>
@@ -449,7 +449,7 @@ const KYBForm = () => {
               <Button 
                 onClick={() => setCurrentStep(2)}
                 disabled={!hasUploadedDoc('certificate_of_incorporation')}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
+                className="flex-1 bg-gold-500 hover:bg-gold-600 text-black"
               >
                 {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
@@ -461,8 +461,8 @@ const KYBForm = () => {
       case 2:
         return (
           <div className="space-y-6" data-testid="representatives-step">
-            <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.representatives.title')}</h4>
+            <div className="bg-zinc-800/50 border border-gold-400/30 rounded-lg p-4">
+              <h4 className="text-gold-400 font-medium mb-2">{t('kyc.kybForm.representatives.title')}</h4>
               <p className="text-sm text-gray-400">
                 {t('kyc.kybForm.representatives.description')}
               </p>
@@ -478,7 +478,7 @@ const KYBForm = () => {
                       <p className="text-white font-medium">{rep.full_name}</p>
                       <p className="text-sm text-gray-400">{rep.role}</p>
                       {rep.is_ubo && (
-                        <span className="text-xs text-amber-400">UBO - {rep.ownership_percentage}%</span>
+                        <span className="text-xs text-gold-400">UBO - {rep.ownership_percentage}%</span>
                       )}
                     </div>
                     <Check className="text-green-400" size={20} />
@@ -541,7 +541,7 @@ const KYBForm = () => {
                     type="checkbox"
                     checked={newRep.is_ubo}
                     onChange={(e) => setNewRep({...newRep, is_ubo: e.target.checked})}
-                    className="w-4 h-4 accent-amber-500"
+                    className="w-4 h-4 accent-gold-400"
                   />
                   <span className="text-sm text-gray-400">{t('kyc.kybForm.representatives.isUbo')}</span>
                 </label>
@@ -566,7 +566,7 @@ const KYBForm = () => {
                 onClick={handleAddRepresentative}
                 disabled={loading || !newRep.full_name || !newRep.role}
                 variant="outline"
-                className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10"
+                className="w-full border-gold-400/50 text-gold-400 hover:bg-gold-400/10"
                 data-testid="add-representative-btn"
               >
                 {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : <Plus size={18} className="mr-2" />}
@@ -586,7 +586,7 @@ const KYBForm = () => {
               <Button 
                 onClick={() => setCurrentStep(3)}
                 disabled={representatives.length === 0}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
+                className="flex-1 bg-gold-500 hover:bg-gold-600 text-black"
               >
                 {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
@@ -598,8 +598,8 @@ const KYBForm = () => {
       case 3:
         return (
           <div className="space-y-6" data-testid="address-proof-step">
-            <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.addressProof.title')}</h4>
+            <div className="bg-zinc-800/50 border border-gold-400/30 rounded-lg p-4">
+              <h4 className="text-gold-400 font-medium mb-2">{t('kyc.kybForm.addressProof.title')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 {t('kyc.kybForm.addressProof.docsList').map((doc, index) => (
                   <li key={index}>• {doc}</li>
@@ -678,7 +678,7 @@ const KYBForm = () => {
                 index < currentStep 
                   ? 'bg-green-600 border-green-600 text-white' 
                   : index === currentStep
-                    ? 'bg-amber-600 border-amber-600 text-black'
+                    ? 'bg-gold-500 border-gold-500 text-black'
                     : 'bg-zinc-800 border-zinc-700 text-gray-500'
               }`}
             >
@@ -703,7 +703,7 @@ const KYBForm = () => {
           <span 
             key={step.id}
             className={`text-xs ${
-              index <= currentStep ? 'text-amber-400' : 'text-gray-500'
+              index <= currentStep ? 'text-gold-400' : 'text-gray-500'
             }`}
           >
             {step.label}
@@ -715,7 +715,7 @@ const KYBForm = () => {
       <div className="bg-zinc-900/50 border border-amber-900/20 rounded-xl p-6">
         {currentStep < STEPS.length && (
           <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-            {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-amber-400' })}
+            {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-gold-400' })}
             {STEPS[currentStep].label}
           </h3>
         )}
@@ -784,8 +784,8 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${
           dragActive 
-            ? 'border-amber-500 bg-amber-500/10' 
-            : 'border-zinc-700 hover:border-amber-500/50'
+            ? 'border-gold-400 bg-gold-400/10' 
+            : 'border-zinc-700 hover:border-gold-400/50'
         }`}
         data-testid={testId}
       >
@@ -811,7 +811,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
       {selectedFile && (
         <div className="flex items-center justify-between bg-zinc-800 rounded-lg p-3">
           <div className="flex items-center gap-3">
-            <FileText className="text-amber-400" size={20} />
+            <FileText className="text-gold-400" size={20} />
             <div>
               <p className="text-white text-sm">{selectedFile.name}</p>
               <p className="text-xs text-gray-400">
@@ -832,7 +832,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
               onClick={handleUpload}
               disabled={uploading}
               size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-black"
+              className="bg-gold-500 hover:bg-gold-600 text-black"
             >
               {uploading ? <Loader2 className="animate-spin" size={16} /> : (t ? t('kyc.form.upload.upload') : 'Carregar')}
             </Button>

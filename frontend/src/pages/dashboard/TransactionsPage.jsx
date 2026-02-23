@@ -76,7 +76,7 @@ const TransactionsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -91,7 +91,7 @@ const TransactionsPage = () => {
         </div>
         <Button 
           variant="outline" 
-          className="border-amber-900/30 text-amber-400"
+          className="border-amber-900/30 text-gold-400"
           disabled
         >
           <Download size={18} className="mr-2" />

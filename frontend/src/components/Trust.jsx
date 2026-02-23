@@ -119,7 +119,7 @@ const Trust = () => {
               ref={(el) => (statsRef.current[index] = el)}
               className="text-center"
             >
-              <div className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mb-2">
                 {stat.value}
               </div>
               <div className="text-sm text-gray-400 tracking-wider uppercase">
@@ -137,7 +137,7 @@ const Trust = () => {
               stagger={0.06}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
-            <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('trust.titleHighlight')} 
                 stagger={0.06}
@@ -165,16 +165,16 @@ const Trust = () => {
               <Card
                 key={index}
                 ref={(el) => (cardsRef.current[index] = el)}
-                className="group bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-amber-600/50 overflow-hidden transition-all duration-500 hover:scale-105"
+                className="group bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-105"
               >
                 <CardContent className="p-6">
                   {/* Icon */}
-                  <div className="mb-4 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                    <IconComponent className="text-amber-400" size={28} />
+                  <div className="mb-4 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                    <IconComponent className="text-gold-400" size={28} />
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                  <h3 className="text-xl font-light text-white mb-3 group-hover:text-gold-400 transition-colors duration-300">
                     {factor.title}
                   </h3>
 

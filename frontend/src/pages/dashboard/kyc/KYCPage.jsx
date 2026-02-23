@@ -60,7 +60,7 @@ const KYCPage = () => {
       case 'approved':
         return <Badge className="bg-green-900/30 text-green-400"><CheckCircle size={14} className="mr-1" />Approved</Badge>;
       case 'pending_review':
-        return <Badge className="bg-amber-900/30 text-amber-400"><Clock size={14} className="mr-1" />Pending Review</Badge>;
+        return <Badge className="bg-amber-900/30 text-gold-400"><Clock size={14} className="mr-1" />Pending Review</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-900/30 text-blue-400"><Clock size={14} className="mr-1" />In Progress</Badge>;
       case 'rejected':
@@ -88,7 +88,7 @@ const KYCPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -102,11 +102,11 @@ const KYCPage = () => {
       </div>
 
       {/* Current Status */}
-      <Card className="bg-gradient-to-r from-amber-900/20 to-amber-600/10 border-amber-600/30">
+      <Card className="bg-gradient-to-r from-amber-900/20 to-gold-500/10 border-gold-500/30">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-amber-600/20 flex items-center justify-center">
-              <Shield className="text-amber-400" size={28} />
+            <div className="w-14 h-14 rounded-full bg-gold-500/20 flex items-center justify-center">
+              <Shield className="text-gold-400" size={28} />
             </div>
             <div className="flex-1">
               <h3 className="text-xl text-white">Verification Status</h3>
@@ -128,7 +128,7 @@ const KYCPage = () => {
       {/* Verification Options */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC - Individual */}
-        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-amber-600/50 transition-all">
+        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-gold-500/50 transition-all">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -149,7 +149,7 @@ const KYCPage = () => {
               {kycSteps.map((step, index) => (
                 <div key={index} className="flex items-center gap-3 text-sm">
                   <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                    <step.icon className="text-amber-400" size={16} />
+                    <step.icon className="text-gold-400" size={16} />
                   </div>
                   <div>
                     <p className="text-white">{step.label}</p>
@@ -166,14 +166,14 @@ const KYCPage = () => {
                 Verified
               </Button>
             ) : status?.kyc_status === 'pending_review' ? (
-              <Button disabled className="w-full bg-amber-600/20 text-amber-400">
+              <Button disabled className="w-full bg-gold-500/20 text-gold-400">
                 <Clock size={18} className="mr-2" />
                 Under Review
               </Button>
             ) : status?.has_kyc ? (
               <Button 
                 onClick={() => navigate('/dashboard/kyc/individual')}
-                className="w-full bg-amber-600 hover:bg-amber-500"
+                className="w-full bg-gold-500 hover:bg-gold-400"
               >
                 Continue Verification
                 <ArrowRight size={18} className="ml-2" />
@@ -181,7 +181,7 @@ const KYCPage = () => {
             ) : (
               <Button 
                 onClick={() => startVerification('kyc')}
-                className="w-full bg-amber-600 hover:bg-amber-500"
+                className="w-full bg-gold-500 hover:bg-gold-400"
               >
                 Start KYC
                 <ArrowRight size={18} className="ml-2" />
@@ -191,7 +191,7 @@ const KYCPage = () => {
         </Card>
 
         {/* KYB - Business */}
-        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-amber-600/50 transition-all">
+        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-gold-500/50 transition-all">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -229,7 +229,7 @@ const KYCPage = () => {
                 Verified
               </Button>
             ) : status?.kyb_status === 'pending_review' ? (
-              <Button disabled className="w-full bg-amber-600/20 text-amber-400">
+              <Button disabled className="w-full bg-gold-500/20 text-gold-400">
                 <Clock size={18} className="mr-2" />
                 Under Review
               </Button>

@@ -40,7 +40,7 @@ const AdminOverview = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -56,7 +56,7 @@ const AdminOverview = () => {
           </div>
           <div className={`w-14 h-14 rounded-full bg-${color?.replace('text-', '')}/20 flex items-center justify-center`} 
                style={{ backgroundColor: color ? `${color.replace('text-', '')}20` : 'rgba(217, 119, 6, 0.2)' }}>
-            <Icon className={color || 'text-amber-400'} size={28} />
+            <Icon className={color || 'text-gold-400'} size={28} />
           </div>
         </div>
       </CardContent>
@@ -73,7 +73,7 @@ const AdminOverview = () => {
 
       {/* User Stats */}
       <div>
-        <h2 className="text-lg text-amber-400 mb-4 flex items-center gap-2">
+        <h2 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
           <Users size={20} /> Users
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,7 +93,7 @@ const AdminOverview = () => {
             title="Pending Approval" 
             value={stats?.users?.pending || 0}
             icon={Clock}
-            color="text-amber-400"
+            color="text-gold-400"
           />
           <StatCard 
             title="Admins" 
@@ -106,7 +106,7 @@ const AdminOverview = () => {
 
       {/* KYC Stats */}
       <div>
-        <h2 className="text-lg text-amber-400 mb-4 flex items-center gap-2">
+        <h2 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
           <Shield size={20} /> KYC Status
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -120,14 +120,14 @@ const AdminOverview = () => {
             title="KYC Pending" 
             value={stats?.kyc?.pending || 0}
             icon={Clock}
-            color="text-amber-400"
+            color="text-gold-400"
           />
         </div>
       </div>
 
       {/* Investment Stats */}
       <div>
-        <h2 className="text-lg text-amber-400 mb-4 flex items-center gap-2">
+        <h2 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
           <TrendingUp size={20} /> Investments
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -147,7 +147,7 @@ const AdminOverview = () => {
             title="Total Investments" 
             value={stats?.investments?.total_investments || 0}
             icon={DollarSign}
-            color="text-amber-400"
+            color="text-gold-400"
           />
           <StatCard 
             title="Total Invested" 
@@ -160,7 +160,7 @@ const AdminOverview = () => {
 
       {/* Other Stats */}
       <div>
-        <h2 className="text-lg text-amber-400 mb-4 flex items-center gap-2">
+        <h2 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
           <Wallet size={20} /> Platform
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -174,7 +174,7 @@ const AdminOverview = () => {
             title="Total Transactions" 
             value={stats?.transactions?.total || 0}
             icon={TrendingUp}
-            color="text-amber-400"
+            color="text-gold-400"
           />
           <StatCard 
             title="Active Invite Codes" 

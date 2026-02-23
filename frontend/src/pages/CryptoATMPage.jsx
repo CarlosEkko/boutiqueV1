@@ -486,7 +486,7 @@ const CryptoATMPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black" />
 
         <div className="relative z-10 container mx-auto px-6 text-center hero-content">
-          <Badge className="hero-badge mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
+          <Badge className="hero-badge mb-4 bg-amber-950/50 text-amber-200 border-gold-600/30 px-4 py-1">
             Crypto ATM Network
           </Badge>
           
@@ -494,7 +494,7 @@ const CryptoATMPage = () => {
             {atmHeroData.title}
           </h1>
           
-          <p className="hero-text text-xl md:text-2xl bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mb-6 font-light">
+          <p className="hero-text text-xl md:text-2xl bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mb-6 font-light">
             {atmHeroData.subtitle}
           </p>
           
@@ -505,7 +505,7 @@ const CryptoATMPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
               size="lg"
-              className="hero-button bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white px-8 py-6 text-lg group"
+              className="hero-button bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white px-8 py-6 text-lg group"
             >
               Find Nearest ATM
               <MapPin className="ml-2 group-hover:scale-110 transition-transform" size={20} />
@@ -514,7 +514,7 @@ const CryptoATMPage = () => {
               size="lg"
               variant="outline"
               onClick={() => navigate('/#contact')}
-              className="hero-button border-2 border-amber-600/50 text-amber-200 hover:bg-amber-950/30 backdrop-blur-sm px-8 py-6 text-lg"
+              className="hero-button border-2 border-gold-500/50 text-amber-200 hover:bg-amber-950/30 backdrop-blur-sm px-8 py-6 text-lg"
             >
               Request VIP Access
             </Button>
@@ -528,7 +528,7 @@ const CryptoATMPage = () => {
                 ref={(el) => (statsRef.current[index] = el)}
                 className="bg-zinc-900/50 backdrop-blur-sm border border-amber-900/20 rounded-lg p-4"
               >
-                <div className="stat-number text-3xl font-light text-amber-400 mb-1">{stat.value}</div>
+                <div className="stat-number text-3xl font-light text-gold-400 mb-1">{stat.value}</div>
                 <div className="text-sm text-gray-400">{stat.label}</div>
               </div>
             ))}
@@ -542,7 +542,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               Exclusive Features
-              <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
                 Premium Experience
               </span>
             </h2>
@@ -567,8 +567,8 @@ const CryptoATMPage = () => {
                     />
                   </div>
                   <div className="md:w-1/2 feature-content">
-                    <div className="feature-icon inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 mb-6">
-                      <IconComponent className="text-amber-400" size={32} />
+                    <div className="feature-icon inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 mb-6">
+                      <IconComponent className="text-gold-400" size={32} />
                     </div>
                     <h3 className="text-3xl font-light text-white mb-4">{feature.title}</h3>
                     <p className="text-gray-400 text-lg leading-relaxed">{feature.description}</p>
@@ -586,7 +586,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               How It Works
-              <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
                 Simple & Secure
               </span>
             </h2>
@@ -597,10 +597,10 @@ const CryptoATMPage = () => {
               <Card
                 key={item.step}
                 ref={(el) => (stepsRef.current[index] = el)}
-                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-amber-600/50 transition-all duration-500"
+                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-gold-500/50 transition-all duration-500"
               >
                 <CardContent className="p-6 text-center">
-                  <div className="step-number w-12 h-12 rounded-full bg-amber-600/90 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">
+                  <div className="step-number w-12 h-12 rounded-full bg-gold-500/90 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">
                     {item.step}
                   </div>
                   <h4 className="text-xl font-light text-white mb-3">{item.title}</h4>
@@ -618,7 +618,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               Global Network
-              <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
                 Premium Locations
               </span>
             </h2>
@@ -632,12 +632,12 @@ const CryptoATMPage = () => {
                 className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20"
               >
                 <CardContent className="p-6">
-                  <h3 className="text-2xl font-light text-amber-400 mb-6">{location.region}</h3>
+                  <h3 className="text-2xl font-light text-gold-400 mb-6">{location.region}</h3>
                   <div className="space-y-4">
                     {location.cities.map((city) => (
                       <div key={city.name} className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <MapPin size={16} className="text-amber-400" />
+                          <MapPin size={16} className="text-gold-400" />
                           <div>
                             <div className="text-white font-light">{city.name}</div>
                             <div className="text-gray-500 text-xs">{city.country}</div>
@@ -647,7 +647,7 @@ const CryptoATMPage = () => {
                           <Badge className="bg-amber-950/50 text-amber-200 text-xs">
                             {city.count} ATMs
                           </Badge>
-                          {city.vip && <Crown size={14} className="text-amber-400" />}
+                          {city.vip && <Crown size={14} className="text-gold-400" />}
                         </div>
                       </div>
                     ))}
@@ -675,11 +675,11 @@ const CryptoATMPage = () => {
                 <Card
                   key={benefit.title}
                   ref={(el) => (benefitsRef.current[index] = el)}
-                  className="bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-amber-600/50 transition-all duration-500"
+                  className="bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-gold-500/50 transition-all duration-500"
                 >
                   <CardContent className="p-6">
-                    <div className="benefit-icon inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 mb-4">
-                      <IconComponent className="text-amber-400" size={24} />
+                    <div className="benefit-icon inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 mb-4">
+                      <IconComponent className="text-gold-400" size={24} />
                     </div>
                     <h4 className="text-lg font-light text-white mb-2">{benefit.title}</h4>
                     <p className="text-gray-400 text-sm">{benefit.description}</p>
@@ -697,7 +697,7 @@ const CryptoATMPage = () => {
           <div className="max-w-3xl mx-auto cta-content">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-6">
               Ready to Experience
-              <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
                 Premium Crypto Access?
               </span>
             </h2>
@@ -707,7 +707,7 @@ const CryptoATMPage = () => {
             <Button
               size="lg"
               onClick={() => navigate('/#contact')}
-              className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white px-10 py-6 text-lg group"
+              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white px-10 py-6 text-lg group"
             >
               Apply for VIP Access
               <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />

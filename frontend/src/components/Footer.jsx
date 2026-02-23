@@ -20,10 +20,10 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <a href="#" className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 mb-4 group`}>
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+              <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
                 <span className="text-black font-bold text-xl">K</span>
               </div>
-              <span className="text-2xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
+              <span className="text-2xl font-light bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent">
                 KBEX.io
               </span>
             </a>
@@ -32,15 +32,15 @@ const Footer = () => {
             </p>
             <div className="space-y-2">
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
-                <Mail size={16} className="text-amber-400" />
+                <Mail size={16} className="text-gold-400" />
                 <span>contact@kbex.io</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
-                <Phone size={16} className="text-amber-400" />
+                <Phone size={16} className="text-gold-400" />
                 <span>+41 (0) 800 KBEX</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
-                <MapPin size={16} className="text-amber-400" />
+                <MapPin size={16} className="text-gold-400" />
                 <span>Zurich, Switzerland</span>
               </div>
             </div>
@@ -55,7 +55,7 @@ const Footer = () => {
                   <li key={link}>
                     <a
                       href="#"
-                      className="text-gray-400 text-sm hover:text-amber-400 transition-colors duration-300"
+                      className="text-gray-400 text-sm hover:text-gold-400 transition-colors duration-300"
                     >
                       {link}
                     </a>

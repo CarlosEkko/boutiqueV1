@@ -89,7 +89,7 @@ const Products = () => {
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-16">
-          <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
+          <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-gold-600/30 px-4 py-1">
             <GlowText 
               text={t('products.badge')} 
               stagger={0.05}
@@ -104,7 +104,7 @@ const Products = () => {
               delay={0.2}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
-            <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('products.titleHighlight')} 
                 stagger={0.06}
@@ -130,12 +130,12 @@ const Products = () => {
             <Card
               key={product.id}
               ref={(el) => (cardsRef.current[index] = el)}
-              className="group relative bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-amber-600/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-amber-900/20"
+              className="group relative bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-amber-900/20"
             >
               <CardContent className="p-0">
                 {/* Product Number Badge */}
                 <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-20`}>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center text-white font-semibold shadow-lg shadow-amber-900/50">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-amber-900/50">
                     {String(index + 1).padStart(2, '0')}
                   </div>
                 </div>
@@ -151,7 +151,7 @@ const Products = () => {
 
                 {/* Content */}
                 <div className="p-6 relative">
-                  <h3 className="text-2xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                  <h3 className="text-2xl font-light text-white mb-3 group-hover:text-gold-400 transition-colors duration-300">
                     {product.title}
                   </h3>
                   <p className="text-gray-400 mb-4 leading-relaxed">
@@ -162,14 +162,14 @@ const Products = () => {
                   <ul className="space-y-2">
                     {product.features.map((feature, idx) => (
                       <li key={idx} className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-sm text-gray-300`}>
-                        <Check size={16} className="text-amber-500 flex-shrink-0" />
+                        <Check size={16} className="text-gold-400 flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
 
                   {/* Hover effect line */}
-                  <div className="mt-6 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="mt-6 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               </CardContent>
             </Card>

@@ -80,7 +80,7 @@ const AuthPage = () => {
       {/* Back to home link */}
       <Link 
         to="/" 
-        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-amber-400 transition-colors"
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-400 hover:text-gold-400 transition-colors"
         data-testid="back-to-home"
       >
         <ArrowLeft size={20} />
@@ -92,7 +92,7 @@ const AuthPage = () => {
           {/* Logo */}
           <div className="mb-4 flex justify-center">
             <span className="text-2xl font-light tracking-wider text-white">
-              KB<span className="text-amber-400">EX</span>
+              KB<span className="text-gold-400">EX</span>
             </span>
           </div>
           
@@ -114,7 +114,7 @@ const AuthPage = () => {
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-gray-300 flex items-center gap-2">
-                  <User size={16} className="text-amber-500" />
+                  <User size={16} className="text-gold-400" />
                   {t('auth.fullName') || 'Full Name'}
                 </Label>
                 <Input
@@ -125,7 +125,7 @@ const AuthPage = () => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="João Silva"
-                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-amber-500"
+                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                   data-testid="register-name-input"
                 />
               </div>
@@ -134,7 +134,7 @@ const AuthPage = () => {
             {/* Email field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300 flex items-center gap-2">
-                <Mail size={16} className="text-amber-500" />
+                <Mail size={16} className="text-gold-400" />
                 {t('auth.email') || 'Email'}
               </Label>
               <Input
@@ -145,7 +145,7 @@ const AuthPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="joao@exemplo.com"
-                className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-amber-500"
+                className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                 data-testid="auth-email-input"
               />
             </div>
@@ -153,7 +153,7 @@ const AuthPage = () => {
             {/* Password field */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-300 flex items-center gap-2">
-                <Lock size={16} className="text-amber-500" />
+                <Lock size={16} className="text-gold-400" />
                 {t('auth.password') || 'Password'}
               </Label>
               <div className="relative">
@@ -165,13 +165,13 @@ const AuthPage = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-amber-500 pr-10"
+                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400 pr-10"
                   data-testid="auth-password-input"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-400 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold-400 transition-colors"
                   data-testid="toggle-password-visibility"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -184,7 +184,7 @@ const AuthPage = () => {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-gray-300 flex items-center gap-2">
-                    <Phone size={16} className="text-amber-500" />
+                    <Phone size={16} className="text-gold-400" />
                     {t('auth.phone') || 'Phone Number'}
                   </Label>
                   <Input
@@ -194,19 +194,19 @@ const AuthPage = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+351 912 345 678"
-                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-amber-500"
+                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                     data-testid="register-phone-input"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="country" className="text-gray-300 flex items-center gap-2">
-                    <Globe size={16} className="text-amber-500" />
+                    <Globe size={16} className="text-gold-400" />
                     {t('auth.country') || 'Country'}
                   </Label>
                   <Select value={formData.country} onValueChange={handleCountryChange}>
                     <SelectTrigger 
-                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-amber-500"
+                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
                       data-testid="register-country-select"
                     >
                       <SelectValue placeholder={t('auth.selectCountry') || 'Select your country'} />
@@ -231,7 +231,7 @@ const AuthPage = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-medium py-5 mt-2"
+              className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white font-medium py-5 mt-2"
               data-testid="auth-submit-button"
             >
               {loading 
@@ -251,7 +251,7 @@ const AuthPage = () => {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-amber-400 hover:text-amber-300 transition-colors font-medium"
+                className="ml-2 text-gold-400 hover:text-amber-300 transition-colors font-medium"
                 data-testid="toggle-auth-mode"
               >
                 {isLogin 

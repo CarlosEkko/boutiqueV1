@@ -129,7 +129,7 @@ const AdminUsers = () => {
   const getKYCBadge = (status) => {
     switch (status) {
       case 'approved': return <Badge className="bg-green-900/30 text-green-400">Approved</Badge>;
-      case 'pending': return <Badge className="bg-amber-900/30 text-amber-400">Pending</Badge>;
+      case 'pending': return <Badge className="bg-amber-900/30 text-gold-400">Pending</Badge>;
       case 'rejected': return <Badge className="bg-red-900/30 text-red-400">Rejected</Badge>;
       default: return <Badge className="bg-gray-900/30 text-gray-400">Not Started</Badge>;
     }
@@ -138,7 +138,7 @@ const AdminUsers = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -171,7 +171,7 @@ const AdminUsers = () => {
               onClick={() => setFilter(f)}
               variant={filter === f ? 'default' : 'outline'}
               className={filter === f 
-                ? 'bg-amber-600 hover:bg-amber-500' 
+                ? 'bg-gold-500 hover:bg-gold-400' 
                 : 'border-amber-900/30 text-gray-400 hover:text-white'
               }
             >
@@ -193,8 +193,8 @@ const AdminUsers = () => {
                   onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-amber-600/20 flex items-center justify-center">
-                      <span className="text-amber-400 font-bold">
+                    <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                      <span className="text-gold-400 font-bold">
                         {user.name?.charAt(0)?.toUpperCase() || '?'}
                       </span>
                     </div>
@@ -202,7 +202,7 @@ const AdminUsers = () => {
                       <div className="flex items-center gap-2">
                         <p className="text-white font-medium">{user.name}</p>
                         {user.is_admin && (
-                          <Crown size={14} className="text-amber-400" />
+                          <Crown size={14} className="text-gold-400" />
                         )}
                       </div>
                       <p className="text-sm text-gray-400">{user.email}</p>
@@ -215,7 +215,7 @@ const AdminUsers = () => {
                       {user.is_approved ? (
                         <Badge className="bg-green-900/30 text-green-400">Approved</Badge>
                       ) : (
-                        <Badge className="bg-amber-900/30 text-amber-400">Pending</Badge>
+                        <Badge className="bg-amber-900/30 text-gold-400">Pending</Badge>
                       )}
                       {getKYCBadge(user.kyc_status)}
                     </div>
@@ -286,7 +286,7 @@ const AdminUsers = () => {
                           size="sm"
                           variant={user.kyc_status === status ? 'default' : 'outline'}
                           className={user.kyc_status === status 
-                            ? 'bg-amber-600 hover:bg-amber-500' 
+                            ? 'bg-gold-500 hover:bg-gold-400' 
                             : 'border-amber-900/30 text-gray-400 hover:text-white text-xs'
                           }
                         >

@@ -297,7 +297,7 @@ const KYCForm = () => {
             <Button 
               onClick={handlePersonalInfoSubmit}
               disabled={loading || !personalInfo.full_name || !personalInfo.date_of_birth}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-black"
+              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
               data-testid="submit-personal-info"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
@@ -396,7 +396,7 @@ const KYCForm = () => {
               <Button 
                 onClick={() => setCurrentStep(2)}
                 disabled={!hasUploadedDoc(idDocument.document_type)}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
+                className="flex-1 bg-gold-500 hover:bg-gold-600 text-black"
               >
                 {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
@@ -408,8 +408,8 @@ const KYCForm = () => {
       case 2:
         return (
           <div className="space-y-6" data-testid="selfie-step">
-            <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.form.selfie.title')}</h4>
+            <div className="bg-zinc-800/50 border border-gold-400/30 rounded-lg p-4">
+              <h4 className="text-gold-400 font-medium mb-2">{t('kyc.form.selfie.title')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 {t('kyc.form.selfie.instructions').map((instruction, index) => (
                   <li key={index}>• {instruction}</li>
@@ -438,7 +438,7 @@ const KYCForm = () => {
               <Button 
                 onClick={() => setCurrentStep(3)}
                 disabled={!hasUploadedDoc('selfie_with_id')}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
+                className="flex-1 bg-gold-500 hover:bg-gold-600 text-black"
               >
                 {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
@@ -450,8 +450,8 @@ const KYCForm = () => {
       case 3:
         return (
           <div className="space-y-6" data-testid="address-proof-step">
-            <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.form.address.acceptedDocs')}</h4>
+            <div className="bg-zinc-800/50 border border-gold-400/30 rounded-lg p-4">
+              <h4 className="text-gold-400 font-medium mb-2">{t('kyc.form.address.acceptedDocs')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
                 {t('kyc.form.address.docsList').map((doc, index) => (
                   <li key={index}>• {doc}</li>
@@ -521,7 +521,7 @@ const KYCForm = () => {
                 index < currentStep 
                   ? 'bg-green-600 border-green-600 text-white' 
                   : index === currentStep
-                    ? 'bg-amber-600 border-amber-600 text-black'
+                    ? 'bg-gold-500 border-gold-500 text-black'
                     : 'bg-zinc-800 border-zinc-700 text-gray-500'
               }`}
             >
@@ -546,7 +546,7 @@ const KYCForm = () => {
           <span 
             key={step.id}
             className={`text-xs ${
-              index <= currentStep ? 'text-amber-400' : 'text-gray-500'
+              index <= currentStep ? 'text-gold-400' : 'text-gray-500'
             }`}
           >
             {step.label}
@@ -558,7 +558,7 @@ const KYCForm = () => {
       <div className="bg-zinc-900/50 border border-amber-900/20 rounded-xl p-6">
         {currentStep < STEPS.length && (
           <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-            {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-amber-400' })}
+            {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-gold-400' })}
             {STEPS[currentStep].label}
           </h3>
         )}
@@ -627,8 +627,8 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer ${
           dragActive 
-            ? 'border-amber-500 bg-amber-500/10' 
-            : 'border-zinc-700 hover:border-amber-500/50'
+            ? 'border-gold-400 bg-gold-400/10' 
+            : 'border-zinc-700 hover:border-gold-400/50'
         }`}
         data-testid={testId}
       >
@@ -654,7 +654,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
       {selectedFile && (
         <div className="flex items-center justify-between bg-zinc-800 rounded-lg p-3">
           <div className="flex items-center gap-3">
-            <FileText className="text-amber-400" size={20} />
+            <FileText className="text-gold-400" size={20} />
             <div>
               <p className="text-white text-sm">{selectedFile.name}</p>
               <p className="text-xs text-gray-400">
@@ -675,7 +675,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
               onClick={handleUpload}
               disabled={uploading}
               size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-black"
+              className="bg-gold-500 hover:bg-gold-600 text-black"
             >
               {uploading ? <Loader2 className="animate-spin" size={16} /> : (t ? t('kyc.form.upload.upload') : 'Upload')}
             </Button>

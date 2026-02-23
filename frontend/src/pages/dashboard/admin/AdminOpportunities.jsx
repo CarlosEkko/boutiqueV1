@@ -98,7 +98,7 @@ const AdminOpportunities = () => {
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case 'low': return 'bg-green-900/30 text-green-400';
-      case 'medium': return 'bg-amber-900/30 text-amber-400';
+      case 'medium': return 'bg-amber-900/30 text-gold-400';
       case 'high': return 'bg-red-900/30 text-red-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
@@ -117,7 +117,7 @@ const AdminOpportunities = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">Loading...</div>
+        <div className="text-gold-400">Loading...</div>
       </div>
     );
   }
@@ -132,7 +132,7 @@ const AdminOpportunities = () => {
         </div>
         <Button 
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-amber-600 hover:bg-amber-500"
+          className="bg-gold-500 hover:bg-gold-400"
         >
           <Plus size={18} className="mr-2" />
           {showCreateForm ? 'Cancel' : 'Create Opportunity'}
@@ -267,7 +267,7 @@ const AdminOpportunities = () => {
               </div>
 
               <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-500">
+                <Button type="submit" className="w-full bg-gold-500 hover:bg-gold-400">
                   Create Opportunity
                 </Button>
               </div>
@@ -305,7 +305,7 @@ const AdminOpportunities = () => {
                       <p className="text-xs text-gray-400">ROI</p>
                     </div>
                     <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <Clock className="mx-auto text-amber-400 mb-1" size={20} />
+                      <Clock className="mx-auto text-gold-400 mb-1" size={20} />
                       <p className="text-xl text-white">{opp.duration_days}</p>
                       <p className="text-xs text-gray-400">Days</p>
                     </div>
@@ -324,7 +324,7 @@ const AdminOpportunities = () => {
                     </div>
                     <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full"
+                        className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -343,7 +343,7 @@ const AdminOpportunities = () => {
                         size="sm"
                         variant={opp.status === status ? 'default' : 'outline'}
                         className={opp.status === status 
-                          ? 'bg-amber-600 hover:bg-amber-500 text-xs' 
+                          ? 'bg-gold-500 hover:bg-gold-400 text-xs' 
                           : 'border-amber-900/30 text-gray-400 hover:text-white text-xs'
                         }
                       >
