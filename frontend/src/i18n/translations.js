@@ -11,7 +11,56 @@ const translations = {
       whyUs: 'Why Us',
       regions: 'Regions',
       contact: 'Contact',
-      requestAccess: 'Request Access'
+      requestAccess: 'Request Access',
+      login: 'Login',
+      profile: 'Profile'
+    },
+    
+    // Auth
+    auth: {
+      welcomeBack: 'Welcome Back',
+      createAccount: 'Create Account',
+      loginDescription: 'Sign in to access your account',
+      registerDescription: 'Join our exclusive platform',
+      fullName: 'Full Name',
+      email: 'Email',
+      password: 'Password',
+      phone: 'Phone Number',
+      country: 'Country',
+      selectCountry: 'Select your country',
+      signIn: 'Sign In',
+      signUp: 'Sign Up',
+      processing: 'Processing...',
+      noAccount: "Don't have an account?",
+      haveAccount: 'Already have an account?',
+      backToHome: 'Back to Home',
+      loginSuccess: 'Login successful!',
+      registerSuccess: 'Account created successfully!',
+      logoutSuccess: 'Logged out successfully!',
+      logout: 'Logout'
+    },
+    
+    // Profile
+    profile: {
+      backToHome: 'Back to Home',
+      edit: 'Edit Profile',
+      fullName: 'Full Name',
+      email: 'Email',
+      phone: 'Phone Number',
+      country: 'Country',
+      selectCountry: 'Select your country',
+      memberSince: 'Member Since',
+      verified: 'Verified Member',
+      notProvided: 'Not provided',
+      cannotChange: 'Cannot be changed',
+      updateSuccess: 'Profile updated successfully!'
+    },
+    
+    // Common
+    common: {
+      save: 'Save',
+      saving: 'Saving...',
+      cancel: 'Cancel'
     },
     
     // Hero Section
