@@ -19,7 +19,7 @@ const Regions = () => {
       <div className="container mx-auto px-6">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <Badge className="mb-4 bg-amber-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
+          <Badge className="mb-4 bg-gold-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
             <GlowText 
               text={t('regions.badge')} 
               stagger={0.05}

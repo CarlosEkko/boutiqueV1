@@ -51,7 +51,7 @@ const ContactCTA = () => {
             <CardContent className="p-0">
               <div className={`grid md:grid-cols-5 gap-0 ${isRTL ? 'md:grid-flow-dense' : ''}`}>
                 {/* Left side - CTA Text */}
-                <div className={`md:col-span-2 bg-gradient-to-br from-amber-950/50 to-gold-800/30 p-8 md:p-10 flex flex-col justify-center ${isRTL ? 'border-l md:col-start-4' : 'border-r'} border-gold-700/20`}>
+                <div className={`md:col-span-2 bg-gradient-to-br from-gold-950/50 to-gold-800/30 p-8 md:p-10 flex flex-col justify-center ${isRTL ? 'border-l md:col-start-4' : 'border-r'} border-gold-700/20`}>
                   <div className="mb-6">
                     <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-4 py-2 rounded-full bg-gold-500/20 border border-gold-500/30 mb-4`}>
                       <div className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />

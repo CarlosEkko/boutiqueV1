@@ -222,7 +222,7 @@ const Hero = () => {
       <div ref={finalContentRef} className="relative z-30 container mx-auto px-6 text-center opacity-0">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-gold-600/30">
+          <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-gold-950/30 backdrop-blur-sm border border-gold-600/30">
             <div className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
             <span className="text-gold-200 text-sm tracking-wider font-medium">
               EXCLUSIVE ACCESS • INSTITUTIONAL GRADE
@@ -254,7 +254,7 @@ const Hero = () => {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-gold-500/50 text-gold-200 hover:bg-amber-950/30 hover:border-gold-400 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
+              className="border-2 border-gold-500/50 text-gold-200 hover:bg-gold-950/30 hover:border-gold-400 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
             >
               {heroData.cta.secondary}
             </Button>

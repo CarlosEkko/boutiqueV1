@@ -486,7 +486,7 @@ const CryptoATMPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black" />
 
         <div className="relative z-10 container mx-auto px-6 text-center hero-content">
-          <Badge className="hero-badge mb-4 bg-amber-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
+          <Badge className="hero-badge mb-4 bg-gold-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
             Crypto ATM Network
           </Badge>
           
@@ -514,7 +514,7 @@ const CryptoATMPage = () => {
               size="lg"
               variant="outline"
               onClick={() => navigate('/#contact')}
-              className="hero-button border-2 border-gold-500/50 text-gold-200 hover:bg-amber-950/30 backdrop-blur-sm px-8 py-6 text-lg"
+              className="hero-button border-2 border-gold-500/50 text-gold-200 hover:bg-gold-950/30 backdrop-blur-sm px-8 py-6 text-lg"
             >
               Request VIP Access
             </Button>
@@ -644,7 +644,7 @@ const CryptoATMPage = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge className="bg-amber-950/50 text-gold-200 text-xs">
+                          <Badge className="bg-gold-950/50 text-gold-200 text-xs">
                             {city.count} ATMs
                           </Badge>
                           {city.vip && <Crown size={14} className="text-gold-400" />}
