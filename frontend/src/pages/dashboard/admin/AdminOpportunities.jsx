@@ -41,7 +41,7 @@ const AdminOpportunities = () => {
 
   const fetchOpportunities = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/dashboard/investments/opportunities?status=`, {
+      const response = await axios.get(`${API_URL}/api/dashboard/investments/opportunities`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOpportunities(response.data);
