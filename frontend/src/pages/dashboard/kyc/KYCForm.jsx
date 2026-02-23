@@ -417,11 +417,12 @@ const KYCForm = () => {
             </div>
 
             <FileUploadBox
-              label="Selfie com Documento"
+              label={t('kyc.form.selfie.selfieWithId')}
               accept="image/*"
               onUpload={(file) => handleFileUpload(file, 'selfie_with_id')}
               uploaded={hasUploadedDoc('selfie_with_id')}
               testId="upload-selfie"
+              t={t}
             />
 
             <div className="flex gap-4">
@@ -431,14 +432,14 @@ const KYCForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={() => setCurrentStep(3)}
                 disabled={!hasUploadedDoc('selfie_with_id')}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
               >
-                Continuar
+                {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
               </Button>
             </div>
@@ -449,21 +450,21 @@ const KYCForm = () => {
         return (
           <div className="space-y-6" data-testid="address-proof-step">
             <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">Documentos Aceites</h4>
+              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.form.address.acceptedDocs')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Fatura de serviços (água, luz, gás, internet)</li>
-                <li>• Extrato bancário</li>
-                <li>• Documento fiscal oficial</li>
-                <li>• Deve ter menos de 3 meses</li>
+                {t('kyc.form.address.docsList').map((doc, index) => (
+                  <li key={index}>• {doc}</li>
+                ))}
               </ul>
             </div>
 
             <FileUploadBox
-              label="Comprovativo de Morada"
+              label={t('kyc.form.address.proofOfAddress')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'proof_of_address')}
               uploaded={hasUploadedDoc('proof_of_address')}
               testId="upload-address-proof"
+              t={t}
             />
 
             <div className="flex gap-4">
@@ -473,7 +474,7 @@ const KYCForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={handleSubmitForReview}
@@ -482,7 +483,7 @@ const KYCForm = () => {
                 data-testid="submit-kyc"
               >
                 {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                Submeter KYC
+                {t('kyc.form.submit')}
                 <Check size={18} className="ml-2" />
               </Button>
             </div>
