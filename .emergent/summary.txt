@@ -1,4 +1,4 @@
-<analysis>**original_problem_statement**: 
+<analysis>**original_problem_statement**:
 The user wants to build a website for a premium Crypto Boutique Exchange named **Kryptobox.io**.
 
 **PRODUCT REQUIREMENTS:**
@@ -10,8 +10,10 @@ The user wants to build a website for a premium Crypto Boutique Exchange named *
     - Full JWT Authentication (Login, Register, Profile).
     - Private Client Dashboard (Portfolio, Wallets, Transactions, Investments, ROI, Transparency).
     - Admin Panel (User Management, Investment Management, Invite Codes).
+    - A complete, manual KYC/KYB verification system (submission, document upload, admin review).
+    - Multilingual support (EN, PT, AR) for the entire application, including the dashboard.
 - **Features in Progress:**
-    - Manual KYC/KYB verification system.
+    - Finishing translation for large forms.
 - **Future Features:**
     - Fireblocks integration for live wallet management.
     - Private dashboard with crypto portfolio, transaction history, and investment opportunities.
@@ -22,39 +24,37 @@ The user wants to build a website for a premium Crypto Boutique Exchange named *
 
 **what currently exists?**
 A full-stack application with a React frontend and a FastAPI backend.
-- **Frontend**: A multi-page site featuring a landing page, full JWT authentication flow (login, register), a private client dashboard, and an integrated admin panel. The dashboard includes pages for portfolio overview, wallets, transactions, investments, ROI, and fund transparency. The admin panel allows for user management (approval/revocation), investment opportunity creation, and invite code management.
-- **Backend**: A FastAPI server with a modular structure. It includes API endpoints for:
-    - Live crypto prices (CoinGecko proxy).
-    - Full JWT Authentication (register, login, get profile, update profile).
-    - A membership system (users require admin approval to access the dashboard).
-    - All necessary endpoints to power the client dashboard and admin panel with mock data.
-    - The initial backend structure for handling KYC/KYB document uploads has been created.
-- **Database**: MongoDB is used to store data for users, wallets, investment opportunities, and KYC/KYB submissions.
+- **Frontend**: A multi-page site featuring a landing page, full JWT authentication, a private client dashboard, and an admin panel. The entire application, including the dashboard and all KYC/KYB forms, now supports multilingual content in English, Portuguese (default), and Arabic.
+- **Backend**: A FastAPI server with a modular structure providing all necessary API endpoints for authentication, live crypto prices (CoinGecko proxy), and a complete manual KYC/KYB workflow (initiation, document upload, submission, admin review/approval/rejection).
+- **Database**: MongoDB stores data for users, investment opportunities, and KYC/KYB submissions.
 
-**Last working item**: 
-- **Last item agent was working**: Implementing a manual KYC (Know Your Customer) and KYB (Know Your Business) verification system. The agent created the backend Pydantic models, API routes for submission and admin review, and installed necessary dependencies (). The process of creating the corresponding frontend forms and pages for users to upload their documents had just begun.
+**Last working item**:
+- **Last item agent was working**: Fixing a runtime error in . The agent had just finished adding internationalization (i18n) to the KYC/KYB forms but introduced a bug where the  constant, which defines the form steps, was trying to use the  translation function outside the React component's render cycle, causing the application to crash.
 - **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?** both
-    - **Backend**: Use  to test the file upload endpoints for KYC/KYB documents.
-    - **Frontend**: Use the screenshot tool to verify the new forms render correctly.
-    - **E2E**: Use  to perform a full end-to-end test of the KYC submission and admin approval flow.
+- **Which testing method agent to use?** Frontend testing agent. First, fix the bug. Then, use the screenshot tool on the  page to confirm it renders correctly. After that, a broader test using the testing agent is recommended to check for regressions in the multilingual implementation.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-There are no known bugs or issues. The focus is on completing the in-progress feature.
+- **Issue 1**: (P0) KYC Form page is crashing.
+    - **Attempted fixes**: The agent correctly identified that the  constant is defined outside the component and cannot access the  function from the  hook. No fix has been applied yet.
+    - **Next debug checklist**:
+        1.  Open .
+        2.  Move the  declaration from the top level of the file to *inside* the  component function, just after the  hook is called.
+        3.  The same issue likely exists in . Apply the same fix there.
+    - **Why fix this issue and what will be achieved with the fix?**: The Individual KYC form is currently broken and inaccessible to users. Fixing this will restore the core KYC functionality.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?**: N
+    - **Should Test frontend/backend/both after fix?**: Frontend
+    - **Blocked on other issue**: None
 
 **In progress Task List**:
-- **Task 1**: (P0) Complete KYC/KYB System Implementation
-    - **Where to resume**: 
-        1.  Complete the frontend components in  (, , ) to allow users to upload documents.
-        2.  Integrate the new KYC API routers (, ) into the main  file.
-        3.  Create the admin frontend page for reviewing KYC/KYB submissions, allowing admins to view submitted documents and approve/reject them.
-        4.  Update the  model and dashboard to reflect KYC status.
-    - **What will be achieved with this?**: A complete, manual identity verification flow, which is a critical step for a financial services platform.
+- **Task 1**: (P1) Complete the translation of the KYB form.
+    - **Where to resume**: The agent noted that  is a very large file and only implemented translations for the most critical parts. A full review of  is needed to wrap all user-facing strings, including labels, placeholders, and toast messages, with the  function.
+    - **What will be achieved with this?**: The entire application will be 100% multilingual, providing a consistent user experience across all supported languages.
     - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: both
-    - **Blocked on something**: None
+    - **Should Test frontend/backend/both after fix?**: Frontend
+    - **Blocked on something**: Blocked on Issue 1, as the same structural bug may prevent the KYB form from rendering.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
@@ -66,12 +66,17 @@ There are no known bugs or issues. The focus is on completing the in-progress fe
     - **P3: Enhance Dashboard**: Add more detailed charts, transaction history filtering, and real-time data where possible.
 
 **Completed work in this session**
-- **Bug Fix**: The recurring  animation bug was definitively fixed.
-- **Feature**: A complete JWT Authentication system was implemented (Register, Login, Profile).
-- **Feature**: A multi-page private client dashboard was built with pages for Overview, Wallets, Transactions, Investments, ROI, and Transparency.
-- **Feature**: A membership system requiring admin approval for new users was implemented.
-- **Feature**: A visual Admin Panel was integrated into the dashboard, featuring sections for statistics, User Management, Investment Management, and Invite Codes.
-- **Testing**: The  was used successfully to validate the authentication and dashboard features, with all tests passing.
+- **Feature**: Implemented a complete, end-to-end manual KYC/KYB system. This includes:
+    - Frontend forms for individual (KYC) and business (KYB) data and document submission.
+    - Backend endpoints to handle the multi-step process, including file uploads.
+    - An admin panel for reviewing, approving, and rejecting submissions with a reason.
+- **Testing**: Thoroughly manually tested the full lifecycle of the KYC/KYB flow:
+    - Successful KYC approval.
+    - KYC rejection with a reason and a Try Again state for the user.
+    - Successful KYB approval for a business with multiple representatives (UBOs).
+- **Feature**: Implemented multilingual support (i18n) across the entire authenticated application (Dashboard, Admin, KYC pages) using .
+    - Added translation files () for English, Portuguese, and Arabic.
+    - Set Portuguese as the default language.
 
 **Earlier issues found/mentioned but not fixed**
 None.
@@ -85,85 +90,75 @@ None.
 
 
 **Key Technical Concepts**
-- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, GSAP.
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, GSAP, **react-i18next, i18next**.
 - **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver).
-- **Authentication**: JWT (JSON Web Tokens) with , , and .
+- **Authentication**: JWT (JSON Web Tokens).
 - **File Handling**: Asynchronous file uploads using  and .
 - **Database**: MongoDB.
 - **State Management**: React Context API.
 
 **key DB schema**
 - **users**: 
-- **wallets**: 
-- **investment_opportunities**: 
 - **kyc_submissions**: 
 
 **changes in tech stack**
-- : Added for handling form data and file uploads in FastAPI.
-- : Added for asynchronous file I/O operations.
+- ****, ****: Added to implement multilingual support in the frontend.
 
 **All files of reference**
-- **KYC/KYB (In Progress)**:
-    - : Pydantic models for KYC/KYB submissions.
-    - : API endpoints for users to submit KYC data.
-    - : API endpoints for admins to review submissions.
-    - : Directory for new frontend components.
-- **Backend Core**:
-    - : The main FastAPI application file.
-- **Authentication**:
-    - , , .
-- **Dashboard & Admin**:
-    - , , .
+- **Bug Location**: 
+- **In-Progress Task**: 
+- **Multilingual Core**:
+    - 
+    - 
+- **KYC Components**:
+    - 
+    - 
+- **Main App Structure**:
+    -  (routes)
+    -  (navigation)
 
 **key api endpoints**
-- **Auth**: , , 
-- **Dashboard**: , , 
-- **Admin**: , , 
-- **KYC (In Progress)**: , , 
+- **KYC**: , , , 
+- **Admin KYC**: , , 
+- (Equivalent endpoints exist for  and )
 
 **Critical Info for New Agent**
 - You MUST respond in Portuguese.
-- Your immediate priority is to complete the KYC/KYB feature. This involves finishing the frontend forms, integrating the backend routes into , and building the admin review UI.
-- The Fireblocks integration is **blocked**. Do not attempt to work on it until the user provides the RSA Private Key. Acknowledge this blocker if the user asks about live wallet functionality.
-- The application is now quite large. Be sure to use the testing agent () after completing the KYC feature to ensure nothing else has broken.
+- Your immediate priority is to fix the crash in  by moving the  constant inside the component. This same bug is likely present in .
+- After fixing the bug, review  and add any missing translations.
+- The Fireblocks integration is still **blocked**. Do not work on it. Acknowledge the block if the user asks.
 
 **documents and test reports created in this job**
--  (updated)
-- 
-- 
+None.  was not updated in this session.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  ****: (IN PROGRESS) User requested a KYC/KYB system similar to Sumsub.
-2.  ****: (ACKNOWLEDGED) User acknowledged they will provide the Fireblocks private key later.
-3.  ****: (BLOCKED) User requested Fireblocks integration for wallet creation.
-4.  ****: (RESOLVED) User requested a visual admin panel.
-5.  ****: (RESOLVED) User asked for instructions on how to test the newly created dashboard.
-6.  ****: (RESOLVED) User specified the requirements for the private client dashboard.
-7.  ****: (RESOLVED) User selected P3 (User Authentication) as the next priority.
-8.  ****: (RESOLVED) User confirmed choices for authentication implementation and re-stated the need to fix the  bug.
+1.  **** (IN PROGRESS) - Confirmed the agent should proceed with translating  and .
+2.  **** (RESOLVED) - Requested that the dashboard and all its sub-pages be made multilingual.
+3.  **** (RESOLVED) - Confirmed the agent should test the KYC rejection and KYB flows.
+4.  **** (RESOLVED) - Requested a full test of the KYC flow.
+5.  **** (RESOLVED) - User acknowledgment.
+6.  **** (RESOLVED) - User gave the initial go-ahead to build the KYC system.
 
 **Project Health Check:**
-- **Broken**: None.
-- **In Progress**: The KYC/KYB system is partially implemented.
-- **Mocked**:
-    - All dashboard financial data (portfolio value, wallet balances, transaction history).
-    - Wallet addresses are placeholders. This is blocked by the Fireblocks integration.
+- **Broken**: The Individual KYC form page () is crashing due to a JavaScript error.
+- **In Progress**: Full multilingual support for the KYB form ().
+- **Mocked**: All dashboard financial data (portfolio value, wallet balances, etc.). This is blocked by the Fireblocks integration.
 
 **3rd Party Integrations**
-- **GSAP**: Used for frontend animations.
-- **CoinGecko**: Used via a backend proxy for live crypto price data.
+- **GSAP**: Frontend animations.
+- **CoinGecko**: Backend proxy for live crypto prices.
+- **react-i18next / i18next**: Frontend internationalization.
 - **Fireblocks**: Planned for wallet management. **Blocked** pending user-provided RSA Private Key.
 
 **Testing status**
-- **Testing agent used after significant changes**: YES (for Auth and Dashboard features)
+- **Testing agent used after significant changes**: NO. Agent performed extensive manual testing via  and screenshots.
 - **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: Test reports generated by the testing agent are available at .
-- **Known regressions**: None.
+- **Test files created**: None.
+- **Known regressions**: A new bug was introduced in  at the end of the session.
 
 **Credentials to test flow:**
-To test the application, including the admin panel:
-- **Email**: 
-- **Password**: 
+- **Admin & Approved KYC User**:  / 
+- **User for KYB / Rejected KYC**:  / 
 
 **What agent forgot to execute**
-The agent has created the route files for the KYC feature ( and ) but has not yet imported and included these routers in the main FastAPI app instance in . This is a necessary step to make the new endpoints live.</analysis>
+The agent introduced a bug while implementing translations by defining a constant that uses a hook () outside the component scope. The agent correctly identified the cause but did not get to implement the fix before the session ended.</analysis>
