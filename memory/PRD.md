@@ -27,7 +27,7 @@ Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, dire
 ### Phase 1: Core Platform ✅
 - Landing page with premium design
 - Live crypto prices (CoinGecko integration)
-- Multi-language support (PT/EN)
+- Multi-language support (PT/EN/AR)
 - Responsive design
 
 ### Phase 2: Authentication System ✅
@@ -68,6 +68,12 @@ Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, dire
   - Approve/Reject with reasons
   - Search and filter functionality
 
+### Phase 6: Dashboard Multilingual Support ✅ (December 2024)
+- All dashboard pages now support PT/EN/AR
+- Navigation menu fully translated
+- KYC/KYB pages fully translated
+- Admin panels fully translated
+
 ---
 
 ## Technical Architecture
@@ -79,6 +85,7 @@ Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, dire
 - Shadcn UI Components
 - GSAP Animations
 - Axios for API calls
+- i18n for translations (EN/PT/AR)
 
 ### Backend
 - FastAPI (Python)
@@ -168,9 +175,14 @@ Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, dire
 - **Password**: senha123
 - **Role**: Admin
 
+- **Email**: maria@teste.com
+- **Password**: senha123
+- **Role**: Standard (KYC rejected, KYB approved)
+
 ---
 
 ## Notes
 - Dashboard financial data is currently MOCKED
 - Wallet addresses are placeholders (pending Fireblocks)
 - All KYC/KYB document reviews are manual
+- Default language is Portuguese (PT)
