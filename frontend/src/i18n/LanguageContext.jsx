@@ -6,7 +6,7 @@ const LanguageContext = createContext();
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState('PT');
   
-  const t = useCallback((key) => {
+  const t = useCallback((key, fallback = null) => {
     const keys = key.split('.');
     let value = translations[language];
     
@@ -14,12 +14,16 @@ export const LanguageProvider = ({ children }) => {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
+        // Return fallback if provided, otherwise return the key
+        if (fallback !== null) {
+          return fallback;
+        }
         console.warn(`Translation key not found: ${key}`);
         return key;
       }
     }
     
-    return value || key;
+    return value || fallback || key;
   }, [language]);
   
   const changeLanguage = useCallback((lang) => {
