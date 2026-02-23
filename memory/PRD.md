@@ -69,6 +69,21 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 
 ## 4. What's Been Implemented
 
+### ✅ Admin Panel (February 23, 2026)
+
+#### Admin Pages (inside Dashboard)
+- **AdminOverview.jsx** - Platform statistics (users, investments, KYC, wallets)
+- **AdminUsers.jsx** - User management (approve, reject, KYC status, make admin)
+- **AdminOpportunities.jsx** - Create and manage investment pools
+- **AdminTransparency.jsx** - Manage public wallets and audit reports
+- **AdminInvites.jsx** - Generate and manage invite codes
+
+#### Admin Backend Routes
+- GET `/api/admin/stats` - Platform statistics
+- POST `/api/admin/users/{id}/make-admin` - Grant admin rights
+- POST `/api/admin/users/{id}/remove-admin` - Remove admin rights
+- All previous admin routes (approve, reject, kyc, invites, etc.)
+
 ### ✅ Private Dashboard System (February 23, 2026)
 
 #### Dashboard Pages
