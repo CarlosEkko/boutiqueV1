@@ -28,13 +28,13 @@ const HeroV2 = () => {
   const finalContentRef = useRef(null);
   const [showFinalFrame, setShowFinalFrame] = useState(false);
   const [showFinalContent, setShowFinalContent] = useState(false);
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const masterTimeline = gsap.timeline();
 
-      // Frame 1: "The Boutique" - blur fade in and out
+      // REDUCED TIMING - Frame 1: "The Boutique"
       masterTimeline
         .fromTo(
           frame1Ref.current,
@@ -47,7 +47,7 @@ const HeroV2 = () => {
             opacity: 1,
             scale: 1,
             filter: 'blur(0px)',
-            duration: 1.2,
+            duration: 0.8,
             ease: 'power2.out'
           }
         )
@@ -57,10 +57,10 @@ const HeroV2 = () => {
             opacity: 0,
             scale: 0,
             filter: 'blur(50px)',
-            duration: 0.8,
+            duration: 0.5,
             ease: 'power2.in'
           },
-          '+=1.2'
+          '+=0.6'
         );
 
       // Frame 2: "Exchange for" 
@@ -76,10 +76,10 @@ const HeroV2 = () => {
             opacity: 1,
             scale: 1,
             filter: 'blur(0px)',
-            duration: 1.2,
+            duration: 0.8,
             ease: 'power2.out'
           },
-          '-=0.3'
+          '-=0.2'
         )
         .to(
           frame2Ref.current,
@@ -87,10 +87,10 @@ const HeroV2 = () => {
             opacity: 0,
             scale: 0,
             filter: 'blur(50px)',
-            duration: 0.8,
+            duration: 0.5,
             ease: 'power2.in'
           },
-          '+=1.2'
+          '+=0.6'
         );
 
       // Frame 3: "Sophisticated"
@@ -106,10 +106,10 @@ const HeroV2 = () => {
             opacity: 1,
             scale: 1,
             filter: 'blur(0px)',
-            duration: 1.2,
+            duration: 0.8,
             ease: 'power2.out'
           },
-          '-=0.3'
+          '-=0.2'
         )
         .to(
           frame3Ref.current,
@@ -117,13 +117,13 @@ const HeroV2 = () => {
             opacity: 0,
             scale: 0,
             filter: 'blur(50px)',
-            duration: 0.8,
+            duration: 0.5,
             ease: 'power2.in'
           },
-          '+=1.2'
+          '+=0.6'
         );
 
-      // Frame 4: "INVESTORS" (larger text)
+      // Frame 4: "INVESTORS"
       masterTimeline
         .fromTo(
           frame4Ref.current,
@@ -136,10 +136,10 @@ const HeroV2 = () => {
             opacity: 1,
             scale: 1,
             filter: 'blur(0px)',
-            duration: 1.4,
+            duration: 0.9,
             ease: 'power2.out'
           },
-          '-=0.3'
+          '-=0.2'
         )
         .to(
           frame4Ref.current,
@@ -147,18 +147,18 @@ const HeroV2 = () => {
             opacity: 0,
             scale: 0.5,
             filter: 'blur(40px)',
-            duration: 0.8,
+            duration: 0.5,
             ease: 'power2.in'
           },
-          '+=1.5'
+          '+=0.8'
         );
 
       // Show final frame with letter glow effect
       masterTimeline.call(() => {
         setShowFinalFrame(true);
-      }, null, '-=0.2');
+      }, null, '-=0.1');
 
-      // Delay to let React render the final frame, then animate letters
+      // Animate letters
       masterTimeline.call(() => {
         const letters = finalFrameRef.current?.querySelectorAll('.hero-letter');
         if (letters && letters.length > 0) {
@@ -171,15 +171,15 @@ const HeroV2 = () => {
             {
               opacity: 0.9,
               textShadow: '0px 0px 20px rgba(217, 119, 6, 0.0)',
-              duration: 0.7,
-              stagger: 0.05,
+              duration: 0.5,
+              stagger: 0.03,
               ease: 'power2.out',
               onComplete: () => {
-                // Fade out the final frame and show final content
+                // Fade out and show final content faster
                 gsap.to(finalFrameRef.current, {
                   opacity: 0,
-                  duration: 1,
-                  delay: 2,
+                  duration: 0.6,
+                  delay: 1,
                   ease: 'power2.in',
                   onComplete: () => {
                     setShowFinalContent(true);
@@ -189,7 +189,7 @@ const HeroV2 = () => {
             }
           );
         }
-      }, null, '+=0.1');
+      }, null, '+=0.05');
 
     }, heroRef);
 
@@ -208,7 +208,7 @@ const HeroV2 = () => {
         {
           opacity: 1,
           y: 0,
-          duration: 1.5,
+          duration: 1,
           ease: 'power3.out'
         }
       );
@@ -226,7 +226,6 @@ const HeroV2 = () => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black" />
-        {/* Radial gradient overlay like CodePen */}
         <div 
           className="absolute inset-0" 
           style={{
@@ -310,7 +309,7 @@ const HeroV2 = () => {
         )}
       </div>
 
-      {/* Final content */}
+      {/* Final content - TRANSLATED */}
       {showFinalContent && (
         <div 
           ref={finalContentRef} 
@@ -326,7 +325,7 @@ const HeroV2 = () => {
               </span>
             </div>
 
-            {/* Final title */}
+            {/* Final title - TRANSLATED */}
             <h1 className="text-5xl md:text-7xl font-extralight text-white leading-tight tracking-wide">
               {t('hero.title')}
               <span className="block text-amber-400 mt-2">
@@ -334,12 +333,12 @@ const HeroV2 = () => {
               </span>
             </h1>
 
-            {/* Description */}
+            {/* Description - TRANSLATED */}
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               {t('hero.description')}
             </p>
 
-            {/* CTA Buttons */}
+            {/* CTA Buttons - TRANSLATED */}
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button
                 size="lg"
@@ -359,7 +358,7 @@ const HeroV2 = () => {
               </Button>
             </div>
 
-            {/* Trust indicators */}
+            {/* Trust indicators - TRANSLATED */}
             <div className={`pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
                 <div className="w-1 h-1 bg-amber-400 rounded-full" />
@@ -383,24 +382,6 @@ const HeroV2 = () => {
         .hero-letter {
           color: transparent;
           text-shadow: 0px 0px 1px rgba(217, 119, 6, 0.8);
-        }
-        
-        @keyframes letterGlow {
-          0% {
-            opacity: 0;
-            text-shadow: 0px 0px 1px rgba(217, 119, 6, 0.1);
-          }
-          66% {
-            opacity: 1;
-            text-shadow: 0px 0px 20px rgba(217, 119, 6, 0.9);
-          }
-          77% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0.9;
-            text-shadow: 0px 0px 20px rgba(217, 119, 6, 0.0);
-          }
         }
       `}</style>
     </section>
