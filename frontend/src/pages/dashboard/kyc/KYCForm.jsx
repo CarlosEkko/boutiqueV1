@@ -556,10 +556,12 @@ const KYCForm = () => {
 
       {/* Current Step Content */}
       <div className="bg-zinc-900/50 border border-amber-900/20 rounded-xl p-6">
-        <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
-          {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-amber-400' })}
-          {STEPS[currentStep].label}
-        </h3>
+        {currentStep < STEPS.length && (
+          <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
+            {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-amber-400' })}
+            {STEPS[currentStep].label}
+          </h3>
+        )}
         {renderStepContent()}
       </div>
     </div>
