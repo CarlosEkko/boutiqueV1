@@ -266,35 +266,35 @@ const KYCStatus = () => {
               className="w-full bg-blue-600 hover:bg-blue-700"
               data-testid="continue-kyb-btn"
             >
-              Continuar Verificação
+              {t('kyc.status.continueVerification')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           )}
 
           {kybStatus === 'pending_review' && (
             <div className="text-center text-amber-400 text-sm">
-              A sua verificação está em análise. Tempo estimado: 2-5 dias úteis.
+              {t('kyc.status.estimatedTimeKyb')}
             </div>
           )}
 
           {kybStatus === 'approved' && (
             <div className="flex items-center justify-center gap-2 text-green-400">
               <CheckCircle2 size={20} />
-              <span>Verificação completa</span>
+              <span>{t('kyc.status.verificationComplete')}</span>
             </div>
           )}
 
           {kybStatus === 'rejected' && (
             <div className="space-y-3">
               <div className="text-red-400 text-sm text-center">
-                Verificação rejeitada. {kycData?.kyb?.rejection_reason}
+                {t('kyc.status.rejected')}. {kycData?.kyb?.rejection_reason}
               </div>
               <Button 
                 onClick={() => startVerification('kyb')}
                 variant="outline"
                 className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10"
               >
-                Tentar Novamente
+                {t('kyc.status.tryAgain')}
               </Button>
             </div>
           )}
@@ -308,13 +308,11 @@ const KYCStatus = () => {
             <Shield className="text-amber-400" size={24} />
           </div>
           <div>
-            <h3 className="text-white font-medium mb-2">Porquê verificar a sua identidade?</h3>
+            <h3 className="text-white font-medium mb-2">{t('kyc.status.whyVerify')}</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>• Acesso completo a todas as funcionalidades da plataforma</li>
-              <li>• Limites de transação mais elevados</li>
-              <li>• Proteção contra fraude e acesso não autorizado</li>
-              <li>• Conformidade com regulamentações AML/KYC</li>
-              <li>• Suporte prioritário e atendimento dedicado</li>
+              {t('kyc.status.benefits').map((benefit, index) => (
+                <li key={index}>• {benefit}</li>
+              ))}
             </ul>
           </div>
         </div>
