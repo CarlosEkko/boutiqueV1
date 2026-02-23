@@ -229,7 +229,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company_type">Tipo de Empresa *</Label>
+                <Label htmlFor="company_type">{t('kyc.kybForm.companyInfo.companyType')} *</Label>
                 <select
                   id="company_type"
                   value={companyInfo.company_type}
@@ -237,12 +237,12 @@ const KYBForm = () => {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-3 py-2 text-white"
                   data-testid="select-company-type"
                 >
-                  <option value="llc">Sociedade por Quotas (Lda)</option>
-                  <option value="corporation">Sociedade Anónima (SA)</option>
-                  <option value="partnership">Sociedade em Nome Colectivo</option>
-                  <option value="sole_proprietorship">Empresário em Nome Individual</option>
-                  <option value="non_profit">Associação/Fundação</option>
-                  <option value="other">Outro</option>
+                  <option value="llc">{t('kyc.kybForm.companyInfo.llc')}</option>
+                  <option value="corporation">{t('kyc.kybForm.companyInfo.corporation')}</option>
+                  <option value="partnership">{t('kyc.kybForm.companyInfo.partnership')}</option>
+                  <option value="sole_proprietorship">{t('kyc.kybForm.companyInfo.soleProprietorship')}</option>
+                  <option value="non_profit">{t('kyc.kybForm.companyInfo.nonProfit')}</option>
+                  <option value="other">{t('kyc.kybForm.companyInfo.other')}</option>
                 </select>
               </div>
             </div>
