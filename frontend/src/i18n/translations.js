@@ -127,6 +127,131 @@ const translations = {
     }
   },
   
+  PT: {
+    // Navigation
+    nav: {
+      home: 'Início',
+      products: 'Produtos',
+      cryptoAtm: 'Crypto ATM',
+      whyUs: 'Porquê Nós',
+      regions: 'Regiões',
+      contact: 'Contacto',
+      requestAccess: 'Solicitar Acesso'
+    },
+    
+    // Hero Section
+    hero: {
+      badge: 'ACESSO EXCLUSIVO • NÍVEL INSTITUCIONAL',
+      title: 'A Exchange Boutique para',
+      subtitle: 'Investidores Sofisticados',
+      description: 'Serviços exclusivos de criptomoedas personalizados para indivíduos de alto património e clientes institucionais na Europa, Médio Oriente e Brasil.',
+      ctaPrimary: 'Solicitar Acesso',
+      ctaSecondary: 'Saber Mais',
+      trustLicensed: 'Licenciada & Regulada',
+      trustSecurity: 'Segurança Bancária',
+      trustAuc: '+$2.5B AUC'
+    },
+    
+    // Products Section
+    products: {
+      badge: 'Serviços Premium',
+      title: 'Personalizado para',
+      titleHighlight: 'Clientes Excepcionais',
+      description: 'Quatro pilares de excelência desenhados exclusivamente para investidores institucionais e de alto património',
+      premiumExchange: 'Exchange Premium',
+      premiumExchangeDesc: 'Mesa de negociação OTC white-glove com gestores de relacionamento dedicados. Execute negociações de grande volume com liquidez institucional e discrição.',
+      cryptoAtm: 'Rede Crypto ATM',
+      cryptoAtmDesc: 'Rede curada de ATMs crypto premium em localizações exclusivas. Conversões fiat-para-crypto sem fricção com privacidade e conveniência melhoradas.',
+      launchpad: 'Launchpad',
+      launchpadDesc: 'Acesso antecipado a projetos blockchain verificados e vendas de tokens. Participe em oportunidades de investimento exclusivas antes do mercado.',
+      custody: 'Custódia Institucional',
+      custodyDesc: 'Segurança de nível militar para armazenamento de ativos digitais. Carteiras multi-assinatura, cobertura de seguro e monitorização 24/7.'
+    },
+    
+    // Trust Section
+    trust: {
+      title: 'Porquê a Elite',
+      titleHighlight: 'Escolhe a Kryptobox',
+      description: 'Padrões intransigentes que nos distinguem no espaço dos ativos digitais',
+      regulated: 'Regulada & Conforme',
+      regulatedDesc: 'Totalmente licenciada e regulada em jurisdições europeias. Operações conformes com MiCA garantindo certeza legal.',
+      security: 'Segurança Bancária',
+      securityDesc: 'Infraestrutura de segurança multi-camada com 98% em cold storage. Auditorias de segurança regulares por terceiros.',
+      exclusive: 'Serviço Exclusivo',
+      exclusiveDesc: 'Plataforma apenas para membros com gestores de relacionamento dedicados. Serviço personalizado para clientes sofisticados.',
+      global: 'Alcance Global',
+      globalDesc: 'Operações sem fricção na Europa, Médio Oriente e Brasil. Presença local com capacidades globais.',
+      stats: {
+        auc: '+$2.5B',
+        aucLabel: 'Ativos Sob Custódia',
+        clients: '+500',
+        clientsLabel: 'Clientes Institucionais',
+        uptime: '99.9%',
+        uptimeLabel: 'Uptime da Plataforma',
+        support: '24/7',
+        supportLabel: 'Suporte Dedicado'
+      }
+    },
+    
+    // Regions Section
+    regions: {
+      badge: 'Presença Global',
+      title: 'Servindo Excelência',
+      titleHighlight: 'Em Três Continentes',
+      description: 'Experiência local com alcance global - onde precisa de nós, quando precisa de nós',
+      europe: 'Europa',
+      europeDesc: 'Sede na Suíça com presença nos principais centros financeiros da UE',
+      middleEast: 'Médio Oriente',
+      middleEastDesc: 'Servindo clientes UHNW no Dubai, Abu Dhabi e Riade',
+      brazil: 'Brasil',
+      brazilDesc: 'Serviços exclusivos para a crescente economia crypto da América Latina'
+    },
+    
+    // Contact Section
+    contact: {
+      badge: 'Começar',
+      title: 'Junte-se ao',
+      titleHighlight: 'Círculo Exclusivo',
+      description: 'Submeta o seu interesse e a nossa equipa entrará em contacto para discutir como a Kryptobox pode servir as suas necessidades de ativos digitais.',
+      form: {
+        fullName: 'Nome Completo',
+        email: 'Endereço de Email',
+        phone: 'Número de Telefone',
+        investmentRange: 'Faixa de Investimento',
+        selectRange: 'Selecione a sua faixa',
+        range1: '$100K - $500K',
+        range2: '$500K - $1M',
+        range3: '$1M - $5M',
+        range4: '+$5M',
+        message: 'Fale-nos das suas necessidades',
+        submit: 'Solicitar Acesso',
+        disclaimer: 'A sua informação está protegida pela nossa política de privacidade e será usada apenas para avaliar elegibilidade de membro.'
+      }
+    },
+    
+    // Footer
+    footer: {
+      tagline: 'A exchange boutique para investidores sofisticados.',
+      company: 'Empresa',
+      about: 'Sobre Nós',
+      careers: 'Carreiras',
+      press: 'Imprensa',
+      legal: 'Legal',
+      services: 'Serviços',
+      exchange: 'Exchange',
+      atmNetwork: 'Rede ATM',
+      launchpad: 'Launchpad',
+      custody: 'Custódia',
+      support: 'Suporte',
+      helpCenter: 'Centro de Ajuda',
+      contactUs: 'Contacte-nos',
+      status: 'Estado do Sistema',
+      security: 'Segurança',
+      copyright: '© 2025 Kryptobox.io. Todos os direitos reservados.',
+      disclaimer: 'A negociação de criptomoedas envolve risco substancial de perda. Por favor negoceie com responsabilidade.'
+    }
+  },
+  
   AR: {
     // Navigation
     nav: {
