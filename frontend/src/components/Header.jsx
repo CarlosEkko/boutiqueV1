@@ -12,6 +12,7 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { language, t, changeLanguage, isRTL } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
   const cursorRef = useRef(null);
   const cursorPointerRef = useRef(null);
   const trailRefs = useRef([]);
