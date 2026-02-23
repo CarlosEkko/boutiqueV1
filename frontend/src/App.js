@@ -66,6 +66,13 @@ function AppRoutes() {
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
+        
+        {/* Admin Routes */}
+        <Route path="admin" element={<AdminOverview />} />
+        <Route path="admin/users" element={<AdminUsers />} />
+        <Route path="admin/opportunities" element={<AdminOpportunities />} />
+        <Route path="admin/transparency" element={<AdminTransparency />} />
+        <Route path="admin/invites" element={<AdminInvites />} />
       </Route>
     </Routes>
   );
