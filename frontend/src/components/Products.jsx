@@ -94,7 +94,7 @@ const Products = () => {
               text={t('products.badge')} 
               stagger={0.05}
               duration={0.8}
-              glowColor="rgba(254, 243, 199, 0.9)"
+              glowColor="rgba(196, 168, 122, 0.5)"
             />
           </Badge>
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
@@ -102,14 +102,14 @@ const Products = () => {
               text={t('products.title')} 
               stagger={0.06}
               delay={0.2}
-              glowColor="rgba(255, 255, 255, 0.8)"
+              glowColor="rgba(255, 255, 255, 0.4)"
             />
             <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('products.titleHighlight')} 
                 stagger={0.06}
                 delay={0.5}
-                glowColor="rgba(165, 122, 80, 0.9)"
+                glowColor="rgba(165, 122, 80, 0.5)"
               />
             </span>
           </h2>
@@ -119,7 +119,7 @@ const Products = () => {
               stagger={0.02}
               delay={0.8}
               duration={0.5}
-              glowColor="rgba(156, 163, 175, 0.8)"
+              glowColor="rgba(156, 163, 175, 0.4)"
             />
           </p>
         </div>

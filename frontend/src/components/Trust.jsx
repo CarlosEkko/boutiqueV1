@@ -135,14 +135,14 @@ const Trust = () => {
             <GlowText 
               text={t('trust.title')} 
               stagger={0.06}
-              glowColor="rgba(255, 255, 255, 0.8)"
+              glowColor="rgba(255, 255, 255, 0.4)"
             />
             <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('trust.titleHighlight')} 
                 stagger={0.06}
                 delay={0.3}
-                glowColor="rgba(165, 122, 80, 0.9)"
+                glowColor="rgba(165, 122, 80, 0.5)"
               />
             </span>
           </h2>
@@ -152,7 +152,7 @@ const Trust = () => {
               stagger={0.02}
               delay={0.6}
               duration={0.5}
-              glowColor="rgba(156, 163, 175, 0.8)"
+              glowColor="rgba(156, 163, 175, 0.4)"
             />
           </p>
         </div>
