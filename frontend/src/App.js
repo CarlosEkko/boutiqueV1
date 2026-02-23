@@ -1,12 +1,68 @@
 import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import CryptoATMPage from "./pages/CryptoATMPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
+import {
+  DashboardLayout,
+  DashboardOverview,
+  WalletsPage,
+  TransactionsPage,
+  InvestmentsPage,
+  ROIPage,
+  TransparencyPage
+} from "./pages/dashboard";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+
+// Protected Route wrapper
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-amber-400">Loading...</div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/crypto-atm" element={<CryptoATMPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      
+      {/* Dashboard Routes - Protected */}
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<DashboardOverview />} />
+        <Route path="wallets" element={<WalletsPage />} />
+        <Route path="transactions" element={<TransactionsPage />} />
+        <Route path="investments" element={<InvestmentsPage />} />
+        <Route path="roi" element={<ROIPage />} />
+        <Route path="transparency" element={<TransparencyPage />} />
+      </Route>
+    </Routes>
+  );
+}
 
 function App() {
   return (
@@ -14,12 +70,7 @@ function App() {
       <AuthProvider>
         <div className="App">
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/crypto-atm" element={<CryptoATMPage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
           <Toaster />
         </div>
