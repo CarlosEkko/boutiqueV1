@@ -103,9 +103,7 @@ const Hero = () => {
           {/* Main Heading with character animation */}
           <h1 ref={titleRef} className="text-5xl md:text-7xl lg:text-8xl font-extralight leading-tight tracking-wide">
             <span className="title-line-1 block text-white mb-2">{heroData.title}</span>
-            <span className="title-line-2 block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
-              {heroData.subtitle}
-            </span>
+            <span className="title-line-2 block text-amber-400 mb-2">{heroData.subtitle}</span>
           </h1>
 
           {/* Description */}
