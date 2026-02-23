@@ -107,7 +107,7 @@ const DashboardLayout = () => {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {/* User Navigation */}
           <div className="mb-4">
-            {sidebarOpen && <p className="px-4 text-xs text-gray-500 uppercase mb-2">Portfolio</p>}
+            {sidebarOpen && <p className="px-4 text-xs text-gray-500 uppercase mb-2">{t('dashboard.layout.portfolio')}</p>}
             {userNavItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
@@ -116,7 +116,7 @@ const DashboardLayout = () => {
           {/* Admin Navigation - Only visible to admins */}
           {isAdmin && (
             <div className="pt-4 border-t border-amber-900/20">
-              {sidebarOpen && <p className="px-4 text-xs text-amber-500 uppercase mb-2">Admin</p>}
+              {sidebarOpen && <p className="px-4 text-xs text-amber-500 uppercase mb-2">{t('dashboard.layout.admin')}</p>}
               {adminNavItems.map((item) => (
                 <NavItem key={item.to} {...item} />
               ))}
@@ -128,7 +128,7 @@ const DashboardLayout = () => {
         <div className="p-4 border-t border-amber-900/20">
           {sidebarOpen && (
             <div className="mb-4 px-4">
-              <p className="text-sm text-gray-400">Logged in as</p>
+              <p className="text-sm text-gray-400">{t('dashboard.layout.loggedInAs')}</p>
               <p className="text-white font-medium truncate">{user?.name}</p>
               <p className="text-xs text-amber-400">{user?.membership_level || 'Standard'}</p>
             </div>
