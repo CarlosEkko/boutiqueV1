@@ -167,6 +167,324 @@ const translations = {
       }
     },
     
+    // Dashboard
+    dashboard: {
+      // Layout
+      layout: {
+        portfolio: 'Portfolio',
+        admin: 'Admin',
+        loggedInAs: 'Logged in as',
+        logout: 'Logout'
+      },
+      // Navigation
+      nav: {
+        overview: 'Overview',
+        wallets: 'Wallets',
+        transactions: 'Transactions',
+        investments: 'Investments',
+        roi: 'ROI',
+        transparency: 'Transparency',
+        kycVerification: 'KYC Verification',
+        adminOverview: 'Admin Overview',
+        users: 'Users',
+        kycKyb: 'KYC/KYB',
+        opportunities: 'Opportunities',
+        inviteCodes: 'Invite Codes'
+      },
+      // Overview
+      overview: {
+        welcome: 'Welcome back',
+        portfolioValue: 'Portfolio Value',
+        totalAssets: 'Total Assets',
+        activeInvestments: 'Active Investments',
+        pendingTransactions: 'Pending',
+        recentActivity: 'Recent Activity',
+        noActivity: 'No recent activity',
+        viewAll: 'View All'
+      },
+      // Wallets
+      wallets: {
+        title: 'Your Wallets',
+        subtitle: 'Manage your cryptocurrency wallets',
+        balance: 'Balance',
+        available: 'Available',
+        pending: 'Pending',
+        address: 'Address',
+        copyAddress: 'Copy Address',
+        deposit: 'Deposit',
+        withdraw: 'Withdraw',
+        noWallets: 'No wallets found'
+      },
+      // Transactions
+      transactions: {
+        title: 'Transaction History',
+        subtitle: 'View all your transactions',
+        type: 'Type',
+        amount: 'Amount',
+        status: 'Status',
+        date: 'Date',
+        deposit: 'Deposit',
+        withdrawal: 'Withdrawal',
+        transfer: 'Transfer',
+        completed: 'Completed',
+        pending: 'Pending',
+        failed: 'Failed',
+        noTransactions: 'No transactions found'
+      },
+      // Investments
+      investments: {
+        title: 'Investment Opportunities',
+        subtitle: 'Explore available investment options',
+        expectedRoi: 'Expected ROI',
+        duration: 'Duration',
+        minInvestment: 'Min Investment',
+        maxInvestment: 'Max Investment',
+        riskLevel: 'Risk Level',
+        status: 'Status',
+        open: 'Open',
+        closed: 'Closed',
+        invest: 'Invest',
+        days: 'days',
+        noOpportunities: 'No opportunities available'
+      },
+      // ROI
+      roi: {
+        title: 'Return on Investment',
+        subtitle: 'Track your investment performance',
+        totalInvested: 'Total Invested',
+        totalReturns: 'Total Returns',
+        averageRoi: 'Average ROI',
+        activePositions: 'Active Positions',
+        performanceChart: 'Performance Chart',
+        noData: 'No investment data available'
+      },
+      // Transparency
+      transparency: {
+        title: 'Fund Transparency',
+        subtitle: 'Proof of reserves and audit reports',
+        proofOfReserves: 'Proof of Reserves',
+        auditReports: 'Audit Reports',
+        lastUpdated: 'Last Updated',
+        totalReserves: 'Total Reserves',
+        viewReport: 'View Report',
+        noReports: 'No reports available'
+      }
+    },
+    
+    // KYC
+    kyc: {
+      // Status Page
+      status: {
+        title: 'Identity Verification',
+        subtitle: 'Complete KYC/KYB verification to unlock all platform features',
+        kycIndividual: 'KYC Individual',
+        forIndividuals: 'For individuals',
+        kycDescription: 'Personal identity verification. Required for operations up to €15,000/month.',
+        kybBusiness: 'KYB Business',
+        forBusinesses: 'For companies and institutions',
+        kybDescription: 'Complete business verification. Required for institutional operations and higher limits.',
+        notStarted: 'Not Started',
+        inProgress: 'In Progress',
+        pendingReview: 'Pending Review',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        verificationComplete: 'Verification complete',
+        startKyc: 'Start KYC',
+        startKyb: 'Start KYB',
+        continueVerification: 'Continue Verification',
+        tryAgain: 'Try Again',
+        estimatedTime: 'Your verification is under review. Estimated time: 24-48 hours.',
+        estimatedTimeKyb: 'Your verification is under review. Estimated time: 2-5 business days.',
+        whyVerify: 'Why verify your identity?',
+        benefits: [
+          'Full access to all platform features',
+          'Higher transaction limits',
+          'Protection against fraud and unauthorized access',
+          'Compliance with AML/KYC regulations',
+          'Priority support and dedicated service'
+        ],
+        documents: {
+          idDocument: 'ID Document (Passport, ID Card, or Driver\'s License)',
+          selfieWithId: 'Selfie with document',
+          proofOfAddress: 'Proof of address',
+          certIncorporation: 'Certificate of incorporation',
+          articlesAssociation: 'Articles of association',
+          directorsUbos: 'Identification of directors and UBOs'
+        }
+      },
+      // KYC Form
+      form: {
+        title: 'KYC Verification',
+        subtitle: 'Complete all steps to verify your identity',
+        back: 'Back',
+        continue: 'Continue',
+        submit: 'Submit KYC',
+        saveInfo: 'Save Information',
+        steps: {
+          personalInfo: 'Personal Info',
+          idDocument: 'ID Document',
+          selfie: 'Selfie',
+          proofAddress: 'Address'
+        },
+        personalInfo: {
+          fullName: 'Full Name',
+          dateOfBirth: 'Date of Birth',
+          nationality: 'Nationality',
+          countryResidence: 'Country of Residence',
+          address: 'Address',
+          city: 'City',
+          postalCode: 'Postal Code'
+        },
+        idDocument: {
+          documentType: 'Document Type',
+          passport: 'Passport',
+          idCard: 'ID Card',
+          driversLicense: 'Driver\'s License',
+          documentNumber: 'Document Number',
+          expiryDate: 'Expiry Date',
+          issuingCountry: 'Issuing Country',
+          uploadDocument: 'Upload Document',
+          frontDocument: 'Front of Document'
+        },
+        selfie: {
+          title: 'Selfie Instructions',
+          instructions: [
+            'Hold the document next to your face',
+            'Make sure both are clearly visible',
+            'Good lighting, no reflections or shadows',
+            'Do not wear sunglasses or hats'
+          ],
+          selfieWithId: 'Selfie with Document'
+        },
+        address: {
+          acceptedDocs: 'Accepted Documents',
+          docsList: [
+            'Utility bill (water, electricity, gas, internet)',
+            'Bank statement',
+            'Official tax document',
+            'Must be less than 3 months old'
+          ],
+          proofOfAddress: 'Proof of Address'
+        },
+        upload: {
+          dragDrop: 'Drag a file or click to select',
+          formats: 'Formats: JPG, PNG, PDF (max. 10MB)',
+          uploadSuccess: 'Document uploaded successfully',
+          upload: 'Upload'
+        }
+      },
+      // KYB Form
+      kybForm: {
+        title: 'KYB Business Verification',
+        subtitle: 'Complete all steps to verify your company',
+        steps: {
+          companyInfo: 'Company Info',
+          documents: 'Documents',
+          representatives: 'Representatives',
+          addressProof: 'Proof'
+        },
+        companyInfo: {
+          companyName: 'Company Name',
+          companyType: 'Company Type',
+          llc: 'Limited Liability Company (LLC)',
+          corporation: 'Corporation',
+          partnership: 'Partnership',
+          soleProprietorship: 'Sole Proprietorship',
+          nonProfit: 'Non-Profit / Foundation',
+          other: 'Other',
+          registrationNumber: 'Registration Number',
+          taxId: 'Tax ID (if different)',
+          incorporationDate: 'Date of Incorporation',
+          incorporationCountry: 'Country of Incorporation',
+          headquartersAddress: 'Headquarters Address',
+          businessAddress: 'Business Address',
+          businessCity: 'City',
+          businessPostalCode: 'Postal Code',
+          businessCountry: 'Country',
+          contacts: 'Contacts',
+          corporateEmail: 'Corporate Email',
+          phone: 'Phone',
+          website: 'Website'
+        },
+        documents: {
+          requiredDocs: 'Required Documents',
+          docsList: [
+            'Certificate of incorporation or permanent certificate',
+            'Articles of association / Bylaws',
+            'Shareholder register'
+          ],
+          certIncorporation: 'Certificate of Incorporation',
+          articlesAssociation: 'Articles of Association / Bylaws',
+          shareholderRegister: 'Shareholder Register'
+        },
+        representatives: {
+          title: 'Legal Representatives',
+          description: 'Add all directors and ultimate beneficial owners (UBOs) with ownership above 25%.',
+          addedReps: 'Added Representatives',
+          addRepresentative: 'Add Representative',
+          fullName: 'Full Name',
+          role: 'Role',
+          dateOfBirth: 'Date of Birth',
+          nationality: 'Nationality',
+          ownershipPercentage: '% Ownership',
+          isUbo: 'Ultimate Beneficial Owner (UBO)',
+          add: 'Add Representative'
+        },
+        addressProof: {
+          title: 'Business Address Proof',
+          docsList: [
+            'Utility bill in company name',
+            'Corporate bank statement',
+            'Official document with headquarters address',
+            'Must be less than 3 months old'
+          ],
+          businessProof: 'Business Address Proof',
+          taxRegistration: 'Tax Registration (optional)'
+        },
+        submit: 'Submit KYB'
+      },
+      // Admin KYC
+      admin: {
+        title: 'KYC/KYB Verifications',
+        subtitle: 'Review and approve identity verification requests',
+        searchPlaceholder: 'Search by name or email...',
+        pending: 'Pending',
+        kycPending: 'KYC Pending',
+        kybPending: 'KYB Pending',
+        approvedToday: 'Approved Today',
+        noKycPending: 'No pending KYC verifications',
+        noKybPending: 'No pending KYB verifications',
+        allProcessed: 'All verifications have been processed',
+        personalData: 'Personal Data',
+        companyData: 'Company Data',
+        idDocument: 'ID Document',
+        representatives: 'Representatives',
+        submittedDocuments: 'Submitted Documents',
+        noDocuments: 'No documents found',
+        rejectionReason: 'Rejection reason (required to reject)',
+        rejectionPlaceholder: 'E.g.: Unreadable document, inconsistent data...',
+        reject: 'Reject',
+        approve: 'Approve',
+        docs: 'docs',
+        name: 'Name',
+        dob: 'Date of Birth',
+        nationalityLabel: 'Nationality',
+        countryResidence: 'Country of Residence',
+        addressLabel: 'Address',
+        cityLabel: 'City',
+        company: 'Company',
+        type: 'Type',
+        nipc: 'Registration No.',
+        incorporationDateLabel: 'Incorporation Date',
+        countryLabel: 'Country',
+        emailLabel: 'Email',
+        documentType: 'Type',
+        documentNumber: 'Number',
+        validity: 'Validity',
+        issuingCountryLabel: 'Issuing Country'
+      }
+    },
+    
     // Footer
     footer: {
       tagline: 'The boutique exchange for sophisticated investors.',
