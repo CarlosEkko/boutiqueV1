@@ -94,7 +94,7 @@ const AdminKYC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">A carregar...</div>
+        <div className="text-amber-400">...</div>
       </div>
     );
   }
@@ -104,8 +104,8 @@ const AdminKYC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-light text-white mb-1">Verificações KYC/KYB</h1>
-          <p className="text-gray-400">Revise e aprove pedidos de verificação de identidade</p>
+          <h1 className="text-2xl font-light text-white mb-1">{t('kyc.admin.title')}</h1>
+          <p className="text-gray-400">{t('kyc.admin.subtitle')}</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -138,7 +138,7 @@ const AdminKYC = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         <Input
-          placeholder="Pesquisar por nome ou email..."
+          placeholder={t('kyc.admin.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10 bg-zinc-900 border-zinc-700"
