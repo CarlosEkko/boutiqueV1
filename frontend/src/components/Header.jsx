@@ -26,6 +26,7 @@ const Header = () => {
 
   const languages = [
     { code: 'EN', name: 'English' },
+    { code: 'PT', name: 'Português' },
     { code: 'AR', name: 'العربية' }
   ];
 
