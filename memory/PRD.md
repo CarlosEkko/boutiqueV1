@@ -262,10 +262,17 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 ## 10. Technical Architecture
 
 ### Current Stack
-- **Frontend:** React 19, Tailwind CSS, Shadcn UI, Lucide Icons
+- **Frontend:** React 19, Tailwind CSS, Shadcn UI, Lucide Icons, GSAP
 - **Backend:** FastAPI (Python) - NOT YET IMPLEMENTED
 - **Database:** MongoDB - NOT YET IMPLEMENTED
 - **Hosting:** Emergent Agent platform
+
+### Key Files
+- `/app/frontend/src/components/HeroV2.jsx` - Cinematic hero with animations
+- `/app/frontend/src/components/CryptoTicker.jsx` - Price ticker component
+- `/app/frontend/src/pages/CryptoAtmPage.jsx` - ATM Network page
+- `/app/frontend/src/utils/textAnimations.js` - Text animation utilities
+- `/app/frontend/src/mock.js` - All mock data centralized
 
 ### Deployment
 - Frontend: Auto-deployed via supervisor (hot reload enabled)
