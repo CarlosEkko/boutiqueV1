@@ -144,6 +144,7 @@ async def login(credentials: UserLogin):
         updated_at=updated_at,
         is_active=user_doc.get("is_active", True),
         is_approved=user_doc.get("is_approved", False),
+        is_admin=user_doc.get("is_admin", False),
         kyc_status=user_doc.get("kyc_status", KYCStatus.NOT_STARTED),
         membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD)
     )
@@ -183,6 +184,7 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)):
         updated_at=updated_at,
         is_active=user_doc.get("is_active", True),
         is_approved=user_doc.get("is_approved", False),
+        is_admin=user_doc.get("is_admin", False),
         kyc_status=user_doc.get("kyc_status", KYCStatus.NOT_STARTED),
         membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD)
     )
