@@ -502,3 +502,265 @@ async def update_public_wallet_balance(
         raise HTTPException(status_code=404, detail="Wallet not found")
     
     return {"success": True, "message": "Balance updated"}
+
+
+
+# ==================== KYC/KYB ADMIN ====================
+
+@router.get("/kyc/pending")
+async def list_pending_kyc(admin: dict = Depends(get_admin_user)):
+    """List all pending KYC verifications"""
+    kyc_list = await db.kyc_verifications.find(
+        {"status": "pending_review"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Enrich with user info and documents
+    enriched = []
+    for kyc in kyc_list:
+        user = await db.users.find_one({"id": kyc.get("user_id")}, {"_id": 0, "hashed_password": 0})
+        docs = await db.kyc_documents.find({"user_id": kyc.get("user_id")}, {"_id": 0}).to_list(100)
+        enriched.append({
+            **kyc,
+            "user": user,
+            "documents": docs
+        })
+    
+    return enriched
+
+
+@router.get("/kyb/pending")
+async def list_pending_kyb(admin: dict = Depends(get_admin_user)):
+    """List all pending KYB verifications"""
+    kyb_list = await db.kyb_verifications.find(
+        {"status": "pending_review"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Enrich with user info and documents
+    enriched = []
+    for kyb in kyb_list:
+        user = await db.users.find_one({"id": kyb.get("user_id")}, {"_id": 0, "hashed_password": 0})
+        docs = await db.kyc_documents.find({"user_id": kyb.get("user_id")}, {"_id": 0}).to_list(100)
+        enriched.append({
+            **kyb,
+            "user": user,
+            "documents": docs
+        })
+    
+    return enriched
+
+
+@router.get("/kyc/{user_id}")
+async def get_user_kyc(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get KYC details for a specific user"""
+    kyc = await db.kyc_verifications.find_one({"user_id": user_id}, {"_id": 0})
+    if not kyc:
+        raise HTTPException(status_code=404, detail="KYC not found")
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+    docs = await db.kyc_documents.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    
+    return {
+        **kyc,
+        "user": user,
+        "documents": docs
+    }
+
+
+@router.get("/kyb/{user_id}")
+async def get_user_kyb(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get KYB details for a specific user"""
+    kyb = await db.kyb_verifications.find_one({"user_id": user_id}, {"_id": 0})
+    if not kyb:
+        raise HTTPException(status_code=404, detail="KYB not found")
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+    docs = await db.kyc_documents.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    
+    return {
+        **kyb,
+        "user": user,
+        "documents": docs
+    }
+
+
+@router.post("/kyc/{user_id}/approve")
+async def approve_kyc(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Approve a KYC verification"""
+    kyc = await db.kyc_verifications.find_one({"user_id": user_id})
+    if not kyc:
+        raise HTTPException(status_code=404, detail="KYC not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update KYC status
+    await db.kyc_verifications.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_by": admin["id"],
+                "reviewed_at": now,
+                "completed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    # Update user's KYC status
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"kyc_status": "approved", "updated_at": now}}
+    )
+    
+    # Update all documents to approved
+    await db.kyc_documents.update_many(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_by": admin["id"],
+                "reviewed_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "KYC approved"}
+
+
+@router.post("/kyc/{user_id}/reject")
+async def reject_kyc(
+    user_id: str,
+    reason: str = "Documents do not meet requirements",
+    admin: dict = Depends(get_admin_user)
+):
+    """Reject a KYC verification"""
+    kyc = await db.kyc_verifications.find_one({"user_id": user_id})
+    if not kyc:
+        raise HTTPException(status_code=404, detail="KYC not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update KYC status
+    await db.kyc_verifications.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejection_reason": reason,
+                "reviewed_by": admin["id"],
+                "reviewed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    # Update user's KYC status
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"kyc_status": "rejected", "updated_at": now}}
+    )
+    
+    return {"success": True, "message": "KYC rejected"}
+
+
+@router.post("/kyb/{user_id}/approve")
+async def approve_kyb(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Approve a KYB verification"""
+    kyb = await db.kyb_verifications.find_one({"user_id": user_id})
+    if not kyb:
+        raise HTTPException(status_code=404, detail="KYB not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update KYB status
+    await db.kyb_verifications.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_by": admin["id"],
+                "reviewed_at": now,
+                "completed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "KYB approved"}
+
+
+@router.post("/kyb/{user_id}/reject")
+async def reject_kyb(
+    user_id: str,
+    reason: str = "Documents do not meet requirements",
+    admin: dict = Depends(get_admin_user)
+):
+    """Reject a KYB verification"""
+    kyb = await db.kyb_verifications.find_one({"user_id": user_id})
+    if not kyb:
+        raise HTTPException(status_code=404, detail="KYB not found")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update KYB status
+    await db.kyb_verifications.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejection_reason": reason,
+                "reviewed_by": admin["id"],
+                "reviewed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "KYB rejected"}
+
+
+@router.post("/document/{doc_id}/approve")
+async def approve_document(doc_id: str, admin: dict = Depends(get_admin_user)):
+    """Approve a specific document"""
+    result = await db.kyc_documents.update_one(
+        {"id": doc_id},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_by": admin["id"],
+                "reviewed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    return {"success": True, "message": "Document approved"}
+
+
+@router.post("/document/{doc_id}/reject")
+async def reject_document(
+    doc_id: str,
+    reason: str = "Document not readable or invalid",
+    admin: dict = Depends(get_admin_user)
+):
+    """Reject a specific document"""
+    result = await db.kyc_documents.update_one(
+        {"id": doc_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejection_reason": reason,
+                "reviewed_by": admin["id"],
+                "reviewed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    return {"success": True, "message": "Document rejected"}
