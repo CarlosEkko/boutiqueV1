@@ -387,7 +387,56 @@ const translations = {
       whyUs: 'لماذا نحن',
       regions: 'المناطق',
       contact: 'اتصل بنا',
-      requestAccess: 'طلب الوصول'
+      requestAccess: 'طلب الوصول',
+      login: 'تسجيل الدخول',
+      profile: 'الملف الشخصي'
+    },
+    
+    // Auth
+    auth: {
+      welcomeBack: 'مرحباً بعودتك',
+      createAccount: 'إنشاء حساب',
+      loginDescription: 'سجل الدخول للوصول إلى حسابك',
+      registerDescription: 'انضم إلى منصتنا الحصرية',
+      fullName: 'الاسم الكامل',
+      email: 'البريد الإلكتروني',
+      password: 'كلمة المرور',
+      phone: 'رقم الهاتف',
+      country: 'البلد',
+      selectCountry: 'اختر بلدك',
+      signIn: 'تسجيل الدخول',
+      signUp: 'إنشاء حساب',
+      processing: 'جاري المعالجة...',
+      noAccount: 'ليس لديك حساب؟',
+      haveAccount: 'لديك حساب بالفعل؟',
+      backToHome: 'العودة للرئيسية',
+      loginSuccess: 'تم تسجيل الدخول بنجاح!',
+      registerSuccess: 'تم إنشاء الحساب بنجاح!',
+      logoutSuccess: 'تم تسجيل الخروج بنجاح!',
+      logout: 'تسجيل الخروج'
+    },
+    
+    // Profile
+    profile: {
+      backToHome: 'العودة للرئيسية',
+      edit: 'تعديل الملف الشخصي',
+      fullName: 'الاسم الكامل',
+      email: 'البريد الإلكتروني',
+      phone: 'رقم الهاتف',
+      country: 'البلد',
+      selectCountry: 'اختر بلدك',
+      memberSince: 'عضو منذ',
+      verified: 'عضو موثق',
+      notProvided: 'غير متوفر',
+      cannotChange: 'لا يمكن تغييره',
+      updateSuccess: 'تم تحديث الملف الشخصي بنجاح!'
+    },
+    
+    // Common
+    common: {
+      save: 'حفظ',
+      saving: 'جاري الحفظ...',
+      cancel: 'إلغاء'
     },
     
     // Hero Section
