@@ -673,6 +673,324 @@ const translations = {
       }
     },
     
+    // Dashboard
+    dashboard: {
+      // Layout
+      layout: {
+        portfolio: 'Portfólio',
+        admin: 'Admin',
+        loggedInAs: 'Sessão iniciada como',
+        logout: 'Sair'
+      },
+      // Navigation
+      nav: {
+        overview: 'Visão Geral',
+        wallets: 'Carteiras',
+        transactions: 'Transações',
+        investments: 'Investimentos',
+        roi: 'ROI',
+        transparency: 'Transparência',
+        kycVerification: 'Verificação KYC',
+        adminOverview: 'Admin Visão Geral',
+        users: 'Utilizadores',
+        kycKyb: 'KYC/KYB',
+        opportunities: 'Oportunidades',
+        inviteCodes: 'Códigos de Convite'
+      },
+      // Overview
+      overview: {
+        welcome: 'Bem-vindo de volta',
+        portfolioValue: 'Valor do Portfólio',
+        totalAssets: 'Total de Ativos',
+        activeInvestments: 'Investimentos Ativos',
+        pendingTransactions: 'Pendentes',
+        recentActivity: 'Atividade Recente',
+        noActivity: 'Sem atividade recente',
+        viewAll: 'Ver Tudo'
+      },
+      // Wallets
+      wallets: {
+        title: 'As Suas Carteiras',
+        subtitle: 'Gerir as suas carteiras de criptomoedas',
+        balance: 'Saldo',
+        available: 'Disponível',
+        pending: 'Pendente',
+        address: 'Endereço',
+        copyAddress: 'Copiar Endereço',
+        deposit: 'Depositar',
+        withdraw: 'Levantar',
+        noWallets: 'Nenhuma carteira encontrada'
+      },
+      // Transactions
+      transactions: {
+        title: 'Histórico de Transações',
+        subtitle: 'Ver todas as suas transações',
+        type: 'Tipo',
+        amount: 'Montante',
+        status: 'Estado',
+        date: 'Data',
+        deposit: 'Depósito',
+        withdrawal: 'Levantamento',
+        transfer: 'Transferência',
+        completed: 'Concluído',
+        pending: 'Pendente',
+        failed: 'Falhado',
+        noTransactions: 'Nenhuma transação encontrada'
+      },
+      // Investments
+      investments: {
+        title: 'Oportunidades de Investimento',
+        subtitle: 'Explorar opções de investimento disponíveis',
+        expectedRoi: 'ROI Esperado',
+        duration: 'Duração',
+        minInvestment: 'Investimento Mínimo',
+        maxInvestment: 'Investimento Máximo',
+        riskLevel: 'Nível de Risco',
+        status: 'Estado',
+        open: 'Aberto',
+        closed: 'Fechado',
+        invest: 'Investir',
+        days: 'dias',
+        noOpportunities: 'Nenhuma oportunidade disponível'
+      },
+      // ROI
+      roi: {
+        title: 'Retorno do Investimento',
+        subtitle: 'Acompanhar o desempenho dos seus investimentos',
+        totalInvested: 'Total Investido',
+        totalReturns: 'Retornos Totais',
+        averageRoi: 'ROI Médio',
+        activePositions: 'Posições Ativas',
+        performanceChart: 'Gráfico de Desempenho',
+        noData: 'Sem dados de investimento disponíveis'
+      },
+      // Transparency
+      transparency: {
+        title: 'Transparência de Fundos',
+        subtitle: 'Prova de reservas e relatórios de auditoria',
+        proofOfReserves: 'Prova de Reservas',
+        auditReports: 'Relatórios de Auditoria',
+        lastUpdated: 'Última Atualização',
+        totalReserves: 'Total de Reservas',
+        viewReport: 'Ver Relatório',
+        noReports: 'Nenhum relatório disponível'
+      }
+    },
+    
+    // KYC
+    kyc: {
+      // Status Page
+      status: {
+        title: 'Verificação de Identidade',
+        subtitle: 'Complete a verificação KYC/KYB para desbloquear todas as funcionalidades da plataforma',
+        kycIndividual: 'KYC Individual',
+        forIndividuals: 'Para pessoas físicas',
+        kycDescription: 'Verificação de identidade pessoal. Necessário para operações até €15.000/mês.',
+        kybBusiness: 'KYB Empresarial',
+        forBusinesses: 'Para empresas e instituições',
+        kybDescription: 'Verificação empresarial completa. Necessário para operações institucionais e limites superiores.',
+        notStarted: 'Não Iniciado',
+        inProgress: 'Em Progresso',
+        pendingReview: 'Aguardando Revisão',
+        approved: 'Aprovado',
+        rejected: 'Rejeitado',
+        verificationComplete: 'Verificação completa',
+        startKyc: 'Iniciar KYC',
+        startKyb: 'Iniciar KYB',
+        continueVerification: 'Continuar Verificação',
+        tryAgain: 'Tentar Novamente',
+        estimatedTime: 'A sua verificação está em análise. Tempo estimado: 24-48 horas.',
+        estimatedTimeKyb: 'A sua verificação está em análise. Tempo estimado: 2-5 dias úteis.',
+        whyVerify: 'Porquê verificar a sua identidade?',
+        benefits: [
+          'Acesso completo a todas as funcionalidades da plataforma',
+          'Limites de transação mais elevados',
+          'Proteção contra fraude e acesso não autorizado',
+          'Conformidade com regulamentações AML/KYC',
+          'Suporte prioritário e atendimento dedicado'
+        ],
+        documents: {
+          idDocument: 'Documento de identificação (Passaporte, CC ou CNH)',
+          selfieWithId: 'Selfie com documento',
+          proofOfAddress: 'Comprovativo de morada',
+          certIncorporation: 'Certidão de constituição',
+          articlesAssociation: 'Estatutos sociais',
+          directorsUbos: 'Identificação dos diretores e UBOs'
+        }
+      },
+      // KYC Form
+      form: {
+        title: 'Verificação KYC',
+        subtitle: 'Complete todos os passos para verificar a sua identidade',
+        back: 'Voltar',
+        continue: 'Continuar',
+        submit: 'Submeter KYC',
+        saveInfo: 'Guardar Informação',
+        steps: {
+          personalInfo: 'Dados Pessoais',
+          idDocument: 'Documento ID',
+          selfie: 'Selfie',
+          proofAddress: 'Morada'
+        },
+        personalInfo: {
+          fullName: 'Nome Completo',
+          dateOfBirth: 'Data de Nascimento',
+          nationality: 'Nacionalidade',
+          countryResidence: 'País de Residência',
+          address: 'Morada',
+          city: 'Cidade',
+          postalCode: 'Código Postal'
+        },
+        idDocument: {
+          documentType: 'Tipo de Documento',
+          passport: 'Passaporte',
+          idCard: 'Cartão de Cidadão',
+          driversLicense: 'Carta de Condução',
+          documentNumber: 'Número do Documento',
+          expiryDate: 'Data de Validade',
+          issuingCountry: 'País de Emissão',
+          uploadDocument: 'Carregar Documento',
+          frontDocument: 'Frente do Documento'
+        },
+        selfie: {
+          title: 'Instruções para a Selfie',
+          instructions: [
+            'Segure o documento ao lado do rosto',
+            'Certifique-se que ambos estão claramente visíveis',
+            'Boa iluminação, sem reflexos ou sombras',
+            'Não use óculos de sol ou chapéu'
+          ],
+          selfieWithId: 'Selfie com Documento'
+        },
+        address: {
+          acceptedDocs: 'Documentos Aceites',
+          docsList: [
+            'Fatura de serviços (água, luz, gás, internet)',
+            'Extrato bancário',
+            'Documento fiscal oficial',
+            'Deve ter menos de 3 meses'
+          ],
+          proofOfAddress: 'Comprovativo de Morada'
+        },
+        upload: {
+          dragDrop: 'Arraste um ficheiro ou clique para selecionar',
+          formats: 'Formatos: JPG, PNG, PDF (máx. 10MB)',
+          uploadSuccess: 'Documento carregado com sucesso',
+          upload: 'Carregar'
+        }
+      },
+      // KYB Form
+      kybForm: {
+        title: 'Verificação KYB Empresarial',
+        subtitle: 'Complete todos os passos para verificar a sua empresa',
+        steps: {
+          companyInfo: 'Dados da Empresa',
+          documents: 'Documentos',
+          representatives: 'Representantes',
+          addressProof: 'Comprovativo'
+        },
+        companyInfo: {
+          companyName: 'Nome da Empresa',
+          companyType: 'Tipo de Empresa',
+          llc: 'Sociedade por Quotas (Lda)',
+          corporation: 'Sociedade Anónima (SA)',
+          partnership: 'Sociedade em Nome Colectivo',
+          soleProprietorship: 'Empresário em Nome Individual',
+          nonProfit: 'Associação/Fundação',
+          other: 'Outro',
+          registrationNumber: 'NIPC',
+          taxId: 'NIF (se diferente)',
+          incorporationDate: 'Data de Constituição',
+          incorporationCountry: 'País de Constituição',
+          headquartersAddress: 'Endereço da Sede',
+          businessAddress: 'Morada',
+          businessCity: 'Cidade',
+          businessPostalCode: 'Código Postal',
+          businessCountry: 'País',
+          contacts: 'Contactos',
+          corporateEmail: 'Email Corporativo',
+          phone: 'Telefone',
+          website: 'Website'
+        },
+        documents: {
+          requiredDocs: 'Documentos Necessários',
+          docsList: [
+            'Certidão permanente ou certidão de constituição',
+            'Pacto social / Estatutos',
+            'Registo de quotistas/acionistas'
+          ],
+          certIncorporation: 'Certidão de Constituição',
+          articlesAssociation: 'Estatutos / Pacto Social',
+          shareholderRegister: 'Registo de Quotistas'
+        },
+        representatives: {
+          title: 'Representantes Legais',
+          description: 'Adicione todos os diretores e beneficiários efetivos (UBOs) com participação superior a 25%.',
+          addedReps: 'Representantes Adicionados',
+          addRepresentative: 'Adicionar Representante',
+          fullName: 'Nome Completo',
+          role: 'Cargo',
+          dateOfBirth: 'Data de Nascimento',
+          nationality: 'Nacionalidade',
+          ownershipPercentage: '% Participação',
+          isUbo: 'Beneficiário Efetivo (UBO)',
+          add: 'Adicionar Representante'
+        },
+        addressProof: {
+          title: 'Comprovativo de Morada da Sede',
+          docsList: [
+            'Fatura de serviços em nome da empresa',
+            'Extrato bancário empresarial',
+            'Documento oficial com morada da sede',
+            'Deve ter menos de 3 meses'
+          ],
+          businessProof: 'Comprovativo de Morada Empresarial',
+          taxRegistration: 'Registo Fiscal (opcional)'
+        },
+        submit: 'Submeter KYB'
+      },
+      // Admin KYC
+      admin: {
+        title: 'Verificações KYC/KYB',
+        subtitle: 'Revise e aprove pedidos de verificação de identidade',
+        searchPlaceholder: 'Pesquisar por nome ou email...',
+        pending: 'Pendentes',
+        kycPending: 'KYC Pendentes',
+        kybPending: 'KYB Pendentes',
+        approvedToday: 'Aprovados Hoje',
+        noKycPending: 'Nenhuma verificação KYC pendente',
+        noKybPending: 'Nenhuma verificação KYB pendente',
+        allProcessed: 'Todas as verificações foram processadas',
+        personalData: 'Dados Pessoais',
+        companyData: 'Dados da Empresa',
+        idDocument: 'Documento de Identificação',
+        representatives: 'Representantes',
+        submittedDocuments: 'Documentos Submetidos',
+        noDocuments: 'Nenhum documento encontrado',
+        rejectionReason: 'Motivo da rejeição (obrigatório para rejeitar)',
+        rejectionPlaceholder: 'Ex: Documento ilegível, dados inconsistentes...',
+        reject: 'Rejeitar',
+        approve: 'Aprovar',
+        docs: 'docs',
+        name: 'Nome',
+        dob: 'Data Nascimento',
+        nationalityLabel: 'Nacionalidade',
+        countryResidence: 'País Residência',
+        addressLabel: 'Morada',
+        cityLabel: 'Cidade',
+        company: 'Empresa',
+        type: 'Tipo',
+        nipc: 'NIPC',
+        incorporationDateLabel: 'Data Constituição',
+        countryLabel: 'País',
+        emailLabel: 'Email',
+        documentType: 'Tipo',
+        documentNumber: 'Número',
+        validity: 'Validade',
+        issuingCountryLabel: 'País Emissão'
+      }
+    },
+    
     // Footer
     footer: {
       tagline: 'A exchange boutique para investidores sofisticados.',
