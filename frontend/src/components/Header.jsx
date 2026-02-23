@@ -318,13 +318,13 @@ const Header = () => {
               {/* Auth Button - Login or Profile */}
               {isAuthenticated ? (
                 <Button
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/dashboard')}
                   variant="outline"
                   className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
-                  data-testid="header-profile-btn"
+                  data-testid="header-dashboard-btn"
                 >
                   <User size={18} className="mr-2" />
-                  {user?.name?.split(' ')[0] || t('nav.profile') || 'Profile'}
+                  Dashboard
                 </Button>
               ) : (
                 <Button
