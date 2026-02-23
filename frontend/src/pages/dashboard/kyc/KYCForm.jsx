@@ -100,9 +100,10 @@ const KYCForm = () => {
           'id_document': 1,
           'selfie': 2,
           'proof_of_address': 3,
-          'completed': 4
+          'completed': 3 // Stay on last step if completed
         };
-        setCurrentStep(stepMap[kyc.current_step] || 0);
+        const stepIndex = stepMap[kyc.current_step];
+        setCurrentStep(stepIndex !== undefined ? Math.min(stepIndex, 3) : 0);
       }
     } catch (error) {
       console.error('Error fetching KYC status:', error);
