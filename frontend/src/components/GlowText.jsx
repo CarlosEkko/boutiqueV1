@@ -15,7 +15,7 @@ const GlowText = ({
   delay = 0,
   stagger = 0.04,
   duration = 0.6,
-  glowColor = 'rgba(165, 122, 80, 0.9)',
+  glowColor = 'rgba(165, 122, 80, 0.6)',
   triggerOnScroll = true,
   triggerStart = 'top 85%'
 }) => {
@@ -35,13 +35,13 @@ const GlowText = ({
       if (hasAnimatedRef.current) return;
       hasAnimatedRef.current = true;
 
-      // Create a glow sweep animation
+      // Create a subtle glow sweep animation
       const tl = gsap.timeline();
       
-      // Phase 1: Add glow effect letter by letter
+      // Phase 1: Add subtle glow effect letter by letter
       tl.to(letters, {
-        textShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}, 0 0 60px ${glowColor}`,
-        duration: duration * 0.4,
+        textShadow: `0 0 8px ${glowColor}, 0 0 16px ${glowColor}`,
+        duration: duration * 0.5,
         stagger: stagger,
         ease: 'power2.out',
         delay: delay
@@ -50,7 +50,7 @@ const GlowText = ({
       // Phase 2: Fade out glow, text remains fully visible
       tl.to(letters, {
         textShadow: 'none',
-        duration: duration * 0.6,
+        duration: duration * 0.5,
         stagger: stagger * 0.2,
         ease: 'power2.inOut'
       }, `-=${duration * 0.2}`);
