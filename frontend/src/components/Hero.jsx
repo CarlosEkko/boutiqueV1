@@ -38,10 +38,10 @@ const Hero = () => {
       }
       
       if (titleLine2) {
-        animateTextChars.rotateScale(titleLine2, {
-          duration: 0.06,
-          stagger: 0.02,
-          delay: 0.8
+        animateTextChars.flip3D(titleLine2, {
+          duration: 0.6,
+          stagger: 0.025,
+          delay: 0.9
         });
       }
 
