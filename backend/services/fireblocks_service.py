@@ -5,7 +5,7 @@ Handles wallet creation, balance queries, and transactions via Fireblocks API
 import os
 import logging
 from typing import Optional, Dict, List, Any
-from fireblocks_sdk import FireblocksSDK, TransferPeerPath, VAULT_ACCOUNT, TRANSACTION_STATUS_COMPLETED
+from fireblocks_sdk import FireblocksSDK, TransferPeerPath, PagedVaultAccountsRequestFilters, VAULT_ACCOUNT, TRANSACTION_STATUS_COMPLETED
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
