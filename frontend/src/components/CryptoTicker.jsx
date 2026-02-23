@@ -149,11 +149,11 @@ const CryptoTicker = () => {
         )}
       </div>
 
-      {/* Live indicator */}
+      {/* Live indicator with source */}
       {isLive && (
-        <div className="flex items-center space-x-1 mr-4 flex-shrink-0">
+        <div className="flex items-center space-x-1 mr-4 flex-shrink-0" title={`Data from ${dataSource}`}>
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-[10px] text-green-400 uppercase tracking-wider">Live</span>
+          <span className="text-[10px] text-green-400 uppercase tracking-wider">CMC</span>
         </div>
       )}
       
