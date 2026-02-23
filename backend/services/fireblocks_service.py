@@ -52,8 +52,9 @@ class FireblocksService:
         """Get all vault accounts"""
         try:
             client = cls.get_client()
-            # Use the paginated method
-            result = client.get_vault_accounts_with_page_info()
+            # Use the paginated method with empty filter
+            filters = PagedVaultAccountsRequestFilters()
+            result = client.get_vault_accounts_with_page_info(filters)
             accounts = result.get('accounts', []) if isinstance(result, dict) else result
             return accounts
         except Exception as e:
