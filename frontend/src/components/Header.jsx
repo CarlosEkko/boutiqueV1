@@ -315,6 +315,29 @@ const Header = () => {
                 ))}
               </div>
 
+              {/* Auth Button - Login or Profile */}
+              {isAuthenticated ? (
+                <Button
+                  onClick={() => navigate('/profile')}
+                  variant="outline"
+                  className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  data-testid="header-profile-btn"
+                >
+                  <User size={18} className="mr-2" />
+                  {user?.name?.split(' ')[0] || t('nav.profile') || 'Profile'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => navigate('/auth')}
+                  variant="outline"
+                  className="border-amber-900/30 text-amber-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  data-testid="header-login-btn"
+                >
+                  <LogIn size={18} className="mr-2" />
+                  {t('nav.login') || 'Login'}
+                </Button>
+              )}
+
               <Button
                 onClick={(e) => handleNavClick(e, '/#contact')}
                 className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 font-['Inter']"
