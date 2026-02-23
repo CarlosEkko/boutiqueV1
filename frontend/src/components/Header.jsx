@@ -256,7 +256,7 @@ const Header = () => {
                       <span className="text-black font-bold text-lg md:text-xl font-['Inter']">K</span>
                     </div>
                     <span className="text-xl md:text-2xl font-light text-white font-['Inter']">
-                      <span className="text-amber-400">Krypto</span>box.io
+                      <span className="text-amber-400">KB</span>EX.io
                     </span>
                   </div>
                 </span>
