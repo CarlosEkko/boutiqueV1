@@ -24,7 +24,7 @@ const Footer = () => {
                 <span className="text-black font-bold text-xl">K</span>
               </div>
               <span className="text-2xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
-                Kryptobox.io
+                KBEX.io
               </span>
             </a>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
@@ -33,7 +33,7 @@ const Footer = () => {
             <div className="space-y-2">
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
                 <Mail size={16} className="text-amber-400" />
-                <span>contact@kryptobox.io</span>
+                <span>contact@kbex.io</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
                 <Phone size={16} className="text-amber-400" />
