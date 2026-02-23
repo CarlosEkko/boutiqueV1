@@ -68,6 +68,120 @@ async def get_status_checks():
     
     return status_checks
 
+
+# ==================== CRYPTO PRICES API ====================
+
+class CryptoPrice(BaseModel):
+    symbol: str
+    name: str
+    price: float
+    change_24h: float
+    market_cap: Optional[float] = None
+    volume_24h: Optional[float] = None
+
+class CryptoPricesResponse(BaseModel):
+    prices: List[CryptoPrice]
+    last_updated: datetime
+    source: str = "coingecko"
+
+# Cache for crypto prices
+crypto_cache: Dict[str, Any] = {
+    "data": None,
+    "last_fetch": None,
+    "cache_duration": 60  # Cache for 60 seconds
+}
+
+COINGECKO_API_URL = "https://api.coingecko.com/api/v3"
+
+# Crypto IDs mapping for CoinGecko
+CRYPTO_IDS = {
+    "bitcoin": {"symbol": "BTC", "name": "Bitcoin"},
+    "ethereum": {"symbol": "ETH", "name": "Ethereum"},
+    "cardano": {"symbol": "ADA", "name": "Cardano"},
+    "solana": {"symbol": "SOL", "name": "Solana"},
+    "ripple": {"symbol": "XRP", "name": "Ripple"},
+    "binancecoin": {"symbol": "BNB", "name": "BNB"},
+    "dogecoin": {"symbol": "DOGE", "name": "Dogecoin"},
+    "polkadot": {"symbol": "DOT", "name": "Polkadot"}
+}
+
+async def fetch_crypto_prices() -> List[CryptoPrice]:
+    """Fetch crypto prices from CoinGecko API"""
+    crypto_ids = ",".join(CRYPTO_IDS.keys())
+    
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            response = await client.get(
+                f"{COINGECKO_API_URL}/simple/price",
+                params={
+                    "ids": crypto_ids,
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                    "include_market_cap": "true",
+                    "include_24hr_vol": "true"
+                }
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            prices = []
+            for crypto_id, info in CRYPTO_IDS.items():
+                if crypto_id in data:
+                    crypto_data = data[crypto_id]
+                    prices.append(CryptoPrice(
+                        symbol=info["symbol"],
+                        name=info["name"],
+                        price=crypto_data.get("usd", 0),
+                        change_24h=crypto_data.get("usd_24h_change", 0),
+                        market_cap=crypto_data.get("usd_market_cap"),
+                        volume_24h=crypto_data.get("usd_24h_vol")
+                    ))
+            
+            return prices
+            
+        except httpx.HTTPError as e:
+            logger.error(f"Error fetching crypto prices from CoinGecko: {e}")
+            raise HTTPException(status_code=503, detail="Unable to fetch crypto prices")
+        except Exception as e:
+            logger.error(f"Unexpected error fetching crypto prices: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/crypto-prices", response_model=CryptoPricesResponse)
+async def get_crypto_prices():
+    """
+    Get current crypto prices from CoinGecko API.
+    Results are cached for 60 seconds to avoid rate limiting.
+    """
+    global crypto_cache
+    
+    current_time = datetime.now(timezone.utc)
+    
+    # Check if cache is valid
+    if (crypto_cache["data"] is not None and 
+        crypto_cache["last_fetch"] is not None):
+        time_diff = (current_time - crypto_cache["last_fetch"]).total_seconds()
+        if time_diff < crypto_cache["cache_duration"]:
+            logger.info("Returning cached crypto prices")
+            return CryptoPricesResponse(
+                prices=crypto_cache["data"],
+                last_updated=crypto_cache["last_fetch"],
+                source="coingecko (cached)"
+            )
+    
+    # Fetch fresh data
+    logger.info("Fetching fresh crypto prices from CoinGecko")
+    prices = await fetch_crypto_prices()
+    
+    # Update cache
+    crypto_cache["data"] = prices
+    crypto_cache["last_fetch"] = current_time
+    
+    return CryptoPricesResponse(
+        prices=prices,
+        last_updated=current_time,
+        source="coingecko"
+    )
+
 # Include the router in the main app
 app.include_router(api_router)
 
