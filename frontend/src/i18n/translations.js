@@ -33,14 +33,28 @@ const translations = {
       title: 'Tailored for',
       titleHighlight: 'Exceptional Clients',
       description: 'Four pillars of excellence designed exclusively for institutional and high-net-worth investors',
-      premiumExchange: 'Premium Exchange',
-      premiumExchangeDesc: 'White-glove OTC trading desk with dedicated relationship managers. Execute large-volume trades with institutional-grade liquidity and discretion.',
-      cryptoAtm: 'Crypto ATM Network',
-      cryptoAtmDesc: 'Curated network of premium crypto ATMs in exclusive locations. Seamless fiat-to-crypto conversions with enhanced privacy and convenience.',
-      launchpad: 'Launchpad',
-      launchpadDesc: 'Early access to vetted blockchain projects and token sales. Participate in exclusive investment opportunities before the market.',
-      custody: 'Institutional Custody',
-      custodyDesc: 'Military-grade security for digital asset storage. Multi-signature wallets, insurance coverage, and 24/7 monitoring.'
+      items: [
+        {
+          title: 'Premium Exchange',
+          description: 'White-glove OTC trading desk with dedicated relationship managers. Execute large-volume trades with institutional-grade liquidity and discretion.',
+          features: ['24/7 Dedicated Support', 'Institutional Liquidity', 'Best Execution Guaranteed']
+        },
+        {
+          title: 'Crypto ATM Network',
+          description: 'Curated network of premium crypto ATMs in exclusive locations. Seamless fiat-to-crypto conversions with enhanced privacy and convenience.',
+          features: ['Prime Locations', 'Enhanced Privacy', 'Multi-Currency Support']
+        },
+        {
+          title: 'Exclusive Launchpad',
+          description: 'Early access to vetted blockchain projects and token sales. Participate in pre-vetted opportunities unavailable to retail investors.',
+          features: ['Vetted Projects Only', 'Early Access', 'Due Diligence Reports']
+        },
+        {
+          title: 'Institutional Custody',
+          description: 'Military-grade security with multi-signature cold storage. Bank-level insurance and compliance for peace of mind.',
+          features: ['Cold Storage', 'Multi-Sig Security', 'Insured Assets']
+        }
+      ]
     },
     
     // Trust Section
