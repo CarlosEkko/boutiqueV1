@@ -269,7 +269,7 @@ const HeroV2 = () => {
           className="absolute text-6xl md:text-8xl lg:text-9xl font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
-            textShadow: '0px 0px 1px rgba(165, 122, 80, 0.8)'
+            textShadow: '0px 0px 1px rgba(165, 122, 80, 0.4)'
           }}
         >
           Sophisticated
@@ -281,7 +281,7 @@ const HeroV2 = () => {
           className="absolute text-7xl md:text-9xl lg:text-[11rem] font-extralight text-gold-400 opacity-0 text-center px-4"
           style={{ 
             willChange: 'opacity, transform, filter',
-            textShadow: '0px 0px 2px rgba(165, 122, 80, 0.8)'
+            textShadow: '0px 0px 1px rgba(165, 122, 80, 0.4)'
           }}
         >
           INVESTORS
@@ -295,13 +295,13 @@ const HeroV2 = () => {
           >
             <h1 
               className="text-4xl md:text-6xl lg:text-7xl font-extralight text-gold-400 tracking-widest uppercase mb-4"
-              style={{ textShadow: '0px 0px 1px rgba(165, 122, 80, 0.8)' }}
+              style={{ textShadow: '0px 0px 1px rgba(165, 122, 80, 0.4)' }}
             >
               {splitTextIntoSpans('KBEX')}
             </h1>
             <p 
               className="text-lg md:text-xl lg:text-2xl font-light text-gray-300 tracking-wider"
-              style={{ textShadow: '0px 0px 1px rgba(255, 255, 255, 0.5)' }}
+              style={{ textShadow: '0px 0px 1px rgba(255, 255, 255, 0.3)' }}
             >
               {splitTextIntoSpans('Premium Crypto Exchange')}
             </p>
