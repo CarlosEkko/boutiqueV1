@@ -92,7 +92,7 @@ const AuthPage = () => {
           {/* Logo */}
           <div className="mb-4 flex justify-center">
             <span className="text-2xl font-light tracking-wider text-white">
-              KRYPTO<span className="text-amber-400">BOX</span>
+              KB<span className="text-amber-400">EX</span>
             </span>
           </div>
           
