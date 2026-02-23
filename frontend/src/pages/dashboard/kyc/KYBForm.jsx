@@ -126,10 +126,10 @@ const KYBForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Dados da empresa guardados');
+      toast.success(t('kyc.form.upload.uploadSuccess'));
       setCurrentStep(1);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao guardar dados');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -148,10 +148,10 @@ const KYBForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Documento carregado com sucesso');
+      toast.success(t('kyc.form.upload.uploadSuccess'));
       fetchDocuments();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao carregar documento');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
