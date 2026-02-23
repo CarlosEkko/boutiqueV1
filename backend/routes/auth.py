@@ -85,6 +85,7 @@ async def register(user_data: UserCreate):
         updated_at=user_in_db.updated_at,
         is_active=user_in_db.is_active,
         is_approved=user_in_db.is_approved,
+        is_admin=user_in_db.is_admin,
         kyc_status=user_in_db.kyc_status,
         membership_level=user_in_db.membership_level
     )
