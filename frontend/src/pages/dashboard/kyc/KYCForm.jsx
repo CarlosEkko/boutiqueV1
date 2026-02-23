@@ -674,7 +674,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
               size="sm"
               className="bg-amber-600 hover:bg-amber-700 text-black"
             >
-              {uploading ? <Loader2 className="animate-spin" size={16} /> : 'Carregar'}
+              {uploading ? <Loader2 className="animate-spin" size={16} /> : (t ? t('kyc.form.upload.upload') : 'Upload')}
             </Button>
           </div>
         </div>
