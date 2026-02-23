@@ -37,7 +37,7 @@ const Footer = () => {
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
                 <Phone size={16} className="text-amber-400" />
-                <span>+41 (0) 800 KRYPTO</span>
+                <span>+41 (0) 800 KBEX</span>
               </div>
               <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-gray-400 text-sm`}>
                 <MapPin size={16} className="text-amber-400" />
