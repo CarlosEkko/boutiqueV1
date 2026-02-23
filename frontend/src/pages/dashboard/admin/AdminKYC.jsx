@@ -151,7 +151,7 @@ const AdminKYC = () => {
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 text-amber-400 mb-2">
             <Clock size={18} />
-            <span className="text-sm">Pendentes</span>
+            <span className="text-sm">{t('kyc.admin.pending')}</span>
           </div>
           <p className="text-2xl font-medium text-white">
             {pendingKYC.length + pendingKYB.length}
@@ -160,21 +160,21 @@ const AdminKYC = () => {
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 text-blue-400 mb-2">
             <User size={18} />
-            <span className="text-sm">KYC Pendentes</span>
+            <span className="text-sm">{t('kyc.admin.kycPending')}</span>
           </div>
           <p className="text-2xl font-medium text-white">{pendingKYC.length}</p>
         </div>
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 text-purple-400 mb-2">
             <Building2 size={18} />
-            <span className="text-sm">KYB Pendentes</span>
+            <span className="text-sm">{t('kyc.admin.kybPending')}</span>
           </div>
           <p className="text-2xl font-medium text-white">{pendingKYB.length}</p>
         </div>
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 text-green-400 mb-2">
             <CheckCircle2 size={18} />
-            <span className="text-sm">Aprovados Hoje</span>
+            <span className="text-sm">{t('kyc.admin.approvedToday')}</span>
           </div>
           <p className="text-2xl font-medium text-white">-</p>
         </div>
@@ -185,10 +185,10 @@ const AdminKYC = () => {
         <div className="bg-zinc-900/50 border border-amber-900/20 rounded-xl p-12 text-center">
           <Shield className="mx-auto text-gray-600 mb-4" size={48} />
           <h3 className="text-white font-medium mb-2">
-            Nenhuma verificação {activeTab.toUpperCase()} pendente
+            {activeTab === 'kyc' ? t('kyc.admin.noKycPending') : t('kyc.admin.noKybPending')}
           </h3>
           <p className="text-gray-400 text-sm">
-            Todas as verificações foram processadas
+            {t('kyc.admin.allProcessed')}
           </p>
         </div>
       ) : (
@@ -204,6 +204,7 @@ const AdminKYC = () => {
               onReject={() => handleReject(item.user_id, activeTab)}
               rejectionReason={rejectionReason}
               setRejectionReason={setRejectionReason}
+              t={t}
             />
           ))}
         </div>
@@ -217,7 +218,7 @@ const VerificationCard = ({
   type, 
   expanded, 
   onToggle, 
-  onApprove, 
+  onApprove,
   onReject,
   rejectionReason,
   setRejectionReason
