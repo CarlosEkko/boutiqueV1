@@ -74,6 +74,13 @@ Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, dire
 - KYC/KYB pages fully translated
 - Admin panels fully translated
 
+### Phase 6.1: KYC/KYB Bug Fixes & Complete Translations ✅ (February 2025)
+- Fixed critical STEPS constant bug causing "Cannot read properties of undefined (reading 'icon')" error
+- Fixed stepMap bounds to prevent array index overflow
+- Added complete Portuguese translations to KYBForm.jsx
+- All form labels, buttons, progress steps now fully translated
+- FileUploadBox component updated to support i18n
+
 ---
 
 ## Technical Architecture
