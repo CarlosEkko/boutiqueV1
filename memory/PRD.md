@@ -98,6 +98,11 @@ Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriorm
 - Updated tailwind.config.js with custom 'gold' color scale (50-950)
 - All components, animations, gradients, and shadows updated
 - Selection, scrollbar, and focus states use new gold tones
+- **Subtle Glow Effects**: Reduced glow/shadow intensity across all animated elements
+  - GlowText component: 60% opacity, smaller blur radius (8px-16px vs 20px-60px)
+  - Hero animations: 40-50% opacity shadows vs 80-100%
+  - Cursor glow: 50% intensity
+  - Text shadows: Reduced to 0.2-0.4 opacity for elegant appearance
 
 ---
 
