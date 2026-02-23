@@ -211,6 +211,118 @@ async def update_membership_level(
     return {"success": True, "message": f"Membership level updated to {level}"}
 
 
+@router.post("/users/{user_id}/make-admin")
+async def make_user_admin(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Make a user an admin"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_admin": True,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"User {user['email']} is now an admin"}
+
+
+@router.post("/users/{user_id}/remove-admin")
+async def remove_user_admin(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Remove admin rights from a user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent removing own admin rights
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Cannot remove your own admin rights")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_admin": False,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"Admin rights removed from {user['email']}"}
+
+
+@router.get("/stats")
+async def get_admin_stats(admin: dict = Depends(get_admin_user)):
+    """Get admin dashboard statistics"""
+    # Count users
+    total_users = await db.users.count_documents({})
+    approved_users = await db.users.count_documents({"is_approved": True})
+    pending_users = await db.users.count_documents({"is_approved": False})
+    admin_users = await db.users.count_documents({"is_admin": True})
+    
+    # KYC stats
+    kyc_approved = await db.users.count_documents({"kyc_status": "approved"})
+    kyc_pending = await db.users.count_documents({"kyc_status": "pending"})
+    
+    # Investment stats
+    total_opportunities = await db.investment_opportunities.count_documents({})
+    open_opportunities = await db.investment_opportunities.count_documents({"status": "open"})
+    total_investments = await db.user_investments.count_documents({})
+    
+    # Calculate total invested amount
+    investments = await db.user_investments.find({}, {"amount": 1, "_id": 0}).to_list(10000)
+    total_invested_amount = sum(inv.get("amount", 0) for inv in investments)
+    
+    # Wallet stats
+    total_wallets = await db.wallets.count_documents({})
+    
+    # Transaction stats
+    total_transactions = await db.transactions.count_documents({})
+    
+    # Invite code stats
+    total_invite_codes = await db.invite_codes.count_documents({})
+    active_invite_codes = await db.invite_codes.count_documents({"is_active": True})
+    
+    return {
+        "users": {
+            "total": total_users,
+            "approved": approved_users,
+            "pending": pending_users,
+            "admins": admin_users
+        },
+        "kyc": {
+            "approved": kyc_approved,
+            "pending": kyc_pending
+        },
+        "investments": {
+            "total_opportunities": total_opportunities,
+            "open_opportunities": open_opportunities,
+            "total_investments": total_investments,
+            "total_invested_amount": total_invested_amount
+        },
+        "wallets": {
+            "total": total_wallets
+        },
+        "transactions": {
+            "total": total_transactions
+        },
+        "invite_codes": {
+            "total": total_invite_codes,
+            "active": active_invite_codes
+        }
+    }
+
+
 # ==================== INVITE CODES ====================
 
 @router.get("/invites", response_model=List[dict])
