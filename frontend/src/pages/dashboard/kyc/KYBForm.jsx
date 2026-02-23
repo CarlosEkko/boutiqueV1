@@ -314,7 +314,7 @@ const KYBForm = () => {
 
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="business_city">Cidade *</Label>
+                <Label htmlFor="business_city">{t('kyc.kybForm.companyInfo.businessCity')} *</Label>
                 <Input
                   id="business_city"
                   value={companyInfo.business_city}
@@ -324,7 +324,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="business_postal_code">Código Postal *</Label>
+                <Label htmlFor="business_postal_code">{t('kyc.kybForm.companyInfo.businessPostalCode')} *</Label>
                 <Input
                   id="business_postal_code"
                   value={companyInfo.business_postal_code}
@@ -334,7 +334,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="business_country">País *</Label>
+                <Label htmlFor="business_country">{t('kyc.kybForm.companyInfo.businessCountry')} *</Label>
                 <Input
                   id="business_country"
                   value={companyInfo.business_country}
@@ -346,12 +346,12 @@ const KYBForm = () => {
             </div>
 
             <div className="border-t border-zinc-700 pt-4">
-              <h4 className="text-white font-medium mb-4">Contactos</h4>
+              <h4 className="text-white font-medium mb-4">{t('kyc.kybForm.companyInfo.contacts')}</h4>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="business_email">Email Corporativo *</Label>
+                <Label htmlFor="business_email">{t('kyc.kybForm.companyInfo.corporateEmail')} *</Label>
                 <Input
                   id="business_email"
                   type="email"
@@ -363,7 +363,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="business_phone">Telefone</Label>
+                <Label htmlFor="business_phone">{t('kyc.kybForm.companyInfo.phone')}</Label>
                 <Input
                   id="business_phone"
                   value={companyInfo.business_phone}
@@ -375,7 +375,7 @@ const KYBForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website">{t('kyc.kybForm.companyInfo.website')}</Label>
               <Input
                 id="website"
                 value={companyInfo.website}
@@ -392,7 +392,7 @@ const KYBForm = () => {
               data-testid="submit-company-info"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Continuar
+              {t('kyc.form.continue')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           </div>
