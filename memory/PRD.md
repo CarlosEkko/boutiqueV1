@@ -90,7 +90,13 @@ Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriorm
   - Real-time price conversion for all crypto pairs
   - Dropdown selector in header ticker bar
 
-### Phase 6.3: Gold Color Palette Update ✅ (February 2025)
+### Phase 6.4: CoinMarketCap Integration ✅ (February 2025)
+- **Replaced CoinGecko with CoinMarketCap API** for crypto prices
+- Backend endpoint updated to fetch from CMC API with proper authentication
+- 8 cryptocurrencies tracked: BTC, ETH, ADA, SOL, XRP, BNB, DOGE, DOT
+- Real-time prices with 60-second cache to optimize API usage
+- Frontend ticker shows "CMC" indicator when data is live
+- Multi-fiat conversion maintained (USD, EUR, AED, BRL)
 - **New Color Scheme**: Replaced amber (#d97706) with custom gold palette
   - Primary gold: #a57a50 (warm bronze/gold)
   - Mid-tone: #7e5d3f (darker gold)
