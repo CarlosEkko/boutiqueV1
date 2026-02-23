@@ -1,4 +1,4 @@
-// Translations for Kryptobox.io
+// Translations for KBEX.io
 // Supports English (EN), Portuguese (PT), and Arabic (AR)
 
 const translations = {
@@ -109,7 +109,7 @@ const translations = {
     // Trust Section
     trust: {
       title: 'Why the Elite',
-      titleHighlight: 'Choose Kryptobox',
+      titleHighlight: 'Choose KBEX',
       description: 'Uncompromising standards that set us apart in the digital asset space',
       regulated: 'Regulated & Compliant',
       regulatedDesc: 'Fully licensed and regulated across European jurisdictions. MiCA-compliant operations ensuring legal certainty.',
@@ -150,7 +150,7 @@ const translations = {
       badge: 'Get Started',
       title: 'Join the',
       titleHighlight: 'Exclusive Circle',
-      description: 'Submit your interest and our team will reach out to discuss how Kryptobox can serve your digital asset needs.',
+      description: 'Submit your interest and our team will reach out to discuss how KBEX can serve your digital asset needs.',
       form: {
         fullName: 'Full Name',
         email: 'Email Address',
@@ -503,7 +503,7 @@ const translations = {
       contactUs: 'Contact Us',
       status: 'System Status',
       security: 'Security',
-      copyright: '© 2025 Kryptobox.io. All rights reserved.',
+      copyright: '© 2025 KBEX.io. All rights reserved.',
       disclaimer: 'Cryptocurrency trading involves substantial risk of loss. Please trade responsibly.'
     }
   },
@@ -615,7 +615,7 @@ const translations = {
     // Trust Section
     trust: {
       title: 'Porquê a Elite',
-      titleHighlight: 'Escolhe a Kryptobox',
+      titleHighlight: 'Escolhe a KBEX',
       description: 'Padrões intransigentes que nos distinguem no espaço dos ativos digitais',
       regulated: 'Regulada & Conforme',
       regulatedDesc: 'Totalmente licenciada e regulada em jurisdições europeias. Operações conformes com MiCA garantindo certeza legal.',
@@ -656,7 +656,7 @@ const translations = {
       badge: 'Começar',
       title: 'Junte-se ao',
       titleHighlight: 'Círculo Exclusivo',
-      description: 'Submeta o seu interesse e a nossa equipa entrará em contacto para discutir como a Kryptobox pode servir as suas necessidades de ativos digitais.',
+      description: 'Submeta o seu interesse e a nossa equipa entrará em contacto para discutir como a KBEX pode servir as suas necessidades de ativos digitais.',
       form: {
         fullName: 'Nome Completo',
         email: 'Endereço de Email',
@@ -1009,7 +1009,7 @@ const translations = {
       contactUs: 'Contacte-nos',
       status: 'Estado do Sistema',
       security: 'Segurança',
-      copyright: '© 2025 Kryptobox.io. Todos os direitos reservados.',
+      copyright: '© 2025 KBEX.io. Todos os direitos reservados.',
       disclaimer: 'A negociação de criptomoedas envolve risco substancial de perda. Por favor negoceie com responsabilidade.'
     }
   },
