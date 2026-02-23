@@ -221,7 +221,8 @@ const VerificationCard = ({
   onApprove,
   onReject,
   rejectionReason,
-  setRejectionReason
+  setRejectionReason,
+  t
 }) => {
   const isKYC = type === 'kyc';
 
@@ -249,7 +250,7 @@ const VerificationCard = ({
             </h3>
             <p className="text-sm text-gray-400">{item.user?.email}</p>
             {!isKYC && (
-              <p className="text-xs text-amber-400">NIPC: {item.registration_number}</p>
+              <p className="text-xs text-amber-400">{t('kyc.admin.nipc')}: {item.registration_number}</p>
             )}
           </div>
         </div>
@@ -257,10 +258,10 @@ const VerificationCard = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10">
             <Clock size={14} className="text-amber-400" />
-            <span className="text-sm text-amber-400">Pendente</span>
+            <span className="text-sm text-amber-400">{t('kyc.admin.pending')}</span>
           </div>
           <div className="text-gray-400">
-            {item.documents?.length || 0} docs
+            {item.documents?.length || 0} {t('kyc.admin.docs')}
           </div>
           {expanded ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
         </div>
@@ -273,21 +274,21 @@ const VerificationCard = ({
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h4 className="text-amber-400 font-medium mb-3">
-                {isKYC ? 'Dados Pessoais' : 'Dados da Empresa'}
+                {isKYC ? t('kyc.admin.personalData') : t('kyc.admin.companyData')}
               </h4>
               <div className="space-y-2 text-sm">
                 {isKYC ? (
                   <>
-                    <InfoRow label="Nome" value={item.full_name} />
-                    <InfoRow label="Data Nascimento" value={item.date_of_birth} />
-                    <InfoRow label="Nacionalidade" value={item.nationality} />
-                    <InfoRow label="País Residência" value={item.country_of_residence} />
-                    <InfoRow label="Morada" value={item.address} />
-                    <InfoRow label="Cidade" value={`${item.city}, ${item.postal_code}`} />
+                    <InfoRow label={t('kyc.admin.name')} value={item.full_name} />
+                    <InfoRow label={t('kyc.admin.dob')} value={item.date_of_birth} />
+                    <InfoRow label={t('kyc.admin.nationalityLabel')} value={item.nationality} />
+                    <InfoRow label={t('kyc.admin.countryResidence')} value={item.country_of_residence} />
+                    <InfoRow label={t('kyc.admin.addressLabel')} value={item.address} />
+                    <InfoRow label={t('kyc.admin.cityLabel')} value={`${item.city}, ${item.postal_code}`} />
                   </>
                 ) : (
                   <>
-                    <InfoRow label="Empresa" value={item.company_name} />
+                    <InfoRow label={t('kyc.admin.company')} value={item.company_name} />
                     <InfoRow label="Tipo" value={item.company_type} />
                     <InfoRow label="NIPC" value={item.registration_number} />
                     <InfoRow label="Data Constituição" value={item.incorporation_date} />
