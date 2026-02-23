@@ -3,21 +3,21 @@ import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Fallback mock data in case API fails
+// Fallback data in case CoinMarketCap API fails
 const fallbackCryptoData = [
-  { symbol: 'BTC', name: 'Bitcoin', price: 94250, change_24h: 2.45 },
-  { symbol: 'ETH', name: 'Ethereum', price: 3580, change_24h: 1.82 },
-  { symbol: 'ADA', name: 'Cardano', price: 0.89, change_24h: -0.56 },
-  { symbol: 'SOL', name: 'Solana', price: 142.30, change_24h: 3.21 },
-  { symbol: 'XRP', name: 'Ripple', price: 2.18, change_24h: -1.15 }
+  { symbol: 'BTC', name: 'Bitcoin', price: 64500, change_24h: -2.5 },
+  { symbol: 'ETH', name: 'Ethereum', price: 1850, change_24h: -3.2 },
+  { symbol: 'ADA', name: 'Cardano', price: 0.26, change_24h: -1.8 },
+  { symbol: 'SOL', name: 'Solana', price: 78, change_24h: -4.1 },
+  { symbol: 'XRP', name: 'Ripple', price: 1.36, change_24h: -2.0 }
 ];
 
-// Exchange rates (USD base) - these would ideally come from an API
+// Exchange rates (USD base)
 const exchangeRates = {
   USD: { rate: 1, symbol: '$' },
   EUR: { rate: 0.92, symbol: '€' },
   AED: { rate: 3.67, symbol: 'د.إ' },
-  BRL: { rate: 4.97, symbol: 'R$' }
+  BRL: { rate: 5.80, symbol: 'R$' }
 };
 
 const fiatCurrencies = ['USD', 'EUR', 'AED', 'BRL'];
@@ -29,6 +29,7 @@ const CryptoTicker = () => {
   const [isLive, setIsLive] = useState(false);
   const [selectedFiat, setSelectedFiat] = useState('USD');
   const [showFiatDropdown, setShowFiatDropdown] = useState(false);
+  const [dataSource, setDataSource] = useState('');
 
   const fetchCryptoPrices = useCallback(async () => {
     try {
@@ -41,12 +42,14 @@ const CryptoTicker = () => {
       if (data.prices && data.prices.length > 0) {
         setCryptoData(data.prices);
         setIsLive(true);
+        setDataSource(data.source || 'coinmarketcap');
         setError(null);
       }
     } catch (err) {
       console.warn('Failed to fetch crypto prices, using fallback data:', err.message);
       setError(err.message);
       setIsLive(false);
+      setDataSource('offline');
     } finally {
       setLoading(false);
     }
@@ -58,23 +61,6 @@ const CryptoTicker = () => {
     const interval = setInterval(fetchCryptoPrices, 60000);
     return () => clearInterval(interval);
   }, [fetchCryptoPrices]);
-
-  // Small price fluctuations for visual effect (only when not live)
-  useEffect(() => {
-    if (isLive) return;
-    
-    const interval = setInterval(() => {
-      setCryptoData(prevData =>
-        prevData.map(crypto => ({
-          ...crypto,
-          price: crypto.price * (1 + (Math.random() - 0.5) * 0.002),
-          change_24h: crypto.change_24h + (Math.random() - 0.5) * 0.1
-        }))
-      );
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [isLive]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
