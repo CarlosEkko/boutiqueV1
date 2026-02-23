@@ -96,6 +96,13 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 - ✅ Hover effects and animations
 - ✅ Responsive mobile menu
 - ✅ Visual feedback on interactions
+- ✅ Crypto price ticker (MOCK DATA - needs backend proxy)
+- ✅ Advanced GSAP animations throughout
+- ✅ Cinematic hero animation sequence (blur/fade/scale + letter glow)
+
+#### Animation Libraries
+- **GSAP (GreenSock)** - Professional animations, ScrollTrigger integration
+- **Custom textAnimations.js** - Utility functions for character-level text effects
 
 ---
 
