@@ -90,6 +90,15 @@ Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriorm
   - Real-time price conversion for all crypto pairs
   - Dropdown selector in header ticker bar
 
+### Phase 6.3: Gold Color Palette Update ✅ (February 2025)
+- **New Color Scheme**: Replaced amber (#d97706) with custom gold palette
+  - Primary gold: #a57a50 (warm bronze/gold)
+  - Mid-tone: #7e5d3f (darker gold)
+  - Dark: #3a2d1e (deep bronze)
+- Updated tailwind.config.js with custom 'gold' color scale (50-950)
+- All components, animations, gradients, and shadows updated
+- Selection, scrollbar, and focus states use new gold tones
+
 ---
 
 ## Technical Architecture
