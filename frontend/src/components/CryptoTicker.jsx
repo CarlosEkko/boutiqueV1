@@ -140,7 +140,7 @@ const CryptoTicker = () => {
         </button>
         
         {showFiatDropdown && (
-          <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-amber-900/30 rounded shadow-lg overflow-hidden">
+          <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-amber-900/30 rounded shadow-lg overflow-hidden z-[200]">
             {fiatCurrencies.map((currency) => (
               <button
                 key={currency}
