@@ -726,7 +726,7 @@ const KYBForm = () => {
 };
 
 // File Upload Component (same as KYCForm)
-const FileUploadBox = ({ label, accept, onUpload, uploaded, testId }) => {
+const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -770,7 +770,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId }) => {
       <div className="border-2 border-green-500/30 bg-green-500/10 rounded-lg p-6 text-center">
         <Check className="mx-auto text-green-400 mb-2" size={32} />
         <p className="text-green-400 font-medium">{label}</p>
-        <p className="text-sm text-gray-400">Documento carregado com sucesso</p>
+        <p className="text-sm text-gray-400">{t ? t('kyc.form.upload.uploadSuccess') : 'Documento carregado com sucesso'}</p>
       </div>
     );
   }
@@ -800,10 +800,10 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId }) => {
           <Upload className="mx-auto text-gray-400 mb-2" size={32} />
           <p className="text-white font-medium">{label}</p>
           <p className="text-sm text-gray-400 mt-1">
-            Arraste um ficheiro ou clique para selecionar
+            {t ? t('kyc.form.upload.dragDrop') : 'Arraste um ficheiro ou clique para selecionar'}
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            Formatos: JPG, PNG, PDF (máx. 10MB)
+            {t ? t('kyc.form.upload.formats') : 'Formatos: JPG, PNG, PDF (máx. 10MB)'}
           </p>
         </label>
       </div>
@@ -834,7 +834,7 @@ const FileUploadBox = ({ label, accept, onUpload, uploaded, testId }) => {
               size="sm"
               className="bg-amber-600 hover:bg-amber-700 text-black"
             >
-              {uploading ? <Loader2 className="animate-spin" size={16} /> : 'Carregar'}
+              {uploading ? <Loader2 className="animate-spin" size={16} /> : (t ? t('kyc.form.upload.upload') : 'Carregar')}
             </Button>
           </div>
         </div>
