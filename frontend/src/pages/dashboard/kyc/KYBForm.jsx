@@ -159,7 +159,7 @@ const KYBForm = () => {
 
   const handleAddRepresentative = async () => {
     if (!newRep.full_name || !newRep.role) {
-      toast.error('Preencha o nome e cargo do representante');
+      toast.error('Error');
       return;
     }
 
@@ -176,7 +176,7 @@ const KYBForm = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      toast.success('Representante adicionado');
+      toast.success(t('kyc.form.upload.uploadSuccess'));
       setRepresentatives([...representatives, {...newRep, id: Date.now()}]);
       setNewRep({
         full_name: '',
@@ -187,7 +187,7 @@ const KYBForm = () => {
         is_ubo: false
       });
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao adicionar representante');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -197,10 +197,10 @@ const KYBForm = () => {
     setLoading(true);
     try {
       await axios.post(`${API_URL}/api/kyc/submit?verification_type=kyb`);
-      toast.success('KYB submetido para revisão');
+      toast.success(t('kyc.status.pendingReview'));
       navigate('/dashboard/kyc');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao submeter KYB');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -217,7 +217,7 @@ const KYBForm = () => {
           <div className="space-y-6" data-testid="company-info-step">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company_name">Nome da Empresa *</Label>
+                <Label htmlFor="company_name">{t('kyc.kybForm.companyInfo.companyName')} *</Label>
                 <Input
                   id="company_name"
                   value={companyInfo.company_name}
