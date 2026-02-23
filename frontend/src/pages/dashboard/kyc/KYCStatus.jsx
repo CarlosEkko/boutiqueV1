@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { 
   Shield, 
@@ -22,6 +23,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const KYCStatus = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [kycData, setKycData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,10 +45,10 @@ const KYCStatus = () => {
   const startVerification = async (type) => {
     try {
       await axios.post(`${API_URL}/api/kyc/start?verification_type=${type}`);
-      toast.success(`Verificação ${type.toUpperCase()} iniciada`);
+      toast.success(`${type.toUpperCase()} ${t('kyc.status.inProgress')}`);
       navigate(`/dashboard/kyc/${type}`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao iniciar verificação');
+      toast.error(error.response?.data?.detail || 'Error');
     }
   };
 
