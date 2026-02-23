@@ -59,35 +59,35 @@ const KYCStatus = () => {
         bgColor: 'bg-gray-500/10',
         borderColor: 'border-gray-500/30',
         icon: AlertCircle,
-        label: 'Não Iniciado'
+        label: t('kyc.status.notStarted')
       },
       in_progress: {
         color: 'text-blue-400',
         bgColor: 'bg-blue-500/10',
         borderColor: 'border-blue-500/30',
         icon: Clock,
-        label: 'Em Progresso'
+        label: t('kyc.status.inProgress')
       },
       pending_review: {
         color: 'text-amber-400',
         bgColor: 'bg-amber-500/10',
         borderColor: 'border-amber-500/30',
         icon: Clock,
-        label: 'Aguardando Revisão'
+        label: t('kyc.status.pendingReview')
       },
       approved: {
         color: 'text-green-400',
         bgColor: 'bg-green-500/10',
         borderColor: 'border-green-500/30',
         icon: CheckCircle2,
-        label: 'Aprovado'
+        label: t('kyc.status.approved')
       },
       rejected: {
         color: 'text-red-400',
         bgColor: 'bg-red-500/10',
         borderColor: 'border-red-500/30',
         icon: XCircle,
-        label: 'Rejeitado'
+        label: t('kyc.status.rejected')
       }
     };
     return configs[status] || configs.not_started;
@@ -96,7 +96,7 @@ const KYCStatus = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-amber-400">A carregar...</div>
+        <div className="text-amber-400">...</div>
       </div>
     );
   }
