@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -6,7 +6,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 /**
  * GlowText Component - Letter-by-letter glow animation
- * Text is always visible, glow effect animates on scroll
+ * Text starts fully visible, glow effect sweeps across on scroll
  */
 const GlowText = ({ 
   text, 
@@ -21,48 +21,39 @@ const GlowText = ({
 }) => {
   const containerRef = useRef(null);
   const hasAnimatedRef = useRef(false);
-  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => setIsReady(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!containerRef.current || !isReady || hasAnimatedRef.current) return;
+    if (!containerRef.current) return;
 
     const letters = containerRef.current.querySelectorAll('.glow-letter');
     if (letters.length === 0) return;
 
-    // Set initial state - text visible but dimmed
-    gsap.set(letters, {
-      opacity: 0.4,
-      color: 'inherit'
-    });
+    // Ensure letters are fully visible from the start
+    gsap.set(letters, { opacity: 1 });
 
     const animateLetters = () => {
       if (hasAnimatedRef.current) return;
       hasAnimatedRef.current = true;
 
-      // Phase 1: Fade in with glow
-      gsap.to(letters, {
-        opacity: 1,
-        textShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}`,
-        duration: duration * 0.5,
+      // Create a glow sweep animation
+      const tl = gsap.timeline();
+      
+      // Phase 1: Add glow effect letter by letter
+      tl.to(letters, {
+        textShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}, 0 0 60px ${glowColor}`,
+        duration: duration * 0.4,
         stagger: stagger,
         ease: 'power2.out',
-        delay: delay,
-        onComplete: () => {
-          // Phase 2: Fade out glow, keep text visible
-          gsap.to(letters, {
-            textShadow: '0 0 0 transparent',
-            duration: duration * 0.5,
-            stagger: stagger * 0.3,
-            ease: 'power2.out'
-          });
-        }
+        delay: delay
       });
+      
+      // Phase 2: Fade out glow, text remains fully visible
+      tl.to(letters, {
+        textShadow: 'none',
+        duration: duration * 0.6,
+        stagger: stagger * 0.2,
+        ease: 'power2.inOut'
+      }, `-=${duration * 0.2}`);
     };
 
     if (triggerOnScroll) {
@@ -75,19 +66,20 @@ const GlowText = ({
 
       return () => trigger.kill();
     } else {
-      animateLetters();
+      const timer = setTimeout(animateLetters, 100);
+      return () => clearTimeout(timer);
     }
-  }, [text, delay, stagger, duration, glowColor, triggerOnScroll, triggerStart, isReady]);
+  }, [text, delay, stagger, duration, glowColor, triggerOnScroll, triggerStart]);
 
-  // Split text into individual letter spans
+  // Split text into individual letter spans - all visible from start
   const renderLetters = () => {
     return text.split('').map((char, index) => (
       <span
         key={`${char}-${index}`}
-        className="glow-letter inline-block transition-all"
+        className="glow-letter"
         style={{ 
-          opacity: 0.4,
-          color: 'inherit'
+          display: 'inline-block',
+          opacity: 1
         }}
       >
         {char === ' ' ? '\u00A0' : char}
@@ -96,7 +88,7 @@ const GlowText = ({
   };
 
   return (
-    <Tag ref={containerRef} className={`${className}`} style={{ display: 'inline' }}>
+    <Tag ref={containerRef} className={className} style={{ display: 'inline' }}>
       {renderLetters()}
     </Tag>
   );
