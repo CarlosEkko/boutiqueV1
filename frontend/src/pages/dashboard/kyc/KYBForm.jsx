@@ -249,7 +249,7 @@ const KYBForm = () => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="registration_number">NIPC *</Label>
+                <Label htmlFor="registration_number">{t('kyc.kybForm.companyInfo.registrationNumber')} *</Label>
                 <Input
                   id="registration_number"
                   value={companyInfo.registration_number}
