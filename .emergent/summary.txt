@@ -6,142 +6,164 @@ The user wants to build a website for a premium Crypto Boutique Exchange named *
 - **Geographic Focus:** Europe, Middle East, Brazil.
 - **Products/Services:** Exchange, Crypto ATM Network, Launchpad, ICO, Institutional Custody.
 - **Tone & Style:** Quiet luxury, trust, exclusivity, clear, serious, and sophisticated.
-- **Visuals:** Use a provided reference image for the background theme. Dark theme with gold/amber accents.
+- **Features Implemented:**
+    - Full JWT Authentication (Login, Register, Profile).
+    - Private Client Dashboard (Portfolio, Wallets, Transactions, Investments, ROI, Transparency).
+    - Admin Panel (User Management, Investment Management, Invite Codes).
+- **Features in Progress:**
+    - Manual KYC/KYB verification system.
+- **Future Features:**
+    - Fireblocks integration for live wallet management.
+    - Private dashboard with crypto portfolio, transaction history, and investment opportunities.
+    - Fund transparency page.
+    - ROI tracking page.
 
-**User's preferred language**: 
-Portuguese. The next agent MUST respond in Portuguese.
+**User's preferred language**: Portuguese. The next agent MUST respond in Portuguese.
 
 **what currently exists?**
 A full-stack application with a React frontend and a FastAPI backend.
-- **Frontend**: A multi-page, animated, and fully internationalized (English, Portuguese, Arabic) static site.
-    - **Pages**: Home page composed of multiple sections (, , , ), and a dedicated  page.
-    - **Animations**: Extensive use of GSAP for a cinematic hero text sequence, a custom glow text effect for section titles (currently buggy), and a custom magnetic cursor with a glow trail.
-    - **Header**: Features a full-screen overlay menu with an animated hamburger icon.
-    - **i18n**: A custom React Context-based system handles translations, including right-to-left (RTL) support for Arabic. All site content is translated.
-- **Backend**: A simple FastAPI server with a single endpoint () that acts as a proxy to the CoinGecko API. This powers the live crypto price ticker in the header, resolving previous CORS issues.
+- **Frontend**: A multi-page site featuring a landing page, full JWT authentication flow (login, register), a private client dashboard, and an integrated admin panel. The dashboard includes pages for portfolio overview, wallets, transactions, investments, ROI, and fund transparency. The admin panel allows for user management (approval/revocation), investment opportunity creation, and invite code management.
+- **Backend**: A FastAPI server with a modular structure. It includes API endpoints for:
+    - Live crypto prices (CoinGecko proxy).
+    - Full JWT Authentication (register, login, get profile, update profile).
+    - A membership system (users require admin approval to access the dashboard).
+    - All necessary endpoints to power the client dashboard and admin panel with mock data.
+    - The initial backend structure for handling KYC/KYB document uploads has been created.
+- **Database**: MongoDB is used to store data for users, wallets, investment opportunities, and KYC/KYB submissions.
 
 **Last working item**: 
-- **Last item agent was working**: The user reported that the  animation effect on section titles was broken again (the text was not appearing after the animation). The agent's last action was to re-implement a more reliable  component and start applying it back to the , , and  sections to fix the visibility issue while keeping the animation.
+- **Last item agent was working**: Implementing a manual KYC (Know Your Customer) and KYB (Know Your Business) verification system. The agent created the backend Pydantic models, API routes for submission and admin review, and installed necessary dependencies (). The process of creating the corresponding frontend forms and pages for users to upload their documents had just begun.
 - **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?** screenshot tool (to visually verify that the  animation plays correctly and the title text remains visible on the , , and  sections).
+- **Which testing method agent to use?** both
+    - **Backend**: Use  to test the file upload endpoints for KYC/KYB documents.
+    - **Frontend**: Use the screenshot tool to verify the new forms render correctly.
+    - **E2E**: Use  to perform a full end-to-end test of the KYC submission and admin approval flow.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1**: (P0) Fix  component animation.
-
-**Issues Detail**:
-- **Issue 1**: Fix  component animation
-    - **Attempted fixes**: The agent initially created a  component, but it had bugs where the text would get cut off or disappear entirely after the animation. It was temporarily removed. The agent then created a new, simplified version () and started re-applying it. The fix is not yet complete or verified.
-    - **Next debug checklist**:
-        1. Review the latest implementation in .
-        2. Ensure the component correctly applies the character-by-character glow animation.
-        3. Crucially, verify that the  of the text is set to  after the animation completes, so it remains permanently visible.
-        4. Apply the fixed  component to the titles of the Premium Services (), Why Kryptobox (), and Global Presence () sections.
-        5. Use the screenshot tool to test the page in Portuguese and confirm the titles animate in and stay visible.
-    - **Why fix this issue and what will be achieved with the fix?**: This is a key aesthetic feature requested by the user. Fixing it will restore the desired quiet luxury and dynamic feel to the section headers.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: Frontend
-    - **Blocked on other issue**: None
+There are no known bugs or issues. The focus is on completing the in-progress feature.
 
 **In progress Task List**:
-None.
+- **Task 1**: (P0) Complete KYC/KYB System Implementation
+    - **Where to resume**: 
+        1.  Complete the frontend components in  (, , ) to allow users to upload documents.
+        2.  Integrate the new KYC API routers (, ) into the main  file.
+        3.  Create the admin frontend page for reviewing KYC/KYB submissions, allowing admins to view submitted documents and approve/reject them.
+        4.  Update the  model and dashboard to reflect KYC status.
+    - **What will be achieved with this?**: A complete, manual identity verification flow, which is a critical step for a financial services platform.
+    - **Status**: IN PROGRESS
+    - **Should Test frontend/backend/both after fix?**: both
+    - **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - There are no immediate upcoming tasks. The next steps should be taken from the Future Tasks list after the current issue is resolved.
+    - **P1: Fireblocks Integration**: The user wants to use Fireblocks for wallet creation and management. The agent has the playbook and an API key but is **blocked** waiting for the user to provide the **RSA Private Key**. The backend logic should be completed once the key is available.
 
 - **Future Tasks**:
     - **P2: Build out remaining product pages**: Create dedicated pages for Launchpad, ICO, and Institutional Custody.
-    - **P2: Implement Request Access form**: Build the backend endpoint and frontend logic to handle submissions from the contact form.
-    - **P3: User Authentication**: Implement a login/signup system for a client portal.
+    - **P2: Implement Request Access form**: Build the backend endpoint and frontend logic to handle submissions from the public contact form.
+    - **P3: Enhance Dashboard**: Add more detailed charts, transaction history filtering, and real-time data where possible.
 
 **Completed work in this session**
-- **New Hero Animation**: Implemented a complex, multi-stage hero text animation ().
-- **Live Crypto Ticker**: Built a FastAPI backend proxy () and connected the frontend  to it for live CoinGecko data.
-- **New Overlay Menu**: Replaced the header with a full-screen overlay menu based on a CodePen example.
-- **Custom Magnetic Cursor**: Added a custom cursor with a glow trail and a magnetic effect on links.
-- **Full Internationalization (i18n)**: Implemented a multi-language system (EN, PT, AR) with a language switcher, translating all content across the site, including product cards and handling RTL for Arabic.
-- **Bug Fix**: Reduced the hero animation duration as requested by the user.
-- **Bug Fix**: Translated all static content, including the Hero section and product card details, which were initially missed.
-- **Bug Fix**: Temporarily fixed (and is now re-fixing) a buggy  animation on section titles.
+- **Bug Fix**: The recurring  animation bug was definitively fixed.
+- **Feature**: A complete JWT Authentication system was implemented (Register, Login, Profile).
+- **Feature**: A multi-page private client dashboard was built with pages for Overview, Wallets, Transactions, Investments, ROI, and Transparency.
+- **Feature**: A membership system requiring admin approval for new users was implemented.
+- **Feature**: A visual Admin Panel was integrated into the dashboard, featuring sections for statistics, User Management, Investment Management, and Invite Codes.
+- **Testing**: The  was used successfully to validate the authentication and dashboard features, with all tests passing.
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: The agent in the last session had issues with generating malformed code. In this session, the  component has become a recurring issue, requiring multiple attempts to fix animation visibility bugs.
-- **Recurrence count**: 2 (within this session)
-- **Status**: IN PROGRESS
+- **Issue**: The  component had a recurring animation bug causing text to disappear.
+- **Recurrence count**: 2
+- **Status**: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI
-- **Animation**: GSAP (GreenSock Animation Platform) with .
-- **Backend**: FastAPI
-- **API Communication**: 
-- **Internationalization (i18n)**: Custom solution using React Context.
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, GSAP.
+- **Backend**: FastAPI, Pydantic, Motor (async MongoDB driver).
+- **Authentication**: JWT (JSON Web Tokens) with , , and .
+- **File Handling**: Asynchronous file uploads using  and .
+- **Database**: MongoDB.
+- **State Management**: React Context API.
 
 **key DB schema**
-No database schema has been defined.
+- **users**: 
+- **wallets**: 
+- **investment_opportunities**: 
+- **kyc_submissions**: 
 
 **changes in tech stack**
-- **Backend**: To use the fastapi command, please install "fastapi[standard]":
-
-	pip install "fastapi[standard]", , ,  were added to support the API proxy.
-- **Frontend**:  was added for API calls.
+- : Added for handling form data and file uploads in FastAPI.
+- : Added for asynchronous file I/O operations.
 
 **All files of reference**
-- : The component with the recurring bug that needs to be fixed.
-- : One of the components where  is used.
-- : Another component where  is used.
-- : Another component where  is used.
-- : The core of the i18n system.
-- : The translation files.
-- : The FastAPI backend server.
-- : The component containing the main hero animation sequence.
-- : The component for the overlay menu and language switcher.
+- **KYC/KYB (In Progress)**:
+    - : Pydantic models for KYC/KYB submissions.
+    - : API endpoints for users to submit KYC data.
+    - : API endpoints for admins to review submissions.
+    - : Directory for new frontend components.
+- **Backend Core**:
+    - : The main FastAPI application file.
+- **Authentication**:
+    - , , .
+- **Dashboard & Admin**:
+    - , , .
 
 **key api endpoints**
-- : A backend proxy endpoint that fetches real-time market data from the CoinGecko API.
+- **Auth**: , , 
+- **Dashboard**: , , 
+- **Admin**: , , 
+- **KYC (In Progress)**: , , 
 
 **Critical Info for New Agent**
 - You MUST respond in Portuguese.
-- The highest priority is to fix the  component. The animation must play, and the text must remain visible afterward. This has been a recurring problem.
-- Any new text content added to the site must be added to all three translation files: , , and .
-- The backend service must be running for the live crypto ticker to work. It should start automatically, but if you encounter issues, check the supervisor logs.
+- Your immediate priority is to complete the KYC/KYB feature. This involves finishing the frontend forms, integrating the backend routes into , and building the admin review UI.
+- The Fireblocks integration is **blocked**. Do not attempt to work on it until the user provides the RSA Private Key. Acknowledge this blocker if the user asks about live wallet functionality.
+- The application is now quite large. Be sure to use the testing agent () after completing the KYC feature to ensure nothing else has broken.
 
 **documents and test reports created in this job**
-- : Has been created and updated throughout the session.
+-  (updated)
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  ****: (PENDING) User confirms a previous fix worked but broke the  effect, and they want it back. This is the current active issue.
-2.  ****: (RESOLVED) User reported three issues: text not appearing in the Premium Services section, the hero section wasn't translated, and the hero animation was too slow. The agent fixed all three.
-3.  ****: (RESOLVED) User confirmed that the product card content should also be translated.
-4.  ****: (RESOLVED) User reported that only the menu was being translated, not the whole page. The agent fixed this by internationalizing all page components.
-5.  ****: (RESOLVED) User requested Portuguese to be added as a language option.
-6.  ****: (RESOLVED) User approved moving forward with P1 tasks (backend for ticker, i18n) and requested a glow trail for the cursor.
-7.  ****: (RESOLVED) User requested the menu font be changed to Inter and to implement a magnetic cursor effect from a CodePen.
-8.  ****: (RESOLVED) User requested a new overlay-style menu based on a CodePen example.
-9.  ****: (PARTIALLY RESOLVED/BUGGY) User requested the glow text effect on several section titles. This was implemented but is the source of the current bug.
-10. **: (N/A) User confirming a previous animation fix.
+1.  ****: (IN PROGRESS) User requested a KYC/KYB system similar to Sumsub.
+2.  ****: (ACKNOWLEDGED) User acknowledged they will provide the Fireblocks private key later.
+3.  ****: (BLOCKED) User requested Fireblocks integration for wallet creation.
+4.  ****: (RESOLVED) User requested a visual admin panel.
+5.  ****: (RESOLVED) User asked for instructions on how to test the newly created dashboard.
+6.  ****: (RESOLVED) User specified the requirements for the private client dashboard.
+7.  ****: (RESOLVED) User selected P3 (User Authentication) as the next priority.
+8.  ****: (RESOLVED) User confirmed choices for authentication implementation and re-stated the need to fix the  bug.
 
 **Project Health Check:**
-- **Broken**: The  component animation is not working as intended, causing section titles to be invisible.
-- **Mocked**: None. All data is either static and translated or live from an API.
+- **Broken**: None.
+- **In Progress**: The KYC/KYB system is partially implemented.
+- **Mocked**:
+    - All dashboard financial data (portfolio value, wallet balances, transaction history).
+    - Wallet addresses are placeholders. This is blocked by the Fireblocks integration.
 
 **3rd Party Integrations**
 - **GSAP**: Used for frontend animations.
-- **CoinGecko**: Used via a backend proxy to supply live crypto price data.
+- **CoinGecko**: Used via a backend proxy for live crypto price data.
+- **Fireblocks**: Planned for wallet management. **Blocked** pending user-provided RSA Private Key.
 
 **Testing status**
-- **Testing agent used after significant changes**: NO
+- **Testing agent used after significant changes**: YES (for Auth and Dashboard features)
 - **Troubleshoot agent used after agent stuck in loop**: NO
-- **Test files created**: []
-- **Known regressions**: The  animation effect regressed and is now broken.
+- **Test files created**: Test reports generated by the testing agent are available at .
+- **Known regressions**: None.
 
 **Credentials to test flow:**
-N/A</analysis>
+To test the application, including the admin panel:
+- **Email**: 
+- **Password**: 
+
+**What agent forgot to execute**
+The agent has created the route files for the KYC feature ( and ) but has not yet imported and included these routers in the main FastAPI app instance in . This is a necessary step to make the new endpoints live.</analysis>
