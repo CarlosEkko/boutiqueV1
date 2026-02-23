@@ -1,6 +1,6 @@
 import React from 'react';
 import Header from '../components/Header';
-import Hero from '../components/Hero';
+import HeroV2 from '../components/HeroV2';
 import Products from '../components/Products';
 import Trust from '../components/Trust';
 import Regions from '../components/Regions';
@@ -11,7 +11,7 @@ const Home = () => {
   return (
     <div className="bg-black min-h-screen">
       <Header />
-      <Hero />
+      <HeroV2 />
       <Products />
       <Trust />
       <Regions />
