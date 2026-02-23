@@ -141,7 +141,7 @@ const AdminTransparency = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-amber-900/20 pb-2">
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
         <button
           onClick={() => setActiveTab('wallets')}
           className={`px-4 py-2 rounded-lg transition-colors ${
@@ -181,7 +181,7 @@ const AdminTransparency = () => {
 
           {/* Add Wallet Form */}
           {showWalletForm && (
-            <Card className="bg-zinc-900/50 border-amber-900/20">
+            <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardHeader>
                 <CardTitle className="text-white font-light">Add Public Wallet</CardTitle>
               </CardHeader>
@@ -199,7 +199,7 @@ const AdminTransparency = () => {
                           asset_name: asset.name
                         });
                       }}
-                      className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                      className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                     >
                       {assetOptions.map(asset => (
                         <option key={asset.id} value={asset.id}>{asset.name}</option>
@@ -212,7 +212,7 @@ const AdminTransparency = () => {
                     <select
                       value={walletForm.label}
                       onChange={(e) => setWalletForm({...walletForm, label: e.target.value})}
-                      className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                      className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                     >
                       <option value="Cold Storage">Cold Storage</option>
                       <option value="Hot Wallet">Hot Wallet</option>
@@ -228,7 +228,7 @@ const AdminTransparency = () => {
                       onChange={(e) => setWalletForm({...walletForm, address: e.target.value})}
                       placeholder="e.g., bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
                       required
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1 font-mono"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1 font-mono"
                     />
                   </div>
 
@@ -241,7 +241,7 @@ const AdminTransparency = () => {
                       onChange={(e) => setWalletForm({...walletForm, balance: e.target.value})}
                       placeholder="e.g., 125.5"
                       required
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                     />
                   </div>
 
@@ -259,7 +259,7 @@ const AdminTransparency = () => {
           <div className="space-y-3">
             {reserves?.wallets?.length > 0 ? (
               reserves.wallets.map((wallet) => (
-                <Card key={wallet.id} className="bg-zinc-900/50 border-amber-900/20">
+                <Card key={wallet.id} className="bg-zinc-900/50 border-gold-800/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -299,7 +299,7 @@ const AdminTransparency = () => {
                 </Card>
               ))
             ) : (
-              <Card className="bg-zinc-900/50 border-amber-900/20">
+              <Card className="bg-zinc-900/50 border-gold-800/20">
                 <CardContent className="p-12 text-center">
                   <Wallet className="mx-auto mb-4 text-gray-500" size={48} />
                   <h3 className="text-xl text-white mb-2">No Public Wallets</h3>
@@ -326,7 +326,7 @@ const AdminTransparency = () => {
 
           {/* Add Report Form */}
           {showReportForm && (
-            <Card className="bg-zinc-900/50 border-amber-900/20">
+            <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardHeader>
                 <CardTitle className="text-white font-light">Add Audit Report</CardTitle>
               </CardHeader>
@@ -339,7 +339,7 @@ const AdminTransparency = () => {
                       onChange={(e) => setReportForm({...reportForm, title: e.target.value})}
                       placeholder="e.g., Q4 2025 Audit Report"
                       required
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                     />
                   </div>
 
@@ -348,7 +348,7 @@ const AdminTransparency = () => {
                     <select
                       value={reportForm.type}
                       onChange={(e) => setReportForm({...reportForm, type: e.target.value})}
-                      className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                      className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                     >
                       <option value="audit">Audit</option>
                       <option value="proof_of_reserves">Proof of Reserves</option>
@@ -362,7 +362,7 @@ const AdminTransparency = () => {
                       value={reportForm.auditor}
                       onChange={(e) => setReportForm({...reportForm, auditor: e.target.value})}
                       placeholder="e.g., Deloitte"
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                     />
                   </div>
 
@@ -373,7 +373,7 @@ const AdminTransparency = () => {
                       onChange={(e) => setReportForm({...reportForm, summary: e.target.value})}
                       placeholder="Brief summary of the report"
                       required
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                     />
                   </div>
 
@@ -383,7 +383,7 @@ const AdminTransparency = () => {
                       value={reportForm.file_url}
                       onChange={(e) => setReportForm({...reportForm, file_url: e.target.value})}
                       placeholder="https://..."
-                      className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                     />
                   </div>
 
@@ -401,7 +401,7 @@ const AdminTransparency = () => {
           <div className="space-y-3">
             {reports.length > 0 ? (
               reports.map((report) => (
-                <Card key={report.id} className="bg-zinc-900/50 border-amber-900/20">
+                <Card key={report.id} className="bg-zinc-900/50 border-gold-800/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -427,7 +427,7 @@ const AdminTransparency = () => {
                           href={report.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gold-400 hover:text-amber-300 bg-gold-500/20 rounded-lg"
+                          className="p-2 text-gold-400 hover:text-gold-300 bg-gold-500/20 rounded-lg"
                         >
                           <ExternalLink size={18} />
                         </a>
@@ -437,7 +437,7 @@ const AdminTransparency = () => {
                 </Card>
               ))
             ) : (
-              <Card className="bg-zinc-900/50 border-amber-900/20">
+              <Card className="bg-zinc-900/50 border-gold-800/20">
                 <CardContent className="p-12 text-center">
                   <FileText className="mx-auto mb-4 text-gray-500" size={48} />
                   <h3 className="text-xl text-white mb-2">No Reports</h3>

@@ -85,11 +85,11 @@ const Products = () => {
 
   return (
     <section ref={sectionRef} id="products" className={`py-24 bg-black relative ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/10 via-black to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-800/10 via-black to-black" />
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-16">
-          <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-gold-600/30 px-4 py-1">
+          <Badge className="mb-4 bg-amber-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
             <GlowText 
               text={t('products.badge')} 
               stagger={0.05}
@@ -104,7 +104,7 @@ const Products = () => {
               delay={0.2}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
-            <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('products.titleHighlight')} 
                 stagger={0.06}
@@ -130,12 +130,12 @@ const Products = () => {
             <Card
               key={product.id}
               ref={(el) => (cardsRef.current[index] = el)}
-              className="group relative bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-amber-900/20"
+              className="group relative bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-gold-800/20"
             >
               <CardContent className="p-0">
                 {/* Product Number Badge */}
                 <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-20`}>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-amber-900/50">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-white font-semibold shadow-lg shadow-gold-800/50">
                     {String(index + 1).padStart(2, '0')}
                   </div>
                 </div>

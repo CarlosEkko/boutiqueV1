@@ -233,14 +233,14 @@ const Header = () => {
       {/* Fixed Header */}
       <header className={`fixed top-0 left-0 w-full z-[100] ${isRTL ? 'rtl' : 'ltr'}`}>
         {/* Crypto Ticker Bar */}
-        <div className="bg-black/80 backdrop-blur-md border-b border-amber-900/10 py-2">
+        <div className="bg-black/80 backdrop-blur-md border-b border-gold-800/10 py-2">
           <div className="container mx-auto px-6">
             <CryptoTicker />
           </div>
         </div>
 
         {/* Main Header */}
-        <div className="bg-black/80 backdrop-blur-md border-b border-amber-900/20">
+        <div className="bg-black/80 backdrop-blur-md border-b border-gold-800/20">
           <div className={`header-wrapper relative w-[calc(100%-60px)] md:w-[calc(100%-100px)] mx-auto ${isRTL ? 'md:mr-[50px]' : 'md:ml-[50px]'}`}>
             {/* Logo */}
             <div className={`absolute ${isRTL ? 'right-0' : 'left-0'} top-[20px] md:top-[30px] cursor-pointer z-[101]`}>
@@ -293,7 +293,7 @@ const Header = () => {
             {/* Right Side - Language & CTA (Desktop) */}
             <div className={`hidden md:flex items-center space-x-4 ${isRTL ? 'float-left ml-[70px]' : 'float-right mr-[70px]'} mt-[24px]`}>
               {/* Language Selector */}
-              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-3 py-2 rounded-lg bg-zinc-900/50 border border-amber-900/20 hover:border-gold-600/40 transition-colors duration-300`}>
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-3 py-2 rounded-lg bg-zinc-900/50 border border-gold-800/20 hover:border-gold-600/40 transition-colors duration-300`}>
                 <Globe size={16} className="text-gold-400" />
                 {languages.map((lang, index) => (
                   <React.Fragment key={lang.code}>
@@ -309,7 +309,7 @@ const Header = () => {
                       {lang.code}
                     </button>
                     {index < languages.length - 1 && (
-                      <span className="text-amber-900/40">|</span>
+                      <span className="text-gold-800/40">|</span>
                     )}
                   </React.Fragment>
                 ))}
@@ -320,7 +320,7 @@ const Header = () => {
                 <Button
                   onClick={() => navigate('/dashboard')}
                   variant="outline"
-                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30 hover:text-gold-300 font-['Inter']"
                   data-testid="header-dashboard-btn"
                 >
                   <User size={18} className="mr-2" />
@@ -330,7 +330,7 @@ const Header = () => {
                 <Button
                   onClick={() => navigate('/auth')}
                   variant="outline"
-                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300 font-['Inter']"
+                  className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30 hover:text-gold-300 font-['Inter']"
                   data-testid="header-login-btn"
                 >
                   <LogIn size={18} className="mr-2" />
@@ -340,7 +340,7 @@ const Header = () => {
 
               <Button
                 onClick={(e) => handleNavClick(e, '/#contact')}
-                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-amber-900/30 transition-all duration-300 font-['Inter']"
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-gold-800/30 transition-all duration-300 font-['Inter']"
                 data-testid="header-cta"
               >
                 {t('nav.requestAccess')}
@@ -438,14 +438,14 @@ const Header = () => {
                     {lang.code}
                   </button>
                   {index < languages.length - 1 && (
-                    <span className="text-amber-900/40">|</span>
+                    <span className="text-gold-800/40">|</span>
                   )}
                 </React.Fragment>
               ))}
             </div>
             <Button
               onClick={(e) => handleNavClick(e, '/#contact')}
-              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-amber-900/30 px-8 py-3 text-lg font-['Inter']"
+              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-gold-800/30 px-8 py-3 text-lg font-['Inter']"
             >
               {t('nav.requestAccess')}
             </Button>

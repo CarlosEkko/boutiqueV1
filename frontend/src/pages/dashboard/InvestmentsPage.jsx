@@ -49,7 +49,7 @@ const InvestmentsPage = () => {
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case 'low': return 'bg-green-900/30 text-green-400';
-      case 'medium': return 'bg-amber-900/30 text-gold-400';
+      case 'medium': return 'bg-gold-800/30 text-gold-400';
       case 'high': return 'bg-red-900/30 text-red-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
@@ -59,7 +59,7 @@ const InvestmentsPage = () => {
     switch (status) {
       case 'active': return 'bg-green-900/30 text-green-400';
       case 'completed': return 'bg-blue-900/30 text-blue-400';
-      case 'open': return 'bg-amber-900/30 text-gold-400';
+      case 'open': return 'bg-gold-800/30 text-gold-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
   };
@@ -81,7 +81,7 @@ const InvestmentsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-amber-900/20 pb-2">
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
         <button
           onClick={() => setActiveTab('opportunities')}
           className={`px-4 py-2 rounded-lg transition-colors ${
@@ -114,7 +114,7 @@ const InvestmentsPage = () => {
               return (
                 <Card 
                   key={opp.id}
-                  className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 transition-all"
+                  className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20 hover:border-gold-500/50 transition-all"
                 >
                   <CardContent className="p-6">
                     {/* Header */}
@@ -188,7 +188,7 @@ const InvestmentsPage = () => {
               );
             })
           ) : (
-            <Card className="col-span-full bg-zinc-900/50 border-amber-900/20">
+            <Card className="col-span-full bg-zinc-900/50 border-gold-800/20">
               <CardContent className="p-12 text-center">
                 <TrendingUp className="mx-auto mb-4 text-gray-500" size={48} />
                 <h3 className="text-xl text-white mb-2">No Opportunities Available</h3>
@@ -208,7 +208,7 @@ const InvestmentsPage = () => {
             myInvestments.map((inv) => (
               <Card 
                 key={inv.id}
-                className="bg-zinc-900/50 border-amber-900/20"
+                className="bg-zinc-900/50 border-gold-800/20"
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -238,7 +238,7 @@ const InvestmentsPage = () => {
               </Card>
             ))
           ) : (
-            <Card className="bg-zinc-900/50 border-amber-900/20">
+            <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardContent className="p-12 text-center">
                 <AlertCircle className="mx-auto mb-4 text-gray-500" size={48} />
                 <h3 className="text-xl text-white mb-2">No Investments Yet</h3>

@@ -77,12 +77,12 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-black flex">
       {/* Sidebar - Desktop */}
       <aside 
-        className={`hidden md:flex flex-col bg-zinc-950 border-r border-amber-900/20 transition-all duration-300 ${
+        className={`hidden md:flex flex-col bg-zinc-950 border-r border-gold-800/20 transition-all duration-300 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-amber-900/20">
+        <div className="p-6 border-b border-gold-800/20">
           <div className="flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
@@ -115,7 +115,7 @@ const DashboardLayout = () => {
 
           {/* Admin Navigation - Only visible to admins */}
           {isAdmin && (
-            <div className="pt-4 border-t border-amber-900/20">
+            <div className="pt-4 border-t border-gold-800/20">
               {sidebarOpen && <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>}
               {adminNavItems.map((item) => (
                 <NavItem key={item.to} {...item} />
@@ -125,7 +125,7 @@ const DashboardLayout = () => {
         </nav>
 
         {/* User & Logout */}
-        <div className="p-4 border-t border-amber-900/20">
+        <div className="p-4 border-t border-gold-800/20">
           {sidebarOpen && (
             <div className="mb-4 px-4">
               <p className="text-sm text-gray-400">{t('dashboard.layout.loggedInAs')}</p>
@@ -145,7 +145,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-amber-900/20 px-4 py-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-gold-800/20 px-4 py-3">
         <div className="flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
@@ -176,7 +176,7 @@ const DashboardLayout = () => {
             
             {/* Admin Navigation */}
             {isAdmin && (
-              <div className="pt-4 mt-4 border-t border-amber-900/20">
+              <div className="pt-4 mt-4 border-t border-gold-800/20">
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>
                 {adminNavItems.map((item) => (
                   <NavItem key={item.to} {...item} />

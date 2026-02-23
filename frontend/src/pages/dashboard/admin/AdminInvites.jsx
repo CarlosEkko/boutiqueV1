@@ -103,7 +103,7 @@ const AdminInvites = () => {
       </div>
 
       {/* Create New Invite */}
-      <Card className="bg-zinc-900/50 border-amber-900/20">
+      <Card className="bg-zinc-900/50 border-gold-800/20">
         <CardHeader>
           <CardTitle className="text-white font-light">Generate New Code</CardTitle>
         </CardHeader>
@@ -116,7 +116,7 @@ const AdminInvites = () => {
                 min="1"
                 value={maxUses}
                 onChange={(e) => setMaxUses(parseInt(e.target.value) || 1)}
-                className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                className="bg-zinc-800 border-gold-800/30 text-white mt-1"
               />
             </div>
             <Button onClick={createInvite} className="bg-gold-500 hover:bg-gold-400">
@@ -136,7 +136,7 @@ const AdminInvites = () => {
         {activeInvites.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeInvites.map((invite) => (
-              <Card key={invite.id} className="bg-zinc-900/50 border-amber-900/20">
+              <Card key={invite.id} className="bg-zinc-900/50 border-gold-800/20">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <code className="text-xl font-mono text-gold-400">{invite.code}</code>
@@ -177,7 +177,7 @@ const AdminInvites = () => {
             ))}
           </div>
         ) : (
-          <Card className="bg-zinc-900/50 border-amber-900/20">
+          <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-8 text-center">
               <Gift className="mx-auto mb-4 text-gray-500" size={40} />
               <p className="text-gray-400">No active invite codes. Generate one above.</p>

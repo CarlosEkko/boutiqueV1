@@ -60,7 +60,7 @@ const KYCPage = () => {
       case 'approved':
         return <Badge className="bg-green-900/30 text-green-400"><CheckCircle size={14} className="mr-1" />Approved</Badge>;
       case 'pending_review':
-        return <Badge className="bg-amber-900/30 text-gold-400"><Clock size={14} className="mr-1" />Pending Review</Badge>;
+        return <Badge className="bg-gold-800/30 text-gold-400"><Clock size={14} className="mr-1" />Pending Review</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-900/30 text-blue-400"><Clock size={14} className="mr-1" />In Progress</Badge>;
       case 'rejected':
@@ -102,7 +102,7 @@ const KYCPage = () => {
       </div>
 
       {/* Current Status */}
-      <Card className="bg-gradient-to-r from-amber-900/20 to-gold-500/10 border-gold-500/30">
+      <Card className="bg-gradient-to-r from-gold-800/20 to-gold-500/10 border-gold-500/30">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-gold-500/20 flex items-center justify-center">
@@ -128,7 +128,7 @@ const KYCPage = () => {
       {/* Verification Options */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC - Individual */}
-        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-gold-500/50 transition-all">
+        <Card className="bg-zinc-900/50 border-gold-800/20 hover:border-gold-500/50 transition-all">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ const KYCPage = () => {
         </Card>
 
         {/* KYB - Business */}
-        <Card className="bg-zinc-900/50 border-amber-900/20 hover:border-gold-500/50 transition-all">
+        <Card className="bg-zinc-900/50 border-gold-800/20 hover:border-gold-500/50 transition-all">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

@@ -98,7 +98,7 @@ const AdminOpportunities = () => {
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case 'low': return 'bg-green-900/30 text-green-400';
-      case 'medium': return 'bg-amber-900/30 text-gold-400';
+      case 'medium': return 'bg-gold-800/30 text-gold-400';
       case 'high': return 'bg-red-900/30 text-red-400';
       default: return 'bg-gray-900/30 text-gray-400';
     }
@@ -141,7 +141,7 @@ const AdminOpportunities = () => {
 
       {/* Create Form */}
       {showCreateForm && (
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
             <CardTitle className="text-white font-light">New Investment Opportunity</CardTitle>
           </CardHeader>
@@ -155,7 +155,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., Kilf Lending Pool"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
               
@@ -167,7 +167,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="Brief description of the opportunity"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -181,7 +181,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., 12.5"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -194,7 +194,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., 90"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -207,7 +207,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., 1000"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -220,7 +220,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., 100000"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -233,7 +233,7 @@ const AdminOpportunities = () => {
                   onChange={handleChange}
                   placeholder="e.g., 500000"
                   required
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
 
@@ -243,7 +243,7 @@ const AdminOpportunities = () => {
                   name="risk_level"
                   value={formData.risk_level}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -257,7 +257,7 @@ const AdminOpportunities = () => {
                   name="currency"
                   value={formData.currency}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                 >
                   <option value="USDT">USDT</option>
                   <option value="USDC">USDC</option>
@@ -283,7 +283,7 @@ const AdminOpportunities = () => {
             const progress = ((opp.current_pool || 0) / opp.total_pool) * 100;
             
             return (
-              <Card key={opp.id} className="bg-zinc-900/50 border-amber-900/20">
+              <Card key={opp.id} className="bg-zinc-900/50 border-gold-800/20">
                 <CardContent className="p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -344,7 +344,7 @@ const AdminOpportunities = () => {
                         variant={opp.status === status ? 'default' : 'outline'}
                         className={opp.status === status 
                           ? 'bg-gold-500 hover:bg-gold-400 text-xs' 
-                          : 'border-amber-900/30 text-gray-400 hover:text-white text-xs'
+                          : 'border-gold-800/30 text-gray-400 hover:text-white text-xs'
                         }
                       >
                         {status}
@@ -356,7 +356,7 @@ const AdminOpportunities = () => {
             );
           })
         ) : (
-          <Card className="col-span-full bg-zinc-900/50 border-amber-900/20">
+          <Card className="col-span-full bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-12 text-center">
               <TrendingUp className="mx-auto mb-4 text-gray-500" size={48} />
               <h3 className="text-xl text-white mb-2">No Opportunities</h3>

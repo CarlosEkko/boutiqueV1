@@ -119,7 +119,7 @@ const Trust = () => {
               ref={(el) => (statsRef.current[index] = el)}
               className="text-center"
             >
-              <div className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl md:text-5xl font-light bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mb-2">
                 {stat.value}
               </div>
               <div className="text-sm text-gray-400 tracking-wider uppercase">
@@ -137,7 +137,7 @@ const Trust = () => {
               stagger={0.06}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
-            <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('trust.titleHighlight')} 
                 stagger={0.06}
@@ -165,7 +165,7 @@ const Trust = () => {
               <Card
                 key={index}
                 ref={(el) => (cardsRef.current[index] = el)}
-                className="group bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-105"
+                className="group bg-gradient-to-br from-zinc-900/80 to-black/80 border-gold-800/20 hover:border-gold-500/50 overflow-hidden transition-all duration-500 hover:scale-105"
               >
                 <CardContent className="p-6">
                   {/* Icon */}

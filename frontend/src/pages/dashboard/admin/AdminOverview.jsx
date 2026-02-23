@@ -46,7 +46,7 @@ const AdminOverview = () => {
   }
 
   const StatCard = ({ title, value, icon: Icon, color, subValue }) => (
-    <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+    <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>

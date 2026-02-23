@@ -61,7 +61,7 @@ const ROIPage = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -77,7 +77,7 @@ const ROIPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -93,7 +93,7 @@ const ROIPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -109,7 +109,7 @@ const ROIPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -128,7 +128,7 @@ const ROIPage = () => {
 
       {/* Investment Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg text-white">Investment Status</h3>
@@ -146,7 +146,7 @@ const ROIPage = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg text-white">ROI Comparison</h3>
@@ -182,7 +182,7 @@ const ROIPage = () => {
       </div>
 
       {/* Individual Investments */}
-      <Card className="bg-zinc-900/50 border-amber-900/20">
+      <Card className="bg-zinc-900/50 border-gold-800/20">
         <CardHeader>
           <CardTitle className="text-white font-light">Investment Details</CardTitle>
         </CardHeader>
@@ -191,7 +191,7 @@ const ROIPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-amber-900/20">
+                  <tr className="border-b border-gold-800/20">
                     <th className="text-left py-3 px-4 text-gray-400 font-medium">Investment</th>
                     <th className="text-right py-3 px-4 text-gray-400 font-medium">Amount</th>
                     <th className="text-right py-3 px-4 text-gray-400 font-medium">Expected Return</th>
@@ -201,7 +201,7 @@ const ROIPage = () => {
                 </thead>
                 <tbody>
                   {roiData.investments.map((inv) => (
-                    <tr key={inv.id} className="border-b border-amber-900/10">
+                    <tr key={inv.id} className="border-b border-gold-800/10">
                       <td className="py-4 px-4 text-white">{inv.opportunity_name}</td>
                       <td className="py-4 px-4 text-right text-white">
                         {inv.amount} {inv.currency}

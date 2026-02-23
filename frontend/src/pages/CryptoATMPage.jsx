@@ -486,7 +486,7 @@ const CryptoATMPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black" />
 
         <div className="relative z-10 container mx-auto px-6 text-center hero-content">
-          <Badge className="hero-badge mb-4 bg-amber-950/50 text-amber-200 border-gold-600/30 px-4 py-1">
+          <Badge className="hero-badge mb-4 bg-amber-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
             Crypto ATM Network
           </Badge>
           
@@ -494,7 +494,7 @@ const CryptoATMPage = () => {
             {atmHeroData.title}
           </h1>
           
-          <p className="hero-text text-xl md:text-2xl bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mb-6 font-light">
+          <p className="hero-text text-xl md:text-2xl bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mb-6 font-light">
             {atmHeroData.subtitle}
           </p>
           
@@ -514,7 +514,7 @@ const CryptoATMPage = () => {
               size="lg"
               variant="outline"
               onClick={() => navigate('/#contact')}
-              className="hero-button border-2 border-gold-500/50 text-amber-200 hover:bg-amber-950/30 backdrop-blur-sm px-8 py-6 text-lg"
+              className="hero-button border-2 border-gold-500/50 text-gold-200 hover:bg-amber-950/30 backdrop-blur-sm px-8 py-6 text-lg"
             >
               Request VIP Access
             </Button>
@@ -526,7 +526,7 @@ const CryptoATMPage = () => {
               <div
                 key={index}
                 ref={(el) => (statsRef.current[index] = el)}
-                className="bg-zinc-900/50 backdrop-blur-sm border border-amber-900/20 rounded-lg p-4"
+                className="bg-zinc-900/50 backdrop-blur-sm border border-gold-800/20 rounded-lg p-4"
               >
                 <div className="stat-number text-3xl font-light text-gold-400 mb-1">{stat.value}</div>
                 <div className="text-sm text-gray-400">{stat.label}</div>
@@ -542,7 +542,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               Exclusive Features
-              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
                 Premium Experience
               </span>
             </h2>
@@ -563,7 +563,7 @@ const CryptoATMPage = () => {
                     <img
                       src={feature.image}
                       alt={feature.title}
-                      className="w-full h-80 object-cover shadow-2xl shadow-amber-900/20"
+                      className="w-full h-80 object-cover shadow-2xl shadow-gold-800/20"
                     />
                   </div>
                   <div className="md:w-1/2 feature-content">
@@ -586,7 +586,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               How It Works
-              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
                 Simple & Secure
               </span>
             </h2>
@@ -597,7 +597,7 @@ const CryptoATMPage = () => {
               <Card
                 key={item.step}
                 ref={(el) => (stepsRef.current[index] = el)}
-                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-gold-500/50 transition-all duration-500"
+                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-gold-800/20 hover:border-gold-500/50 transition-all duration-500"
               >
                 <CardContent className="p-6 text-center">
                   <div className="step-number w-12 h-12 rounded-full bg-gold-500/90 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">
@@ -618,7 +618,7 @@ const CryptoATMPage = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
               Global Network
-              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
                 Premium Locations
               </span>
             </h2>
@@ -629,7 +629,7 @@ const CryptoATMPage = () => {
               <Card
                 key={location.region}
                 ref={(el) => (locationsRef.current[locIndex] = el)}
-                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20"
+                className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-gold-800/20"
               >
                 <CardContent className="p-6">
                   <h3 className="text-2xl font-light text-gold-400 mb-6">{location.region}</h3>
@@ -644,7 +644,7 @@ const CryptoATMPage = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge className="bg-amber-950/50 text-amber-200 text-xs">
+                          <Badge className="bg-amber-950/50 text-gold-200 text-xs">
                             {city.count} ATMs
                           </Badge>
                           {city.vip && <Crown size={14} className="text-gold-400" />}
@@ -675,7 +675,7 @@ const CryptoATMPage = () => {
                 <Card
                   key={benefit.title}
                   ref={(el) => (benefitsRef.current[index] = el)}
-                  className="bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-gold-500/50 transition-all duration-500"
+                  className="bg-gradient-to-br from-zinc-900/50 to-black/50 border-gold-800/20 hover:border-gold-500/50 transition-all duration-500"
                 >
                   <CardContent className="p-6">
                     <div className="benefit-icon inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 mb-4">
@@ -697,7 +697,7 @@ const CryptoATMPage = () => {
           <div className="max-w-3xl mx-auto cta-content">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-6">
               Ready to Experience
-              <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
                 Premium Crypto Access?
               </span>
             </h2>

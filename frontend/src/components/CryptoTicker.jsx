@@ -132,7 +132,7 @@ const CryptoTicker = () => {
             e.stopPropagation();
             setShowFiatDropdown(!showFiatDropdown);
           }}
-          className="flex items-center space-x-1 px-2 py-1 bg-zinc-900/80 border border-amber-900/30 rounded text-xs text-gold-400 hover:border-gold-500/50 transition-colors"
+          className="flex items-center space-x-1 px-2 py-1 bg-zinc-900/80 border border-gold-800/30 rounded text-xs text-gold-400 hover:border-gold-500/50 transition-colors"
           data-testid="fiat-selector"
         >
           <span className="font-medium">{selectedFiat}</span>
@@ -140,7 +140,7 @@ const CryptoTicker = () => {
         </button>
         
         {showFiatDropdown && (
-          <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-amber-900/30 rounded shadow-lg overflow-hidden z-[200]">
+          <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-gold-800/30 rounded shadow-lg overflow-hidden z-[200]">
             {fiatCurrencies.map((currency) => (
               <button
                 key={currency}
@@ -150,7 +150,7 @@ const CryptoTicker = () => {
                 }}
                 className={`block w-full px-3 py-1.5 text-xs text-left transition-colors ${
                   selectedFiat === currency
-                    ? 'bg-amber-900/30 text-gold-400'
+                    ? 'bg-gold-800/30 text-gold-400'
                     : 'text-gray-300 hover:bg-zinc-800'
                 }`}
                 data-testid={`fiat-option-${currency.toLowerCase()}`}

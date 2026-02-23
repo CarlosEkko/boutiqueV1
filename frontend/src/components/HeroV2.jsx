@@ -320,7 +320,7 @@ const HeroV2 = () => {
             {/* Badge */}
             <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-gold-600/30`}>
               <div className="w-2 h-2 bg-gold-400 rounded-full animate-pulse" />
-              <span className="text-amber-200 text-sm tracking-wider font-medium">
+              <span className="text-gold-200 text-sm tracking-wider font-medium">
                 {t('hero.badge')}
               </span>
             </div>
@@ -342,7 +342,7 @@ const HeroV2 = () => {
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-2xl shadow-amber-900/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-2xl shadow-gold-800/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-primary"
               >
                 {t('hero.ctaPrimary')}
@@ -351,7 +351,7 @@ const HeroV2 = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-gold-500/50 text-amber-200 hover:bg-amber-950/30 hover:border-gold-400 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
+                className="border-2 border-gold-500/50 text-gold-200 hover:bg-amber-950/30 hover:border-gold-400 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-secondary"
               >
                 {t('hero.ctaSecondary')}

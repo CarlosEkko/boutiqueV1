@@ -129,7 +129,7 @@ const AdminUsers = () => {
   const getKYCBadge = (status) => {
     switch (status) {
       case 'approved': return <Badge className="bg-green-900/30 text-green-400">Approved</Badge>;
-      case 'pending': return <Badge className="bg-amber-900/30 text-gold-400">Pending</Badge>;
+      case 'pending': return <Badge className="bg-gold-800/30 text-gold-400">Pending</Badge>;
       case 'rejected': return <Badge className="bg-red-900/30 text-red-400">Rejected</Badge>;
       default: return <Badge className="bg-gray-900/30 text-gray-400">Not Started</Badge>;
     }
@@ -161,7 +161,7 @@ const AdminUsers = () => {
             placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-zinc-900 border-amber-900/30 text-white"
+            className="pl-10 bg-zinc-900 border-gold-800/30 text-white"
           />
         </div>
         <div className="flex gap-2">
@@ -172,7 +172,7 @@ const AdminUsers = () => {
               variant={filter === f ? 'default' : 'outline'}
               className={filter === f 
                 ? 'bg-gold-500 hover:bg-gold-400' 
-                : 'border-amber-900/30 text-gray-400 hover:text-white'
+                : 'border-gold-800/30 text-gray-400 hover:text-white'
               }
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -185,7 +185,7 @@ const AdminUsers = () => {
       <div className="space-y-3">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
-            <Card key={user.id} className="bg-zinc-900/50 border-amber-900/20">
+            <Card key={user.id} className="bg-zinc-900/50 border-gold-800/20">
               <CardContent className="p-4">
                 {/* User Row */}
                 <div 
@@ -215,7 +215,7 @@ const AdminUsers = () => {
                       {user.is_approved ? (
                         <Badge className="bg-green-900/30 text-green-400">Approved</Badge>
                       ) : (
-                        <Badge className="bg-amber-900/30 text-gold-400">Pending</Badge>
+                        <Badge className="bg-gold-800/30 text-gold-400">Pending</Badge>
                       )}
                       {getKYCBadge(user.kyc_status)}
                     </div>
@@ -256,7 +256,7 @@ const AdminUsers = () => {
 
                 {/* Expanded Details */}
                 {expandedUser === user.id && (
-                  <div className="mt-4 pt-4 border-t border-amber-900/20">
+                  <div className="mt-4 pt-4 border-t border-gold-800/20">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                       <div className="flex items-center gap-2 text-gray-400">
                         <Mail size={16} />
@@ -287,7 +287,7 @@ const AdminUsers = () => {
                           variant={user.kyc_status === status ? 'default' : 'outline'}
                           className={user.kyc_status === status 
                             ? 'bg-gold-500 hover:bg-gold-400' 
-                            : 'border-amber-900/30 text-gray-400 hover:text-white text-xs'
+                            : 'border-gold-800/30 text-gray-400 hover:text-white text-xs'
                           }
                         >
                           {status.replace('_', ' ')}
@@ -325,7 +325,7 @@ const AdminUsers = () => {
             </Card>
           ))
         ) : (
-          <Card className="bg-zinc-900/50 border-amber-900/20">
+          <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-12 text-center">
               <Users className="mx-auto mb-4 text-gray-500" size={48} />
               <h3 className="text-xl text-white mb-2">No Users Found</h3>

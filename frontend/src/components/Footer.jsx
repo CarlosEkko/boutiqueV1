@@ -14,7 +14,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className={`bg-black border-t border-amber-900/20 ${isRTL ? 'rtl' : 'ltr'}`}>
+    <footer className={`bg-black border-t border-gold-800/20 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="container mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand Column */}
@@ -23,7 +23,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
                 <span className="text-black font-bold text-xl">K</span>
               </div>
-              <span className="text-2xl font-light bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent">
+              <span className="text-2xl font-light bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent">
                 KBEX.io
               </span>
             </a>
@@ -66,7 +66,7 @@ const Footer = () => {
           ))}
         </div>
 
-        <Separator className="bg-amber-900/20 mb-8" />
+        <Separator className="bg-gold-800/20 mb-8" />
 
         <div className={`flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
           <p className="text-gray-500 text-sm">
@@ -82,7 +82,7 @@ const Footer = () => {
         </div>
 
         {/* Legal Disclaimer */}
-        <div className="mt-8 pt-8 border-t border-amber-900/10">
+        <div className="mt-8 pt-8 border-t border-gold-800/10">
           <p className="text-xs text-gray-600 leading-relaxed">
             <strong>{isRTL ? 'تحذير المخاطر:' : 'Risk Warning:'}</strong> {t('footer.disclaimer')}
           </p>

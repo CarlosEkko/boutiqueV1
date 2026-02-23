@@ -92,7 +92,7 @@ const WalletsPage = () => {
             return (
               <Card 
                 key={wallet.id}
-                className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-gold-500/50 transition-all cursor-pointer"
+                className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20 hover:border-gold-500/50 transition-all cursor-pointer"
                 onClick={() => setSelectedWallet(wallet)}
               >
                 <CardContent className="p-6">
@@ -161,7 +161,7 @@ const WalletsPage = () => {
           })}
         </div>
       ) : (
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-12 text-center">
             <Wallet className="mx-auto mb-4 text-gray-500" size={48} />
             <h3 className="text-xl text-white mb-2">No Wallets Yet</h3>
@@ -179,7 +179,7 @@ const WalletsPage = () => {
           onClick={() => setSelectedWallet(null)}
         >
           <Card 
-            className="bg-zinc-900 border-amber-900/30 max-w-lg w-full"
+            className="bg-zinc-900 border-gold-800/30 max-w-lg w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader>
@@ -204,7 +204,7 @@ const WalletsPage = () => {
                   <p className="text-white font-mono text-sm break-all">{selectedWallet.address}</p>
                   <button
                     onClick={() => copyAddress(selectedWallet.address)}
-                    className="ml-2 p-2 text-gold-400 hover:text-amber-300"
+                    className="ml-2 p-2 text-gold-400 hover:text-gold-300"
                   >
                     <Copy size={18} />
                   </button>

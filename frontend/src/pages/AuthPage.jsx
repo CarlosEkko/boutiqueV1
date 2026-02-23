@@ -75,7 +75,7 @@ const AuthPage = () => {
   return (
     <div className={`min-h-screen bg-black flex items-center justify-center p-4 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-black to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-800/20 via-black to-black" />
       
       {/* Back to home link */}
       <Link 
@@ -87,7 +87,7 @@ const AuthPage = () => {
         <span>{t('auth.backToHome') || 'Back to Home'}</span>
       </Link>
 
-      <Card className="w-full max-w-md bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/30 relative z-10">
+      <Card className="w-full max-w-md bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/30 relative z-10">
         <CardHeader className="text-center pb-2">
           {/* Logo */}
           <div className="mb-4 flex justify-center">
@@ -125,7 +125,7 @@ const AuthPage = () => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="João Silva"
-                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
+                  className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                   data-testid="register-name-input"
                 />
               </div>
@@ -145,7 +145,7 @@ const AuthPage = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="joao@exemplo.com"
-                className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
+                className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                 data-testid="auth-email-input"
               />
             </div>
@@ -165,7 +165,7 @@ const AuthPage = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400 pr-10"
+                  className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400 pr-10"
                   data-testid="auth-password-input"
                 />
                 <button
@@ -194,7 +194,7 @@ const AuthPage = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+351 912 345 678"
-                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
+                    className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                     data-testid="register-phone-input"
                   />
                 </div>
@@ -206,17 +206,17 @@ const AuthPage = () => {
                   </Label>
                   <Select value={formData.country} onValueChange={handleCountryChange}>
                     <SelectTrigger 
-                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
+                      className="bg-zinc-800/50 border-gold-800/30 text-white focus:border-gold-400"
                       data-testid="register-country-select"
                     >
                       <SelectValue placeholder={t('auth.selectCountry') || 'Select your country'} />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-amber-900/30">
+                    <SelectContent className="bg-zinc-900 border-gold-800/30">
                       {COUNTRIES.map(country => (
                         <SelectItem 
                           key={country.code} 
                           value={country.code}
-                          className="text-white hover:bg-amber-900/30 focus:bg-amber-900/30"
+                          className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30"
                         >
                           {country.name}
                         </SelectItem>
@@ -251,7 +251,7 @@ const AuthPage = () => {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-gold-400 hover:text-amber-300 transition-colors font-medium"
+                className="ml-2 text-gold-400 hover:text-gold-300 transition-colors font-medium"
                 data-testid="toggle-auth-mode"
               >
                 {isLogin 

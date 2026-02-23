@@ -302,7 +302,7 @@ const KYCStatus = () => {
       </div>
 
       {/* Info Section */}
-      <div className="bg-zinc-900/30 border border-amber-900/20 rounded-xl p-6">
+      <div className="bg-zinc-900/30 border border-gold-800/20 rounded-xl p-6">
         <div className="flex items-start gap-4">
           <div className="p-2 bg-gold-400/10 rounded-lg">
             <Shield className="text-gold-400" size={24} />

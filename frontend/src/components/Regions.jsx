@@ -19,7 +19,7 @@ const Regions = () => {
       <div className="container mx-auto px-6">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-gold-600/30 px-4 py-1">
+          <Badge className="mb-4 bg-amber-950/50 text-gold-200 border-gold-600/30 px-4 py-1">
             <GlowText 
               text={t('regions.badge')} 
               stagger={0.05}
@@ -34,7 +34,7 @@ const Regions = () => {
               delay={0.2}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
-            <span className="block bg-gradient-to-r from-amber-200 via-gold-400 to-amber-200 bg-clip-text text-transparent mt-2">
+            <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
               <GlowText 
                 text={t('regions.titleHighlight')} 
                 stagger={0.06}
@@ -59,7 +59,7 @@ const Regions = () => {
           {translatedRegions.map((region, index) => (
             <div
               key={index}
-              className="group relative bg-gradient-to-br from-zinc-900/80 to-black/80 border border-amber-900/20 hover:border-gold-500/50 rounded-2xl p-8 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-amber-900/20 animate-fade-in-up"
+              className="group relative bg-gradient-to-br from-zinc-900/80 to-black/80 border border-gold-800/20 hover:border-gold-500/50 rounded-2xl p-8 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-gold-800/20 animate-fade-in-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Decorative corner */}

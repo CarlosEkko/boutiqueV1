@@ -128,7 +128,7 @@ const ProfilePage = () => {
   return (
     <div className={`min-h-screen bg-black py-12 px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/20 via-black to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-800/20 via-black to-black" />
 
       <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
@@ -145,7 +145,7 @@ const ProfilePage = () => {
           <Button
             onClick={handleLogout}
             variant="outline"
-            className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30 hover:text-amber-300"
+            className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30 hover:text-gold-300"
             data-testid="logout-button"
           >
             <LogOut size={18} className="mr-2" />
@@ -154,7 +154,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Profile Card */}
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/30">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/30">
           <CardHeader className="text-center pb-4">
             {/* Avatar */}
             <div className="flex justify-center mb-4">
@@ -210,7 +210,7 @@ const ProfilePage = () => {
                   onClick={() => setEditing(true)}
                   variant="outline"
                   size="sm"
-                  className="border-amber-900/30 text-gold-400 hover:bg-amber-900/30"
+                  className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30"
                   data-testid="edit-profile-button"
                 >
                   <Edit2 size={16} className="mr-1" />
@@ -232,7 +232,7 @@ const ProfilePage = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
+                    className="bg-zinc-800/50 border-gold-800/30 text-white focus:border-gold-400"
                     data-testid="profile-name-input"
                   />
                 ) : (
@@ -264,7 +264,7 @@ const ProfilePage = () => {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+351 912 345 678"
-                    className="bg-zinc-800/50 border-amber-900/30 text-white placeholder:text-gray-500 focus:border-gold-400"
+                    className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
                     data-testid="profile-phone-input"
                   />
                 ) : (
@@ -283,17 +283,17 @@ const ProfilePage = () => {
                 {editing ? (
                   <Select value={formData.country} onValueChange={handleCountryChange}>
                     <SelectTrigger 
-                      className="bg-zinc-800/50 border-amber-900/30 text-white focus:border-gold-400"
+                      className="bg-zinc-800/50 border-gold-800/30 text-white focus:border-gold-400"
                       data-testid="profile-country-select"
                     >
                       <SelectValue placeholder={t('profile.selectCountry') || 'Select your country'} />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-amber-900/30">
+                    <SelectContent className="bg-zinc-900 border-gold-800/30">
                       {COUNTRIES.map(country => (
                         <SelectItem 
                           key={country.code} 
                           value={country.code}
-                          className="text-white hover:bg-amber-900/30 focus:bg-amber-900/30"
+                          className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30"
                         >
                           {country.name}
                         </SelectItem>
@@ -310,7 +310,7 @@ const ProfilePage = () => {
               </div>
 
               {/* Member since */}
-              <div className="space-y-2 pt-4 border-t border-amber-900/20">
+              <div className="space-y-2 pt-4 border-t border-gold-800/20">
                 <Label className="text-gray-300 flex items-center gap-2">
                   <Calendar size={16} className="text-gold-400" />
                   {t('profile.memberSince') || 'Member Since'}

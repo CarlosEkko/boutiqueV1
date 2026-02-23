@@ -91,7 +91,7 @@ const TransactionsPage = () => {
         </div>
         <Button 
           variant="outline" 
-          className="border-amber-900/30 text-gold-400"
+          className="border-gold-800/30 text-gold-400"
           disabled
         >
           <Download size={18} className="mr-2" />
@@ -102,10 +102,10 @@ const TransactionsPage = () => {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <Select value={filter.type} onValueChange={(v) => setFilter({...filter, type: v})}>
-          <SelectTrigger className="w-[150px] bg-zinc-900 border-amber-900/30 text-white">
+          <SelectTrigger className="w-[150px] bg-zinc-900 border-gold-800/30 text-white">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-amber-900/30">
+          <SelectContent className="bg-zinc-900 border-gold-800/30">
             <SelectItem value="all" className="text-white">All Types</SelectItem>
             <SelectItem value="deposit" className="text-white">Deposit</SelectItem>
             <SelectItem value="withdrawal" className="text-white">Withdrawal</SelectItem>
@@ -115,10 +115,10 @@ const TransactionsPage = () => {
         </Select>
 
         <Select value={filter.currency} onValueChange={(v) => setFilter({...filter, currency: v})}>
-          <SelectTrigger className="w-[150px] bg-zinc-900 border-amber-900/30 text-white">
+          <SelectTrigger className="w-[150px] bg-zinc-900 border-gold-800/30 text-white">
             <SelectValue placeholder="Currency" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-amber-900/30">
+          <SelectContent className="bg-zinc-900 border-gold-800/30">
             <SelectItem value="all" className="text-white">All Currencies</SelectItem>
             <SelectItem value="BTC" className="text-white">BTC</SelectItem>
             <SelectItem value="ETH" className="text-white">ETH</SelectItem>
@@ -129,10 +129,10 @@ const TransactionsPage = () => {
       </div>
 
       {/* Transactions List */}
-      <Card className="bg-zinc-900/50 border-amber-900/20">
+      <Card className="bg-zinc-900/50 border-gold-800/20">
         <CardContent className="p-0">
           {transactions.length > 0 ? (
-            <div className="divide-y divide-amber-900/10">
+            <div className="divide-y divide-gold-800/10">
               {transactions.map((tx) => (
                 <div 
                   key={tx.id}

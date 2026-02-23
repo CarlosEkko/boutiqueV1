@@ -234,7 +234,7 @@ const KYCIndividual = () => {
                 <Input
                   value={personalInfo.full_name}
                   onChange={(e) => setPersonalInfo({...personalInfo, full_name: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                   required
                 />
               </div>
@@ -244,7 +244,7 @@ const KYCIndividual = () => {
                   type="date"
                   value={personalInfo.date_of_birth}
                   onChange={(e) => setPersonalInfo({...personalInfo, date_of_birth: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                   required
                 />
               </div>
@@ -253,7 +253,7 @@ const KYCIndividual = () => {
                 <select
                   value={personalInfo.nationality}
                   onChange={(e) => setPersonalInfo({...personalInfo, nationality: e.target.value})}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                   required
                 >
                   <option value="">Select...</option>
@@ -265,7 +265,7 @@ const KYCIndividual = () => {
                 <select
                   value={personalInfo.country_of_residence}
                   onChange={(e) => setPersonalInfo({...personalInfo, country_of_residence: e.target.value})}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                   required
                 >
                   <option value="">Select...</option>
@@ -277,7 +277,7 @@ const KYCIndividual = () => {
                 <Input
                   value={personalInfo.address}
                   onChange={(e) => setPersonalInfo({...personalInfo, address: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                   required
                 />
               </div>
@@ -286,7 +286,7 @@ const KYCIndividual = () => {
                 <Input
                   value={personalInfo.city}
                   onChange={(e) => setPersonalInfo({...personalInfo, city: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                   required
                 />
               </div>
@@ -295,7 +295,7 @@ const KYCIndividual = () => {
                 <Input
                   value={personalInfo.postal_code}
                   onChange={(e) => setPersonalInfo({...personalInfo, postal_code: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                   required
                 />
               </div>
@@ -322,7 +322,7 @@ const KYCIndividual = () => {
                 <select
                   value={idDocument.document_type}
                   onChange={(e) => setIdDocument({...idDocument, document_type: e.target.value})}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                 >
                   {DOCUMENT_TYPES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                 </select>
@@ -332,7 +332,7 @@ const KYCIndividual = () => {
                 <Input
                   value={idDocument.document_number}
                   onChange={(e) => setIdDocument({...idDocument, document_number: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
               <div>
@@ -341,7 +341,7 @@ const KYCIndividual = () => {
                   type="date"
                   value={idDocument.document_expiry}
                   onChange={(e) => setIdDocument({...idDocument, document_expiry: e.target.value})}
-                  className="bg-zinc-800 border-amber-900/30 text-white mt-1"
+                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
                 />
               </div>
               <div>
@@ -349,7 +349,7 @@ const KYCIndividual = () => {
                 <select
                   value={idDocument.document_country}
                   onChange={(e) => setIdDocument({...idDocument, document_country: e.target.value})}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-amber-900/30 text-white rounded-md mt-1"
+                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
                 >
                   <option value="">Select...</option>
                   {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
@@ -357,12 +357,12 @@ const KYCIndividual = () => {
               </div>
             </div>
             
-            <Button onClick={submitIdDocument} disabled={loading} variant="outline" className="w-full border-amber-900/30 text-gold-400">
+            <Button onClick={submitIdDocument} disabled={loading} variant="outline" className="w-full border-gold-800/30 text-gold-400">
               Save Document Info
             </Button>
 
             {/* Upload Area */}
-            <div className="border-2 border-dashed border-amber-900/30 rounded-lg p-8 text-center">
+            <div className="border-2 border-dashed border-gold-800/30 rounded-lg p-8 text-center">
               {idDoc ? (
                 <div className="flex items-center justify-center gap-3">
                   <CheckCircle className="text-green-400" size={24} />
@@ -418,7 +418,7 @@ const KYCIndividual = () => {
               </ul>
             </div>
 
-            <div className="border-2 border-dashed border-amber-900/30 rounded-lg p-8 text-center">
+            <div className="border-2 border-dashed border-gold-800/30 rounded-lg p-8 text-center">
               {selfieDoc ? (
                 <div className="flex items-center justify-center gap-3">
                   <CheckCircle className="text-green-400" size={24} />
@@ -474,7 +474,7 @@ const KYCIndividual = () => {
               </ul>
             </div>
 
-            <div className="border-2 border-dashed border-amber-900/30 rounded-lg p-8 text-center">
+            <div className="border-2 border-dashed border-gold-800/30 rounded-lg p-8 text-center">
               {livenessDoc ? (
                 <div className="flex items-center justify-center gap-3">
                   <CheckCircle className="text-green-400" size={24} />
@@ -530,7 +530,7 @@ const KYCIndividual = () => {
               </ul>
             </div>
 
-            <div className="border-2 border-dashed border-amber-900/30 rounded-lg p-8 text-center">
+            <div className="border-2 border-dashed border-gold-800/30 rounded-lg p-8 text-center">
               {addressDoc ? (
                 <div className="flex items-center justify-center gap-3">
                   <CheckCircle className="text-green-400" size={24} />
@@ -589,7 +589,7 @@ const KYCIndividual = () => {
         <Button 
           variant="outline" 
           onClick={() => navigate('/dashboard/kyc')}
-          className="border-amber-900/30 text-gray-400"
+          className="border-gold-800/30 text-gray-400"
         >
           <ArrowLeft size={18} className="mr-2" />
           Back
@@ -636,7 +636,7 @@ const KYCIndividual = () => {
       </div>
 
       {/* Step Content */}
-      <Card className="bg-zinc-900/50 border-amber-900/20">
+      <Card className="bg-zinc-900/50 border-gold-800/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-3">
             {React.createElement(STEPS[currentStep].icon, { size: 24, className: 'text-gold-400' })}

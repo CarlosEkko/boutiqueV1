@@ -77,7 +77,7 @@ const TransparencyPage = () => {
       </div>
 
       {/* Trust Banner */}
-      <Card className="bg-gradient-to-r from-amber-900/20 to-gold-500/10 border-gold-500/30">
+      <Card className="bg-gradient-to-r from-gold-800/20 to-gold-500/10 border-gold-500/30">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center flex-shrink-0">
@@ -95,7 +95,7 @@ const TransparencyPage = () => {
       </Card>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-amber-900/20 pb-2">
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
         <button
           onClick={() => setActiveTab('reserves')}
           className={`px-4 py-2 rounded-lg transition-colors ${
@@ -125,7 +125,7 @@ const TransparencyPage = () => {
           {reserves?.totals_by_asset && Object.keys(reserves.totals_by_asset).length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(reserves.totals_by_asset).map(([asset, balance]) => (
-                <Card key={asset} className="bg-zinc-900/50 border-amber-900/20">
+                <Card key={asset} className="bg-zinc-900/50 border-gold-800/20">
                   <CardContent className="p-4 text-center">
                     <p className="text-2xl font-light text-white">{balance.toLocaleString()}</p>
                     <p className="text-gold-400 font-medium">{asset}</p>
@@ -136,7 +136,7 @@ const TransparencyPage = () => {
           )}
 
           {/* Public Wallets */}
-          <Card className="bg-zinc-900/50 border-amber-900/20">
+          <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardHeader>
               <CardTitle className="text-white font-light flex items-center gap-2">
                 <Wallet size={20} className="text-gold-400" />
@@ -208,7 +208,7 @@ const TransparencyPage = () => {
         <div className="space-y-4">
           {reports.length > 0 ? (
             reports.map((report) => (
-              <Card key={report.id} className="bg-zinc-900/50 border-amber-900/20">
+              <Card key={report.id} className="bg-zinc-900/50 border-gold-800/20">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-start gap-4">
@@ -237,7 +237,7 @@ const TransparencyPage = () => {
                           ? 'bg-green-900/30 text-green-400'
                           : report.type === 'proof_of_reserves'
                           ? 'bg-blue-900/30 text-blue-400'
-                          : 'bg-amber-900/30 text-gold-400'
+                          : 'bg-gold-800/30 text-gold-400'
                       }`}>
                         {report.type?.replace('_', ' ')}
                       </Badge>
@@ -246,7 +246,7 @@ const TransparencyPage = () => {
                           href={report.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-gold-400 hover:text-amber-300 bg-gold-500/20 rounded-lg"
+                          className="p-2 text-gold-400 hover:text-gold-300 bg-gold-500/20 rounded-lg"
                         >
                           <ExternalLink size={18} />
                         </a>
@@ -257,7 +257,7 @@ const TransparencyPage = () => {
               </Card>
             ))
           ) : (
-            <Card className="bg-zinc-900/50 border-amber-900/20">
+            <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardContent className="p-12 text-center">
                 <FileText className="mx-auto mb-4 text-gray-500" size={48} />
                 <h3 className="text-xl text-white mb-2">No Reports Yet</h3>

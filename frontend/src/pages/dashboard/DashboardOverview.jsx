@@ -56,7 +56,7 @@ const DashboardOverview = () => {
   if (error === 'pending_approval') {
     return (
       <div className="max-w-2xl mx-auto mt-12">
-        <Card className="bg-zinc-900/50 border-amber-900/30">
+        <Card className="bg-zinc-900/50 border-gold-800/30">
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold-500/20 flex items-center justify-center">
               <Clock className="text-gold-400" size={32} />
@@ -119,7 +119,7 @@ const DashboardOverview = () => {
           <Badge className={`${
             overview?.kyc_status === 'approved' 
               ? 'bg-green-900/30 text-green-400' 
-              : 'bg-amber-900/30 text-gold-400'
+              : 'bg-gold-800/30 text-gold-400'
           }`}>
             KYC: {overview?.kyc_status || 'Not Started'}
           </Badge>
@@ -131,7 +131,7 @@ const DashboardOverview = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -147,7 +147,7 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -163,7 +163,7 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -179,7 +179,7 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20">
+        <Card className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-gold-800/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -199,7 +199,7 @@ const DashboardOverview = () => {
       {/* Portfolio Allocation & Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Allocation */}
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
             <CardTitle className="text-white font-light">Portfolio Allocation</CardTitle>
           </CardHeader>
@@ -231,7 +231,7 @@ const DashboardOverview = () => {
         </Card>
 
         {/* Recent Transactions */}
-        <Card className="bg-zinc-900/50 border-amber-900/20">
+        <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
             <CardTitle className="text-white font-light">Recent Transactions</CardTitle>
           </CardHeader>
@@ -239,7 +239,7 @@ const DashboardOverview = () => {
             {overview?.recent_transactions?.length > 0 ? (
               <div className="space-y-4">
                 {overview.recent_transactions.map((tx, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-amber-900/10 last:border-0">
+                  <div key={index} className="flex items-center justify-between py-2 border-b border-gold-800/10 last:border-0">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         tx.type === 'deposit' || tx.type === 'return'

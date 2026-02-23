@@ -712,7 +712,7 @@ const KYBForm = () => {
       </div>
 
       {/* Current Step Content */}
-      <div className="bg-zinc-900/50 border border-amber-900/20 rounded-xl p-6">
+      <div className="bg-zinc-900/50 border border-gold-800/20 rounded-xl p-6">
         {currentStep < STEPS.length && (
           <h3 className="text-lg font-medium text-white mb-6 flex items-center gap-2">
             {React.createElement(STEPS[currentStep].icon, { size: 20, className: 'text-gold-400' })}
