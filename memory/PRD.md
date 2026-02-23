@@ -65,13 +65,18 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 ### ✅ Frontend MVP (February 16, 2025)
 
 #### Components Created
-1. **Header.jsx** - Fixed navigation with logo, menu links, CTA button
-2. **Hero.jsx** - Full-screen hero with dramatic messaging and CTAs
-3. **Products.jsx** - Grid of 4 premium services with images and features
-4. **Trust.jsx** - Stats section + 4 trust factor cards
-5. **Regions.jsx** - Geographic presence (Europe, Middle East, Brazil)
-6. **ContactCTA.jsx** - Split design with form (exclusive membership request)
-7. **Footer.jsx** - Comprehensive footer with links, contact info, legal disclaimer
+1. **Header.jsx** - Fixed navigation with logo, menu links, CTA button, language selector (EN/AR UI)
+2. **CryptoTicker.jsx** - Live scrolling crypto price ticker (MOCK DATA)
+3. **Hero.jsx** - Original hero component (replaced)
+4. **HeroV2.jsx** - ✅ NEW: Advanced cinematic hero with sequential text animations
+   - Blur/Fade/Scale effects for 4 phrases (inspired by CodePen Sonick)
+   - Letter-by-letter glow animation for "KRYPTOBOX" (inspired by CodePen StephenScaff)
+   - Full animation sequence: "The Boutique" → "Exchange for" → "Sophisticated" → "INVESTORS" → "KRYPTOBOX" → Final CTA content
+5. **Products.jsx** - Grid of 4 premium services with images and features
+6. **Trust.jsx** - Stats section + 4 trust factor cards
+7. **Regions.jsx** - Geographic presence (Europe, Middle East, Brazil)
+8. **ContactCTA.jsx** - Split design with form (exclusive membership request)
+9. **Footer.jsx** - Comprehensive footer with links, contact info, legal disclaimer
 
 #### Pages
 - **Home.jsx** - Main landing page assembling all components
