@@ -226,7 +226,7 @@ const Header = () => {
           ref={cursorPointerRef}
           className="c-cursor__pointer fixed w-[14px] h-[14px] -left-[7px] -top-[7px] z-[9999] opacity-0"
         >
-          <div className="cursor-dot absolute w-full h-full bg-gold-400 rounded-full shadow-[0_0_15px_rgba(165,122,80,0.8),0_0_30px_rgba(165,122,80,0.4)] transition-transform duration-300 ease-[cubic-bezier(0.165,0.84,0.44,1)]" />
+          <div className="cursor-dot absolute w-full h-full bg-gold-400 rounded-full shadow-[0_0_8px_rgba(165,122,80,0.5),0_0_16px_rgba(165,122,80,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.165,0.84,0.44,1)]" />
         </div>
       </div>
 
