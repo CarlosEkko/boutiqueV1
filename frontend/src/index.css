@@ -201,13 +201,13 @@ html {
 
 /* Selection styling */
 ::selection {
-    background-color: rgba(217, 119, 6, 0.3);
-    color: #fbbf24;
+    background-color: rgba(165, 122, 80, 0.3);
+    color: #c4a87a;
 }
 
 /* Focus visible for accessibility */
 *:focus-visible {
-    outline: 2px solid #d97706;
+    outline: 2px solid #a57a50;
     outline-offset: 2px;
 }
 
