@@ -25,9 +25,8 @@ async def get_admin_user(user_id: str = Depends(get_current_user_id)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # For now, check if email ends with @kryptobox.io or is in admin list
-    admin_emails = ["admin@kryptobox.io", "joao@teste.com"]
-    if user.get("email") not in admin_emails:
+    # Check if user has is_admin flag set to True
+    if not user.get("is_admin", False):
         raise HTTPException(status_code=403, detail="Admin access required")
     
     return user
