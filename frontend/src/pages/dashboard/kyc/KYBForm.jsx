@@ -599,29 +599,30 @@ const KYBForm = () => {
         return (
           <div className="space-y-6" data-testid="address-proof-step">
             <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">Comprovativo de Morada da Sede</h4>
+              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.addressProof.title')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Fatura de serviços em nome da empresa</li>
-                <li>• Extrato bancário empresarial</li>
-                <li>• Documento oficial com morada da sede</li>
-                <li>• Deve ter menos de 3 meses</li>
+                {t('kyc.kybForm.addressProof.docsList').map((doc, index) => (
+                  <li key={index}>• {doc}</li>
+                ))}
               </ul>
             </div>
 
             <FileUploadBox
-              label="Comprovativo de Morada Empresarial"
+              label={t('kyc.kybForm.addressProof.businessProof')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'business_address_proof')}
               uploaded={hasUploadedDoc('business_address_proof')}
               testId="upload-business-address-proof"
+              t={t}
             />
 
             <FileUploadBox
-              label="Registo Fiscal (opcional)"
+              label={t('kyc.kybForm.addressProof.taxRegistration')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'tax_registration')}
               uploaded={hasUploadedDoc('tax_registration')}
               testId="upload-tax-registration"
+              t={t}
             />
 
             <div className="flex gap-4">
@@ -631,7 +632,7 @@ const KYBForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={handleSubmitForReview}
@@ -640,7 +641,7 @@ const KYBForm = () => {
                 data-testid="submit-kyb"
               >
                 {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                Submeter KYB
+                {t('kyc.kybForm.submit')}
                 <Check size={18} className="ml-2" />
               </Button>
             </div>
@@ -662,10 +663,10 @@ const KYBForm = () => {
           className="text-gray-400 hover:text-white mb-4"
         >
           <ChevronLeft size={18} className="mr-2" />
-          Voltar
+          {t('kyc.form.back')}
         </Button>
-        <h1 className="text-2xl font-light text-white mb-2">Verificação KYB Empresarial</h1>
-        <p className="text-gray-400">Complete todos os passos para verificar a sua empresa</p>
+        <h1 className="text-2xl font-light text-white mb-2">{t('kyc.kybForm.title')}</h1>
+        <p className="text-gray-400">{t('kyc.kybForm.subtitle')}</p>
       </div>
 
       {/* Progress Steps */}
