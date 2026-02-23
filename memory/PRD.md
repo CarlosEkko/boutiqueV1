@@ -81,6 +81,15 @@ Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriorm
 - All form labels, buttons, progress steps now fully translated
 - FileUploadBox component updated to support i18n
 
+### Phase 6.2: Rebranding & Fiat Currency Selector ✅ (February 2025)
+- **Rebranding**: Changed name from "Kryptobox" to "KBEX" across entire application
+  - Header, Footer, Auth page, Dashboard sidebar, Hero animation, Translations
+  - Email contact updated to contact@kbex.io
+- **Fiat Currency Selector**: Added multi-currency support in crypto ticker
+  - Supported currencies: USD ($), EUR (€), AED (د.إ), BRL (R$)
+  - Real-time price conversion for all crypto pairs
+  - Dropdown selector in header ticker bar
+
 ---
 
 ## Technical Architecture
