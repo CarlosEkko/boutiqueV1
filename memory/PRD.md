@@ -196,19 +196,19 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 ## 7. Prioritized Backlog
 
 ### P0 - Critical (Next Phase)
-- [ ] Backend development (FastAPI)
-  - Contact request submission endpoint
-  - Crypto prices proxy (resolve CORS issue)
-  - Email notification service
-  - Database models for contact requests
+- [x] ~~Backend development (FastAPI)~~
+  - [x] ~~Crypto prices proxy (resolve CORS issue)~~ ✅ DONE
+  - [ ] Contact request submission endpoint
+  - [ ] Email notification service
+  - [ ] Database models for contact requests
 - [ ] Frontend-backend integration
-  - Replace mock crypto ticker with real API data
-  - Replace mock data with API calls
-  - Add loading spinners
-  - Error handling and validation
+  - [x] ~~Replace mock crypto ticker with real API data~~ ✅ DONE
+  - [ ] Replace mock form submission with API calls
+  - [ ] Add loading spinners
+  - [ ] Error handling and validation
 
 ### P1 - High Priority
-- [ ] Language selector functionality (EN/AR i18n)
+- [x] ~~Language selector functionality (EN/AR i18n)~~ ✅ DONE
 - [ ] Admin dashboard for reviewing contact requests
 - [ ] Analytics tracking (Google Analytics, Mixpanel)
 - [ ] SEO optimization (meta tags, sitemap, robots.txt)
