@@ -86,7 +86,7 @@ const TransparencyPage = () => {
             <div>
               <h3 className="text-xl text-white mb-2">Committed to Transparency</h3>
               <p className="text-gray-300">
-                At Kryptobox, we believe in complete transparency. Our proof of reserves is updated regularly, 
+                At KBEX, we believe in complete transparency. Our proof of reserves is updated regularly, 
                 and all our wallets are publicly verifiable on the blockchain.
               </p>
             </div>
