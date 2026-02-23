@@ -505,10 +505,10 @@ const KYCForm = () => {
           className="text-gray-400 hover:text-white mb-4"
         >
           <ChevronLeft size={18} className="mr-2" />
-          Voltar
+          {t('kyc.form.back')}
         </Button>
-        <h1 className="text-2xl font-light text-white mb-2">Verificação KYC</h1>
-        <p className="text-gray-400">Complete todos os passos para verificar a sua identidade</p>
+        <h1 className="text-2xl font-light text-white mb-2">{t('kyc.form.title')}</h1>
+        <p className="text-gray-400">{t('kyc.form.subtitle')}</p>
       </div>
 
       {/* Progress Steps */}
@@ -566,7 +566,7 @@ const KYCForm = () => {
 };
 
 // File Upload Component
-const FileUploadBox = ({ label, accept, onUpload, uploaded, testId }) => {
+const FileUploadBox = ({ label, accept, onUpload, uploaded, testId, t }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
