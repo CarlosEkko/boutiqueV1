@@ -473,7 +473,7 @@ const Header = () => {
         /* Cursor hover effect */
         body.cursor-hover .cursor-dot {
           transform: scale(2.5);
-          box-shadow: 0 0 25px rgba(217,119,6,1), 0 0 50px rgba(217,119,6,0.6), 0 0 75px rgba(217,119,6,0.3);
+          box-shadow: 0 0 25px rgba(165,122,80,1), 0 0 50px rgba(165,122,80,0.6), 0 0 75px rgba(165,122,80,0.3);
         }
         
         body.cursor-hover .cursor-trail > div {
