@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -12,11 +12,23 @@ const fallbackCryptoData = [
   { symbol: 'XRP', name: 'Ripple', price: 2.18, change_24h: -1.15 }
 ];
 
+// Exchange rates (USD base) - these would ideally come from an API
+const exchangeRates = {
+  USD: { rate: 1, symbol: '$' },
+  EUR: { rate: 0.92, symbol: '€' },
+  AED: { rate: 3.67, symbol: 'د.إ' },
+  BRL: { rate: 4.97, symbol: 'R$' }
+};
+
+const fiatCurrencies = ['USD', 'EUR', 'AED', 'BRL'];
+
 const CryptoTicker = () => {
   const [cryptoData, setCryptoData] = useState(fallbackCryptoData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLive, setIsLive] = useState(false);
+  const [selectedFiat, setSelectedFiat] = useState('USD');
+  const [showFiatDropdown, setShowFiatDropdown] = useState(false);
 
   const fetchCryptoPrices = useCallback(async () => {
     try {
@@ -35,7 +47,6 @@ const CryptoTicker = () => {
       console.warn('Failed to fetch crypto prices, using fallback data:', err.message);
       setError(err.message);
       setIsLive(false);
-      // Keep using current data (fallback or last successful fetch)
     } finally {
       setLoading(false);
     }
@@ -44,16 +55,13 @@ const CryptoTicker = () => {
   // Initial fetch and periodic updates
   useEffect(() => {
     fetchCryptoPrices();
-    
-    // Refresh every 60 seconds
     const interval = setInterval(fetchCryptoPrices, 60000);
-    
     return () => clearInterval(interval);
   }, [fetchCryptoPrices]);
 
   // Small price fluctuations for visual effect (only when not live)
   useEffect(() => {
-    if (isLive) return; // Don't simulate when we have live data
+    if (isLive) return;
     
     const interval = setInterval(() => {
       setCryptoData(prevData =>
@@ -68,13 +76,32 @@ const CryptoTicker = () => {
     return () => clearInterval(interval);
   }, [isLive]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.fiat-selector')) {
+        setShowFiatDropdown(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const convertPrice = (usdPrice) => {
+    const { rate } = exchangeRates[selectedFiat];
+    return usdPrice * rate;
+  };
+
   const formatPrice = (price) => {
-    if (price >= 1000) {
-      return `$${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    } else if (price >= 1) {
-      return `$${price.toFixed(2)}`;
+    const convertedPrice = convertPrice(price);
+    const { symbol } = exchangeRates[selectedFiat];
+    
+    if (convertedPrice >= 1000) {
+      return `${symbol}${convertedPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    } else if (convertedPrice >= 1) {
+      return `${symbol}${convertedPrice.toFixed(2)}`;
     } else {
-      return `$${price.toFixed(4)}`;
+      return `${symbol}${convertedPrice.toFixed(4)}`;
     }
   };
 
@@ -97,24 +124,62 @@ const CryptoTicker = () => {
   }
 
   return (
-    <div className="crypto-ticker-container overflow-hidden relative">
+    <div className="crypto-ticker-container overflow-hidden relative flex items-center">
+      {/* Fiat Currency Selector */}
+      <div className="fiat-selector relative z-20 mr-4 flex-shrink-0">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowFiatDropdown(!showFiatDropdown);
+          }}
+          className="flex items-center space-x-1 px-2 py-1 bg-zinc-900/80 border border-amber-900/30 rounded text-xs text-amber-400 hover:border-amber-600/50 transition-colors"
+          data-testid="fiat-selector"
+        >
+          <span className="font-medium">{selectedFiat}</span>
+          <ChevronDown size={12} className={`transition-transform ${showFiatDropdown ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {showFiatDropdown && (
+          <div className="absolute top-full left-0 mt-1 bg-zinc-900 border border-amber-900/30 rounded shadow-lg overflow-hidden">
+            {fiatCurrencies.map((currency) => (
+              <button
+                key={currency}
+                onClick={() => {
+                  setSelectedFiat(currency);
+                  setShowFiatDropdown(false);
+                }}
+                className={`block w-full px-3 py-1.5 text-xs text-left transition-colors ${
+                  selectedFiat === currency
+                    ? 'bg-amber-900/30 text-amber-400'
+                    : 'text-gray-300 hover:bg-zinc-800'
+                }`}
+                data-testid={`fiat-option-${currency.toLowerCase()}`}
+              >
+                <span className="font-medium">{currency}</span>
+                <span className="text-gray-500 ml-1">{exchangeRates[currency].symbol}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Live indicator */}
       {isLive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center space-x-1 pr-4 bg-gradient-to-r from-black via-black to-transparent">
+        <div className="flex items-center space-x-1 mr-4 flex-shrink-0">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span className="text-[10px] text-green-400 uppercase tracking-wider">Live</span>
         </div>
       )}
       
-      <div className="crypto-ticker-track flex items-center space-x-8">
-        {/* Duplicate for seamless scroll */}
+      {/* Crypto Ticker */}
+      <div className="crypto-ticker-track flex items-center space-x-8 overflow-hidden">
         {[...cryptoData, ...cryptoData].map((crypto, index) => (
           <div
             key={`${crypto.symbol}-${index}`}
             className="flex items-center space-x-2 whitespace-nowrap"
           >
             <span className="text-amber-400 font-medium text-sm tracking-wide font-['Inter']">
-              {crypto.symbol}
+              {crypto.symbol}/{selectedFiat}
             </span>
             <span className="text-white text-sm font-light font-['Inter']">
               {formatPrice(crypto.price)}
