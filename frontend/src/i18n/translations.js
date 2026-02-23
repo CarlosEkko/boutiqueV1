@@ -199,7 +199,56 @@ const translations = {
       whyUs: 'Porquê Nós',
       regions: 'Regiões',
       contact: 'Contacto',
-      requestAccess: 'Solicitar Acesso'
+      requestAccess: 'Solicitar Acesso',
+      login: 'Entrar',
+      profile: 'Perfil'
+    },
+    
+    // Auth
+    auth: {
+      welcomeBack: 'Bem-vindo de Volta',
+      createAccount: 'Criar Conta',
+      loginDescription: 'Entre para aceder à sua conta',
+      registerDescription: 'Junte-se à nossa plataforma exclusiva',
+      fullName: 'Nome Completo',
+      email: 'Email',
+      password: 'Palavra-passe',
+      phone: 'Número de Telefone',
+      country: 'País',
+      selectCountry: 'Selecione o seu país',
+      signIn: 'Entrar',
+      signUp: 'Registar',
+      processing: 'A processar...',
+      noAccount: 'Não tem conta?',
+      haveAccount: 'Já tem conta?',
+      backToHome: 'Voltar ao Início',
+      loginSuccess: 'Login com sucesso!',
+      registerSuccess: 'Conta criada com sucesso!',
+      logoutSuccess: 'Sessão terminada com sucesso!',
+      logout: 'Sair'
+    },
+    
+    // Profile
+    profile: {
+      backToHome: 'Voltar ao Início',
+      edit: 'Editar Perfil',
+      fullName: 'Nome Completo',
+      email: 'Email',
+      phone: 'Número de Telefone',
+      country: 'País',
+      selectCountry: 'Selecione o seu país',
+      memberSince: 'Membro Desde',
+      verified: 'Membro Verificado',
+      notProvided: 'Não fornecido',
+      cannotChange: 'Não pode ser alterado',
+      updateSuccess: 'Perfil atualizado com sucesso!'
+    },
+    
+    // Common
+    common: {
+      save: 'Guardar',
+      saving: 'A guardar...',
+      cancel: 'Cancelar'
     },
     
     // Hero Section
