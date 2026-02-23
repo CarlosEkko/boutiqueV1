@@ -96,9 +96,10 @@ const KYBForm = () => {
           'company_documents': 1,
           'representatives': 2,
           'address_proof': 3,
-          'completed': 4
+          'completed': 3 // Stay on last step if completed
         };
-        setCurrentStep(stepMap[kyb.current_step] || 0);
+        const stepIndex = stepMap[kyb.current_step];
+        setCurrentStep(stepIndex !== undefined ? Math.min(stepIndex, 3) : 0);
       }
     } catch (error) {
       console.error('Error fetching KYB status:', error);
