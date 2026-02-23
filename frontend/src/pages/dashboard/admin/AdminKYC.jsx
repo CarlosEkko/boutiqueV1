@@ -289,11 +289,11 @@ const VerificationCard = ({
                 ) : (
                   <>
                     <InfoRow label={t('kyc.admin.company')} value={item.company_name} />
-                    <InfoRow label="Tipo" value={item.company_type} />
-                    <InfoRow label="NIPC" value={item.registration_number} />
-                    <InfoRow label="Data Constituição" value={item.incorporation_date} />
-                    <InfoRow label="País" value={item.incorporation_country} />
-                    <InfoRow label="Email" value={item.business_email} />
+                    <InfoRow label={t('kyc.admin.type')} value={item.company_type} />
+                    <InfoRow label={t('kyc.admin.nipc')} value={item.registration_number} />
+                    <InfoRow label={t('kyc.admin.incorporationDateLabel')} value={item.incorporation_date} />
+                    <InfoRow label={t('kyc.admin.countryLabel')} value={item.incorporation_country} />
+                    <InfoRow label={t('kyc.admin.emailLabel')} value={item.business_email} />
                   </>
                 )}
               </div>
@@ -302,12 +302,12 @@ const VerificationCard = ({
             {/* ID Document Info (KYC only) */}
             {isKYC && item.id_document_type && (
               <div>
-                <h4 className="text-amber-400 font-medium mb-3">Documento de Identificação</h4>
+                <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.idDocument')}</h4>
                 <div className="space-y-2 text-sm">
-                  <InfoRow label="Tipo" value={formatDocType(item.id_document_type)} />
-                  <InfoRow label="Número" value={item.id_document_number} />
-                  <InfoRow label="Validade" value={item.id_document_expiry} />
-                  <InfoRow label="País Emissão" value={item.id_document_country} />
+                  <InfoRow label={t('kyc.admin.documentType')} value={formatDocType(item.id_document_type)} />
+                  <InfoRow label={t('kyc.admin.documentNumber')} value={item.id_document_number} />
+                  <InfoRow label={t('kyc.admin.validity')} value={item.id_document_expiry} />
+                  <InfoRow label={t('kyc.admin.issuingCountryLabel')} value={item.id_document_country} />
                 </div>
               </div>
             )}
@@ -315,7 +315,7 @@ const VerificationCard = ({
             {/* Representatives (KYB only) */}
             {!isKYC && item.representatives?.length > 0 && (
               <div>
-                <h4 className="text-amber-400 font-medium mb-3">Representantes</h4>
+                <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.representatives')}</h4>
                 <div className="space-y-3">
                   {item.representatives.map((rep, index) => (
                     <div key={index} className="bg-zinc-800/50 rounded-lg p-3">
@@ -333,7 +333,7 @@ const VerificationCard = ({
 
           {/* Documents */}
           <div>
-            <h4 className="text-amber-400 font-medium mb-3">Documentos Submetidos</h4>
+            <h4 className="text-amber-400 font-medium mb-3">{t('kyc.admin.submittedDocuments')}</h4>
             {item.documents?.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {item.documents.map((doc) => (
@@ -362,7 +362,7 @@ const VerificationCard = ({
             ) : (
               <div className="text-gray-400 text-sm flex items-center gap-2">
                 <AlertCircle size={16} />
-                Nenhum documento encontrado
+                {t('kyc.admin.noDocuments')}
               </div>
             )}
           </div>
@@ -370,12 +370,12 @@ const VerificationCard = ({
           {/* Rejection Reason Input */}
           <div className="border-t border-zinc-800 pt-4">
             <label className="text-sm text-gray-400 block mb-2">
-              Motivo da rejeição (obrigatório para rejeitar)
+              {t('kyc.admin.rejectionReason')}
             </label>
             <Input
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Ex: Documento ilegível, dados inconsistentes..."
+              placeholder={t('kyc.admin.rejectionPlaceholder')}
               className="bg-zinc-800 border-zinc-700 mb-4"
               data-testid="rejection-reason-input"
             />
