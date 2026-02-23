@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../i18n';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { TrendingUp, TrendingDown, Star, Search, ArrowUpDown } from 'lucide-react';
@@ -29,7 +29,7 @@ const futuresMarkets = [
 ];
 
 const MarketsPage = () => {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('spot');
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState(['BTC/USDT', 'ETH/USDT']);
