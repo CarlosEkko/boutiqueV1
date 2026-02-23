@@ -297,7 +297,7 @@ const HeroV2 = () => {
               className="text-4xl md:text-6xl lg:text-7xl font-extralight text-amber-400 tracking-widest uppercase mb-4"
               style={{ textShadow: '0px 0px 1px rgba(217, 119, 6, 0.8)' }}
             >
-              {splitTextIntoSpans('KRYPTOBOX')}
+              {splitTextIntoSpans('KBEX')}
             </h1>
             <p 
               className="text-lg md:text-xl lg:text-2xl font-light text-gray-300 tracking-wider"
