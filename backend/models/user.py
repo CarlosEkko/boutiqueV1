@@ -52,6 +52,7 @@ class UserInDB(UserBase):
     is_active: bool = True
     # Membership fields
     is_approved: bool = False
+    is_admin: bool = False  # Admin flag
     kyc_status: KYCStatus = KYCStatus.NOT_STARTED
     membership_level: MembershipLevel = MembershipLevel.STANDARD
     invite_code_used: Optional[str] = None
@@ -67,6 +68,7 @@ class UserResponse(UserBase):
     updated_at: datetime
     is_active: bool
     is_approved: bool
+    is_admin: bool = False
     kyc_status: KYCStatus
     membership_level: MembershipLevel
 
