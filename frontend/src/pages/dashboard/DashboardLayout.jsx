@@ -99,10 +99,24 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => (
-            <NavItem key={item.to} {...item} />
-          ))}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {/* User Navigation */}
+          <div className="mb-4">
+            {sidebarOpen && <p className="px-4 text-xs text-gray-500 uppercase mb-2">Portfolio</p>}
+            {userNavItems.map((item) => (
+              <NavItem key={item.to} {...item} />
+            ))}
+          </div>
+
+          {/* Admin Navigation - Only visible to admins */}
+          {isAdmin && (
+            <div className="pt-4 border-t border-amber-900/20">
+              {sidebarOpen && <p className="px-4 text-xs text-amber-500 uppercase mb-2">Admin</p>}
+              {adminNavItems.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* User & Logout */}
