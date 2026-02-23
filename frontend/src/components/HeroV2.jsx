@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { heroData } from '../mock';
+import { useLanguage } from '../i18n';
 import gsap from 'gsap';
 
 // Utility to split text into spans for letter-by-letter animation
@@ -27,6 +28,7 @@ const HeroV2 = () => {
   const finalContentRef = useRef(null);
   const [showFinalFrame, setShowFinalFrame] = useState(false);
   const [showFinalContent, setShowFinalContent] = useState(false);
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -214,7 +216,7 @@ const HeroV2 = () => {
   }, [showFinalContent]);
 
   return (
-    <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section ref={heroRef} className={`relative min-h-screen flex items-center justify-center overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <div
@@ -317,35 +319,35 @@ const HeroV2 = () => {
         >
           <div className="max-w-5xl mx-auto space-y-8">
             {/* Badge */}
-            <div className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-amber-700/30">
+            <div className={`inline-flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 px-6 py-3 rounded-full bg-amber-950/30 backdrop-blur-sm border border-amber-700/30`}>
               <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
               <span className="text-amber-200 text-sm tracking-wider font-medium">
-                EXCLUSIVE ACCESS • INSTITUTIONAL GRADE
+                {t('hero.badge')}
               </span>
             </div>
 
             {/* Final title */}
             <h1 className="text-5xl md:text-7xl font-extralight text-white leading-tight tracking-wide">
-              {heroData.title}
+              {t('hero.title')}
               <span className="block text-amber-400 mt-2">
-                {heroData.subtitle}
+                {t('hero.subtitle')}
               </span>
             </h1>
 
             {/* Description */}
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              {heroData.description}
+              {t('hero.description')}
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+            <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white border-none shadow-2xl shadow-amber-900/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-primary"
               >
-                {heroData.cta.primary}
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" size={20} />
+                {t('hero.ctaPrimary')}
+                <ArrowRight className={`${isRTL ? 'mr-2 rotate-180 group-hover:-translate-x-1' : 'ml-2 group-hover:translate-x-1'} transition-transform duration-300`} size={20} />
               </Button>
               <Button
                 size="lg"
@@ -353,23 +355,23 @@ const HeroV2 = () => {
                 className="border-2 border-amber-600/50 text-amber-200 hover:bg-amber-950/30 hover:border-amber-500 backdrop-blur-sm px-8 py-6 text-lg transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-secondary"
               >
-                {heroData.cta.secondary}
+                {t('hero.ctaSecondary')}
               </Button>
             </div>
 
             {/* Trust indicators */}
-            <div className="pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400">
-              <div className="flex items-center space-x-2">
+            <div className={`pt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
                 <div className="w-1 h-1 bg-amber-400 rounded-full" />
-                <span>Licensed & Regulated</span>
+                <span>{t('hero.trustLicensed')}</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
                 <div className="w-1 h-1 bg-amber-400 rounded-full" />
-                <span>Bank-Level Security</span>
+                <span>{t('hero.trustSecurity')}</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
                 <div className="w-1 h-1 bg-amber-400 rounded-full" />
-                <span>$2.5B+ AUC</span>
+                <span>{t('hero.trustAuc')}</span>
               </div>
             </div>
           </div>

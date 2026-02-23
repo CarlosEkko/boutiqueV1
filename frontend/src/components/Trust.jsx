@@ -5,6 +5,7 @@ import { ShieldCheck, Lock, Crown, Globe } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import GlowText from './GlowText';
+import { useLanguage } from '../i18n';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,6 +21,7 @@ const Trust = () => {
   const statsRef = useRef([]);
   const headerRef = useRef(null);
   const cardsRef = useRef([]);
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -66,16 +68,10 @@ const Trust = () => {
       cardsRef.current.forEach((card, index) => {
         gsap.fromTo(
           card,
-          {
-            opacity: 0,
-            y: 80,
-            rotateX: -20,
-            scale: 0.8
-          },
+          { opacity: 0, y: 50, scale: 0.95 },
           {
             opacity: 1,
             y: 0,
-            rotateX: 0,
             scale: 1,
             duration: 0.8,
             delay: index * 0.1,
@@ -87,72 +83,45 @@ const Trust = () => {
             }
           }
         );
-
-        // Hover animation
-        card.addEventListener('mouseenter', () => {
-          gsap.to(card, {
-            y: -15,
-            scale: 1.05,
-            duration: 0.4,
-            ease: 'power2.out'
-          });
-          
-          const icon = card.querySelector('.trust-icon');
-          if (icon) {
-            gsap.to(icon, {
-              rotation: 360,
-              scale: 1.2,
-              duration: 0.6,
-              ease: 'back.out(1.7)'
-            });
-          }
-        });
-
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            y: 0,
-            scale: 1,
-            duration: 0.4,
-            ease: 'power2.out'
-          });
-          
-          const icon = card.querySelector('.trust-icon');
-          if (icon) {
-            gsap.to(icon, {
-              rotation: 0,
-              scale: 1,
-              duration: 0.4,
-              ease: 'power2.out'
-            });
-          }
-        });
       });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  return (
-    <section ref={sectionRef} id="trust" className="py-24 bg-black relative overflow-hidden">
-      {/* Ambient background elements */}
-      <div className="absolute top-1/4 left-0 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
+  // Translated stats
+  const translatedStats = [
+    { value: t('trust.stats.auc'), label: t('trust.stats.aucLabel') },
+    { value: t('trust.stats.clients'), label: t('trust.stats.clientsLabel') },
+    { value: t('trust.stats.uptime'), label: t('trust.stats.uptimeLabel') },
+    { value: t('trust.stats.support'), label: t('trust.stats.supportLabel') }
+  ];
 
-      <div className="container mx-auto px-6 relative z-10">
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-24 max-w-5xl mx-auto">
-          {stats.map((stat, index) => (
+  // Translated trust factors
+  const translatedFactors = [
+    { icon: 'shield-check', title: t('trust.regulated'), description: t('trust.regulatedDesc') },
+    { icon: 'lock', title: t('trust.security'), description: t('trust.securityDesc') },
+    { icon: 'crown', title: t('trust.exclusive'), description: t('trust.exclusiveDesc') },
+    { icon: 'globe', title: t('trust.global'), description: t('trust.globalDesc') }
+  ];
+
+  return (
+    <section ref={sectionRef} id="trust" className={`py-24 bg-gradient-to-b from-black via-zinc-950 to-black ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="container mx-auto px-6">
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20">
+          {translatedStats.map((stat, index) => (
             <div
               key={index}
               ref={(el) => (statsRef.current[index] = el)}
-              className="text-center group"
+              className="text-center"
             >
-              <div className="mb-2">
-                <span className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent inline-block">
-                  {stat.value}
-                </span>
+              <div className="text-4xl md:text-5xl font-light bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mb-2">
+                {stat.value}
               </div>
-              <p className="text-gray-400 text-sm tracking-wide">{stat.label}</p>
+              <div className="text-sm text-gray-400 tracking-wider uppercase">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
@@ -161,14 +130,14 @@ const Trust = () => {
         <div ref={headerRef} className="max-w-3xl mx-auto mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
             <GlowText 
-              text="Why the Elite" 
+              text={t('trust.title')} 
               as="span"
               stagger={0.05}
               glowColor="rgba(255, 255, 255, 0.8)"
             />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
               <GlowText 
-                text="Choose Kryptobox" 
+                text={t('trust.titleHighlight')} 
                 stagger={0.05}
                 delay={0.5}
                 glowColor="rgba(217, 119, 6, 0.9)"
@@ -177,7 +146,7 @@ const Trust = () => {
           </h2>
           <p className="text-gray-400 text-lg">
             <GlowText 
-              text="Uncompromising standards that set us apart in the digital asset space" 
+              text={t('trust.description')} 
               stagger={0.02}
               delay={1}
               duration={0.5}
@@ -186,24 +155,28 @@ const Trust = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {trustFactors.map((factor, index) => {
+        {/* Trust Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {translatedFactors.map((factor, index) => {
             const IconComponent = iconMap[factor.icon];
             return (
               <Card
-                key={factor.id}
+                key={index}
                 ref={(el) => (cardsRef.current[index] = el)}
-                className="group bg-gradient-to-br from-zinc-900/50 to-black/50 border-amber-900/20 hover:border-amber-600/50 backdrop-blur-sm transition-all duration-500 hover:shadow-xl hover:shadow-amber-900/20"
+                className="group bg-gradient-to-br from-zinc-900/80 to-black/80 border-amber-900/20 hover:border-amber-600/50 overflow-hidden transition-all duration-500 hover:scale-105"
               >
-                <CardContent className="p-6 text-center">
+                <CardContent className="p-6">
                   {/* Icon */}
-                  <div className="trust-icon mb-4 inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 transition-all duration-500">
+                  <div className="mb-4 inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-amber-600/20 to-amber-700/20 border border-amber-700/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                     <IconComponent className="text-amber-400" size={28} />
                   </div>
 
+                  {/* Title */}
                   <h3 className="text-xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
                     {factor.title}
                   </h3>
+
+                  {/* Description */}
                   <p className="text-gray-400 text-sm leading-relaxed">
                     {factor.description}
                   </p>

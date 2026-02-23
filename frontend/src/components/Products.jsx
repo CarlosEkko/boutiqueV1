@@ -6,6 +6,7 @@ import { Check } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import GlowText from './GlowText';
+import { useLanguage } from '../i18n';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,6 +14,7 @@ const Products = () => {
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const cardsRef = useRef([]);
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -59,25 +61,6 @@ const Products = () => {
             }
           }
         );
-
-        // Hover effect
-        card.addEventListener('mouseenter', () => {
-          gsap.to(card, {
-            y: -10,
-            scale: 1.03,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
-
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            y: 0,
-            scale: 1,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
       });
     }, sectionRef);
 
@@ -85,16 +68,14 @@ const Products = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} id="products" className="py-24 bg-gradient-to-b from-black via-zinc-950 to-black relative">
-      {/* Subtle ambient glow */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
-
+    <section ref={sectionRef} id="products" className={`py-24 bg-black relative ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-900/10 via-black to-black" />
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
         <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
             <GlowText 
-              text="Premium Services" 
+              text={t('products.badge')} 
               stagger={0.04}
               duration={0.6}
               glowColor="rgba(254, 243, 199, 0.9)"
@@ -102,7 +83,7 @@ const Products = () => {
           </Badge>
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
             <GlowText 
-              text="Tailored for" 
+              text={t('products.title')} 
               as="span"
               stagger={0.05}
               delay={0.3}
@@ -110,7 +91,7 @@ const Products = () => {
             />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
               <GlowText 
-                text="Exceptional Clients" 
+                text={t('products.titleHighlight')} 
                 stagger={0.05}
                 delay={0.8}
                 glowColor="rgba(217, 119, 6, 0.9)"
@@ -119,7 +100,7 @@ const Products = () => {
           </h2>
           <p className="text-gray-400 text-lg">
             <GlowText 
-              text="Four pillars of excellence designed exclusively for institutional and high-net-worth investors" 
+              text={t('products.description')} 
               stagger={0.02}
               delay={1.3}
               duration={0.5}
@@ -134,45 +115,47 @@ const Products = () => {
             <Card
               key={product.id}
               ref={(el) => (cardsRef.current[index] = el)}
-              className="group bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-amber-700/50 backdrop-blur-sm overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-amber-900/20"
+              className="group relative bg-gradient-to-br from-zinc-900/90 to-black/90 border-amber-900/20 hover:border-amber-600/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-amber-900/20"
             >
-              {/* Image */}
-              <div className="relative h-56 overflow-hidden">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-                
-                {/* Floating number badge */}
-                <div className="absolute top-4 right-4 w-12 h-12 bg-amber-600/90 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {String(index + 1).padStart(2, '0')}
-                </div>
-              </div>
-
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
-                  {product.title}
-                </h3>
-                <p className="text-gray-400 mb-6 leading-relaxed">
-                  {product.description}
-                </p>
-
-                {/* Features */}
-                <div className="space-y-2">
-                  {product.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 text-sm text-gray-300">
-                      <div className="w-5 h-5 rounded-full bg-amber-950/50 border border-amber-700/30 flex items-center justify-center flex-shrink-0">
-                        <Check size={12} className="text-amber-400" />
-                      </div>
-                      <span>{feature}</span>
-                    </div>
-                  ))}
+              <CardContent className="p-0">
+                {/* Product Number Badge */}
+                <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-20`}>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center text-white font-semibold shadow-lg shadow-amber-900/50">
+                    {String(index + 1).padStart(2, '0')}
+                  </div>
                 </div>
 
-                {/* Hover effect line */}
-                <div className="mt-6 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                {/* Image Container */}
+                <div className="relative h-48 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                    style={{ backgroundImage: `url(${product.image})` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                </div>
+
+                {/* Content */}
+                <div className="p-6 relative">
+                  <h3 className="text-2xl font-light text-white mb-3 group-hover:text-amber-400 transition-colors duration-300">
+                    {product.title}
+                  </h3>
+                  <p className="text-gray-400 mb-4 leading-relaxed">
+                    {product.description}
+                  </p>
+
+                  {/* Features List */}
+                  <ul className="space-y-2">
+                    {product.features.map((feature, idx) => (
+                      <li key={idx} className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 text-sm text-gray-300`}>
+                        <Check size={16} className="text-amber-500 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Hover effect line */}
+                  <div className="mt-6 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
               </CardContent>
             </Card>
           ))}
