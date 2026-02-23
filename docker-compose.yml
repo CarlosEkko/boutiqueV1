@@ -1,0 +1,99 @@
+# KBEX.io - Docker Compose for DigitalOcean Deployment
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: kbex-mongodb
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=kbex_production
+    networks:
+      - kbex-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kbex-backend
+    restart: always
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=kbex_production
+      - CORS_ORIGINS=*
+      - COINMARKETCAP_API_KEY=${COINMARKETCAP_API_KEY}
+      - FIREBLOCKS_API_KEY=${FIREBLOCKS_API_KEY:-}
+      - FIREBLOCKS_SECRET_KEY_PATH=/app/fireblocks_secret.key
+      - FIREBLOCKS_BASE_PATH=${FIREBLOCKS_BASE_PATH:-https://api.fireblocks.io}
+    volumes:
+      - backend_uploads:/app/uploads
+      - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
+    networks:
+      - kbex-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=${DOMAIN_URL:-http://localhost}
+    container_name: kbex-frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - kbex-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: kbex-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_data:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - kbex-network
+
+  # Certbot for SSL (Let's Encrypt)
+  certbot:
+    image: certbot/certbot
+    container_name: kbex-certbot
+    volumes:
+      - certbot_data:/var/www/certbot
+      - ./nginx/ssl:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  mongodb_data:
+  backend_uploads:
+  certbot_data:
+
+networks:
+  kbex-network:
+    driver: bridge
