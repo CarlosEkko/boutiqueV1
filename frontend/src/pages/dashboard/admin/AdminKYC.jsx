@@ -390,7 +390,7 @@ const VerificationCard = ({
               data-testid="reject-btn"
             >
               <XCircle size={18} className="mr-2" />
-              Rejeitar
+              {t('kyc.admin.reject')}
             </Button>
             <Button
               onClick={onApprove}
@@ -398,7 +398,7 @@ const VerificationCard = ({
               data-testid="approve-btn"
             >
               <CheckCircle2 size={18} className="mr-2" />
-              Aprovar
+              {t('kyc.admin.approve')}
             </Button>
           </div>
         </div>
