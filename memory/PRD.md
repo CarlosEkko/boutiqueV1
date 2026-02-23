@@ -1,7 +1,7 @@
-# Kryptobox.io - Product Requirements Document
+# KBEX.io - Product Requirements Document
 
 ## Original Problem Statement
-Website para uma Crypto Boutique Exchange premium chamada **Kryptobox.io**, direcionada a indivíduos de alto patrimônio (HNW/UHNW) e empresas na Europa, Médio Oriente e Brasil.
+Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriormente Kryptobox.io), direcionada a indivíduos de alto patrimônio (HNW/UHNW) e empresas na Europa, Médio Oriente e Brasil.
 
 ## Target Audience
 - High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals
