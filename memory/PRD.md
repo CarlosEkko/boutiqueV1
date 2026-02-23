@@ -83,9 +83,9 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 - **CryptoAtmPage.jsx** - Dedicated page for Crypto ATM Network product with GSAP animations
 
 #### Styling
-- **index.css** - Custom animations (fade-in, fade-in-up, shimmer), custom scrollbar, grain texture
+- **index.css** - Custom animations (fade-in, fade-in-up, shimmer), custom scrollbar, grain texture, crypto ticker animation
 - **App.css** - Smooth transitions for interactive elements
-- **Google Fonts** - Playfair Display + Inter
+- **Google Fonts** - Inter (Extra Light 200, Light 300, Regular 400)
 
 #### Mock Data
 - **mock.js** - All content centralized (hero, products, trust factors, stats, regions, CTA)
