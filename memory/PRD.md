@@ -254,7 +254,7 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 ### Deployment
 - Frontend: Auto-deployed via supervisor (hot reload enabled)
 - Backend: Runs on port 8001 (supervisor managed)
-- External URL: https://sovereign-exchange-1.preview.emergentagent.com
+- External URL: https://luxury-exchange-2.preview.emergentagent.com
 
 ---
 
