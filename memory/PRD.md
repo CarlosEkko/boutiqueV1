@@ -71,7 +71,11 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
    - Navigation links with Inter font (light weight, tracking)
    - Custom magnetic cursor effect (amber dot follows mouse, scales on hover)
    - Active link indicator with amber underline
-2. **CryptoTicker.jsx** - Live scrolling crypto price ticker (MOCK DATA)
+2. **CryptoTicker.jsx** - Live scrolling crypto price ticker with real CoinGecko API data
+   - Displays BTC, ETH, ADA, SOL, XRP, BNB, DOGE, DOT prices
+   - Auto-refresh every 60 seconds
+   - Green "LIVE" indicator when connected to API
+   - Fallback to mock data if API fails
 3. **Hero.jsx** - Original hero component (replaced)
 4. **HeroV2.jsx** - ✅ NEW: Advanced cinematic hero with sequential text animations
    - Blur/Fade/Scale effects for 4 phrases (inspired by CodePen Sonick)
