@@ -338,7 +338,7 @@ const KYCForm = () => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="document_expiry">Data de Validade *</Label>
+                <Label htmlFor="document_expiry">{t('kyc.form.idDocument.expiryDate')} *</Label>
                 <Input
                   id="document_expiry"
                   type="date"
@@ -349,12 +349,11 @@ const KYCForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="document_country">País de Emissão *</Label>
+                <Label htmlFor="document_country">{t('kyc.form.idDocument.issuingCountry')} *</Label>
                 <Input
                   id="document_country"
                   value={idDocument.document_country}
                   onChange={(e) => setIdDocument({...idDocument, document_country: e.target.value})}
-                  placeholder="Portugal"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-doc-country"
                 />
@@ -367,19 +366,20 @@ const KYCForm = () => {
               variant="outline"
               className="w-full border-zinc-700"
             >
-              Guardar Informação
+              {t('kyc.form.saveInfo')}
             </Button>
 
             {/* Upload Section */}
             <div className="border-t border-zinc-700 pt-6">
-              <h4 className="text-white font-medium mb-4">Carregar Documento</h4>
+              <h4 className="text-white font-medium mb-4">{t('kyc.form.idDocument.uploadDocument')}</h4>
               
               <FileUploadBox
-                label="Frente do Documento"
+                label={t('kyc.form.idDocument.frontDocument')}
                 accept="image/*,.pdf"
                 onUpload={(file) => handleFileUpload(file, idDocument.document_type)}
                 uploaded={hasUploadedDoc(idDocument.document_type)}
                 testId="upload-id-front"
+                t={t}
               />
             </div>
 
@@ -390,14 +390,14 @@ const KYCForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={() => setCurrentStep(2)}
                 disabled={!hasUploadedDoc(idDocument.document_type)}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
               >
-                Continuar
+                {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
               </Button>
             </div>
@@ -408,12 +408,11 @@ const KYCForm = () => {
         return (
           <div className="space-y-6" data-testid="selfie-step">
             <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">Instruções para a Selfie</h4>
+              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.form.selfie.title')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Segure o documento ao lado do rosto</li>
-                <li>• Certifique-se que ambos estão claramente visíveis</li>
-                <li>• Boa iluminação, sem reflexos ou sombras</li>
-                <li>• Não use óculos de sol ou chapéu</li>
+                {t('kyc.form.selfie.instructions').map((instruction, index) => (
+                  <li key={index}>• {instruction}</li>
+                ))}
               </ul>
             </div>
 
