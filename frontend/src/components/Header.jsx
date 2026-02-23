@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe } from 'lucide-react';
+import { Globe, User, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
 import CryptoTicker from './CryptoTicker';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n';
+import { useAuth } from '../context/AuthContext';
 import gsap from 'gsap';
 
 const Header = () => {
