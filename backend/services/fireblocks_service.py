@@ -77,7 +77,7 @@ class FireblocksService:
         """Get a specific vault account"""
         try:
             client = cls.get_client()
-            account = client.get_vault_account(vault_id)
+            account = client.get_vault_account_by_id(vault_id)
             return account
         except Exception as e:
             logger.error(f"Failed to get vault account {vault_id}: {e}")
