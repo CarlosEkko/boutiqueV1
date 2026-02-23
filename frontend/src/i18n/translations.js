@@ -172,14 +172,28 @@ const translations = {
       title: 'Personalizado para',
       titleHighlight: 'Clientes Excepcionais',
       description: 'Quatro pilares de excelência desenhados exclusivamente para investidores institucionais e de alto património',
-      premiumExchange: 'Exchange Premium',
-      premiumExchangeDesc: 'Mesa de negociação OTC white-glove com gestores de relacionamento dedicados. Execute negociações de grande volume com liquidez institucional e discrição.',
-      cryptoAtm: 'Rede Crypto ATM',
-      cryptoAtmDesc: 'Rede curada de ATMs crypto premium em localizações exclusivas. Conversões fiat-para-crypto sem fricção com privacidade e conveniência melhoradas.',
-      launchpad: 'Launchpad',
-      launchpadDesc: 'Acesso antecipado a projetos blockchain verificados e vendas de tokens. Participe em oportunidades de investimento exclusivas antes do mercado.',
-      custody: 'Custódia Institucional',
-      custodyDesc: 'Segurança de nível militar para armazenamento de ativos digitais. Carteiras multi-assinatura, cobertura de seguro e monitorização 24/7.'
+      items: [
+        {
+          title: 'Exchange Premium',
+          description: 'Mesa de negociação OTC white-glove com gestores de relacionamento dedicados. Execute negociações de grande volume com liquidez institucional e discrição.',
+          features: ['Suporte Dedicado 24/7', 'Liquidez Institucional', 'Melhor Execução Garantida']
+        },
+        {
+          title: 'Rede Crypto ATM',
+          description: 'Rede curada de ATMs crypto premium em localizações exclusivas. Conversões fiat-para-crypto sem fricção com privacidade e conveniência melhoradas.',
+          features: ['Localizações Premium', 'Privacidade Melhorada', 'Suporte Multi-Moeda']
+        },
+        {
+          title: 'Launchpad Exclusivo',
+          description: 'Acesso antecipado a projetos blockchain verificados e vendas de tokens. Participe em oportunidades pré-verificadas indisponíveis para investidores de retalho.',
+          features: ['Apenas Projetos Verificados', 'Acesso Antecipado', 'Relatórios de Due Diligence']
+        },
+        {
+          title: 'Custódia Institucional',
+          description: 'Segurança de nível militar com cold storage multi-assinatura. Seguro e conformidade de nível bancário para tranquilidade.',
+          features: ['Cold Storage', 'Segurança Multi-Sig', 'Ativos Segurados']
+        }
+      ]
     },
     
     // Trust Section
