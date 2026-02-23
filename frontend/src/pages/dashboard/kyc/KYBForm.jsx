@@ -402,36 +402,39 @@ const KYBForm = () => {
         return (
           <div className="space-y-6" data-testid="company-documents-step">
             <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">Documentos Necessários</h4>
+              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.documents.requiredDocs')}</h4>
               <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Certidão permanente ou certidão de constituição</li>
-                <li>• Pacto social / Estatutos</li>
-                <li>• Registo de quotistas/acionistas</li>
+                {t('kyc.kybForm.documents.docsList').map((doc, index) => (
+                  <li key={index}>• {doc}</li>
+                ))}
               </ul>
             </div>
 
             <FileUploadBox
-              label="Certidão de Constituição"
+              label={t('kyc.kybForm.documents.certIncorporation')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'certificate_of_incorporation')}
               uploaded={hasUploadedDoc('certificate_of_incorporation')}
               testId="upload-cert-incorporation"
+              t={t}
             />
 
             <FileUploadBox
-              label="Estatutos / Pacto Social"
+              label={t('kyc.kybForm.documents.articlesAssociation')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'articles_of_association')}
               uploaded={hasUploadedDoc('articles_of_association')}
               testId="upload-articles"
+              t={t}
             />
 
             <FileUploadBox
-              label="Registo de Quotistas"
+              label={t('kyc.kybForm.documents.shareholderRegister')}
               accept="image/*,.pdf"
               onUpload={(file) => handleFileUpload(file, 'shareholder_register')}
               uploaded={hasUploadedDoc('shareholder_register')}
               testId="upload-shareholders"
+              t={t}
             />
 
             <div className="flex gap-4">
@@ -441,14 +444,14 @@ const KYBForm = () => {
                 className="flex-1 border-zinc-700"
               >
                 <ChevronLeft size={18} className="mr-2" />
-                Voltar
+                {t('kyc.form.back')}
               </Button>
               <Button 
                 onClick={() => setCurrentStep(2)}
                 disabled={!hasUploadedDoc('certificate_of_incorporation')}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-black"
               >
-                Continuar
+                {t('kyc.form.continue')}
                 <ChevronRight size={18} className="ml-2" />
               </Button>
             </div>
@@ -459,9 +462,9 @@ const KYBForm = () => {
         return (
           <div className="space-y-6" data-testid="representatives-step">
             <div className="bg-zinc-800/50 border border-amber-500/30 rounded-lg p-4">
-              <h4 className="text-amber-400 font-medium mb-2">Representantes Legais</h4>
+              <h4 className="text-amber-400 font-medium mb-2">{t('kyc.kybForm.representatives.title')}</h4>
               <p className="text-sm text-gray-400">
-                Adicione todos os diretores e beneficiários efetivos (UBOs) com participação superior a 25%.
+                {t('kyc.kybForm.representatives.description')}
               </p>
             </div>
 
