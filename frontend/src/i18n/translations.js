@@ -1179,6 +1179,312 @@ const translations = {
       }
     },
     
+    // Dashboard
+    dashboard: {
+      layout: {
+        portfolio: 'المحفظة',
+        admin: 'الإدارة',
+        loggedInAs: 'تم تسجيل الدخول كـ',
+        logout: 'تسجيل الخروج'
+      },
+      nav: {
+        overview: 'نظرة عامة',
+        wallets: 'المحافظ',
+        transactions: 'المعاملات',
+        investments: 'الاستثمارات',
+        roi: 'العائد على الاستثمار',
+        transparency: 'الشفافية',
+        kycVerification: 'التحقق من الهوية',
+        adminOverview: 'نظرة عامة للإدارة',
+        users: 'المستخدمين',
+        kycKyb: 'KYC/KYB',
+        opportunities: 'الفرص',
+        inviteCodes: 'أكواد الدعوة'
+      },
+      overview: {
+        welcome: 'مرحباً بعودتك',
+        portfolioValue: 'قيمة المحفظة',
+        totalAssets: 'إجمالي الأصول',
+        activeInvestments: 'الاستثمارات النشطة',
+        pendingTransactions: 'قيد الانتظار',
+        recentActivity: 'النشاط الأخير',
+        noActivity: 'لا يوجد نشاط حديث',
+        viewAll: 'عرض الكل'
+      },
+      wallets: {
+        title: 'محافظك',
+        subtitle: 'إدارة محافظ العملات المشفرة',
+        balance: 'الرصيد',
+        available: 'المتاح',
+        pending: 'قيد الانتظار',
+        address: 'العنوان',
+        copyAddress: 'نسخ العنوان',
+        deposit: 'إيداع',
+        withdraw: 'سحب',
+        noWallets: 'لم يتم العثور على محافظ'
+      },
+      transactions: {
+        title: 'سجل المعاملات',
+        subtitle: 'عرض جميع معاملاتك',
+        type: 'النوع',
+        amount: 'المبلغ',
+        status: 'الحالة',
+        date: 'التاريخ',
+        deposit: 'إيداع',
+        withdrawal: 'سحب',
+        transfer: 'تحويل',
+        completed: 'مكتمل',
+        pending: 'قيد الانتظار',
+        failed: 'فشل',
+        noTransactions: 'لم يتم العثور على معاملات'
+      },
+      investments: {
+        title: 'فرص الاستثمار',
+        subtitle: 'استكشاف خيارات الاستثمار المتاحة',
+        expectedRoi: 'العائد المتوقع',
+        duration: 'المدة',
+        minInvestment: 'الحد الأدنى للاستثمار',
+        maxInvestment: 'الحد الأقصى للاستثمار',
+        riskLevel: 'مستوى المخاطر',
+        status: 'الحالة',
+        open: 'مفتوح',
+        closed: 'مغلق',
+        invest: 'استثمار',
+        days: 'أيام',
+        noOpportunities: 'لا توجد فرص متاحة'
+      },
+      roi: {
+        title: 'العائد على الاستثمار',
+        subtitle: 'تتبع أداء استثماراتك',
+        totalInvested: 'إجمالي المستثمر',
+        totalReturns: 'إجمالي العوائد',
+        averageRoi: 'متوسط العائد',
+        activePositions: 'المراكز النشطة',
+        performanceChart: 'مخطط الأداء',
+        noData: 'لا تتوفر بيانات استثمارية'
+      },
+      transparency: {
+        title: 'شفافية الصندوق',
+        subtitle: 'إثبات الاحتياطيات وتقارير التدقيق',
+        proofOfReserves: 'إثبات الاحتياطيات',
+        auditReports: 'تقارير التدقيق',
+        lastUpdated: 'آخر تحديث',
+        totalReserves: 'إجمالي الاحتياطيات',
+        viewReport: 'عرض التقرير',
+        noReports: 'لا توجد تقارير متاحة'
+      }
+    },
+    
+    // KYC
+    kyc: {
+      status: {
+        title: 'التحقق من الهوية',
+        subtitle: 'أكمل التحقق من KYC/KYB لفتح جميع ميزات المنصة',
+        kycIndividual: 'KYC فردي',
+        forIndividuals: 'للأفراد',
+        kycDescription: 'التحقق من الهوية الشخصية. مطلوب للعمليات حتى 15,000 يورو شهرياً.',
+        kybBusiness: 'KYB للأعمال',
+        forBusinesses: 'للشركات والمؤسسات',
+        kybDescription: 'التحقق الكامل من الأعمال. مطلوب للعمليات المؤسسية والحدود الأعلى.',
+        notStarted: 'لم يبدأ',
+        inProgress: 'قيد التقدم',
+        pendingReview: 'في انتظار المراجعة',
+        approved: 'موافق عليه',
+        rejected: 'مرفوض',
+        verificationComplete: 'اكتمل التحقق',
+        startKyc: 'بدء KYC',
+        startKyb: 'بدء KYB',
+        continueVerification: 'متابعة التحقق',
+        tryAgain: 'حاول مرة أخرى',
+        estimatedTime: 'التحقق قيد المراجعة. الوقت المقدر: 24-48 ساعة.',
+        estimatedTimeKyb: 'التحقق قيد المراجعة. الوقت المقدر: 2-5 أيام عمل.',
+        whyVerify: 'لماذا تتحقق من هويتك؟',
+        benefits: [
+          'وصول كامل لجميع ميزات المنصة',
+          'حدود معاملات أعلى',
+          'حماية من الاحتيال والوصول غير المصرح به',
+          'الامتثال للوائح مكافحة غسل الأموال',
+          'دعم ذو أولوية وخدمة مخصصة'
+        ],
+        documents: {
+          idDocument: 'وثيقة الهوية (جواز السفر، بطاقة الهوية، أو رخصة القيادة)',
+          selfieWithId: 'صورة شخصية مع الوثيقة',
+          proofOfAddress: 'إثبات العنوان',
+          certIncorporation: 'شهادة التأسيس',
+          articlesAssociation: 'النظام الأساسي',
+          directorsUbos: 'تحديد المديرين والمستفيدين النهائيين'
+        }
+      },
+      form: {
+        title: 'التحقق من KYC',
+        subtitle: 'أكمل جميع الخطوات للتحقق من هويتك',
+        back: 'رجوع',
+        continue: 'متابعة',
+        submit: 'إرسال KYC',
+        saveInfo: 'حفظ المعلومات',
+        steps: {
+          personalInfo: 'المعلومات الشخصية',
+          idDocument: 'وثيقة الهوية',
+          selfie: 'صورة شخصية',
+          proofAddress: 'العنوان'
+        },
+        personalInfo: {
+          fullName: 'الاسم الكامل',
+          dateOfBirth: 'تاريخ الميلاد',
+          nationality: 'الجنسية',
+          countryResidence: 'بلد الإقامة',
+          address: 'العنوان',
+          city: 'المدينة',
+          postalCode: 'الرمز البريدي'
+        },
+        idDocument: {
+          documentType: 'نوع الوثيقة',
+          passport: 'جواز السفر',
+          idCard: 'بطاقة الهوية',
+          driversLicense: 'رخصة القيادة',
+          documentNumber: 'رقم الوثيقة',
+          expiryDate: 'تاريخ الانتهاء',
+          issuingCountry: 'بلد الإصدار',
+          uploadDocument: 'رفع الوثيقة',
+          frontDocument: 'الوجه الأمامي للوثيقة'
+        },
+        selfie: {
+          title: 'تعليمات الصورة الشخصية',
+          instructions: [
+            'أمسك الوثيقة بجانب وجهك',
+            'تأكد من أن كليهما مرئيان بوضوح',
+            'إضاءة جيدة، بدون انعكاسات أو ظلال',
+            'لا ترتدِ نظارات شمسية أو قبعة'
+          ],
+          selfieWithId: 'صورة شخصية مع الوثيقة'
+        },
+        address: {
+          acceptedDocs: 'الوثائق المقبولة',
+          docsList: [
+            'فاتورة خدمات (ماء، كهرباء، غاز، إنترنت)',
+            'كشف حساب بنكي',
+            'وثيقة ضريبية رسمية',
+            'يجب أن تكون أقل من 3 أشهر'
+          ],
+          proofOfAddress: 'إثبات العنوان'
+        },
+        upload: {
+          dragDrop: 'اسحب ملفاً أو انقر للاختيار',
+          formats: 'الصيغ: JPG، PNG، PDF (الحد الأقصى 10 ميجا)',
+          uploadSuccess: 'تم رفع الوثيقة بنجاح',
+          upload: 'رفع'
+        }
+      },
+      kybForm: {
+        title: 'التحقق من KYB للأعمال',
+        subtitle: 'أكمل جميع الخطوات للتحقق من شركتك',
+        steps: {
+          companyInfo: 'معلومات الشركة',
+          documents: 'الوثائق',
+          representatives: 'الممثلون',
+          addressProof: 'الإثبات'
+        },
+        companyInfo: {
+          companyName: 'اسم الشركة',
+          companyType: 'نوع الشركة',
+          llc: 'شركة ذات مسؤولية محدودة',
+          corporation: 'شركة مساهمة',
+          partnership: 'شراكة',
+          soleProprietorship: 'مؤسسة فردية',
+          nonProfit: 'منظمة غير ربحية',
+          other: 'أخرى',
+          registrationNumber: 'رقم التسجيل',
+          taxId: 'الرقم الضريبي (إن كان مختلفاً)',
+          incorporationDate: 'تاريخ التأسيس',
+          incorporationCountry: 'بلد التأسيس',
+          headquartersAddress: 'عنوان المقر الرئيسي',
+          businessAddress: 'عنوان العمل',
+          businessCity: 'المدينة',
+          businessPostalCode: 'الرمز البريدي',
+          businessCountry: 'البلد',
+          contacts: 'جهات الاتصال',
+          corporateEmail: 'البريد الإلكتروني للشركة',
+          phone: 'الهاتف',
+          website: 'الموقع الإلكتروني'
+        },
+        documents: {
+          requiredDocs: 'الوثائق المطلوبة',
+          docsList: [
+            'شهادة التأسيس',
+            'النظام الأساسي / اللوائح',
+            'سجل المساهمين'
+          ],
+          certIncorporation: 'شهادة التأسيس',
+          articlesAssociation: 'النظام الأساسي / اللوائح',
+          shareholderRegister: 'سجل المساهمين'
+        },
+        representatives: {
+          title: 'الممثلون القانونيون',
+          description: 'أضف جميع المديرين والمستفيدين النهائيين (UBOs) بملكية تزيد عن 25٪.',
+          addedReps: 'الممثلون المضافون',
+          addRepresentative: 'إضافة ممثل',
+          fullName: 'الاسم الكامل',
+          role: 'المنصب',
+          dateOfBirth: 'تاريخ الميلاد',
+          nationality: 'الجنسية',
+          ownershipPercentage: 'نسبة الملكية',
+          isUbo: 'المستفيد النهائي (UBO)',
+          add: 'إضافة ممثل'
+        },
+        addressProof: {
+          title: 'إثبات عنوان العمل',
+          docsList: [
+            'فاتورة خدمات باسم الشركة',
+            'كشف حساب بنكي للشركة',
+            'وثيقة رسمية بعنوان المقر',
+            'يجب أن تكون أقل من 3 أشهر'
+          ],
+          businessProof: 'إثبات عنوان العمل',
+          taxRegistration: 'التسجيل الضريبي (اختياري)'
+        },
+        submit: 'إرسال KYB'
+      },
+      admin: {
+        title: 'التحقق من KYC/KYB',
+        subtitle: 'مراجعة واعتماد طلبات التحقق من الهوية',
+        searchPlaceholder: 'البحث بالاسم أو البريد الإلكتروني...',
+        pending: 'قيد الانتظار',
+        kycPending: 'KYC قيد الانتظار',
+        kybPending: 'KYB قيد الانتظار',
+        approvedToday: 'تمت الموافقة اليوم',
+        noKycPending: 'لا توجد تحقيقات KYC قيد الانتظار',
+        noKybPending: 'لا توجد تحقيقات KYB قيد الانتظار',
+        allProcessed: 'تمت معالجة جميع التحقيقات',
+        personalData: 'البيانات الشخصية',
+        companyData: 'بيانات الشركة',
+        idDocument: 'وثيقة الهوية',
+        representatives: 'الممثلون',
+        submittedDocuments: 'الوثائق المقدمة',
+        noDocuments: 'لم يتم العثور على وثائق',
+        rejectionReason: 'سبب الرفض (مطلوب للرفض)',
+        rejectionPlaceholder: 'مثال: وثيقة غير مقروءة، بيانات متناقضة...',
+        reject: 'رفض',
+        approve: 'موافقة',
+        docs: 'وثائق',
+        name: 'الاسم',
+        dob: 'تاريخ الميلاد',
+        nationalityLabel: 'الجنسية',
+        countryResidence: 'بلد الإقامة',
+        addressLabel: 'العنوان',
+        cityLabel: 'المدينة',
+        company: 'الشركة',
+        type: 'النوع',
+        nipc: 'رقم التسجيل',
+        incorporationDateLabel: 'تاريخ التأسيس',
+        countryLabel: 'البلد',
+        emailLabel: 'البريد الإلكتروني',
+        documentType: 'النوع',
+        documentNumber: 'الرقم',
+        validity: 'الصلاحية',
+        issuingCountryLabel: 'بلد الإصدار'
+      }
+    },
+    
     // Footer
     footer: {
       tagline: 'منصة التداول الفاخرة للمستثمرين المتميزين.',
