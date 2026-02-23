@@ -52,7 +52,9 @@ class FireblocksService:
         """Get all vault accounts"""
         try:
             client = cls.get_client()
-            accounts = client.get_vault_accounts()
+            # Use the paginated method
+            result = client.get_vault_accounts_with_page_info()
+            accounts = result.get('accounts', []) if isinstance(result, dict) else result
             return accounts
         except Exception as e:
             logger.error(f"Failed to get vault accounts: {e}")
