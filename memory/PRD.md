@@ -79,7 +79,8 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 9. **Footer.jsx** - Comprehensive footer with links, contact info, legal disclaimer
 
 #### Pages
-- **Home.jsx** - Main landing page assembling all components
+- **Home.jsx** - Main landing page assembling all components (uses HeroV2)
+- **CryptoAtmPage.jsx** - Dedicated page for Crypto ATM Network product with GSAP animations
 
 #### Styling
 - **index.css** - Custom animations (fade-in, fade-in-up, shimmer), custom scrollbar, grain texture
