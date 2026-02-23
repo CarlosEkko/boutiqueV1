@@ -12,136 +12,136 @@ The user wants to build a website for a premium Crypto Boutique Exchange named *
 Portuguese. The next agent MUST respond in Portuguese.
 
 **what currently exists?**
-A multi-page static frontend for Kryptobox.io built with React, TailwindCSS, and Shadcn UI components.
-- **Homepage:** Features a Hero section, Products, Trust indicators, and other informational sections.
-- **Crypto ATM Network Page:** A dedicated page () with its own Hero section, features, steps, and location info.
-- **Header:** Includes a centered navigation menu, a (currently non-functional) language selector for English and Arabic, and a crypto price ticker.
-- **Crypto Ticker:** A live-updating crypto price ticker is present in the header, running on **mock data** due to browser CORS limitations. The plan is to connect this to a backend proxy later.
-- **Animations:** The site is heavily animated using GSAP, with scroll-triggered effects, 3D transformations, and character-level text animations.
-- **Styling:** Adheres to a quiet luxury theme with a dark background, gold/amber accents, and the Inter font family.
+A full-stack application with a React frontend and a FastAPI backend.
+- **Frontend**: A multi-page, animated, and fully internationalized (English, Portuguese, Arabic) static site.
+    - **Pages**: Home page composed of multiple sections (, , , ), and a dedicated  page.
+    - **Animations**: Extensive use of GSAP for a cinematic hero text sequence, a custom glow text effect for section titles (currently buggy), and a custom magnetic cursor with a glow trail.
+    - **Header**: Features a full-screen overlay menu with an animated hamburger icon.
+    - **i18n**: A custom React Context-based system handles translations, including right-to-left (RTL) support for Arabic. All site content is translated.
+- **Backend**: A simple FastAPI server with a single endpoint () that acts as a proxy to the CoinGecko API. This powers the live crypto price ticker in the header, resolving previous CORS issues.
 
 **Last working item**: 
-- **Last item agent was working**: The agent was in the middle of a major rework of the homepage's Hero section animations to match two CodePen examples provided by the user. The goal is to create a sequential text animation with blur/fade/scale effects, and a scramble/reveal effect for other text. The agent created a new file  and was referencing  to build the new animation logic.
+- **Last item agent was working**: The user reported that the  animation effect on section titles was broken again (the text was not appearing after the animation). The agent's last action was to re-implement a more reliable  component and start applying it back to the , , and  sections to fix the visibility issue while keeping the animation.
 - **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?** screenshot tool (to verify the new hero animations visually once implemented).
+- **Which testing method agent to use?** screenshot tool (to visually verify that the  animation plays correctly and the title text remains visible on the , , and  sections).
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1**: (P0) Implement New Hero Animations.
+- **Issue 1**: (P0) Fix  component animation.
 
 **Issues Detail**:
-- **Issue 1**: Implement New Hero Animations
-    - **Attempted fixes**: The agent started by creating a new component file  and reviewing the existing animation utilities. The implementation is not yet complete.
+- **Issue 1**: Fix  component animation
+    - **Attempted fixes**: The agent initially created a  component, but it had bugs where the text would get cut off or disappear entirely after the animation. It was temporarily removed. The agent then created a new, simplified version () and started re-applying it. The fix is not yet complete or verified.
     - **Next debug checklist**:
-        1. Analyze the JavaScript/CSS logic from the two provided CodePen links:
-            -  (Sequential blur/fade/scale)
-            -  (Text scramble/reveal)
-        2. Translate these animation styles into new functions within  or directly inside  using GSAP.
-        3. Apply the new animations to the text elements inside .
-        4. Replace the existing Hero component on the homepage with .
-        5. Verify the animation sequence and visual appearance match the user's request.
-    - **Why fix this issue and what will be achieved with the fix?**: This is a direct user request to enhance the main landing page's visual appeal and create a more sophisticated, cinematic first impression.
+        1. Review the latest implementation in .
+        2. Ensure the component correctly applies the character-by-character glow animation.
+        3. Crucially, verify that the  of the text is set to  after the animation completes, so it remains permanently visible.
+        4. Apply the fixed  component to the titles of the Premium Services (), Why Kryptobox (), and Global Presence () sections.
+        5. Use the screenshot tool to test the page in Portuguese and confirm the titles animate in and stay visible.
+    - **Why fix this issue and what will be achieved with the fix?**: This is a key aesthetic feature requested by the user. Fixing it will restore the desired quiet luxury and dynamic feel to the section headers.
     - **Status**: IN PROGRESS
-    - **Is recurring issue?**: N
+    - **Is recurring issue?**: Y
     - **Should Test frontend/backend/both after fix?**: Frontend
     - **Blocked on other issue**: None
 
 **In progress Task List**:
-None. The only in-progress item is classified as an issue since it's an active user request being worked on.
+None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **P1: Backend Implementation for Crypto Ticker**: Create a backend endpoint (e.g., ) that fetches real-time data from an external API (like CoinGecko) and serves it to the frontend. This will replace the mock data and resolve the CORS issue.
-    - **P2: Language Selector Functionality**: Implement the logic for the language selector in the header to switch the site's content between English and Arabic. This will require a framework for internationalization (i18n).
+    - There are no immediate upcoming tasks. The next steps should be taken from the Future Tasks list after the current issue is resolved.
 
 - **Future Tasks**:
     - **P2: Build out remaining product pages**: Create dedicated pages for Launchpad, ICO, and Institutional Custody.
-    - **P2: Implement Request Access form**: Build the backend and frontend for the contact/interest form for HNW clients.
+    - **P2: Implement Request Access form**: Build the backend endpoint and frontend logic to handle submissions from the contact form.
     - **P3: User Authentication**: Implement a login/signup system for a client portal.
 
 **Completed work in this session**
-- **Initial Frontend Scaffolding**: Created the main page structure with multiple sections.
-- **Typography Update**: Changed the site-wide font to Inter (Extra Light and Light weights).
-- **Header Redesign**: Centered the navigation menu, made the header non-fixed, and added a UI for language selection.
-- **Crypto Price Ticker**: Implemented a scrolling crypto price ticker in the header using mock data.
-- **GSAP Animations (Initial Pass)**: Added professional GSAP animations with  to the homepage and product cards.
-- **Crypto ATM Network Page**: Created a new, fully-featured page at  with multiple sections and advanced GSAP animations.
-- **Split-Text Character Animations**: Created a utility  and implemented cinematic, character-by-character text animations on the hero section.
-- **Bug Fix**: Resolved an issue where animated gradient text was not rendering by switching to a solid color.
+- **New Hero Animation**: Implemented a complex, multi-stage hero text animation ().
+- **Live Crypto Ticker**: Built a FastAPI backend proxy () and connected the frontend  to it for live CoinGecko data.
+- **New Overlay Menu**: Replaced the header with a full-screen overlay menu based on a CodePen example.
+- **Custom Magnetic Cursor**: Added a custom cursor with a glow trail and a magnetic effect on links.
+- **Full Internationalization (i18n)**: Implemented a multi-language system (EN, PT, AR) with a language switcher, translating all content across the site, including product cards and handling RTL for Arabic.
+- **Bug Fix**: Reduced the hero animation duration as requested by the user.
+- **Bug Fix**: Translated all static content, including the Hero section and product card details, which were initially missed.
+- **Bug Fix**: Temporarily fixed (and is now re-fixing) a buggy  animation on section titles.
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: The agent encountered several instances of generating duplicated code or syntax errors when editing  (messages 78-83), requiring multiple attempts to fix the file.
-- **Recurrence count**: 1 (within this session)
-- **Status**: RESOLVED (for that specific file), but the underlying tendency to produce malformed code during edits is a risk to monitor.
+- **Issue recurrence in previous fork**: The agent in the last session had issues with generating malformed code. In this session, the  component has become a recurring issue, requiring multiple attempts to fix animation visibility bugs.
+- **Recurrence count**: 2 (within this session)
+- **Status**: IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React, React Router, Tailwind CSS
-- **UI Library**: Shadcn/UI components
-- **Animation**: GSAP (GreenSock Animation Platform) with  and custom split-text effects.
-- **Backend**: (Not yet implemented) FastAPI, MongoDB
-- **Data**: Currently static or mocked (e.g., crypto prices).
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI
+- **Animation**: GSAP (GreenSock Animation Platform) with .
+- **Backend**: FastAPI
+- **API Communication**: 
+- **Internationalization (i18n)**: Custom solution using React Context.
 
 **key DB schema**
-No database schema has been defined as the backend has not been built.
+No database schema has been defined.
 
 **changes in tech stack**
--  has been added as a dependency to  to handle advanced animations.
+- **Backend**: To use the fastapi command, please install "fastapi[standard]":
+
+	pip install "fastapi[standard]", , ,  were added to support the API proxy.
+- **Frontend**:  was added for API calls.
 
 **All files of reference**
-- : The main landing page component.
-- : The component for the newly created ATM Network page.
-- : Contains the navigation, logo, and language selector.
-- : A custom utility created to house complex GSAP text animation functions.
-- : The new hero component currently being developed.
-- : Modified to include the Inter font.
+- : The component with the recurring bug that needs to be fixed.
+- : One of the components where  is used.
+- : Another component where  is used.
+- : Another component where  is used.
+- : The core of the i18n system.
+- : The translation files.
+- : The FastAPI backend server.
+- : The component containing the main hero animation sequence.
+- : The component for the overlay menu and language switcher.
 
 **key api endpoints**
-No APIs have been built yet. An upcoming task is to create .
+- : A backend proxy endpoint that fetches real-time market data from the CoinGecko API.
 
 **Critical Info for New Agent**
-- The user is highly focused on premium aesthetics and cinematic animations. GSAP is a core part of the project.
-- The current active task is to replace the homepage hero animation with effects from two CodePen examples. This is the highest priority.
-- All dynamic data (like crypto prices) is currently mocked. The next major step after the hero animation will be to start backend development, beginning with a proxy for the crypto ticker.
-- The agent has previously struggled with file edits, producing duplicated code. Be cautious when using  on large, complex files.
-- The user communicates in Portuguese. All responses must be in Portuguese.
+- You MUST respond in Portuguese.
+- The highest priority is to fix the  component. The animation must play, and the text must remain visible afterward. This has been a recurring problem.
+- Any new text content added to the site must be added to all three translation files: , , and .
+- The backend service must be running for the live crypto ticker to work. It should start automatically, but if you encounter issues, check the supervisor logs.
 
 **documents and test reports created in this job**
-None.
+- : Has been created and updated throughout the session.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  ****: (PENDING) User wants the hero section animation to be like this CodePen example.
-2.  ****: (PENDING) User wants another animation effect from this CodePen applied to other text.
-3.  ****: (RESOLVED) User reported a bug where the second line of the hero text was not visible.
-4.  ****: (RESOLVED) User requested the  animation for both lines of the hero title.
-5.  ****: (RESOLVED) User requested character-level text animations using GSAP.
-6.  ****: (RESOLVED) User requested the creation of the Crypto ATM Network page.
-7.  ****: (RESOLVED) User asked for GSAP animations on the new ATM page.
-8.  ****: (RESOLVED) User requested more space in the menu and GSAP animations on the site.
-9.  ****: (RESOLVED) User requested header layout changes: centered menu, non-fixed header, and space for a language selector.
-10. ****: (RESOLVED) User requested a live crypto price ticker.
+1.  ****: (PENDING) User confirms a previous fix worked but broke the  effect, and they want it back. This is the current active issue.
+2.  ****: (RESOLVED) User reported three issues: text not appearing in the Premium Services section, the hero section wasn't translated, and the hero animation was too slow. The agent fixed all three.
+3.  ****: (RESOLVED) User confirmed that the product card content should also be translated.
+4.  ****: (RESOLVED) User reported that only the menu was being translated, not the whole page. The agent fixed this by internationalizing all page components.
+5.  ****: (RESOLVED) User requested Portuguese to be added as a language option.
+6.  ****: (RESOLVED) User approved moving forward with P1 tasks (backend for ticker, i18n) and requested a glow trail for the cursor.
+7.  ****: (RESOLVED) User requested the menu font be changed to Inter and to implement a magnetic cursor effect from a CodePen.
+8.  ****: (RESOLVED) User requested a new overlay-style menu based on a CodePen example.
+9.  ****: (PARTIALLY RESOLVED/BUGGY) User requested the glow text effect on several section titles. This was implemented but is the source of the current bug.
+10. **: (N/A) User confirming a previous animation fix.
 
 **Project Health Check:**
-- **Broken**: Nothing is functionally broken, but some features are incomplete.
-- **Mocked**: The crypto price ticker in the header is using mock data.
+- **Broken**: The  component animation is not working as intended, causing section titles to be invisible.
+- **Mocked**: None. All data is either static and translated or live from an API.
 
 **3rd Party Integrations**
-- **GSAP**: Used for all advanced animations on the frontend.
+- **GSAP**: Used for frontend animations.
+- **CoinGecko**: Used via a backend proxy to supply live crypto price data.
 
 **Testing status**
 - **Testing agent used after significant changes**: NO
 - **Troubleshoot agent used after agent stuck in loop**: NO
 - **Test files created**: []
-- **Known regressions**: None
+- **Known regressions**: The  animation effect regressed and is now broken.
 
 **Credentials to test flow:**
-N/A
-
-**What agent forgot to execute**
-The agent has followed the user's requests sequentially. No major tasks have been forgotten, but the overall project still requires backend implementation and functionality for most interactive elements (forms, language switcher).</analysis>
+N/A</analysis>
