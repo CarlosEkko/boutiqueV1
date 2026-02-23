@@ -12,6 +12,9 @@ from datetime import datetime, timezone
 import httpx
 import asyncio
 
+# Add backend to path for imports
+import sys
+sys.path.insert(0, str(Path(__file__).parent))
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -26,6 +29,11 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# Import and configure auth routes
+from routes.auth import router as auth_router, set_db as set_auth_db
+set_auth_db(db)
+api_router.include_router(auth_router)
 
 
 # Define Models
