@@ -2,7 +2,7 @@
 ## Product Requirements Document
 
 **Last Updated:** February 23, 2026  
-**Status:** Frontend MVP + Backend API Complete (Live Crypto Data, i18n, JWT Auth)
+**Status:** Frontend MVP + Backend Complete (Dashboard, Membership, Investments)
 
 ---
 
@@ -48,6 +48,10 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 - ✅ Landing page with multiple sections
 - ✅ Fixed header with smooth scroll navigation
 - ✅ Contact form for exclusive membership requests
+- ✅ User authentication (JWT-based login/register)
+- ✅ Private Dashboard for approved members
+- ✅ Investment opportunities (lending pools)
+- ✅ Transparency page (proof of reserves)
 - ✅ Trust indicators and social proof (stats, testimonials)
 - ✅ Product showcase with detailed descriptions
 - ✅ User authentication (JWT-based login/register)
