@@ -13,6 +13,13 @@ import {
   ROIPage,
   TransparencyPage
 } from "./pages/dashboard";
+import {
+  AdminOverview,
+  AdminUsers,
+  AdminOpportunities,
+  AdminTransparency,
+  AdminInvites
+} from "./pages/dashboard/admin";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
