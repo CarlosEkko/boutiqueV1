@@ -3,3 +3,4 @@ export { default as AdminUsers } from './AdminUsers';
 export { default as AdminOpportunities } from './AdminOpportunities';
 export { default as AdminTransparency } from './AdminTransparency';
 export { default as AdminInvites } from './AdminInvites';
+export { default as AdminKYC } from './AdminKYC';

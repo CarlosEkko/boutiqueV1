@@ -18,8 +18,10 @@ import {
   AdminUsers,
   AdminOpportunities,
   AdminTransparency,
-  AdminInvites
+  AdminInvites,
+  AdminKYC
 } from "./pages/dashboard/admin";
+import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -67,12 +69,18 @@ function AppRoutes() {
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
         
+        {/* KYC Routes */}
+        <Route path="kyc" element={<KYCStatus />} />
+        <Route path="kyc/kyc" element={<KYCForm />} />
+        <Route path="kyc/kyb" element={<KYBForm />} />
+        
         {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />
         <Route path="admin/users" element={<AdminUsers />} />
         <Route path="admin/opportunities" element={<AdminOpportunities />} />
         <Route path="admin/transparency" element={<AdminTransparency />} />
         <Route path="admin/invites" element={<AdminInvites />} />
+        <Route path="admin/kyc" element={<AdminKYC />} />
       </Route>
     </Routes>
   );

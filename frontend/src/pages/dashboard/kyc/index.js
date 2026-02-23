@@ -1,2 +1,3 @@
-export { default as KYCPage } from './KYCPage';
-export { default as KYCIndividual } from './KYCIndividual';
+export { default as KYCStatus } from './KYCStatus';
+export { default as KYCForm } from './KYCForm';
+export { default as KYBForm } from './KYBForm';
