@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -13,7 +13,7 @@ import {
   X,
   ChevronLeft
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '../../components/ui/button';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
