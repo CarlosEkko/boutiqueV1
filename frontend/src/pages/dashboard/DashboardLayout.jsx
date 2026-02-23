@@ -11,7 +11,11 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronLeft
+  ChevronLeft,
+  Users,
+  Gift,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
@@ -22,13 +26,23 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  const isAdmin = user?.is_admin;
+
+  const userNavItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
     { to: '/dashboard/wallets', icon: Wallet, label: 'Wallets' },
     { to: '/dashboard/transactions', icon: History, label: 'Transactions' },
     { to: '/dashboard/investments', icon: TrendingUp, label: 'Investments' },
     { to: '/dashboard/roi', icon: PieChart, label: 'ROI' },
     { to: '/dashboard/transparency', icon: Shield, label: 'Transparency' },
+  ];
+
+  const adminNavItems = [
+    { to: '/dashboard/admin', icon: BarChart3, label: 'Admin Overview', end: true },
+    { to: '/dashboard/admin/users', icon: Users, label: 'Users' },
+    { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: 'Opportunities' },
+    { to: '/dashboard/admin/transparency', icon: Shield, label: 'Transparency' },
+    { to: '/dashboard/admin/invites', icon: Gift, label: 'Invite Codes' },
   ];
 
   const handleLogout = () => {
