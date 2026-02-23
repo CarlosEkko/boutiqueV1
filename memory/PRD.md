@@ -72,9 +72,10 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
    - Blur/Fade/Scale effects for 4 phrases (inspired by CodePen Sonick)
    - Letter-by-letter glow animation for "KRYPTOBOX" (inspired by CodePen StephenScaff)
    - Full animation sequence: "The Boutique" → "Exchange for" → "Sophisticated" → "INVESTORS" → "KRYPTOBOX" → Final CTA content
-5. **Products.jsx** - Grid of 4 premium services with images and features
-6. **Trust.jsx** - Stats section + 4 trust factor cards
-7. **Regions.jsx** - Geographic presence (Europe, Middle East, Brazil)
+5. **GlowText.jsx** - ✅ NEW: Reusable component for letter-by-letter glow animations with ScrollTrigger
+6. **Products.jsx** - Grid of 4 premium services with GlowText animations
+7. **Trust.jsx** - Stats section + 4 trust factor cards with GlowText animations
+8. **Regions.jsx** - Geographic presence with GlowText animations
 8. **ContactCTA.jsx** - Split design with form (exclusive membership request)
 9. **Footer.jsx** - Comprehensive footer with links, contact info, legal disclaimer
 
