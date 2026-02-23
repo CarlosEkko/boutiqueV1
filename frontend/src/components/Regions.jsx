@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from './ui/badge';
 import { MapPin } from 'lucide-react';
 import { regions } from '../mock';
+import GlowText from './GlowText';
 
 const Regions = () => {
   return (
@@ -10,16 +11,38 @@ const Regions = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
-            Global Presence
+            <GlowText 
+              text="Global Presence" 
+              stagger={0.04}
+              duration={0.6}
+              glowColor="rgba(254, 243, 199, 0.9)"
+            />
           </Badge>
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-            Serving Excellence
+            <GlowText 
+              text="Serving Excellence" 
+              as="span"
+              stagger={0.05}
+              delay={0.3}
+              glowColor="rgba(255, 255, 255, 0.8)"
+            />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
-              Across Three Continents
+              <GlowText 
+                text="Across Three Continents" 
+                stagger={0.05}
+                delay={0.8}
+                glowColor="rgba(217, 119, 6, 0.9)"
+              />
             </span>
           </h2>
           <p className="text-gray-400 text-lg">
-            Local expertise with global reach - where you need us, when you need us
+            <GlowText 
+              text="Local expertise with global reach - where you need us, when you need us" 
+              stagger={0.02}
+              delay={1.3}
+              duration={0.5}
+              glowColor="rgba(156, 163, 175, 0.8)"
+            />
           </p>
         </div>
 

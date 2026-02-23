@@ -4,6 +4,7 @@ import { trustFactors, stats } from '../mock';
 import { ShieldCheck, Lock, Crown, Globe } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import GlowText from './GlowText';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -159,13 +160,29 @@ const Trust = () => {
         {/* Trust Factors */}
         <div ref={headerRef} className="max-w-3xl mx-auto mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-            Why the Elite
+            <GlowText 
+              text="Why the Elite" 
+              as="span"
+              stagger={0.05}
+              glowColor="rgba(255, 255, 255, 0.8)"
+            />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
-              Choose Kryptobox
+              <GlowText 
+                text="Choose Kryptobox" 
+                stagger={0.05}
+                delay={0.5}
+                glowColor="rgba(217, 119, 6, 0.9)"
+              />
             </span>
           </h2>
           <p className="text-gray-400 text-lg">
-            Uncompromising standards that set us apart in the digital asset space
+            <GlowText 
+              text="Uncompromising standards that set us apart in the digital asset space" 
+              stagger={0.02}
+              delay={1}
+              duration={0.5}
+              glowColor="rgba(156, 163, 175, 0.8)"
+            />
           </p>
         </div>
 
