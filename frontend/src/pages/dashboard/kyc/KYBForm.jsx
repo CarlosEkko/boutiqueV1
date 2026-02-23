@@ -260,7 +260,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="tax_id">NIF (se diferente)</Label>
+                <Label htmlFor="tax_id">{t('kyc.kybForm.companyInfo.taxId')}</Label>
                 <Input
                   id="tax_id"
                   value={companyInfo.tax_id}
@@ -273,7 +273,7 @@ const KYBForm = () => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="incorporation_date">Data de Constituição *</Label>
+                <Label htmlFor="incorporation_date">{t('kyc.kybForm.companyInfo.incorporationDate')} *</Label>
                 <Input
                   id="incorporation_date"
                   type="date"
@@ -284,7 +284,7 @@ const KYBForm = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="incorporation_country">País de Constituição *</Label>
+                <Label htmlFor="incorporation_country">{t('kyc.kybForm.companyInfo.incorporationCountry')} *</Label>
                 <Input
                   id="incorporation_country"
                   value={companyInfo.incorporation_country}
@@ -297,11 +297,11 @@ const KYBForm = () => {
             </div>
 
             <div className="border-t border-zinc-700 pt-4">
-              <h4 className="text-white font-medium mb-4">Endereço da Sede</h4>
+              <h4 className="text-white font-medium mb-4">{t('kyc.kybForm.companyInfo.headquartersAddress')}</h4>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="business_address">Morada *</Label>
+              <Label htmlFor="business_address">{t('kyc.kybForm.companyInfo.businessAddress')} *</Label>
               <Input
                 id="business_address"
                 value={companyInfo.business_address}
