@@ -184,7 +184,7 @@ const KYCForm = () => {
       
       return response.data;
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao carregar documento');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -194,10 +194,10 @@ const KYCForm = () => {
     setLoading(true);
     try {
       await axios.post(`${API_URL}/api/kyc/submit?verification_type=kyc`);
-      toast.success('KYC submetido para revisão');
+      toast.success(t('kyc.status.pendingReview'));
       navigate('/dashboard/kyc');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao submeter KYC');
+      toast.error(error.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
@@ -214,18 +214,17 @@ const KYCForm = () => {
           <div className="space-y-6" data-testid="personal-info-step">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="full_name">Nome Completo *</Label>
+                <Label htmlFor="full_name">{t('kyc.form.personalInfo.fullName')} *</Label>
                 <Input
                   id="full_name"
                   value={personalInfo.full_name}
                   onChange={(e) => setPersonalInfo({...personalInfo, full_name: e.target.value})}
-                  placeholder="João Silva"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-full-name"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date_of_birth">Data de Nascimento *</Label>
+                <Label htmlFor="date_of_birth">{t('kyc.form.personalInfo.dateOfBirth')} *</Label>
                 <Input
                   id="date_of_birth"
                   type="date"
@@ -239,23 +238,21 @@ const KYCForm = () => {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nationality">Nacionalidade *</Label>
+                <Label htmlFor="nationality">{t('kyc.form.personalInfo.nationality')} *</Label>
                 <Input
                   id="nationality"
                   value={personalInfo.nationality}
                   onChange={(e) => setPersonalInfo({...personalInfo, nationality: e.target.value})}
-                  placeholder="Portuguesa"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-nationality"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="country_of_residence">País de Residência *</Label>
+                <Label htmlFor="country_of_residence">{t('kyc.form.personalInfo.countryResidence')} *</Label>
                 <Input
                   id="country_of_residence"
                   value={personalInfo.country_of_residence}
                   onChange={(e) => setPersonalInfo({...personalInfo, country_of_residence: e.target.value})}
-                  placeholder="Portugal"
                   className="bg-zinc-800 border-zinc-700"
                   data-testid="input-country"
                 />
