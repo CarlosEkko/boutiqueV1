@@ -1,5 +1,5 @@
 // Translations for Kryptobox.io
-// Supports English (EN) and Arabic (AR)
+// Supports English (EN), Portuguese (PT), and Arabic (AR)
 
 const translations = {
   EN: {
