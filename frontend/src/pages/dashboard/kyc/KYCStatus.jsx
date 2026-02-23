@@ -182,28 +182,28 @@ const KYCStatus = () => {
 
           {kycStatus === 'pending_review' && (
             <div className="text-center text-amber-400 text-sm">
-              A sua verificação está em análise. Tempo estimado: 24-48 horas.
+              {t('kyc.status.estimatedTime')}
             </div>
           )}
 
           {kycStatus === 'approved' && (
             <div className="flex items-center justify-center gap-2 text-green-400">
               <CheckCircle2 size={20} />
-              <span>Verificação completa</span>
+              <span>{t('kyc.status.verificationComplete')}</span>
             </div>
           )}
 
           {kycStatus === 'rejected' && (
             <div className="space-y-3">
               <div className="text-red-400 text-sm text-center">
-                Verificação rejeitada. {kycData?.kyc?.rejection_reason}
+                {t('kyc.status.rejected')}. {kycData?.kyc?.rejection_reason}
               </div>
               <Button 
                 onClick={() => startVerification('kyc')}
                 variant="outline"
                 className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10"
               >
-                Tentar Novamente
+                {t('kyc.status.tryAgain')}
               </Button>
             </div>
           )}
@@ -220,8 +220,8 @@ const KYCStatus = () => {
                 <Building2 className={kybConfig.color} size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-white">KYB Empresarial</h3>
-                <p className="text-sm text-gray-400">Para empresas e instituições</p>
+                <h3 className="text-lg font-medium text-white">{t('kyc.status.kybBusiness')}</h3>
+                <p className="text-sm text-gray-400">{t('kyc.status.forBusinesses')}</p>
               </div>
             </div>
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${kybConfig.bgColor}`}>
@@ -231,21 +231,21 @@ const KYCStatus = () => {
           </div>
 
           <p className="text-gray-400 text-sm mb-6">
-            Verificação empresarial completa. Necessário para operações institucionais e limites superiores.
+            {t('kyc.status.kybDescription')}
           </p>
 
           <div className="space-y-3 mb-6">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <FileText size={16} />
-              <span>Certidão de constituição</span>
+              <span>{t('kyc.status.documents.certIncorporation')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <FileText size={16} />
-              <span>Estatutos sociais</span>
+              <span>{t('kyc.status.documents.articlesAssociation')}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <User size={16} />
-              <span>Identificação dos diretores e UBOs</span>
+              <span>{t('kyc.status.documents.directorsUbos')}</span>
             </div>
           </div>
 
@@ -255,7 +255,7 @@ const KYCStatus = () => {
               className="w-full bg-amber-600 hover:bg-amber-700 text-black"
               data-testid="start-kyb-btn"
             >
-              Iniciar KYB
+              {t('kyc.status.startKyb')}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           )}
