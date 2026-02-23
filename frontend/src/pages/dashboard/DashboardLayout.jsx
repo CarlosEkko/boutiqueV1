@@ -139,7 +139,7 @@ const DashboardLayout = () => {
             className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-900/20"
           >
             <LogOut size={20} />
-            {sidebarOpen && 'Logout'}
+            {sidebarOpen && t('dashboard.layout.logout')}
           </Button>
         </div>
       </aside>
@@ -169,7 +169,7 @@ const DashboardLayout = () => {
         <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16">
           <nav className="p-4 space-y-2">
             {/* User Navigation */}
-            <p className="px-4 text-xs text-gray-500 uppercase mb-2">Portfolio</p>
+            <p className="px-4 text-xs text-gray-500 uppercase mb-2">{t('dashboard.layout.portfolio')}</p>
             {userNavItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
@@ -177,7 +177,7 @@ const DashboardLayout = () => {
             {/* Admin Navigation */}
             {isAdmin && (
               <div className="pt-4 mt-4 border-t border-amber-900/20">
-                <p className="px-4 text-xs text-amber-500 uppercase mb-2">Admin</p>
+                <p className="px-4 text-xs text-amber-500 uppercase mb-2">{t('dashboard.layout.admin')}</p>
                 {adminNavItems.map((item) => (
                   <NavItem key={item.to} {...item} />
                 ))}
@@ -190,7 +190,7 @@ const DashboardLayout = () => {
               className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-900/20 mt-4"
             >
               <LogOut size={20} />
-              Logout
+              {t('dashboard.layout.logout')}
             </Button>
           </nav>
         </div>
