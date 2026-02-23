@@ -5,6 +5,7 @@ import { products } from '../mock';
 import { Check } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import GlowText from './GlowText';
 import { useLanguage } from '../i18n';
 import translations from '../i18n/translations';
 
@@ -89,16 +90,37 @@ const Products = () => {
         {/* Section Header */}
         <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4 bg-amber-950/50 text-amber-200 border-amber-700/30 px-4 py-1">
-            {t('products.badge')}
+            <GlowText 
+              text={t('products.badge')} 
+              stagger={0.05}
+              duration={0.8}
+              glowColor="rgba(254, 243, 199, 0.9)"
+            />
           </Badge>
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-            {t('products.title')}
+            <GlowText 
+              text={t('products.title')} 
+              stagger={0.06}
+              delay={0.2}
+              glowColor="rgba(255, 255, 255, 0.8)"
+            />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
-              {t('products.titleHighlight')}
+              <GlowText 
+                text={t('products.titleHighlight')} 
+                stagger={0.06}
+                delay={0.5}
+                glowColor="rgba(217, 119, 6, 0.9)"
+              />
             </span>
           </h2>
           <p className="text-gray-400 text-lg">
-            {t('products.description')}
+            <GlowText 
+              text={t('products.description')} 
+              stagger={0.02}
+              delay={0.8}
+              duration={0.5}
+              glowColor="rgba(156, 163, 175, 0.8)"
+            />
           </p>
         </div>
 

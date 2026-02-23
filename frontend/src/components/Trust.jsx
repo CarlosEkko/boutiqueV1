@@ -3,6 +3,7 @@ import { Card, CardContent } from './ui/card';
 import { ShieldCheck, Lock, Crown, Globe } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import GlowText from './GlowText';
 import { useLanguage } from '../i18n';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -131,13 +132,28 @@ const Trust = () => {
         {/* Trust Factors */}
         <div ref={headerRef} className="max-w-3xl mx-auto mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-            {t('trust.title')}
+            <GlowText 
+              text={t('trust.title')} 
+              stagger={0.06}
+              glowColor="rgba(255, 255, 255, 0.8)"
+            />
             <span className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent mt-2">
-              {t('trust.titleHighlight')}
+              <GlowText 
+                text={t('trust.titleHighlight')} 
+                stagger={0.06}
+                delay={0.3}
+                glowColor="rgba(217, 119, 6, 0.9)"
+              />
             </span>
           </h2>
           <p className="text-gray-400 text-lg">
-            {t('trust.description')}
+            <GlowText 
+              text={t('trust.description')} 
+              stagger={0.02}
+              delay={0.6}
+              duration={0.5}
+              glowColor="rgba(156, 163, 175, 0.8)"
+            />
           </p>
         </div>
 
