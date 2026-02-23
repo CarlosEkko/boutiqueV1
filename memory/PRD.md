@@ -282,10 +282,14 @@ Build a premium cryptocurrency exchange website for **Kryptobox.io** targeting:
 
 ### Key Files
 - `/app/frontend/src/components/HeroV2.jsx` - Cinematic hero with animations
-- `/app/frontend/src/components/CryptoTicker.jsx` - Price ticker component
+- `/app/frontend/src/components/Header.jsx` - Overlay menu with cursor glow trail
+- `/app/frontend/src/components/CryptoTicker.jsx` - Live price ticker component
+- `/app/frontend/src/components/GlowText.jsx` - Letter glow animation component
+- `/app/frontend/src/i18n/` - Internationalization system (EN/AR)
 - `/app/frontend/src/pages/CryptoAtmPage.jsx` - ATM Network page
 - `/app/frontend/src/utils/textAnimations.js` - Text animation utilities
-- `/app/frontend/src/mock.js` - All mock data centralized
+- `/app/frontend/src/mock.js` - Fallback mock data
+- `/app/backend/server.py` - FastAPI backend with crypto-prices endpoint
 
 ### Deployment
 - Frontend: Auto-deployed via supervisor (hot reload enabled)
