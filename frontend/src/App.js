@@ -2,6 +2,10 @@ import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import CryptoATMPage from "./pages/CryptoATMPage";
+import MarketsPage from "./pages/MarketsPage";
+import TradingPage from "./pages/TradingPage";
+import EarnPage from "./pages/EarnPage";
+import InstitutionalPage from "./pages/InstitutionalPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import {
@@ -50,6 +54,10 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/crypto-atm" element={<CryptoATMPage />} />
+      <Route path="/markets" element={<MarketsPage />} />
+      <Route path="/trading" element={<TradingPage />} />
+      <Route path="/earn" element={<EarnPage />} />
+      <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       
