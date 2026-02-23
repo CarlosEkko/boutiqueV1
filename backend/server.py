@@ -110,7 +110,7 @@ class CryptoPrice(BaseModel):
 class CryptoPricesResponse(BaseModel):
     prices: List[CryptoPrice]
     last_updated: datetime
-    source: str = "coingecko"
+    source: str = "coinmarketcap"
 
 # Cache for crypto prices
 crypto_cache: Dict[str, Any] = {
@@ -119,56 +119,76 @@ crypto_cache: Dict[str, Any] = {
     "cache_duration": 60  # Cache for 60 seconds
 }
 
-COINGECKO_API_URL = "https://api.coingecko.com/api/v3"
+# CoinMarketCap API configuration
+COINMARKETCAP_API_URL = "https://pro-api.coinmarketcap.com/v1"
+COINMARKETCAP_API_KEY = os.environ.get("COINMARKETCAP_API_KEY", "")
 
-# Crypto IDs mapping for CoinGecko
-CRYPTO_IDS = {
-    "bitcoin": {"symbol": "BTC", "name": "Bitcoin"},
-    "ethereum": {"symbol": "ETH", "name": "Ethereum"},
-    "cardano": {"symbol": "ADA", "name": "Cardano"},
-    "solana": {"symbol": "SOL", "name": "Solana"},
-    "ripple": {"symbol": "XRP", "name": "Ripple"},
-    "binancecoin": {"symbol": "BNB", "name": "BNB"},
-    "dogecoin": {"symbol": "DOGE", "name": "Dogecoin"},
-    "polkadot": {"symbol": "DOT", "name": "Polkadot"}
-}
+# Crypto symbols for CoinMarketCap
+CRYPTO_SYMBOLS = ["BTC", "ETH", "ADA", "SOL", "XRP", "BNB", "DOGE", "DOT"]
 
 async def fetch_crypto_prices() -> List[CryptoPrice]:
-    """Fetch crypto prices from CoinGecko API"""
-    crypto_ids = ",".join(CRYPTO_IDS.keys())
+    """Fetch crypto prices from CoinMarketCap API"""
     
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    if not COINMARKETCAP_API_KEY:
+        logger.error("CoinMarketCap API key not configured")
+        raise HTTPException(status_code=503, detail="CoinMarketCap API key not configured")
+    
+    headers = {
+        "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
+        "Accept": "application/json"
+    }
+    
+    async with httpx.AsyncClient(timeout=15.0) as client:
         try:
             response = await client.get(
-                f"{COINGECKO_API_URL}/simple/price",
+                f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
                 params={
-                    "ids": crypto_ids,
-                    "vs_currencies": "usd",
-                    "include_24hr_change": "true",
-                    "include_market_cap": "true",
-                    "include_24hr_vol": "true"
-                }
+                    "symbol": ",".join(CRYPTO_SYMBOLS),
+                    "convert": "USD"
+                },
+                headers=headers
             )
             response.raise_for_status()
             data = response.json()
             
+            if data.get("status", {}).get("error_code", 0) != 0:
+                error_msg = data.get("status", {}).get("error_message", "Unknown error")
+                logger.error(f"CoinMarketCap API error: {error_msg}")
+                raise HTTPException(status_code=503, detail=f"CoinMarketCap API error: {error_msg}")
+            
             prices = []
-            for crypto_id, info in CRYPTO_IDS.items():
-                if crypto_id in data:
-                    crypto_data = data[crypto_id]
+            crypto_data = data.get("data", {})
+            
+            for symbol in CRYPTO_SYMBOLS:
+                if symbol in crypto_data:
+                    crypto = crypto_data[symbol]
+                    # Handle case where symbol maps to multiple coins (use first)
+                    if isinstance(crypto, list):
+                        crypto = crypto[0]
+                    
+                    quote = crypto.get("quote", {}).get("USD", {})
                     prices.append(CryptoPrice(
-                        symbol=info["symbol"],
-                        name=info["name"],
-                        price=crypto_data.get("usd", 0),
-                        change_24h=crypto_data.get("usd_24h_change", 0),
-                        market_cap=crypto_data.get("usd_market_cap"),
-                        volume_24h=crypto_data.get("usd_24h_vol")
+                        symbol=symbol,
+                        name=crypto.get("name", symbol),
+                        price=quote.get("price", 0),
+                        change_24h=quote.get("percent_change_24h", 0),
+                        market_cap=quote.get("market_cap"),
+                        volume_24h=quote.get("volume_24h")
                     ))
             
             return prices
             
-        except httpx.HTTPError as e:
-            logger.error(f"Error fetching crypto prices from CoinGecko: {e}")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.error("Invalid CoinMarketCap API key")
+                raise HTTPException(status_code=503, detail="Invalid API key")
+            elif e.response.status_code == 429:
+                logger.error("CoinMarketCap rate limit exceeded")
+                raise HTTPException(status_code=503, detail="Rate limit exceeded")
+            logger.error(f"HTTP error fetching crypto prices: {e}")
+            raise HTTPException(status_code=503, detail="Unable to fetch crypto prices")
+        except httpx.RequestError as e:
+            logger.error(f"Request error fetching crypto prices: {e}")
             raise HTTPException(status_code=503, detail="Unable to fetch crypto prices")
         except Exception as e:
             logger.error(f"Unexpected error fetching crypto prices: {e}")
@@ -177,7 +197,7 @@ async def fetch_crypto_prices() -> List[CryptoPrice]:
 @api_router.get("/crypto-prices", response_model=CryptoPricesResponse)
 async def get_crypto_prices():
     """
-    Get current crypto prices from CoinGecko API.
+    Get current crypto prices from CoinMarketCap API.
     Results are cached for 60 seconds to avoid rate limiting.
     """
     global crypto_cache
@@ -193,11 +213,11 @@ async def get_crypto_prices():
             return CryptoPricesResponse(
                 prices=crypto_cache["data"],
                 last_updated=crypto_cache["last_fetch"],
-                source="coingecko (cached)"
+                source="coinmarketcap (cached)"
             )
     
     # Fetch fresh data
-    logger.info("Fetching fresh crypto prices from CoinGecko")
+    logger.info("Fetching fresh crypto prices from CoinMarketCap")
     prices = await fetch_crypto_prices()
     
     # Update cache
@@ -207,7 +227,7 @@ async def get_crypto_prices():
     return CryptoPricesResponse(
         prices=prices,
         last_updated=current_time,
-        source="coingecko"
+        source="coinmarketcap"
     )
 
 # Include the router in the main app
