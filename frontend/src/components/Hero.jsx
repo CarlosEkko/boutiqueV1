@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { heroData } from '../mock';
 import gsap from 'gsap';
+import { animateTextChars } from '../utils/textAnimations';
 
 const Hero = () => {
   const heroRef = useRef(null);
@@ -24,21 +25,25 @@ const Hero = () => {
         { opacity: 1, y: 0, duration: 0.8 }
       );
 
-      // Title animation with stagger
-      tl.fromTo(
-        titleRef.current.children,
-        { opacity: 0, y: 50, rotateX: -15 },
-        { opacity: 1, y: 0, rotateX: 0, duration: 1, stagger: 0.2 },
-        '-=0.4'
-      );
-
-      // Subtitle shimmer effect
-      tl.fromTo(
-        subtitleRef.current,
-        { opacity: 0, scale: 0.9 },
-        { opacity: 1, scale: 1, duration: 1 },
-        '-=0.6'
-      );
+      // Animate title by character with 3D flip effect
+      const titleLine1 = titleRef.current.querySelector('.title-line-1');
+      const titleLine2 = titleRef.current.querySelector('.title-line-2');
+      
+      if (titleLine1) {
+        animateTextChars.flip3D(titleLine1, {
+          duration: 0.6,
+          stagger: 0.03,
+          delay: 0.3
+        });
+      }
+      
+      if (titleLine2) {
+        animateTextChars.rotateScale(titleLine2, {
+          duration: 0.06,
+          stagger: 0.02,
+          delay: 0.8
+        });
+      }
 
       // Description
       tl.fromTo(
@@ -95,10 +100,10 @@ const Hero = () => {
             </span>
           </div>
 
-          {/* Main Heading */}
+          {/* Main Heading with character animation */}
           <h1 ref={titleRef} className="text-5xl md:text-7xl lg:text-8xl font-extralight leading-tight tracking-wide">
-            <span className="block text-white mb-2">{heroData.title}</span>
-            <span ref={subtitleRef} className="block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
+            <span className="title-line-1 block text-white mb-2">{heroData.title}</span>
+            <span className="title-line-2 block bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 bg-clip-text text-transparent">
               {heroData.subtitle}
             </span>
           </h1>
