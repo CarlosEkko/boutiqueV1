@@ -1,224 +1,80 @@
 # KBEX.io - Product Requirements Document
 
-## Original Problem Statement
-Website para uma Crypto Boutique Exchange premium chamada **KBEX.io** (anteriormente Kryptobox.io), direcionada a indivíduos de alto patrimônio (HNW/UHNW) e empresas na Europa, Médio Oriente e Brasil.
+## Project Overview
+Premium Crypto Boutique Exchange website targeting High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
 
-## Target Audience
-- High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals
-- Companies and institutions
-- Geographic focus: Europe, Middle East, Brazil
+## Core Brand Identity
+- **Brand Name**: KBEX.io (formerly Kryptobox.io)
+- **Tone & Style**: "Quiet luxury," trust, exclusivity, sophisticated
+- **Color Palette**: Custom gold/bronze theme
 
-## Core Products/Services
-- Crypto Exchange
-- Crypto ATM Network
-- Launchpad
-- ICO
-- Institutional Custody
-
-## Design Philosophy
-- "Quiet luxury" aesthetic
-- Trust and exclusivity
-- Clear, serious, and sophisticated tone
-
----
+## Tech Stack
+- **Frontend**: React, Tailwind CSS, Shadcn UI, GSAP animations
+- **Backend**: FastAPI, Motor (async MongoDB)
+- **Database**: MongoDB
+- **Authentication**: JWT
+- **i18n**: Custom multilingual system (EN, PT, AR)
+- **API Integration**: CoinMarketCap (live prices)
+- **DevOps**: Docker, Docker Compose
 
 ## Implemented Features
 
-### Phase 1: Core Platform ✅
-- Landing page with premium design
-- Live crypto prices (CoinGecko integration)
-- Multi-language support (PT/EN/AR)
-- Responsive design
+### Public Pages (Completed - Dec 2025)
+- [x] Landing Page with hero, products, trust, regions, contact sections
+- [x] Crypto ATM Page
+- [x] **Markets Page** - Spot/Futures/Favorites tabs with market data table
+- [x] **Trading Page** - Terminal Pro interface with order book, recent trades, order form
+- [x] **Earn Page** - Flexible/Locked/DeFi staking with calculator
+- [x] **Institutional Page** - OTC, Custody, APIs services for institutional clients
 
-### Phase 2: Authentication System ✅
-- JWT-based authentication
-- User registration with invite codes
-- Login/Logout functionality
-- Profile management
-- Membership approval system
+### Authentication & Dashboard (Completed)
+- [x] JWT Authentication (Login/Register)
+- [x] Private Client Dashboard
+- [x] KYC/KYB Verification System
+- [x] Admin Panel
 
-### Phase 3: Private Client Dashboard ✅
-- Portfolio Overview
-- Wallets Page
-- Transactions History
-- Investment Opportunities
-- ROI Tracking
-- Fund Transparency
+### Integrations (Completed)
+- [x] CoinMarketCap - Live crypto price ticker
+- [x] Fiat currency selector (USD, EUR, BRL, AED)
 
-### Phase 4: Admin Panel ✅
-- Admin statistics dashboard
-- User management (approve/reject/KYC status)
-- Investment opportunity management
-- Invite code generation
-- Transparency report management
+### Blocked Features
+- [ ] Fireblocks Integration - Authentication error ("invalid signature"). Requires new API Key + Private Key pair from user's Fireblocks Production dashboard.
 
-### Phase 5: KYC/KYB System ✅ (December 2024)
-- **KYC Individual Verification**
-  - Multi-step form (Personal Info → ID Document → Selfie → Proof of Address)
-  - Document upload with drag & drop
-  - Progress tracking
-- **KYB Business Verification**
-  - Company information form
-  - Company documents upload
-  - Representatives/UBO management
-  - Business address proof
-- **Admin KYC Management**
-  - Pending verifications list
-  - Document review
-  - Approve/Reject with reasons
-  - Search and filter functionality
+## Page Routes
+| Route | Page | Status |
+|-------|------|--------|
+| `/` | Landing Page | ✅ Complete |
+| `/markets` | Markets (Spot/Futures/Favorites) | ✅ Complete |
+| `/trading` | Trading Terminal Pro | ✅ Complete |
+| `/earn` | Staking/Earn | ✅ Complete |
+| `/institutional` | Institutional Services | ✅ Complete |
+| `/crypto-atm` | Crypto ATM Network | ✅ Complete |
+| `/auth` | Login/Register | ✅ Complete |
+| `/dashboard/*` | Client Dashboard | ✅ Complete |
 
-### Phase 6: Dashboard Multilingual Support ✅ (December 2024)
-- All dashboard pages now support PT/EN/AR
-- Navigation menu fully translated
-- KYC/KYB pages fully translated
-- Admin panels fully translated
+## Navigation Structure
+1. Início (Home)
+2. Mercados (Markets)
+3. Trading
+4. Ganhos (Earn)
+5. Institucional (Institutional)
+6. Crypto ATM
+7. Contacto (Contact)
 
-### Phase 6.1: KYC/KYB Bug Fixes & Complete Translations ✅ (February 2025)
-- Fixed critical STEPS constant bug causing "Cannot read properties of undefined (reading 'icon')" error
-- Fixed stepMap bounds to prevent array index overflow
-- Added complete Portuguese translations to KYBForm.jsx
-- All form labels, buttons, progress steps now fully translated
-- FileUploadBox component updated to support i18n
-
-### Phase 6.2: Rebranding & Fiat Currency Selector ✅ (February 2025)
-- **Rebranding**: Changed name from "Kryptobox" to "KBEX" across entire application
-  - Header, Footer, Auth page, Dashboard sidebar, Hero animation, Translations
-  - Email contact updated to contact@kbex.io
-- **Fiat Currency Selector**: Added multi-currency support in crypto ticker
-  - Supported currencies: USD ($), EUR (€), AED (د.إ), BRL (R$)
-  - Real-time price conversion for all crypto pairs
-  - Dropdown selector in header ticker bar
-
-### Phase 6.4: CoinMarketCap Integration ✅ (February 2025)
-- **Replaced CoinGecko with CoinMarketCap API** for crypto prices
-- Backend endpoint updated to fetch from CMC API with proper authentication
-- 8 cryptocurrencies tracked: BTC, ETH, ADA, SOL, XRP, BNB, DOGE, DOT
-- Real-time prices with 60-second cache to optimize API usage
-- Frontend ticker shows "CMC" indicator when data is live
-- Multi-fiat conversion maintained (USD, EUR, AED, BRL)
-- **New Color Scheme**: Replaced amber (#d97706) with custom gold palette
-  - Primary gold: #a57a50 (warm bronze/gold)
-  - Mid-tone: #7e5d3f (darker gold)
-  - Dark: #3a2d1e (deep bronze)
-- Updated tailwind.config.js with custom 'gold' color scale (50-950)
-- All components, animations, gradients, and shadows updated
-- Selection, scrollbar, and focus states use new gold tones
-- **Subtle Glow Effects**: Reduced glow/shadow intensity across all animated elements
-  - GlowText component: 60% opacity, smaller blur radius (8px-16px vs 20px-60px)
-  - Hero animations: 40-50% opacity shadows vs 80-100%
-  - Cursor glow: 50% intensity
-  - Text shadows: Reduced to 0.2-0.4 opacity for elegant appearance
-
----
-
-## Technical Architecture
-
-### Frontend
-- React 18
-- React Router v6
-- Tailwind CSS
-- Shadcn UI Components
-- GSAP Animations
-- Axios for API calls
-- i18n for translations (EN/PT/AR)
-
-### Backend
-- FastAPI (Python)
-- Motor (Async MongoDB driver)
-- JWT Authentication (python-jose)
-- Password hashing (bcrypt/passlib)
-- File uploads (aiofiles, python-multipart)
-
-### Database
-- MongoDB
-
-### Key Collections
-- `users` - User accounts and profiles
-- `wallets` - User crypto wallets
-- `transactions` - Transaction history
-- `investment_opportunities` - Available investments
-- `user_investments` - User investment records
-- `kyc_verifications` - KYC submissions
-- `kyb_verifications` - KYB submissions
-- `kyc_documents` - Uploaded verification documents
-- `invite_codes` - Referral codes
-
----
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `PUT /api/auth/me`
-
-### Dashboard
-- `GET /api/dashboard/overview`
-- `GET /api/dashboard/wallets`
-- `GET /api/dashboard/transactions`
-- `GET /api/dashboard/investments`
-
-### KYC/KYB
-- `GET /api/kyc/status`
-- `POST /api/kyc/start`
-- `POST /api/kyc/personal-info`
-- `POST /api/kyc/id-document`
-- `POST /api/kyc/upload-document`
-- `POST /api/kyc/submit`
-- `POST /api/kyc/company-info`
-- `POST /api/kyc/add-representative`
-- `GET /api/kyc/documents`
-
-### Admin
-- `GET /api/admin/users`
-- `POST /api/admin/users/{id}/approve`
-- `GET /api/admin/kyc/pending`
-- `GET /api/admin/kyb/pending`
-- `POST /api/admin/kyc/{user_id}/approve`
-- `POST /api/admin/kyc/{user_id}/reject`
-- `POST /api/admin/kyb/{user_id}/approve`
-- `POST /api/admin/kyb/{user_id}/reject`
-
----
-
-## Pending/Blocked Features
-
-### P1: Fireblocks Integration ⚠️ BLOCKED
-- Live wallet creation and management
-- **Blocked**: Waiting for RSA Private Key from user
-- Playbook and API key available
-
-### P2: Product Pages
-- Launchpad page
-- ICO page
-- Institutional Custody page
-
-### P2: Request Access Form
-- Public contact form
-- Backend submission handling
-
-### P3: Dashboard Enhancements
-- Detailed charts
-- Transaction filtering
-- Real-time data updates
-
----
+## Future Tasks (Backlog)
+- [ ] Populate Markets with real-time CoinMarketCap data
+- [ ] Integrate TradingView chart in Trading page
+- [ ] Build Launchpad page
+- [ ] Build ICO page  
+- [ ] Implement "Request Access" form backend
+- [ ] Add full translations for new pages (markets.*, trading.*, earn.*, institutional.*)
+- [ ] Fix Fireblocks integration (pending user credentials)
+- [ ] Real portfolio data in Dashboard (post-Fireblocks)
 
 ## Test Credentials
-- **Email**: joao@teste.com
-- **Password**: senha123
-- **Role**: Admin
+- **Admin User**: joao@teste.com / senha123
+- **Regular User**: maria@teste.com / senha123
 
-- **Email**: maria@teste.com
-- **Password**: senha123
-- **Role**: Standard (KYC rejected, KYB approved)
-
----
-
-## Notes
-- Dashboard financial data is currently MOCKED
-- Wallet addresses are placeholders (pending Fireblocks)
-- All KYC/KYB document reviews are manual
-- Default language is Portuguese (PT)
+## Deployment
+- Docker containerized
+- Guide: `/app/DEPLOY_DIGITALOCEAN.md`
