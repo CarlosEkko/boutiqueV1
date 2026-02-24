@@ -481,16 +481,8 @@ const Header = () => {
           transform: scale(2);
         }
         
-        /* Hide default cursor when custom cursor is active */
-        @media (min-width: 1024px) {
-          body {
-            cursor: none;
-          }
-          
-          a, button, [role="button"] {
-            cursor: none;
-          }
-        }
+        /* Custom cursor - disabled for better Safari compatibility */
+        /* Original cursor: none styles removed */
       `}</style>
     </>
   );
