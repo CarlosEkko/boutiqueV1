@@ -37,6 +37,19 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Force cursor visibility for Safari compatibility */
+* {
+    cursor: auto;
+}
+
+a, button, [role="button"], input, select, textarea, [onclick], .cursor-pointer {
+    cursor: pointer;
+}
+
+input[type="text"], input[type="email"], input[type="password"], textarea {
+    cursor: text;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 10px;
