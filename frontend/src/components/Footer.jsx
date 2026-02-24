@@ -20,9 +20,11 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <a href="#" className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 mb-4 group`}>
-              <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                <span className="text-black font-bold text-xl">K</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="KBEX.io" 
+                className="h-10 w-auto transform group-hover:scale-105 transition-transform duration-300"
+              />
               <span className="text-2xl font-light bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent">
                 KBEX.io
               </span>
