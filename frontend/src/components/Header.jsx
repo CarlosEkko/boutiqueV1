@@ -224,9 +224,11 @@ const Header = () => {
               >
                 <span className="inline-block">
                   <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2`}>
-                    <div className="w-9 h-9 md:w-10 md:h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
-                      <span className="text-black font-bold text-lg md:text-xl font-['Inter']">K</span>
-                    </div>
+                    <img 
+                      src="/logo.png" 
+                      alt="KBEX.io" 
+                      className="h-10 md:h-12 w-auto transform group-hover:scale-105 transition-transform duration-300"
+                    />
                     <span className="text-xl md:text-2xl font-light text-white font-['Inter']">
                       <span className="text-gold-400">KB</span>EX.io
                     </span>
