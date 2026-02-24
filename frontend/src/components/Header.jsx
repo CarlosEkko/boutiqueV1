@@ -199,37 +199,8 @@ const Header = () => {
 
   return (
     <>
-      {/* Custom Cursor with Glow Trail */}
-      <div ref={cursorRef} className="c-cursor pointer-events-none hidden lg:block">
-        {/* Trail elements */}
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={`trail-${i}`}
-            ref={el => trailRefs.current[i] = el}
-            className="cursor-trail fixed -left-[6px] -top-[6px] z-[9998] opacity-0"
-            style={{
-              width: `${12 - i * 1.5}px`,
-              height: `${12 - i * 1.5}px`,
-            }}
-          >
-            <div 
-              className="w-full h-full rounded-full"
-              style={{
-                background: `radial-gradient(circle, rgba(165,122,80,${0.6 - i * 0.1}) 0%, transparent 70%)`,
-                filter: `blur(${i * 1}px)`,
-              }}
-            />
-          </div>
-        ))}
-        
-        {/* Main cursor */}
-        <div 
-          ref={cursorPointerRef}
-          className="c-cursor__pointer fixed w-[14px] h-[14px] -left-[7px] -top-[7px] z-[9999] opacity-0"
-        >
-          <div className="cursor-dot absolute w-full h-full bg-gold-400 rounded-full shadow-[0_0_8px_rgba(165,122,80,0.5),0_0_16px_rgba(165,122,80,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.165,0.84,0.44,1)]" />
-        </div>
-      </div>
+      {/* Custom Cursor - Hidden for Safari compatibility */}
+      {/* The custom cursor caused issues on Safari, so it's disabled */}
 
       {/* Fixed Header */}
       <header className={`fixed top-0 left-0 w-full z-[100] ${isRTL ? 'rtl' : 'ltr'}`}>
