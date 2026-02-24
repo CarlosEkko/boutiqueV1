@@ -1,4 +1,4 @@
-# KBEX.io - Docker Compose for DigitalOcean Deployment
+# KBEX.io - Docker Compose para Produção
 version: '3.8'
 
 services:
@@ -26,13 +26,16 @@ services:
       dockerfile: Dockerfile
     container_name: kbex-backend
     restart: always
+    ports:
+      - "8001:8001"
     depends_on:
       mongodb:
         condition: service_healthy
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=kbex_production
-      - CORS_ORIGINS=*
+      - CORS_ORIGINS=${DOMAIN_URL:-*}
+      - JWT_SECRET=${JWT_SECRET}
       - COINMARKETCAP_API_KEY=${COINMARKETCAP_API_KEY}
       - FIREBLOCKS_API_KEY=${FIREBLOCKS_API_KEY:-}
       - FIREBLOCKS_SECRET_KEY_PATH=/app/fireblocks_secret.key
