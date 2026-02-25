@@ -294,13 +294,13 @@ const HeroV2 = () => {
             className="absolute text-center px-4"
           >
             <h1 
-              className="text-4xl md:text-6xl lg:text-7xl font-extralight text-gold-400 tracking-widest uppercase mb-4"
+              className="glow-text-animate text-4xl md:text-6xl lg:text-7xl font-extralight text-gold-400 tracking-widest uppercase mb-4"
               style={{ textShadow: '0px 0px 1px rgba(165, 122, 80, 0.4)' }}
             >
               {splitTextIntoSpans('KBEX')}
             </h1>
             <p 
-              className="text-lg md:text-xl lg:text-2xl font-light text-gray-300 tracking-wider"
+              className="glow-text-animate text-lg md:text-xl lg:text-2xl font-light text-gray-300 tracking-wider"
               style={{ textShadow: '0px 0px 1px rgba(255, 255, 255, 0.3)' }}
             >
               {splitTextIntoSpans('Premium Crypto Exchange')}
