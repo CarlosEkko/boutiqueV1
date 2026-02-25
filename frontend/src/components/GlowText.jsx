@@ -6,7 +6,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 /**
  * GlowText Component - Letter-by-letter glow animation
- * Text starts fully visible, glow effect sweeps across on scroll
+ * Continuous glowing effect inspired by transmission animation
  */
 const GlowText = ({ 
   text, 
@@ -17,13 +17,14 @@ const GlowText = ({
   duration = 0.6,
   glowColor = 'rgba(165, 122, 80, 0.6)',
   triggerOnScroll = true,
-  triggerStart = 'top 85%'
+  triggerStart = 'top 85%',
+  continuous = false
 }) => {
   const containerRef = useRef(null);
   const hasAnimatedRef = useRef(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || continuous) return;
 
     const letters = containerRef.current.querySelectorAll('.glow-letter');
     if (letters.length === 0) return;
@@ -69,7 +70,7 @@ const GlowText = ({
       const timer = setTimeout(animateLetters, 100);
       return () => clearTimeout(timer);
     }
-  }, [text, delay, stagger, duration, glowColor, triggerOnScroll, triggerStart]);
+  }, [text, delay, stagger, duration, glowColor, triggerOnScroll, triggerStart, continuous]);
 
   // Split text into individual letter spans - all visible from start
   const renderLetters = () => {
@@ -86,6 +87,15 @@ const GlowText = ({
       </span>
     ));
   };
+
+  // For continuous animation, use CSS class
+  if (continuous) {
+    return (
+      <Tag ref={containerRef} className={`glow-text-animate ${className}`} style={{ display: 'inline' }}>
+        {renderLetters()}
+      </Tag>
+    );
+  }
 
   return (
     <Tag ref={containerRef} className={className} style={{ display: 'inline' }}>
