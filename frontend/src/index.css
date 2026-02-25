@@ -37,17 +37,26 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Force cursor visibility for Safari compatibility */
-* {
-    cursor: auto;
+/* Cursor styles for all browsers including Safari */
+html, body {
+    cursor: default !important;
 }
 
-a, button, [role="button"], input, select, textarea, [onclick], .cursor-pointer {
-    cursor: pointer;
+a, button, [role="button"], input[type="submit"], input[type="button"], 
+select, label, [onclick], .cursor-pointer, [data-testid] {
+    cursor: pointer !important;
 }
 
-input[type="text"], input[type="email"], input[type="password"], textarea {
-    cursor: text;
+input[type="text"], input[type="email"], input[type="password"], 
+input[type="number"], input[type="search"], textarea {
+    cursor: text !important;
+}
+
+/* Ensure interactive elements are clickable */
+a, button, input, select, textarea, [role="button"], [onclick] {
+    -webkit-user-select: auto;
+    user-select: auto;
+    pointer-events: auto;
 }
 
 /* Custom scrollbar */
