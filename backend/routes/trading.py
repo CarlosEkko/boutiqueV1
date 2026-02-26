@@ -333,12 +333,80 @@ async def get_fees(admin: dict = Depends(get_admin_user)):
     return fees.model_dump()
 
 
+@router.get("/admin/fees/{currency}", response_model=dict)
+async def get_currency_fees_endpoint(
+    currency: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get fees for a specific currency"""
+    currency = currency.upper()
+    if currency not in SUPPORTED_FIAT:
+        raise HTTPException(status_code=400, detail=f"Currency not supported. Available: {SUPPORTED_FIAT}")
+    
+    fees = await get_trading_fees()
+    currency_fees = get_currency_fees(fees, currency)
+    
+    return {
+        "currency": currency,
+        "fees": currency_fees
+    }
+
+
+@router.put("/admin/fees/{currency}", response_model=dict)
+async def update_currency_fees(
+    currency: str,
+    fees_update: CurrencyFeesUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update fees for a specific currency"""
+    currency = currency.upper()
+    if currency not in SUPPORTED_FIAT:
+        raise HTTPException(status_code=400, detail=f"Currency not supported. Available: {SUPPORTED_FIAT}")
+    
+    current_fees = await get_trading_fees()
+    
+    # Get current currency fees or create defaults
+    if not current_fees.fees_by_currency:
+        current_fees.fees_by_currency = {}
+    
+    if currency not in current_fees.fees_by_currency:
+        current_fees.fees_by_currency[currency] = {
+            "buy_fee_percent": 2.0,
+            "buy_spread_percent": 1.0,
+            "sell_fee_percent": 2.0,
+            "sell_spread_percent": 1.0,
+            "swap_fee_percent": 1.5,
+            "swap_spread_percent": 0.5,
+            "min_buy_fee": 5.0,
+            "min_sell_fee": 5.0,
+            "min_swap_fee": 3.0
+        }
+    
+    # Update specific fields
+    for field, value in fees_update.model_dump(exclude_unset=True).items():
+        if value is not None:
+            current_fees.fees_by_currency[currency][field] = value
+    
+    await db.trading_fees.update_one(
+        {"id": current_fees.id},
+        {
+            "$set": {
+                "fees_by_currency": current_fees.fees_by_currency,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_by": admin["id"]
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"Fees for {currency} updated"}
+
+
 @router.put("/admin/fees", response_model=dict)
 async def update_fees(
     fees_update: TradingFeesUpdate,
     admin: dict = Depends(get_admin_user)
 ):
-    """Update trading fees configuration"""
+    """Update trading fees configuration (legacy - updates all currencies)"""
     current_fees = await get_trading_fees()
     
     update_data = {"updated_at": datetime.now(timezone.utc).isoformat(), "updated_by": admin["id"]}
