@@ -298,18 +298,69 @@ async def approve_user(
     )
     
     # Create default wallets for approved user - Crypto + Fiat
-    default_assets = [
-        # Fiat currencies
+    # Fiat currencies
+    fiat_assets = [
         {"asset_id": "EUR", "asset_name": "Euro", "asset_type": "fiat", "symbol": "€"},
         {"asset_id": "USD", "asset_name": "US Dollar", "asset_type": "fiat", "symbol": "$"},
         {"asset_id": "AED", "asset_name": "UAE Dirham", "asset_type": "fiat", "symbol": "د.إ"},
         {"asset_id": "BRL", "asset_name": "Brazilian Real", "asset_type": "fiat", "symbol": "R$"},
-        # Cryptocurrencies
-        {"asset_id": "BTC", "asset_name": "Bitcoin", "asset_type": "crypto"},
-        {"asset_id": "ETH", "asset_name": "Ethereum", "asset_type": "crypto"},
-        {"asset_id": "USDT", "asset_name": "Tether", "asset_type": "crypto"},
-        {"asset_id": "USDC", "asset_name": "USD Coin", "asset_type": "crypto"}
     ]
+    
+    # Top 50 cryptocurrencies
+    crypto_assets = [
+        {"asset_id": "BTC", "asset_name": "Bitcoin"},
+        {"asset_id": "ETH", "asset_name": "Ethereum"},
+        {"asset_id": "USDT", "asset_name": "Tether"},
+        {"asset_id": "BNB", "asset_name": "BNB"},
+        {"asset_id": "SOL", "asset_name": "Solana"},
+        {"asset_id": "XRP", "asset_name": "XRP"},
+        {"asset_id": "USDC", "asset_name": "USD Coin"},
+        {"asset_id": "ADA", "asset_name": "Cardano"},
+        {"asset_id": "DOGE", "asset_name": "Dogecoin"},
+        {"asset_id": "TRX", "asset_name": "TRON"},
+        {"asset_id": "AVAX", "asset_name": "Avalanche"},
+        {"asset_id": "LINK", "asset_name": "Chainlink"},
+        {"asset_id": "TON", "asset_name": "Toncoin"},
+        {"asset_id": "SHIB", "asset_name": "Shiba Inu"},
+        {"asset_id": "DOT", "asset_name": "Polkadot"},
+        {"asset_id": "BCH", "asset_name": "Bitcoin Cash"},
+        {"asset_id": "NEAR", "asset_name": "NEAR Protocol"},
+        {"asset_id": "MATIC", "asset_name": "Polygon"},
+        {"asset_id": "LTC", "asset_name": "Litecoin"},
+        {"asset_id": "UNI", "asset_name": "Uniswap"},
+        {"asset_id": "ICP", "asset_name": "Internet Computer"},
+        {"asset_id": "DAI", "asset_name": "Dai"},
+        {"asset_id": "APT", "asset_name": "Aptos"},
+        {"asset_id": "ETC", "asset_name": "Ethereum Classic"},
+        {"asset_id": "ATOM", "asset_name": "Cosmos"},
+        {"asset_id": "XLM", "asset_name": "Stellar"},
+        {"asset_id": "XMR", "asset_name": "Monero"},
+        {"asset_id": "OKB", "asset_name": "OKB"},
+        {"asset_id": "FIL", "asset_name": "Filecoin"},
+        {"asset_id": "HBAR", "asset_name": "Hedera"},
+        {"asset_id": "ARB", "asset_name": "Arbitrum"},
+        {"asset_id": "CRO", "asset_name": "Cronos"},
+        {"asset_id": "MKR", "asset_name": "Maker"},
+        {"asset_id": "VET", "asset_name": "VeChain"},
+        {"asset_id": "INJ", "asset_name": "Injective"},
+        {"asset_id": "OP", "asset_name": "Optimism"},
+        {"asset_id": "AAVE", "asset_name": "Aave"},
+        {"asset_id": "GRT", "asset_name": "The Graph"},
+        {"asset_id": "RUNE", "asset_name": "THORChain"},
+        {"asset_id": "ALGO", "asset_name": "Algorand"},
+        {"asset_id": "FTM", "asset_name": "Fantom"},
+        {"asset_id": "THETA", "asset_name": "Theta Network"},
+        {"asset_id": "SAND", "asset_name": "The Sandbox"},
+        {"asset_id": "AXS", "asset_name": "Axie Infinity"},
+        {"asset_id": "MANA", "asset_name": "Decentraland"},
+        {"asset_id": "EGLD", "asset_name": "MultiversX"},
+        {"asset_id": "EOS", "asset_name": "EOS"},
+        {"asset_id": "XTZ", "asset_name": "Tezos"},
+        {"asset_id": "FLOW", "asset_name": "Flow"},
+        {"asset_id": "NEO", "asset_name": "Neo"},
+    ]
+    
+    default_assets = fiat_assets + [{"asset_type": "crypto", **c} for c in crypto_assets]
     
     for asset in default_assets:
         existing = await db.wallets.find_one({
