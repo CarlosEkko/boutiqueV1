@@ -224,7 +224,7 @@ const AdminUsers = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Loading...</div>
+        <div className="text-gold-400">Carregando...</div>
       </div>
     );
   }
@@ -234,38 +234,67 @@ const AdminUsers = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light text-white">User Management</h1>
-          <p className="text-gray-400 mt-1">Manage users, approvals, and KYC</p>
+          <h1 className="text-3xl font-light text-white flex items-center gap-3">
+            <Users className="text-gold-400" />
+            Gestão de Clientes
+          </h1>
+          <p className="text-gray-400 mt-1">Gerir utilizadores, aprovações e KYC</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <Input
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-zinc-900 border-gold-800/30 text-white"
-          />
-        </div>
-        <div className="flex gap-2">
-          {['all', 'pending', 'approved'].map((f) => (
-            <Button
-              key={f}
-              onClick={() => setFilter(f)}
-              variant={filter === f ? 'default' : 'outline'}
-              className={filter === f 
-                ? 'bg-gold-500 hover:bg-gold-400' 
-                : 'border-gold-800/30 text-gray-400 hover:text-white'
-              }
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <Card className="bg-zinc-900/30 border-gold-800/20">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <Input
+                placeholder="Pesquisar por nome ou email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-zinc-800 border-gold-800/30 text-white"
+              />
+            </div>
+            
+            {/* Region Filter */}
+            <Select value={regionFilter} onValueChange={setRegionFilter}>
+              <SelectTrigger className="w-48 bg-zinc-800 border-gold-800/30">
+                <Globe size={16} className="mr-2 text-gray-400" />
+                <SelectValue placeholder="Região" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-gold-800/30">
+                {regions.map((region) => (
+                  <SelectItem key={region.value} value={region.value}>
+                    {region.flag} {region.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <div className="flex gap-2">
+              {[
+                { value: 'all', label: 'Todos' },
+                { value: 'pending', label: 'Pendentes' },
+                { value: 'approved', label: 'Aprovados' }
+              ].map((f) => (
+                <Button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  variant={filter === f.value ? 'default' : 'outline'}
+                  size="sm"
+                  className={filter === f.value 
+                    ? 'bg-gold-500 hover:bg-gold-400' 
+                    : 'border-gold-800/30 text-gray-400 hover:text-white'
+                  }
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Users List */}
       <div className="space-y-3">
