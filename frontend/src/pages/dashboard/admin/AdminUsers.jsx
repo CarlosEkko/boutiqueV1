@@ -158,6 +158,43 @@ const AdminUsers = () => {
     }
   };
 
+  const resetPassword = async (generateRandom = false) => {
+    if (!selectedUser) return;
+    try {
+      const password = generateRandom ? null : newPassword;
+      if (!generateRandom && (!newPassword || newPassword.length < 6)) {
+        toast.error('Password deve ter pelo menos 6 caracteres');
+        return;
+      }
+      
+      const response = await axios.post(
+        `${API_URL}/api/admin/users/${selectedUser.id}/reset-password`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: password ? { new_password: password } : {}
+        }
+      );
+      
+      setGeneratedPassword(response.data.temporary_password);
+      toast.success('Password alterada com sucesso');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao alterar password');
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Password copiada para clipboard');
+  };
+
+  const openPasswordDialog = (user) => {
+    setSelectedUser(user);
+    setNewPassword('');
+    setGeneratedPassword('');
+    setShowPasswordDialog(true);
+  };
+
   const updateKYC = async (userId, status) => {
     try {
       await axios.post(`${API_URL}/api/admin/users/${userId}/kyc/${status}`, {}, {
