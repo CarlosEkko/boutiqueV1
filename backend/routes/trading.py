@@ -15,7 +15,8 @@ from models.trading import (
     CreateBuyOrder, CreateSellOrder, CreateSwapOrder,
     BankAccount, CreateBankAccount,
     BankTransfer, BankTransferStatus, CreateBankTransferDeposit, SubmitBankTransferProof,
-    PaymentTransaction
+    PaymentTransaction,
+    CryptoFees, CryptoFeesUpdate
 )
 from utils.auth import get_current_user_id
 from routes.admin import get_admin_user, get_internal_user
