@@ -214,10 +214,10 @@ const AdminUsers = () => {
 
   const getKYCBadge = (status) => {
     switch (status) {
-      case 'approved': return <Badge className="bg-green-900/30 text-green-400">Approved</Badge>;
-      case 'pending': return <Badge className="bg-gold-800/30 text-gold-400">Pending</Badge>;
-      case 'rejected': return <Badge className="bg-red-900/30 text-red-400">Rejected</Badge>;
-      default: return <Badge className="bg-gray-900/30 text-gray-400">Not Started</Badge>;
+      case 'approved': return <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>;
+      case 'pending': return <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>;
+      case 'rejected': return <Badge className="bg-red-900/30 text-red-400">Rejeitado</Badge>;
+      default: return <Badge className="bg-gray-900/30 text-gray-400">Não Iniciado</Badge>;
     }
   };
 
