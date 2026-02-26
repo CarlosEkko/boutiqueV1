@@ -473,6 +473,92 @@ async def remove_user_admin(
     return {"success": True, "message": f"Admin rights removed from {user['email']}"}
 
 
+@router.post("/users/{user_id}/block")
+async def block_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Block a user - prevents login"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent blocking yourself
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+    
+    # Prevent blocking other admins
+    if user.get("is_admin"):
+        raise HTTPException(status_code=400, detail="Cannot block an admin user")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_active": False,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"User {user['email']} has been blocked"}
+
+
+@router.post("/users/{user_id}/unblock")
+async def unblock_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Unblock a user - allows login again"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_active": True,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"User {user['email']} has been unblocked"}
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Permanently delete a user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent deleting yourself
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    # Prevent deleting other admins
+    if user.get("is_admin"):
+        raise HTTPException(status_code=400, detail="Cannot delete an admin user. Remove admin rights first.")
+    
+    # Delete user's related data
+    await db.tickets.delete_many({"user_id": user_id})
+    await db.ticket_messages.delete_many({"sender_id": user_id})
+    await db.kyc_submissions.delete_many({"user_id": user_id})
+    await db.user_investments.delete_many({"user_id": user_id})
+    await db.wallets.delete_many({"user_id": user_id})
+    await db.transactions.delete_many({"user_id": user_id})
+    
+    # Delete the user
+    await db.users.delete_one({"id": user_id})
+    
+    return {"success": True, "message": f"User {user['email']} has been permanently deleted"}
+
+
 @router.get("/stats")
 async def get_admin_stats(admin: dict = Depends(get_admin_user)):
     """Get admin dashboard statistics"""
