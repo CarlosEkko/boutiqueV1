@@ -399,6 +399,30 @@ async def update_membership_level(
     return {"success": True, "message": f"Membership level updated to {level}"}
 
 
+@router.post("/users/{user_id}/region/{new_region}")
+async def update_user_region(
+    user_id: str,
+    new_region: Region,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update user region (Admin only)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "region": new_region,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": f"Region updated to {new_region}"}
+
+
 @router.post("/users/{user_id}/make-admin")
 async def make_user_admin(
     user_id: str,
