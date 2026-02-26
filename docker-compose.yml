@@ -95,7 +95,6 @@ services:
 volumes:
   mongodb_data:
   backend_uploads:
-  certbot_data:
 
 networks:
   kbex-network:
