@@ -2,160 +2,180 @@
 The user wants to build a website for a premium Crypto Boutique Exchange named **KBEX.io**.
 
 **PRODUCT REQUIREMENTS:**
-- **Target Audience:** High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies.
-- **Geographic Focus:** Europe, Middle East, Brazil.
-- **Products/Services:** Exchange, Crypto ATM Network, Launchpad, ICO, Institutional Custody.
-- **Tone & Style:** Quiet luxury, trust, exclusivity, clear, serious, and sophisticated.
-- **Recent User Request:** The user has requested a comprehensive Role-Based Access Control (RBAC) system.
-    - **Client Tiers**:
-        - Standard
-        - Premium
-        - Elite
-    - **Internal Roles**:
-        - Admin (Superuser)
-        - Manager (Global view)
-        - Local Manager (Region-specific view)
-        - Support (Handles tickets)
-    - **Regionalization**: All users (clients and internal) must be associated with a geographic region (Europe, MENA, or LATAM). Internal users' access should be restricted based on their region.
+-   **Target Audience:** High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies.
+-   **Geographic Focus:** Europe, Middle East, Brazil.
+-   **Products/Services:** Exchange, Crypto ATM Network, Launchpad, ICO, Institutional Custody.
+-   **Tone & Style:** Quiet luxury, trust, exclusivity, clear, serious, and sophisticated.
+-   **Implemented Features in this Session:**
+    -   A new page for buying, selling, and converting cryptocurrencies.
+    -   Payment integration with Stripe (for credit cards) and a manual Bank Transfer system with admin approval.
+    -   Creation of Fiat Wallets (EUR, USD, AED, BRL).
+    -   A complete Fiat Deposit flow, where users request a deposit, receive bank details, and an admin approves the transaction to credit the user's wallet.
+    -   A global multi-currency system, allowing users to select a display currency (EUR, USD, AED, BRL) which updates all crypto prices and values across the platform.
+    -   Updated the wallet page to show crypto balances converted to the selected fiat currency.
+-   **Latest User Request:** Trading fees should be configurable for each fiat currency individually (e.g., different fees for EUR pairs vs. BRL pairs).
 
 **User's preferred language**: Portuguese. The next agent MUST respond in Portuguese.
 
 **what currently exists?**
-The project is a full-stack application (React frontend, FastAPI backend, MongoDB) that has been **successfully deployed to a user-provided OVH VPS**. The live application includes:
-- A multilingual site (EN, PT, AR) with a sophisticated quiet luxury theme.
-- Full JWT authentication, a private client dashboard, and a complete KYC/KYB system.
-- Placeholder pages for Markets, Trading, Earn, and Institutional.
-- The application is containerized with Docker and served via Nginx with a valid SSL certificate from Let's Encrypt.
-- A full deployment workflow is established: changes are saved to GitHub and then pulled to the VPS using an  script.
+The application is a full-stack React/FastAPI/MongoDB platform deployed on the user's VPS. It includes JWT authentication, KYC, a multi-currency client dashboard, and a comprehensive RBAC admin panel. This session added a complete trading and fiat management system:
+-   **Exchange Page**: Users can buy, sell, and convert the top 50 cryptocurrencies.
+-   **Fiat System**: Users have fiat wallets (EUR, USD, AED, BRL) and can deposit funds via bank transfer, which requires admin approval.
+-   **Multi-Currency**: The entire user dashboard now operates in a selected fiat currency (EUR, USD, AED, BRL), with a currency selector in the header. All prices, balances, and limits are displayed in the chosen currency.
+-   **Admin Panel**: Admins can manage trading fees/limits and approve fiat deposits.
 
 **Last working item**:
-- **Last item agent was working**: The agent began implementing the new Role-Based Access Control (RBAC) system. It started by updating the user data models in  to include the new fields for , , and .
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?** Backend testing agent. After creating the API endpoints for user management, roles, and regions, the testing agent should be used to verify creation, updates, and permission-based fetching of users.
-- **User Testing Done**: N
+-   **Last item agent was working**: The agent was in the process of updating the trading fee management system to be configurable per fiat currency. The backend models and API endpoints were updated to handle per-currency fees. The agent was about to modify the frontend admin page () to allow admins to set these individualized fees.
+-   **Status**: IN PROGRESS
+-   **Agent Testing Done**: N
+-   **Which testing method agent to use?**: both. The backend needs to be tested to ensure the new per-currency fee logic is applied correctly during trades. The frontend needs to be tested to verify the new admin UI for setting these fees works as expected.
+-   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1**: (P1) Safari cursor bug.
-    - **Description**: The user reports the mouse cursor is still not functioning correctly on Safari, despite previous fixes that removed the problematic custom cursor. It seems to work only on some parts of the page.
-    - **Next debug checklist**:
-        1.  Review  to see if the global  rule is causing conflicts.
-        2.  Inspect  again to ensure all remnants of the custom cursor logic ( for cursor, GSAP animations targeting the cursor) have been fully removed.
-        3.  The agent cannot test on Safari, so this will require careful code inspection and user verification.
-    - **Why fix this issue and what will be achieved with the fix?**: Ensures a usable and professional experience for Safari users.
-    - **Status**: IN PROGRESS
-    - **Is recurring issue?**: Y
-    - **Should Test frontend/backend/both after fix?**: Frontend (Requires user verification on Safari).
-    - **Blocked on other issue**: None
+-   **Issue 1**: (P1) Safari cursor bug.
+-   **Issue 2**: (P2) Fireblocks Integration is broken.
+-   **Issue 3**: (P3) Whitelist functionality is missing.
 
-- **Issue 2**: (P2) Fireblocks Integration is broken.
-    - **Description**: The integration fails with authentication errors, likely due to mismatched API/private keys.
-    - **Why fix this issue and what will be achieved with the fix?**: This is a blocker for any real wallet management features.
-    - **Status**: BLOCKED (Waiting on user to provide a new, verified set of credentials). This issue has a lower priority as the user is currently focused on the RBAC feature.
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: Backend
-    - **Blocked on other issue**: None
+**Issues Detail**:
+-   **Issue 1**:
+    -   **Description**: The mouse cursor does not function correctly on the Safari browser. This is a recurring problem.
+    -   **Next debug checklist**:
+        1.  Review  for global cursor styles.
+        2.  Inspect  to remove any custom cursor logic remnants.
+        3.  This requires careful code inspection, as direct testing on Safari is not possible. Final verification must be done by the user.
+    -   **Why fix this issue and what will be achieved with the fix?**: Ensures a usable experience for Safari users.
+    -   **Status**: NOT STARTED
+    -   **Is recurring issue?**: Y
+    -   **Should Test frontend/backend/both after fix?**: Frontend (User verification required)
+    -   **Blocked on other issue**: None
+-   **Issue 2**:
+    -   **Description**: The Fireblocks integration fails with authentication errors, likely due to invalid API/private keys.
+    -   **Why fix this issue and what will be achieved with the fix?**: This is a blocker for real wallet management and institutional custody features.
+    -   **Status**: BLOCKED (Waiting for the user to provide new credentials).
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Backend
+    -   **Blocked on other issue**: None
+-   **Issue 3**:
+    -   **Description**: The user noted that whitelist functions are not visible for the admin. This feature has not been implemented yet.
+    -   **Next debug checklist**: Ask the user for requirements: should the whitelist be for crypto withdrawal addresses, user registration emails, or IP addresses?
+    -   **Why fix this issue and what will be achieved with the fix?**: Adds an important security layer.
+    -   **Status**: NOT STARTED (Blocked on user input)
+    -   **Is recurring issue?**: N
+    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Blocked on other issue**: None
 
 **In progress Task List**:
-- **Task 1**: (P0) Implement the new RBAC and regionalization system.
-    - **Where to resume**: The user models in  have been updated. The next step is to build the backend logic.
-        1.  In , create API endpoints for Admins to manage internal users (create, assign roles, and regions).
-        2.  Modify existing admin routes to allow filtering clients by region.
-        3.  Implement permission logic. This can be done via a FastAPI dependency that checks the JWT token for the user's role and region and grants or denies access to specific endpoints.
-        4.  Create the backend models and routes for a new support ticket system.
-        5.  Once the backend is ready, update the frontend Admin Panel to manage these new attributes.
-    - **What will be achieved with this?**: Fulfills the user's latest major request for granular user management.
-    - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: Both
-    - **Blocked on something**: None
+-   **Task 1**: Implement individualized trading fees per currency. (P0 - HIGHEST PRIORITY)
+    -   **Where to resume**: The backend has been updated. The next step is to modify the frontend page . The UI should change from a single set of fee inputs to a tabbed interface or section for each supported fiat currency (EUR, USD, AED, BRL), allowing the admin to set and save fees for each one independently.
+    -   **What will be achieved with this?**: Fulfills the user's request for granular control over trading fees based on the fiat currency used in the transaction.
+    -   **Status**: IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?**: Both
+    -   **Blocked on something**: No
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks**:
-    - **P1: Implement Frontend for RBAC**: Create the UI for the Admin Panel, Manager Dashboards, and the Support Ticket system.
-    - **P2: Populate New Pages**:
-        - **Markets Page**: Integrate real-time CoinMarketCap data.
-        - **Trading Page**: Integrate a TradingView chart.
-- **Future Tasks**:
-    - **P3: Build out product pages**: Launchpad, ICO.
-    - **P3: Add full translations for EN/AR** for all new content.
-    - **P4: Enhance Dashboard**: Add charts and history (depends on fixing Fireblocks).
+-   **Upcoming Tasks**:
+    -   **P1: Populate Static Pages**:
+        -   **Markets Page**: Integrate real-time data from CoinMarketCap.
+        -   **Trading Page**: Integrate a TradingView chart widget.
+-   **Future Tasks**:
+    -   **P2: Implement Whitelist Functionality**: Once requirements are gathered, build the backend and frontend for the chosen whitelist feature.
+    -   **P3: Build out Product Pages**: Create content and functionality for the Launchpad and ICO sections.
+    -   **P3: Add Full Translations**: Translate all new UI elements into English and Arabic.
+    -   **P4: Enhance Dashboard with Financial Data**: Add charts and transaction history (this is dependent on fixing the Fireblocks integration).
 
 **Completed work in this session**
-- **Deployment**: Successfully deployed the entire stack to the user's OVH VPS, including Docker, Nginx, and SSL (Let's Encrypt). Created deployment and update scripts (, , ).
-- **Troubleshooting**: Resolved numerous critical deployment and configuration issues on the VPS, including dependency conflicts, Nginx proxy errors, and SSL certificate generation.
-- **Login Fix**: Diagnosed and fixed the login functionality on the live server by creating test users in the empty database and resolving frontend-backend communication errors.
-- **UI & Bug Fixes**:
-    - Integrated the user-provided KBEX.io logo into the header, footer, and as a favicon.
-    - Removed the Made with Emergent badge from the production build.
-    - Restored a glow text animation effect.
-- **Feature Scaffolding**: Created placeholder pages, routes, and navigation for Markets, Trading, Earn, and Institutional sections.
+-   **Buy/Sell/Convert Page**: Implemented the full-featured exchange page for users.
+-   **Stripe & Bank Transfer Integration**: Added payment options for credit cards (Stripe) and a manual approval flow for bank transfers.
+-   **Fiat Wallets & Deposit System**: Created fiat wallets (EUR, USD, AED, BRL) and a complete deposit workflow with admin oversight.
+-   **Global Multi-Currency System**: Implemented a  in React and corresponding backend logic to allow all financial data on the platform to be displayed in the user's selected fiat currency.
+-   **Wallet Page UI Update**: The user's wallet page now shows crypto asset values converted to the selected fiat currency.
+-   **Admin Trading Management**: Created pages for admins to manage fees, limits, and approve transfers.
+
+**Earlier issues found/mentioned but not fixed**
+-   None. The agent addressed all user requests from this session, though the last one is still in progress.
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork**: Safari cursor bug.
+-   **Recurrence count**: 2
+-   **Status**: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI
-- **Backend**: FastAPI, Pydantic, Motor
-- **Database**: MongoDB
-- **Deployment**: Docker, Docker Compose, Nginx (as a reverse proxy), Let's Encrypt (Certbot) for SSL, Bash scripting.
+-   **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, React Context API (for multi-currency).
+-   **Backend**: FastAPI, Pydantic, Motor (for MongoDB).
+-   **Database**: MongoDB.
+-   **Deployment**: Docker, Nginx, Let's Encrypt.
 
 **key DB schema**
-- **users**: 
+-   **users**: 
+-   **wallets**: 
+-   **trading_fees**:  (Structure changed to be per-currency)
+-   **trading_limits**: 
+-   **fiat_deposits**: 
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
-- **Current Task (RBAC)**: , 
-- **Deployment & Config**: , , , 
-- **Safari Bug**: , 
+-   **Current Task**: , , .
+-   **Multi-Currency**: , , , .
+-   **Fiat Deposits**: , .
+
+**Areas that need refactoring**:
+-   The production  uses  as a workaround, while local development likely still relies on . This divergence should be resolved to prevent environment-specific bugs.
 
 **key api endpoints**
-- **Existing Auth**: , 
-- **Upcoming**: New endpoints will be added under  and .
+-    (Buy/Sell/Convert)
+-    (Now accepts )
+-   
+-    (Now accepts )
+-    (Now accepts a currency-specific payload)
+-   
+-   
+-   
+-   
 
 **Critical Info for New Agent**
-- **You MUST respond in Portuguese.**
-- The application is **LIVE** on the user's VPS. Changes must be saved to GitHub and then deployed to the VPS using .
-- Your priority is to continue the **RBAC implementation**, focusing on building the backend APIs for user and ticket management.
-- The  file is not in the Git repository. After a , it must be copied to the frontend container again using .
-- The Fireblocks integration is blocked and is a low priority.
+-   **Você DEVE responder em português.**
+-   Your immediate priority is to finish the implementation of **individualized trading fees per currency**. This involves updating the frontend admin page () to allow setting fees for EUR, USD, AED, and BRL. The backend is already prepared for this.
+-   The application is **LIVE**. Guide the user through the established deployment workflow (GitHub push -> VPS pull & build) for any changes.
+-   The production database is separate. Do not assume data from the preview environment exists on the live server.
 
 **documents and test reports created in this job**
-- 
-- 
-- 🚀 KBEX.io - Iniciando Deploy...
-================================
-[0;31m❌ Erro: Ficheiro .env não encontrado![0m
-
-Execute os seguintes comandos:
-  cp .env.example .env
-  nano .env  # Preencha as variáveis, , 
-- 
+-    (Backend tests for initial trading feature passed 25/25).
+-    was updated multiple times with completed features.
 
 **Last 10 User Messages and any pending HUMAN messages**
-- User provided detailed requirements for the new RBAC system (client tiers, internal roles, regions).
-- User approved the agent's plan to implement the RBAC system.
-- User confirmed the names for client tiers and internal roles.
-- User clarified that client regions are based on fiscal residence.
-- User confirmed that all internal roles should be region-locked except for the global Admin/Manager.
+1.  **User Request**: Trading fees should be individualized by currency. (IN PROGRESS)
+2.  **User Report**: Crypto wallet values don't change with the selected currency. (RESOLVED)
+3.  **User Request**: Implement a full multi-currency platform for crypto/fiat pairs. (RESOLVED)
+4.  **User Request**: Implement fiat deposit functionality. (RESOLVED)
+5.  **User Request**: Add fiat wallets (EUR, USD, AED, BRL). (RESOLVED)
+6.  **User Clarification**: Provided detailed requirements for the Buy/Sell/Convert page (Stripe, bank transfers, admin-configurable fees, Top 50 coins). (RESOLVED)
 
 **Project Health Check:**
-- **Broken**: Fireblocks Integration.
-- **In Progress**: RBAC system implementation, Safari cursor bug.
-- **Mocked**: All dashboard financial data.
-- **Live**: The core application is deployed and functional on the user's domain.
+-   **Broken**: Fireblocks Integration.
+-   **In Progress**: Per-currency fee management UI, Safari cursor bug.
+-   **Mocked**: Exchange rate sources are from CoinMarketCap, but real trading execution is not connected to an exchange.
+-   **Live**: The core application, including a functional multi-currency trading and fiat deposit system, is deployed on the user's domain.
 
 **3rd Party Integrations**
-- **CoinMarketCap**: For live crypto prices (API key is in  on VPS).
-- **Fireblocks**: Wallet management (**BLOCKED**).
-- **Let's Encrypt / Certbot**: Used on the VPS for SSL certificate management.
+-   **CoinMarketCap**: For live crypto prices.
+-   **Stripe**: Integrated for credit card payments on the Buy/Sell page.
+-   **Fireblocks**: Wallet management (**BLOCKED**).
+-   **Let's Encrypt / Certbot**: Used on the VPS for SSL.
 
 **Testing status**
-- **Testing agent used after significant changes**: YES (for navigation to new pages).
-- **Test files created**: None.
+-   **Testing agent used after significant changes**: YES (for the initial trading backend).
+-   **Troubleshoot agent used after agent stuck in loop**: NO
+-   **Test files created**: None.
+-   **Known regressions**: None.
 
 **Credentials to test flow:**
-Credentials are for the **LIVE VPS** accessible at :
-- **Admin**:  / 
-- **User**:  / 
+Credentials are for the **LIVE VPS** and can be used for the preview environment:
+-   **Admin**:  / 
 
 **What agent forgot to execute**
-- The agent correctly planned the RBAC feature but only completed the very first step (updating the data model). The main body of work (backend APIs, frontend UI) is still pending.</analysis>
+-   The agent did not complete the final user request to implement the frontend UI for per-currency trading fees. The work was left halfway through.</analysis>
