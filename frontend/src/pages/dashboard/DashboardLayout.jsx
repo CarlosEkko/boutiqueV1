@@ -143,13 +143,6 @@ const DashboardLayout = () => {
               <p className="text-xs text-gold-400">{user?.membership_level || 'Standard'}</p>
             </div>
           )}
-          <NavLink
-            to="/profile"
-            className="w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-400 hover:text-gold-400 hover:bg-gold-900/20 transition-colors"
-          >
-            <User size={20} />
-            {sidebarOpen && <span className="font-medium">Meu Perfil</span>}
-          </NavLink>
           <Button
             onClick={handleLogout}
             variant="ghost"
