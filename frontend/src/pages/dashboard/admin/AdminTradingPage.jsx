@@ -23,6 +23,13 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const SUPPORTED_CURRENCIES = [
+  { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+  { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+];
+
 const AdminTradingPage = () => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('fees');
@@ -30,8 +37,9 @@ const AdminTradingPage = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   
-  // Fees state
+  // Fees state - now per currency
   const [fees, setFees] = useState(null);
+  const [selectedCurrency, setSelectedCurrency] = useState('EUR');
   
   // Limits state
   const [limits, setLimits] = useState({});
