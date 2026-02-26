@@ -213,11 +213,21 @@ const WalletsPage = () => {
           <h1 className="text-3xl font-light text-white">Minhas Carteiras</h1>
           <p className="text-gray-400 mt-1">Gerencie suas carteiras de criptomoedas e moedas fiat</p>
         </div>
-        <Button 
-          className="bg-gold-500 hover:bg-gold-400 text-white"
-          onClick={fetchWallets}
-        >
-          <RefreshCw size={18} className="mr-2" />
+        <div className="flex gap-2">
+          <Button 
+            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            onClick={() => window.location.href = '/dashboard/fiat-deposit'}
+            data-testid="fiat-deposit-btn"
+          >
+            <Banknote size={18} className="mr-2" />
+            Depositar Fiat
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-zinc-700 text-gray-300 hover:bg-zinc-800"
+            onClick={fetchWallets}
+          >
+            <RefreshCw size={18} className="mr-2" />
           Atualizar
         </Button>
       </div>
