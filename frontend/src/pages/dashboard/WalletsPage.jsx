@@ -14,15 +14,16 @@ import {
   Plus,
   Banknote,
   Bitcoin,
-  Eye,
-  EyeOff,
-  LayoutGrid,
-  List,
-  ChevronRight
+  Star,
+  X,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Key for localStorage watchlist
+const WATCHLIST_KEY = 'kbex_crypto_watchlist';
 
 const WalletsPage = () => {
   const { token } = useAuth();
@@ -32,8 +33,12 @@ const WalletsPage = () => {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [cryptoPrices, setCryptoPrices] = useState({});
-  const [showAllCrypto, setShowAllCrypto] = useState(false);
-  const [viewMode, setViewMode] = useState('compact'); // 'compact' or 'grid'
+  const [watchlist, setWatchlist] = useState(() => {
+    const saved = localStorage.getItem(WATCHLIST_KEY);
+    return saved ? JSON.parse(saved) : ['BTC', 'ETH', 'SOL'];
+  });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchWallets();
