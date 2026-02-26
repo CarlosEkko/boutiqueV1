@@ -312,44 +312,6 @@ const WalletsPage = () => {
   };
 
   // Watchlist item card (smaller)
-  const WatchlistCard = ({ wallet }) => {
-    const cryptoLogo = cryptoPrices[wallet.asset_id]?.logo;
-    const price = cryptoPrices[wallet.asset_id]?.price || 0;
-    
-    return (
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-gold-500/30 transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center overflow-hidden">
-              {cryptoLogo ? (
-                <img src={cryptoLogo} alt={wallet.asset_id} className="w-8 h-8 rounded-full" />
-              ) : (
-                <span className="text-gold-400 text-sm font-bold">{wallet.asset_id?.slice(0, 2)}</span>
-              )}
-            </div>
-            <div>
-              <p className="text-white font-medium">{wallet.asset_id}</p>
-              <p className="text-gray-500 text-xs">{wallet.asset_name}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-gray-400 text-sm">{formatCurrency(price)}</p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeFromWatchlist(wallet.asset_id);
-              }}
-              className="p-1 text-gray-500 hover:text-red-400 transition-colors"
-              title="Remover da watchlist"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
