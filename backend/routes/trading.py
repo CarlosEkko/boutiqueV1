@@ -420,12 +420,23 @@ async def approve_bank_transfer(
         }
     )
     
-    # If this is a deposit, credit the user's balance
+    # If this is a deposit, credit the user's fiat wallet
     if transfer["transfer_type"] == "deposit":
-        # Find or create USDT wallet for user
+        currency = transfer.get("currency", "EUR")
+        
+        # Currency name mapping
+        currency_names = {
+            "EUR": "Euro",
+            "USD": "US Dollar",
+            "AED": "UAE Dirham",
+            "BRL": "Brazilian Real",
+            "USDT": "Tether"
+        }
+        
+        # Find or create fiat wallet for user
         wallet = await db.wallets.find_one({
             "user_id": transfer["user_id"],
-            "asset_id": "USDT"
+            "asset_id": currency
         })
         
         if wallet:
@@ -435,12 +446,17 @@ async def approve_bank_transfer(
                 {"$set": {"balance": new_balance, "available_balance": new_balance}}
             )
         else:
-            # Create USDT wallet
+            # Create fiat wallet
+            is_fiat = currency in ["EUR", "USD", "AED", "BRL"]
+            fiat_symbols = {"EUR": "€", "USD": "$", "AED": "د.إ", "BRL": "R$"}
+            
             new_wallet = {
                 "id": str(uuid.uuid4()),
                 "user_id": transfer["user_id"],
-                "asset_id": "USDT",
-                "asset_name": "Tether",
+                "asset_id": currency,
+                "asset_name": currency_names.get(currency, currency),
+                "asset_type": "fiat" if is_fiat else "crypto",
+                "symbol": fiat_symbols.get(currency),
                 "balance": transfer["amount"],
                 "available_balance": transfer["amount"],
                 "pending_balance": 0,
