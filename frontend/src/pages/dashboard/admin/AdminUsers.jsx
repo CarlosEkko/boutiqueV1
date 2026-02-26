@@ -617,6 +617,101 @@ const AdminUsers = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={(open) => {
+        setShowPasswordDialog(open);
+        if (!open) {
+          setNewPassword('');
+          setGeneratedPassword('');
+          setSelectedUser(null);
+        }
+      }}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-400">
+              <Key size={20} />
+              Alterar Password
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Alterar password para <span className="text-white font-medium">{selectedUser?.name}</span> ({selectedUser?.email})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {!generatedPassword ? (
+              <>
+                {/* Manual Password Input */}
+                <div className="space-y-2">
+                  <Label className="text-white">Nova Password</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <Input
+                      type="text"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      className="pl-10 bg-zinc-800 border-gold-500/50 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => resetPassword(false)}
+                    disabled={!newPassword || newPassword.length < 6}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500"
+                  >
+                    <Key size={16} className="mr-2" />
+                    Definir Password
+                  </Button>
+                  <Button
+                    onClick={() => resetPassword(true)}
+                    variant="outline"
+                    className="flex-1 border-gold-500/50 text-gold-400 hover:bg-gold-900/30"
+                  >
+                    <RefreshCw size={16} className="mr-2" />
+                    Gerar Aleatória
+                  </Button>
+                </div>
+              </>
+            ) : (
+              /* Password Generated - Show Result */
+              <div className="space-y-4">
+                <div className="p-4 bg-green-900/20 border border-green-800/30 rounded-lg">
+                  <p className="text-green-400 text-sm mb-2 flex items-center gap-2">
+                    <CheckCircle size={16} />
+                    Password alterada com sucesso!
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 p-3 bg-zinc-800 rounded font-mono text-white text-lg">
+                      {generatedPassword}
+                    </div>
+                    <Button
+                      onClick={() => copyToClipboard(generatedPassword)}
+                      size="sm"
+                      className="bg-gold-500 hover:bg-gold-400"
+                    >
+                      <Copy size={16} />
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="text-gray-400 text-sm">
+                  Envie esta password ao utilizador. Por segurança, ele deve alterar após o primeiro login.
+                </p>
+
+                <Button
+                  onClick={() => setShowPasswordDialog(false)}
+                  className="w-full bg-zinc-700 hover:bg-zinc-600"
+                >
+                  Fechar
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
