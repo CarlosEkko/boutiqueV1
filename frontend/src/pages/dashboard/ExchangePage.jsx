@@ -341,7 +341,7 @@ const ExchangePage = () => {
       </select>
       {value && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-          ${value.price_usd?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          {formatCurrency(value.price || value.price_usd)}
         </div>
       )}
     </div>
