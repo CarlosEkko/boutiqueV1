@@ -850,7 +850,7 @@ const ExchangePage = () => {
                 <div className="space-y-3">
                   <div className="flex items-end gap-2">
                     <span className="text-3xl font-light text-white">
-                      ${selectedCrypto.price_usd?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      {formatCurrency(selectedCrypto.price || selectedCrypto.price_usd)}
                     </span>
                     <span className={`text-sm ${selectedCrypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {selectedCrypto.change_24h >= 0 ? '+' : ''}{selectedCrypto.change_24h?.toFixed(2)}%
@@ -858,7 +858,7 @@ const ExchangePage = () => {
                   </div>
                   {selectedCrypto.market_cap && (
                     <div className="text-sm text-gray-400">
-                      Market Cap: ${(selectedCrypto.market_cap / 1e9).toFixed(2)}B
+                      Market Cap: {formatCurrency(selectedCrypto.market_cap / 1e9)}B
                     </div>
                   )}
                 </div>
@@ -879,11 +879,11 @@ const ExchangePage = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Limite Diário Compra</span>
-                  <span className="text-white">${limits.limits?.daily_buy_limit?.toLocaleString()}</span>
+                  <span className="text-white">{formatCurrency(convertFromUSD(limits.limits?.daily_buy_limit))}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Usado Hoje</span>
-                  <span className="text-white">${limits.usage?.daily_buy_used?.toFixed(2) || '0.00'}</span>
+                  <span className="text-white">{formatCurrency(convertFromUSD(limits.usage?.daily_buy_used || 0))}</span>
                 </div>
                 <div className="w-full bg-zinc-800 rounded-full h-2 mt-1">
                   <div 
