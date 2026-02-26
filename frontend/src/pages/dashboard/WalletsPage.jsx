@@ -381,13 +381,19 @@ const WalletsPage = () => {
           >
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${
                   isFiat(selectedWallet.asset_id) 
                     ? 'bg-emerald-500/20' 
                     : 'bg-gold-500/20'
                 }`}>
                   {isFiat(selectedWallet.asset_id) ? (
-                    <span className="text-emerald-400 font-bold">{fiatSymbols[selectedWallet.asset_id]}</span>
+                    <span className="text-2xl">{fiatFlags[selectedWallet.asset_id]}</span>
+                  ) : cryptoPrices[selectedWallet.asset_id]?.logo ? (
+                    <img 
+                      src={cryptoPrices[selectedWallet.asset_id]?.logo} 
+                      alt={selectedWallet.asset_id} 
+                      className="w-10 h-10 rounded-full"
+                    />
                   ) : (
                     <span className="text-gold-400 font-bold">{selectedWallet.asset_id?.slice(0, 2)}</span>
                   )}
