@@ -701,9 +701,27 @@ async def cancel_order(
 
 # ==================== PUBLIC: CRYPTO PRICES ====================
 
+@router.get("/exchange-rates", response_model=dict)
+async def get_fiat_exchange_rates():
+    """Get current fiat exchange rates"""
+    rates = await get_exchange_rates()
+    return {
+        "base": "USD",
+        "rates": rates,
+        "supported_currencies": SUPPORTED_FIAT
+    }
+
+
 @router.get("/cryptos", response_model=List[dict])
-async def get_available_cryptos():
-    """Get list of available cryptocurrencies with prices"""
+async def get_available_cryptos(currency: str = "USD"):
+    """Get list of available cryptocurrencies with prices in specified currency"""
+    currency = currency.upper()
+    if currency not in SUPPORTED_FIAT:
+        currency = "USD"
+    
+    # Get exchange rates
+    rates = await get_exchange_rates()
+    
     cryptos = await db.supported_cryptos.find(
         {"is_active": True},
         {"_id": 0}
@@ -725,25 +743,45 @@ async def get_available_cryptos():
         ]
         cryptos = default_cryptos
     
-    # Fetch current prices
+    # Fetch current prices and convert to requested currency
     for crypto in cryptos:
         try:
             price_info = await get_crypto_price(crypto["symbol"])
-            crypto["price_usd"] = price_info.get("price_usd", 0)
+            price_usd = price_info.get("price_usd", 0)
+            market_cap_usd = price_info.get("market_cap")
+            
+            crypto["price_usd"] = price_usd
+            crypto["price"] = convert_price(price_usd, currency, rates)
+            crypto["currency"] = currency
             crypto["change_24h"] = price_info.get("change_24h", 0)
-            crypto["market_cap"] = price_info.get("market_cap")
+            crypto["market_cap"] = convert_price(market_cap_usd, currency, rates) if market_cap_usd else None
         except Exception:
             crypto["price_usd"] = 0
+            crypto["price"] = 0
+            crypto["currency"] = currency
             crypto["change_24h"] = 0
     
     return cryptos
 
 
 @router.get("/price/{symbol}", response_model=dict)
-async def get_single_crypto_price(symbol: str):
-    """Get price for a single cryptocurrency"""
+async def get_single_crypto_price(symbol: str, currency: str = "USD"):
+    """Get price for a single cryptocurrency in specified currency"""
+    currency = currency.upper()
+    if currency not in SUPPORTED_FIAT:
+        currency = "USD"
+    
+    rates = await get_exchange_rates()
     price_info = await get_crypto_price(symbol.upper())
-    return price_info
+    
+    price_usd = price_info.get("price_usd", 0)
+    
+    return {
+        **price_info,
+        "price": convert_price(price_usd, currency, rates),
+        "currency": currency,
+        "exchange_rate": rates.get(currency, 1.0)
+    }
 
 
 @router.get("/fees", response_model=dict)
