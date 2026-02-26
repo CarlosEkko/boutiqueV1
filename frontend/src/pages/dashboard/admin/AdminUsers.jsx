@@ -56,7 +56,10 @@ const AdminUsers = () => {
   const [expandedUser, setExpandedUser] = useState(null);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [generatedPassword, setGeneratedPassword] = useState('');
 
   const regions = [
     { value: 'all', label: 'Todas Regiões', flag: '🌐' },
