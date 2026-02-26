@@ -123,22 +123,46 @@ const WalletsPage = () => {
     return 0;
   };
 
+  // Save watchlist to localStorage
+  const saveWatchlist = (newWatchlist) => {
+    setWatchlist(newWatchlist);
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(newWatchlist));
+  };
+
+  const addToWatchlist = (symbol) => {
+    if (!watchlist.includes(symbol)) {
+      saveWatchlist([...watchlist, symbol]);
+      toast.success(`${symbol} adicionado à watchlist`);
+    }
+  };
+
+  const removeFromWatchlist = (symbol) => {
+    saveWatchlist(watchlist.filter(s => s !== symbol));
+    toast.success(`${symbol} removido da watchlist`);
+  };
+
   const filteredWallets = wallets.filter(w => {
     if (activeTab === 'fiat') return isFiat(w.asset_id);
     if (activeTab === 'crypto') return !isFiat(w.asset_id);
     return true;
   });
 
-  // Separate and sort wallets
+  // Separate wallets
   const fiatWallets = filteredWallets.filter(w => isFiat(w.asset_id));
   const allCryptoWallets = filteredWallets.filter(w => !isFiat(w.asset_id));
   
-  // Crypto wallets with balance vs without
+  // Crypto wallets with balance
   const cryptoWithBalance = allCryptoWallets.filter(w => (w.balance || 0) > 0);
-  const cryptoWithoutBalance = allCryptoWallets.filter(w => (w.balance || 0) === 0);
   
-  // Show crypto wallets based on toggle
-  const cryptoWallets = showAllCrypto ? allCryptoWallets : (cryptoWithBalance.length > 0 ? cryptoWithBalance : allCryptoWallets.slice(0, 8));
+  // Watchlist wallets (without balance but in watchlist)
+  const watchlistWallets = allCryptoWallets.filter(w => 
+    (w.balance || 0) === 0 && watchlist.includes(w.asset_id)
+  );
+  
+  // Available to add to watchlist
+  const availableForWatchlist = allCryptoWallets.filter(w => 
+    (w.balance || 0) === 0 && !watchlist.includes(w.asset_id)
+  );
 
   if (loading) {
     return (
