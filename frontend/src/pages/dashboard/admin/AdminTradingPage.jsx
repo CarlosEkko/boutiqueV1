@@ -151,18 +151,18 @@ const AdminTradingPage = () => {
     }
   };
 
-  const saveFees = async () => {
-    setSaving(true);
+  const saveFees = async (currency) => {
+    setSavingCurrency(currency);
     setMessage(null);
     try {
-      await axios.put(`${API_URL}/api/trading/admin/fees`, fees, {
+      await axios.put(`${API_URL}/api/trading/admin/fees/${currency}`, allFees[currency], {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessage({ type: 'success', text: 'Taxas atualizadas com sucesso!' });
+      setMessage({ type: 'success', text: `Taxas de ${currency} atualizadas com sucesso!` });
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao salvar taxas' });
     } finally {
-      setSaving(false);
+      setSavingCurrency(null);
     }
   };
 
