@@ -85,8 +85,8 @@ const TicketsDashboard = () => {
   const fetchTickets = async () => {
     try {
       let url = `${API_URL}/api/tickets/internal/all?`;
-      if (statusFilter) url += `status=${statusFilter}&`;
-      if (priorityFilter) url += `priority=${priorityFilter}&`;
+      if (statusFilter && statusFilter !== 'all') url += `status=${statusFilter}&`;
+      if (priorityFilter && priorityFilter !== 'all') url += `priority=${priorityFilter}&`;
       if (assignedToMe) url += `assigned_to_me=true&`;
       
       const response = await axios.get(url, {
