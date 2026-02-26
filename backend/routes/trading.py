@@ -148,6 +148,40 @@ async def get_trading_fees() -> TradingFees:
     return TradingFees(**fees)
 
 
+async def get_fees_for_crypto(symbol: str) -> dict:
+    """Get trading fees for a specific cryptocurrency.
+    Returns fees from crypto_fees collection if available, otherwise defaults.
+    """
+    fees = await db.crypto_fees.find_one({"symbol": symbol.upper()}, {"_id": 0})
+    
+    if fees and fees.get("is_active", True):
+        return {
+            "buy_fee_percent": fees.get("buy_fee_percent", 2.0),
+            "buy_spread_percent": fees.get("buy_spread_percent", 1.0),
+            "sell_fee_percent": fees.get("sell_fee_percent", 2.0),
+            "sell_spread_percent": fees.get("sell_spread_percent", 1.0),
+            "swap_fee_percent": fees.get("swap_fee_percent", 1.5),
+            "swap_spread_percent": fees.get("swap_spread_percent", 0.5),
+            "min_buy_fee": fees.get("min_buy_fee", 5.0),
+            "min_sell_fee": fees.get("min_sell_fee", 5.0),
+            "min_swap_fee": fees.get("min_swap_fee", 3.0)
+        }
+    
+    # Fallback to global trading fees
+    global_fees = await get_trading_fees()
+    return {
+        "buy_fee_percent": global_fees.buy_fee_percent,
+        "buy_spread_percent": global_fees.buy_spread_percent,
+        "sell_fee_percent": global_fees.sell_fee_percent,
+        "sell_spread_percent": global_fees.sell_spread_percent,
+        "swap_fee_percent": global_fees.swap_fee_percent,
+        "swap_spread_percent": global_fees.swap_spread_percent,
+        "min_buy_fee": global_fees.min_buy_fee_usd,
+        "min_sell_fee": global_fees.min_sell_fee_usd,
+        "min_swap_fee": global_fees.min_swap_fee_usd
+    }
+
+
 def get_currency_fees(fees: TradingFees, currency: str) -> dict:
     """Get fees for a specific currency"""
     if fees.fees_by_currency and currency in fees.fees_by_currency:
