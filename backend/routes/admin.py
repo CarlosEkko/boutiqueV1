@@ -535,6 +535,100 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
     }
 
 
+@router.get("/stats/regional")
+async def get_regional_stats(manager: dict = Depends(get_manager_or_admin)):
+    """Get regional statistics dashboard - Admin and Manager only"""
+    regions = ["europe", "mena", "latam"]
+    regional_data = {}
+    
+    for region in regions:
+        region_filter = {"region": region}
+        client_filter = {**region_filter, "user_type": {"$ne": "internal"}}
+        
+        # Client stats
+        total_clients = await db.users.count_documents(client_filter)
+        approved_clients = await db.users.count_documents({**client_filter, "is_approved": True})
+        pending_clients = await db.users.count_documents({**client_filter, "is_approved": False})
+        
+        # KYC stats
+        kyc_approved = await db.users.count_documents({**client_filter, "kyc_status": "approved"})
+        kyc_pending = await db.users.count_documents({**client_filter, "kyc_status": "pending"})
+        kyc_not_started = await db.users.count_documents({**client_filter, "kyc_status": "not_started"})
+        
+        # Membership tiers
+        standard = await db.users.count_documents({**client_filter, "membership_level": "standard"})
+        premium = await db.users.count_documents({**client_filter, "membership_level": "premium"})
+        elite = await db.users.count_documents({**client_filter, "membership_level": "vip"})
+        
+        # Ticket stats
+        open_tickets = await db.tickets.count_documents({**region_filter, "status": "open"})
+        in_progress_tickets = await db.tickets.count_documents({**region_filter, "status": "in_progress"})
+        resolved_tickets = await db.tickets.count_documents({**region_filter, "status": {"$in": ["resolved", "closed"]}})
+        urgent_tickets = await db.tickets.count_documents({
+            **region_filter, 
+            "priority": "urgent",
+            "status": {"$nin": ["resolved", "closed"]}
+        })
+        
+        # New clients this month (created_at check)
+        from datetime import timedelta
+        month_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        new_clients = await db.users.count_documents({
+            **client_filter,
+            "created_at": {"$gte": month_ago}
+        })
+        
+        # Internal staff in this region
+        internal_staff = await db.users.count_documents({
+            "region": region,
+            "user_type": "internal"
+        })
+        
+        regional_data[region] = {
+            "clients": {
+                "total": total_clients,
+                "approved": approved_clients,
+                "pending": pending_clients,
+                "new_this_month": new_clients
+            },
+            "kyc": {
+                "approved": kyc_approved,
+                "pending": kyc_pending,
+                "not_started": kyc_not_started
+            },
+            "tiers": {
+                "standard": standard,
+                "premium": premium,
+                "elite": elite
+            },
+            "tickets": {
+                "open": open_tickets,
+                "in_progress": in_progress_tickets,
+                "resolved": resolved_tickets,
+                "urgent": urgent_tickets,
+                "total_active": open_tickets + in_progress_tickets
+            },
+            "staff": {
+                "count": internal_staff
+            }
+        }
+    
+    # Global summary
+    total_clients = sum(r["clients"]["total"] for r in regional_data.values())
+    total_tickets_active = sum(r["tickets"]["total_active"] for r in regional_data.values())
+    total_urgent = sum(r["tickets"]["urgent"] for r in regional_data.values())
+    
+    return {
+        "regions": regional_data,
+        "global_summary": {
+            "total_clients": total_clients,
+            "total_active_tickets": total_tickets_active,
+            "total_urgent_tickets": total_urgent,
+            "regions_count": len(regions)
+        }
+    }
+
+
 # ==================== INVITE CODES ====================
 
 @router.get("/invites", response_model=List[dict])
