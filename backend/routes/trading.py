@@ -1069,8 +1069,30 @@ async def get_single_crypto_price(symbol: str, currency: str = "USD"):
 
 
 @router.get("/fees", response_model=dict)
-async def get_public_fees(currency: str = "USD"):
-    """Get current trading fees for a currency (public)"""
+async def get_public_fees(currency: str = "USD", crypto: str = None):
+    """Get current trading fees (public). 
+    If crypto symbol provided, returns crypto-specific fees.
+    Otherwise returns global/currency fees.
+    """
+    # If crypto symbol provided, return crypto-specific fees
+    if crypto:
+        crypto_fees = await get_fees_for_crypto(crypto.upper())
+        global_fees = await get_trading_fees()
+        return {
+            "crypto": crypto.upper(),
+            "buy_fee_percent": crypto_fees["buy_fee_percent"],
+            "sell_fee_percent": crypto_fees["sell_fee_percent"],
+            "swap_fee_percent": crypto_fees["swap_fee_percent"],
+            "buy_spread_percent": crypto_fees["buy_spread_percent"],
+            "sell_spread_percent": crypto_fees["sell_spread_percent"],
+            "swap_spread_percent": crypto_fees["swap_spread_percent"],
+            "min_buy_fee": crypto_fees["min_buy_fee"],
+            "min_sell_fee": crypto_fees["min_sell_fee"],
+            "min_swap_fee": crypto_fees["min_swap_fee"],
+            "network_fees": global_fees.network_fees
+        }
+    
+    # Otherwise return currency-based fees (legacy)
     currency = currency.upper()
     if currency not in SUPPORTED_FIAT:
         currency = "USD"
