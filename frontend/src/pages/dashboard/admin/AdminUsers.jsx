@@ -67,16 +67,19 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      let url = `${API_URL}/api/admin/users`;
-      if (filter === 'pending') url += '?is_approved=false';
-      if (filter === 'approved') url += '?is_approved=true';
+      let url = `${API_URL}/api/admin/users?`;
+      if (filter === 'pending') url += 'is_approved=false&';
+      if (filter === 'approved') url += 'is_approved=true&';
+      if (regionFilter && regionFilter !== 'all') url += `region=${regionFilter}&`;
       
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setUsers(response.data);
+      // Filter out internal users - only show clients
+      const clientUsers = response.data.filter(u => u.user_type !== 'internal');
+      setUsers(clientUsers);
     } catch (err) {
-      toast.error('Failed to load users');
+      toast.error('Falha ao carregar utilizadores');
     } finally {
       setLoading(false);
     }
