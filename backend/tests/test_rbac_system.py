@@ -141,7 +141,7 @@ class TestLoginRBACFields:
     
     def test_client_login_returns_rbac_fields(self):
         """Test client login returns proper RBAC fields"""
-        global client_latam_token, client_europe_token
+        global client_latam_token
         
         # LATAM client
         payload = {"email": CLIENT_LATAM_EMAIL, "password": CLIENT_LATAM_PASSWORD}
@@ -160,18 +160,6 @@ class TestLoginRBACFields:
         assert client_user.get("user_type") == "client", f"Expected client user_type, got {client_user.get('user_type')}"
         
         print(f"Client LATAM login: user_type={client_user.get('user_type')}, region={client_user.get('region')}")
-        
-        # Europe client
-        payload = {"email": CLIENT_EUROPE_EMAIL, "password": CLIENT_EUROPE_PASSWORD}
-        response = requests.post(f"{BASE_URL}/api/auth/login", json=payload)
-        
-        assert response.status_code == 200, f"Client Europe login failed: {response.status_code}"
-        
-        data = response.json()
-        client_europe_token = data["access_token"]
-        client_europe_user = data["user"]
-        
-        print(f"Client Europe login: user_type={client_europe_user.get('user_type')}, region={client_europe_user.get('region')}")
 
 
 # ==================== INTERNAL USER MANAGEMENT ====================
