@@ -165,6 +165,54 @@ class TradingFeesUpdate(BaseModel):
     network_fees: Optional[dict] = None
 
 
+# ==================== CRYPTO-SPECIFIC FEES ====================
+
+class CryptoFees(BaseModel):
+    """Fees for a specific cryptocurrency"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    symbol: str  # BTC, ETH, etc.
+    name: str  # Bitcoin, Ethereum, etc.
+    
+    # Buy fees (percentage)
+    buy_fee_percent: float = 2.0
+    buy_spread_percent: float = 1.0
+    
+    # Sell fees (percentage)
+    sell_fee_percent: float = 2.0
+    sell_spread_percent: float = 1.0
+    
+    # Swap fees
+    swap_fee_percent: float = 1.5
+    swap_spread_percent: float = 0.5
+    
+    # Minimum fees (in USD)
+    min_buy_fee: float = 5.0
+    min_sell_fee: float = 5.0
+    min_swap_fee: float = 3.0
+    
+    # Status
+    is_active: bool = True
+    
+    updated_by: Optional[str] = None
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CryptoFeesUpdate(BaseModel):
+    """Update crypto-specific fees"""
+    buy_fee_percent: Optional[float] = None
+    buy_spread_percent: Optional[float] = None
+    sell_fee_percent: Optional[float] = None
+    sell_spread_percent: Optional[float] = None
+    swap_fee_percent: Optional[float] = None
+    swap_spread_percent: Optional[float] = None
+    min_buy_fee: Optional[float] = None
+    min_sell_fee: Optional[float] = None
+    min_swap_fee: Optional[float] = None
+    is_active: Optional[bool] = None
+
+
 # ==================== USER LIMITS ====================
 
 class UserTradingLimits(BaseModel):
