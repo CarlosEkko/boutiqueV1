@@ -85,9 +85,11 @@ const DashboardLayout = () => {
         <div className="p-6 border-b border-gold-800/20">
           <div className="flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-xl">K</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="KBEX.io" 
+                className="h-10 w-auto"
+              />
               {sidebarOpen && (
                 <span className="text-xl font-light text-white">
                   <span className="text-gold-400">KB</span>EX
@@ -148,9 +150,11 @@ const DashboardLayout = () => {
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-gold-800/20 px-4 py-3">
         <div className="flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-gold-400 to-gold-500 rounded-lg flex items-center justify-center">
-              <span className="text-black font-bold">K</span>
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="KBEX.io" 
+              className="h-8 w-auto"
+            />
             <span className="text-lg font-light text-white">
               <span className="text-gold-400">KB</span>EX
             </span>
