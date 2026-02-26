@@ -1,80 +1,174 @@
-# KBEX.io - Product Requirements Document
+# KBEX.io - Premium Crypto Boutique Exchange
 
-## Project Overview
-Premium Crypto Boutique Exchange website targeting High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
+## Original Problem Statement
+Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
 
-## Core Brand Identity
-- **Brand Name**: KBEX.io (formerly Kryptobox.io)
-- **Tone & Style**: "Quiet luxury," trust, exclusivity, sophisticated
-- **Color Palette**: Custom gold/bronze theme
+## Core Requirements
+- **Target Audience**: HNW/UHNW individuals and companies
+- **Geographic Focus**: Europe, MENA (Middle East & North Africa), LATAM (Latin America)
+- **Products/Services**: Exchange, Crypto ATM Network, Launchpad, ICO, Institutional Custody
+- **Tone & Style**: "Quiet luxury," trust, exclusivity, clear, serious, sophisticated
+- **User's Language**: Portuguese
 
 ## Tech Stack
-- **Frontend**: React, Tailwind CSS, Shadcn UI, GSAP animations
-- **Backend**: FastAPI, Motor (async MongoDB)
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI
+- **Backend**: FastAPI, Pydantic, Motor (async MongoDB)
 - **Database**: MongoDB
-- **Authentication**: JWT
-- **i18n**: Custom multilingual system (EN, PT, AR)
-- **API Integration**: CoinMarketCap (live prices)
-- **DevOps**: Docker, Docker Compose
+- **Deployment**: Docker, Docker Compose, Nginx (reverse proxy), Let's Encrypt (SSL)
+
+## Architecture
+```
+/app
+├── backend/
+│   ├── models/user.py (RBAC models)
+│   ├── routes/
+│   │   ├── auth.py (JWT authentication)
+│   │   ├── admin.py (RBAC endpoints)
+│   │   ├── tickets.py (Support system)
+│   │   ├── kyc.py (KYC/KYB verification)
+│   │   └── dashboard.py (User dashboard)
+│   └── server.py
+├── frontend/
+│   ├── src/
+│   │   ├── components/ (Header, Footer, UI)
+│   │   ├── pages/ (Home, Dashboard, Auth, Markets, etc.)
+│   │   └── context/AuthContext.jsx
+│   └── public/logo.png
+├── docker-compose.yml
+└── nginx/nginx.conf
+```
 
 ## Implemented Features
 
-### Public Pages (Completed - Dec 2025)
-- [x] Landing Page with hero, products, trust, regions, contact sections
-- [x] Crypto ATM Page
-- [x] **Markets Page** - Spot/Futures/Favorites tabs with market data table
-- [x] **Trading Page** - Terminal Pro interface with order book, recent trades, order form
-- [x] **Earn Page** - Flexible/Locked/DeFi staking with calculator
-- [x] **Institutional Page** - OTC, Custody, APIs services for institutional clients
+### Authentication & Users
+- [x] JWT-based authentication
+- [x] User registration with invite codes
+- [x] Login/Logout
+- [x] Profile management
 
-### Authentication & Dashboard (Completed)
-- [x] JWT Authentication (Login/Register)
-- [x] Private Client Dashboard
-- [x] KYC/KYB Verification System
-- [x] Admin Panel
+### RBAC System (NEW - Feb 2026)
+- [x] Client Tiers: Standard, Premium, Elite
+- [x] Internal Roles: Admin, Manager, Local Manager, Support
+- [x] Regions: Europe, MENA, LATAM, Global
+- [x] Region-based access control
+- [x] Internal user management (create, update, delete)
 
-### Integrations (Completed)
-- [x] CoinMarketCap - Live crypto price ticker
-- [x] Fiat currency selector (USD, EUR, BRL, AED)
+### Ticket/Support System
+- [x] Create tickets (clients)
+- [x] Reply to tickets
+- [x] Assign tickets (internal)
+- [x] Update status/priority
+- [x] Region-based ticket filtering
+- [x] Ticket statistics
 
-### Blocked Features
-- [ ] Fireblocks Integration - Authentication error ("invalid signature"). Requires new API Key + Private Key pair from user's Fireblocks Production dashboard.
+### KYC/KYB System
+- [x] Individual KYC form
+- [x] Business KYB form
+- [x] Document upload
+- [x] Admin approval/rejection
 
-## Page Routes
-| Route | Page | Status |
-|-------|------|--------|
-| `/` | Landing Page | ✅ Complete |
-| `/markets` | Markets (Spot/Futures/Favorites) | ✅ Complete |
-| `/trading` | Trading Terminal Pro | ✅ Complete |
-| `/earn` | Staking/Earn | ✅ Complete |
-| `/institutional` | Institutional Services | ✅ Complete |
-| `/crypto-atm` | Crypto ATM Network | ✅ Complete |
-| `/auth` | Login/Register | ✅ Complete |
-| `/dashboard/*` | Client Dashboard | ✅ Complete |
+### Dashboard
+- [x] Portfolio overview
+- [x] Wallet management (mocked)
+- [x] Transaction history (mocked)
+- [x] Investment opportunities
+- [x] ROI tracking
+- [x] Transparency reports
 
-## Navigation Structure
-1. Início (Home)
-2. Mercados (Markets)
-3. Trading
-4. Ganhos (Earn)
-5. Institucional (Institutional)
-6. Crypto ATM
-7. Contacto (Contact)
+### Admin Panel
+- [x] User management
+- [x] KYC/KYB review
+- [x] Investment opportunities
+- [x] Invite codes
+- [x] Statistics
 
-## Future Tasks (Backlog)
-- [ ] Populate Markets with real-time CoinMarketCap data
-- [ ] Integrate TradingView chart in Trading page
-- [ ] Build Launchpad page
-- [ ] Build ICO page  
-- [ ] Implement "Request Access" form backend
-- [ ] Add full translations for new pages (markets.*, trading.*, earn.*, institutional.*)
-- [ ] Fix Fireblocks integration (pending user credentials)
-- [ ] Real portfolio data in Dashboard (post-Fireblocks)
+### Public Pages
+- [x] Homepage with hero
+- [x] Markets page (placeholder)
+- [x] Trading page (placeholder)
+- [x] Earn page (placeholder)
+- [x] Institutional page (placeholder)
+- [x] Crypto ATM page
 
-## Test Credentials
-- **Admin User**: joao@teste.com / senha123
-- **Regular User**: maria@teste.com / senha123
+## API Endpoints
 
-## Deployment
-- Docker containerized
-- Guide: `/app/DEPLOY_DIGITALOCEAN.md`
+### Auth
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/auth/me
+- PUT /api/auth/me
+
+### Admin (RBAC)
+- GET /api/admin/users (with region filter)
+- POST /api/admin/internal-users
+- GET /api/admin/internal-users
+- PUT /api/admin/internal-users/{id}
+- DELETE /api/admin/internal-users/{id}
+- POST /api/admin/users/{id}/region/{region}
+- POST /api/admin/users/{id}/membership/{level}
+
+### Tickets
+- POST /api/tickets/ (create)
+- GET /api/tickets/my-tickets
+- GET /api/tickets/{id}
+- POST /api/tickets/{id}/reply
+- GET /api/tickets/internal/all (with region filter)
+- POST /api/tickets/internal/{id}/assign
+- POST /api/tickets/internal/{id}/status/{status}
+- GET /api/tickets/internal/stats
+
+## Database Schema
+
+### users
+```json
+{
+  "id": "uuid",
+  "email": "string",
+  "name": "string",
+  "hashed_password": "string",
+  "user_type": "client|internal",
+  "internal_role": "admin|manager|local_manager|support|null",
+  "region": "europe|mena|latam|global",
+  "membership_level": "standard|premium|elite",
+  "is_admin": "boolean",
+  "is_approved": "boolean",
+  "kyc_status": "not_started|pending|approved|rejected"
+}
+```
+
+### tickets
+```json
+{
+  "id": "uuid",
+  "user_id": "string",
+  "region": "europe|mena|latam",
+  "subject": "string",
+  "category": "general|kyc|transaction|account|technical|complaint",
+  "priority": "low|medium|high|urgent",
+  "status": "open|in_progress|waiting_client|resolved|closed",
+  "assigned_to": "string|null"
+}
+```
+
+## Test Credentials (Preview Environment)
+- **Admin**: carlos@kryptobox.io / senha123
+- **Local Manager (Europe)**: manager_europe@kbex.io / senha123
+- **Support (LATAM)**: support_latam@kbex.io / senha123
+- **Client (LATAM)**: maria@teste.com / senha123
+
+## Known Issues
+- [ ] Safari cursor bug (P1) - cursor not working correctly in Safari
+- [ ] Fireblocks integration blocked (P2) - waiting for new credentials
+
+## Pending Tasks
+- [ ] Frontend RBAC UI (Admin Panel for internal users)
+- [ ] Ticket management UI (Support dashboard)
+- [ ] Markets page with CoinMarketCap data
+- [ ] Trading page with TradingView chart
+- [ ] Full translations EN/AR
+
+## Future Tasks
+- [ ] Launchpad page
+- [ ] ICO page
+- [ ] Dashboard charts and history
+- [ ] Real wallet integration (after Fireblocks fix)
