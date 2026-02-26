@@ -71,7 +71,27 @@ const AdminTradingPage = () => {
       const response = await axios.get(`${API_URL}/api/trading/admin/fees`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setFees(response.data);
+      // The response includes fees_by_currency with all currencies
+      const feesData = response.data.fees_by_currency || {};
+      
+      // Initialize with defaults if currencies missing
+      SUPPORTED_CURRENCIES.forEach(curr => {
+        if (!feesData[curr.code]) {
+          feesData[curr.code] = {
+            buy_fee_percent: 2.0,
+            buy_spread_percent: 1.0,
+            sell_fee_percent: 2.0,
+            sell_spread_percent: 1.0,
+            swap_fee_percent: 1.5,
+            swap_spread_percent: 0.5,
+            min_buy_fee: 5.0,
+            min_sell_fee: 5.0,
+            min_swap_fee: 3.0
+          };
+        }
+      });
+      
+      setAllFees(feesData);
     } catch (err) {
       setMessage({ type: 'error', text: 'Erro ao carregar taxas' });
     } finally {
