@@ -385,6 +385,11 @@ const WalletsPage = () => {
                   {formatBalance(selectedWallet.balance, selectedWallet.asset_id)} 
                   {!isFiat(selectedWallet.asset_id) && ` ${selectedWallet.asset_id}`}
                 </p>
+                {!isFiat(selectedWallet.asset_id) && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    ≈ {formatCurrency(getCryptoValue(selectedWallet.asset_id, selectedWallet.balance))}
+                  </p>
+                )}
               </div>
               
               {!isFiat(selectedWallet.asset_id) && selectedWallet.address && (
@@ -405,7 +410,7 @@ const WalletsPage = () => {
               {isFiat(selectedWallet.asset_id) && (
                 <div className="bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-4">
                   <p className="text-emerald-400 text-sm">
-                    Para depositar {selectedWallet.asset_name}, utilize a página de Exchange e selecione "Transferência Bancária".
+                    Para depositar {selectedWallet.asset_name}, utilize a página de Depósito Fiat.
                   </p>
                 </div>
               )}
@@ -413,7 +418,7 @@ const WalletsPage = () => {
               <div className="flex gap-3">
                 <Button 
                   className={`flex-1 ${isFiat(selectedWallet.asset_id) ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-green-600 hover:bg-green-500'}`} 
-                  onClick={() => window.location.href = '/dashboard/exchange'}
+                  onClick={() => window.location.href = isFiat(selectedWallet.asset_id) ? '/dashboard/fiat-deposit' : '/dashboard/exchange'}
                 >
                   {isFiat(selectedWallet.asset_id) ? 'Depositar' : 'Comprar'}
                 </Button>
