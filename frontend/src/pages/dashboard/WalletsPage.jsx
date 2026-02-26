@@ -27,6 +27,8 @@ const WalletsPage = () => {
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [cryptoPrices, setCryptoPrices] = useState({});
+  const [showAllCrypto, setShowAllCrypto] = useState(false);
+  const [viewMode, setViewMode] = useState('compact'); // 'compact' or 'grid'
 
   useEffect(() => {
     fetchWallets();
