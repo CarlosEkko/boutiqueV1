@@ -58,7 +58,8 @@ const WalletsPage = () => {
       response.data.forEach(c => {
         pricesMap[c.symbol] = {
           price: c.price || c.price_usd,
-          price_usd: c.price_usd
+          price_usd: c.price_usd,
+          logo: c.logo
         };
       });
       setCryptoPrices(pricesMap);
