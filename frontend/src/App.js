@@ -20,11 +20,13 @@ import {
 import {
   AdminOverview,
   AdminUsers,
+  AdminStaff,
   AdminOpportunities,
   AdminTransparency,
   AdminInvites,
   AdminKYC,
-  RegionalDashboard
+  RegionalDashboard,
+  TicketsDashboard
 } from "./pages/dashboard/admin";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
