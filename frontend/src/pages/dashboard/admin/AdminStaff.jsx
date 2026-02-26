@@ -485,17 +485,17 @@ const AdminStaff = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-400">Função</Label>
+                <Label className="text-white font-medium">Função</Label>
                 <Select
                   value={formData.internal_role}
                   onValueChange={(value) => setFormData({...formData, internal_role: value})}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-gold-800/30">
+                  <SelectTrigger className="bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-gold-800/30">
+                  <SelectContent className="bg-zinc-800 border-gold-500/50">
                     {roles.map((role) => (
-                      <SelectItem key={role.value} value={role.value}>
+                      <SelectItem key={role.value} value={role.value} className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">
                         {role.label}
                       </SelectItem>
                     ))}
@@ -504,17 +504,17 @@ const AdminStaff = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-400">Região</Label>
+                <Label className="text-white font-medium">Região</Label>
                 <Select
                   value={formData.region}
                   onValueChange={(value) => setFormData({...formData, region: value})}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-gold-800/30">
+                  <SelectTrigger className="bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-gold-800/30">
+                  <SelectContent className="bg-zinc-800 border-gold-500/50">
                     {regions.map((region) => (
-                      <SelectItem key={region.value} value={region.value}>
+                      <SelectItem key={region.value} value={region.value} className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">
                         {region.flag} {region.label}
                       </SelectItem>
                     ))}
