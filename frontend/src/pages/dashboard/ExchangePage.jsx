@@ -78,6 +78,13 @@ const ExchangePage = () => {
     fetchCryptos();
   }, [currency]);
 
+  // Refetch fees when selected crypto changes
+  useEffect(() => {
+    if (selectedCrypto) {
+      fetchFees(selectedCrypto.symbol);
+    }
+  }, [selectedCrypto?.symbol]);
+
   const fetchCryptos = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=${currency}`);
