@@ -260,11 +260,12 @@ const ExchangePage = () => {
     if (!selectedCrypto || !amount || !fees) return null;
     
     const fiatAmount = parseFloat(amount);
-    const price = selectedCrypto.price_usd || 0;
+    // Use price in selected currency
+    const price = selectedCrypto.price || selectedCrypto.price_usd || 0;
     const feePercent = fees.buy_fee_percent || 2;
-    const networkFee = fees.network_fees?.ethereum || 5;
+    const networkFee = convertFromUSD(fees.network_fees?.ethereum || 5);
     
-    const feeAmount = Math.max(fiatAmount * (feePercent / 100), 5);
+    const feeAmount = Math.max(fiatAmount * (feePercent / 100), convertFromUSD(5));
     const usableAmount = fiatAmount - feeAmount - networkFee;
     const cryptoAmount = usableAmount / price;
     
@@ -281,11 +282,11 @@ const ExchangePage = () => {
     if (!selectedCrypto || !sellAmount || !fees) return null;
     
     const cryptoAmount = parseFloat(sellAmount);
-    const price = selectedCrypto.price_usd || 0;
+    const price = selectedCrypto.price || selectedCrypto.price_usd || 0;
     const feePercent = fees.sell_fee_percent || 2;
     
     const grossAmount = cryptoAmount * price;
-    const feeAmount = Math.max(grossAmount * (feePercent / 100), 5);
+    const feeAmount = Math.max(grossAmount * (feePercent / 100), convertFromUSD(5));
     const netAmount = grossAmount - feeAmount;
     
     return {
@@ -300,17 +301,17 @@ const ExchangePage = () => {
     if (!fromCrypto || !toCrypto || !fromAmount || !fees) return null;
     
     const amount = parseFloat(fromAmount);
-    const fromPrice = fromCrypto.price_usd || 0;
-    const toPrice = toCrypto.price_usd || 0;
+    const fromPrice = fromCrypto.price || fromCrypto.price_usd || 0;
+    const toPrice = toCrypto.price || toCrypto.price_usd || 0;
     const feePercent = fees.swap_fee_percent || 1.5;
     
-    const fromUsd = amount * fromPrice;
-    const feeAmount = Math.max(fromUsd * (feePercent / 100), 3);
-    const netUsd = fromUsd - feeAmount;
-    const toAmount = netUsd / toPrice;
+    const fromValue = amount * fromPrice;
+    const feeAmount = Math.max(fromValue * (feePercent / 100), convertFromUSD(3));
+    const netValue = fromValue - feeAmount;
+    const toAmount = netValue / toPrice;
     
     return {
-      fromUsd,
+      fromValue,
       fee: feeAmount,
       toAmount: toAmount > 0 ? toAmount : 0,
       rate: fromPrice / toPrice
