@@ -52,7 +52,7 @@ const ExchangePage = () => {
 
   useEffect(() => {
     fetchCryptos();
-    fetchFees();
+    // Fees will be loaded when selectedCrypto is set
     if (token) {
       fetchLimits();
       fetchOrders();
