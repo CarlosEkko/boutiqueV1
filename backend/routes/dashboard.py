@@ -230,7 +230,7 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
                 "pending_balance": 0,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db.wallets.insert_one(new_wallet)
+            await db.wallets.insert_one(new_wallet.copy())
             wallets.append(new_wallet)
     
     return wallets
