@@ -417,96 +417,92 @@ const WalletsPage = () => {
 
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto pr-2 space-y-8">
-
-      {/* Wallets Grid */}
-      {filteredWallets.length > 0 ? (
-        <div className="space-y-8">
-          {/* Fiat Section */}
-          {(activeTab === 'all' || activeTab === 'fiat') && fiatWallets.length > 0 && (
-            <div>
-              {activeTab === 'all' && (
-                <h2 className="text-lg font-medium text-emerald-400 mb-4 flex items-center gap-2">
-                  <Banknote size={20} />
-                  Carteiras Fiat
-                </h2>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {fiatWallets.map((wallet) => (
-                  <WalletCard key={wallet.id} wallet={wallet} />
-                ))}
-              </div>
+        {/* Fiat Section */}
+        {(activeTab === 'all' || activeTab === 'fiat') && fiatWallets.length > 0 && (
+          <div>
+            <h2 className="text-lg font-medium text-emerald-400 mb-6 flex items-center gap-2">
+              <Banknote size={20} />
+              Carteiras Fiat
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {fiatWallets.map((wallet) => (
+                <WalletCard key={wallet.id} wallet={wallet} />
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Crypto with Balance Section */}
-          {(activeTab === 'all' || activeTab === 'crypto') && cryptoWithBalance.length > 0 && (
-            <div>
-              <h2 className="text-lg font-medium text-gold-400 mb-4 flex items-center gap-2">
-                <Bitcoin size={20} />
-                Carteiras com Saldo ({cryptoWithBalance.length})
+        {/* Crypto with Balance Section */}
+        {(activeTab === 'all' || activeTab === 'crypto') && cryptoWithBalance.length > 0 && (
+          <div>
+            <h2 className="text-lg font-medium text-gold-400 mb-6 flex items-center gap-2">
+              <Bitcoin size={20} />
+              Carteiras com Saldo ({cryptoWithBalance.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {cryptoWithBalance.map((wallet) => (
+                <WalletCard key={wallet.id} wallet={wallet} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Watchlist Section - with Full Cards */}
+        {(activeTab === 'all' || activeTab === 'watchlist') && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-medium text-gray-400 flex items-center gap-2">
+                <Star size={20} />
+                Watchlist ({watchlistWallets.length})
               </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-zinc-700 text-gray-300 hover:bg-zinc-800"
+                onClick={() => setShowAddModal(true)}
+              >
+                <Plus size={16} className="mr-1" />
+                Adicionar
+              </Button>
+            </div>
+            
+            {watchlistWallets.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {cryptoWithBalance.map((wallet) => (
-                  <WalletCard key={wallet.id} wallet={wallet} />
+                {watchlistWallets.map((wallet) => (
+                  <WalletCard key={wallet.id} wallet={wallet} isWatchlist onRemove={() => removeFromWatchlist(wallet.asset_id)} />
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Watchlist Section */}
-          {(activeTab === 'all' || activeTab === 'crypto') && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium text-gray-400 flex items-center gap-2">
-                  <Star size={20} />
-                  Watchlist ({watchlistWallets.length})
-                </h2>
+            ) : (
+              <div className="border border-dashed border-zinc-700 rounded-lg p-8 text-center">
+                <Star className="mx-auto mb-3 text-gray-600" size={32} />
+                <p className="text-gray-500 mb-3">Adicione criptomoedas à sua watchlist para acompanhar</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-zinc-700 text-gray-300 hover:bg-zinc-800"
+                  className="border-gold-500/30 text-gold-400 hover:bg-gold-500/10"
                   onClick={() => setShowAddModal(true)}
                 >
                   <Plus size={16} className="mr-1" />
-                  Adicionar
+                  Adicionar cripto
                 </Button>
               </div>
-              
-              {watchlistWallets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {watchlistWallets.map((wallet) => (
-                    <WatchlistCard key={wallet.id} wallet={wallet} />
-                  ))}
-                </div>
-              ) : (
-                <div className="border border-dashed border-zinc-700 rounded-lg p-6 text-center">
-                  <Star className="mx-auto mb-2 text-gray-600" size={24} />
-                  <p className="text-gray-500 text-sm">Adicione criptomoedas à sua watchlist para acompanhar</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2 text-gold-400 hover:text-gold-300"
-                    onClick={() => setShowAddModal(true)}
-                  >
-                    <Plus size={16} className="mr-1" />
-                    Adicionar cripto
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <Card className="bg-zinc-900/50 border-gold-800/20">
-          <CardContent className="p-12 text-center">
-            <Wallet className="mx-auto mb-4 text-gray-500" size={48} />
-            <h3 className="text-xl text-white mb-2">Nenhuma Carteira</h3>
-            <p className="text-gray-400 mb-4">
-              Suas carteiras aparecerão aqui após a aprovação da conta.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+            )}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {filteredWallets.length === 0 && (
+          <Card className="bg-zinc-900/50 border-gold-800/20">
+            <CardContent className="p-12 text-center">
+              <Wallet className="mx-auto mb-4 text-gray-500" size={48} />
+              <h3 className="text-xl text-white mb-2">Nenhuma Carteira</h3>
+              <p className="text-gray-400 mb-4">
+                Suas carteiras aparecerão aqui após a aprovação da conta.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Add to Watchlist Modal */}
       {showAddModal && (
