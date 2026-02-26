@@ -1,13 +1,14 @@
 # Frontend Dockerfile for KBEX.io
-FROM node:18-alpine as builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json yarn.lock ./
+# Copy package files (yarn.lock is optional)
+COPY package.json ./
+COPY yarn.lock* ./
 
 # Install dependencies (using --network-timeout for slow connections)
-RUN yarn install --network-timeout 100000
+RUN yarn install --network-timeout 100000 --frozen-lockfile || yarn install --network-timeout 100000
 
 # Copy source code
 COPY . .
