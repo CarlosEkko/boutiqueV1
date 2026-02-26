@@ -73,9 +73,14 @@ const ExchangePage = () => {
     }
   }, [token, searchParams]);
 
+  // Refetch cryptos when currency changes
+  useEffect(() => {
+    fetchCryptos();
+  }, [currency]);
+
   const fetchCryptos = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/trading/cryptos`);
+      const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=${currency}`);
       setCryptos(response.data);
       if (response.data.length > 0) {
         setSelectedCrypto(response.data[0]);
