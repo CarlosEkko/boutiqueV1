@@ -94,9 +94,10 @@ const ExchangePage = () => {
     }
   };
 
-  const fetchFees = async () => {
+  const fetchFees = async (cryptoSymbol = null) => {
     try {
-      const response = await axios.get(`${API_URL}/api/trading/fees`);
+      const params = cryptoSymbol ? `?crypto=${cryptoSymbol}` : '';
+      const response = await axios.get(`${API_URL}/api/trading/fees${params}`);
       setFees(response.data);
     } catch (err) {
       console.error('Failed to fetch fees', err);
