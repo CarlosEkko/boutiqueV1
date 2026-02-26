@@ -243,7 +243,7 @@ const AdminUsers = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-zinc-900/30 border-gold-800/20">
+      <Card className="bg-zinc-900/50 border-gold-500/30">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
@@ -252,15 +252,15 @@ const AdminUsers = () => {
                 placeholder="Pesquisar por nome ou email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-zinc-800 border-gold-800/30 text-white"
+                className="pl-10 bg-zinc-700 border-2 border-gold-500/40 text-white placeholder:text-gray-400"
               />
             </div>
             
             {/* Region Filter */}
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="w-48 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
+              <SelectTrigger className="w-52 bg-zinc-700 border-2 border-gold-500/60 text-white hover:border-gold-400 hover:bg-zinc-600 transition-colors font-medium">
                 <Globe size={16} className="mr-2 text-gold-400" />
-                <SelectValue placeholder="Região" className="text-white" />
+                <SelectValue placeholder="Selecionar Região" className="text-white" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/50">
                 {regions.map((region) => (
@@ -284,8 +284,8 @@ const AdminUsers = () => {
                   variant={filter === f.value ? 'default' : 'outline'}
                   size="sm"
                   className={filter === f.value 
-                    ? 'bg-gold-500 hover:bg-gold-400' 
-                    : 'border-gold-800/30 text-gray-400 hover:text-white'
+                    ? 'bg-gold-500 hover:bg-gold-400 font-medium' 
+                    : 'border-2 border-gold-500/60 text-white hover:bg-gold-900/30 font-medium'
                   }
                 >
                   {f.label}
