@@ -1032,11 +1032,17 @@ async def get_available_cryptos(currency: str = "USD"):
             crypto["currency"] = currency
             crypto["change_24h"] = price_info.get("change_24h", 0)
             crypto["market_cap"] = convert_price(market_cap_usd, currency, rates) if market_cap_usd else None
+            
+            # Add logo URL
+            if crypto.get("cmc_id"):
+                crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
         except Exception:
             crypto["price_usd"] = 0
             crypto["price"] = 0
             crypto["currency"] = currency
             crypto["change_24h"] = 0
+            if crypto.get("cmc_id"):
+                crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
     
     return cryptos
 
