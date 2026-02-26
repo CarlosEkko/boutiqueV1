@@ -61,6 +61,7 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] Admin: Complete/cancel orders
 - [x] User limits check (daily/monthly/per-transaction)
 - [x] Order history
+- [x] Fiat wallets: EUR, USD, AED, BRL (auto-created for users)
 
 ### Authentication & Users
 - [x] JWT-based authentication
