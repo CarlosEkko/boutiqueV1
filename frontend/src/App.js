@@ -113,12 +113,14 @@ function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <div className="App">
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-          <Toaster />
-        </div>
+        <CurrencyProvider>
+          <div className="App">
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+            <Toaster />
+          </div>
+        </CurrencyProvider>
       </AuthProvider>
     </LanguageProvider>
   );
