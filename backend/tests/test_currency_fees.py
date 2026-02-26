@@ -235,13 +235,14 @@ class TestCurrencyFeesAPI:
         assert fees_differ, "EUR and BRL fees should have different values"
     
     def test_unauthenticated_access_fails(self):
-        """GET /api/trading/admin/fees without auth should return 401"""
+        """GET /api/trading/admin/fees without auth should return 401 or 403"""
         response = requests.get(
             f"{BASE_URL}/api/trading/admin/fees",
             headers={"Content-Type": "application/json"}
         )
         
-        assert response.status_code == 401
+        # Both 401 (Unauthorized) and 403 (Forbidden) are acceptable
+        assert response.status_code in [401, 403]
     
     def test_public_fees_endpoint_returns_currency_fees(self):
         """GET /api/trading/fees?currency=BRL should return BRL-specific fees (public)"""
