@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
+import CurrencySelector from '../../components/CurrencySelector';
 import { 
   LayoutDashboard, 
   Wallet, 
