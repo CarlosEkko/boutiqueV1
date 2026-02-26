@@ -228,8 +228,9 @@ const WalletsPage = () => {
             onClick={fetchWallets}
           >
             <RefreshCw size={18} className="mr-2" />
-          Atualizar
-        </Button>
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
