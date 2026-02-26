@@ -16,7 +16,9 @@ from models.trading import (
     BankAccount, CreateBankAccount,
     BankTransfer, BankTransferStatus, CreateBankTransferDeposit, SubmitBankTransferProof,
     PaymentTransaction,
-    CryptoFees, CryptoFeesUpdate
+    CryptoFees, CryptoFeesUpdate,
+    KBEXBankAccount, KBEXBankAccountCreate, KBEXBankAccountUpdate,
+    FiatWithdrawal, FiatWithdrawalRequest, WithdrawalStatus
 )
 from utils.auth import get_current_user_id
 from routes.admin import get_admin_user, get_internal_user
