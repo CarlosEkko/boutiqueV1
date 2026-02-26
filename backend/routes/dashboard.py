@@ -48,6 +48,34 @@ async def get_portfolio_overview(user: dict = Depends(get_approved_user)):
     # Get user's wallets
     wallets = await db.wallets.find({"user_id": user_id}, {"_id": 0}).to_list(100)
     
+    # Check and create fiat wallets if missing
+    fiat_currencies = [
+        {"asset_id": "EUR", "asset_name": "Euro", "asset_type": "fiat", "symbol": "€"},
+        {"asset_id": "USD", "asset_name": "US Dollar", "asset_type": "fiat", "symbol": "$"},
+        {"asset_id": "AED", "asset_name": "UAE Dirham", "asset_type": "fiat", "symbol": "د.إ"},
+        {"asset_id": "BRL", "asset_name": "Brazilian Real", "asset_type": "fiat", "symbol": "R$"},
+    ]
+    
+    existing_asset_ids = {w.get("asset_id") for w in wallets}
+    
+    for fiat in fiat_currencies:
+        if fiat["asset_id"] not in existing_asset_ids:
+            new_wallet = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "asset_id": fiat["asset_id"],
+                "asset_name": fiat["asset_name"],
+                "asset_type": fiat["asset_type"],
+                "symbol": fiat["symbol"],
+                "address": None,
+                "balance": 0,
+                "available_balance": 0,
+                "pending_balance": 0,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.wallets.insert_one(new_wallet)
+            wallets.append(new_wallet)
+    
     # Get user's active investments
     investments = await db.user_investments.find(
         {"user_id": user_id, "status": InvestmentStatus.ACTIVE},
@@ -60,14 +88,19 @@ async def get_portfolio_overview(user: dict = Depends(get_approved_user)):
         {"_id": 0}
     ).sort("created_at", -1).to_list(10)
     
-    # Calculate totals (mock prices for now)
+    # Calculate totals (mock prices for crypto, 1:1 for stablecoins and fiat)
     mock_prices = {
         "BTC": 95000,
         "ETH": 3200,
         "USDT": 1,
         "USDC": 1,
         "SOL": 180,
-        "ADA": 0.95
+        "ADA": 0.95,
+        # Fiat currencies (converted to USD)
+        "EUR": 1.08,
+        "USD": 1,
+        "AED": 0.27,
+        "BRL": 0.17
     }
     
     total_wallet_value = 0
