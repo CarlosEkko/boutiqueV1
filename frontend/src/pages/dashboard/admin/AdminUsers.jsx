@@ -258,13 +258,13 @@ const AdminUsers = () => {
             
             {/* Region Filter */}
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger className="w-48 bg-zinc-800 border-gold-800/30">
-                <Globe size={16} className="mr-2 text-gray-400" />
-                <SelectValue placeholder="Região" />
+              <SelectTrigger className="w-48 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
+                <Globe size={16} className="mr-2 text-gold-400" />
+                <SelectValue placeholder="Região" className="text-white" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-gold-800/30">
+              <SelectContent className="bg-zinc-800 border-gold-500/50">
                 {regions.map((region) => (
-                  <SelectItem key={region.value} value={region.value}>
+                  <SelectItem key={region.value} value={region.value} className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">
                     {region.flag} {region.label}
                   </SelectItem>
                 ))}
