@@ -7,3 +7,4 @@ export { default as AdminInvites } from './AdminInvites';
 export { default as AdminKYC } from './AdminKYC';
 export { default as RegionalDashboard } from './RegionalDashboard';
 export { default as TicketsDashboard } from './TicketsDashboard';
+export { default as AdminTradingPage } from './AdminTradingPage';

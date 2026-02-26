@@ -26,8 +26,10 @@ import {
   AdminInvites,
   AdminKYC,
   RegionalDashboard,
-  TicketsDashboard
+  TicketsDashboard,
+  AdminTradingPage
 } from "./pages/dashboard/admin";
+import ExchangePage from "./pages/dashboard/ExchangePage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
@@ -86,6 +88,10 @@ function AppRoutes() {
         <Route path="kyc/kyb" element={<KYBForm />} />
         
         {/* Admin Routes */}
+        {/* Exchange */}
+        <Route path="exchange" element={<ExchangePage />} />
+        
+        {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />
         <Route path="admin/regional" element={<RegionalDashboard />} />
         <Route path="admin/staff" element={<AdminStaff />} />
@@ -95,6 +101,7 @@ function AppRoutes() {
         <Route path="admin/transparency" element={<AdminTransparency />} />
         <Route path="admin/invites" element={<AdminInvites />} />
         <Route path="admin/kyc" element={<AdminKYC />} />
+        <Route path="admin/trading" element={<AdminTradingPage />} />
       </Route>
     </Routes>
   );
