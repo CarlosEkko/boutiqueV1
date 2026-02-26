@@ -48,11 +48,22 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, approved
+  const [regionFilter, setRegionFilter] = useState('all');
   const [expandedUser, setExpandedUser] = useState(null);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const regions = [
+    { value: 'all', label: 'Todas Regiões', flag: '🌐' },
+    { value: 'europe', label: 'Europa', flag: '🇪🇺' },
+    { value: 'mena', label: 'MENA', flag: '🌍' },
+    { value: 'latam', label: 'LATAM', flag: '🌎' }
+  ];
 
   useEffect(() => {
     fetchUsers();
-  }, [token, filter]);
+  }, [token, filter, regionFilter]);
 
   const fetchUsers = async () => {
     try {
