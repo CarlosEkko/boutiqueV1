@@ -32,10 +32,93 @@ STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 COINMARKETCAP_API_KEY = os.environ.get("COINMARKETCAP_API_KEY", "")
 COINMARKETCAP_API_URL = "https://pro-api.coinmarketcap.com/v1"
 
+# Supported fiat currencies
+SUPPORTED_FIAT = ["USD", "EUR", "AED", "BRL"]
+
+# Exchange rates cache (updated every 5 minutes)
+EXCHANGE_RATES_CACHE = {
+    "rates": {
+        "USD": 1.0,
+        "EUR": 0.92,
+        "AED": 3.67,
+        "BRL": 5.90
+    },
+    "updated_at": None
+}
+
 
 def set_db(database):
     global db
     db = database
+
+
+# ==================== CURRENCY CONVERSION ====================
+
+async def get_exchange_rates() -> dict:
+    """Get current exchange rates from cache or fetch from API"""
+    global EXCHANGE_RATES_CACHE
+    
+    now = datetime.now(timezone.utc)
+    
+    # Check if cache is valid (5 minutes)
+    if EXCHANGE_RATES_CACHE["updated_at"]:
+        cache_age = (now - EXCHANGE_RATES_CACHE["updated_at"]).total_seconds()
+        if cache_age < 300:  # 5 minutes
+            return EXCHANGE_RATES_CACHE["rates"]
+    
+    # Try to fetch from CoinMarketCap (they have fiat conversion)
+    if COINMARKETCAP_API_KEY:
+        try:
+            headers = {
+                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
+                "Accept": "application/json"
+            }
+            
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                # Get USD price of a stable reference (USDT = 1 USD)
+                response = await client.get(
+                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
+                    params={"symbol": "USDT", "convert": "EUR,AED,BRL"},
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    usdt_data = data.get("data", {}).get("USDT")
+                    if isinstance(usdt_data, list):
+                        usdt_data = usdt_data[0]
+                    
+                    if usdt_data:
+                        quotes = usdt_data.get("quote", {})
+                        EXCHANGE_RATES_CACHE["rates"] = {
+                            "USD": 1.0,
+                            "EUR": quotes.get("EUR", {}).get("price", 0.92),
+                            "AED": quotes.get("AED", {}).get("price", 3.67),
+                            "BRL": quotes.get("BRL", {}).get("price", 5.90)
+                        }
+                        EXCHANGE_RATES_CACHE["updated_at"] = now
+        except Exception as e:
+            print(f"Failed to fetch exchange rates: {e}")
+    
+    return EXCHANGE_RATES_CACHE["rates"]
+
+
+def convert_price(price_usd: float, target_currency: str, rates: dict) -> float:
+    """Convert USD price to target currency"""
+    if target_currency == "USD":
+        return price_usd
+    
+    rate = rates.get(target_currency, 1.0)
+    return price_usd * rate
+
+
+def convert_to_usd(amount: float, source_currency: str, rates: dict) -> float:
+    """Convert amount from source currency to USD"""
+    if source_currency == "USD":
+        return amount
+    
+    rate = rates.get(source_currency, 1.0)
+    return amount / rate if rate > 0 else amount
 
 
 # ==================== HELPER FUNCTIONS ====================
