@@ -38,8 +38,9 @@ const AdminTradingPage = () => {
   const [message, setMessage] = useState(null);
   
   // Fees state - now per currency
-  const [fees, setFees] = useState(null);
-  const [selectedCurrency, setSelectedCurrency] = useState('EUR');
+  const [allFees, setAllFees] = useState(null);
+  const [selectedFeeCurrency, setSelectedFeeCurrency] = useState('EUR');
+  const [savingCurrency, setSavingCurrency] = useState(null);
   
   // Limits state
   const [limits, setLimits] = useState({});
