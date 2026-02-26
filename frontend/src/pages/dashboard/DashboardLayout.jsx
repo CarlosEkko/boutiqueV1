@@ -202,14 +202,25 @@ const DashboardLayout = () => {
               </div>
             )}
             
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-900/20 mt-4"
-            >
-              <LogOut size={20} />
-              {t('dashboard.layout.logout')}
-            </Button>
+            {/* Profile & Logout */}
+            <div className="pt-4 mt-4 border-t border-gold-800/20">
+              <NavLink
+                to="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-gold-400 hover:bg-gold-900/20 transition-colors"
+              >
+                <User size={20} />
+                <span className="font-medium">Meu Perfil</span>
+              </NavLink>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-900/20 mt-2"
+              >
+                <LogOut size={20} />
+                {t('dashboard.layout.logout')}
+              </Button>
+            </div>
           </nav>
         </div>
       )}
