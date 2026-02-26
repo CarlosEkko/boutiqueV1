@@ -18,7 +18,9 @@ import {
   Settings,
   BarChart3,
   UserCheck,
-  Globe
+  Globe,
+  UserCog,
+  Ticket
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
