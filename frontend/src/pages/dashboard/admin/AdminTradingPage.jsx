@@ -192,6 +192,43 @@ const AdminTradingPage = () => {
     }
   };
 
+  const saveCryptoFees = async () => {
+    if (!selectedCrypto) return;
+    setSavingCrypto(selectedCrypto.symbol);
+    setMessage(null);
+    try {
+      await axios.put(`${API_URL}/api/trading/admin/crypto-fees/${selectedCrypto.symbol}`, {
+        buy_fee_percent: selectedCrypto.buy_fee_percent,
+        buy_spread_percent: selectedCrypto.buy_spread_percent,
+        sell_fee_percent: selectedCrypto.sell_fee_percent,
+        sell_spread_percent: selectedCrypto.sell_spread_percent,
+        swap_fee_percent: selectedCrypto.swap_fee_percent,
+        swap_spread_percent: selectedCrypto.swap_spread_percent,
+        min_buy_fee: selectedCrypto.min_buy_fee,
+        min_sell_fee: selectedCrypto.min_sell_fee,
+        min_swap_fee: selectedCrypto.min_swap_fee
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: `Taxas de ${selectedCrypto.symbol} atualizadas com sucesso!` });
+      // Update local state
+      setCryptoFees(prev => prev.map(c => 
+        c.symbol === selectedCrypto.symbol ? selectedCrypto : c
+      ));
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao salvar taxas' });
+    } finally {
+      setSavingCrypto(null);
+    }
+  };
+
+  const updateCryptoFeeField = (field, value) => {
+    setSelectedCrypto(prev => ({
+      ...prev,
+      [field]: parseFloat(value) || 0
+    }));
+  };
+
   const saveLimits = async () => {
     setSaving(true);
     setMessage(null);
