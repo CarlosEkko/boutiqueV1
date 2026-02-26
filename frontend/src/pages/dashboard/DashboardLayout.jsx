@@ -43,6 +43,7 @@ const DashboardLayout = () => {
     { to: '/dashboard/roi', icon: PieChart, label: t('dashboard.nav.roi') },
     { to: '/dashboard/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
     { to: '/dashboard/kyc', icon: UserCheck, label: t('dashboard.nav.kycVerification') },
+    { to: '/profile', icon: User, label: 'Meu Perfil' },
   ];
 
   const adminNavItems = [
