@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime, timezone
 from typing import List, Optional
-from models.user import UserResponseAdmin, KYCStatus, MembershipLevel, InviteCode
+from models.user import (
+    UserResponseAdmin, KYCStatus, MembershipLevel, InviteCode,
+    Region, InternalRole, UserType, InternalUserCreate, InternalUserUpdate
+)
 from utils.auth import get_current_user_id
+from passlib.context import CryptContext
 import uuid
 import secrets
 
@@ -10,6 +14,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 # Database reference
 db = None
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def set_db(database):
@@ -17,7 +22,7 @@ def set_db(database):
     db = database
 
 
-# ==================== ADMIN CHECK ====================
+# ==================== ROLE-BASED ACCESS ====================
 
 async def get_admin_user(user_id: str = Depends(get_current_user_id)):
     """Check if user is admin"""
@@ -25,20 +30,185 @@ async def get_admin_user(user_id: str = Depends(get_current_user_id)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Check if user has is_admin flag set to True
-    if not user.get("is_admin", False):
+    # Check admin access (legacy is_admin or new internal_role)
+    is_admin = user.get("is_admin", False)
+    internal_role = user.get("internal_role")
+    
+    if not is_admin and internal_role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
     return user
 
 
-# ==================== USER MANAGEMENT ====================
+async def get_manager_or_admin(user_id: str = Depends(get_current_user_id)):
+    """Check if user is admin or manager"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_admin = user.get("is_admin", False)
+    internal_role = user.get("internal_role")
+    
+    if not is_admin and internal_role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Manager or Admin access required")
+    
+    return user
+
+
+async def get_internal_user(user_id: str = Depends(get_current_user_id)):
+    """Check if user is any internal role"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_admin = user.get("is_admin", False)
+    user_type = user.get("user_type")
+    internal_role = user.get("internal_role")
+    
+    if not is_admin and user_type != "internal" and internal_role is None:
+        raise HTTPException(status_code=403, detail="Internal access required")
+    
+    return user
+
+
+def can_access_region(user: dict, target_region: str) -> bool:
+    """Check if user can access a specific region"""
+    internal_role = user.get("internal_role") or ("admin" if user.get("is_admin") else None)
+    user_region = user.get("region", "global")
+    
+    # Admin and Manager can access all regions
+    if internal_role in ["admin", "manager"]:
+        return True
+    
+    # Global region users can access all
+    if user_region == "global":
+        return True
+    
+    # Others can only access their own region
+    return user_region == target_region
+
+
+# ==================== INTERNAL USER MANAGEMENT ====================
+
+@router.post("/internal-users", response_model=dict)
+async def create_internal_user(
+    user_data: InternalUserCreate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Create a new internal user (Admin only)"""
+    # Check if email already exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = pwd_context.hash(user_data.password)
+    
+    new_user = {
+        "id": str(uuid.uuid4()),
+        "email": user_data.email,
+        "name": user_data.name,
+        "phone": user_data.phone,
+        "hashed_password": hashed_password,
+        "user_type": "internal",
+        "internal_role": user_data.internal_role,
+        "region": user_data.region,
+        "is_active": True,
+        "is_admin": user_data.internal_role == "admin",
+        "is_approved": True,
+        "kyc_status": "approved",
+        "membership_level": "standard",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(new_user)
+    
+    return {
+        "success": True,
+        "user_id": new_user["id"],
+        "message": f"Internal user {user_data.email} created with role {user_data.internal_role}"
+    }
+
+
+@router.get("/internal-users", response_model=List[dict])
+async def list_internal_users(
+    role: Optional[InternalRole] = None,
+    region: Optional[Region] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """List all internal users"""
+    query = {"user_type": "internal"}
+    
+    if role:
+        query["internal_role"] = role
+    if region:
+        query["region"] = region
+    
+    users = await db.users.find(query, {"_id": 0, "hashed_password": 0}).to_list(1000)
+    return users
+
+
+@router.put("/internal-users/{user_id}", response_model=dict)
+async def update_internal_user(
+    user_id: str,
+    user_data: InternalUserUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update an internal user"""
+    user = await db.users.find_one({"id": user_id, "user_type": "internal"})
+    if not user:
+        raise HTTPException(status_code=404, detail="Internal user not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if user_data.name is not None:
+        update_data["name"] = user_data.name
+    if user_data.phone is not None:
+        update_data["phone"] = user_data.phone
+    if user_data.internal_role is not None:
+        update_data["internal_role"] = user_data.internal_role
+        update_data["is_admin"] = user_data.internal_role == "admin"
+    if user_data.region is not None:
+        update_data["region"] = user_data.region
+    if user_data.is_active is not None:
+        update_data["is_active"] = user_data.is_active
+    
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    return {"success": True, "message": "Internal user updated"}
+
+
+@router.delete("/internal-users/{user_id}", response_model=dict)
+async def delete_internal_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete an internal user (deactivate)"""
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    user = await db.users.find_one({"id": user_id, "user_type": "internal"})
+    if not user:
+        raise HTTPException(status_code=404, detail="Internal user not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"success": True, "message": "Internal user deactivated"}
+
+
+# ==================== CLIENT USER MANAGEMENT ====================
 
 @router.get("/users", response_model=List[dict])
 async def list_users(
     is_approved: Optional[bool] = None,
     kyc_status: Optional[KYCStatus] = None,
-    admin: dict = Depends(get_admin_user)
+    membership_level: Optional[MembershipLevel] = None,
+    region: Optional[Region] = None,
+    user_type: Optional[UserType] = None,
+    internal_user: dict = Depends(get_internal_user)
 ):
     """List all users with optional filters"""
     query = {}
