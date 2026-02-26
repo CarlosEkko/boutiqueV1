@@ -68,6 +68,7 @@ const AdminTradingPage = () => {
 
   useEffect(() => {
     if (activeTab === 'fees') fetchFees();
+    if (activeTab === 'crypto-fees') fetchCryptoFees();
     if (activeTab === 'limits') fetchLimits();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'transfers') fetchTransfers();
