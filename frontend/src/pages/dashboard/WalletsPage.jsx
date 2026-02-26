@@ -123,7 +123,8 @@ const WalletsPage = () => {
 
   const WalletCard = ({ wallet }) => {
     const isFiatWallet = isFiat(wallet.asset_id);
-    const usdValue = (wallet.balance || 0) * (prices[wallet.asset_id] || 1);
+    // Get value in selected currency
+    const cryptoValue = !isFiatWallet ? getCryptoValue(wallet.asset_id, wallet.balance) : 0;
     
     return (
       <Card 
@@ -167,12 +168,12 @@ const WalletsPage = () => {
             </p>
             {!isFiatWallet && (
               <p className="text-sm text-gray-400">
-                ≈ ${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ≈ {formatCurrency(cryptoValue)}
               </p>
             )}
-            {isFiatWallet && wallet.asset_id !== 'USD' && (
+            {isFiatWallet && wallet.asset_id !== currency && (
               <p className="text-sm text-gray-400">
-                ≈ ${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD
+                ≈ {formatCurrency(convertFromUSD((wallet.balance || 0) / (fiatSymbols[wallet.asset_id] === '€' ? 0.92 : wallet.asset_id === 'AED' ? 3.67 : wallet.asset_id === 'BRL' ? 5.90 : 1)))}
               </p>
             )}
           </div>
