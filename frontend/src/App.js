@@ -88,6 +88,8 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />
         <Route path="admin/regional" element={<RegionalDashboard />} />
+        <Route path="admin/staff" element={<AdminStaff />} />
+        <Route path="admin/tickets" element={<TicketsDashboard />} />
         <Route path="admin/users" element={<AdminUsers />} />
         <Route path="admin/opportunities" element={<AdminOpportunities />} />
         <Route path="admin/transparency" element={<AdminTransparency />} />
