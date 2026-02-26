@@ -303,30 +303,30 @@ const TicketsDashboard = () => {
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <Filter size={16} className="text-gray-400" />
-              <span className="text-sm text-gray-400">Filtros:</span>
+              <Filter size={16} className="text-gold-400" />
+              <span className="text-sm text-white font-medium">Filtros:</span>
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-zinc-800 border-gold-800/30">
+              <SelectTrigger className="w-44 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-gold-800/30">
-                <SelectItem value="all">Todos Estados</SelectItem>
+              <SelectContent className="bg-zinc-800 border-gold-500/50">
+                <SelectItem value="all" className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">Todos Estados</SelectItem>
                 {statusOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-40 bg-zinc-800 border-gold-800/30">
+              <SelectTrigger className="w-44 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
                 <SelectValue placeholder="Prioridade" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-gold-800/30">
-                <SelectItem value="all">Todas Prioridades</SelectItem>
+              <SelectContent className="bg-zinc-800 border-gold-500/50">
+                <SelectItem value="all" className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">Todas Prioridades</SelectItem>
                 {priorityOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -335,7 +335,7 @@ const TicketsDashboard = () => {
               onClick={() => setAssignedToMe(!assignedToMe)}
               variant={assignedToMe ? "default" : "outline"}
               size="sm"
-              className={assignedToMe ? "bg-gold-500" : "border-gold-800/30"}
+              className={assignedToMe ? "bg-gold-500 hover:bg-gold-400" : "border-gold-500/50 text-white hover:bg-gold-900/30"}
             >
               <UserCheck size={14} className="mr-1" />
               Meus Tickets
