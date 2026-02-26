@@ -263,6 +263,47 @@ const WalletsPage = () => {
     );
   };
 
+  // Compact row component for crypto wallets
+  const CompactWalletRow = ({ wallet }) => {
+    const cryptoLogo = cryptoPrices[wallet.asset_id]?.logo;
+    const cryptoValue = getCryptoValue(wallet.asset_id, wallet.balance);
+    const hasBalance = (wallet.balance || 0) > 0;
+    
+    return (
+      <div
+        onClick={() => setSelectedWallet(wallet)}
+        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+          hasBalance 
+            ? 'bg-zinc-800/70 hover:bg-zinc-700/70 border border-gold-500/20' 
+            : 'bg-zinc-900/50 hover:bg-zinc-800/50 border border-zinc-800'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center overflow-hidden">
+            {cryptoLogo ? (
+              <img src={cryptoLogo} alt={wallet.asset_id} className="w-6 h-6 rounded-full" />
+            ) : (
+              <span className="text-gold-400 text-xs font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+            )}
+          </div>
+          <div>
+            <p className="text-white font-medium text-sm">{wallet.asset_id}</p>
+            <p className="text-gray-500 text-xs">{wallet.asset_name}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className={`font-medium text-sm ${hasBalance ? 'text-white' : 'text-gray-500'}`}>
+            {formatBalance(wallet.balance, wallet.asset_id)} {wallet.asset_id}
+          </p>
+          {hasBalance && (
+            <p className="text-gray-400 text-xs">≈ {formatCurrency(cryptoValue)}</p>
+          )}
+        </div>
+        <ChevronRight className="text-gray-500 ml-2" size={16} />
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
