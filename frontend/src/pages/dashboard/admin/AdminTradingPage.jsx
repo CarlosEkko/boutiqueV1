@@ -229,8 +229,14 @@ const AdminTradingPage = () => {
     }
   };
 
-  const updateFeeField = (field, value) => {
-    setFees({ ...fees, [field]: parseFloat(value) || 0 });
+  const updateFeeField = (currency, field, value) => {
+    setAllFees(prev => ({
+      ...prev,
+      [currency]: {
+        ...prev[currency],
+        [field]: parseFloat(value) || 0
+      }
+    }));
   };
 
   const updateLimitField = (field, value) => {
