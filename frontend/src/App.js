@@ -88,9 +88,9 @@ function AppRoutes() {
         <Route path="kyc/kyc" element={<KYCForm />} />
         <Route path="kyc/kyb" element={<KYBForm />} />
         
-        {/* Admin Routes */}
         {/* Exchange */}
         <Route path="exchange" element={<ExchangePage />} />
+        <Route path="fiat-deposit" element={<FiatDepositPage />} />
         
         {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />
