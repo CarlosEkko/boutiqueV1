@@ -497,3 +497,134 @@ class PaymentTransaction(BaseModel):
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+
+# ==================== KBEX BANK ACCOUNTS (Admin Configurable) ====================
+
+class KBEXBankAccount(BaseModel):
+    """Bank account details for KBEX to receive deposits"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    currency: str  # EUR, USD, AED, BRL
+    
+    # Bank details
+    bank_name: str
+    account_name: str = "KBEX Exchange Ltd"
+    iban: Optional[str] = None
+    swift_bic: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None  # For USD
+    sort_code: Optional[str] = None  # For GBP
+    
+    # Address
+    bank_address: Optional[str] = None
+    
+    # Instructions
+    instructions: Optional[str] = None
+    
+    # Status
+    is_active: bool = True
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_by: Optional[str] = None
+
+
+class KBEXBankAccountCreate(BaseModel):
+    """Create KBEX bank account"""
+    currency: str
+    bank_name: str
+    account_name: str = "KBEX Exchange Ltd"
+    iban: Optional[str] = None
+    swift_bic: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None
+    sort_code: Optional[str] = None
+    bank_address: Optional[str] = None
+    instructions: Optional[str] = None
+    is_active: bool = True
+
+
+class KBEXBankAccountUpdate(BaseModel):
+    """Update KBEX bank account"""
+    bank_name: Optional[str] = None
+    account_name: Optional[str] = None
+    iban: Optional[str] = None
+    swift_bic: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None
+    sort_code: Optional[str] = None
+    bank_address: Optional[str] = None
+    instructions: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+# ==================== FIAT WITHDRAWAL REQUESTS ====================
+
+class WithdrawalStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class FiatWithdrawal(BaseModel):
+    """Fiat withdrawal request"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    user_email: str
+    
+    # Amount
+    currency: str  # EUR, USD, AED, BRL
+    amount: float
+    fee_amount: float = 0.0
+    net_amount: float  # Amount after fees
+    
+    # User's bank account details
+    bank_account_id: Optional[str] = None  # Reference to user's saved bank account
+    bank_name: str
+    account_holder: str
+    iban: Optional[str] = None
+    swift_bic: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None
+    
+    # Status
+    status: WithdrawalStatus = WithdrawalStatus.PENDING
+    
+    # Admin notes
+    admin_notes: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    
+    # Transaction reference
+    transaction_reference: Optional[str] = None
+    
+    # Timestamps
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    processed_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    
+    # Admin actions
+    processed_by: Optional[str] = None
+
+
+class FiatWithdrawalRequest(BaseModel):
+    """Request fiat withdrawal"""
+    currency: str
+    amount: float
+    bank_account_id: Optional[str] = None
+    # Or provide bank details directly
+    bank_name: Optional[str] = None
+    account_holder: Optional[str] = None
+    iban: Optional[str] = None
+    swift_bic: Optional[str] = None
+    account_number: Optional[str] = None
+    routing_number: Optional[str] = None
