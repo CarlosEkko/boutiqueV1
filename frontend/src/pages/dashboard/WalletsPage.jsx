@@ -89,6 +89,13 @@ const WalletsPage = () => {
     BRL: 'R$'
   };
 
+  const fiatFlags = {
+    EUR: '🇪🇺',
+    USD: '🇺🇸',
+    AED: '🇦🇪',
+    BRL: '🇧🇷'
+  };
+
   const isFiat = (assetId) => ['EUR', 'USD', 'AED', 'BRL'].includes(assetId);
 
   // Get crypto value in selected currency
