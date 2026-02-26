@@ -156,10 +156,10 @@ const AdminUsers = () => {
       await axios.post(`${API_URL}/api/admin/users/${userId}/kyc/${status}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`KYC status updated to ${status}`);
+      toast.success(`Estado KYC atualizado para ${status}`);
       fetchUsers();
     } catch (err) {
-      toast.error('Failed to update KYC status');
+      toast.error('Falha ao atualizar estado KYC');
     }
   };
 
@@ -168,10 +168,10 @@ const AdminUsers = () => {
       await axios.post(`${API_URL}/api/admin/users/${userId}/make-admin`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('User is now an admin');
+      toast.success('Utilizador é agora admin');
       fetchUsers();
     } catch (err) {
-      toast.error('Failed to make user admin');
+      toast.error('Falha ao promover utilizador');
     }
   };
 
@@ -180,11 +180,22 @@ const AdminUsers = () => {
       await axios.post(`${API_URL}/api/admin/users/${userId}/remove-admin`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Admin rights removed');
+      toast.success('Direitos de admin removidos');
       fetchUsers();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to remove admin rights');
+      toast.error(err.response?.data?.detail || 'Falha ao remover direitos');
     }
+  };
+
+  const getRegionBadge = (region) => {
+    const regionConfig = regions.find(r => r.value === region);
+    if (!regionConfig) return null;
+    return (
+      <span className="flex items-center gap-1 text-sm">
+        <span>{regionConfig.flag}</span>
+        <span className="text-gray-400">{regionConfig.label}</span>
+      </span>
+    );
   };
 
   const filteredUsers = users.filter(user => 
