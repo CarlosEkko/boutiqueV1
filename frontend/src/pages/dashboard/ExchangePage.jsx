@@ -337,30 +337,80 @@ const ExchangePage = () => {
   const sellPreview = calculateSellPreview();
   const swapPreview = calculateSwapPreview();
 
-  const CryptoSelector = ({ value, onChange, exclude = null }) => (
-    <div className="relative">
-      <select
-        value={value?.symbol || ''}
-        onChange={(e) => {
-          const crypto = cryptos.find(c => c.symbol === e.target.value);
-          onChange(crypto);
-        }}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white appearance-none cursor-pointer focus:outline-none focus:border-gold-500"
-        data-testid="crypto-selector"
-      >
-        {cryptos.filter(c => !exclude || c.symbol !== exclude.symbol).map(crypto => (
-          <option key={crypto.symbol} value={crypto.symbol}>
-            {crypto.symbol} - {crypto.name}
-          </option>
-        ))}
-      </select>
-      {value && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-          {formatCurrency(value.price || value.price_usd)}
-        </div>
-      )}
-    </div>
-  );
+  const [cryptoDropdownOpen, setCryptoDropdownOpen] = useState(false);
+  const [fromCryptoDropdownOpen, setFromCryptoDropdownOpen] = useState(false);
+  const [toCryptoDropdownOpen, setToCryptoDropdownOpen] = useState(false);
+  
+  const CryptoSelector = ({ value, onChange, exclude = null, dropdownOpen, setDropdownOpen }) => {
+    const filteredCryptos = cryptos.filter(c => !exclude || c.symbol !== exclude.symbol);
+    
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white flex items-center justify-between cursor-pointer focus:outline-none focus:border-gold-500 hover:border-zinc-600 transition-colors"
+          data-testid="crypto-selector"
+        >
+          <div className="flex items-center gap-3">
+            {value?.logo && (
+              <img 
+                src={value.logo} 
+                alt={value.symbol} 
+                className="w-6 h-6 rounded-full"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
+            <span className="font-medium">{value?.symbol || 'Selecionar'}</span>
+            <span className="text-gray-400 text-sm">{value?.name}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">
+              {value && formatCurrency(value.price || value.price_usd)}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+        
+        {dropdownOpen && (
+          <div className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl max-h-80 overflow-y-auto">
+            {filteredCryptos.map(crypto => (
+              <button
+                key={crypto.symbol}
+                type="button"
+                onClick={() => {
+                  onChange(crypto);
+                  setDropdownOpen(false);
+                }}
+                className={`w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-700/50 transition-colors ${
+                  value?.symbol === crypto.symbol ? 'bg-gold-500/10' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {crypto.logo && (
+                    <img 
+                      src={crypto.logo} 
+                      alt={crypto.symbol} 
+                      className="w-6 h-6 rounded-full"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="font-medium text-white">{crypto.symbol}</span>
+                  <span className="text-gray-400 text-sm">{crypto.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-white">{formatCurrency(crypto.price || crypto.price_usd)}</div>
+                  <div className={`text-xs ${crypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {crypto.change_24h >= 0 ? '+' : ''}{crypto.change_24h?.toFixed(2)}%
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6" data-testid="exchange-page">
