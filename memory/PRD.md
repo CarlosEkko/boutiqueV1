@@ -70,6 +70,10 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] Fiat deposit via bank transfer with unique reference code
 - [x] Fiat deposit proof submission
 - [x] Admin approval for fiat deposits → credits fiat wallet
+- [x] **Multi-currency platform**: EUR, USD, AED, BRL
+- [x] **Global currency selector** in dashboard
+- [x] **Exchange rates API** with 5-minute cache
+- [x] **Automatic price conversion** for all crypto pairs
 
 ### Authentication & Users
 - [x] JWT-based authentication
