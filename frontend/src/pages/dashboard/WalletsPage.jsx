@@ -13,7 +13,12 @@ import {
   RefreshCw,
   Plus,
   Banknote,
-  Bitcoin
+  Bitcoin,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  List,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
