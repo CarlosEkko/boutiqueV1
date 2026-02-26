@@ -392,7 +392,7 @@ const WalletsPage = () => {
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto pr-2 space-y-8">
+      <div className="flex-1 overflow-y-auto pr-2 space-y-10">
         {/* Fiat Section */}
         {(activeTab === 'all' || activeTab === 'fiat') && fiatWallets.length > 0 && (
           <div>
@@ -413,7 +413,7 @@ const WalletsPage = () => {
           <div>
             <h2 className="text-lg font-medium text-gold-400 mb-6 flex items-center gap-2">
               <Bitcoin size={20} />
-              Carteiras com Saldo ({cryptoWithBalance.length})
+              Carteiras Crypto com Saldo ({cryptoWithBalance.length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {cryptoWithBalance.map((wallet) => (
