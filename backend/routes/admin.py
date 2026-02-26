@@ -559,6 +559,45 @@ async def delete_user(
     return {"success": True, "message": f"User {user['email']} has been permanently deleted"}
 
 
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: str,
+    new_password: str = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """Reset user password - Admin can set a new password or generate a random one"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Generate random password if not provided
+    if not new_password:
+        new_password = secrets.token_urlsafe(12)
+    
+    # Validate password length
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Hash the new password
+    hashed_password = pwd_context.hash(new_password)
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "hashed_password": hashed_password,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {
+        "success": True, 
+        "message": f"Password reset for {user['email']}",
+        "temporary_password": new_password
+    }
+
+
 @router.get("/stats")
 async def get_admin_stats(admin: dict = Depends(get_admin_user)):
     """Get admin dashboard statistics"""
