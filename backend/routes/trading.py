@@ -147,6 +147,25 @@ async def get_trading_fees() -> TradingFees:
     return TradingFees(**fees)
 
 
+def get_currency_fees(fees: TradingFees, currency: str) -> dict:
+    """Get fees for a specific currency"""
+    if fees.fees_by_currency and currency in fees.fees_by_currency:
+        return fees.fees_by_currency[currency]
+    
+    # Fallback to legacy fields
+    return {
+        "buy_fee_percent": fees.buy_fee_percent,
+        "buy_spread_percent": fees.buy_spread_percent,
+        "sell_fee_percent": fees.sell_fee_percent,
+        "sell_spread_percent": fees.sell_spread_percent,
+        "swap_fee_percent": fees.swap_fee_percent,
+        "swap_spread_percent": fees.swap_spread_percent,
+        "min_buy_fee": fees.min_buy_fee_usd,
+        "min_sell_fee": fees.min_sell_fee_usd,
+        "min_swap_fee": fees.min_swap_fee_usd
+    }
+
+
 async def get_user_limits(tier: str) -> UserTradingLimits:
     """Get trading limits for user tier"""
     limits = await db.trading_limits.find_one({"tier": tier}, {"_id": 0})
