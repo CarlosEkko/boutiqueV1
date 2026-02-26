@@ -5,7 +5,6 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import CurrencySelector from '../../components/CurrencySelector';
 import { 
   Wallet, 
   Copy, 
