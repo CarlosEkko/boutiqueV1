@@ -8,7 +8,7 @@ import os
 import httpx
 
 from models.trading import (
-    TradingFees, TradingFeesUpdate,
+    TradingFees, TradingFeesUpdate, CurrencyFeesUpdate,
     UserTradingLimits, UserTradingLimitsUpdate,
     SupportedCrypto,
     TradingOrder, OrderType, OrderStatus, PaymentMethod,
