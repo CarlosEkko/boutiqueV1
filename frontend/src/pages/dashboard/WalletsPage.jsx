@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -20,14 +21,22 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const WalletsPage = () => {
   const { token } = useAuth();
+  const { currency, formatCurrency, convertFromUSD, currentCurrency } = useCurrency();
   const [wallets, setWallets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [cryptoPrices, setCryptoPrices] = useState({});
 
   useEffect(() => {
     fetchWallets();
+    fetchCryptoPrices();
   }, [token]);
+
+  // Refetch prices when currency changes
+  useEffect(() => {
+    fetchCryptoPrices();
+  }, [currency]);
 
   const fetchWallets = async () => {
     try {
@@ -39,6 +48,22 @@ const WalletsPage = () => {
       toast.error('Failed to load wallets');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCryptoPrices = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=${currency}`);
+      const pricesMap = {};
+      response.data.forEach(c => {
+        pricesMap[c.symbol] = {
+          price: c.price || c.price_usd,
+          price_usd: c.price_usd
+        };
+      });
+      setCryptoPrices(pricesMap);
+    } catch (err) {
+      console.error('Failed to fetch prices', err);
     }
   };
 
@@ -56,19 +81,6 @@ const WalletsPage = () => {
     return parseFloat(balance || 0).toFixed(decimals);
   };
 
-  // Mock prices for display
-  const prices = {
-    BTC: 95000,
-    ETH: 3200,
-    USDT: 1,
-    USDC: 1,
-    SOL: 180,
-    EUR: 1.08,
-    USD: 1,
-    AED: 0.27,
-    BRL: 0.17
-  };
-
   const fiatSymbols = {
     EUR: '€',
     USD: '$',
@@ -77,6 +89,19 @@ const WalletsPage = () => {
   };
 
   const isFiat = (assetId) => ['EUR', 'USD', 'AED', 'BRL'].includes(assetId);
+
+  // Get crypto value in selected currency
+  const getCryptoValue = (assetId, balance) => {
+    const priceInfo = cryptoPrices[assetId];
+    if (priceInfo) {
+      return (balance || 0) * priceInfo.price;
+    }
+    // Fallback for stablecoins
+    if (assetId === 'USDT' || assetId === 'USDC') {
+      return convertFromUSD(balance || 0);
+    }
+    return 0;
+  };
 
   const filteredWallets = wallets.filter(w => {
     if (activeTab === 'fiat') return isFiat(w.asset_id);
