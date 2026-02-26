@@ -241,9 +241,14 @@ const WalletsPage = () => {
             <p className="text-2xl font-light text-white">
               {isFiatWallet && fiatSymbols[wallet.asset_id]}{formatBalance(wallet.balance, wallet.asset_id)} {!isFiatWallet && wallet.asset_id}
             </p>
-            {!isFiatWallet && (
+            {!isFiatWallet && (wallet.balance || 0) > 0 && (
               <p className="text-sm text-gray-400">
                 ≈ {formatCurrency(cryptoValue)}
+              </p>
+            )}
+            {!isFiatWallet && (wallet.balance || 0) === 0 && cryptoPrice > 0 && (
+              <p className="text-sm text-gray-400">
+                Preço: {formatCurrency(cryptoPrice)}
               </p>
             )}
             {isFiatWallet && wallet.asset_id !== currency && (
