@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useCurrency } from '../../context/CurrencyContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { ChevronDown } from 'lucide-react';
 
 const CurrencySelector = ({ className = '' }) => {
