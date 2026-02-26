@@ -71,13 +71,35 @@ const AdminTradingPage = () => {
   const [cryptoSearch, setCryptoSearch] = useState('');
   const [savingCrypto, setSavingCrypto] = useState(null);
 
+  // KBEX Bank Accounts state
+  const [kbexBankAccounts, setKbexBankAccounts] = useState([]);
+  const [editingBankAccount, setEditingBankAccount] = useState(null);
+  const [newBankAccount, setNewBankAccount] = useState({
+    currency: 'EUR',
+    bank_name: '',
+    account_name: 'KBEX Exchange Ltd',
+    iban: '',
+    swift_bic: '',
+    account_number: '',
+    routing_number: '',
+    bank_address: '',
+    instructions: ''
+  });
+
+  // Fiat Withdrawals state
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawalsFilter, setWithdrawalsFilter] = useState({ status: '', currency: '' });
+  const [expandedWithdrawal, setExpandedWithdrawal] = useState(null);
+
   useEffect(() => {
     if (activeTab === 'fees') fetchFees();
     if (activeTab === 'crypto-fees') fetchCryptoFees();
     if (activeTab === 'limits') fetchLimits();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'transfers') fetchTransfers();
-  }, [activeTab, ordersFilter, transfersFilter]);
+    if (activeTab === 'bank-accounts') fetchKbexBankAccounts();
+    if (activeTab === 'withdrawals') fetchWithdrawals();
+  }, [activeTab, ordersFilter, transfersFilter, withdrawalsFilter]);
 
   const fetchFees = async () => {
     setLoading(true);
