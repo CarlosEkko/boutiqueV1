@@ -339,10 +339,7 @@ const WalletsPage = () => {
             Atualizar
           </Button>
           {/* Currency Selector */}
-          <div className="flex items-center bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">
-            <span className="text-lg mr-2">{currentCurrency?.flag || '🇺🇸'}</span>
-            <span className="text-white font-medium">{currency}</span>
-          </div>
+          <CurrencySelector />
         </div>
       </div>
 
