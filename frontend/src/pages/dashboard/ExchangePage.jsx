@@ -721,7 +721,7 @@ const ExchangePage = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Taxa</span>
-                        <span className="text-gray-300">${swapPreview.fee.toFixed(2)}</span>
+                        <span className="text-gray-300">{formatCurrency(swapPreview.fee)}</span>
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
                         <div className="flex justify-between">
