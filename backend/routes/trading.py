@@ -1157,17 +1157,18 @@ async def create_buy_order(
     # Check limits
     await check_user_limits(user, "buy", order.fiat_amount)
     
-    # Get fees
-    fees = await get_trading_fees()
+    # Get fees for this specific crypto
+    fees = await get_fees_for_crypto(order.crypto_symbol.upper())
+    global_fees = await get_trading_fees()  # For network fees
     
     # Calculate amounts
-    spread_amount = market_price * (fees.buy_spread_percent / 100)
+    spread_amount = market_price * (fees["buy_spread_percent"] / 100)
     execution_price = market_price + spread_amount
     
-    fee_amount = max(order.fiat_amount * (fees.buy_fee_percent / 100), fees.min_buy_fee_usd)
+    fee_amount = max(order.fiat_amount * (fees["buy_fee_percent"] / 100), fees["min_buy_fee"])
     
     # Network fee
-    network_fee = fees.network_fees.get(order.network or "ethereum", 5.0)
+    network_fee = global_fees.network_fees.get(order.network or "ethereum", 5.0)
     
     # Calculate crypto amount user will receive
     usable_amount = order.fiat_amount - fee_amount - network_fee
