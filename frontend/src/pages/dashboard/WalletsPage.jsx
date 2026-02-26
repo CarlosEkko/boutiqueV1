@@ -133,6 +133,8 @@ const WalletsPage = () => {
     const isFiatWallet = isFiat(wallet.asset_id);
     // Get value in selected currency
     const cryptoValue = !isFiatWallet ? getCryptoValue(wallet.asset_id, wallet.balance) : 0;
+    // Get crypto logo
+    const cryptoLogo = !isFiatWallet ? cryptoPrices[wallet.asset_id]?.logo : null;
     
     return (
       <Card 
@@ -148,15 +150,23 @@ const WalletsPage = () => {
           {/* Asset Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center overflow-hidden ${
                 isFiatWallet 
                   ? 'bg-gradient-to-br from-emerald-500/30 to-emerald-600/30'
                   : 'bg-gradient-to-br from-gold-500/30 to-gold-600/30'
               }`}>
                 {isFiatWallet ? (
-                  <span className="text-emerald-400 font-bold text-lg">{fiatSymbols[wallet.asset_id] || wallet.asset_id?.slice(0, 1)}</span>
-                ) : (
-                  <span className="text-gold-400 font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+                  <span className="text-2xl">{fiatFlags[wallet.asset_id]}</span>
+                ) : cryptoLogo ? (
+                  <img 
+                    src={cryptoLogo} 
+                    alt={wallet.asset_id} 
+                    className="w-10 h-10 rounded-full"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                ) : null}
+                {!isFiatWallet && (
+                  <span className={`text-gold-400 font-bold ${cryptoLogo ? 'hidden' : ''}`}>{wallet.asset_id?.slice(0, 2)}</span>
                 )}
               </div>
               <div>
