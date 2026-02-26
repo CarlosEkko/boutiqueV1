@@ -369,6 +369,24 @@ const WalletsPage = () => {
           <Bitcoin size={16} />
           Cripto
         </button>
+        
+        {/* View mode toggle */}
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('compact')}
+            className={`p-2 rounded-lg transition-colors ${viewMode === 'compact' ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-white'}`}
+            title="Vista compacta"
+          >
+            <List size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-white'}`}
+            title="Vista em grade"
+          >
+            <LayoutGrid size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Wallets Grid */}
@@ -380,7 +398,7 @@ const WalletsPage = () => {
               {activeTab === 'all' && (
                 <h2 className="text-lg font-medium text-emerald-400 mb-4 flex items-center gap-2">
                   <Banknote size={20} />
-                  Carteiras Fiat
+                  Carteiras Fiat ({fiatWallets.length})
                 </h2>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -392,19 +410,49 @@ const WalletsPage = () => {
           )}
 
           {/* Crypto Section */}
-          {(activeTab === 'all' || activeTab === 'crypto') && cryptoWallets.length > 0 && (
+          {(activeTab === 'all' || activeTab === 'crypto') && allCryptoWallets.length > 0 && (
             <div>
               {activeTab === 'all' && (
-                <h2 className="text-lg font-medium text-gold-400 mb-4 flex items-center gap-2">
-                  <Bitcoin size={20} />
-                  Carteiras Cripto
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-medium text-gold-400 flex items-center gap-2">
+                    <Bitcoin size={20} />
+                    Carteiras Cripto 
+                    <span className="text-sm text-gray-400 font-normal">
+                      ({cryptoWithBalance.length} com saldo / {allCryptoWallets.length} total)
+                    </span>
+                  </h2>
+                  <button
+                    onClick={() => setShowAllCrypto(!showAllCrypto)}
+                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    {showAllCrypto ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showAllCrypto ? 'Mostrar menos' : 'Ver todas'}
+                  </button>
+                </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {cryptoWallets.map((wallet) => (
-                  <WalletCard key={wallet.id} wallet={wallet} />
-                ))}
-              </div>
+              
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {cryptoWallets.map((wallet) => (
+                    <WalletCard key={wallet.id} wallet={wallet} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {cryptoWallets.map((wallet) => (
+                    <CompactWalletRow key={wallet.id} wallet={wallet} />
+                  ))}
+                </div>
+              )}
+              
+              {!showAllCrypto && cryptoWithoutBalance.length > 0 && cryptoWithBalance.length > 0 && (
+                <button
+                  onClick={() => setShowAllCrypto(true)}
+                  className="mt-4 w-full py-3 text-center text-gray-400 hover:text-white border border-dashed border-zinc-700 rounded-lg hover:border-zinc-600 transition-colors"
+                >
+                  + {cryptoWithoutBalance.length} carteiras sem saldo
+                </button>
+              )}
             </div>
           )}
         </div>
