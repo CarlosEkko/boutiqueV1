@@ -59,6 +59,12 @@ const AdminTradingPage = () => {
   // Expanded cards
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [expandedTransfer, setExpandedTransfer] = useState(null);
+  
+  // Crypto fees state
+  const [cryptoFees, setCryptoFees] = useState([]);
+  const [selectedCrypto, setSelectedCrypto] = useState(null);
+  const [cryptoSearch, setCryptoSearch] = useState('');
+  const [savingCrypto, setSavingCrypto] = useState(null);
 
   useEffect(() => {
     if (activeTab === 'fees') fetchFees();
