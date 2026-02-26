@@ -34,7 +34,7 @@ const SUPPORTED_CURRENCIES = [
 
 const AdminTradingPage = () => {
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState('fees');
+  const [activeTab, setActiveTab] = useState('crypto-fees');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
