@@ -872,14 +872,28 @@ async def get_single_crypto_price(symbol: str, currency: str = "USD"):
 
 
 @router.get("/fees", response_model=dict)
-async def get_public_fees():
-    """Get current trading fees (public)"""
+async def get_public_fees(currency: str = "USD"):
+    """Get current trading fees for a currency (public)"""
+    currency = currency.upper()
+    if currency not in SUPPORTED_FIAT:
+        currency = "USD"
+    
     fees = await get_trading_fees()
+    currency_fees = get_currency_fees(fees, currency)
+    
     return {
-        "buy_fee_percent": fees.buy_fee_percent,
-        "sell_fee_percent": fees.sell_fee_percent,
-        "swap_fee_percent": fees.swap_fee_percent,
-        "network_fees": fees.network_fees
+        "currency": currency,
+        "buy_fee_percent": currency_fees.get("buy_fee_percent", 2.0),
+        "sell_fee_percent": currency_fees.get("sell_fee_percent", 2.0),
+        "swap_fee_percent": currency_fees.get("swap_fee_percent", 1.5),
+        "buy_spread_percent": currency_fees.get("buy_spread_percent", 1.0),
+        "sell_spread_percent": currency_fees.get("sell_spread_percent", 1.0),
+        "swap_spread_percent": currency_fees.get("swap_spread_percent", 0.5),
+        "min_buy_fee": currency_fees.get("min_buy_fee", 5.0),
+        "min_sell_fee": currency_fees.get("min_sell_fee", 5.0),
+        "min_swap_fee": currency_fees.get("min_swap_fee", 3.0),
+        "network_fees": fees.network_fees,
+        "all_currencies": fees.fees_by_currency
     }
 
 
