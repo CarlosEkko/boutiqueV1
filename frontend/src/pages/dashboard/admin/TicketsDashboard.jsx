@@ -341,16 +341,16 @@ const TicketsDashboard = () => {
               Meus Tickets
             </Button>
 
-            {(statusFilter || priorityFilter || assignedToMe) && (
+            {(statusFilter && statusFilter !== 'all') || (priorityFilter && priorityFilter !== 'all') || assignedToMe ? (
               <Button
-                onClick={() => { setStatusFilter(''); setPriorityFilter(''); setAssignedToMe(false); }}
+                onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); setAssignedToMe(false); }}
                 variant="ghost"
                 size="sm"
                 className="text-gray-400"
               >
                 Limpar Filtros
               </Button>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>
