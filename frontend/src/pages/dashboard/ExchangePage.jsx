@@ -507,21 +507,21 @@ const ExchangePage = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Valor em USD</label>
+                    <label className="text-sm text-gray-400 mb-2 block">Valor em {currency}</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
                       <Input
                         type="number"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
-                        className="bg-zinc-800 border-zinc-700 text-white pl-8"
+                        className="bg-zinc-800 border-zinc-700 text-white pl-10"
                         data-testid="buy-amount-input"
                       />
                     </div>
                     {limits && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Limite: ${limits.limits?.min_buy_amount?.toFixed(2)} - ${limits.limits?.max_buy_amount?.toLocaleString()}
+                        Limite: {formatCurrency(convertFromUSD(limits.limits?.min_buy_amount))} - {formatCurrency(convertFromUSD(limits.limits?.max_buy_amount))}
                       </p>
                     )}
                   </div>
