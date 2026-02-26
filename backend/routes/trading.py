@@ -1244,6 +1244,218 @@ async def submit_transfer_proof(
     return {"success": True, "message": "Proof submitted. Awaiting admin approval."}
 
 
+# ==================== USER: FIAT DEPOSITS ====================
+
+# KBEX Bank accounts for receiving deposits (per currency)
+KBEX_BANK_ACCOUNTS = {
+    "EUR": {
+        "bank_name": "KBEX Exchange Ltd",
+        "iban": "PT50 0000 0000 0000 0000 0000 0",
+        "bic": "KBEXPTPL",
+        "account_holder": "KBEX Exchange Ltd",
+        "bank_address": "Lisbon, Portugal"
+    },
+    "USD": {
+        "bank_name": "KBEX Exchange Inc",
+        "iban": "US00 0000 0000 0000 0000 0000",
+        "bic": "KBEXUSNY",
+        "account_holder": "KBEX Exchange Inc",
+        "bank_address": "New York, USA",
+        "routing_number": "021000021",
+        "account_number": "123456789"
+    },
+    "AED": {
+        "bank_name": "KBEX Exchange DMCC",
+        "iban": "AE00 0000 0000 0000 0000 000",
+        "bic": "KBEXAEAD",
+        "account_holder": "KBEX Exchange DMCC",
+        "bank_address": "Dubai, UAE"
+    },
+    "BRL": {
+        "bank_name": "KBEX Brasil Ltda",
+        "pix_key": "depositos@kbex.io",
+        "account_holder": "KBEX Brasil Ltda",
+        "bank_address": "São Paulo, Brasil",
+        "bank": "Banco do Brasil",
+        "agency": "0001",
+        "account": "12345-6"
+    }
+}
+
+
+class CreateFiatDeposit(BaseModel):
+    """Create fiat deposit request"""
+    currency: str  # EUR, USD, AED, BRL
+    amount: float
+
+
+@router.post("/fiat/deposit", response_model=dict)
+async def create_fiat_deposit(
+    deposit: CreateFiatDeposit,
+    user: dict = Depends(get_current_user)
+):
+    """Create a fiat deposit request and get bank details"""
+    # Check user is approved
+    if not user.get("is_approved"):
+        raise HTTPException(status_code=403, detail="Account not approved for deposits")
+    
+    currency = deposit.currency.upper()
+    
+    # Validate currency
+    if currency not in KBEX_BANK_ACCOUNTS:
+        raise HTTPException(status_code=400, detail=f"Currency {currency} not supported. Available: EUR, USD, AED, BRL")
+    
+    # Minimum deposit amounts
+    min_amounts = {"EUR": 100, "USD": 100, "AED": 500, "BRL": 500}
+    if deposit.amount < min_amounts.get(currency, 100):
+        raise HTTPException(status_code=400, detail=f"Minimum deposit is {min_amounts[currency]} {currency}")
+    
+    # Generate unique reference code
+    reference_code = f"DEP{secrets.token_hex(4).upper()}"
+    
+    # Create bank transfer record
+    bank_transfer = BankTransfer(
+        user_id=user["id"],
+        user_email=user["email"],
+        transfer_type="deposit",
+        amount=deposit.amount,
+        currency=currency,
+        recipient_iban=KBEX_BANK_ACCOUNTS[currency].get("iban"),
+        recipient_bank=KBEX_BANK_ACCOUNTS[currency].get("bank_name"),
+        reference_code=reference_code,
+        status=BankTransferStatus.PENDING
+    )
+    
+    # Save to database
+    transfer_dict = bank_transfer.model_dump()
+    transfer_dict["created_at"] = transfer_dict["created_at"].isoformat()
+    transfer_dict["updated_at"] = transfer_dict["updated_at"].isoformat()
+    await db.bank_transfers.insert_one(transfer_dict)
+    
+    # Get bank details for response
+    bank_details = KBEX_BANK_ACCOUNTS[currency].copy()
+    bank_details["reference_code"] = reference_code
+    bank_details["amount"] = deposit.amount
+    bank_details["currency"] = currency
+    
+    return {
+        "success": True,
+        "deposit_id": bank_transfer.id,
+        "reference_code": reference_code,
+        "bank_details": bank_details,
+        "instructions": {
+            "pt": f"Faça uma transferência de {deposit.amount} {currency} para a conta bancária indicada. Use o código de referência '{reference_code}' na descrição da transferência. Após a transferência, envie o comprovante.",
+            "en": f"Transfer {deposit.amount} {currency} to the bank account shown. Use reference code '{reference_code}' in the transfer description. After transfer, submit proof of payment."
+        },
+        "next_step": "upload_proof"
+    }
+
+
+@router.get("/fiat/deposits", response_model=List[dict])
+async def get_my_fiat_deposits(
+    status: Optional[str] = None,
+    currency: Optional[str] = None,
+    user: dict = Depends(get_current_user)
+):
+    """Get user's fiat deposit history"""
+    query = {"user_id": user["id"], "transfer_type": "deposit"}
+    
+    if status:
+        query["status"] = status
+    if currency:
+        query["currency"] = currency.upper()
+    
+    deposits = await db.bank_transfers.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return deposits
+
+
+@router.get("/fiat/deposit/{deposit_id}", response_model=dict)
+async def get_fiat_deposit_details(
+    deposit_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Get fiat deposit details"""
+    deposit = await db.bank_transfers.find_one({
+        "id": deposit_id,
+        "user_id": user["id"],
+        "transfer_type": "deposit"
+    }, {"_id": 0})
+    
+    if not deposit:
+        raise HTTPException(status_code=404, detail="Deposit not found")
+    
+    # Add bank details
+    currency = deposit.get("currency", "EUR")
+    if currency in KBEX_BANK_ACCOUNTS:
+        deposit["bank_details"] = KBEX_BANK_ACCOUNTS[currency].copy()
+        deposit["bank_details"]["reference_code"] = deposit["reference_code"]
+    
+    return deposit
+
+
+@router.post("/fiat/deposit/{deposit_id}/proof", response_model=dict)
+async def submit_fiat_deposit_proof(
+    deposit_id: str,
+    proof_url: str,
+    user: dict = Depends(get_current_user)
+):
+    """Submit proof of fiat deposit"""
+    deposit = await db.bank_transfers.find_one({
+        "id": deposit_id,
+        "user_id": user["id"],
+        "transfer_type": "deposit"
+    }, {"_id": 0})
+    
+    if not deposit:
+        raise HTTPException(status_code=404, detail="Deposit not found")
+    
+    if deposit["status"] not in ["pending"]:
+        raise HTTPException(status_code=400, detail="Proof already submitted or deposit processed")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.bank_transfers.update_one(
+        {"id": deposit_id},
+        {
+            "$set": {
+                "proof_document_url": proof_url,
+                "status": "awaiting_approval",
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Proof submitted. Your deposit is awaiting admin approval."}
+
+
+@router.delete("/fiat/deposit/{deposit_id}", response_model=dict)
+async def cancel_fiat_deposit(
+    deposit_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Cancel a pending fiat deposit"""
+    deposit = await db.bank_transfers.find_one({
+        "id": deposit_id,
+        "user_id": user["id"],
+        "transfer_type": "deposit"
+    }, {"_id": 0})
+    
+    if not deposit:
+        raise HTTPException(status_code=404, detail="Deposit not found")
+    
+    if deposit["status"] not in ["pending"]:
+        raise HTTPException(status_code=400, detail="Cannot cancel deposit in current status")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.bank_transfers.update_one(
+        {"id": deposit_id},
+        {"$set": {"status": "cancelled", "updated_at": now}}
+    )
+    
+    return {"success": True, "message": "Deposit cancelled"}
+
+
 # ==================== STRIPE WEBHOOK ====================
 
 @router.post("/webhook/stripe")
