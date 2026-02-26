@@ -21,7 +21,9 @@ import {
   Globe,
   UserCog,
   Ticket,
-  User
+  User,
+  ArrowDownUp,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
@@ -37,6 +39,7 @@ const DashboardLayout = () => {
 
   const userNavItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t('dashboard.nav.overview'), end: true },
+    { to: '/dashboard/exchange', icon: ArrowDownUp, label: 'Exchange' },
     { to: '/dashboard/wallets', icon: Wallet, label: t('dashboard.nav.wallets') },
     { to: '/dashboard/transactions', icon: History, label: t('dashboard.nav.transactions') },
     { to: '/dashboard/investments', icon: TrendingUp, label: t('dashboard.nav.investments') },
@@ -48,6 +51,7 @@ const DashboardLayout = () => {
 
   const adminNavItems = [
     { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
+    { to: '/dashboard/admin/trading', icon: DollarSign, label: 'Gestão Trading' },
     { to: '/dashboard/admin/regional', icon: Globe, label: 'Métricas Regionais' },
     { to: '/dashboard/admin/staff', icon: UserCog, label: 'Gestão de Equipa' },
     { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },
