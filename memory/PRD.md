@@ -1,7 +1,7 @@
 # KBEX.io - Premium Crypto Boutique Exchange
 
 ## Original Problem Statement
-Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
+Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting High-Net-Worth (HNW) / Ultra-High-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
 
 ## Core Requirements
 - **Target Audience**: HNW/UHNW individuals and companies
@@ -15,15 +15,19 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Backend**: FastAPI, Pydantic, Motor (async MongoDB)
 - **Database**: MongoDB
 - **Deployment**: Docker, Docker Compose, Nginx (reverse proxy), Let's Encrypt (SSL)
+- **Integrations**: CoinMarketCap (preços), Stripe (pagamentos), emergentintegrations
 
 ## Architecture
 ```
 /app
 ├── backend/
-│   ├── models/user.py (RBAC models)
+│   ├── models/
+│   │   ├── user.py (RBAC models)
+│   │   └── trading.py (Trading models - NEW)
 │   ├── routes/
 │   │   ├── auth.py (JWT authentication)
 │   │   ├── admin.py (RBAC endpoints)
+│   │   ├── trading.py (Exchange endpoints - NEW)
 │   │   ├── tickets.py (Support system)
 │   │   ├── kyc.py (KYC/KYB verification)
 │   │   └── dashboard.py (User dashboard)
@@ -31,7 +35,11 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 ├── frontend/
 │   ├── src/
 │   │   ├── components/ (Header, Footer, UI)
-│   │   ├── pages/ (Home, Dashboard, Auth, Markets, etc.)
+│   │   ├── pages/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── ExchangePage.jsx (NEW)
+│   │   │   │   └── admin/AdminTradingPage.jsx (NEW)
+│   │   │   └── ...
 │   │   └── context/AuthContext.jsx
 │   └── public/logo.png
 ├── docker-compose.yml
@@ -40,14 +48,28 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Implemented Features
 
+### Exchange/Trading (NEW - Dec 2025)
+- [x] Buy crypto with credit card (Stripe)
+- [x] Buy crypto with bank transfer (admin approval required)
+- [x] Sell crypto (admin approval required)
+- [x] Swap/Convert crypto between currencies
+- [x] Real-time prices from CoinMarketCap (60s cache)
+- [x] Admin: Configure trading fees (buy/sell/swap)
+- [x] Admin: Configure spreads
+- [x] Admin: Configure user limits by tier (Standard/Premium/VIP)
+- [x] Admin: Approve/reject bank transfers
+- [x] Admin: Complete/cancel orders
+- [x] User limits check (daily/monthly/per-transaction)
+- [x] Order history
+
 ### Authentication & Users
 - [x] JWT-based authentication
 - [x] User registration with invite codes
 - [x] Login/Logout
 - [x] Profile management
 
-### RBAC System (NEW - Feb 2026)
-- [x] Client Tiers: Standard, Premium, Elite
+### RBAC System
+- [x] Client Tiers: Standard, Premium, VIP
 - [x] Internal Roles: Admin, Manager, Local Manager, Support
 - [x] Regions: Europe, MENA, LATAM, Global
 - [x] Region-based access control
@@ -69,28 +91,48 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ### Dashboard
 - [x] Portfolio overview
-- [x] Wallet management (mocked)
-- [x] Transaction history (mocked)
+- [x] Wallet management
+- [x] Transaction history
 - [x] Investment opportunities
 - [x] ROI tracking
 - [x] Transparency reports
 
 ### Admin Panel
-- [x] User management
+- [x] User management (block/unblock/delete/reset password)
+- [x] Trading management (fees, limits, orders, transfers)
 - [x] KYC/KYB review
 - [x] Investment opportunities
 - [x] Invite codes
 - [x] Statistics
-
-### Public Pages
-- [x] Homepage with hero
-- [x] Markets page (placeholder)
-- [x] Trading page (placeholder)
-- [x] Earn page (placeholder)
-- [x] Institutional page (placeholder)
-- [x] Crypto ATM page
+- [x] Regional metrics
 
 ## API Endpoints
+
+### Trading (NEW)
+- GET /api/trading/cryptos - List available cryptocurrencies with prices
+- GET /api/trading/price/{symbol} - Get single crypto price
+- GET /api/trading/fees - Public fee configuration
+- GET /api/trading/limits - User's trading limits
+- POST /api/trading/buy - Create buy order
+- POST /api/trading/sell - Create sell order
+- POST /api/trading/swap - Create swap order
+- GET /api/trading/orders - User's orders
+- GET /api/trading/orders/{id} - Order details
+- GET /api/trading/payment-status/{session_id} - Check Stripe payment status
+- POST /api/webhook/stripe - Stripe webhook
+
+### Trading Admin
+- GET /api/trading/admin/fees - Full fee configuration
+- PUT /api/trading/admin/fees - Update fees
+- GET /api/trading/admin/limits - All tier limits
+- GET /api/trading/admin/limits/{tier} - Specific tier limits
+- PUT /api/trading/admin/limits/{tier} - Update tier limits
+- GET /api/trading/admin/orders - All orders
+- POST /api/trading/admin/orders/{id}/complete - Complete order
+- POST /api/trading/admin/orders/{id}/cancel - Cancel order
+- GET /api/trading/admin/bank-transfers - All bank transfers
+- POST /api/trading/admin/bank-transfers/{id}/approve - Approve transfer
+- POST /api/trading/admin/bank-transfers/{id}/reject - Reject transfer
 
 ### Auth
 - POST /api/auth/register
@@ -119,6 +161,74 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Database Schema
 
+### trading_fees
+```json
+{
+  "id": "uuid",
+  "buy_fee_percent": 2.0,
+  "buy_spread_percent": 1.0,
+  "sell_fee_percent": 2.0,
+  "sell_spread_percent": 1.0,
+  "swap_fee_percent": 1.5,
+  "swap_spread_percent": 0.5,
+  "min_buy_fee_usd": 5.0,
+  "min_sell_fee_usd": 5.0,
+  "min_swap_fee_usd": 3.0,
+  "network_fees": {"bitcoin": 10.0, "ethereum": 5.0, ...}
+}
+```
+
+### trading_limits
+```json
+{
+  "id": "uuid",
+  "tier": "standard|premium|vip",
+  "daily_buy_limit": 5000.0,
+  "daily_sell_limit": 5000.0,
+  "daily_swap_limit": 10000.0,
+  "monthly_buy_limit": 50000.0,
+  "monthly_sell_limit": 50000.0,
+  "monthly_swap_limit": 100000.0,
+  "min_buy_amount": 50.0,
+  "max_buy_amount": 10000.0,
+  ...
+}
+```
+
+### trading_orders
+```json
+{
+  "id": "uuid",
+  "user_id": "string",
+  "order_type": "buy|sell|swap",
+  "status": "pending|awaiting_payment|processing|completed|cancelled|failed|awaiting_admin_approval",
+  "crypto_symbol": "BTC",
+  "crypto_amount": 0.001,
+  "fiat_amount": 100.00,
+  "market_price": 66000.00,
+  "execution_price": 66660.00,
+  "fee_percent": 2.0,
+  "fee_amount": 2.00,
+  "payment_method": "card|bank_transfer|crypto",
+  "stripe_session_id": "string|null",
+  "bank_transfer_id": "string|null"
+}
+```
+
+### bank_transfers
+```json
+{
+  "id": "uuid",
+  "user_id": "string",
+  "order_id": "string|null",
+  "transfer_type": "deposit|withdrawal",
+  "amount": 100.00,
+  "currency": "EUR",
+  "reference_code": "KB12345678",
+  "status": "pending|awaiting_approval|approved|rejected|completed"
+}
+```
+
 ### users
 ```json
 {
@@ -129,40 +239,22 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   "user_type": "client|internal",
   "internal_role": "admin|manager|local_manager|support|null",
   "region": "europe|mena|latam|global",
-  "membership_level": "standard|premium|elite",
+  "membership_level": "standard|premium|vip",
   "is_admin": "boolean",
   "is_approved": "boolean",
   "kyc_status": "not_started|pending|approved|rejected"
 }
 ```
 
-### tickets
-```json
-{
-  "id": "uuid",
-  "user_id": "string",
-  "region": "europe|mena|latam",
-  "subject": "string",
-  "category": "general|kyc|transaction|account|technical|complaint",
-  "priority": "low|medium|high|urgent",
-  "status": "open|in_progress|waiting_client|resolved|closed",
-  "assigned_to": "string|null"
-}
-```
-
 ## Test Credentials (Preview Environment)
 - **Admin**: carlos@kryptobox.io / senha123
-- **Local Manager (Europe)**: manager_europe@kbex.io / senha123
-- **Support (LATAM)**: support_latam@kbex.io / senha123
-- **Client (LATAM)**: maria@teste.com / senha123
 
 ## Known Issues
 - [ ] Safari cursor bug (P1) - cursor not working correctly in Safari
 - [ ] Fireblocks integration blocked (P2) - waiting for new credentials
+- [ ] Whitelist functionality not implemented (P3) - waiting for requirements
 
 ## Pending Tasks
-- [ ] Frontend RBAC UI (Admin Panel for internal users)
-- [ ] Ticket management UI (Support dashboard)
 - [ ] Markets page with CoinMarketCap data
 - [ ] Trading page with TradingView chart
 - [ ] Full translations EN/AR
@@ -172,3 +264,4 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [ ] ICO page
 - [ ] Dashboard charts and history
 - [ ] Real wallet integration (after Fireblocks fix)
+- [ ] Whitelist functionality (after requirements)
