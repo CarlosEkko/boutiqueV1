@@ -269,6 +269,10 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [ ] Fireblocks integration blocked (P2) - waiting for new credentials
 - [ ] Whitelist functionality not implemented (P3) - waiting for requirements
 
+## Completed (Feb 2026)
+- [x] Per-currency trading fees - Admin can configure fees for EUR, USD, AED, BRL individually
+- [x] Admin UI for per-currency fees - Currency tabs with flag icons, separate fee forms per currency
+
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data
 - [ ] Trading page with TradingView chart
