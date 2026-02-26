@@ -30,6 +30,7 @@ import {
   AdminTradingPage
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
+import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
