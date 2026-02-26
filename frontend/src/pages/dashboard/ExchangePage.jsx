@@ -567,16 +567,16 @@ const ExchangePage = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Taxa</span>
-                        <span className="text-gray-300">${buyPreview.fee.toFixed(2)}</span>
+                        <span className="text-gray-300">{formatCurrency(buyPreview.fee)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Taxa de Rede</span>
-                        <span className="text-gray-300">${buyPreview.networkFee.toFixed(2)}</span>
+                        <span className="text-gray-300">{formatCurrency(buyPreview.networkFee)}</span>
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Total</span>
-                          <span className="text-gold-400 font-semibold">${buyPreview.total.toFixed(2)}</span>
+                          <span className="text-gold-400 font-semibold">{formatCurrency(buyPreview.total)}</span>
                         </div>
                       </div>
                     </div>
