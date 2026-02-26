@@ -332,14 +332,14 @@ const WalletsPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-light text-white">Minhas Carteiras</h1>
           <p className="text-gray-400 mt-1">Gerencie suas carteiras de criptomoedas e moedas fiat</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
           <Button 
             className="bg-emerald-500 hover:bg-emerald-600 text-white"
             onClick={() => window.location.href = '/dashboard/fiat-deposit'}
@@ -356,16 +356,21 @@ const WalletsPage = () => {
             <RefreshCw size={18} className="mr-2" />
             Atualizar
           </Button>
+          {/* Currency Selector */}
+          <div className="flex items-center bg-zinc-800 rounded-lg px-3 py-2 border border-zinc-700">
+            <span className="text-lg mr-2">{currentCurrency?.flag || '🇺🇸'}</span>
+            <span className="text-white font-medium">{currency}</span>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-zinc-800 pb-2">
+      <div className="flex gap-2 mb-6">
         <button
-          className={`px-4 py-2 rounded-lg transition-colors ${
+          className={`px-5 py-2.5 rounded-lg transition-colors font-medium ${
             activeTab === 'all' 
-              ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' 
-              : 'text-gray-400 hover:text-white'
+              ? 'bg-gold-500 text-black' 
+              : 'text-gray-400 hover:text-white hover:bg-zinc-800'
           }`}
           onClick={() => setActiveTab('all')}
           data-testid="tab-all"
@@ -373,10 +378,10 @@ const WalletsPage = () => {
           Todas
         </button>
         <button
-          className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
             activeTab === 'fiat' 
-              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-              : 'text-gray-400 hover:text-white'
+              ? 'bg-gold-500 text-black' 
+              : 'text-gray-400 hover:text-white hover:bg-zinc-800'
           }`}
           onClick={() => setActiveTab('fiat')}
           data-testid="tab-fiat"
@@ -385,10 +390,10 @@ const WalletsPage = () => {
           Fiat
         </button>
         <button
-          className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
             activeTab === 'crypto' 
-              ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' 
-              : 'text-gray-400 hover:text-white'
+              ? 'bg-gold-500 text-black' 
+              : 'text-gray-400 hover:text-white hover:bg-zinc-800'
           }`}
           onClick={() => setActiveTab('crypto')}
           data-testid="tab-crypto"
@@ -396,7 +401,22 @@ const WalletsPage = () => {
           <Bitcoin size={16} />
           Cripto
         </button>
+        <button
+          className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
+            activeTab === 'watchlist' 
+              ? 'bg-gold-500 text-black' 
+              : 'text-gray-400 hover:text-white hover:bg-zinc-800'
+          }`}
+          onClick={() => setActiveTab('watchlist')}
+          data-testid="tab-watchlist"
+        >
+          <Star size={16} />
+          Watchlist
+        </button>
       </div>
+
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-8">
 
       {/* Wallets Grid */}
       {filteredWallets.length > 0 ? (
