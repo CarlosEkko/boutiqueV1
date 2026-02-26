@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime, timezone
-from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel
+from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel, UserType, Region
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -133,7 +133,7 @@ async def login(credentials: UserLogin):
     # Create access token
     access_token = create_access_token(data={"sub": user_doc["id"]})
     
-    # Return response
+    # Return response with RBAC fields
     user_response = UserResponse(
         id=user_doc["id"],
         email=user_doc["email"],
@@ -146,7 +146,10 @@ async def login(credentials: UserLogin):
         is_approved=user_doc.get("is_approved", False),
         is_admin=user_doc.get("is_admin", False),
         kyc_status=user_doc.get("kyc_status", KYCStatus.NOT_STARTED),
-        membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD)
+        membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD),
+        user_type=user_doc.get("user_type", UserType.CLIENT),
+        region=user_doc.get("region", Region.EUROPE),
+        internal_role=user_doc.get("internal_role")
     )
     
     return TokenResponse(
@@ -186,7 +189,10 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)):
         is_approved=user_doc.get("is_approved", False),
         is_admin=user_doc.get("is_admin", False),
         kyc_status=user_doc.get("kyc_status", KYCStatus.NOT_STARTED),
-        membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD)
+        membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD),
+        user_type=user_doc.get("user_type", UserType.CLIENT),
+        region=user_doc.get("region", Region.EUROPE),
+        internal_role=user_doc.get("internal_role")
     )
 
 

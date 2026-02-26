@@ -132,7 +132,7 @@ class UserResponse(UserBase):
     
     # Internal fields
     is_admin: bool = False
-    internal_role: Optional[InternalRole] = None
+    internal_role: Optional[str] = None  # String for JSON serialization
 
 
 class UserResponseAdmin(UserResponse):
