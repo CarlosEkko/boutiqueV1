@@ -17,7 +17,8 @@ import {
   Gift,
   Settings,
   BarChart3,
-  UserCheck
+  UserCheck,
+  Globe
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
