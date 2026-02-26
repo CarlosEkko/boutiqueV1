@@ -312,7 +312,7 @@ const TicketsDashboard = () => {
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-800/30">
-                <SelectItem value="">Todos Estados</SelectItem>
+                <SelectItem value="all">Todos Estados</SelectItem>
                 {statusOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
@@ -324,7 +324,7 @@ const TicketsDashboard = () => {
                 <SelectValue placeholder="Prioridade" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-800/30">
-                <SelectItem value="">Todas Prioridades</SelectItem>
+                <SelectItem value="all">Todas Prioridades</SelectItem>
                 {priorityOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
