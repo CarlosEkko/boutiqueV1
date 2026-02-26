@@ -299,7 +299,7 @@ const TicketsDashboard = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-zinc-900/30 border-gold-800/20">
+      <Card className="bg-zinc-900/50 border-gold-500/30">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
@@ -308,8 +308,8 @@ const TicketsDashboard = () => {
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-44 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
-                <SelectValue placeholder="Estado" />
+              <SelectTrigger className="w-48 bg-zinc-700 border-2 border-gold-500/60 text-white hover:border-gold-400 hover:bg-zinc-600 transition-colors font-medium">
+                <SelectValue placeholder="Selecionar Estado" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/50">
                 <SelectItem value="all" className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">Todos Estados</SelectItem>
@@ -320,8 +320,8 @@ const TicketsDashboard = () => {
             </Select>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-44 bg-zinc-800/80 border-gold-500/50 text-white hover:border-gold-400 hover:bg-zinc-700/80 transition-colors">
-                <SelectValue placeholder="Prioridade" />
+              <SelectTrigger className="w-48 bg-zinc-700 border-2 border-gold-500/60 text-white hover:border-gold-400 hover:bg-zinc-600 transition-colors font-medium">
+                <SelectValue placeholder="Selecionar Prioridade" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/50">
                 <SelectItem value="all" className="text-white hover:bg-gold-900/30 focus:bg-gold-900/30">Todas Prioridades</SelectItem>
@@ -335,7 +335,7 @@ const TicketsDashboard = () => {
               onClick={() => setAssignedToMe(!assignedToMe)}
               variant={assignedToMe ? "default" : "outline"}
               size="sm"
-              className={assignedToMe ? "bg-gold-500 hover:bg-gold-400" : "border-gold-500/50 text-white hover:bg-gold-900/30"}
+              className={assignedToMe ? "bg-gold-500 hover:bg-gold-400" : "border-2 border-gold-500/60 text-white hover:bg-gold-900/30 font-medium"}
             >
               <UserCheck size={14} className="mr-1" />
               Meus Tickets
