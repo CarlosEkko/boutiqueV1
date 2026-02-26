@@ -20,7 +20,12 @@ import {
   ChevronDown,
   ChevronUp,
   Coins,
-  Search
+  Search,
+  Banknote,
+  ArrowDownToLine,
+  Plus,
+  Trash2,
+  Edit
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
