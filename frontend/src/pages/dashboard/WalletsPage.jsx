@@ -396,36 +396,18 @@ const WalletsPage = () => {
           <Bitcoin size={16} />
           Cripto
         </button>
-        
-        {/* View mode toggle */}
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('compact')}
-            className={`p-2 rounded-lg transition-colors ${viewMode === 'compact' ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-white'}`}
-            title="Vista compacta"
-          >
-            <List size={18} />
-          </button>
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-zinc-700 text-white' : 'text-gray-400 hover:text-white'}`}
-            title="Vista em grade"
-          >
-            <LayoutGrid size={18} />
-          </button>
-        </div>
       </div>
 
       {/* Wallets Grid */}
       {filteredWallets.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Fiat Section */}
           {(activeTab === 'all' || activeTab === 'fiat') && fiatWallets.length > 0 && (
             <div>
               {activeTab === 'all' && (
                 <h2 className="text-lg font-medium text-emerald-400 mb-4 flex items-center gap-2">
                   <Banknote size={20} />
-                  Carteiras Fiat ({fiatWallets.length})
+                  Carteiras Fiat
                 </h2>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -436,49 +418,60 @@ const WalletsPage = () => {
             </div>
           )}
 
-          {/* Crypto Section */}
-          {(activeTab === 'all' || activeTab === 'crypto') && allCryptoWallets.length > 0 && (
+          {/* Crypto with Balance Section */}
+          {(activeTab === 'all' || activeTab === 'crypto') && cryptoWithBalance.length > 0 && (
             <div>
-              {activeTab === 'all' && (
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-medium text-gold-400 flex items-center gap-2">
-                    <Bitcoin size={20} />
-                    Carteiras Cripto 
-                    <span className="text-sm text-gray-400 font-normal">
-                      ({cryptoWithBalance.length} com saldo / {allCryptoWallets.length} total)
-                    </span>
-                  </h2>
-                  <button
-                    onClick={() => setShowAllCrypto(!showAllCrypto)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    {showAllCrypto ? <EyeOff size={16} /> : <Eye size={16} />}
-                    {showAllCrypto ? 'Mostrar menos' : 'Ver todas'}
-                  </button>
-                </div>
-              )}
+              <h2 className="text-lg font-medium text-gold-400 mb-4 flex items-center gap-2">
+                <Bitcoin size={20} />
+                Carteiras com Saldo ({cryptoWithBalance.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {cryptoWithBalance.map((wallet) => (
+                  <WalletCard key={wallet.id} wallet={wallet} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Watchlist Section */}
+          {(activeTab === 'all' || activeTab === 'crypto') && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-gray-400 flex items-center gap-2">
+                  <Star size={20} />
+                  Watchlist ({watchlistWallets.length})
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-zinc-700 text-gray-300 hover:bg-zinc-800"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <Plus size={16} className="mr-1" />
+                  Adicionar
+                </Button>
+              </div>
               
-              {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {cryptoWallets.map((wallet) => (
-                    <WalletCard key={wallet.id} wallet={wallet} />
+              {watchlistWallets.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {watchlistWallets.map((wallet) => (
+                    <WatchlistCard key={wallet.id} wallet={wallet} />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {cryptoWallets.map((wallet) => (
-                    <CompactWalletRow key={wallet.id} wallet={wallet} />
-                  ))}
+                <div className="border border-dashed border-zinc-700 rounded-lg p-6 text-center">
+                  <Star className="mx-auto mb-2 text-gray-600" size={24} />
+                  <p className="text-gray-500 text-sm">Adicione criptomoedas à sua watchlist para acompanhar</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 text-gold-400 hover:text-gold-300"
+                    onClick={() => setShowAddModal(true)}
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Adicionar cripto
+                  </Button>
                 </div>
-              )}
-              
-              {!showAllCrypto && cryptoWithoutBalance.length > 0 && cryptoWithBalance.length > 0 && (
-                <button
-                  onClick={() => setShowAllCrypto(true)}
-                  className="mt-4 w-full py-3 text-center text-gray-400 hover:text-white border border-dashed border-zinc-700 rounded-lg hover:border-zinc-600 transition-colors"
-                >
-                  + {cryptoWithoutBalance.length} carteiras sem saldo
-                </button>
               )}
             </div>
           )}
@@ -493,6 +486,84 @@ const WalletsPage = () => {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Add to Watchlist Modal */}
+      {showAddModal && (
+        <div 
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowAddModal(false)}
+        >
+          <Card 
+            className="bg-zinc-900 border-zinc-700 max-w-md w-full max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardHeader className="border-b border-zinc-800">
+              <CardTitle className="text-white flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Star className="text-gold-400" size={20} />
+                  Adicionar à Watchlist
+                </span>
+                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-white">
+                  <X size={20} />
+                </button>
+              </CardTitle>
+            </CardHeader>
+            <div className="p-4 border-b border-zinc-800">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Buscar criptomoeda..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-gold-500"
+                />
+              </div>
+            </div>
+            <CardContent className="p-0 overflow-y-auto flex-1">
+              <div className="divide-y divide-zinc-800">
+                {availableForWatchlist
+                  .filter(w => 
+                    w.asset_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    w.asset_name.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((wallet) => {
+                    const logo = cryptoPrices[wallet.asset_id]?.logo;
+                    const price = cryptoPrices[wallet.asset_id]?.price || 0;
+                    return (
+                      <button
+                        key={wallet.id}
+                        onClick={() => {
+                          addToWatchlist(wallet.asset_id);
+                          setShowAddModal(false);
+                        }}
+                        className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center overflow-hidden">
+                            {logo ? (
+                              <img src={logo} alt={wallet.asset_id} className="w-6 h-6 rounded-full" />
+                            ) : (
+                              <span className="text-gold-400 text-xs font-bold">{wallet.asset_id?.slice(0, 2)}</span>
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <p className="text-white font-medium">{wallet.asset_id}</p>
+                            <p className="text-gray-500 text-xs">{wallet.asset_name}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400 text-sm">{formatCurrency(price)}</span>
+                          <Plus className="text-gold-400" size={18} />
+                        </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Wallet Details Modal */}
