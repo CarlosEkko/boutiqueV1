@@ -37,30 +37,94 @@ class BankTransferStatus(str, Enum):
 
 # ==================== TRADING FEES ====================
 
-class TradingFees(BaseModel):
-    """Admin-configurable trading fees"""
+class CurrencyFees(BaseModel):
+    """Fees for a specific currency"""
     model_config = ConfigDict(extra="ignore")
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     
     # Buy fees (percentage)
     buy_fee_percent: float = 2.0
-    buy_spread_percent: float = 1.0  # Added to market price
+    buy_spread_percent: float = 1.0
     
     # Sell fees (percentage)
     sell_fee_percent: float = 2.0
-    sell_spread_percent: float = 1.0  # Subtracted from market price
+    sell_spread_percent: float = 1.0
     
     # Swap fees
     swap_fee_percent: float = 1.5
     swap_spread_percent: float = 0.5
     
-    # Minimum fees (fixed amount in USD)
+    # Minimum fees (in the currency)
+    min_buy_fee: float = 5.0
+    min_sell_fee: float = 5.0
+    min_swap_fee: float = 3.0
+
+
+class TradingFees(BaseModel):
+    """Admin-configurable trading fees per currency"""
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    
+    # Fees per currency
+    fees_by_currency: dict = Field(default_factory=lambda: {
+        "EUR": {
+            "buy_fee_percent": 2.0,
+            "buy_spread_percent": 1.0,
+            "sell_fee_percent": 2.0,
+            "sell_spread_percent": 1.0,
+            "swap_fee_percent": 1.5,
+            "swap_spread_percent": 0.5,
+            "min_buy_fee": 5.0,
+            "min_sell_fee": 5.0,
+            "min_swap_fee": 3.0
+        },
+        "USD": {
+            "buy_fee_percent": 2.0,
+            "buy_spread_percent": 1.0,
+            "sell_fee_percent": 2.0,
+            "sell_spread_percent": 1.0,
+            "swap_fee_percent": 1.5,
+            "swap_spread_percent": 0.5,
+            "min_buy_fee": 5.0,
+            "min_sell_fee": 5.0,
+            "min_swap_fee": 3.0
+        },
+        "AED": {
+            "buy_fee_percent": 2.5,
+            "buy_spread_percent": 1.0,
+            "sell_fee_percent": 2.5,
+            "sell_spread_percent": 1.0,
+            "swap_fee_percent": 2.0,
+            "swap_spread_percent": 0.5,
+            "min_buy_fee": 20.0,
+            "min_sell_fee": 20.0,
+            "min_swap_fee": 15.0
+        },
+        "BRL": {
+            "buy_fee_percent": 3.0,
+            "buy_spread_percent": 1.5,
+            "sell_fee_percent": 3.0,
+            "sell_spread_percent": 1.5,
+            "swap_fee_percent": 2.5,
+            "swap_spread_percent": 1.0,
+            "min_buy_fee": 30.0,
+            "min_sell_fee": 30.0,
+            "min_swap_fee": 20.0
+        }
+    })
+    
+    # Legacy fields for backward compatibility
+    buy_fee_percent: float = 2.0
+    buy_spread_percent: float = 1.0
+    sell_fee_percent: float = 2.0
+    sell_spread_percent: float = 1.0
+    swap_fee_percent: float = 1.5
+    swap_spread_percent: float = 0.5
     min_buy_fee_usd: float = 5.0
     min_sell_fee_usd: float = 5.0
     min_swap_fee_usd: float = 3.0
     
-    # Network fees (configurable per network)
+    # Network fees (configurable per network, in USD)
     network_fees: dict = Field(default_factory=lambda: {
         "bitcoin": 10.0,
         "ethereum": 5.0,
@@ -72,6 +136,19 @@ class TradingFees(BaseModel):
     
     updated_by: Optional[str] = None
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CurrencyFeesUpdate(BaseModel):
+    """Update fees for a specific currency"""
+    buy_fee_percent: Optional[float] = None
+    buy_spread_percent: Optional[float] = None
+    sell_fee_percent: Optional[float] = None
+    sell_spread_percent: Optional[float] = None
+    swap_fee_percent: Optional[float] = None
+    swap_spread_percent: Optional[float] = None
+    min_buy_fee: Optional[float] = None
+    min_sell_fee: Optional[float] = None
+    min_swap_fee: Optional[float] = None
 
 
 class TradingFeesUpdate(BaseModel):
