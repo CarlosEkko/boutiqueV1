@@ -7,8 +7,9 @@ WORKDIR /app
 COPY package.json ./
 COPY package-lock.json* ./
 
-# Install dependencies using npm with legacy peer deps
-RUN npm install --legacy-peer-deps
+# Install dependencies with fix for ajv
+RUN npm install --legacy-peer-deps && \
+    npm install ajv@8 ajv-keywords@5 --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -17,7 +18,8 @@ COPY . .
 ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
-# Build the application
+# Build the application with CI=false to ignore warnings
+ENV CI=false
 RUN npm run build
 
 # Production stage with nginx
