@@ -747,7 +747,13 @@ const ExchangePage = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">De</label>
-                    <CryptoSelector value={fromCrypto} onChange={setFromCrypto} exclude={toCrypto} />
+                    <CryptoSelector 
+                      value={fromCrypto} 
+                      onChange={setFromCrypto} 
+                      exclude={toCrypto}
+                      dropdownOpen={fromCryptoDropdownOpen}
+                      setDropdownOpen={setFromCryptoDropdownOpen}
+                    />
                   </div>
                   
                   <div>
@@ -783,7 +789,13 @@ const ExchangePage = () => {
 
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">Para</label>
-                    <CryptoSelector value={toCrypto} onChange={setToCrypto} exclude={fromCrypto} />
+                    <CryptoSelector 
+                      value={toCrypto} 
+                      onChange={setToCrypto} 
+                      exclude={fromCrypto}
+                      dropdownOpen={toCryptoDropdownOpen}
+                      setDropdownOpen={setToCryptoDropdownOpen}
+                    />
                   </div>
 
                   {/* Preview */}
