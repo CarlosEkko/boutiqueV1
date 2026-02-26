@@ -424,6 +424,168 @@ async def update_fees(
     return {"success": True, "message": "Trading fees updated"}
 
 
+# ==================== ADMIN: CRYPTO-SPECIFIC FEES ====================
+
+# Default top 50 cryptocurrencies
+DEFAULT_CRYPTOS = [
+    {"symbol": "BTC", "name": "Bitcoin"},
+    {"symbol": "ETH", "name": "Ethereum"},
+    {"symbol": "USDT", "name": "Tether"},
+    {"symbol": "BNB", "name": "BNB"},
+    {"symbol": "SOL", "name": "Solana"},
+    {"symbol": "XRP", "name": "XRP"},
+    {"symbol": "USDC", "name": "USD Coin"},
+    {"symbol": "ADA", "name": "Cardano"},
+    {"symbol": "DOGE", "name": "Dogecoin"},
+    {"symbol": "TRX", "name": "TRON"},
+    {"symbol": "AVAX", "name": "Avalanche"},
+    {"symbol": "LINK", "name": "Chainlink"},
+    {"symbol": "TON", "name": "Toncoin"},
+    {"symbol": "SHIB", "name": "Shiba Inu"},
+    {"symbol": "DOT", "name": "Polkadot"},
+    {"symbol": "BCH", "name": "Bitcoin Cash"},
+    {"symbol": "NEAR", "name": "NEAR Protocol"},
+    {"symbol": "MATIC", "name": "Polygon"},
+    {"symbol": "LTC", "name": "Litecoin"},
+    {"symbol": "UNI", "name": "Uniswap"},
+    {"symbol": "ICP", "name": "Internet Computer"},
+    {"symbol": "DAI", "name": "Dai"},
+    {"symbol": "APT", "name": "Aptos"},
+    {"symbol": "ETC", "name": "Ethereum Classic"},
+    {"symbol": "ATOM", "name": "Cosmos"},
+    {"symbol": "XLM", "name": "Stellar"},
+    {"symbol": "XMR", "name": "Monero"},
+    {"symbol": "OKB", "name": "OKB"},
+    {"symbol": "FIL", "name": "Filecoin"},
+    {"symbol": "HBAR", "name": "Hedera"},
+    {"symbol": "ARB", "name": "Arbitrum"},
+    {"symbol": "CRO", "name": "Cronos"},
+    {"symbol": "MKR", "name": "Maker"},
+    {"symbol": "VET", "name": "VeChain"},
+    {"symbol": "INJ", "name": "Injective"},
+    {"symbol": "OP", "name": "Optimism"},
+    {"symbol": "AAVE", "name": "Aave"},
+    {"symbol": "GRT", "name": "The Graph"},
+    {"symbol": "RUNE", "name": "THORChain"},
+    {"symbol": "ALGO", "name": "Algorand"},
+    {"symbol": "FTM", "name": "Fantom"},
+    {"symbol": "THETA", "name": "Theta Network"},
+    {"symbol": "SAND", "name": "The Sandbox"},
+    {"symbol": "AXS", "name": "Axie Infinity"},
+    {"symbol": "MANA", "name": "Decentraland"},
+    {"symbol": "EGLD", "name": "MultiversX"},
+    {"symbol": "EOS", "name": "EOS"},
+    {"symbol": "XTZ", "name": "Tezos"},
+    {"symbol": "FLOW", "name": "Flow"},
+    {"symbol": "NEO", "name": "Neo"},
+]
+
+
+async def get_crypto_fees(symbol: str) -> CryptoFees:
+    """Get fees for a specific cryptocurrency, create if not exists"""
+    fees = await db.crypto_fees.find_one({"symbol": symbol.upper()}, {"_id": 0})
+    
+    if fees:
+        if isinstance(fees.get("updated_at"), str):
+            fees["updated_at"] = datetime.fromisoformat(fees["updated_at"])
+        return CryptoFees(**fees)
+    
+    # Find crypto name from defaults
+    crypto_info = next((c for c in DEFAULT_CRYPTOS if c["symbol"] == symbol.upper()), None)
+    if not crypto_info:
+        crypto_info = {"symbol": symbol.upper(), "name": symbol.upper()}
+    
+    # Create default fees for this crypto
+    default_fees = CryptoFees(
+        symbol=crypto_info["symbol"],
+        name=crypto_info["name"]
+    )
+    
+    fees_dict = default_fees.model_dump()
+    fees_dict["updated_at"] = fees_dict["updated_at"].isoformat()
+    await db.crypto_fees.insert_one(fees_dict)
+    
+    return default_fees
+
+
+@router.get("/admin/crypto-fees", response_model=List[dict])
+async def list_all_crypto_fees(admin: dict = Depends(get_admin_user)):
+    """List fees for all supported cryptocurrencies"""
+    # Ensure all default cryptos have fee entries
+    for crypto in DEFAULT_CRYPTOS:
+        await get_crypto_fees(crypto["symbol"])
+    
+    # Get all crypto fees
+    fees_list = await db.crypto_fees.find({}, {"_id": 0}).sort("symbol", 1).to_list(100)
+    return fees_list
+
+
+@router.get("/admin/crypto-fees/{symbol}", response_model=dict)
+async def get_single_crypto_fees(
+    symbol: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get fees for a specific cryptocurrency"""
+    fees = await get_crypto_fees(symbol.upper())
+    return fees.model_dump()
+
+
+@router.put("/admin/crypto-fees/{symbol}", response_model=dict)
+async def update_crypto_fees(
+    symbol: str,
+    fees_update: CryptoFeesUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update fees for a specific cryptocurrency"""
+    # Ensure crypto exists
+    current_fees = await get_crypto_fees(symbol.upper())
+    
+    update_data = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": admin["id"]
+    }
+    
+    for field, value in fees_update.model_dump(exclude_unset=True).items():
+        if value is not None:
+            update_data[field] = value
+    
+    await db.crypto_fees.update_one(
+        {"symbol": symbol.upper()},
+        {"$set": update_data}
+    )
+    
+    return {"success": True, "message": f"Fees for {symbol.upper()} updated"}
+
+
+@router.post("/admin/crypto-fees/batch", response_model=dict)
+async def batch_update_crypto_fees(
+    symbols: List[str],
+    fees_update: CryptoFeesUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update fees for multiple cryptocurrencies at once"""
+    update_data = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_by": admin["id"]
+    }
+    
+    for field, value in fees_update.model_dump(exclude_unset=True).items():
+        if value is not None:
+            update_data[field] = value
+    
+    symbols_upper = [s.upper() for s in symbols]
+    
+    result = await db.crypto_fees.update_many(
+        {"symbol": {"$in": symbols_upper}},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Updated fees for {result.modified_count} cryptocurrencies"
+    }
+
+
 # ==================== ADMIN: LIMITS MANAGEMENT ====================
 
 @router.get("/admin/limits", response_model=List[dict])
