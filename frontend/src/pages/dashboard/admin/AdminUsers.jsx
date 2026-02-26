@@ -90,10 +90,10 @@ const AdminUsers = () => {
       await axios.post(`${API_URL}/api/admin/users/${userId}/approve`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('User approved successfully');
+      toast.success('Utilizador aprovado');
       fetchUsers();
     } catch (err) {
-      toast.error('Failed to approve user');
+      toast.error('Falha ao aprovar utilizador');
     }
   };
 
@@ -102,10 +102,52 @@ const AdminUsers = () => {
       await axios.post(`${API_URL}/api/admin/users/${userId}/reject`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('User access revoked');
+      toast.success('Acesso revogado');
       fetchUsers();
     } catch (err) {
-      toast.error('Failed to reject user');
+      toast.error('Falha ao revogar acesso');
+    }
+  };
+
+  const blockUser = async () => {
+    if (!selectedUser) return;
+    try {
+      await axios.post(`${API_URL}/api/admin/users/${selectedUser.id}/block`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Utilizador bloqueado');
+      setShowBlockDialog(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao bloquear utilizador');
+    }
+  };
+
+  const unblockUser = async (userId) => {
+    try {
+      await axios.post(`${API_URL}/api/admin/users/${userId}/unblock`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Utilizador desbloqueado');
+      fetchUsers();
+    } catch (err) {
+      toast.error('Falha ao desbloquear utilizador');
+    }
+  };
+
+  const deleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/users/${selectedUser.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Utilizador eliminado');
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao eliminar utilizador');
     }
   };
 
