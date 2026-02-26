@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -24,6 +25,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ExchangePage = () => {
   const { token, user } = useAuth();
+  const { currency, currentCurrency, formatCurrency, convertFromUSD, convertToUSD } = useCurrency();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('buy');
   const [cryptos, setCryptos] = useState([]);
