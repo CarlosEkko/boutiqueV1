@@ -216,6 +216,24 @@ async def list_users(
         query["is_approved"] = is_approved
     if kyc_status:
         query["kyc_status"] = kyc_status
+    if membership_level:
+        query["membership_level"] = membership_level
+    if user_type:
+        query["user_type"] = user_type
+    
+    # Region filtering based on internal user's role
+    internal_role = internal_user.get("internal_role") or ("admin" if internal_user.get("is_admin") else None)
+    user_region = internal_user.get("region", "global")
+    
+    # If user specifies a region filter and has access
+    if region:
+        if internal_role in ["admin", "manager"] or user_region == "global" or user_region == region:
+            query["region"] = region
+        else:
+            raise HTTPException(status_code=403, detail="Access denied to this region")
+    elif internal_role in ["local_manager", "support"] and user_region != "global":
+        # Local managers and support only see their region
+        query["region"] = user_region
     
     users = await db.users.find(
         query,
