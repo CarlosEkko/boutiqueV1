@@ -297,12 +297,18 @@ async def approve_user(
         }
     )
     
-    # Create default wallets for approved user
+    # Create default wallets for approved user - Crypto + Fiat
     default_assets = [
-        {"asset_id": "BTC", "asset_name": "Bitcoin"},
-        {"asset_id": "ETH", "asset_name": "Ethereum"},
-        {"asset_id": "USDT", "asset_name": "Tether"},
-        {"asset_id": "USDC", "asset_name": "USD Coin"}
+        # Fiat currencies
+        {"asset_id": "EUR", "asset_name": "Euro", "asset_type": "fiat", "symbol": "€"},
+        {"asset_id": "USD", "asset_name": "US Dollar", "asset_type": "fiat", "symbol": "$"},
+        {"asset_id": "AED", "asset_name": "UAE Dirham", "asset_type": "fiat", "symbol": "د.إ"},
+        {"asset_id": "BRL", "asset_name": "Brazilian Real", "asset_type": "fiat", "symbol": "R$"},
+        # Cryptocurrencies
+        {"asset_id": "BTC", "asset_name": "Bitcoin", "asset_type": "crypto"},
+        {"asset_id": "ETH", "asset_name": "Ethereum", "asset_type": "crypto"},
+        {"asset_id": "USDT", "asset_name": "Tether", "asset_type": "crypto"},
+        {"asset_id": "USDC", "asset_name": "USD Coin", "asset_type": "crypto"}
     ]
     
     for asset in default_assets:
@@ -316,7 +322,9 @@ async def approve_user(
                 "user_id": user_id,
                 "asset_id": asset["asset_id"],
                 "asset_name": asset["asset_name"],
-                "address": f"mock_{asset['asset_id'].lower()}_{user_id[:8]}",  # Mock address
+                "asset_type": asset.get("asset_type", "crypto"),
+                "symbol": asset.get("symbol"),
+                "address": f"mock_{asset['asset_id'].lower()}_{user_id[:8]}" if asset.get("asset_type") == "crypto" else None,
                 "balance": 0,
                 "available_balance": 0,
                 "pending_balance": 0,
