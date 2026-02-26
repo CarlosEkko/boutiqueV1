@@ -674,7 +674,12 @@ const ExchangePage = () => {
                 <div className="space-y-6">
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">Criptomoeda</label>
-                    <CryptoSelector value={selectedCrypto} onChange={setSelectedCrypto} />
+                    <CryptoSelector 
+                      value={selectedCrypto} 
+                      onChange={setSelectedCrypto}
+                      dropdownOpen={cryptoDropdownOpen}
+                      setDropdownOpen={setCryptoDropdownOpen}
+                    />
                   </div>
                   
                   <div>
