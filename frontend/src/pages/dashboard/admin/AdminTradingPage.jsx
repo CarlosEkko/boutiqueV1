@@ -108,6 +108,23 @@ const AdminTradingPage = () => {
     }
   };
 
+  const fetchCryptoFees = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/trading/admin/crypto-fees`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCryptoFees(response.data);
+      if (response.data.length > 0 && !selectedCrypto) {
+        setSelectedCrypto(response.data[0]);
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Erro ao carregar taxas de criptomoedas' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchLimits = async () => {
     setLoading(true);
     try {
