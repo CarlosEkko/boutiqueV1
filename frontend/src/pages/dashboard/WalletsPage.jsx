@@ -126,7 +126,14 @@ const WalletsPage = () => {
 
   // Separate and sort wallets
   const fiatWallets = filteredWallets.filter(w => isFiat(w.asset_id));
-  const cryptoWallets = filteredWallets.filter(w => !isFiat(w.asset_id));
+  const allCryptoWallets = filteredWallets.filter(w => !isFiat(w.asset_id));
+  
+  // Crypto wallets with balance vs without
+  const cryptoWithBalance = allCryptoWallets.filter(w => (w.balance || 0) > 0);
+  const cryptoWithoutBalance = allCryptoWallets.filter(w => (w.balance || 0) === 0);
+  
+  // Show crypto wallets based on toggle
+  const cryptoWallets = showAllCrypto ? allCryptoWallets : (cryptoWithBalance.length > 0 ? cryptoWithBalance : allCryptoWallets.slice(0, 8));
 
   if (loading) {
     return (
