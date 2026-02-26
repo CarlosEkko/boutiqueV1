@@ -62,6 +62,9 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] User limits check (daily/monthly/per-transaction)
 - [x] Order history
 - [x] Fiat wallets: EUR, USD, AED, BRL (auto-created for users)
+- [x] Fiat deposit via bank transfer with unique reference code
+- [x] Fiat deposit proof submission
+- [x] Admin approval for fiat deposits → credits fiat wallet
 
 ### Authentication & Users
 - [x] JWT-based authentication
