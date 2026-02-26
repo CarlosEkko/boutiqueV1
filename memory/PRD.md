@@ -74,6 +74,8 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] **Global currency selector** in dashboard
 - [x] **Exchange rates API** with 5-minute cache
 - [x] **Automatic price conversion** for all crypto pairs
+- [x] **Per-currency trading fees** (Feb 2026) - Admin can configure individual fees for EUR, USD, AED, BRL
+- [x] **Admin per-currency fee UI** - Tabbed interface with currency selector and per-currency fee configuration
 
 ### Authentication & Users
 - [x] JWT-based authentication
