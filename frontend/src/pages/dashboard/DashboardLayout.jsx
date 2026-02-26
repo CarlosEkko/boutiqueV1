@@ -226,7 +226,11 @@ const DashboardLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        <div className="md:p-8 p-4 pt-20 md:pt-8">
+        {/* Top Bar with Currency Selector */}
+        <div className="hidden md:flex justify-end items-center px-8 py-4 border-b border-zinc-800/50">
+          <CurrencySelector />
+        </div>
+        <div className="md:p-8 p-4 pt-20 md:pt-4">
           <Outlet />
         </div>
       </main>
