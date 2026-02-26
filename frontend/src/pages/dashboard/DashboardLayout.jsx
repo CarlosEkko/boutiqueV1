@@ -47,6 +47,8 @@ const DashboardLayout = () => {
   const adminNavItems = [
     { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
     { to: '/dashboard/admin/regional', icon: Globe, label: 'Métricas Regionais' },
+    { to: '/dashboard/admin/staff', icon: UserCog, label: 'Gestão de Equipa' },
+    { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },
     { to: '/dashboard/admin/users', icon: Users, label: t('dashboard.nav.users') },
     { to: '/dashboard/admin/kyc', icon: UserCheck, label: t('dashboard.nav.kycKyb') },
     { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: t('dashboard.nav.opportunities') },
