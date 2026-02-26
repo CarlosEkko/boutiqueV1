@@ -241,6 +241,16 @@ async def get_crypto_prices():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Stripe webhook alias at /api/webhook/stripe
+from routes.trading import router as trading_router_direct
+@api_router.post("/webhook/stripe")
+async def stripe_webhook_alias(request: Request):
+    """Alias for Stripe webhook - redirects to trading webhook"""
+    from routes.trading import stripe_webhook, set_db as set_trading_db_direct
+    # Ensure db is set
+    set_trading_db_direct(db)
+    return await stripe_webhook(request)
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
