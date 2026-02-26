@@ -1011,21 +1011,9 @@ async def get_available_cryptos(currency: str = "USD"):
         {"_id": 0}
     ).to_list(100)
     
-    if not cryptos:
-        # Return default top cryptos if none configured
-        default_cryptos = [
-            {"symbol": "BTC", "name": "Bitcoin", "cmc_id": 1, "networks": ["bitcoin", "lightning"]},
-            {"symbol": "ETH", "name": "Ethereum", "cmc_id": 1027, "networks": ["ethereum"]},
-            {"symbol": "USDT", "name": "Tether", "cmc_id": 825, "networks": ["ethereum", "tron", "bsc"]},
-            {"symbol": "BNB", "name": "BNB", "cmc_id": 1839, "networks": ["bsc"]},
-            {"symbol": "SOL", "name": "Solana", "cmc_id": 5426, "networks": ["solana"]},
-            {"symbol": "XRP", "name": "XRP", "cmc_id": 52, "networks": ["xrpl"]},
-            {"symbol": "USDC", "name": "USD Coin", "cmc_id": 3408, "networks": ["ethereum", "solana", "polygon"]},
-            {"symbol": "ADA", "name": "Cardano", "cmc_id": 2010, "networks": ["cardano"]},
-            {"symbol": "DOGE", "name": "Dogecoin", "cmc_id": 74, "networks": ["dogecoin"]},
-            {"symbol": "TRX", "name": "TRON", "cmc_id": 1958, "networks": ["tron"]},
-        ]
-        cryptos = default_cryptos
+    if not cryptos or len(cryptos) < 50:
+        # Use the full list of 50 default cryptos
+        cryptos = [c.copy() for c in DEFAULT_CRYPTOS]
     
     # Fetch current prices and convert to requested currency
     for crypto in cryptos:
