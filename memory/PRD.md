@@ -270,8 +270,10 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [ ] Whitelist functionality not implemented (P3) - waiting for requirements
 
 ## Completed (Feb 2026)
-- [x] Per-currency trading fees - Admin can configure fees for EUR, USD, AED, BRL individually
+- [x] Per-currency trading fees (fiat) - Admin can configure fees for EUR, USD, AED, BRL individually
 - [x] Admin UI for per-currency fees - Currency tabs with flag icons, separate fee forms per currency
+- [x] **Per-cryptocurrency trading fees** - Admin can configure fees for each of 50 supported cryptocurrencies (BTC, ETH, SOL, etc.)
+- [x] **Admin UI for crypto fees** - New 'Taxas Crypto' tab with searchable crypto list and individual fee configuration
 
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data
