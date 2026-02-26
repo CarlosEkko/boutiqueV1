@@ -3,12 +3,12 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files (yarn.lock is optional)
+# Copy package files
 COPY package.json ./
-COPY yarn.lock* ./
+COPY package-lock.json* ./
 
-# Install dependencies (using --network-timeout for slow connections)
-RUN yarn install --network-timeout 100000 --frozen-lockfile || yarn install --network-timeout 100000
+# Install dependencies using npm with legacy peer deps
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
@@ -18,7 +18,7 @@ ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 # Production stage with nginx
 FROM nginx:alpine
