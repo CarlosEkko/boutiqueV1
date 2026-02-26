@@ -1359,15 +1359,15 @@ async def create_sell_order(
     # Check limits
     await check_user_limits(user, "sell", fiat_amount)
     
-    # Get fees
-    fees = await get_trading_fees()
+    # Get fees for this specific crypto
+    fees = await get_fees_for_crypto(order.crypto_symbol.upper())
     
     # Calculate amounts with spread
-    spread_amount = market_price * (fees.sell_spread_percent / 100)
+    spread_amount = market_price * (fees["sell_spread_percent"] / 100)
     execution_price = market_price - spread_amount
     
     gross_amount = order.crypto_amount * execution_price
-    fee_amount = max(gross_amount * (fees.sell_fee_percent / 100), fees.min_sell_fee_usd)
+    fee_amount = max(gross_amount * (fees["sell_fee_percent"] / 100), fees["min_sell_fee"])
     
     total_receive = gross_amount - fee_amount
     
@@ -1383,7 +1383,7 @@ async def create_sell_order(
         fiat_amount=fiat_amount,
         market_price=market_price,
         execution_price=execution_price,
-        fee_percent=fees.sell_fee_percent,
+        fee_percent=fees["sell_fee_percent"],
         fee_amount=fee_amount,
         total_amount=total_receive,
         payment_method=order.payment_method
