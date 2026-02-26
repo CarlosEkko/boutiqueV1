@@ -45,17 +45,20 @@ from routes.dashboard import router as dashboard_router, set_db as set_dashboard
 from routes.admin import router as admin_router, set_db as set_admin_db
 from routes.kyc import router as kyc_router, set_db as set_kyc_db
 from routes.fireblocks import router as fireblocks_router
+from routes.tickets import router as tickets_router, set_db as set_tickets_db
 
 set_auth_db(db)
 set_dashboard_db(db)
 set_admin_db(db)
 set_kyc_db(db)
+set_tickets_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
 api_router.include_router(admin_router)
 api_router.include_router(kyc_router)
 api_router.include_router(fireblocks_router)
+api_router.include_router(tickets_router)
 
 
 # Define Models
