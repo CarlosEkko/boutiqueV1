@@ -78,12 +78,19 @@ const ExchangePage = () => {
     fetchCryptos();
   }, [currency]);
 
-  // Refetch fees when selected crypto changes
+  // Refetch fees when selected crypto changes (for buy/sell)
   useEffect(() => {
-    if (selectedCrypto) {
+    if (selectedCrypto && (activeTab === 'buy' || activeTab === 'sell')) {
       fetchFees(selectedCrypto.symbol);
     }
-  }, [selectedCrypto?.symbol]);
+  }, [selectedCrypto?.symbol, activeTab]);
+
+  // Refetch fees when fromCrypto changes (for swap)
+  useEffect(() => {
+    if (fromCrypto && activeTab === 'swap') {
+      fetchFees(fromCrypto.symbol);
+    }
+  }, [fromCrypto?.symbol, activeTab]);
 
   const fetchCryptos = async () => {
     try {
