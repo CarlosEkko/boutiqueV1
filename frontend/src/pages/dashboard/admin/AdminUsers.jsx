@@ -300,7 +300,7 @@ const AdminUsers = () => {
       <div className="space-y-3">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
-            <Card key={user.id} className="bg-zinc-900/50 border-gold-800/20">
+            <Card key={user.id} className={`border ${user.is_active === false ? 'bg-red-950/20 border-red-900/30' : 'bg-zinc-900/50 border-gold-800/20'}`}>
               <CardContent className="p-4">
                 {/* User Row */}
                 <div 
@@ -308,8 +308,8 @@ const AdminUsers = () => {
                   onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
-                      <span className="text-gold-400 font-bold">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${user.is_active === false ? 'bg-red-500/20' : 'bg-gold-500/20'}`}>
+                      <span className={`font-bold ${user.is_active === false ? 'text-red-400' : 'text-gold-400'}`}>
                         {user.name?.charAt(0)?.toUpperCase() || '?'}
                       </span>
                     </div>
@@ -319,18 +319,22 @@ const AdminUsers = () => {
                         {user.is_admin && (
                           <Crown size={14} className="text-gold-400" />
                         )}
+                        {user.is_active === false && (
+                          <Badge className="bg-red-900/30 text-red-400 text-xs">Bloqueado</Badge>
+                        )}
                       </div>
                       <p className="text-sm text-gray-400">{user.email}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    {/* Status Badges */}
+                    {/* Region & Status Badges */}
                     <div className="hidden md:flex items-center gap-2">
+                      {getRegionBadge(user.region)}
                       {user.is_approved ? (
-                        <Badge className="bg-green-900/30 text-green-400">Approved</Badge>
+                        <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>
                       ) : (
-                        <Badge className="bg-gold-800/30 text-gold-400">Pending</Badge>
+                        <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>
                       )}
                       {getKYCBadge(user.kyc_status)}
                     </div>
@@ -344,18 +348,18 @@ const AdminUsers = () => {
                           className="bg-green-600 hover:bg-green-500"
                         >
                           <CheckCircle size={16} className="mr-1" />
-                          Approve
+                          Aprovar
                         </Button>
                       )}
-                      {user.is_approved && (
+                      {user.is_approved && user.is_active !== false && (
                         <Button
                           onClick={(e) => { e.stopPropagation(); rejectUser(user.id); }}
                           size="sm"
                           variant="outline"
-                          className="border-red-900/30 text-red-400 hover:bg-red-900/30"
+                          className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
                         >
                           <XCircle size={16} className="mr-1" />
-                          Revoke
+                          Revogar
                         </Button>
                       )}
                     </div>
@@ -379,11 +383,11 @@ const AdminUsers = () => {
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <Phone size={16} />
-                        <span className="text-white">{user.phone || 'Not provided'}</span>
+                        <span className="text-white">{user.phone || 'Não fornecido'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <Globe size={16} />
-                        <span className="text-white">{user.country || 'Not provided'}</span>
+                        <span className="text-white">{user.country || 'Não fornecido'}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <Calendar size={16} />
@@ -391,9 +395,17 @@ const AdminUsers = () => {
                       </div>
                     </div>
 
+                    {/* Region Display */}
+                    <div className="mb-4 p-3 bg-zinc-800/30 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">Região:</span>
+                        {getRegionBadge(user.region) || <span className="text-gray-500">Não definida</span>}
+                      </div>
+                    </div>
+
                     {/* KYC Actions */}
                     <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="text-gray-400 text-sm mr-2">KYC Status:</span>
+                      <span className="text-gray-400 text-sm mr-2">Estado KYC:</span>
                       {['not_started', 'pending', 'approved', 'rejected'].map((status) => (
                         <Button
                           key={status}
@@ -405,14 +417,16 @@ const AdminUsers = () => {
                             : 'border-gold-800/30 text-gray-400 hover:text-white text-xs'
                           }
                         >
-                          {status.replace('_', ' ')}
+                          {status === 'not_started' ? 'Não Iniciado' : 
+                           status === 'pending' ? 'Pendente' :
+                           status === 'approved' ? 'Aprovado' : 'Rejeitado'}
                         </Button>
                       ))}
                     </div>
 
                     {/* Admin Toggle */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-sm mr-2">Admin Rights:</span>
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-gray-400 text-sm mr-2">Direitos Admin:</span>
                       {user.is_admin ? (
                         <Button
                           onClick={() => removeAdmin(user.id)}
@@ -421,7 +435,7 @@ const AdminUsers = () => {
                           className="border-red-900/30 text-red-400 hover:bg-red-900/30"
                         >
                           <Shield size={14} className="mr-1" />
-                          Remove Admin
+                          Remover Admin
                         </Button>
                       ) : (
                         <Button
@@ -430,9 +444,43 @@ const AdminUsers = () => {
                           className="bg-purple-600 hover:bg-purple-500"
                         >
                           <Crown size={14} className="mr-1" />
-                          Make Admin
+                          Tornar Admin
                         </Button>
                       )}
+                    </div>
+
+                    {/* Block/Delete Actions */}
+                    <div className="flex items-center gap-2 pt-4 border-t border-gold-800/20">
+                      <span className="text-gray-400 text-sm mr-2">Ações:</span>
+                      {user.is_active === false ? (
+                        <Button
+                          onClick={() => unblockUser(user.id)}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-500"
+                        >
+                          <CheckCircle size={14} className="mr-1" />
+                          Desbloquear
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => { setSelectedUser(user); setShowBlockDialog(true); }}
+                          size="sm"
+                          variant="outline"
+                          className="border-orange-900/30 text-orange-400 hover:bg-orange-900/30"
+                        >
+                          <Ban size={14} className="mr-1" />
+                          Bloquear
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => { setSelectedUser(user); setShowDeleteDialog(true); }}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-900/30 text-red-400 hover:bg-red-900/30"
+                      >
+                        <Trash2 size={14} className="mr-1" />
+                        Eliminar
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -443,12 +491,76 @@ const AdminUsers = () => {
           <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-12 text-center">
               <Users className="mx-auto mb-4 text-gray-500" size={48} />
-              <h3 className="text-xl text-white mb-2">No Users Found</h3>
-              <p className="text-gray-400">No users match your search criteria.</p>
+              <h3 className="text-xl text-white mb-2">Sem Utilizadores</h3>
+              <p className="text-gray-400">Nenhum utilizador corresponde aos critérios de pesquisa.</p>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Block Confirmation Dialog */}
+      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-400">
+              <Ban size={20} />
+              Bloquear Utilizador
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Tem a certeza que deseja bloquear <span className="text-white font-medium">{selectedUser?.name}</span>?
+              O utilizador não poderá aceder à plataforma.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowBlockDialog(false)}
+              className="border-gold-800/30"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={blockUser}
+              className="bg-orange-600 hover:bg-orange-500"
+            >
+              <Ban size={16} className="mr-2" />
+              Bloquear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <AlertTriangle size={20} />
+              Eliminar Utilizador
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Tem a certeza que deseja eliminar permanentemente <span className="text-white font-medium">{selectedUser?.name}</span>?
+              Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              className="border-gold-800/30"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={deleteUser}
+              className="bg-red-600 hover:bg-red-500"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Eliminar Permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
