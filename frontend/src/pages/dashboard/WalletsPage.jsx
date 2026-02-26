@@ -338,8 +338,6 @@ const WalletsPage = () => {
             <RefreshCw size={18} className="mr-2" />
             Atualizar
           </Button>
-          {/* Currency Selector */}
-          <CurrencySelector />
         </div>
       </div>
 
