@@ -293,15 +293,51 @@ const AdminTradingPage = () => {
       </div>
 
       {/* Fees Tab */}
-      {activeTab === 'fees' && fees && (
+      {activeTab === 'fees' && allFees && (
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Settings size={20} className="text-gold-400" />
-              Configuração de Taxas
+              Configuração de Taxas por Moeda
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Currency Selector */}
+            <div className="flex flex-wrap gap-2 pb-4 border-b border-zinc-700">
+              {SUPPORTED_CURRENCIES.map(curr => (
+                <button
+                  key={curr.code}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    selectedFeeCurrency === curr.code
+                      ? 'bg-gold-500 text-black font-medium'
+                      : 'bg-zinc-800 text-gray-400 hover:text-white hover:bg-zinc-700'
+                  }`}
+                  onClick={() => setSelectedFeeCurrency(curr.code)}
+                  data-testid={`fee-currency-${curr.code}`}
+                >
+                  <span>{curr.flag}</span>
+                  <span>{curr.code}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Current Currency Info */}
+            <div className="bg-zinc-800/50 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {SUPPORTED_CURRENCIES.find(c => c.code === selectedFeeCurrency)?.flag}
+                </span>
+                <div>
+                  <h3 className="text-lg text-white font-medium">
+                    {SUPPORTED_CURRENCIES.find(c => c.code === selectedFeeCurrency)?.name} ({selectedFeeCurrency})
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    Configurar taxas para transações em {selectedFeeCurrency}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Buy Fees */}
             <div>
               <h3 className="text-lg text-gold-400 mb-4">Taxas de Compra</h3>
@@ -311,8 +347,8 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.buy_fee_percent}
-                    onChange={(e) => updateFeeField('buy_fee_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.buy_fee_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'buy_fee_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     data-testid="buy-fee-input"
                   />
@@ -322,19 +358,19 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.buy_spread_percent}
-                    onChange={(e) => updateFeeField('buy_spread_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.buy_spread_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'buy_spread_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     data-testid="buy-spread-input"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
+                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
                     type="number"
                     step="0.5"
-                    value={fees.min_buy_fee_usd}
-                    onChange={(e) => updateFeeField('min_buy_fee_usd', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.min_buy_fee || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_buy_fee', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     data-testid="min-buy-fee-input"
                   />
@@ -351,8 +387,8 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.sell_fee_percent}
-                    onChange={(e) => updateFeeField('sell_fee_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.sell_fee_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'sell_fee_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     data-testid="sell-fee-input"
                   />
@@ -362,18 +398,18 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.sell_spread_percent}
-                    onChange={(e) => updateFeeField('sell_spread_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.sell_spread_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'sell_spread_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
+                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
                     type="number"
                     step="0.5"
-                    value={fees.min_sell_fee_usd}
-                    onChange={(e) => updateFeeField('min_sell_fee_usd', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.min_sell_fee || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_sell_fee', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                   />
                 </div>
@@ -389,8 +425,8 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.swap_fee_percent}
-                    onChange={(e) => updateFeeField('swap_fee_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.swap_fee_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'swap_fee_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     data-testid="swap-fee-input"
                   />
@@ -400,18 +436,18 @@ const AdminTradingPage = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={fees.swap_spread_percent}
-                    onChange={(e) => updateFeeField('swap_spread_percent', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.swap_spread_percent || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'swap_spread_percent', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
+                  <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
                     type="number"
                     step="0.5"
-                    value={fees.min_swap_fee_usd}
-                    onChange={(e) => updateFeeField('min_swap_fee_usd', e.target.value)}
+                    value={allFees[selectedFeeCurrency]?.min_swap_fee || 0}
+                    onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_swap_fee', e.target.value)}
                     className="bg-zinc-800 border-zinc-700 text-white"
                   />
                 </div>
@@ -420,12 +456,16 @@ const AdminTradingPage = () => {
 
             <Button
               className="bg-gold-500 hover:bg-gold-600 text-black"
-              onClick={saveFees}
-              disabled={saving}
+              onClick={() => saveFees(selectedFeeCurrency)}
+              disabled={savingCurrency === selectedFeeCurrency}
               data-testid="save-fees-btn"
             >
-              {saving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save className="mr-2" size={18} />}
-              {saving ? 'Salvando...' : 'Salvar Taxas'}
+              {savingCurrency === selectedFeeCurrency ? (
+                <Loader2 className="animate-spin mr-2" size={18} />
+              ) : (
+                <Save className="mr-2" size={18} />
+              )}
+              {savingCurrency === selectedFeeCurrency ? 'Salvando...' : `Salvar Taxas ${selectedFeeCurrency}`}
             </Button>
           </CardContent>
         </Card>
