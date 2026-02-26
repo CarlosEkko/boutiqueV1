@@ -17,6 +17,11 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Deployment**: Docker, Docker Compose, Nginx (reverse proxy), Let's Encrypt (SSL)
 - **Integrations**: CoinMarketCap (preços), Stripe (pagamentos), emergentintegrations
 
+## Key Features
+- **Multi-currency support**: EUR, USD, AED, BRL with real-time exchange rates
+- **Global currency selector** in dashboard header
+- **Automatic price conversion** for all crypto prices and limits
+
 ## Architecture
 ```
 /app
