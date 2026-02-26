@@ -494,8 +494,20 @@ const AdminUsers = () => {
                     </div>
 
                     {/* Block/Delete Actions */}
-                    <div className="flex items-center gap-2 pt-4 border-t border-gold-800/20">
+                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gold-800/20">
                       <span className="text-gray-400 text-sm mr-2">Ações:</span>
+                      
+                      {/* Password Reset */}
+                      <Button
+                        onClick={() => openPasswordDialog(user)}
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-900/30 text-blue-400 hover:bg-blue-900/30"
+                      >
+                        <Key size={14} className="mr-1" />
+                        Alterar Password
+                      </Button>
+
                       {user.is_active === false ? (
                         <Button
                           onClick={() => unblockUser(user.id)}
