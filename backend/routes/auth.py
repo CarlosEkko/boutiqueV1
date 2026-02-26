@@ -248,3 +248,89 @@ async def update_profile(
         updated_at=updated_at,
         is_active=updated_user.get("is_active", True)
     )
+
+
+# ==================== SECURITY ENDPOINTS ====================
+
+@router.post("/change-password")
+async def change_password(
+    current_password: str,
+    new_password: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Change user's password"""
+    user_doc = await db.users.find_one({"id": user_id})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify current password
+    if not verify_password(current_password, user_doc.get("hashed_password", "")):
+        raise HTTPException(status_code=400, detail="Password atual incorreta")
+    
+    # Validate new password
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Nova password deve ter pelo menos 6 caracteres")
+    
+    # Update password
+    hashed = get_password_hash(new_password)
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "hashed_password": hashed,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Password alterada com sucesso"}
+
+
+@router.post("/set-anti-phishing")
+async def set_anti_phishing(
+    code: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Set anti-phishing code"""
+    if len(code) < 4:
+        raise HTTPException(status_code=400, detail="Código deve ter pelo menos 4 caracteres")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "anti_phishing_code": code,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Código anti-phishing definido"}
+
+
+@router.post("/deactivate-account")
+async def deactivate_account(
+    user_id: str = Depends(get_current_user_id)
+):
+    """Deactivate user's own account"""
+    user_doc = await db.users.find_one({"id": user_id})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent admin from self-deactivating
+    if user_doc.get("is_admin"):
+        raise HTTPException(status_code=400, detail="Administradores não podem desativar a própria conta")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_active": False,
+                "deactivated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Conta desativada com sucesso"}
+
