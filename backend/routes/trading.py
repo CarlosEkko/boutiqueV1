@@ -1457,12 +1457,12 @@ async def create_swap_order(
     # Check limits
     await check_user_limits(user, "swap", fiat_amount)
     
-    # Get fees
-    fees = await get_trading_fees()
+    # Get fees for the source crypto (for swaps, use from_crypto fees)
+    fees = await get_fees_for_crypto(order.from_crypto.upper())
     
     # Calculate with spread
-    fee_amount = max(fiat_amount * (fees.swap_fee_percent / 100), fees.min_swap_fee_usd)
-    spread_cost = fiat_amount * (fees.swap_spread_percent / 100)
+    fee_amount = max(fiat_amount * (fees["swap_fee_percent"] / 100), fees["min_swap_fee"])
+    spread_cost = fiat_amount * (fees["swap_spread_percent"] / 100)
     
     usable_amount = fiat_amount - fee_amount - spread_cost
     to_amount = usable_amount / to_price_usd
@@ -1481,7 +1481,7 @@ async def create_swap_order(
         fiat_amount=fiat_amount,
         market_price=to_price_usd,
         execution_price=to_price_usd,
-        fee_percent=fees.swap_fee_percent,
+        fee_percent=fees["swap_fee_percent"],
         fee_amount=fee_amount,
         total_amount=to_amount,
         payment_method=PaymentMethod.CRYPTO
