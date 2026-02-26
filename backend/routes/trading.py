@@ -1188,7 +1188,7 @@ async def create_buy_order(
         fiat_amount=order.fiat_amount,
         market_price=market_price,
         execution_price=execution_price,
-        fee_percent=fees.buy_fee_percent,
+        fee_percent=fees["buy_fee_percent"],
         fee_amount=fee_amount,
         network_fee=network_fee,
         total_amount=total_amount,
