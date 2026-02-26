@@ -890,6 +890,405 @@ async def reject_bank_transfer(
     return {"success": True, "message": "Bank transfer rejected"}
 
 
+# ==================== ADMIN: KBEX BANK ACCOUNTS MANAGEMENT ====================
+
+@router.get("/admin/kbex-bank-accounts", response_model=List[dict])
+async def list_kbex_bank_accounts(admin: dict = Depends(get_admin_user)):
+    """List all KBEX bank accounts for receiving deposits"""
+    accounts = await db.kbex_bank_accounts.find({}, {"_id": 0}).sort("currency", 1).to_list(20)
+    return accounts
+
+
+@router.get("/admin/kbex-bank-accounts/{currency}", response_model=dict)
+async def get_kbex_bank_account(currency: str, admin: dict = Depends(get_admin_user)):
+    """Get KBEX bank account for a specific currency"""
+    account = await db.kbex_bank_accounts.find_one({"currency": currency.upper()}, {"_id": 0})
+    if not account:
+        raise HTTPException(status_code=404, detail=f"Bank account for {currency} not found")
+    return account
+
+
+@router.post("/admin/kbex-bank-accounts", response_model=dict)
+async def create_kbex_bank_account(
+    account: KBEXBankAccountCreate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Create a new KBEX bank account for a currency"""
+    # Check if account for this currency already exists
+    existing = await db.kbex_bank_accounts.find_one({"currency": account.currency.upper()})
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Bank account for {account.currency} already exists")
+    
+    bank_account = KBEXBankAccount(
+        currency=account.currency.upper(),
+        bank_name=account.bank_name,
+        account_name=account.account_name,
+        iban=account.iban,
+        swift_bic=account.swift_bic,
+        account_number=account.account_number,
+        routing_number=account.routing_number,
+        sort_code=account.sort_code,
+        bank_address=account.bank_address,
+        instructions=account.instructions,
+        is_active=account.is_active,
+        updated_by=admin["id"]
+    )
+    
+    account_dict = bank_account.model_dump()
+    account_dict["created_at"] = account_dict["created_at"].isoformat()
+    account_dict["updated_at"] = account_dict["updated_at"].isoformat()
+    
+    await db.kbex_bank_accounts.insert_one(account_dict)
+    
+    return {"success": True, "message": f"Bank account for {account.currency} created", "id": bank_account.id}
+
+
+@router.put("/admin/kbex-bank-accounts/{currency}", response_model=dict)
+async def update_kbex_bank_account(
+    currency: str,
+    update: KBEXBankAccountUpdate,
+    admin: dict = Depends(get_admin_user)
+):
+    """Update KBEX bank account for a currency"""
+    account = await db.kbex_bank_accounts.find_one({"currency": currency.upper()})
+    if not account:
+        raise HTTPException(status_code=404, detail=f"Bank account for {currency} not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat(), "updated_by": admin["id"]}
+    
+    for field, value in update.model_dump(exclude_unset=True).items():
+        if value is not None:
+            update_data[field] = value
+    
+    await db.kbex_bank_accounts.update_one(
+        {"currency": currency.upper()},
+        {"$set": update_data}
+    )
+    
+    return {"success": True, "message": f"Bank account for {currency} updated"}
+
+
+@router.delete("/admin/kbex-bank-accounts/{currency}", response_model=dict)
+async def delete_kbex_bank_account(currency: str, admin: dict = Depends(get_admin_user)):
+    """Delete KBEX bank account for a currency"""
+    result = await db.kbex_bank_accounts.delete_one({"currency": currency.upper()})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"Bank account for {currency} not found")
+    
+    return {"success": True, "message": f"Bank account for {currency} deleted"}
+
+
+# Public endpoint to get bank details for a currency
+@router.get("/bank-details/{currency}", response_model=dict)
+async def get_bank_details_for_deposit(currency: str, user: dict = Depends(get_current_user)):
+    """Get KBEX bank details for making a deposit in a specific currency"""
+    account = await db.kbex_bank_accounts.find_one(
+        {"currency": currency.upper(), "is_active": True},
+        {"_id": 0, "updated_by": 0}
+    )
+    if not account:
+        raise HTTPException(status_code=404, detail=f"Bank account for {currency} not available")
+    
+    # Generate reference code for this user
+    reference_code = f"KBEX-{user['id'][:8].upper()}-{currency.upper()}"
+    
+    return {
+        "bank_details": account,
+        "reference_code": reference_code,
+        "instructions": f"Please include the reference code '{reference_code}' in your transfer description."
+    }
+
+
+# ==================== ADMIN: FIAT WITHDRAWALS MANAGEMENT ====================
+
+@router.get("/admin/fiat-withdrawals", response_model=List[dict])
+async def list_fiat_withdrawals(
+    status: Optional[str] = None,
+    currency: Optional[str] = None,
+    admin: dict = Depends(get_internal_user)
+):
+    """List all fiat withdrawal requests"""
+    query = {}
+    if status:
+        query["status"] = status
+    if currency:
+        query["currency"] = currency.upper()
+    
+    withdrawals = await db.fiat_withdrawals.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return withdrawals
+
+
+@router.get("/admin/fiat-withdrawals/{withdrawal_id}", response_model=dict)
+async def get_fiat_withdrawal(withdrawal_id: str, admin: dict = Depends(get_internal_user)):
+    """Get a specific fiat withdrawal request"""
+    withdrawal = await db.fiat_withdrawals.find_one({"id": withdrawal_id}, {"_id": 0})
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+    return withdrawal
+
+
+@router.post("/admin/fiat-withdrawals/{withdrawal_id}/process", response_model=dict)
+async def process_fiat_withdrawal(
+    withdrawal_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Mark withdrawal as processing (being handled)"""
+    withdrawal = await db.fiat_withdrawals.find_one({"id": withdrawal_id}, {"_id": 0})
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+    
+    if withdrawal["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Cannot process withdrawal with status: {withdrawal['status']}")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.fiat_withdrawals.update_one(
+        {"id": withdrawal_id},
+        {
+            "$set": {
+                "status": "processing",
+                "processed_by": admin["id"],
+                "processed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Withdrawal marked as processing"}
+
+
+@router.post("/admin/fiat-withdrawals/{withdrawal_id}/approve", response_model=dict)
+async def approve_fiat_withdrawal(
+    withdrawal_id: str,
+    transaction_reference: Optional[str] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """Approve and complete a fiat withdrawal"""
+    withdrawal = await db.fiat_withdrawals.find_one({"id": withdrawal_id}, {"_id": 0})
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+    
+    if withdrawal["status"] not in ["pending", "processing"]:
+        raise HTTPException(status_code=400, detail=f"Cannot approve withdrawal with status: {withdrawal['status']}")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Deduct from user's fiat wallet
+    wallet = await db.wallets.find_one({
+        "user_id": withdrawal["user_id"],
+        "asset_id": withdrawal["currency"]
+    })
+    
+    if not wallet or (wallet.get("balance", 0) < withdrawal["amount"]):
+        raise HTTPException(status_code=400, detail="Insufficient balance in user's wallet")
+    
+    # Update wallet balance
+    await db.wallets.update_one(
+        {"user_id": withdrawal["user_id"], "asset_id": withdrawal["currency"]},
+        {
+            "$inc": {"balance": -withdrawal["amount"], "available_balance": -withdrawal["amount"]},
+            "$set": {"updated_at": now}
+        }
+    )
+    
+    # Update withdrawal status
+    await db.fiat_withdrawals.update_one(
+        {"id": withdrawal_id},
+        {
+            "$set": {
+                "status": "completed",
+                "transaction_reference": transaction_reference,
+                "processed_by": admin["id"],
+                "completed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Withdrawal approved and completed"}
+
+
+@router.post("/admin/fiat-withdrawals/{withdrawal_id}/reject", response_model=dict)
+async def reject_fiat_withdrawal(
+    withdrawal_id: str,
+    reason: str = "Request rejected",
+    admin: dict = Depends(get_admin_user)
+):
+    """Reject a fiat withdrawal request"""
+    withdrawal = await db.fiat_withdrawals.find_one({"id": withdrawal_id}, {"_id": 0})
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+    
+    if withdrawal["status"] not in ["pending", "processing"]:
+        raise HTTPException(status_code=400, detail=f"Cannot reject withdrawal with status: {withdrawal['status']}")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.fiat_withdrawals.update_one(
+        {"id": withdrawal_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejection_reason": reason,
+                "processed_by": admin["id"],
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Withdrawal rejected"}
+
+
+# ==================== USER: FIAT WITHDRAWAL REQUEST ====================
+
+@router.post("/fiat-withdrawal", response_model=dict)
+async def request_fiat_withdrawal(
+    request: FiatWithdrawalRequest,
+    user: dict = Depends(get_current_user)
+):
+    """Request a fiat withdrawal"""
+    currency = request.currency.upper()
+    
+    if currency not in ["EUR", "USD", "AED", "BRL"]:
+        raise HTTPException(status_code=400, detail="Invalid currency")
+    
+    # Check user's fiat balance
+    wallet = await db.wallets.find_one({
+        "user_id": user["id"],
+        "asset_id": currency
+    })
+    
+    if not wallet or (wallet.get("available_balance", 0) < request.amount):
+        raise HTTPException(status_code=400, detail="Insufficient balance")
+    
+    # Get bank details
+    bank_name = request.bank_name
+    account_holder = request.account_holder
+    iban = request.iban
+    swift_bic = request.swift_bic
+    account_number = request.account_number
+    routing_number = request.routing_number
+    
+    # If bank_account_id provided, use saved account
+    if request.bank_account_id:
+        bank_account = await db.bank_accounts.find_one({
+            "id": request.bank_account_id,
+            "user_id": user["id"]
+        })
+        if not bank_account:
+            raise HTTPException(status_code=404, detail="Bank account not found")
+        
+        bank_name = bank_account.get("bank_name", bank_name)
+        account_holder = bank_account.get("account_holder", account_holder)
+        iban = bank_account.get("iban", iban)
+        swift_bic = bank_account.get("swift_bic", swift_bic)
+        account_number = bank_account.get("account_number", account_number)
+        routing_number = bank_account.get("routing_number", routing_number)
+    
+    if not bank_name or not account_holder:
+        raise HTTPException(status_code=400, detail="Bank name and account holder are required")
+    
+    if not iban and not account_number:
+        raise HTTPException(status_code=400, detail="IBAN or account number is required")
+    
+    # Calculate fee (e.g., 0.5% with minimum 5 EUR/USD)
+    fee_percent = 0.5
+    min_fee = 5.0
+    fee_amount = max(request.amount * (fee_percent / 100), min_fee)
+    net_amount = request.amount - fee_amount
+    
+    withdrawal = FiatWithdrawal(
+        user_id=user["id"],
+        user_email=user["email"],
+        currency=currency,
+        amount=request.amount,
+        fee_amount=fee_amount,
+        net_amount=net_amount,
+        bank_account_id=request.bank_account_id,
+        bank_name=bank_name,
+        account_holder=account_holder,
+        iban=iban,
+        swift_bic=swift_bic,
+        account_number=account_number,
+        routing_number=routing_number,
+        status=WithdrawalStatus.PENDING
+    )
+    
+    withdrawal_dict = withdrawal.model_dump()
+    withdrawal_dict["created_at"] = withdrawal_dict["created_at"].isoformat()
+    withdrawal_dict["updated_at"] = withdrawal_dict["updated_at"].isoformat()
+    withdrawal_dict["status"] = withdrawal_dict["status"].value
+    
+    await db.fiat_withdrawals.insert_one(withdrawal_dict)
+    
+    # Reserve the balance (move from available to pending)
+    await db.wallets.update_one(
+        {"user_id": user["id"], "asset_id": currency},
+        {
+            "$inc": {"available_balance": -request.amount, "pending_balance": request.amount},
+            "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+        }
+    )
+    
+    return {
+        "success": True,
+        "message": "Withdrawal request submitted",
+        "withdrawal": {
+            "id": withdrawal.id,
+            "amount": request.amount,
+            "fee": fee_amount,
+            "net_amount": net_amount,
+            "currency": currency,
+            "status": "pending"
+        }
+    }
+
+
+@router.get("/my-withdrawals", response_model=List[dict])
+async def get_my_withdrawals(user: dict = Depends(get_current_user)):
+    """Get user's withdrawal history"""
+    withdrawals = await db.fiat_withdrawals.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return withdrawals
+
+
+@router.post("/fiat-withdrawal/{withdrawal_id}/cancel", response_model=dict)
+async def cancel_fiat_withdrawal(withdrawal_id: str, user: dict = Depends(get_current_user)):
+    """Cancel a pending withdrawal request"""
+    withdrawal = await db.fiat_withdrawals.find_one({
+        "id": withdrawal_id,
+        "user_id": user["id"]
+    })
+    
+    if not withdrawal:
+        raise HTTPException(status_code=404, detail="Withdrawal not found")
+    
+    if withdrawal["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Can only cancel pending withdrawals")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Update withdrawal status
+    await db.fiat_withdrawals.update_one(
+        {"id": withdrawal_id},
+        {"$set": {"status": "cancelled", "updated_at": now}}
+    )
+    
+    # Return reserved balance
+    await db.wallets.update_one(
+        {"user_id": user["id"], "asset_id": withdrawal["currency"]},
+        {
+            "$inc": {"available_balance": withdrawal["amount"], "pending_balance": -withdrawal["amount"]},
+            "$set": {"updated_at": now}
+        }
+    )
+    
+    return {"success": True, "message": "Withdrawal cancelled"}
+
+
 # ==================== ADMIN: ORDERS MANAGEMENT ====================
 
 @router.get("/admin/orders", response_model=List[dict])
