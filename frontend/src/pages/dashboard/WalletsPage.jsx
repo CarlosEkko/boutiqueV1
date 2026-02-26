@@ -172,23 +172,37 @@ const WalletsPage = () => {
     );
   }
 
-  const WalletCard = ({ wallet }) => {
+  const WalletCard = ({ wallet, isWatchlist = false, onRemove }) => {
     const isFiatWallet = isFiat(wallet.asset_id);
     // Get value in selected currency
     const cryptoValue = !isFiatWallet ? getCryptoValue(wallet.asset_id, wallet.balance) : 0;
     // Get crypto logo
     const cryptoLogo = !isFiatWallet ? cryptoPrices[wallet.asset_id]?.logo : null;
+    const cryptoPrice = !isFiatWallet ? cryptoPrices[wallet.asset_id]?.price : 0;
     
     return (
       <Card 
         key={wallet.id}
-        className={`bg-gradient-to-br ${
+        className={`bg-gradient-to-br relative ${
           isFiatWallet 
             ? 'from-emerald-900/30 to-black/90 border-emerald-800/30 hover:border-emerald-500/50' 
             : 'from-zinc-900/90 to-black/90 border-gold-800/20 hover:border-gold-500/50'
         } transition-all cursor-pointer`}
         onClick={() => setSelectedWallet(wallet)}
       >
+        {/* Remove from watchlist button */}
+        {isWatchlist && onRemove && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-colors z-10"
+            title="Remover da watchlist"
+          >
+            <X size={16} />
+          </button>
+        )}
         <CardContent className="p-6">
           {/* Asset Header */}
           <div className="flex items-center justify-between mb-4">
