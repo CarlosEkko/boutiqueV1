@@ -62,7 +62,29 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Implemented Features
 
-### Public Support Page (NEW - Mar 2026)
+### Markets Page with CoinMarketCap Data (NEW - Mar 2026)
+- [x] Real-time cryptocurrency prices from CoinMarketCap API
+- [x] Market statistics: Total Market Cap, Volume 24h, BTC Dominance
+- [x] Top Gainer and Top Loser display
+- [x] Sortable table with 50+ cryptocurrencies
+- [x] Change percentages: 1h, 24h, 7d
+- [x] Favorites system with local storage
+- [x] Tabs: All, Gainers, Losers, Favorites
+- [x] Search functionality
+- [x] Trade button linking to exchange
+- [x] Backend endpoints: `/api/trading/markets`, `/api/trading/markets/stats`
+
+### Trading Page with TradingView Charts (NEW - Mar 2026)
+- [x] TradingView Advanced Chart widget via iframe
+- [x] Real-time candlestick charts from Binance
+- [x] Multiple timeframes (1m, 30m, 1h, etc.)
+- [x] Technical indicators support
+- [x] Pair selector sidebar with favorites
+- [x] Price ticker animation with live data
+- [x] Market info header (price, change, volume, market cap)
+- [x] "Buy/Sell" button linking to exchange page
+
+### Public Support Page (Mar 2026)
 - [x] Public support page at `/support` with same design as Home page
 - [x] Dark theme with gold accents matching brand identity
 - [x] Form with: Name, Email, Subject, Category, Priority, Description

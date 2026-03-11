@@ -2497,3 +2497,191 @@ async def get_payment_status(
     
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+
+# ==================== MARKETS DATA ====================
+
+# Cache for market data
+MARKETS_CACHE = {
+    "data": None,
+    "updated_at": None
+}
+
+@router.get("/markets")
+async def get_markets_data(currency: str = "USD"):
+    """Get market data for all supported cryptocurrencies"""
+    global MARKETS_CACHE
+    
+    now = datetime.now(timezone.utc)
+    
+    # Check cache validity (60 seconds)
+    if MARKETS_CACHE["data"] and MARKETS_CACHE["updated_at"]:
+        cache_age = (now - MARKETS_CACHE["updated_at"]).total_seconds()
+        if cache_age < 60:
+            # Return cached data converted to requested currency
+            return await convert_markets_to_currency(MARKETS_CACHE["data"], currency)
+    
+    # Fetch fresh data from CoinMarketCap
+    if COINMARKETCAP_API_KEY:
+        try:
+            headers = {
+                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
+                "Accept": "application/json"
+            }
+            
+            # Get symbols from DEFAULT_CRYPTOS
+            symbols = ",".join([c["symbol"] for c in DEFAULT_CRYPTOS])
+            
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(
+                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
+                    params={"symbol": symbols, "convert": "USD"},
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    cmc_data = data.get("data", {})
+                    
+                    markets = []
+                    for crypto in DEFAULT_CRYPTOS:
+                        symbol = crypto["symbol"]
+                        cmc_info = cmc_data.get(symbol)
+                        
+                        # Handle both single object and list response
+                        if isinstance(cmc_info, list):
+                            cmc_info = cmc_info[0] if cmc_info else None
+                        
+                        if cmc_info:
+                            quote = cmc_info.get("quote", {}).get("USD", {})
+                            markets.append({
+                                "symbol": symbol,
+                                "name": crypto["name"],
+                                "logo": get_crypto_logo_url(crypto["cmc_id"]),
+                                "price": quote.get("price", 0),
+                                "change_1h": quote.get("percent_change_1h", 0),
+                                "change_24h": quote.get("percent_change_24h", 0),
+                                "change_7d": quote.get("percent_change_7d", 0),
+                                "volume_24h": quote.get("volume_24h", 0),
+                                "market_cap": quote.get("market_cap", 0),
+                                "rank": cmc_info.get("cmc_rank", 0),
+                            })
+                    
+                    MARKETS_CACHE["data"] = markets
+                    MARKETS_CACHE["updated_at"] = now
+                    
+                    return await convert_markets_to_currency(markets, currency)
+        
+        except Exception as e:
+            print(f"Failed to fetch market data: {e}")
+    
+    # Return cached or fallback data
+    if MARKETS_CACHE["data"]:
+        return await convert_markets_to_currency(MARKETS_CACHE["data"], currency)
+    
+    # Return default/fallback data
+    return await get_fallback_markets(currency)
+
+
+async def convert_markets_to_currency(markets: list, currency: str) -> dict:
+    """Convert market data to target currency"""
+    if currency == "USD":
+        return {
+            "currency": currency,
+            "markets": markets,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+    
+    rates = await get_exchange_rates()
+    rate = rates.get(currency, 1.0)
+    
+    converted = []
+    for m in markets:
+        converted.append({
+            **m,
+            "price": (m.get("price") or 0) * rate,
+            "volume_24h": (m.get("volume_24h") or 0) * rate,
+            "market_cap": (m.get("market_cap") or 0) * rate,
+        })
+    
+    return {
+        "currency": currency,
+        "markets": converted,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
+async def get_fallback_markets(currency: str) -> dict:
+    """Return fallback market data when API is unavailable"""
+    # Fallback prices (approximate)
+    fallback_prices = {
+        "BTC": 65000, "ETH": 3500, "USDT": 1, "BNB": 600, "SOL": 150,
+        "XRP": 0.60, "USDC": 1, "ADA": 0.45, "DOGE": 0.12, "TRX": 0.12,
+        "AVAX": 35, "LINK": 15, "TON": 6, "SHIB": 0.000025, "DOT": 7,
+        "BCH": 450, "NEAR": 5, "MATIC": 0.55, "LTC": 85, "UNI": 10,
+    }
+    
+    markets = []
+    for crypto in DEFAULT_CRYPTOS[:20]:  # Limit to first 20 for fallback
+        price = fallback_prices.get(crypto["symbol"], 1)
+        markets.append({
+            "symbol": crypto["symbol"],
+            "name": crypto["name"],
+            "logo": get_crypto_logo_url(crypto["cmc_id"]),
+            "price": price,
+            "change_1h": 0,
+            "change_24h": 0,
+            "change_7d": 0,
+            "volume_24h": 0,
+            "market_cap": 0,
+            "rank": DEFAULT_CRYPTOS.index(crypto) + 1,
+        })
+    
+    return await convert_markets_to_currency(markets, currency)
+
+
+@router.get("/markets/stats")
+async def get_market_stats(currency: str = "USD"):
+    """Get market statistics summary"""
+    markets_response = await get_markets_data(currency)
+    markets = markets_response.get("markets", [])
+    
+    if not markets:
+        return {
+            "total_market_cap": 0,
+            "total_volume_24h": 0,
+            "btc_dominance": 0,
+            "top_gainer": None,
+            "top_loser": None,
+            "currency": currency
+        }
+    
+    total_market_cap = sum(m.get("market_cap") or 0 for m in markets)
+    total_volume = sum(m.get("volume_24h") or 0 for m in markets)
+    
+    btc_market = next((m for m in markets if m["symbol"] == "BTC"), None)
+    btc_market_cap = (btc_market.get("market_cap") or 0) if btc_market else 0
+    btc_dominance = (btc_market_cap / total_market_cap * 100) if btc_market and total_market_cap > 0 else 0
+    
+    sorted_by_change = sorted(markets, key=lambda x: x.get("change_24h") or 0, reverse=True)
+    top_gainer = sorted_by_change[0] if sorted_by_change else None
+    top_loser = sorted_by_change[-1] if sorted_by_change else None
+    
+    return {
+        "total_market_cap": total_market_cap,
+        "total_volume_24h": total_volume,
+        "btc_dominance": round(btc_dominance, 2),
+        "top_gainer": {
+            "symbol": top_gainer["symbol"],
+            "name": top_gainer["name"],
+            "change_24h": round(top_gainer.get("change_24h") or 0, 2)
+        } if top_gainer else None,
+        "top_loser": {
+            "symbol": top_loser["symbol"],
+            "name": top_loser["name"],
+            "change_24h": round(top_loser.get("change_24h") or 0, 2)
+        } if top_loser else None,
+        "currency": currency,
+        "total_cryptos": len(markets)
+    }
