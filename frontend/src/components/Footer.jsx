@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Separator } from './ui/separator';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '../i18n';
@@ -8,9 +9,24 @@ const Footer = () => {
   const { t, isRTL } = useLanguage();
 
   const footerLinks = {
-    [t('footer.services')]: [t('footer.exchange'), t('footer.atmNetwork'), t('footer.launchpad'), t('footer.custody')],
-    [t('footer.company')]: [t('footer.about'), t('footer.careers'), t('footer.press'), t('footer.legal')],
-    [t('footer.support')]: [t('footer.helpCenter'), t('footer.contactUs'), t('footer.status'), t('footer.security')]
+    [t('footer.services')]: [
+      { label: t('footer.exchange'), to: '/dashboard/exchange' },
+      { label: t('footer.atmNetwork'), to: '/atm' },
+      { label: t('footer.launchpad'), to: '#' },
+      { label: t('footer.custody'), to: '/institutional' }
+    ],
+    [t('footer.company')]: [
+      { label: t('footer.about'), to: '#' },
+      { label: t('footer.careers'), to: '#' },
+      { label: t('footer.press'), to: '#' },
+      { label: t('footer.legal'), to: '#' }
+    ],
+    [t('footer.support')]: [
+      { label: t('footer.helpCenter'), to: '/help' },
+      { label: t('footer.contactUs'), to: '/support' },
+      { label: t('footer.status'), to: '#' },
+      { label: t('footer.security'), to: '/help/seguranca' }
+    ]
   };
 
   return (
@@ -19,7 +35,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <a href="#" className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 mb-4 group`}>
+            <Link to="/" className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-2 mb-4 group`}>
               <img 
                 src="/logo.png" 
                 alt="KBEX.io" 
@@ -28,7 +44,7 @@ const Footer = () => {
               <span className="text-2xl font-light bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent">
                 KBEX.io
               </span>
-            </a>
+            </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               {t('footer.tagline')}
             </p>
@@ -54,13 +70,13 @@ const Footer = () => {
               <h3 className="text-white font-semibold mb-4">{category}</h3>
               <ul className="space-y-2">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.label}>
+                    <Link
+                      to={link.to}
                       className="text-gray-400 text-sm hover:text-gold-400 transition-colors duration-300"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
