@@ -900,7 +900,7 @@ async def list_kbex_bank_accounts(admin: dict = Depends(get_admin_user)):
 
 
 @router.get("/admin/kbex-bank-accounts/{currency}", response_model=dict)
-async def get_kbex_bank_account(currency: str, admin: dict = Depends(get_admin_user)):
+async def get_kbex_bank_account_admin(currency: str, admin: dict = Depends(get_admin_user)):
     """Get KBEX bank account for a specific currency"""
     account = await db.kbex_bank_accounts.find_one({"currency": currency.upper()}, {"_id": 0})
     if not account:
@@ -1691,6 +1691,12 @@ async def create_buy_order(
     elif order.payment_method == PaymentMethod.BANK_TRANSFER:
         trading_order.status = OrderStatus.AWAITING_ADMIN_APPROVAL
         
+        # Get bank account from database (default to EUR for buy orders)
+        bank_currency = "EUR"  # Default currency for bank transfers
+        bank_account = await get_kbex_bank_account(bank_currency)
+        if not bank_account:
+            raise HTTPException(status_code=400, detail=f"Bank account for {bank_currency} not configured. Please contact support.")
+        
         # Create bank transfer record
         reference_code = f"KB{secrets.token_hex(4).upper()}"
         
@@ -1700,9 +1706,9 @@ async def create_buy_order(
             order_id=trading_order.id,
             transfer_type="deposit",
             amount=total_amount,
-            currency="EUR",
-            recipient_iban="PT50 0000 0000 0000 0000 0000 0",  # KBEX bank account
-            recipient_bank="KBEX Exchange Ltd",
+            currency=bank_currency,
+            recipient_iban=bank_account.get("iban"),
+            recipient_bank=bank_account.get("bank_name"),
             reference_code=reference_code,
             status=BankTransferStatus.PENDING
         )
@@ -1726,11 +1732,13 @@ async def create_buy_order(
             "order_id": trading_order.id,
             "bank_transfer": {
                 "id": bank_transfer.id,
-                "recipient_iban": bank_transfer.recipient_iban,
-                "recipient_bank": bank_transfer.recipient_bank,
+                "recipient_iban": bank_account.get("iban"),
+                "recipient_bank": bank_account.get("bank_name"),
+                "bic": bank_account.get("bic"),
+                "account_holder": bank_account.get("account_holder"),
                 "reference_code": reference_code,
                 "amount": total_amount,
-                "currency": "EUR"
+                "currency": bank_currency
             },
             "summary": {
                 "crypto_amount": crypto_amount,
@@ -2105,41 +2113,28 @@ async def submit_transfer_proof(
 
 # ==================== USER: FIAT DEPOSITS ====================
 
-# KBEX Bank accounts for receiving deposits (per currency)
-KBEX_BANK_ACCOUNTS = {
-    "EUR": {
-        "bank_name": "KBEX Exchange Ltd",
-        "iban": "PT50 0000 0000 0000 0000 0000 0",
-        "bic": "KBEXPTPL",
-        "account_holder": "KBEX Exchange Ltd",
-        "bank_address": "Lisbon, Portugal"
-    },
-    "USD": {
-        "bank_name": "KBEX Exchange Inc",
-        "iban": "US00 0000 0000 0000 0000 0000",
-        "bic": "KBEXUSNY",
-        "account_holder": "KBEX Exchange Inc",
-        "bank_address": "New York, USA",
-        "routing_number": "021000021",
-        "account_number": "123456789"
-    },
-    "AED": {
-        "bank_name": "KBEX Exchange DMCC",
-        "iban": "AE00 0000 0000 0000 0000 000",
-        "bic": "KBEXAEAD",
-        "account_holder": "KBEX Exchange DMCC",
-        "bank_address": "Dubai, UAE"
-    },
-    "BRL": {
-        "bank_name": "KBEX Brasil Ltda",
-        "pix_key": "depositos@kbex.io",
-        "account_holder": "KBEX Brasil Ltda",
-        "bank_address": "São Paulo, Brasil",
-        "bank": "Banco do Brasil",
-        "agency": "0001",
-        "account": "12345-6"
+async def get_kbex_bank_account(currency: str) -> dict:
+    """Get KBEX bank account details from database for a specific currency"""
+    account = await db.kbex_bank_accounts.find_one(
+        {"currency": currency.upper(), "is_active": True},
+        {"_id": 0}
+    )
+    
+    if not account:
+        return None
+    
+    # Format response with consistent field names
+    return {
+        "bank_name": account.get("bank_name"),
+        "account_holder": account.get("account_name", "KBEX Exchange"),
+        "iban": account.get("iban"),
+        "bic": account.get("swift_bic"),
+        "account_number": account.get("account_number"),
+        "routing_number": account.get("routing_number"),
+        "sort_code": account.get("sort_code"),
+        "bank_address": account.get("bank_address"),
+        "instructions": account.get("instructions")
     }
-}
 
 
 class CreateFiatDeposit(BaseModel):
@@ -2161,8 +2156,13 @@ async def create_fiat_deposit(
     currency = deposit.currency.upper()
     
     # Validate currency
-    if currency not in KBEX_BANK_ACCOUNTS:
-        raise HTTPException(status_code=400, detail=f"Currency {currency} not supported. Available: EUR, USD, AED, BRL")
+    if currency not in SUPPORTED_FIAT:
+        raise HTTPException(status_code=400, detail=f"Currency {currency} not supported. Available: {SUPPORTED_FIAT}")
+    
+    # Get bank account from database (configured by admin)
+    bank_account = await get_kbex_bank_account(currency)
+    if not bank_account:
+        raise HTTPException(status_code=400, detail=f"Bank account for {currency} not configured. Please contact support.")
     
     # Minimum deposit amounts
     min_amounts = {"EUR": 100, "USD": 100, "AED": 500, "BRL": 500}
@@ -2179,8 +2179,8 @@ async def create_fiat_deposit(
         transfer_type="deposit",
         amount=deposit.amount,
         currency=currency,
-        recipient_iban=KBEX_BANK_ACCOUNTS[currency].get("iban"),
-        recipient_bank=KBEX_BANK_ACCOUNTS[currency].get("bank_name"),
+        recipient_iban=bank_account.get("iban"),
+        recipient_bank=bank_account.get("bank_name"),
         reference_code=reference_code,
         status=BankTransferStatus.PENDING
     )
@@ -2192,7 +2192,7 @@ async def create_fiat_deposit(
     await db.bank_transfers.insert_one(transfer_dict)
     
     # Get bank details for response
-    bank_details = KBEX_BANK_ACCOUNTS[currency].copy()
+    bank_details = bank_account.copy()
     bank_details["reference_code"] = reference_code
     bank_details["amount"] = deposit.amount
     bank_details["currency"] = currency
@@ -2243,10 +2243,11 @@ async def get_fiat_deposit_details(
     if not deposit:
         raise HTTPException(status_code=404, detail="Deposit not found")
     
-    # Add bank details
+    # Add bank details from database
     currency = deposit.get("currency", "EUR")
-    if currency in KBEX_BANK_ACCOUNTS:
-        deposit["bank_details"] = KBEX_BANK_ACCOUNTS[currency].copy()
+    bank_account = await get_kbex_bank_account(currency)
+    if bank_account:
+        deposit["bank_details"] = bank_account.copy()
         deposit["bank_details"]["reference_code"] = deposit["reference_code"]
     
     return deposit
