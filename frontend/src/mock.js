@@ -8,7 +8,7 @@ export const heroData = {
     primary: "Request Access",
     secondary: "Learn More"
   },
-  backgroundImage: "https://customer-assets.emergentagent.com/job_42634419-852e-4cf0-b207-d618810426c7/artifacts/zjudpwln_BkGround%201.png"
+  backgroundImage: "/images/hero-background.png"
 };
 
 export const products = [
@@ -16,28 +16,28 @@ export const products = [
     id: 1,
     title: "Premium Exchange",
     description: "White-glove OTC trading desk with dedicated relationship managers. Execute large-volume trades with institutional-grade liquidity and discretion.",
-    image: "https://images.unsplash.com/photo-1641477461141-9894a0bc454b",
+    image: "/images/product-exchange.jpg",
     features: ["24/7 Dedicated Support", "Institutional Liquidity", "Best Execution Guaranteed"]
   },
   {
     id: 2,
     title: "Crypto ATM Network",
     description: "Curated network of premium crypto ATMs in exclusive locations. Seamless fiat-to-crypto conversions with enhanced privacy and convenience.",
-    image: "https://images.unsplash.com/photo-1641524815633-2ec743c73398",
+    image: "/images/product-atm.jpg",
     features: ["Prime Locations", "Enhanced Privacy", "Multi-Currency Support"]
   },
   {
     id: 3,
     title: "Exclusive Launchpad",
     description: "Early access to vetted blockchain projects and token sales. Participate in pre-vetted opportunities unavailable to retail investors.",
-    image: "https://images.unsplash.com/photo-1569979230536-b3415317a681",
+    image: "/images/product-launchpad.jpg",
     features: ["Vetted Projects Only", "Early Access", "Due Diligence Reports"]
   },
   {
     id: 4,
     title: "Institutional Custody",
     description: "Military-grade security with multi-signature cold storage. Bank-level insurance and compliance for peace of mind.",
-    image: "https://images.unsplash.com/photo-1767972464040-8bfee42d7bed",
+    image: "/images/product-custody.jpg",
     features: ["Cold Storage", "Multi-Sig Security", "Insured Assets"]
   }
 ];

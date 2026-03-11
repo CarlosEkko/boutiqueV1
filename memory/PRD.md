@@ -287,6 +287,14 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - Cancel pending withdrawals functionality
   - Navigation links added to dashboard sidebar (Depósito Fiat, Levantamento Fiat)
 
+- [x] **Local File Storage System** - All images and documents now stored on server
+  - New `/api/uploads` endpoint for generic file uploads
+  - Upload proof of deposit via file upload (not URL)
+  - All static images moved from external URLs (Unsplash, etc.) to `/images/` folder
+  - Supported file types: PDF, JPEG, PNG, WebP, GIF
+  - Categories: KYC, deposits, withdrawals, documents, general
+  - Max file size: 10MB
+
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data
 - [ ] Trading page with TradingView chart

@@ -79,12 +79,20 @@ const FiatDepositPage = () => {
     }
   };
 
-  const submitProof = async (depositId, proofUrl) => {
+  const submitProof = async (depositId, file) => {
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
       await axios.post(
-        `${API_URL}/api/trading/fiat/deposit/${depositId}/proof?proof_url=${encodeURIComponent(proofUrl)}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${API_URL}/api/uploads/deposit-proof/${depositId}`,
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          } 
+        }
       );
       
       toast.success('Comprovante enviado! Aguardando aprovação.');
@@ -615,16 +623,16 @@ const FiatDepositPage = () => {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-2 block">URL do Comprovante</label>
+                <label className="text-sm text-gray-400 mb-2 block">Comprovante de Transferência</label>
                 <Input
-                  type="url"
-                  id="proof-url"
-                  placeholder="https://..."
-                  className="bg-zinc-800 border-zinc-700 text-white"
-                  data-testid="proof-url-input"
+                  type="file"
+                  id="proof-file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="bg-zinc-800 border-zinc-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-500 file:text-white file:cursor-pointer"
+                  data-testid="proof-file-input"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Cole o link do comprovante (imagem ou PDF hospedado)
+                  Formatos aceitos: PDF, JPEG, PNG (máx. 10MB)
                 </p>
               </div>
 
@@ -639,11 +647,12 @@ const FiatDepositPage = () => {
                 <Button
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600"
                   onClick={() => {
-                    const proofUrl = document.getElementById('proof-url').value;
-                    if (proofUrl) {
-                      submitProof(selectedDeposit.id, proofUrl);
+                    const fileInput = document.getElementById('proof-file');
+                    const file = fileInput?.files?.[0];
+                    if (file) {
+                      submitProof(selectedDeposit.id, file);
                     } else {
-                      toast.error('Insira a URL do comprovante');
+                      toast.error('Selecione um ficheiro');
                     }
                   }}
                   data-testid="submit-proof-btn"

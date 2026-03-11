@@ -18,28 +18,28 @@ export const atmFeatures = [
     title: "Prime Locations",
     description: "ATMs placed in exclusive high-end shopping districts, luxury hotels, and private banking centers. Curated environments that match the sophistication of our clientele.",
     icon: "map-pin",
-    image: "https://images.unsplash.com/photo-1481437156560-3205f6a55735"
+    image: "/images/atm-dubai.jpg"
   },
   {
     id: 2,
     title: "Enhanced Privacy",
     description: "Discreet transaction booths with biometric verification. Advanced encryption and privacy protocols ensure your transactions remain confidential.",
     icon: "shield",
-    image: "https://images.unsplash.com/photo-1767972464040-8bfee42d7bed"
+    image: "/images/product-custody.jpg"
   },
   {
     id: 3,
     title: "Multi-Currency Support",
     description: "Buy and sell Bitcoin, Ethereum, and other major cryptocurrencies. Support for multiple fiat currencies including EUR, USD, GBP, AED, and BRL.",
     icon: "coins",
-    image: "https://images.unsplash.com/photo-1556741533-974f8e62a92d"
+    image: "/images/atm-zurich.jpg"
   },
   {
     id: 4,
     title: "White-Glove Service",
     description: "Dedicated concierge support available at select locations. VIP transaction assistance for large-volume conversions.",
     icon: "headset",
-    image: "https://images.unsplash.com/photo-1767128465859-34e9abfb501e"
+    image: "/images/atm-saopaulo.jpg"
   }
 ];
 

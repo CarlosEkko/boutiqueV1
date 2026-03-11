@@ -480,7 +480,7 @@ const CryptoATMPage = () => {
           ref={heroImageRef}
           className="absolute inset-0 bg-cover bg-center scale-110"
           style={{
-            backgroundImage: `url(https://customer-assets.emergentagent.com/job_sovereign-exchange-1/artifacts/8oy0bqnz_image.png)`
+            backgroundImage: `url(/images/atm-hero-background.png)`
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black" />
