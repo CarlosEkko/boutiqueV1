@@ -28,7 +28,9 @@ import {
   ArrowUpToLine,
   ArrowDownToLine,
   Bitcoin,
-  Send
+  Send,
+  HelpCircle,
+  Book
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
@@ -54,6 +56,7 @@ const DashboardLayout = () => {
     { to: '/dashboard/investments', icon: TrendingUp, label: t('dashboard.nav.investments') },
     { to: '/dashboard/roi', icon: PieChart, label: t('dashboard.nav.roi') },
     { to: '/dashboard/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
+    { to: '/dashboard/support', icon: HelpCircle, label: 'Suporte' },
     { to: '/dashboard/kyc', icon: UserCheck, label: t('dashboard.nav.kycVerification') },
     { to: '/profile', icon: User, label: 'Meu Perfil' },
   ];
@@ -61,6 +64,7 @@ const DashboardLayout = () => {
   const adminNavItems = [
     { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
     { to: '/dashboard/admin/trading', icon: DollarSign, label: 'Gestão Trading' },
+    { to: '/dashboard/admin/knowledge-base', icon: Book, label: 'Base Conhecimento' },
     { to: '/dashboard/admin/regional', icon: Globe, label: 'Métricas Regionais' },
     { to: '/dashboard/admin/staff', icon: UserCog, label: 'Gestão de Equipa' },
     { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },

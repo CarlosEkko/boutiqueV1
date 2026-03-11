@@ -34,6 +34,9 @@ import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
 import FiatWithdrawalPage from "./pages/dashboard/FiatWithdrawalPage";
 import CryptoDepositPage from "./pages/dashboard/CryptoDepositPage";
 import CryptoWithdrawalPage from "./pages/dashboard/CryptoWithdrawalPage";
+import SupportPage from "./pages/dashboard/SupportPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
+import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
@@ -99,6 +102,9 @@ function AppRoutes() {
         <Route path="crypto-deposit" element={<CryptoDepositPage />} />
         <Route path="crypto-withdrawal" element={<CryptoWithdrawalPage />} />
         
+        {/* Support */}
+        <Route path="support" element={<SupportPage />} />
+        
         {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />
         <Route path="admin/regional" element={<RegionalDashboard />} />
@@ -110,7 +116,13 @@ function AppRoutes() {
         <Route path="admin/invites" element={<AdminInvites />} />
         <Route path="admin/kyc" element={<AdminKYC />} />
         <Route path="admin/trading" element={<AdminTradingPage />} />
+        <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
       </Route>
+
+      {/* Knowledge Base / Help - Public */}
+      <Route path="/help" element={<KnowledgeBasePage />} />
+      <Route path="/help/:categorySlug" element={<KnowledgeBasePage />} />
+      <Route path="/help/article/:articleSlug" element={<KnowledgeBasePage />} />
     </Routes>
   );
 }

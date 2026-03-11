@@ -316,6 +316,27 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - Withdrawal history with status tracking
   - Cancel pending withdrawals
 
+- [x] **Knowledge Base / Help Center** - Complete documentation system
+  - Public pages at `/help`, `/help/:category`, `/help/article/:slug`
+  - Categories with icons and colors (FAQs, Trading, Segurança)
+  - Articles with Markdown support, tags, featured flag
+  - Search functionality
+  - Article feedback (helpful yes/no)
+  - Recent and Popular articles sections
+  - Breadcrumb navigation
+
+- [x] **Admin Knowledge Base Management** (`/dashboard/admin/knowledge-base`)
+  - Create/Edit/Delete categories
+  - Create/Edit/Delete articles with Markdown editor
+  - Article status management (draft, published, archived)
+  - Filter by category and status
+
+- [x] **Support Tickets System** (`/dashboard/support`)
+  - User ticket creation with category and priority
+  - Ticket conversation/messaging
+  - Admin ticket management in existing admin panel
+  - Status tracking (open, in_progress, waiting_customer, resolved, closed)
+
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data
 - [ ] Trading page with TradingView chart
