@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { 
   Search, 
   ChevronRight, 
@@ -16,9 +18,12 @@ import {
   ThumbsDown,
   ArrowLeft,
   Tag,
-  TrendingUp
+  TrendingUp,
+  Folder,
+  Headphones,
+  MessageSquare,
+  Loader2
 } from 'lucide-react';
-import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -34,7 +39,10 @@ const categoryIcons = {
   'legal': Scale,
   'policies': FileCheck,
   'terms': FileText,
-  'default': FileText
+  'trading': TrendingUp,
+  'seguranca': Scale,
+  'security': Scale,
+  'default': Folder
 };
 
 const KnowledgeBasePage = () => {
@@ -82,8 +90,8 @@ const KnowledgeBasePage = () => {
 
   const fetchRecentArticles = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/kb/recent?limit=5`);
-      setRecentArticles(response.data);
+      const response = await axios.get(`${API_URL}/api/kb/articles?limit=5&sort=recent`);
+      setRecentArticles(response.data.articles || []);
     } catch (err) {
       console.error('Error fetching recent articles', err);
     }
@@ -91,8 +99,8 @@ const KnowledgeBasePage = () => {
 
   const fetchPopularArticles = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/kb/popular?limit=5`);
-      setPopularArticles(response.data);
+      const response = await axios.get(`${API_URL}/api/kb/articles?limit=5&sort=popular`);
+      setPopularArticles(response.data.articles || []);
     } catch (err) {
       console.error('Error fetching popular articles', err);
     }
@@ -101,9 +109,11 @@ const KnowledgeBasePage = () => {
   const fetchCategoryArticles = async (slug) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
-      setCurrentCategory(response.data.category);
-      setArticles(response.data.articles);
+      const catResponse = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
+      setCurrentCategory(catResponse.data);
+      
+      const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${slug}`);
+      setArticles(artResponse.data.articles || []);
       setCurrentArticle(null);
     } catch (err) {
       console.error('Error fetching category', err);
@@ -117,10 +127,16 @@ const KnowledgeBasePage = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles/${slug}`);
-      setCurrentArticle(response.data.article);
-      setCurrentCategory(response.data.category);
-      setRelatedArticles(response.data.related || []);
-      setFeedbackGiven(false);
+      setCurrentArticle(response.data);
+      
+      if (response.data.category_id) {
+        const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
+        const cat = catResponse.data.find(c => c.id === response.data.category_id);
+        setCurrentCategory(cat);
+        
+        const relatedResponse = await axios.get(`${API_URL}/api/kb/articles?category_id=${response.data.category_id}&limit=3`);
+        setRelatedArticles(relatedResponse.data.articles?.filter(a => a.slug !== slug) || []);
+      }
     } catch (err) {
       console.error('Error fetching article', err);
       navigate('/help');
@@ -130,140 +146,415 @@ const KnowledgeBasePage = () => {
   };
 
   const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-
+    e?.preventDefault();
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
     setSearching(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles?search=${encodeURIComponent(searchTerm)}`);
-      setSearchResults(response.data.articles);
+      setSearchResults(response.data.articles || []);
     } catch (err) {
-      console.error('Error searching', err);
+      console.error('Search error', err);
     } finally {
       setSearching(false);
     }
   };
 
-  const submitFeedback = async (helpful) => {
-    if (!currentArticle || feedbackGiven) return;
+  const handleFeedback = async (helpful) => {
+    if (feedbackGiven || !currentArticle) return;
     
     try {
       await axios.post(`${API_URL}/api/kb/articles/${currentArticle.id}/feedback?helpful=${helpful}`);
       setFeedbackGiven(true);
     } catch (err) {
-      console.error('Error submitting feedback', err);
+      console.error('Feedback error', err);
     }
   };
 
-  const getCategoryIcon = (iconName) => {
-    const Icon = categoryIcons[iconName?.toLowerCase()] || categoryIcons.default;
+  const getCategoryIcon = (slug) => {
+    const Icon = categoryIcons[slug?.toLowerCase()] || categoryIcons.default;
     return Icon;
   };
 
-  // Homepage view
-  if (!categorySlug && !articleSlug) {
+  // Loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-black">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-b from-zinc-900 to-black py-16">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Centro de Ajuda
-            </h1>
-            <p className="text-xl text-gray-400 mb-8">
-              Como podemos ajudá-lo hoje?
-            </p>
+        <Header />
+        <div className="pt-32 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-            {/* Search */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <Input
-                  type="text"
-                  placeholder="Pesquisar artigos, FAQs, documentação..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-zinc-800 border-zinc-700 text-white text-lg rounded-xl"
-                />
-                <Button 
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-emerald-500 hover:bg-emerald-600"
-                  disabled={searching}
-                >
-                  {searching ? 'A pesquisar...' : 'Pesquisar'}
-                </Button>
+  // Article View
+  if (currentArticle) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Header />
+        
+        <main className="pt-32 pb-20">
+          <div className="max-w-4xl mx-auto px-4">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-2 text-sm mb-8">
+              <Link to="/help" className="text-gray-400 hover:text-gold-400 transition-colors">
+                Centro de Ajuda
+              </Link>
+              <ChevronRight size={14} className="text-gray-600" />
+              {currentCategory && (
+                <>
+                  <Link 
+                    to={`/help/${currentCategory.slug}`}
+                    className="text-gray-400 hover:text-gold-400 transition-colors"
+                  >
+                    {currentCategory.name}
+                  </Link>
+                  <ChevronRight size={14} className="text-gray-600" />
+                </>
+              )}
+              <span className="text-gold-400">{currentArticle.title}</span>
+            </nav>
+
+            {/* Article */}
+            <article className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-8 md:p-12">
+              <div className="mb-8">
+                <h1 className="text-3xl md:text-4xl font-light text-white mb-4">
+                  {currentArticle.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Clock size={14} />
+                    {new Date(currentArticle.created_at).toLocaleDateString('pt-PT')}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye size={14} />
+                    {currentArticle.views || 0} visualizações
+                  </span>
+                  {currentArticle.tags?.map(tag => (
+                    <Badge key={tag} className="bg-gold-500/20 text-gold-400 border-0">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </form>
 
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="mt-6 text-left bg-zinc-900 rounded-xl p-4 max-w-2xl mx-auto">
-                <h3 className="text-white font-semibold mb-3">Resultados ({searchResults.length})</h3>
-                <div className="space-y-2">
-                  {searchResults.map(article => (
+              {/* Content */}
+              <div className="prose prose-invert prose-gold max-w-none 
+                prose-headings:text-white prose-headings:font-light
+                prose-p:text-gray-300 prose-p:leading-relaxed
+                prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
+                prose-strong:text-white
+                prose-code:text-gold-400 prose-code:bg-zinc-800 prose-code:px-1 prose-code:rounded
+                prose-pre:bg-zinc-800/50 prose-pre:border prose-pre:border-zinc-700
+                prose-blockquote:border-gold-500 prose-blockquote:text-gray-400
+                prose-li:text-gray-300
+              ">
+                {currentArticle.content?.startsWith('<') ? (
+                  <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
+                ) : (
+                  <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
+                )}
+              </div>
+
+              {/* Feedback */}
+              <div className="mt-12 pt-8 border-t border-zinc-800">
+                <p className="text-gray-400 mb-4">Este artigo foi útil?</p>
+                {feedbackGiven ? (
+                  <p className="text-gold-400">Obrigado pelo seu feedback!</p>
+                ) : (
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleFeedback(true)}
+                      variant="outline"
+                      className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
+                    >
+                      <ThumbsUp size={16} className="mr-2" /> Sim
+                    </Button>
+                    <Button
+                      onClick={() => handleFeedback(false)}
+                      variant="outline"
+                      className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
+                    >
+                      <ThumbsDown size={16} className="mr-2" /> Não
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </article>
+
+            {/* Related Articles */}
+            {relatedArticles.length > 0 && (
+              <div className="mt-12">
+                <h3 className="text-xl font-light text-white mb-6">Artigos Relacionados</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {relatedArticles.map(article => (
                     <Link
                       key={article.id}
                       to={`/help/article/${article.slug}`}
-                      className="block p-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                      className="p-4 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
                     >
-                      <div className="text-white font-medium">{article.title}</div>
-                      {article.summary && (
-                        <div className="text-sm text-gray-400 mt-1 line-clamp-2">{article.summary}</div>
-                      )}
+                      <h4 className="text-white group-hover:text-gold-400 transition-colors">{article.title}</h4>
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
                     </Link>
                   ))}
                 </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Categories Grid */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-bold text-white mb-8">Explorar Categorias</h2>
+            {/* Back Button */}
+            <div className="mt-8">
+              <Button
+                onClick={() => navigate(currentCategory ? `/help/${currentCategory.slug}` : '/help')}
+                variant="outline"
+                className="border-zinc-700 text-gray-400 hover:text-white"
+              >
+                <ArrowLeft size={16} className="mr-2" /> Voltar
+              </Button>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Category View
+  if (currentCategory) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Header />
+        
+        <main className="pt-32 pb-20">
+          <div className="max-w-6xl mx-auto px-4">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-2 text-sm mb-8">
+              <Link to="/help" className="text-gray-400 hover:text-gold-400 transition-colors">
+                Centro de Ajuda
+              </Link>
+              <ChevronRight size={14} className="text-gray-600" />
+              <span className="text-gold-400">{currentCategory.name}</span>
+            </nav>
+
+            {/* Category Header */}
+            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-8 mb-8">
+              <div className="flex items-center gap-4 mb-4">
+                <div 
+                  className="w-14 h-14 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${currentCategory.color || '#D4AF37'}20` }}
+                >
+                  {React.createElement(getCategoryIcon(currentCategory.slug), {
+                    size: 28,
+                    style: { color: currentCategory.color || '#D4AF37' }
+                  })}
+                </div>
+                <div>
+                  <h1 className="text-3xl font-light text-white">{currentCategory.name}</h1>
+                  <p className="text-gray-400">{currentCategory.description}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Articles List */}
+            <div className="space-y-4">
+              {articles.length === 0 ? (
+                <div className="text-center py-12 bg-zinc-900/30 rounded-xl border border-zinc-800/50">
+                  <FileText size={48} className="mx-auto text-gray-600 mb-4" />
+                  <p className="text-gray-400">Nenhum artigo nesta categoria ainda.</p>
+                </div>
+              ) : (
+                articles.map(article => (
+                  <Link
+                    key={article.id}
+                    to={`/help/article/${article.slug}`}
+                    className="block p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors mb-2">
+                          {article.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
+                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {new Date(article.created_at).toLocaleDateString('pt-PT')}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye size={12} />
+                            {article.views || 0}
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="text-gray-600 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+
+            {/* Back Button */}
+            <div className="mt-8">
+              <Button
+                onClick={() => navigate('/help')}
+                variant="outline"
+                className="border-zinc-700 text-gray-400 hover:text-white"
+              >
+                <ArrowLeft size={16} className="mr-2" /> Voltar ao Centro de Ajuda
+              </Button>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Main Help Center View
+  return (
+    <div className="min-h-screen bg-black">
+      <Header />
+      
+      {/* Hero Section */}
+      <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-20">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-900/50 to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-transparent to-transparent" />
+        
+        {/* Animated lines */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/20 to-transparent animate-pulse" />
+          <div className="absolute top-2/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/10 to-transparent animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-12">
+          <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center">
+            <Book size={36} className="text-gold-400" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-light text-white mb-6">
+            Centro de <span className="text-gold-400">Ajuda</span>
+          </h1>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+            Como podemos ajudá-lo hoje?
+          </p>
           
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+              <Input
+                type="text"
+                placeholder="Pesquisar artigos, FAQs, documentação..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-32 py-6 bg-zinc-900/80 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-500 rounded-xl text-lg"
+              />
+              <Button 
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold-500 hover:bg-gold-400 text-black font-medium"
+                disabled={searching}
+              >
+                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Pesquisar'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <section className="py-12 px-6">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl font-light text-white mb-6">
+              Resultados da Pesquisa ({searchResults.length})
+            </h2>
+            <div className="space-y-4">
+              {searchResults.map(article => (
+                <Link
+                  key={article.id}
+                  to={`/help/article/${article.slug}`}
+                  className="block p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
+                >
+                  <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors">
+                    {article.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm mt-2 line-clamp-2">{article.summary}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Categories */}
+      <section className="py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl font-light text-white mb-8">Explorar Categorias</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map(category => {
-              const Icon = getCategoryIcon(category.icon);
+            {categories.filter(cat => !cat.parent_id).map(category => {
+              const Icon = getCategoryIcon(category.slug);
+              const subcategories = categories.filter(c => c.parent_id === category.id);
+              
               return (
                 <Link
                   key={category.id}
                   to={`/help/${category.slug}`}
-                  className="group"
+                  className="p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
                 >
-                  <Card className="bg-zinc-900/50 border-zinc-800 hover:border-emerald-500/50 transition-all h-full">
-                    <CardContent className="p-6">
-                      <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                        style={{ backgroundColor: `${category.color}20` }}
-                      >
-                        <Icon size={24} style={{ color: category.color }} />
+                  <div 
+                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
+                    style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
+                  >
+                    <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
+                  </div>
+                  <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors mb-2">
+                    {category.name}
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                    {category.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <FileText size={12} />
+                    <span>{category.article_count || 0} artigos</span>
+                  </div>
+                  
+                  {/* Subcategories */}
+                  {subcategories.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-zinc-800">
+                      <p className="text-xs text-gray-500 mb-2">Subcategorias:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {subcategories.map(sub => (
+                          <Badge 
+                            key={sub.id} 
+                            className="bg-zinc-800 text-gray-400 border-0 text-xs"
+                          >
+                            {sub.name}
+                          </Badge>
+                        ))}
                       </div>
-                      <h3 className="text-xl font-semibold text-white group-hover:text-emerald-400 transition-colors mb-2">
-                        {category.name}
-                      </h3>
-                      {category.description && (
-                        <p className="text-gray-400 text-sm mb-4">{category.description}</p>
-                      )}
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FileText size={14} className="mr-1" />
-                        {category.article_count} artigos
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  )}
                 </Link>
               );
             })}
           </div>
         </div>
+      </section>
 
-        {/* Recent & Popular */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Recent & Popular Articles */}
+      <section className="py-16 px-6 bg-zinc-900/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Recent */}
             <div>
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <Clock size={20} className="text-emerald-400" />
+              <h2 className="text-xl font-light text-white mb-6 flex items-center gap-2">
+                <Clock size={20} className="text-gold-400" />
                 Artigos Recentes
               </h2>
               <div className="space-y-3">
@@ -271,12 +562,14 @@ const KnowledgeBasePage = () => {
                   <Link
                     key={article.id}
                     to={`/help/article/${article.slug}`}
-                    className="block p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-emerald-500/50 transition-colors"
+                    className="block p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-lg hover:border-gold-500/30 transition-all group"
                   >
-                    <div className="text-white font-medium">{article.title}</div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      {new Date(article.published_at).toLocaleDateString('pt-PT')}
-                    </div>
+                    <h4 className="text-white group-hover:text-gold-400 transition-colors">
+                      {article.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(article.created_at).toLocaleDateString('pt-PT')}
+                    </p>
                   </Link>
                 ))}
               </div>
@@ -284,7 +577,7 @@ const KnowledgeBasePage = () => {
 
             {/* Popular */}
             <div>
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <h2 className="text-xl font-light text-white mb-6 flex items-center gap-2">
                 <TrendingUp size={20} className="text-gold-400" />
                 Artigos Populares
               </h2>
@@ -293,256 +586,46 @@ const KnowledgeBasePage = () => {
                   <Link
                     key={article.id}
                     to={`/help/article/${article.slug}`}
-                    className="block p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-gold-500/50 transition-colors"
+                    className="block p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-lg hover:border-gold-500/30 transition-all group"
                   >
-                    <div className="text-white font-medium">{article.title}</div>
-                    <div className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-                      <Eye size={14} />
-                      {article.view_count} visualizações
-                    </div>
+                    <h4 className="text-white group-hover:text-gold-400 transition-colors">
+                      {article.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                      <Eye size={12} /> {article.views || 0} visualizações
+                    </p>
                   </Link>
                 ))}
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Support CTA */}
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-          <Card className="bg-gradient-to-r from-emerald-900/30 to-gold-900/30 border-emerald-800/30">
-            <CardContent className="p-8">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Não encontrou o que procurava?
-              </h2>
-              <p className="text-gray-400 mb-6">
-                A nossa equipa de suporte está disponível para ajudá-lo
-              </p>
-              <Link to="/dashboard/support">
-                <Button className="bg-emerald-500 hover:bg-emerald-600">
-                  Contactar Suporte
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Category view
-  if (categorySlug && !articleSlug) {
-    return (
-      <div className="min-h-screen bg-black py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-            <Link to="/help" className="hover:text-white">Centro de Ajuda</Link>
-            <ChevronRight size={14} />
-            <span className="text-white">{currentCategory?.name}</span>
+      {/* Contact Support */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-gradient-to-br from-gold-900/20 to-zinc-900/50 border border-gold-500/20 rounded-2xl p-12">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gold-500/20 flex items-center justify-center">
+              <Headphones size={32} className="text-gold-400" />
+            </div>
+            <h2 className="text-2xl font-light text-white mb-4">
+              Não encontrou o que procurava?
+            </h2>
+            <p className="text-gray-400 mb-8">
+              A nossa equipa de suporte está disponível para ajudar com qualquer questão.
+            </p>
+            <Link to="/support">
+              <Button className="bg-gold-500 hover:bg-gold-400 text-black font-medium px-8 py-6 text-lg">
+                <MessageSquare size={20} className="mr-2" />
+                Contactar Suporte
+              </Button>
+            </Link>
           </div>
-
-          {/* Category Header */}
-          {currentCategory && (
-            <div className="mb-8">
-              <div 
-                className="w-16 h-16 rounded-xl flex items-center justify-center mb-4"
-                style={{ backgroundColor: `${currentCategory.color}20` }}
-              >
-                {React.createElement(getCategoryIcon(currentCategory.icon), {
-                  size: 32,
-                  style: { color: currentCategory.color }
-                })}
-              </div>
-              <h1 className="text-3xl font-bold text-white mb-2">{currentCategory.name}</h1>
-              {currentCategory.description && (
-                <p className="text-gray-400">{currentCategory.description}</p>
-              )}
-            </div>
-          )}
-
-          {/* Articles List */}
-          {loading ? (
-            <div className="text-center py-12 text-gray-400">A carregar...</div>
-          ) : articles.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              Nenhum artigo encontrado nesta categoria
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {articles.map(article => (
-                <Link
-                  key={article.id}
-                  to={`/help/article/${article.slug}`}
-                  className="block"
-                >
-                  <Card className="bg-zinc-900/50 border-zinc-800 hover:border-emerald-500/50 transition-all">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-white hover:text-emerald-400 transition-colors">
-                            {article.title}
-                          </h3>
-                          {article.summary && (
-                            <p className="text-gray-400 mt-2 line-clamp-2">{article.summary}</p>
-                          )}
-                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Clock size={14} />
-                              {new Date(article.published_at).toLocaleDateString('pt-PT')}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Eye size={14} />
-                              {article.view_count}
-                            </span>
-                          </div>
-                        </div>
-                        {article.is_featured && (
-                          <Badge className="bg-gold-500/20 text-gold-400 border-0 shrink-0 ml-4">
-                            Destaque
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
-      </div>
-    );
-  }
+      </section>
 
-  // Article view
-  if (articleSlug && currentArticle) {
-    return (
-      <div className="min-h-screen bg-black py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
-            <Link to="/help" className="hover:text-white">Centro de Ajuda</Link>
-            <ChevronRight size={14} />
-            {currentCategory && (
-              <>
-                <Link to={`/help/${currentCategory.slug}`} className="hover:text-white">
-                  {currentCategory.name}
-                </Link>
-                <ChevronRight size={14} />
-              </>
-            )}
-            <span className="text-white truncate">{currentArticle.title}</span>
-          </div>
-
-          {/* Back Button */}
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-6 text-gray-400 hover:text-white"
-          >
-            <ArrowLeft size={16} className="mr-2" />
-            Voltar
-          </Button>
-
-          {/* Article */}
-          <article className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8">
-            <header className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-4">{currentArticle.title}</h1>
-              
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Clock size={14} />
-                  {new Date(currentArticle.published_at).toLocaleDateString('pt-PT', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Eye size={14} />
-                  {currentArticle.view_count} visualizações
-                </span>
-                {currentArticle.author_name && (
-                  <span>Por {currentArticle.author_name}</span>
-                )}
-              </div>
-
-              {currentArticle.tags && currentArticle.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {currentArticle.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="border-zinc-700 text-gray-400">
-                      <Tag size={12} className="mr-1" />
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </header>
-
-            {/* Content */}
-            <div className="prose prose-invert prose-emerald max-w-none">
-              {/* Support both HTML (from WYSIWYG) and Markdown (legacy) */}
-              {currentArticle.content?.startsWith('<') ? (
-                <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
-              ) : (
-                <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
-              )}
-            </div>
-
-            {/* Feedback */}
-            <div className="mt-12 pt-8 border-t border-zinc-800">
-              <div className="text-center">
-                <p className="text-gray-400 mb-4">Este artigo foi útil?</p>
-                {feedbackGiven ? (
-                  <p className="text-emerald-400">Obrigado pelo seu feedback!</p>
-                ) : (
-                  <div className="flex justify-center gap-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => submitFeedback(true)}
-                      className="border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
-                    >
-                      <ThumbsUp size={16} className="mr-2" />
-                      Sim ({currentArticle.helpful_yes})
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => submitFeedback(false)}
-                      className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
-                    >
-                      <ThumbsDown size={16} className="mr-2" />
-                      Não ({currentArticle.helpful_no})
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </article>
-
-          {/* Related Articles */}
-          {relatedArticles.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-bold text-white mb-4">Artigos Relacionados</h2>
-              <div className="grid gap-4">
-                {relatedArticles.map(article => (
-                  <Link
-                    key={article.id}
-                    to={`/help/article/${article.slug}`}
-                    className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg hover:border-emerald-500/50 transition-colors"
-                  >
-                    <div className="text-white font-medium">{article.title}</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="text-gray-400">A carregar...</div>
+      <Footer />
     </div>
   );
 };
