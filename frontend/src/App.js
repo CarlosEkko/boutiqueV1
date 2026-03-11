@@ -37,6 +37,7 @@ import CryptoWithdrawalPage from "./pages/dashboard/CryptoWithdrawalPage";
 import SupportPage from "./pages/dashboard/SupportPage";
 import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
+import PublicSupportPage from "./pages/PublicSupportPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
@@ -123,6 +124,9 @@ function AppRoutes() {
       <Route path="/help" element={<KnowledgeBasePage />} />
       <Route path="/help/:categorySlug" element={<KnowledgeBasePage />} />
       <Route path="/help/article/:articleSlug" element={<KnowledgeBasePage />} />
+      
+      {/* Public Support Page */}
+      <Route path="/support" element={<PublicSupportPage />} />
     </Routes>
   );
 }

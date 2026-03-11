@@ -68,7 +68,7 @@ async def upload_file(
     user_id: str = Depends(get_current_user_id)
 ):
     """
-    Upload a file to the server.
+    Upload a file to the server (authenticated).
     
     Categories: kyc, deposits, withdrawals, documents, general
     """
@@ -119,6 +119,79 @@ async def upload_file(
         "content_type": content_type,
         "size_bytes": len(content),
         "description": description,
+        "url": f"/api/uploads/file/{category}/{new_filename}",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.uploaded_files.insert_one(file_record)
+    
+    return {
+        "success": True,
+        "file_id": file_id,
+        "url": file_record["url"],
+        "filename": new_filename,
+        "size": len(content),
+        "content_type": content_type
+    }
+
+
+@router.post("/public")
+async def upload_public_file(
+    file: UploadFile = File(...),
+    category: str = Form(default="general")
+):
+    """
+    Upload a file to the server (public - no authentication required).
+    Only allows 'general' and 'documents' categories for security.
+    """
+    # Only allow safe categories for public uploads
+    allowed_categories = ["general", "documents"]
+    if category not in allowed_categories:
+        category = "general"
+    
+    # Validate file type
+    content_type = file.content_type or "application/octet-stream"
+    allowed_types = ALLOWED_IMAGE_TYPES | ALLOWED_DOCUMENT_TYPES
+    
+    if content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File type not allowed. Allowed types: {', '.join(allowed_types)}"
+        )
+    
+    # Read file content
+    content = await file.read()
+    
+    # Validate file size (5MB for public uploads)
+    max_public_size = 5 * 1024 * 1024
+    if len(content) > max_public_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size is {max_public_size // (1024*1024)}MB"
+        )
+    
+    # Generate unique filename
+    file_ext = get_file_extension(content_type, file.filename)
+    file_id = uuid.uuid4().hex[:12]
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+    new_filename = f"{timestamp}_public_{file_id}.{file_ext}"
+    
+    # Save file
+    upload_dir = UPLOAD_DIRS[category]
+    file_path = upload_dir / new_filename
+    
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(content)
+    
+    # Create file record in database
+    file_record = {
+        "id": file_id,
+        "user_id": "public",
+        "category": category,
+        "original_filename": file.filename,
+        "stored_filename": new_filename,
+        "content_type": content_type,
+        "size_bytes": len(content),
         "url": f"/api/uploads/file/{category}/{new_filename}",
         "created_at": datetime.now(timezone.utc).isoformat()
     }

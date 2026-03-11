@@ -164,7 +164,7 @@ async def article_feedback(article_id: str, helpful: bool):
     """Submit feedback on article helpfulness"""
     field = "helpful_yes" if helpful else "helpful_no"
     
-    _ = await db.kb_articles.update_one(
+    result = await db.kb_articles.update_one(
         {"id": article_id},
         {"$inc": {field: 1}}
     )
@@ -206,6 +206,81 @@ async def get_popular_articles(limit: int = Query(5, le=20)):
     ).sort("view_count", -1).limit(limit).to_list(limit)
     
     return articles
+
+
+# ==================== PUBLIC TICKET SUBMISSION ====================
+
+from pydantic import BaseModel
+
+class PublicTicketCreate(BaseModel):
+    name: str
+    email: str
+    subject: str
+    description: str
+    category: str = "general"
+    priority: str = "medium"
+    attachments: List[str] = []
+
+
+@router.post("/public-ticket")
+async def create_public_ticket(ticket_data: PublicTicketCreate):
+    """Create a support ticket without authentication (public form)"""
+    import re
+    
+    # Basic email validation
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, ticket_data.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    # Validate required fields
+    if len(ticket_data.name) < 2:
+        raise HTTPException(status_code=400, detail="Name must be at least 2 characters")
+    if len(ticket_data.subject) < 5:
+        raise HTTPException(status_code=400, detail="Subject must be at least 5 characters")
+    if len(ticket_data.description) < 10:
+        raise HTTPException(status_code=400, detail="Description must be at least 10 characters")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    ticket_number = await generate_ticket_number()
+    
+    ticket_dict = {
+        "id": str(uuid.uuid4()),
+        "ticket_number": ticket_number,
+        "user_id": None,  # No user ID for public tickets
+        "user_email": ticket_data.email,
+        "user_name": ticket_data.name,
+        "subject": ticket_data.subject,
+        "description": ticket_data.description,
+        "category": ticket_data.category,
+        "priority": ticket_data.priority,
+        "status": TicketStatus.OPEN.value,
+        "assigned_to": None,
+        "assigned_name": None,
+        "is_public_ticket": True,
+        "messages": [{
+            "id": str(uuid.uuid4()),
+            "sender_id": None,
+            "sender_name": ticket_data.name,
+            "sender_email": ticket_data.email,
+            "sender_type": "visitor",
+            "message": ticket_data.description,
+            "attachments": ticket_data.attachments,
+            "created_at": now
+        }],
+        "internal_notes": [],
+        "created_at": now,
+        "updated_at": now,
+        "resolved_at": None
+    }
+    
+    await db.support_tickets.insert_one(ticket_dict)
+    
+    return {
+        "success": True,
+        "ticket_id": ticket_dict["id"],
+        "ticket_number": ticket_number,
+        "message": "Your support request has been submitted. We will respond to your email shortly."
+    }
 
 
 # ==================== ADMIN: CATEGORIES ====================
