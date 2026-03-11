@@ -32,6 +32,8 @@ import {
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
 import FiatWithdrawalPage from "./pages/dashboard/FiatWithdrawalPage";
+import CryptoDepositPage from "./pages/dashboard/CryptoDepositPage";
+import CryptoWithdrawalPage from "./pages/dashboard/CryptoWithdrawalPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
@@ -94,6 +96,8 @@ function AppRoutes() {
         <Route path="exchange" element={<ExchangePage />} />
         <Route path="fiat-deposit" element={<FiatDepositPage />} />
         <Route path="fiat-withdrawal" element={<FiatWithdrawalPage />} />
+        <Route path="crypto-deposit" element={<CryptoDepositPage />} />
+        <Route path="crypto-withdrawal" element={<CryptoWithdrawalPage />} />
         
         {/* Admin Routes */}
         <Route path="admin" element={<AdminOverview />} />

@@ -295,10 +295,32 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - Categories: KYC, deposits, withdrawals, documents, general
   - Max file size: 10MB
 
+- [x] **Fireblocks Integration** - Complete crypto wallet management system
+  - Backend routes: `/api/crypto-wallets/*`
+  - User vault initialization with Fireblocks
+  - Deposit address generation for 50+ cryptocurrencies
+  - Crypto withdrawal requests with admin approval
+  - Admin panel tab for managing crypto withdrawals
+  - Webhook handler for Fireblocks events
+  - **BLOCKED: Waiting for valid Fireblocks credentials**
+
+- [x] **Crypto Deposit Page** (`/dashboard/crypto-deposit`)
+  - Wallet initialization flow
+  - Asset selection with search
+  - QR code generation for deposit addresses
+  - Copy address functionality
+
+- [x] **Crypto Withdrawal Page** (`/dashboard/crypto-withdrawal`)
+  - Asset selection from balances
+  - Withdrawal form with fee calculation
+  - Withdrawal history with status tracking
+  - Cancel pending withdrawals
+
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data
 - [ ] Trading page with TradingView chart
 - [ ] Full translations EN/AR
+- [ ] **Get new Fireblocks credentials** (blocking crypto features)
 
 ## Future Tasks
 - [ ] Launchpad page

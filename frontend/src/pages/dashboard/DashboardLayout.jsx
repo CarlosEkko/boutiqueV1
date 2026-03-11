@@ -26,7 +26,9 @@ import {
   ArrowDownUp,
   DollarSign,
   ArrowUpToLine,
-  ArrowDownToLine
+  ArrowDownToLine,
+  Bitcoin,
+  Send
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
@@ -44,6 +46,8 @@ const DashboardLayout = () => {
     { to: '/dashboard', icon: LayoutDashboard, label: t('dashboard.nav.overview'), end: true },
     { to: '/dashboard/exchange', icon: ArrowDownUp, label: 'Exchange' },
     { to: '/dashboard/wallets', icon: Wallet, label: t('dashboard.nav.wallets') },
+    { to: '/dashboard/crypto-deposit', icon: Bitcoin, label: 'Depósito Crypto' },
+    { to: '/dashboard/crypto-withdrawal', icon: Send, label: 'Levantamento Crypto' },
     { to: '/dashboard/fiat-deposit', icon: ArrowUpToLine, label: 'Depósito Fiat' },
     { to: '/dashboard/fiat-withdrawal', icon: ArrowDownToLine, label: 'Levantamento Fiat' },
     { to: '/dashboard/transactions', icon: History, label: t('dashboard.nav.transactions') },

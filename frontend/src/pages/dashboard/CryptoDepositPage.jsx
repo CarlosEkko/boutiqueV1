@@ -1,0 +1,378 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Badge } from '../../components/ui/badge';
+import { 
+  ArrowDownLeft,
+  Copy,
+  Wallet,
+  RefreshCw,
+  QrCode,
+  Search,
+  CheckCircle,
+  AlertTriangle
+} from 'lucide-react';
+import { toast } from 'sonner';
+import QRCode from 'qrcode';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const CryptoDepositPage = () => {
+  const { token } = useAuth();
+  const [vaultStatus, setVaultStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(false);
+  const [cryptoPrices, setCryptoPrices] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [depositAddress, setDepositAddress] = useState(null);
+  const [loadingAddress, setLoadingAddress] = useState(false);
+  const [qrCode, setQrCode] = useState(null);
+
+  // Popular cryptos to show first
+  const popularCryptos = ['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'BNB', 'ADA', 'DOGE', 'MATIC'];
+
+  useEffect(() => {
+    fetchVaultStatus();
+    fetchCryptoPrices();
+  }, [token]);
+
+  const fetchVaultStatus = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/crypto-wallets/my-vault`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setVaultStatus(response.data);
+    } catch (err) {
+      console.error('Failed to fetch vault status', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCryptoPrices = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=USD`);
+      const pricesMap = {};
+      response.data.forEach(c => {
+        pricesMap[c.symbol] = {
+          price: c.price_usd,
+          logo: c.logo,
+          name: c.name
+        };
+      });
+      setCryptoPrices(pricesMap);
+    } catch (err) {
+      console.error('Failed to fetch prices', err);
+    }
+  };
+
+  const initializeWallet = async () => {
+    setInitializing(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/crypto-wallets/initialize`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Carteira crypto inicializada!');
+      fetchVaultStatus();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao inicializar carteira');
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const getDepositAddress = async (symbol) => {
+    setSelectedAsset(symbol);
+    setLoadingAddress(true);
+    setDepositAddress(null);
+    setQrCode(null);
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/crypto-wallets/deposit-address/${symbol}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setDepositAddress(response.data);
+
+      // Generate QR code
+      if (response.data.address) {
+        const qr = await QRCode.toDataURL(response.data.address, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#ffffff'
+          }
+        });
+        setQrCode(qr);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao obter endereço');
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
+
+  const copyAddress = () => {
+    if (depositAddress?.address) {
+      navigator.clipboard.writeText(depositAddress.address);
+      toast.success('Endereço copiado!');
+    }
+  };
+
+  // Get sorted list of cryptos
+  const getSortedCryptos = () => {
+    const allSymbols = Object.keys(cryptoPrices);
+    
+    // Filter by search
+    const filtered = allSymbols.filter(symbol => {
+      const crypto = cryptoPrices[symbol];
+      const term = searchTerm.toLowerCase();
+      return symbol.toLowerCase().includes(term) || 
+             crypto?.name?.toLowerCase().includes(term);
+    });
+
+    // Sort: popular first, then alphabetically
+    return filtered.sort((a, b) => {
+      const aPopular = popularCryptos.indexOf(a);
+      const bPopular = popularCryptos.indexOf(b);
+      
+      if (aPopular >= 0 && bPopular >= 0) return aPopular - bPopular;
+      if (aPopular >= 0) return -1;
+      if (bPopular >= 0) return 1;
+      return a.localeCompare(b);
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="animate-spin text-gold-400" size={32} />
+      </div>
+    );
+  }
+
+  // Wallet not initialized
+  if (!vaultStatus?.has_vault) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Depósito Crypto</h1>
+          <p className="text-gray-400">Receba criptomoedas na sua carteira KBEX</p>
+        </div>
+
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardContent className="p-8 text-center">
+            <Wallet size={48} className="text-gold-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              Inicialize a Sua Carteira Crypto
+            </h3>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Para receber criptomoedas, precisa primeiro inicializar a sua carteira. 
+              Isto irá criar endereços de depósito únicos para cada moeda.
+            </p>
+            <Button
+              onClick={initializeWallet}
+              disabled={initializing}
+              className="bg-gold-500 hover:bg-gold-600 text-black"
+            >
+              {initializing ? (
+                <>
+                  <RefreshCw size={16} className="mr-2 animate-spin" />
+                  Inicializando...
+                </>
+              ) : (
+                <>
+                  <Wallet size={16} className="mr-2" />
+                  Inicializar Carteira
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const sortedCryptos = getSortedCryptos();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Depósito Crypto</h1>
+        <p className="text-gray-400">Selecione uma moeda para obter o endereço de depósito</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Crypto Selection */}
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Search size={20} />
+              Selecionar Moeda
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Pesquisar moeda..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-white"
+            />
+
+            <div className="max-h-[400px] overflow-y-auto space-y-2 pr-2">
+              {sortedCryptos.map(symbol => {
+                const crypto = cryptoPrices[symbol];
+                const isSelected = selectedAsset === symbol;
+                const isPopular = popularCryptos.includes(symbol);
+
+                return (
+                  <button
+                    key={symbol}
+                    onClick={() => getDepositAddress(symbol)}
+                    className={`w-full p-3 rounded-lg border transition-all flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-emerald-500/20 border-emerald-500'
+                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {crypto?.logo && (
+                        <img 
+                          src={crypto.logo} 
+                          alt={symbol}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      <div className="text-left">
+                        <div className="font-medium text-white flex items-center gap-2">
+                          {symbol}
+                          {isPopular && (
+                            <Badge className="bg-gold-500/20 text-gold-400 text-xs border-0">
+                              Popular
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400">{crypto?.name}</div>
+                      </div>
+                    </div>
+                    {isSelected && <CheckCircle size={16} className="text-emerald-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Deposit Address */}
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <ArrowDownLeft size={20} />
+              Endereço de Depósito
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!selectedAsset ? (
+              <div className="text-center py-12 text-gray-400">
+                <QrCode size={48} className="mx-auto mb-4 opacity-50" />
+                <p>Selecione uma moeda para ver o endereço</p>
+              </div>
+            ) : loadingAddress ? (
+              <div className="text-center py-12">
+                <RefreshCw size={32} className="animate-spin text-gold-400 mx-auto mb-4" />
+                <p className="text-gray-400">A gerar endereço...</p>
+              </div>
+            ) : depositAddress ? (
+              <div className="space-y-6">
+                {/* Selected Asset */}
+                <div className="flex items-center gap-3 p-4 bg-zinc-800/50 rounded-lg">
+                  {cryptoPrices[selectedAsset]?.logo && (
+                    <img 
+                      src={cryptoPrices[selectedAsset].logo} 
+                      alt={selectedAsset}
+                      className="w-10 h-10 rounded-full"
+                    />
+                  )}
+                  <div>
+                    <div className="font-semibold text-white text-lg">{selectedAsset}</div>
+                    <div className="text-sm text-gray-400">{cryptoPrices[selectedAsset]?.name}</div>
+                  </div>
+                </div>
+
+                {/* QR Code */}
+                {qrCode && (
+                  <div className="flex justify-center">
+                    <div className="bg-white p-3 rounded-lg">
+                      <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Address */}
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Endereço</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      value={depositAddress.address || 'A gerar...'}
+                      readOnly
+                      className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm"
+                    />
+                    <Button
+                      onClick={copyAddress}
+                      className="bg-emerald-500 hover:bg-emerald-600 shrink-0"
+                    >
+                      <Copy size={16} />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Network Info */}
+                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Rede</span>
+                    <span className="text-white">{depositAddress.network}</span>
+                  </div>
+                </div>
+
+                {/* Warning */}
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex gap-3">
+                  <AlertTriangle className="text-yellow-400 shrink-0" size={20} />
+                  <div className="text-sm">
+                    <p className="text-yellow-400 font-medium mb-1">Importante</p>
+                    <p className="text-gray-400">
+                      Envie apenas {selectedAsset} para este endereço. 
+                      Enviar outros ativos pode resultar em perda permanente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                <AlertTriangle size={32} className="mx-auto mb-2 text-red-400" />
+                <p>Erro ao obter endereço</p>
+                <Button
+                  variant="outline"
+                  onClick={() => getDepositAddress(selectedAsset)}
+                  className="mt-4 border-zinc-700"
+                >
+                  Tentar Novamente
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default CryptoDepositPage;
