@@ -42,7 +42,7 @@ const AdminKnowledgeBase = () => {
   const [categories, setCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryForm, setCategoryForm] = useState({
-    name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: ''
+    name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '', parent_id: ''
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   
@@ -80,19 +80,25 @@ const AdminKnowledgeBase = () => {
 
   const saveCategory = async () => {
     try {
+      // Clean up parent_id if empty
+      const dataToSend = { ...categoryForm };
+      if (!dataToSend.parent_id) {
+        dataToSend.parent_id = null;
+      }
+      
       if (editingCategory) {
-        await axios.put(`${API_URL}/api/kb/admin/categories/${editingCategory}`, categoryForm, {
+        await axios.put(`${API_URL}/api/kb/admin/categories/${editingCategory}`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Categoria atualizada!');
       } else {
-        await axios.post(`${API_URL}/api/kb/admin/categories`, categoryForm, {
+        await axios.post(`${API_URL}/api/kb/admin/categories`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Categoria criada!');
       }
       setEditingCategory(null);
-      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '' });
+      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '', parent_id: '' });
       fetchCategories();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao guardar categoria');
@@ -196,7 +202,8 @@ const AdminKnowledgeBase = () => {
       color: cat.color || '#10b981',
       order: cat.order || 0,
       is_active: cat.is_active !== false,
-      image_url: cat.image_url || ''
+      image_url: cat.image_url || '',
+      parent_id: cat.parent_id || ''
     });
   };
 
@@ -433,6 +440,27 @@ const AdminKnowledgeBase = () => {
                 </div>
               </div>
 
+              {/* Parent Category (for subcategories) */}
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Categoria Pai (opcional)</label>
+                <select
+                  value={categoryForm.parent_id}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, parent_id: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                >
+                  <option value="">Nenhuma (categoria principal)</option>
+                  {categories
+                    .filter(cat => !cat.parent_id && cat.id !== editingCategory) // Only show root categories, exclude self
+                    .map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))
+                  }
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Selecione uma categoria pai para criar uma subcategoria
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Ícone</label>
@@ -494,7 +522,7 @@ const AdminKnowledgeBase = () => {
                     variant="outline"
                     onClick={() => {
                       setEditingCategory(null);
-                      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '' });
+                      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '', parent_id: '' });
                     }}
                     className="border-zinc-700"
                   >
@@ -512,45 +540,92 @@ const AdminKnowledgeBase = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {categories.map(cat => (
-                  <div
-                    key={cat.id}
-                    className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg border border-zinc-700"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded flex items-center justify-center"
-                        style={{ backgroundColor: `${cat.color}30` }}
-                      >
-                        <Folder size={16} style={{ color: cat.color }} />
-                      </div>
-                      <div>
-                        <div className="text-white font-medium">{cat.name}</div>
-                        <div className="text-xs text-gray-400">
-                          /{cat.slug} • {cat.article_count} artigos
+                {/* Root categories (without parent) */}
+                {categories.filter(cat => !cat.parent_id).map(cat => (
+                  <div key={cat.id}>
+                    {/* Parent Category */}
+                    <div
+                      className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg border border-zinc-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded flex items-center justify-center"
+                          style={{ backgroundColor: `${cat.color}30` }}
+                        >
+                          <Folder size={16} style={{ color: cat.color }} />
+                        </div>
+                        <div>
+                          <div className="text-white font-medium">{cat.name}</div>
+                          <div className="text-xs text-gray-400">
+                            /{cat.slug} • {cat.article_count || 0} artigos
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        {!cat.is_active && (
+                          <Badge className="bg-red-500/20 text-red-400 border-0">Inactiva</Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => editCategory(cat)}
+                        >
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteCategory(cat.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!cat.is_active && (
-                        <Badge className="bg-red-500/20 text-red-400 border-0">Inactiva</Badge>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editCategory(cat)}
+                    
+                    {/* Subcategories */}
+                    {categories.filter(sub => sub.parent_id === cat.id).map(subcat => (
+                      <div
+                        key={subcat.id}
+                        className="flex items-center justify-between p-3 ml-8 mt-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
                       >
-                        <Edit size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteCategory(cat.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-1 h-6 bg-zinc-600 rounded-full mr-1"></div>
+                          <div
+                            className="w-7 h-7 rounded flex items-center justify-center"
+                            style={{ backgroundColor: `${subcat.color}30` }}
+                          >
+                            <Folder size={14} style={{ color: subcat.color }} />
+                          </div>
+                          <div>
+                            <div className="text-white text-sm">{subcat.name}</div>
+                            <div className="text-xs text-gray-500">
+                              /{subcat.slug} • {subcat.article_count || 0} artigos
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!subcat.is_active && (
+                            <Badge className="bg-red-500/20 text-red-400 border-0 text-xs">Inactiva</Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editCategory(subcat)}
+                          >
+                            <Edit size={12} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteCategory(subcat.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

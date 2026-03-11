@@ -37,6 +37,7 @@ class KBCategoryBase(BaseModel):
     icon: Optional[str] = None  # Icon name from lucide-react
     color: Optional[str] = "#10b981"  # Default emerald
     image_url: Optional[str] = None  # Category image
+    parent_id: Optional[str] = None  # Parent category ID for subcategories
     order: int = 0
     is_active: bool = True
 
@@ -52,6 +53,7 @@ class KBCategoryUpdate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     image_url: Optional[str] = None
+    parent_id: Optional[str] = None
     order: Optional[int] = None
     is_active: Optional[bool] = None
 

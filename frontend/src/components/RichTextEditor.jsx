@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-// Custom styles for dark theme
+// Custom styles for dark theme - matching form inputs
 const editorStyles = `
   .kb-editor .ql-toolbar {
-    background: rgb(24 24 27);
+    background: rgb(39 39 42);
     border: 1px solid rgb(63 63 70);
     border-radius: 8px 8px 0 0;
   }
@@ -27,6 +27,10 @@ const editorStyles = `
     border-color: rgb(63 63 70);
   }
   
+  .kb-editor .ql-toolbar .ql-picker-label {
+    color: rgb(161 161 170);
+  }
+  
   .kb-editor .ql-toolbar button:hover .ql-stroke,
   .kb-editor .ql-toolbar button.ql-active .ql-stroke {
     stroke: rgb(250 204 21);
@@ -38,7 +42,7 @@ const editorStyles = `
   }
   
   .kb-editor .ql-container {
-    background: rgb(9 9 11);
+    background: rgb(39 39 42);
     border: 1px solid rgb(63 63 70);
     border-top: none;
     border-radius: 0 0 8px 8px;
@@ -47,7 +51,7 @@ const editorStyles = `
   }
   
   .kb-editor .ql-editor {
-    color: rgb(229 231 235);
+    color: rgb(255 255 255);
     min-height: 300px;
   }
   
@@ -76,6 +80,7 @@ const editorStyles = `
   
   .kb-editor .ql-editor p {
     margin-bottom: 1em;
+    color: white;
   }
   
   .kb-editor .ql-editor a {
@@ -86,7 +91,7 @@ const editorStyles = `
     border-left: 4px solid rgb(250 204 21);
     padding-left: 1em;
     margin-left: 0;
-    color: rgb(161 161 170);
+    color: rgb(209 213 219);
   }
   
   .kb-editor .ql-editor pre {
@@ -106,6 +111,11 @@ const editorStyles = `
   .kb-editor .ql-editor ul, 
   .kb-editor .ql-editor ol {
     padding-left: 1.5em;
+    color: white;
+  }
+  
+  .kb-editor .ql-editor li {
+    color: white;
   }
   
   .kb-editor .ql-editor img {
