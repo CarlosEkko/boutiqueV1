@@ -135,6 +135,9 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - GET /api/trading/orders/{id} - Order details
 - GET /api/trading/payment-status/{session_id} - Check Stripe payment status
 - POST /api/webhook/stripe - Stripe webhook
+- POST /api/trading/fiat-withdrawal - Request fiat withdrawal (NEW)
+- GET /api/trading/my-withdrawals - User's withdrawal history (NEW)
+- POST /api/trading/fiat-withdrawal/{id}/cancel - Cancel pending withdrawal (NEW)
 
 ### Trading Admin
 - GET /api/trading/admin/fees - Full fee configuration
@@ -274,6 +277,15 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] Admin UI for per-currency fees - Currency tabs with flag icons, separate fee forms per currency
 - [x] **Per-cryptocurrency trading fees** - Admin can configure fees for each of 50 supported cryptocurrencies (BTC, ETH, SOL, etc.)
 - [x] **Admin UI for crypto fees** - New 'Taxas Crypto' tab with searchable crypto list and individual fee configuration
+
+## Completed (Mar 2026)
+- [x] **Client Fiat Withdrawal Page** - Complete page for users to request fiat withdrawals
+  - Form with currency selection (EUR, USD, AED, BRL) showing wallet balance
+  - Bank details input (IBAN, SWIFT/BIC, account holder, bank name)
+  - 0.5% fee calculation with minimum €5 displayed in summary
+  - Withdrawal history with expandable details
+  - Cancel pending withdrawals functionality
+  - Navigation links added to dashboard sidebar (Depósito Fiat, Levantamento Fiat)
 
 ## Pending Tasks
 - [ ] Markets page with CoinMarketCap data

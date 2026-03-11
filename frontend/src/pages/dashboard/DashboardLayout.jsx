@@ -24,7 +24,9 @@ import {
   Ticket,
   User,
   ArrowDownUp,
-  DollarSign
+  DollarSign,
+  ArrowUpToLine,
+  ArrowDownToLine
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useState } from 'react';
@@ -42,6 +44,8 @@ const DashboardLayout = () => {
     { to: '/dashboard', icon: LayoutDashboard, label: t('dashboard.nav.overview'), end: true },
     { to: '/dashboard/exchange', icon: ArrowDownUp, label: 'Exchange' },
     { to: '/dashboard/wallets', icon: Wallet, label: t('dashboard.nav.wallets') },
+    { to: '/dashboard/fiat-deposit', icon: ArrowUpToLine, label: 'Depósito Fiat' },
+    { to: '/dashboard/fiat-withdrawal', icon: ArrowDownToLine, label: 'Levantamento Fiat' },
     { to: '/dashboard/transactions', icon: History, label: t('dashboard.nav.transactions') },
     { to: '/dashboard/investments', icon: TrendingUp, label: t('dashboard.nav.investments') },
     { to: '/dashboard/roi', icon: PieChart, label: t('dashboard.nav.roi') },
