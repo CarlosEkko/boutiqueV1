@@ -480,7 +480,12 @@ const KnowledgeBasePage = () => {
 
             {/* Content */}
             <div className="prose prose-invert prose-emerald max-w-none">
-              <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
+              {/* Support both HTML (from WYSIWYG) and Markdown (legacy) */}
+              {currentArticle.content?.startsWith('<') ? (
+                <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
+              ) : (
+                <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
+              )}
             </div>
 
             {/* Feedback */}

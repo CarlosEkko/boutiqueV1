@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -21,9 +21,15 @@ import {
   ChevronUp,
   RefreshCw,
   Book,
-  Star
+  Star,
+  Upload,
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Lazy load the rich text editor
+const RichTextEditor = lazy(() => import('../../../components/RichTextEditor'));
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -36,15 +42,16 @@ const AdminKnowledgeBase = () => {
   const [categories, setCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
   const [categoryForm, setCategoryForm] = useState({
-    name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true
+    name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: ''
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   // Articles state
   const [articles, setArticles] = useState([]);
   const [editingArticle, setEditingArticle] = useState(null);
   const [articleForm, setArticleForm] = useState({
     title: '', slug: '', summary: '', content: '', category_id: '', 
-    tags: [], status: 'draft', is_featured: false, order: 0
+    tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
   });
   const [articleFilter, setArticleFilter] = useState({ status: '', category_id: '', search: '' });
   const [tagInput, setTagInput] = useState('');
@@ -85,10 +92,84 @@ const AdminKnowledgeBase = () => {
         toast.success('Categoria criada!');
       }
       setEditingCategory(null);
-      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true });
+      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '' });
       fetchCategories();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao guardar categoria');
+    }
+  };
+
+  const uploadCategoryImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Tipo de ficheiro não suportado. Use JPEG, PNG, GIF ou WebP.');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ficheiro muito grande. Máximo 5MB.');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'general');
+      
+      const response = await axios.post(`${API_URL}/api/uploads/file`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data' 
+        }
+      });
+      
+      setCategoryForm({ ...categoryForm, image_url: response.data.url });
+      toast.success('Imagem carregada!');
+    } catch (err) {
+      toast.error('Erro ao carregar imagem');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const uploadArticleImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Tipo de ficheiro não suportado.');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ficheiro muito grande. Máximo 5MB.');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', 'general');
+      
+      const response = await axios.post(`${API_URL}/api/uploads/file`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data' 
+        }
+      });
+      
+      setArticleForm({ ...articleForm, cover_image: response.data.url });
+      toast.success('Imagem carregada!');
+    } catch (err) {
+      toast.error('Erro ao carregar imagem');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -114,7 +195,8 @@ const AdminKnowledgeBase = () => {
       icon: cat.icon || '',
       color: cat.color || '#10b981',
       order: cat.order || 0,
-      is_active: cat.is_active !== false
+      is_active: cat.is_active !== false,
+      image_url: cat.image_url || ''
     });
   };
 
@@ -155,7 +237,8 @@ const AdminKnowledgeBase = () => {
         tags: article.tags || [],
         status: article.status,
         is_featured: article.is_featured || false,
-        order: article.order || 0
+        order: article.order || 0,
+        cover_image: article.cover_image || ''
       });
     } catch (err) {
       toast.error('Erro ao carregar artigo');
@@ -178,7 +261,7 @@ const AdminKnowledgeBase = () => {
       setEditingArticle(null);
       setArticleForm({
         title: '', slug: '', summary: '', content: '', category_id: '',
-        tags: [], status: 'draft', is_featured: false, order: 0
+        tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
       });
       fetchArticles();
     } catch (err) {
@@ -302,6 +385,54 @@ const AdminKnowledgeBase = () => {
                 />
               </div>
 
+              {/* Image Upload */}
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Imagem da Categoria</label>
+                <div className="flex items-start gap-4">
+                  {categoryForm.image_url ? (
+                    <div className="relative group">
+                      <img 
+                        src={categoryForm.image_url.startsWith('/') ? `${API_URL}${categoryForm.image_url}` : categoryForm.image_url}
+                        alt="Category"
+                        className="w-24 h-24 object-cover rounded-lg border border-zinc-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setCategoryForm({ ...categoryForm, image_url: '' })}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="w-24 h-24 border-2 border-dashed border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gold-500/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={uploadCategoryImage}
+                        className="hidden"
+                      />
+                      {uploadingImage ? (
+                        <Loader2 size={24} className="text-gold-400 animate-spin" />
+                      ) : (
+                        <>
+                          <ImageIcon size={24} className="text-zinc-600 mb-1" />
+                          <span className="text-xs text-zinc-500">Upload</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      value={categoryForm.image_url}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, image_url: e.target.value })}
+                      placeholder="Ou cole o URL da imagem"
+                      className="bg-zinc-800 border-zinc-700 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Ícone</label>
@@ -363,7 +494,7 @@ const AdminKnowledgeBase = () => {
                     variant="outline"
                     onClick={() => {
                       setEditingCategory(null);
-                      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true });
+                      setCategoryForm({ name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '' });
                     }}
                     className="border-zinc-700"
                   >
@@ -445,7 +576,7 @@ const AdminKnowledgeBase = () => {
                     setEditingArticle(null);
                     setArticleForm({
                       title: '', slug: '', summary: '', content: '', category_id: '',
-                      tags: [], status: 'draft', is_featured: false, order: 0
+                      tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
                     });
                   }}
                   className="border-zinc-700"
@@ -534,15 +665,67 @@ const AdminKnowledgeBase = () => {
                 />
               </div>
 
+              {/* Cover Image */}
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Conteúdo (Markdown)</label>
-                <Textarea
-                  value={articleForm.content}
-                  onChange={(e) => setArticleForm({ ...articleForm, content: e.target.value })}
-                  placeholder="# Título&#10;&#10;Conteúdo do artigo em **Markdown**..."
-                  className="bg-zinc-800 border-zinc-700 text-white font-mono"
-                  rows={12}
-                />
+                <label className="text-sm text-gray-400 mb-1 block">Imagem de Capa</label>
+                <div className="flex items-start gap-4">
+                  {articleForm.cover_image ? (
+                    <div className="relative group">
+                      <img 
+                        src={articleForm.cover_image.startsWith('/') ? `${API_URL}${articleForm.cover_image}` : articleForm.cover_image}
+                        alt="Cover"
+                        className="w-32 h-20 object-cover rounded-lg border border-zinc-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setArticleForm({ ...articleForm, cover_image: '' })}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="w-32 h-20 border-2 border-dashed border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gold-500/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={uploadArticleImage}
+                        className="hidden"
+                      />
+                      {uploadingImage ? (
+                        <Loader2 size={20} className="text-gold-400 animate-spin" />
+                      ) : (
+                        <>
+                          <ImageIcon size={20} className="text-zinc-600 mb-1" />
+                          <span className="text-xs text-zinc-500">Upload</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      value={articleForm.cover_image}
+                      onChange={(e) => setArticleForm({ ...articleForm, cover_image: e.target.value })}
+                      placeholder="Ou cole o URL da imagem"
+                      className="bg-zinc-800 border-zinc-700 text-white text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Conteúdo</label>
+                <Suspense fallback={
+                  <div className="bg-zinc-800 border border-zinc-700 rounded-lg h-[350px] flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-gold-400 animate-spin" />
+                  </div>
+                }>
+                  <RichTextEditor
+                    value={articleForm.content}
+                    onChange={(content) => setArticleForm({ ...articleForm, content })}
+                    placeholder="Escreva o conteúdo do artigo aqui..."
+                  />
+                </Suspense>
               </div>
 
               <div>

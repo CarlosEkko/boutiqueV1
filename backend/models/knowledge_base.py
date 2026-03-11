@@ -36,6 +36,7 @@ class KBCategoryBase(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None  # Icon name from lucide-react
     color: Optional[str] = "#10b981"  # Default emerald
+    image_url: Optional[str] = None  # Category image
     order: int = 0
     is_active: bool = True
 
@@ -50,6 +51,7 @@ class KBCategoryUpdate(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     color: Optional[str] = None
+    image_url: Optional[str] = None
     order: Optional[int] = None
     is_active: Optional[bool] = None
 
@@ -67,11 +69,12 @@ class KBArticleBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     slug: str = Field(..., min_length=1, max_length=200)
     summary: Optional[str] = Field(None, max_length=500)
-    content: str = Field(..., min_length=1)  # Markdown content
+    content: str = Field(..., min_length=1)  # HTML content from WYSIWYG editor
     category_id: str
     tags: List[str] = []
     status: ArticleStatus = ArticleStatus.DRAFT
     is_featured: bool = False
+    cover_image: Optional[str] = None  # Cover image URL
     order: int = 0
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -90,6 +93,7 @@ class KBArticleUpdate(BaseModel):
     tags: Optional[List[str]] = None
     status: Optional[ArticleStatus] = None
     is_featured: Optional[bool] = None
+    cover_image: Optional[str] = None
     order: Optional[int] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

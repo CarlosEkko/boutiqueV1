@@ -11,7 +11,7 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **User's Language**: Portuguese
 
 ## Tech Stack
-- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, react-quill-new (WYSIWYG editor)
 - **Backend**: FastAPI, Pydantic, Motor (async MongoDB)
 - **Database**: MongoDB
 - **Deployment**: Docker, Docker Compose, Nginx (reverse proxy), Let's Encrypt (SSL)
@@ -21,6 +21,7 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Multi-currency support**: EUR, USD, AED, BRL with real-time exchange rates
 - **Global currency selector** in dashboard header
 - **Automatic price conversion** for all crypto prices and limits
+- **Knowledge Base & Support System** with WYSIWYG editor
 
 ## Architecture
 ```
@@ -28,32 +29,64 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 ├── backend/
 │   ├── models/
 │   │   ├── user.py (RBAC models)
-│   │   └── trading.py (Trading models - NEW)
+│   │   ├── trading.py (Trading models)
+│   │   └── knowledge_base.py (KB & Tickets)
 │   ├── routes/
 │   │   ├── auth.py (JWT authentication)
 │   │   ├── admin.py (RBAC endpoints)
-│   │   ├── trading.py (Exchange endpoints - NEW)
-│   │   ├── tickets.py (Support system)
-│   │   ├── kyc.py (KYC/KYB verification)
-│   │   └── dashboard.py (User dashboard)
+│   │   ├── trading.py (Exchange endpoints)
+│   │   ├── knowledge_base.py (KB & Support routes)
+│   │   ├── uploads.py (File uploads)
+│   │   └── crypto_wallets.py (Fireblocks - BLOCKED)
 │   └── server.py
 ├── frontend/
 │   ├── src/
-│   │   ├── components/ (Header, Footer, UI)
+│   │   ├── components/
+│   │   │   ├── RichTextEditor.jsx (WYSIWYG - NEW)
+│   │   │   └── ui/ (Shadcn components)
 │   │   ├── pages/
-│   │   │   ├── dashboard/
-│   │   │   │   ├── ExchangePage.jsx (NEW)
-│   │   │   │   └── admin/AdminTradingPage.jsx (NEW)
-│   │   │   └── ...
+│   │   │   ├── PublicSupportPage.jsx (NEW - Public support)
+│   │   │   ├── KnowledgeBasePage.jsx (Help Center)
+│   │   │   └── dashboard/
+│   │   │       ├── DashboardLayout.jsx (Updated with Suporte submenu)
+│   │   │       └── admin/
+│   │   │           ├── AdminKnowledgeBase.jsx (Updated with WYSIWYG)
+│   │   │           └── AdminTickets.jsx
 │   │   └── context/AuthContext.jsx
-│   └── public/logo.png
+│   └── public/
+│       ├── logo.png
+│       └── images/ (Local assets)
 ├── docker-compose.yml
 └── nginx/nginx.conf
 ```
 
 ## Implemented Features
 
-### Exchange/Trading (NEW - Dec 2025)
+### Public Support Page (NEW - Mar 2026)
+- [x] Public support page at `/support` with same design as Home page
+- [x] Dark theme with gold accents matching brand identity
+- [x] Form with: Name, Email, Subject, Category, Priority, Description
+- [x] File upload without authentication (up to 3 files, 5MB each)
+- [x] Backend endpoint: `POST /api/kb/public-ticket`
+- [x] Public file upload: `POST /api/uploads/public`
+- [x] Link in Footer pointing to `/support`
+- [x] Success screen after submission
+
+### Admin Support Submenu (NEW - Mar 2026)
+- [x] Reorganized admin sidebar with "Suporte" submenu
+- [x] Submenu contains: "Tickets de Suporte" and "Base de Conhecimento"
+- [x] Expandable/collapsible with arrow indicator
+- [x] Active state highlighting for current page
+
+### WYSIWYG Editor for Knowledge Base (NEW - Mar 2026)
+- [x] Installed `react-quill-new` for React 18 compatibility
+- [x] Rich text editor with full formatting toolbar
+- [x] Dark theme styling matching app design
+- [x] Image upload for cover images (articles) and category images
+- [x] Supports: Headers, Bold, Italic, Underline, Strike, Colors, Lists, Blockquote, Code, Links, Images
+- [x] HTML content storage (backwards compatible with Markdown)
+
+### Exchange/Trading
 - [x] Buy crypto with credit card (Stripe)
 - [x] Buy crypto with bank transfer (admin approval required)
 - [x] Sell crypto (admin approval required)
@@ -64,18 +97,9 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] Admin: Configure user limits by tier (Standard/Premium/VIP)
 - [x] Admin: Approve/reject bank transfers
 - [x] Admin: Complete/cancel orders
-- [x] User limits check (daily/monthly/per-transaction)
-- [x] Order history
-- [x] Fiat wallets: EUR, USD, AED, BRL (auto-created for users)
-- [x] Fiat deposit via bank transfer with unique reference code
-- [x] Fiat deposit proof submission
-- [x] Admin approval for fiat deposits → credits fiat wallet
-- [x] **Multi-currency platform**: EUR, USD, AED, BRL
-- [x] **Global currency selector** in dashboard
-- [x] **Exchange rates API** with 5-minute cache
-- [x] **Automatic price conversion** for all crypto pairs
-- [x] **Per-currency trading fees** (Feb 2026) - Admin can configure individual fees for EUR, USD, AED, BRL
-- [x] **Admin per-currency fee UI** - Tabbed interface with currency selector and per-currency fee configuration
+- [x] Fiat wallets: EUR, USD, AED, BRL (auto-created)
+- [x] Fiat deposit via bank transfer
+- [x] **Per-currency trading fees** - Admin can configure fees for EUR, USD, AED, BRL
 
 ### Authentication & Users
 - [x] JWT-based authentication
@@ -88,264 +112,80 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - [x] Internal Roles: Admin, Manager, Local Manager, Support
 - [x] Regions: Europe, MENA, LATAM, Global
 - [x] Region-based access control
-- [x] Internal user management (create, update, delete)
 
-### Ticket/Support System
-- [x] Create tickets (clients)
-- [x] Reply to tickets
-- [x] Assign tickets (internal)
-- [x] Update status/priority
-- [x] Region-based ticket filtering
-- [x] Ticket statistics
+### Knowledge Base & Support System
+- [x] Public Help Center at `/help`
+- [x] Article viewing with category navigation
+- [x] Admin CRUD for articles and categories
+- [x] Support ticket creation and management
+- [x] Internal notes and messaging
+- [x] Ticket assignment and status tracking
+- [x] Public ticket submission (without login)
 
-### KYC/KYB System
-- [x] Individual KYC form
-- [x] Business KYB form
-- [x] Document upload
-- [x] Admin approval/rejection
+### Fiat System
+- [x] Fiat wallets (EUR, USD, AED, BRL)
+- [x] Fiat deposit with proof upload
+- [x] Fiat withdrawal requests
+- [x] Admin approval workflow
 
-### Dashboard
-- [x] Portfolio overview
-- [x] Wallet management
-- [x] Transaction history
-- [x] Investment opportunities
-- [x] ROI tracking
-- [x] Transparency reports
+### Local Asset Storage
+- [x] Generic file upload endpoint
+- [x] Public file upload endpoint (no auth)
+- [x] Static images served locally
+- [x] Proof of payment uploads
 
-### Admin Panel
-- [x] User management (block/unblock/delete/reset password)
-- [x] Trading management (fees, limits, orders, transfers)
-- [x] KYC/KYB review
-- [x] Investment opportunities
-- [x] Invite codes
-- [x] Statistics
-- [x] Regional metrics
+## Pending Issues
+
+### P0 - Blocked
+- [ ] **Fireblocks Integration**: Authentication error "Error getting User certificate"
+  - User needs to upload CSR file to Fireblocks Console
+  - CSR file location: `/app/artifacts/zpxe5ra4_fireblocks.csr`
+
+### P1 - Safari Bug
+- [ ] **Safari cursor bug**: Custom cursor doesn't work on Safari
+  - Recurring issue (3x)
+  - Needs investigation in index.css and Header.jsx
+
+### P3 - Pending Requirements
+- [ ] **Whitelist functionality**: Awaiting user requirements
+  - Could be for: withdrawal addresses, registration emails, or IP addresses
+
+## Upcoming Tasks
+- [ ] Populate Markets Page with CoinMarketCap data
+- [ ] Integrate TradingView chart widget
+- [ ] Add full translations (EN/AR)
 
 ## API Endpoints
 
-### Trading (NEW)
-- GET /api/trading/cryptos - List available cryptocurrencies with prices
-- GET /api/trading/price/{symbol} - Get single crypto price
-- GET /api/trading/fees - Public fee configuration
-- GET /api/trading/limits - User's trading limits
-- POST /api/trading/buy - Create buy order
-- POST /api/trading/sell - Create sell order
-- POST /api/trading/swap - Create swap order
-- GET /api/trading/orders - User's orders
-- GET /api/trading/orders/{id} - Order details
-- GET /api/trading/payment-status/{session_id} - Check Stripe payment status
-- POST /api/webhook/stripe - Stripe webhook
-- POST /api/trading/fiat-withdrawal - Request fiat withdrawal (NEW)
-- GET /api/trading/my-withdrawals - User's withdrawal history (NEW)
-- POST /api/trading/fiat-withdrawal/{id}/cancel - Cancel pending withdrawal (NEW)
+### Public (No Auth)
+- `POST /api/kb/public-ticket` - Create public support ticket
+- `POST /api/uploads/public` - Upload file without auth
+- `GET /api/kb/articles` - List published articles
+- `GET /api/kb/categories` - List active categories
 
-### Trading Admin
-- GET /api/trading/admin/fees - Full fee configuration
-- PUT /api/trading/admin/fees - Update fees
-- GET /api/trading/admin/limits - All tier limits
-- GET /api/trading/admin/limits/{tier} - Specific tier limits
-- PUT /api/trading/admin/limits/{tier} - Update tier limits
-- GET /api/trading/admin/orders - All orders
-- POST /api/trading/admin/orders/{id}/complete - Complete order
-- POST /api/trading/admin/orders/{id}/cancel - Cancel order
-- GET /api/trading/admin/bank-transfers - All bank transfers
-- POST /api/trading/admin/bank-transfers/{id}/approve - Approve transfer
-- POST /api/trading/admin/bank-transfers/{id}/reject - Reject transfer
+### User (Auth Required)
+- `POST /api/kb/tickets` - Create support ticket
+- `GET /api/kb/tickets` - Get user's tickets
+- `POST /api/uploads/file` - Upload file with auth
 
-### Auth
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-- PUT /api/auth/me
+### Admin (Admin Role)
+- `GET /api/kb/admin/tickets` - Get all tickets
+- `POST /api/kb/admin/articles` - Create article
+- `PUT /api/kb/admin/articles/{id}` - Update article
+- `POST /api/kb/admin/categories` - Create category
 
-### Admin (RBAC)
-- GET /api/admin/users (with region filter)
-- POST /api/admin/internal-users
-- GET /api/admin/internal-users
-- PUT /api/admin/internal-users/{id}
-- DELETE /api/admin/internal-users/{id}
-- POST /api/admin/users/{id}/region/{region}
-- POST /api/admin/users/{id}/membership/{level}
+## Database Collections
+- `kb_articles`: {id, slug, title, content, category_id, status, cover_image, ...}
+- `kb_categories`: {id, slug, name, description, icon, color, image_url, ...}
+- `support_tickets`: {id, ticket_number, user_id, subject, status, is_public_ticket, ...}
+- `ticket_messages`: {id, ticket_id, message, attachments, ...}
+- `uploaded_files`: {id, user_id, category, url, ...}
 
-### Tickets
-- POST /api/tickets/ (create)
-- GET /api/tickets/my-tickets
-- GET /api/tickets/{id}
-- POST /api/tickets/{id}/reply
-- GET /api/tickets/internal/all (with region filter)
-- POST /api/tickets/internal/{id}/assign
-- POST /api/tickets/internal/{id}/status/{status}
-- GET /api/tickets/internal/stats
-
-## Database Schema
-
-### trading_fees
-```json
-{
-  "id": "uuid",
-  "buy_fee_percent": 2.0,
-  "buy_spread_percent": 1.0,
-  "sell_fee_percent": 2.0,
-  "sell_spread_percent": 1.0,
-  "swap_fee_percent": 1.5,
-  "swap_spread_percent": 0.5,
-  "min_buy_fee_usd": 5.0,
-  "min_sell_fee_usd": 5.0,
-  "min_swap_fee_usd": 3.0,
-  "network_fees": {"bitcoin": 10.0, "ethereum": 5.0, ...}
-}
-```
-
-### trading_limits
-```json
-{
-  "id": "uuid",
-  "tier": "standard|premium|vip",
-  "daily_buy_limit": 5000.0,
-  "daily_sell_limit": 5000.0,
-  "daily_swap_limit": 10000.0,
-  "monthly_buy_limit": 50000.0,
-  "monthly_sell_limit": 50000.0,
-  "monthly_swap_limit": 100000.0,
-  "min_buy_amount": 50.0,
-  "max_buy_amount": 10000.0,
-  ...
-}
-```
-
-### trading_orders
-```json
-{
-  "id": "uuid",
-  "user_id": "string",
-  "order_type": "buy|sell|swap",
-  "status": "pending|awaiting_payment|processing|completed|cancelled|failed|awaiting_admin_approval",
-  "crypto_symbol": "BTC",
-  "crypto_amount": 0.001,
-  "fiat_amount": 100.00,
-  "market_price": 66000.00,
-  "execution_price": 66660.00,
-  "fee_percent": 2.0,
-  "fee_amount": 2.00,
-  "payment_method": "card|bank_transfer|crypto",
-  "stripe_session_id": "string|null",
-  "bank_transfer_id": "string|null"
-}
-```
-
-### bank_transfers
-```json
-{
-  "id": "uuid",
-  "user_id": "string",
-  "order_id": "string|null",
-  "transfer_type": "deposit|withdrawal",
-  "amount": 100.00,
-  "currency": "EUR",
-  "reference_code": "KB12345678",
-  "status": "pending|awaiting_approval|approved|rejected|completed"
-}
-```
-
-### users
-```json
-{
-  "id": "uuid",
-  "email": "string",
-  "name": "string",
-  "hashed_password": "string",
-  "user_type": "client|internal",
-  "internal_role": "admin|manager|local_manager|support|null",
-  "region": "europe|mena|latam|global",
-  "membership_level": "standard|premium|vip",
-  "is_admin": "boolean",
-  "is_approved": "boolean",
-  "kyc_status": "not_started|pending|approved|rejected"
-}
-```
-
-## Test Credentials (Preview Environment)
+## Credentials (Preview)
 - **Admin**: carlos@kryptobox.io / senha123
 
-## Known Issues
-- [ ] Safari cursor bug (P1) - cursor not working correctly in Safari
-- [ ] Fireblocks integration blocked (P2) - waiting for new credentials
-- [ ] Whitelist functionality not implemented (P3) - waiting for requirements
-
-## Completed (Feb 2026)
-- [x] Per-currency trading fees (fiat) - Admin can configure fees for EUR, USD, AED, BRL individually
-- [x] Admin UI for per-currency fees - Currency tabs with flag icons, separate fee forms per currency
-- [x] **Per-cryptocurrency trading fees** - Admin can configure fees for each of 50 supported cryptocurrencies (BTC, ETH, SOL, etc.)
-- [x] **Admin UI for crypto fees** - New 'Taxas Crypto' tab with searchable crypto list and individual fee configuration
-
-## Completed (Mar 2026)
-- [x] **Client Fiat Withdrawal Page** - Complete page for users to request fiat withdrawals
-  - Form with currency selection (EUR, USD, AED, BRL) showing wallet balance
-  - Bank details input (IBAN, SWIFT/BIC, account holder, bank name)
-  - 0.5% fee calculation with minimum €5 displayed in summary
-  - Withdrawal history with expandable details
-  - Cancel pending withdrawals functionality
-  - Navigation links added to dashboard sidebar (Depósito Fiat, Levantamento Fiat)
-
-- [x] **Local File Storage System** - All images and documents now stored on server
-  - New `/api/uploads` endpoint for generic file uploads
-  - Upload proof of deposit via file upload (not URL)
-  - All static images moved from external URLs (Unsplash, etc.) to `/images/` folder
-  - Supported file types: PDF, JPEG, PNG, WebP, GIF
-  - Categories: KYC, deposits, withdrawals, documents, general
-  - Max file size: 10MB
-
-- [x] **Fireblocks Integration** - Complete crypto wallet management system
-  - Backend routes: `/api/crypto-wallets/*`
-  - User vault initialization with Fireblocks
-  - Deposit address generation for 50+ cryptocurrencies
-  - Crypto withdrawal requests with admin approval
-  - Admin panel tab for managing crypto withdrawals
-  - Webhook handler for Fireblocks events
-  - **BLOCKED: Waiting for valid Fireblocks credentials**
-
-- [x] **Crypto Deposit Page** (`/dashboard/crypto-deposit`)
-  - Wallet initialization flow
-  - Asset selection with search
-  - QR code generation for deposit addresses
-  - Copy address functionality
-
-- [x] **Crypto Withdrawal Page** (`/dashboard/crypto-withdrawal`)
-  - Asset selection from balances
-  - Withdrawal form with fee calculation
-  - Withdrawal history with status tracking
-  - Cancel pending withdrawals
-
-- [x] **Knowledge Base / Help Center** - Complete documentation system
-  - Public pages at `/help`, `/help/:category`, `/help/article/:slug`
-  - Categories with icons and colors (FAQs, Trading, Segurança)
-  - Articles with Markdown support, tags, featured flag
-  - Search functionality
-  - Article feedback (helpful yes/no)
-  - Recent and Popular articles sections
-  - Breadcrumb navigation
-
-- [x] **Admin Knowledge Base Management** (`/dashboard/admin/knowledge-base`)
-  - Create/Edit/Delete categories
-  - Create/Edit/Delete articles with Markdown editor
-  - Article status management (draft, published, archived)
-  - Filter by category and status
-
-- [x] **Support Tickets System** (`/dashboard/support`)
-  - User ticket creation with category and priority
-  - Ticket conversation/messaging
-  - Admin ticket management in existing admin panel
-  - Status tracking (open, in_progress, waiting_customer, resolved, closed)
-
-## Pending Tasks
-- [ ] Markets page with CoinMarketCap data
-- [ ] Trading page with TradingView chart
-- [ ] Full translations EN/AR
-- [ ] **Get new Fireblocks credentials** (blocking crypto features)
-
-## Future Tasks
-- [ ] Launchpad page
-- [ ] ICO page
-- [ ] Dashboard charts and history
-- [ ] Real wallet integration (after Fireblocks fix)
-- [ ] Whitelist functionality (after requirements)
+## Deployment Notes
+- Preview URL: https://kbex-trading.preview.emergentagent.com
+- Backend: Port 8001 (internal), prefixed with /api
+- Frontend: Port 3000
+- MongoDB: Via MONGO_URL env var

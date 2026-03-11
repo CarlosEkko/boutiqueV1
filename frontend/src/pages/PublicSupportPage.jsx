@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -21,7 +20,8 @@ import {
   CheckCircle,
   FileText,
   AlertCircle,
-  Headphones
+  Headphones,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,7 +48,6 @@ const PublicSupportPage = () => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    // Pre-fill if user is logged in
     if (isAuthenticated && user) {
       setForm(prev => ({
         ...prev,
@@ -62,7 +61,7 @@ const PublicSupportPage = () => {
     const selectedFiles = Array.from(e.target.files);
     const validFiles = selectedFiles.filter(file => {
       const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
-      const maxSize = 5 * 1024 * 1024; // 5MB for public uploads
+      const maxSize = 5 * 1024 * 1024;
       
       if (!validTypes.includes(file.type)) {
         toast.error(`${file.name}: Tipo de ficheiro não suportado`);
@@ -75,7 +74,7 @@ const PublicSupportPage = () => {
       return true;
     });
     
-    setFiles(prev => [...prev, ...validFiles].slice(0, 3)); // Max 3 files for public
+    setFiles(prev => [...prev, ...validFiles].slice(0, 3));
   };
 
   const removeFile = (index) => {
@@ -93,7 +92,6 @@ const PublicSupportPage = () => {
         formData.append('file', file);
         formData.append('category', 'documents');
         
-        // Use public upload endpoint (no auth required)
         const response = await axios.post(`${API_URL}/api/uploads/public`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -118,12 +116,10 @@ const PublicSupportPage = () => {
     setSubmitting(true);
     
     try {
-      // Upload files first
       setUploading(true);
       const attachmentUrls = await uploadFiles();
       setUploading(false);
       
-      // If user is authenticated, create ticket via authenticated API
       if (isAuthenticated && token) {
         const response = await axios.post(`${API_URL}/api/kb/tickets`, {
           subject: form.subject,
@@ -136,7 +132,6 @@ const PublicSupportPage = () => {
         
         setTicketNumber(response.data.ticket_number);
       } else {
-        // For non-authenticated users, create a public ticket
         const response = await axios.post(`${API_URL}/api/kb/public-ticket`, {
           name: form.name,
           email: form.email,
@@ -161,44 +156,49 @@ const PublicSupportPage = () => {
     }
   };
 
-  // Success screen - Light theme
+  // Success screen - Same style as Home
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="bg-black min-h-screen">
         <Header />
-        <div className="max-w-2xl mx-auto px-4 py-20">
-          <Card className="bg-white border-emerald-200 shadow-xl">
-            <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                <CheckCircle size={40} className="text-emerald-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Pedido Enviado com Sucesso!
-              </h2>
-              {ticketNumber && ticketNumber !== 'PENDING' && (
-                <p className="text-lg text-emerald-600 mb-4">
-                  Número do Ticket: <span className="font-mono font-bold">{ticketNumber}</span>
-                </p>
-              )}
-              <p className="text-gray-600 mb-8">
-                A nossa equipa irá analisar o seu pedido e responder o mais brevemente possível.
-                {form.email && ` Receberá uma notificação em ${form.email}.`}
+        <div className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-900/50 to-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-transparent to-transparent" />
+          
+          <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
+            <div className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center animate-pulse">
+              <CheckCircle size={48} className="text-gold-400" />
+            </div>
+            <h2 className="text-4xl md:text-5xl font-light text-white mb-6">
+              Pedido <span className="text-gold-400">Enviado</span>
+            </h2>
+            {ticketNumber && ticketNumber !== 'PENDING' && (
+              <p className="text-xl text-gold-400 mb-6 font-mono">
+                Ticket: {ticketNumber}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/help">
-                  <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-                    <Book size={16} className="mr-2" />
-                    Centro de Ajuda
-                  </Button>
-                </Link>
-                <Link to="/">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    Voltar ao Início
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+            <p className="text-gray-400 text-lg mb-10 max-w-md mx-auto">
+              A nossa equipa irá analisar o seu pedido e responder o mais brevemente possível.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/help">
+                <Button 
+                  variant="outline" 
+                  className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30 px-8 py-6 text-lg"
+                >
+                  <Book size={20} className="mr-2" />
+                  Centro de Ajuda
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button className="bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-black px-8 py-6 text-lg font-medium">
+                  Voltar ao Início
+                  <ArrowRight size={20} className="ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -206,64 +206,72 @@ const PublicSupportPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+    <div className="bg-black min-h-screen">
       <Header />
       
-      {/* Hero Section - Light theme */}
-      <div className="bg-gradient-to-b from-emerald-50 to-white py-16 border-b border-emerald-100">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-100 flex items-center justify-center">
-            <Headphones size={32} className="text-emerald-600" />
+      {/* Hero Section - Same style as Home */}
+      <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-900/50 to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-transparent to-transparent" />
+        
+        {/* Animated lines */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/20 to-transparent animate-pulse" />
+          <div className="absolute top-2/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/10 to-transparent animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-16">
+          <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center">
+            <Headphones size={36} className="text-gold-400" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Como Podemos Ajudar?
+          <h1 className="text-5xl md:text-6xl font-light text-white mb-6">
+            Como Podemos <span className="text-gold-400">Ajudar</span>?
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Estamos aqui para ajudar. Preencha o formulário abaixo e a nossa equipa responderá em breve.
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Estamos aqui para si. Preencha o formulário abaixo e a nossa equipa responderá em breve.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Contact Form - Light theme */}
-          <div className="lg:col-span-2">
-            <Card className="bg-white border-gray-200 shadow-lg" data-testid="support-form-card">
-              <CardHeader className="border-b border-gray-100 bg-gray-50/50">
-                <CardTitle className="text-gray-800 flex items-center gap-2">
-                  <MessageSquare size={20} className="text-emerald-600" />
-                  Enviar Pedido de Suporte
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+      {/* Form Section */}
+      <section className="relative py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            
+            {/* Contact Form */}
+            <div className="lg:col-span-2">
+              <div className="bg-zinc-900/50 backdrop-blur-sm border border-gold-800/20 rounded-2xl p-8" data-testid="support-form-card">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+                    <MessageSquare size={20} className="text-gold-400" />
+                  </div>
+                  <h2 className="text-2xl font-light text-white">Enviar Pedido de Suporte</h2>
+                </div>
+                
                 <form onSubmit={handleSubmit} className="space-y-6" data-testid="support-form">
                   {/* Contact Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Nome Completo *
-                      </label>
+                      <label className="text-sm font-medium text-gray-400 mb-2 block">Nome Completo *</label>
                       <Input
                         data-testid="input-name"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         placeholder="O seu nome"
-                        className="bg-white border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-emerald-500"
+                        className="bg-black/50 border-gold-800/30 text-white placeholder:text-gray-600 focus:border-gold-500 h-12"
                         required
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Email *
-                      </label>
+                      <label className="text-sm font-medium text-gray-400 mb-2 block">Email *</label>
                       <Input
                         data-testid="input-email"
                         type="email"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
                         placeholder="seu@email.com"
-                        className="bg-white border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-emerald-500"
+                        className="bg-black/50 border-gold-800/30 text-white placeholder:text-gray-600 focus:border-gold-500 h-12"
                         required
                       />
                     </div>
@@ -271,15 +279,13 @@ const PublicSupportPage = () => {
 
                   {/* Subject */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Assunto *
-                    </label>
+                    <label className="text-sm font-medium text-gray-400 mb-2 block">Assunto *</label>
                     <Input
                       data-testid="input-subject"
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
                       placeholder="Descreva brevemente o seu pedido"
-                      className="bg-white border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-emerald-500"
+                      className="bg-black/50 border-gold-800/30 text-white placeholder:text-gray-600 focus:border-gold-500 h-12"
                       required
                     />
                   </div>
@@ -287,14 +293,12 @@ const PublicSupportPage = () => {
                   {/* Category & Priority */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Categoria
-                      </label>
+                      <label className="text-sm font-medium text-gray-400 mb-2 block">Categoria</label>
                       <select
                         data-testid="select-category"
                         value={form.category}
                         onChange={(e) => setForm({ ...form, category: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                        className="w-full bg-black/50 border border-gold-800/30 rounded-lg px-4 py-3 text-white focus:border-gold-500 focus:outline-none"
                       >
                         <option value="general">Geral</option>
                         <option value="technical">Técnico</option>
@@ -305,14 +309,12 @@ const PublicSupportPage = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Prioridade
-                      </label>
+                      <label className="text-sm font-medium text-gray-400 mb-2 block">Prioridade</label>
                       <select
                         data-testid="select-priority"
                         value={form.priority}
                         onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                        className="w-full bg-black/50 border border-gold-800/30 rounded-lg px-4 py-3 text-white focus:border-gold-500 focus:outline-none"
                       >
                         <option value="low">Baixa</option>
                         <option value="medium">Média</option>
@@ -324,25 +326,21 @@ const PublicSupportPage = () => {
 
                   {/* Description */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Descrição *
-                    </label>
+                    <label className="text-sm font-medium text-gray-400 mb-2 block">Descrição *</label>
                     <Textarea
                       data-testid="input-description"
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       placeholder="Descreva o seu problema ou questão em detalhe. Quanto mais informação fornecer, mais rapidamente poderemos ajudar."
-                      className="bg-white border-gray-300 text-gray-800 placeholder:text-gray-400 focus:border-emerald-500 focus:ring-emerald-500 min-h-[150px]"
+                      className="bg-black/50 border-gold-800/30 text-white placeholder:text-gray-600 focus:border-gold-500 min-h-[150px]"
                       required
                     />
                   </div>
 
                   {/* File Upload */}
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Anexos (opcional)
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors bg-gray-50/50">
+                    <label className="text-sm font-medium text-gray-400 mb-2 block">Anexos (opcional)</label>
+                    <div className="border-2 border-dashed border-gold-800/30 rounded-xl p-8 text-center hover:border-gold-500/50 transition-colors bg-black/30">
                       <input
                         type="file"
                         id="file-upload"
@@ -353,11 +351,11 @@ const PublicSupportPage = () => {
                         data-testid="file-input"
                       />
                       <label htmlFor="file-upload" className="cursor-pointer">
-                        <Upload size={32} className="mx-auto text-gray-400 mb-3" />
-                        <p className="text-gray-600 mb-1">
-                          Arraste ficheiros ou <span className="text-emerald-600 font-medium">clique para selecionar</span>
+                        <Upload size={36} className="mx-auto text-gold-500/50 mb-4" />
+                        <p className="text-gray-400 mb-2">
+                          Arraste ficheiros ou <span className="text-gold-400 font-medium">clique para selecionar</span>
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-600">
                           PDF, JPEG, PNG, GIF (máx. 5MB por ficheiro, até 3 ficheiros)
                         </p>
                       </label>
@@ -369,24 +367,20 @@ const PublicSupportPage = () => {
                         {files.map((file, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-200"
+                            className="flex items-center justify-between bg-gold-500/10 border border-gold-500/20 rounded-lg px-4 py-3"
                             data-testid={`file-item-${index}`}
                           >
                             <div className="flex items-center gap-3">
-                              <FileText size={16} className="text-emerald-600" />
-                              <span className="text-sm text-gray-700 truncate max-w-[200px]">
-                                {file.name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                ({(file.size / 1024).toFixed(1)} KB)
-                              </span>
+                              <FileText size={18} className="text-gold-400" />
+                              <span className="text-sm text-white truncate max-w-[200px]">{file.name}</span>
+                              <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => removeFile(index)}
-                              className="text-gray-400 hover:text-red-500"
+                              className="text-gray-400 hover:text-red-400 transition-colors"
                             >
-                              <X size={16} />
+                              <X size={18} />
                             </button>
                           </div>
                         ))}
@@ -398,14 +392,14 @@ const PublicSupportPage = () => {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all"
+                    className="w-full bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 text-black py-6 text-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-gold-500/20"
                     data-testid="submit-button"
                   >
                     {submitting ? (
                       uploading ? 'A carregar ficheiros...' : 'A enviar...'
                     ) : (
                       <>
-                        <Send size={18} className="mr-2" />
+                        <Send size={20} className="mr-2" />
                         Enviar Pedido
                       </>
                     )}
@@ -413,98 +407,91 @@ const PublicSupportPage = () => {
 
                   {isAuthenticated && (
                     <p className="text-sm text-center text-gray-500">
-                      Autenticado como <span className="text-emerald-600 font-medium">{user?.email}</span>
+                      Autenticado como <span className="text-gold-400">{user?.email}</span>
                     </p>
                   )}
                 </form>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
 
-          {/* Sidebar - Light theme */}
-          <div className="space-y-6">
-            {/* Quick Links */}
-            <Card className="bg-white border-gray-200 shadow-lg">
-              <CardHeader className="border-b border-gray-100">
-                <CardTitle className="text-gray-800 text-lg">Ajuda Rápida</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <Link 
-                  to="/help"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-emerald-50 transition-colors border border-gray-100 hover:border-emerald-200"
-                  data-testid="link-help-center"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <Book size={20} className="text-emerald-600" />
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Quick Links */}
+              <div className="bg-zinc-900/50 backdrop-blur-sm border border-gold-800/20 rounded-2xl p-6">
+                <h3 className="text-lg font-medium text-white mb-4">Ajuda Rápida</h3>
+                <div className="space-y-3">
+                  <Link 
+                    to="/help"
+                    className="flex items-center gap-4 p-4 rounded-xl bg-black/30 border border-gold-800/20 hover:border-gold-500/30 transition-all group"
+                    data-testid="link-help-center"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-gold-500/20 flex items-center justify-center group-hover:bg-gold-500/30 transition-colors">
+                      <Book size={24} className="text-gold-400" />
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">Centro de Ajuda</div>
+                      <div className="text-xs text-gray-500">FAQs e tutoriais</div>
+                    </div>
+                  </Link>
+                  <Link 
+                    to="/help/faqs"
+                    className="flex items-center gap-4 p-4 rounded-xl bg-black/30 border border-gold-800/20 hover:border-gold-500/30 transition-all group"
+                    data-testid="link-faqs"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-gold-500/20 flex items-center justify-center group-hover:bg-gold-500/30 transition-colors">
+                      <HelpCircle size={24} className="text-gold-400" />
+                    </div>
+                    <div>
+                      <div className="text-white font-medium">FAQs</div>
+                      <div className="text-xs text-gray-500">Perguntas frequentes</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="bg-zinc-900/50 backdrop-blur-sm border border-gold-800/20 rounded-2xl p-6">
+                <h3 className="text-lg font-medium text-white mb-4">Contactos Directos</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 text-gray-400">
+                    <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+                      <Mail size={18} className="text-gold-400" />
+                    </div>
+                    <span>support@kbex.io</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-gray-400">
+                    <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+                      <Phone size={18} className="text-gold-400" />
+                    </div>
+                    <span>+41 (0) 800 KBEX</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-gray-400">
+                    <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+                      <Clock size={18} className="text-gold-400" />
+                    </div>
+                    <span>24/7 para clientes VIP</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Response Time */}
+              <div className="bg-gradient-to-br from-gold-900/20 to-zinc-900/50 border border-gold-500/20 rounded-2xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle size={24} className="text-gold-400" />
                   </div>
                   <div>
-                    <div className="text-gray-800 font-medium">Centro de Ajuda</div>
-                    <div className="text-xs text-gray-500">FAQs e tutoriais</div>
-                  </div>
-                </Link>
-                <Link 
-                  to="/help/faqs"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-amber-50 transition-colors border border-gray-100 hover:border-amber-200"
-                  data-testid="link-faqs"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <HelpCircle size={20} className="text-amber-600" />
-                  </div>
-                  <div>
-                    <div className="text-gray-800 font-medium">FAQs</div>
-                    <div className="text-xs text-gray-500">Perguntas frequentes</div>
-                  </div>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Contact Info */}
-            <Card className="bg-white border-gray-200 shadow-lg">
-              <CardHeader className="border-b border-gray-100">
-                <CardTitle className="text-gray-800 text-lg">Contactos Directos</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center gap-3 text-gray-600">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Mail size={16} className="text-emerald-600" />
-                  </div>
-                  <span>support@kbex.io</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-600">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Phone size={16} className="text-emerald-600" />
-                  </div>
-                  <span>+41 (0) 800 KBEX</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-600">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Clock size={16} className="text-emerald-600" />
-                  </div>
-                  <span>24/7 para clientes VIP</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Response Time */}
-            <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-200 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <AlertCircle size={20} className="text-emerald-600" />
-                  </div>
-                  <div>
-                    <div className="text-gray-800 font-medium mb-1">Tempo de Resposta</div>
-                    <div className="text-sm text-gray-600">
-                      Respondemos normalmente em menos de 24 horas. 
-                      Clientes VIP têm suporte prioritário.
+                    <div className="text-white font-medium mb-2">Tempo de Resposta</div>
+                    <div className="text-sm text-gray-400">
+                      Respondemos normalmente em menos de 24 horas. Clientes VIP têm suporte prioritário.
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <Footer />
     </div>

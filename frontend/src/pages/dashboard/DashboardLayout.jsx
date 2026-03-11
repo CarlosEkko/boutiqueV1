@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import CurrencySelector from '../../components/CurrencySelector';
@@ -14,9 +14,10 @@ import {
   Menu,
   X,
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   Users,
   Gift,
-  Settings,
   BarChart3,
   UserCheck,
   Globe,
@@ -30,17 +31,22 @@ import {
   Bitcoin,
   Send,
   HelpCircle,
-  Book
+  Book,
+  Headphones
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { useState } from 'react';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [supportMenuOpen, setSupportMenuOpen] = useState(
+    location.pathname.includes('/admin/tickets') || 
+    location.pathname.includes('/admin/knowledge-base')
+  );
 
   const isAdmin = user?.is_admin;
 
@@ -61,18 +67,23 @@ const DashboardLayout = () => {
     { to: '/profile', icon: User, label: 'Meu Perfil' },
   ];
 
+  // Admin nav items - without support items (they are in submenu)
   const adminNavItems = [
     { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
     { to: '/dashboard/admin/trading', icon: DollarSign, label: 'Gestão Trading' },
-    { to: '/dashboard/admin/knowledge-base', icon: Book, label: 'Base Conhecimento' },
     { to: '/dashboard/admin/regional', icon: Globe, label: 'Métricas Regionais' },
     { to: '/dashboard/admin/staff', icon: UserCog, label: 'Gestão de Equipa' },
-    { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },
     { to: '/dashboard/admin/users', icon: Users, label: t('dashboard.nav.users') },
     { to: '/dashboard/admin/kyc', icon: UserCheck, label: t('dashboard.nav.kycKyb') },
     { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: t('dashboard.nav.opportunities') },
     { to: '/dashboard/admin/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
     { to: '/dashboard/admin/invites', icon: Gift, label: t('dashboard.nav.inviteCodes') },
+  ];
+
+  // Support submenu items
+  const supportSubItems = [
+    { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },
+    { to: '/dashboard/admin/knowledge-base', icon: Book, label: 'Base de Conhecimento' },
   ];
 
   const handleLogout = () => {
@@ -97,6 +108,26 @@ const DashboardLayout = () => {
       {(sidebarOpen || mobileMenuOpen) && <span className="font-medium">{label}</span>}
     </NavLink>
   );
+
+  const SubNavItem = ({ to, icon: Icon, label }) => (
+    <NavLink
+      to={to}
+      onClick={() => setMobileMenuOpen(false)}
+      className={({ isActive }) =>
+        `flex items-center gap-3 pl-12 pr-4 py-2.5 rounded-lg transition-all duration-200 ${
+          isActive
+            ? 'bg-gold-500/10 text-gold-400'
+            : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
+        }`
+      }
+    >
+      <Icon size={16} />
+      {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
+    </NavLink>
+  );
+
+  const isSupportActive = location.pathname.includes('/admin/tickets') || 
+                          location.pathname.includes('/admin/knowledge-base');
 
   return (
     <div className="min-h-screen bg-black flex">
@@ -147,6 +178,43 @@ const DashboardLayout = () => {
               {adminNavItems.map((item) => (
                 <NavItem key={item.to} {...item} />
               ))}
+              
+              {/* Support Submenu */}
+              {sidebarOpen && (
+                <div className="mt-2">
+                  <button
+                    onClick={() => setSupportMenuOpen(!supportMenuOpen)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isSupportActive
+                        ? 'bg-gold-500/20 text-gold-400'
+                        : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Headphones size={20} />
+                      <span className="font-medium">Suporte</span>
+                    </div>
+                    {supportMenuOpen ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+                  
+                  {supportMenuOpen && (
+                    <div className="mt-1 space-y-1">
+                      {supportSubItems.map((item) => (
+                        <SubNavItem key={item.to} {...item} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Collapsed mode - show icons only */}
+              {!sidebarOpen && supportSubItems.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
             </div>
           )}
         </nav>
@@ -195,7 +263,7 @@ const DashboardLayout = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16">
+        <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16 overflow-y-auto">
           <nav className="p-4 space-y-2">
             {/* User Navigation */}
             <p className="px-4 text-xs text-gray-500 uppercase mb-2">{t('dashboard.layout.portfolio')}</p>
@@ -210,6 +278,36 @@ const DashboardLayout = () => {
                 {adminNavItems.map((item) => (
                   <NavItem key={item.to} {...item} />
                 ))}
+                
+                {/* Support Submenu - Mobile */}
+                <div className="mt-2">
+                  <button
+                    onClick={() => setSupportMenuOpen(!supportMenuOpen)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isSupportActive
+                        ? 'bg-gold-500/20 text-gold-400'
+                        : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Headphones size={20} />
+                      <span className="font-medium">Suporte</span>
+                    </div>
+                    {supportMenuOpen ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+                  
+                  {supportMenuOpen && (
+                    <div className="mt-1 space-y-1">
+                      {supportSubItems.map((item) => (
+                        <SubNavItem key={item.to} {...item} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
