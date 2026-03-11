@@ -249,6 +249,123 @@ const AdminTradingPage = () => {
     }
   };
 
+  // KBEX Bank Accounts functions
+  const fetchKbexBankAccounts = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/trading/admin/kbex-bank-accounts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setKbexBankAccounts(response.data);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Erro ao carregar contas bancárias' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveKbexBankAccount = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      if (editingBankAccount) {
+        await axios.put(`${API_URL}/api/trading/admin/kbex-bank-accounts/${editingBankAccount.currency}`, newBankAccount, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMessage({ type: 'success', text: 'Conta bancária atualizada!' });
+      } else {
+        await axios.post(`${API_URL}/api/trading/admin/kbex-bank-accounts`, newBankAccount, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMessage({ type: 'success', text: 'Conta bancária criada!' });
+      }
+      fetchKbexBankAccounts();
+      setEditingBankAccount(null);
+      setNewBankAccount({
+        currency: 'EUR', bank_name: '', account_name: 'KBEX Exchange Ltd',
+        iban: '', swift_bic: '', account_number: '', routing_number: '', bank_address: '', instructions: ''
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao salvar conta bancária' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteKbexBankAccount = async (currency) => {
+    if (!window.confirm(`Tem certeza que deseja excluir a conta bancária ${currency}?`)) return;
+    try {
+      await axios.delete(`${API_URL}/api/trading/admin/kbex-bank-accounts/${currency}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Conta bancária excluída!' });
+      fetchKbexBankAccounts();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao excluir' });
+    }
+  };
+
+  // Fiat Withdrawals functions
+  const fetchWithdrawals = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (withdrawalsFilter.status) params.append('status', withdrawalsFilter.status);
+      if (withdrawalsFilter.currency) params.append('currency', withdrawalsFilter.currency);
+      
+      const response = await axios.get(`${API_URL}/api/trading/admin/fiat-withdrawals?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWithdrawals(response.data);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Erro ao carregar levantamentos' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const processWithdrawal = async (withdrawalId) => {
+    try {
+      await axios.post(`${API_URL}/api/trading/admin/fiat-withdrawals/${withdrawalId}/process`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Levantamento em processamento!' });
+      fetchWithdrawals();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao processar' });
+    }
+  };
+
+  const approveWithdrawal = async (withdrawalId, reference) => {
+    try {
+      const params = new URLSearchParams();
+      if (reference) params.append('transaction_reference', reference);
+      
+      await axios.post(`${API_URL}/api/trading/admin/fiat-withdrawals/${withdrawalId}/approve?${params}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Levantamento aprovado!' });
+      fetchWithdrawals();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao aprovar' });
+    }
+  };
+
+  const rejectWithdrawal = async (withdrawalId) => {
+    const reason = window.prompt('Motivo da rejeição:');
+    if (!reason) return;
+    
+    try {
+      await axios.post(`${API_URL}/api/trading/admin/fiat-withdrawals/${withdrawalId}/reject?reason=${encodeURIComponent(reason)}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage({ type: 'success', text: 'Levantamento rejeitado!' });
+      fetchWithdrawals();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao rejeitar' });
+    }
+  };
+
   const updateCryptoFeeField = (field, value) => {
     setSelectedCrypto(prev => ({
       ...prev,
@@ -380,7 +497,9 @@ const AdminTradingPage = () => {
         <TabButton id="fees" icon={DollarSign} label="Taxas Fiat" />
         <TabButton id="limits" icon={Users} label="Limites" />
         <TabButton id="orders" icon={TrendingUp} label="Ordens" />
-        <TabButton id="transfers" icon={Building2} label="Transferências" />
+        <TabButton id="transfers" icon={Building2} label="Depósitos" />
+        <TabButton id="bank-accounts" icon={Banknote} label="Contas Bancárias" />
+        <TabButton id="withdrawals" icon={ArrowDownToLine} label="Levantamentos" />
       </div>
 
       {/* Crypto Fees Tab */}
@@ -1202,6 +1321,403 @@ const AdminTradingPage = () => {
                               className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                               onClick={() => rejectTransfer(transfer.id)}
                               data-testid={`reject-transfer-${transfer.id}`}
+                            >
+                              <XCircle size={16} className="mr-1" />
+                              Rejeitar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bank Accounts Tab */}
+      {activeTab === 'bank-accounts' && (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Banknote size={20} className="text-gold-400" />
+              Contas Bancárias KBEX
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Add/Edit Form */}
+            <div className="bg-zinc-800/50 rounded-lg p-6">
+              <h3 className="text-lg text-gold-400 mb-4">
+                {editingBankAccount ? `Editar Conta ${editingBankAccount.currency}` : 'Adicionar Nova Conta'}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Moeda</label>
+                  <select
+                    value={newBankAccount.currency}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, currency: e.target.value})}
+                    disabled={!!editingBankAccount}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                  >
+                    {SUPPORTED_CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>{c.flag} {c.code} - {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nome do Banco</label>
+                  <Input
+                    value={newBankAccount.bank_name}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, bank_name: e.target.value})}
+                    placeholder="Ex: Banco Nacional de Portugal"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Nome da Conta</label>
+                  <Input
+                    value={newBankAccount.account_name}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, account_name: e.target.value})}
+                    placeholder="KBEX Exchange Ltd"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">IBAN</label>
+                  <Input
+                    value={newBankAccount.iban}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, iban: e.target.value})}
+                    placeholder="PT50 0000 0000 0000 0000 0000 0"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">SWIFT/BIC</label>
+                  <Input
+                    value={newBankAccount.swift_bic}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, swift_bic: e.target.value})}
+                    placeholder="BNPAFRPP"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Número da Conta</label>
+                  <Input
+                    value={newBankAccount.account_number}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, account_number: e.target.value})}
+                    placeholder="Para USD/outros"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Routing Number (USD)</label>
+                  <Input
+                    value={newBankAccount.routing_number}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, routing_number: e.target.value})}
+                    placeholder="Para transferências nos EUA"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm text-gray-400 mb-1 block">Endereço do Banco</label>
+                  <Input
+                    value={newBankAccount.bank_address}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, bank_address: e.target.value})}
+                    placeholder="Morada completa do banco"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div className="md:col-span-3">
+                  <label className="text-sm text-gray-400 mb-1 block">Instruções para o Cliente</label>
+                  <textarea
+                    value={newBankAccount.instructions}
+                    onChange={(e) => setNewBankAccount({...newBankAccount, instructions: e.target.value})}
+                    placeholder="Instruções adicionais para transferências..."
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white min-h-[80px]"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  className="bg-gold-500 hover:bg-gold-600 text-black"
+                  onClick={saveKbexBankAccount}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save className="mr-2" size={18} />}
+                  {editingBankAccount ? 'Atualizar' : 'Criar Conta'}
+                </Button>
+                {editingBankAccount && (
+                  <Button
+                    variant="outline"
+                    className="border-zinc-700"
+                    onClick={() => {
+                      setEditingBankAccount(null);
+                      setNewBankAccount({
+                        currency: 'EUR', bank_name: '', account_name: 'KBEX Exchange Ltd',
+                        iban: '', swift_bic: '', account_number: '', routing_number: '', bank_address: '', instructions: ''
+                      });
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Existing Accounts */}
+            <div>
+              <h3 className="text-lg text-white mb-4">Contas Configuradas</h3>
+              {kbexBankAccounts.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">Nenhuma conta bancária configurada</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {kbexBankAccounts.map(account => (
+                    <div key={account.id} className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{SUPPORTED_CURRENCIES.find(c => c.code === account.currency)?.flag}</span>
+                          <span className="text-xl text-white font-medium">{account.currency}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-white"
+                            onClick={() => {
+                              setEditingBankAccount(account);
+                              setNewBankAccount({
+                                currency: account.currency,
+                                bank_name: account.bank_name || '',
+                                account_name: account.account_name || '',
+                                iban: account.iban || '',
+                                swift_bic: account.swift_bic || '',
+                                account_number: account.account_number || '',
+                                routing_number: account.routing_number || '',
+                                bank_address: account.bank_address || '',
+                                instructions: account.instructions || ''
+                              });
+                            }}
+                          >
+                            <Edit size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => deleteKbexBankAccount(account.currency)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-gray-400">Banco: <span className="text-white">{account.bank_name}</span></p>
+                        <p className="text-gray-400">Conta: <span className="text-white">{account.account_name}</span></p>
+                        {account.iban && <p className="text-gray-400">IBAN: <span className="text-white font-mono">{account.iban}</span></p>}
+                        {account.swift_bic && <p className="text-gray-400">SWIFT: <span className="text-white font-mono">{account.swift_bic}</span></p>}
+                        {account.account_number && <p className="text-gray-400">Nº Conta: <span className="text-white">{account.account_number}</span></p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Withdrawals Tab */}
+      {activeTab === 'withdrawals' && (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardTitle className="text-white flex items-center gap-2">
+                <ArrowDownToLine size={20} className="text-gold-400" />
+                Pedidos de Levantamento
+              </CardTitle>
+              <div className="flex gap-2">
+                <select
+                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                  value={withdrawalsFilter.status}
+                  onChange={(e) => setWithdrawalsFilter({...withdrawalsFilter, status: e.target.value})}
+                >
+                  <option value="">Todos os Status</option>
+                  <option value="pending">Pendente</option>
+                  <option value="processing">Em Processamento</option>
+                  <option value="completed">Concluído</option>
+                  <option value="rejected">Rejeitado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+                <select
+                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                  value={withdrawalsFilter.currency}
+                  onChange={(e) => setWithdrawalsFilter({...withdrawalsFilter, currency: e.target.value})}
+                >
+                  <option value="">Todas as Moedas</option>
+                  {SUPPORTED_CURRENCIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                  ))}
+                </select>
+                <Button variant="outline" size="sm" className="border-zinc-700" onClick={fetchWithdrawals}>
+                  <RefreshCw size={16} />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin text-gold-400" size={32} />
+              </div>
+            ) : withdrawals.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">Nenhum pedido de levantamento encontrado</p>
+            ) : (
+              <div className="space-y-3">
+                {withdrawals.map(withdrawal => (
+                  <div 
+                    key={withdrawal.id} 
+                    className="bg-zinc-800/50 rounded-lg overflow-hidden"
+                  >
+                    <div 
+                      className="p-4 cursor-pointer hover:bg-zinc-800/70 transition-colors"
+                      onClick={() => setExpandedWithdrawal(expandedWithdrawal === withdrawal.id ? null : withdrawal.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl">
+                            {SUPPORTED_CURRENCIES.find(c => c.code === withdrawal.currency)?.flag}
+                          </span>
+                          <div>
+                            <span className="text-white font-medium">
+                              {withdrawal.amount?.toFixed(2)} {withdrawal.currency}
+                            </span>
+                            <span className="text-gray-400 ml-2 text-sm">
+                              (Líquido: {withdrawal.net_amount?.toFixed(2)})
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-gray-400 text-sm">{withdrawal.user_email}</span>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            withdrawal.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                            withdrawal.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                            withdrawal.status === 'processing' ? 'bg-blue-500/20 text-blue-400' :
+                            withdrawal.status === 'rejected' ? 'bg-red-500/20 text-red-400' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {withdrawal.status === 'pending' ? 'Pendente' :
+                             withdrawal.status === 'processing' ? 'Processando' :
+                             withdrawal.status === 'completed' ? 'Concluído' :
+                             withdrawal.status === 'rejected' ? 'Rejeitado' :
+                             withdrawal.status === 'cancelled' ? 'Cancelado' : withdrawal.status}
+                          </span>
+                          {expandedWithdrawal === withdrawal.id ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {expandedWithdrawal === withdrawal.id && (
+                      <div className="px-4 pb-4 border-t border-zinc-700 pt-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                          <div>
+                            <p className="text-gray-400">Valor Bruto</p>
+                            <p className="text-white">{withdrawal.amount?.toFixed(2)} {withdrawal.currency}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Taxa</p>
+                            <p className="text-white">{withdrawal.fee_amount?.toFixed(2)} {withdrawal.currency}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Valor Líquido</p>
+                            <p className="text-green-400">{withdrawal.net_amount?.toFixed(2)} {withdrawal.currency}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-400">Data do Pedido</p>
+                            <p className="text-white">{new Date(withdrawal.created_at).toLocaleString('pt-PT')}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-zinc-900/50 rounded-lg p-4 mb-4">
+                          <h4 className="text-gold-400 font-medium mb-2">Dados Bancários do Cliente</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-400">Banco</p>
+                              <p className="text-white">{withdrawal.bank_name}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400">Titular</p>
+                              <p className="text-white">{withdrawal.account_holder}</p>
+                            </div>
+                            {withdrawal.iban && (
+                              <div>
+                                <p className="text-gray-400">IBAN</p>
+                                <p className="text-white font-mono">{withdrawal.iban}</p>
+                              </div>
+                            )}
+                            {withdrawal.swift_bic && (
+                              <div>
+                                <p className="text-gray-400">SWIFT/BIC</p>
+                                <p className="text-white font-mono">{withdrawal.swift_bic}</p>
+                              </div>
+                            )}
+                            {withdrawal.account_number && (
+                              <div>
+                                <p className="text-gray-400">Nº Conta</p>
+                                <p className="text-white">{withdrawal.account_number}</p>
+                              </div>
+                            )}
+                            {withdrawal.routing_number && (
+                              <div>
+                                <p className="text-gray-400">Routing Number</p>
+                                <p className="text-white">{withdrawal.routing_number}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {withdrawal.rejection_reason && (
+                          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+                            <p className="text-red-400 text-sm">Motivo da rejeição: {withdrawal.rejection_reason}</p>
+                          </div>
+                        )}
+
+                        {withdrawal.transaction_reference && (
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+                            <p className="text-green-400 text-sm">Referência: {withdrawal.transaction_reference}</p>
+                          </div>
+                        )}
+
+                        {(withdrawal.status === 'pending' || withdrawal.status === 'processing') && (
+                          <div className="flex gap-2">
+                            {withdrawal.status === 'pending' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                onClick={() => processWithdrawal(withdrawal.id)}
+                              >
+                                <Clock size={16} className="mr-1" />
+                                Marcar Processando
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                              onClick={() => {
+                                const ref = window.prompt('Referência da transferência (opcional):');
+                                approveWithdrawal(withdrawal.id, ref);
+                              }}
+                            >
+                              <CheckCircle size={16} className="mr-1" />
+                              Aprovar e Concluir
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                              onClick={() => rejectWithdrawal(withdrawal.id)}
                             >
                               <XCircle size={16} className="mr-1" />
                               Rejeitar
