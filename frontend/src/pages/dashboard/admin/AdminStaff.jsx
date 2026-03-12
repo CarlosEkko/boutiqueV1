@@ -55,9 +55,15 @@ const AdminStaff = () => {
 
   const roles = [
     { value: 'admin', label: 'Admin', description: 'Acesso total ao sistema', color: 'purple' },
-    { value: 'manager', label: 'Manager', description: 'Visão global de todas regiões', color: 'blue' },
-    { value: 'local_manager', label: 'Local Manager', description: 'Gestão da região atribuída', color: 'green' },
-    { value: 'support', label: 'Support', description: 'Suporte ao cliente na região', color: 'gold' }
+    { value: 'global_manager', label: 'Global Manager', description: 'Gestão global de todas regiões', color: 'blue' },
+    { value: 'manager', label: 'Manager', description: 'Gestão regional', color: 'blue' },
+    { value: 'sales_manager', label: 'Manager de Vendas', description: 'Líder da equipa de vendas', color: 'green' },
+    { value: 'sales', label: 'Vendas', description: 'Representante de vendas', color: 'green' },
+    { value: 'finance_general', label: 'Financeiro Geral', description: 'Supervisão financeira global', color: 'emerald' },
+    { value: 'finance_local', label: 'Financeiro Local', description: 'Financeiro regional', color: 'emerald' },
+    { value: 'finance', label: 'Financeiro', description: 'Operações financeiras', color: 'emerald' },
+    { value: 'support_manager', label: 'Suporte Manager', description: 'Líder da equipa de suporte', color: 'gold' },
+    { value: 'support_agent', label: 'Agente de Suporte', description: 'Atendimento ao cliente', color: 'gold' }
   ];
 
   const regions = [
@@ -176,6 +182,7 @@ const AdminStaff = () => {
       purple: 'bg-purple-900/30 text-purple-400 border-purple-800/30',
       blue: 'bg-blue-900/30 text-blue-400 border-blue-800/30',
       green: 'bg-green-900/30 text-green-400 border-green-800/30',
+      emerald: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/30',
       gold: 'bg-gold-900/30 text-gold-400 border-gold-800/30',
       gray: 'bg-gray-900/30 text-gray-400 border-gray-800/30'
     };

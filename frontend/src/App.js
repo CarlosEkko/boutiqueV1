@@ -27,7 +27,14 @@ import {
   AdminKYC,
   RegionalDashboard,
   TicketsDashboard,
-  AdminTradingPage
+  AdminTradingPage,
+  AdminPermissions,
+  AdminOrders,
+  AdminFiatDeposits,
+  AdminFiatWithdrawals,
+  AdminCryptoWithdrawals,
+  AdminClients,
+  AdminPipeline
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -118,6 +125,13 @@ function AppRoutes() {
         <Route path="admin/kyc" element={<AdminKYC />} />
         <Route path="admin/trading" element={<AdminTradingPage />} />
         <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
+        <Route path="admin/permissions" element={<AdminPermissions />} />
+        <Route path="admin/orders" element={<AdminOrders />} />
+        <Route path="admin/fiat-deposits" element={<AdminFiatDeposits />} />
+        <Route path="admin/fiat-withdrawals" element={<AdminFiatWithdrawals />} />
+        <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
+        <Route path="admin/clients" element={<AdminClients />} />
+        <Route path="admin/pipeline" element={<AdminPipeline />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

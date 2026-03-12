@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import CurrencySelector from '../../components/CurrencySelector';
@@ -32,102 +33,260 @@ import {
   Send,
   HelpCircle,
   Book,
-  Headphones
+  Headphones,
+  Settings,
+  Settings2,
+  Landmark,
+  Lock,
+  Sliders,
+  Receipt,
+  GitBranch
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Icon mapping for dynamic menu items
+const iconMap = {
+  LayoutDashboard, Wallet, History, TrendingUp, PieChart, Shield, Users, Gift,
+  BarChart3, UserCheck, Globe, UserCog, Ticket, User, ArrowDownUp, DollarSign,
+  ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
+  Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch
+};
+
+// Department icon and color mapping
+const departmentConfig = {
+  portfolio: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
+  admin: { icon: Settings, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  management: { icon: Settings2, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
+  finance: { icon: Landmark, color: 'text-green-400', bgColor: 'bg-green-500/20' },
+  crm: { icon: Users, color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
+  support: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+};
+
 const DashboardLayout = () => {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [supportMenuOpen, setSupportMenuOpen] = useState(
-    location.pathname.includes('/admin/tickets') || 
-    location.pathname.includes('/admin/knowledge-base')
-  );
+  const [menuStructure, setMenuStructure] = useState([]);
+  const [expandedMenus, setExpandedMenus] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  const isAdmin = user?.is_admin;
+  // Fetch menu structure from API
+  useEffect(() => {
+    const fetchMenus = async () => {
+      if (!token) return;
+      
+      try {
+        const response = await axios.get(`${API_URL}/api/permissions/menus`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMenuStructure(response.data.menus || []);
+        
+        // Auto-expand menu that contains current path
+        const newExpanded = {};
+        response.data.menus?.forEach(menu => {
+          const hasActivePath = menu.items?.some(item => 
+            location.pathname === item.path || 
+            location.pathname.startsWith(item.path + '/')
+          );
+          if (hasActivePath) {
+            newExpanded[menu.department] = true;
+          }
+        });
+        setExpandedMenus(newExpanded);
+      } catch (err) {
+        console.error('Failed to fetch menu structure:', err);
+        // Fallback to default portfolio menu for clients
+        setMenuStructure([{
+          department: 'portfolio',
+          label: 'Portfolio',
+          icon: 'LayoutDashboard',
+          items: [
+            { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+            { path: '/dashboard/wallets', label: 'Carteiras', icon: 'Wallet' },
+          ]
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const userNavItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: t('dashboard.nav.overview'), end: true },
-    { to: '/dashboard/exchange', icon: ArrowDownUp, label: 'Exchange' },
-    { to: '/dashboard/wallets', icon: Wallet, label: t('dashboard.nav.wallets') },
-    { to: '/dashboard/crypto-deposit', icon: Bitcoin, label: 'Depósito Crypto' },
-    { to: '/dashboard/crypto-withdrawal', icon: Send, label: 'Levantamento Crypto' },
-    { to: '/dashboard/fiat-deposit', icon: ArrowUpToLine, label: 'Depósito Fiat' },
-    { to: '/dashboard/fiat-withdrawal', icon: ArrowDownToLine, label: 'Levantamento Fiat' },
-    { to: '/dashboard/transactions', icon: History, label: t('dashboard.nav.transactions') },
-    { to: '/dashboard/investments', icon: TrendingUp, label: t('dashboard.nav.investments') },
-    { to: '/dashboard/roi', icon: PieChart, label: t('dashboard.nav.roi') },
-    { to: '/dashboard/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
-    { to: '/dashboard/support', icon: HelpCircle, label: 'Suporte' },
-    { to: '/dashboard/kyc', icon: UserCheck, label: t('dashboard.nav.kycVerification') },
-    { to: '/profile', icon: User, label: 'Meu Perfil' },
-  ];
+    fetchMenus();
+  }, [token, location.pathname]);
 
-  // Admin nav items - without support items (they are in submenu)
-  const adminNavItems = [
-    { to: '/dashboard/admin', icon: BarChart3, label: t('dashboard.nav.adminOverview'), end: true },
-    { to: '/dashboard/admin/trading', icon: DollarSign, label: 'Gestão Trading' },
-    { to: '/dashboard/admin/regional', icon: Globe, label: 'Métricas Regionais' },
-    { to: '/dashboard/admin/staff', icon: UserCog, label: 'Gestão de Equipa' },
-    { to: '/dashboard/admin/users', icon: Users, label: t('dashboard.nav.users') },
-    { to: '/dashboard/admin/kyc', icon: UserCheck, label: t('dashboard.nav.kycKyb') },
-    { to: '/dashboard/admin/opportunities', icon: TrendingUp, label: t('dashboard.nav.opportunities') },
-    { to: '/dashboard/admin/transparency', icon: Shield, label: t('dashboard.nav.transparency') },
-    { to: '/dashboard/admin/invites', icon: Gift, label: t('dashboard.nav.inviteCodes') },
-  ];
-
-  // Support submenu items
-  const supportSubItems = [
-    { to: '/dashboard/admin/tickets', icon: Ticket, label: 'Tickets de Suporte' },
-    { to: '/dashboard/admin/knowledge-base', icon: Book, label: 'Base de Conhecimento' },
-  ];
+  const toggleMenu = (department) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [department]: !prev[department]
+    }));
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const NavItem = ({ to, icon: Icon, label, end }) => (
-    <NavLink
-      to={to}
-      end={end}
-      onClick={() => setMobileMenuOpen(false)}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-          isActive
-            ? 'bg-gold-500/20 text-gold-400 border-l-2 border-gold-400'
-            : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
-        }`
-      }
-    >
-      <Icon size={20} />
-      {(sidebarOpen || mobileMenuOpen) && <span className="font-medium">{label}</span>}
-    </NavLink>
-  );
+  const getIcon = (iconName) => {
+    return iconMap[iconName] || LayoutDashboard;
+  };
 
-  const SubNavItem = ({ to, icon: Icon, label }) => (
-    <NavLink
-      to={to}
-      onClick={() => setMobileMenuOpen(false)}
-      className={({ isActive }) =>
-        `flex items-center gap-3 pl-12 pr-4 py-2.5 rounded-lg transition-all duration-200 ${
-          isActive
-            ? 'bg-gold-500/10 text-gold-400'
-            : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
-        }`
-      }
-    >
-      <Icon size={16} />
-      {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
-    </NavLink>
-  );
+  const isPathActive = (path, exact = false) => {
+    if (exact) {
+      return location.pathname === path;
+    }
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
 
-  const isSupportActive = location.pathname.includes('/admin/tickets') || 
-                          location.pathname.includes('/admin/knowledge-base');
+  const isMenuActive = (menu) => {
+    return menu.items?.some(item => isPathActive(item.path, item.path === '/dashboard'));
+  };
+
+  const NavItem = ({ to, icon: iconName, label, end }) => {
+    const Icon = getIcon(iconName);
+    return (
+      <NavLink
+        to={to}
+        end={end}
+        onClick={() => setMobileMenuOpen(false)}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+            isActive
+              ? 'bg-gold-500/20 text-gold-400 border-l-2 border-gold-400'
+              : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+          }`
+        }
+      >
+        <Icon size={18} />
+        {(sidebarOpen || mobileMenuOpen) && <span className="font-medium text-sm">{label}</span>}
+      </NavLink>
+    );
+  };
+
+  const SubNavItem = ({ to, icon: iconName, label }) => {
+    const Icon = getIcon(iconName);
+    return (
+      <NavLink
+        to={to}
+        onClick={() => setMobileMenuOpen(false)}
+        className={({ isActive }) =>
+          `flex items-center gap-3 pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
+            isActive
+              ? 'bg-gold-500/10 text-gold-400'
+              : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
+          }`
+        }
+      >
+        <Icon size={14} />
+        {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
+      </NavLink>
+    );
+  };
+
+  const MenuSection = ({ menu, isMobile = false }) => {
+    const config = departmentConfig[menu.department] || departmentConfig.portfolio;
+    const DeptIcon = config.icon;
+    const isExpanded = expandedMenus[menu.department];
+    const isActive = isMenuActive(menu);
+
+    // For Portfolio (client menu), show items directly without accordion
+    if (menu.department === 'portfolio') {
+      return (
+        <div className="space-y-1">
+          {sidebarOpen && (
+            <p className="px-4 text-xs text-gray-500 uppercase mb-2 tracking-wider">
+              {menu.label}
+            </p>
+          )}
+          {menu.items?.map((item) => (
+            <NavItem 
+              key={item.path} 
+              to={item.path} 
+              icon={item.icon} 
+              label={item.label}
+              end={item.path === '/dashboard'}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    // For other departments, use accordion style
+    return (
+      <div className="space-y-1">
+        {sidebarOpen || isMobile ? (
+          <>
+            <button
+              onClick={() => toggleMenu(menu.department)}
+              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? `${config.bgColor} ${config.color}`
+                  : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <DeptIcon size={18} />
+                <span className="font-medium text-sm">{menu.label}</span>
+              </div>
+              {isExpanded ? (
+                <ChevronDown size={16} />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+            </button>
+            
+            {isExpanded && (
+              <div className="mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
+                {menu.items?.map((item) => (
+                  <SubNavItem 
+                    key={item.path} 
+                    to={item.path} 
+                    icon={item.icon} 
+                    label={item.label}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          // Collapsed mode - show just the icon
+          <div className="relative group">
+            <button
+              onClick={() => toggleMenu(menu.department)}
+              className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? `${config.bgColor} ${config.color}`
+                  : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+              }`}
+            >
+              <DeptIcon size={20} />
+            </button>
+            {/* Tooltip */}
+            <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 hidden group-hover:block z-50">
+              <div className="bg-zinc-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                {menu.label}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-gold-400">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Separate portfolio from other menus
+  const portfolioMenu = menuStructure.find(m => m.department === 'portfolio');
+  const adminMenus = menuStructure.filter(m => m.department !== 'portfolio');
 
   return (
     <div className="min-h-screen bg-black flex">
@@ -162,58 +321,22 @@ const DashboardLayout = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {/* User Navigation */}
-          <div className="mb-4">
-            {sidebarOpen && <p className="px-4 text-xs text-gray-500 uppercase mb-2">{t('dashboard.layout.portfolio')}</p>}
-            {userNavItems.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
-          </div>
+        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {/* Portfolio Menu */}
+          {portfolioMenu && (
+            <MenuSection menu={portfolioMenu} />
+          )}
 
-          {/* Admin Navigation - Only visible to admins */}
-          {isAdmin && (
-            <div className="pt-4 border-t border-gold-800/20">
-              {sidebarOpen && <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>}
-              {adminNavItems.map((item) => (
-                <NavItem key={item.to} {...item} />
-              ))}
-              
-              {/* Support Submenu */}
+          {/* Admin/Staff Menus */}
+          {adminMenus.length > 0 && (
+            <div className="pt-4 border-t border-gold-800/20 space-y-2">
               {sidebarOpen && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setSupportMenuOpen(!supportMenuOpen)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isSupportActive
-                        ? 'bg-gold-500/20 text-gold-400'
-                        : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Headphones size={20} />
-                      <span className="font-medium">Suporte</span>
-                    </div>
-                    {supportMenuOpen ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </button>
-                  
-                  {supportMenuOpen && (
-                    <div className="mt-1 space-y-1">
-                      {supportSubItems.map((item) => (
-                        <SubNavItem key={item.to} {...item} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
+                  Gestão
+                </p>
               )}
-              
-              {/* Collapsed mode - show icons only */}
-              {!sidebarOpen && supportSubItems.map((item) => (
-                <NavItem key={item.to} {...item} />
+              {adminMenus.map((menu) => (
+                <MenuSection key={menu.department} menu={menu} />
               ))}
             </div>
           )}
@@ -225,7 +348,7 @@ const DashboardLayout = () => {
             <div className="mb-4 px-4">
               <p className="text-sm text-gray-400">{t('dashboard.layout.loggedInAs')}</p>
               <p className="text-white font-medium truncate">{user?.name}</p>
-              <p className="text-xs text-gold-400">{user?.membership_level || 'Standard'}</p>
+              <p className="text-xs text-gold-400">{user?.internal_role || user?.membership_level || 'Standard'}</p>
             </div>
           )}
           <Button
@@ -264,63 +387,26 @@ const DashboardLayout = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16 overflow-y-auto">
-          <nav className="p-4 space-y-2">
-            {/* User Navigation */}
-            <p className="px-4 text-xs text-gray-500 uppercase mb-2">{t('dashboard.layout.portfolio')}</p>
-            {userNavItems.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
+          <nav className="p-4 space-y-4">
+            {/* Portfolio Menu */}
+            {portfolioMenu && (
+              <MenuSection menu={portfolioMenu} isMobile={true} />
+            )}
             
-            {/* Admin Navigation */}
-            {isAdmin && (
-              <div className="pt-4 mt-4 border-t border-gold-800/20">
-                <p className="px-4 text-xs text-gold-400 uppercase mb-2">{t('dashboard.layout.admin')}</p>
-                {adminNavItems.map((item) => (
-                  <NavItem key={item.to} {...item} />
+            {/* Admin/Staff Menus */}
+            {adminMenus.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-gold-800/20 space-y-2">
+                <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
+                  Gestão
+                </p>
+                {adminMenus.map((menu) => (
+                  <MenuSection key={menu.department} menu={menu} isMobile={true} />
                 ))}
-                
-                {/* Support Submenu - Mobile */}
-                <div className="mt-2">
-                  <button
-                    onClick={() => setSupportMenuOpen(!supportMenuOpen)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isSupportActive
-                        ? 'bg-gold-500/20 text-gold-400'
-                        : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Headphones size={20} />
-                      <span className="font-medium">Suporte</span>
-                    </div>
-                    {supportMenuOpen ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </button>
-                  
-                  {supportMenuOpen && (
-                    <div className="mt-1 space-y-1">
-                      {supportSubItems.map((item) => (
-                        <SubNavItem key={item.to} {...item} />
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             )}
             
-            {/* Profile & Logout */}
+            {/* Logout */}
             <div className="pt-4 mt-4 border-t border-gold-800/20">
-              <NavLink
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-gold-400 hover:bg-gold-900/20 transition-colors"
-              >
-                <User size={20} />
-                <span className="font-medium">Meu Perfil</span>
-              </NavLink>
               <Button
                 onClick={handleLogout}
                 variant="ghost"

@@ -22,7 +22,16 @@ class MembershipLevel(str, Enum):
 class InternalRole(str, Enum):
     """Internal staff roles"""
     ADMIN = "admin"
+    GLOBAL_MANAGER = "global_manager"
     MANAGER = "manager"
+    SALES_MANAGER = "sales_manager"
+    SALES = "sales"
+    FINANCE_GENERAL = "finance_general"
+    FINANCE_LOCAL = "finance_local"
+    FINANCE = "finance"
+    SUPPORT_MANAGER = "support_manager"
+    SUPPORT_AGENT = "support_agent"
+    # Legacy roles for backward compatibility
     LOCAL_MANAGER = "local_manager"
     SUPPORT = "support"
 
