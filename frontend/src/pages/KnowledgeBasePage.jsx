@@ -127,14 +127,24 @@ const KnowledgeBasePage = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles/${slug}`);
-      setCurrentArticle(response.data);
+      // The API returns { article: {...}, category: {...}, related: [...] }
+      const articleData = response.data.article || response.data;
+      setCurrentArticle(articleData);
       
-      if (response.data.category_id) {
+      // Use category from response if available
+      if (response.data.category) {
+        setCurrentCategory(response.data.category);
+      } else if (articleData.category_id) {
         const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
-        const cat = catResponse.data.find(c => c.id === response.data.category_id);
+        const cat = catResponse.data.find(c => c.id === articleData.category_id);
         setCurrentCategory(cat);
-        
-        const relatedResponse = await axios.get(`${API_URL}/api/kb/articles?category_id=${response.data.category_id}&limit=3`);
+      }
+      
+      // Use related from response if available
+      if (response.data.related) {
+        setRelatedArticles(response.data.related);
+      } else if (articleData.category_id) {
+        const relatedResponse = await axios.get(`${API_URL}/api/kb/articles?category_id=${articleData.category_id}&limit=3`);
         setRelatedArticles(relatedResponse.data.articles?.filter(a => a.slug !== slug) || []);
       }
     } catch (err) {
@@ -221,39 +231,73 @@ const KnowledgeBasePage = () => {
             </nav>
 
             {/* Article */}
-            <article className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-8 md:p-12">
-              <div className="mb-8">
-                <h1 className="text-3xl md:text-4xl font-light text-white mb-4">
-                  {currentArticle.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Clock size={14} />
-                    {new Date(currentArticle.created_at).toLocaleDateString('pt-PT')}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Eye size={14} />
-                    {currentArticle.views || 0} visualizações
-                  </span>
-                  {currentArticle.tags?.map(tag => (
-                    <Badge key={tag} className="bg-gold-500/20 text-gold-400 border-0">
-                      {tag}
-                    </Badge>
-                  ))}
+            <article className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl overflow-hidden">
+              {/* Cover Image */}
+              {currentArticle.cover_image && (
+                <div className="w-full h-64 md:h-80 bg-zinc-800">
+                  <img 
+                    src={currentArticle.cover_image.startsWith('http') 
+                      ? currentArticle.cover_image 
+                      : `${API_URL}${currentArticle.cover_image}`}
+                    alt={currentArticle.title}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              </div>
+              )}
+              
+              <div className="p-8 md:p-12">
+                <div className="mb-8">
+                  <h1 className="text-3xl md:text-4xl font-light text-white mb-4">
+                    {currentArticle.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Clock size={14} />
+                      {new Date(currentArticle.created_at).toLocaleDateString('pt-PT')}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Eye size={14} />
+                      {currentArticle.views || 0} visualizações
+                    </span>
+                    {currentArticle.tags?.map(tag => (
+                      <Badge key={tag} className="bg-gold-500/20 text-gold-400 border-0">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
 
-              {/* Content */}
-              <div className="prose prose-invert prose-gold max-w-none 
-                prose-headings:text-white prose-headings:font-light
-                prose-p:text-gray-300 prose-p:leading-relaxed
-                prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
-                prose-strong:text-white
-                prose-code:text-gold-400 prose-code:bg-zinc-800 prose-code:px-1 prose-code:rounded
-                prose-pre:bg-zinc-800/50 prose-pre:border prose-pre:border-zinc-700
-                prose-blockquote:border-gold-500 prose-blockquote:text-gray-400
-                prose-li:text-gray-300
-              ">
+              {/* Content - preserving inline styles from WYSIWYG editor */}
+              <div className="article-content prose prose-invert max-w-none">
+                <style>{`
+                  .article-content h1, .article-content h2, .article-content h3 { 
+                    font-weight: 300; 
+                  }
+                  .article-content p { 
+                    color: #d1d5db; 
+                    line-height: 1.75; 
+                  }
+                  .article-content a { 
+                    color: #d4a853; 
+                  }
+                  .article-content code { 
+                    color: #d4a853; 
+                    background: #27272a; 
+                    padding: 0 0.25rem;
+                    border-radius: 0.25rem;
+                  }
+                  .article-content blockquote { 
+                    border-left-color: #d4a853; 
+                    color: #9ca3af; 
+                  }
+                  .article-content li { 
+                    color: #d1d5db; 
+                  }
+                  .article-content img {
+                    max-width: 100%;
+                    border-radius: 0.5rem;
+                  }
+                `}</style>
                 {currentArticle.content?.startsWith('<') ? (
                   <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
                 ) : (
@@ -284,6 +328,7 @@ const KnowledgeBasePage = () => {
                     </Button>
                   </div>
                 )}
+              </div>
               </div>
             </article>
 
