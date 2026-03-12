@@ -566,17 +566,18 @@ const AdminKnowledgeBase = () => {
                           <Badge className="bg-red-500/20 text-red-400 border-0">Inactiva</Badge>
                         )}
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => editCategory(cat)}
+                          className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
                         >
                           <Edit size={14} />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => deleteCategory(cat.id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="border-red-600/50 text-red-400 hover:bg-red-900/30"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -609,17 +610,18 @@ const AdminKnowledgeBase = () => {
                             <Badge className="bg-red-500/20 text-red-400 border-0 text-xs">Inactiva</Badge>
                           )}
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => editCategory(subcat)}
+                            className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30 h-7 w-7 p-0"
                           >
                             <Edit size={12} />
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => deleteCategory(subcat.id)}
-                            className="text-red-400 hover:text-red-300"
+                            className="border-red-600/50 text-red-400 hover:bg-red-900/30 h-7 w-7 p-0"
                           >
                             <Trash2 size={12} />
                           </Button>
@@ -654,10 +656,10 @@ const AdminKnowledgeBase = () => {
                       tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
                     });
                   }}
-                  className="border-zinc-700"
+                  className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
                 >
                   <Plus size={14} className="mr-1" />
-                  Novo
+                  Novo Artigo
                 </Button>
               )}
             </CardHeader>
@@ -918,17 +920,18 @@ const AdminKnowledgeBase = () => {
                            article.status === 'draft' ? 'Rascunho' : 'Arquivado'}
                         </Badge>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => loadArticle(article.id)}
+                          className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
                         >
                           <Edit size={14} />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => deleteArticle(article.id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="border-red-600/50 text-red-400 hover:bg-red-900/30"
                         >
                           <Trash2 size={14} />
                         </Button>

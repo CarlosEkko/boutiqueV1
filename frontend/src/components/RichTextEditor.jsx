@@ -33,12 +33,12 @@ const editorStyles = `
   
   .kb-editor .ql-toolbar button:hover .ql-stroke,
   .kb-editor .ql-toolbar button.ql-active .ql-stroke {
-    stroke: rgb(250 204 21);
+    stroke: rgb(212 175 55);
   }
   
   .kb-editor .ql-toolbar button:hover .ql-fill,
   .kb-editor .ql-toolbar button.ql-active .ql-fill {
-    fill: rgb(250 204 21);
+    fill: rgb(212 175 55);
   }
   
   .kb-editor .ql-container {
@@ -50,9 +50,18 @@ const editorStyles = `
     font-size: 15px;
   }
   
+  .kb-editor .ql-container:focus-within {
+    border-color: rgb(212 175 55);
+    outline: none;
+  }
+  
   .kb-editor .ql-editor {
     color: rgb(255 255 255);
     min-height: 300px;
+  }
+  
+  .kb-editor .ql-editor:focus {
+    outline: none;
   }
   
   .kb-editor .ql-editor.ql-blank::before {
@@ -84,11 +93,11 @@ const editorStyles = `
   }
   
   .kb-editor .ql-editor a {
-    color: rgb(250 204 21);
+    color: rgb(212 175 55);
   }
   
   .kb-editor .ql-editor blockquote {
-    border-left: 4px solid rgb(250 204 21);
+    border-left: 4px solid rgb(212 175 55);
     padding-left: 1em;
     margin-left: 0;
     color: rgb(209 213 219);
@@ -138,7 +147,13 @@ const editorStyles = `
   
   .kb-editor .ql-snow .ql-tooltip a.ql-action::after,
   .kb-editor .ql-snow .ql-tooltip a.ql-remove::before {
-    color: rgb(250 204 21);
+    color: rgb(212 175 55);
+  }
+  
+  /* Remove any green/emerald focus states */
+  .kb-editor *:focus {
+    outline: none !important;
+    box-shadow: none !important;
   }
 `;
 
