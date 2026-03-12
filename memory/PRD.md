@@ -22,18 +22,50 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Global currency selector** in dashboard header
 - **Automatic price conversion** for all crypto prices and limits
 - **Knowledge Base & Support System** with WYSIWYG editor
+- **Accordion Menu by Department** with role-based permissions
+
+## New: Department-Based Permission System (Dec 2025)
+
+### Staff Roles (10 roles)
+1. **Admin** - Acesso total ao sistema
+2. **Global Manager** - Gestão global de todas regiões
+3. **Manager** - Gestão regional
+4. **Sales Manager (Manager de Vendas)** - Líder da equipa de vendas
+5. **Sales (Vendas)** - Representante de vendas
+6. **Finance General (Financeiro Geral)** - Supervisão financeira global
+7. **Finance Local (Financeiro Local)** - Financeiro regional
+8. **Finance (Financeiro)** - Operações financeiras
+9. **Support Manager (Suporte Manager)** - Líder da equipa de suporte
+10. **Support Agent (Agente de Suporte)** - Atendimento ao cliente
+
+### Departments (6 areas)
+1. **Portfolio** - Dashboard do cliente (acesso de todos)
+2. **Admin** - Gestão de equipa, utilizadores, KYC, oportunidades
+3. **Gestão** - Permissões, configurações de trading
+4. **Financeiro** - Ordens, depósitos fiat, levantamentos
+5. **CRM** - Clientes, pipeline de vendas
+6. **Suporte** - Tickets, base de conhecimento
+
+### Role to Department Mapping
+- Admin/Global Manager: Todos os departamentos
+- Manager: Portfolio, Admin, CRM, Suporte
+- Sales Manager/Sales: Portfolio, CRM
+- Finance General/Local/Finance: Portfolio, Financeiro
+- Support Manager/Agent: Portfolio, Suporte
 
 ## Architecture
 ```
 /app
 ├── backend/
 │   ├── models/
-│   │   ├── user.py (RBAC models)
+│   │   ├── user.py (RBAC models - updated with new roles)
+│   │   ├── permissions.py (NEW - Department permissions)
 │   │   ├── trading.py (Trading models)
 │   │   └── knowledge_base.py (KB & Tickets)
 │   ├── routes/
 │   │   ├── auth.py (JWT authentication)
 │   │   ├── admin.py (RBAC endpoints)
+│   │   ├── permissions.py (NEW - Permissions endpoints)
 │   │   ├── trading.py (Exchange endpoints)
 │   │   ├── knowledge_base.py (KB & Support routes)
 │   │   ├── uploads.py (File uploads)
@@ -42,12 +74,21 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── RichTextEditor.jsx (WYSIWYG - NEW)
+│   │   │   ├── RichTextEditor.jsx (WYSIWYG)
 │   │   │   └── ui/ (Shadcn components)
 │   │   ├── pages/
-│   │   │   ├── PublicSupportPage.jsx (NEW - Public support)
+│   │   │   ├── PublicSupportPage.jsx (Public support)
 │   │   │   ├── KnowledgeBasePage.jsx (Help Center)
 │   │   │   └── dashboard/
+│   │   │       ├── DashboardLayout.jsx (NEW - Accordion menu)
+│   │   │       └── admin/
+│   │   │           ├── AdminPermissions.jsx (NEW)
+│   │   │           ├── AdminOrders.jsx (NEW)
+│   │   │           ├── AdminFiatDeposits.jsx (NEW)
+│   │   │           ├── AdminFiatWithdrawals.jsx (NEW)
+│   │   │           ├── AdminCryptoWithdrawals.jsx (NEW)
+│   │   │           ├── AdminClients.jsx (NEW)
+│   │   │           └── AdminPipeline.jsx (NEW)
 │   │   │       ├── DashboardLayout.jsx (Updated with Suporte submenu)
 │   │   │       └── admin/
 │   │   │           ├── AdminKnowledgeBase.jsx (Updated with WYSIWYG)
