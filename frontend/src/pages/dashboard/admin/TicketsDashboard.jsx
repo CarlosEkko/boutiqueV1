@@ -84,16 +84,24 @@ const TicketsDashboard = () => {
 
   const fetchTickets = async () => {
     try {
-      let url = `${API_URL}/api/tickets/internal/all?`;
+      // Use the KB tickets endpoint which includes public tickets
+      let url = `${API_URL}/api/kb/admin/tickets?`;
       if (statusFilter && statusFilter !== 'all') url += `status=${statusFilter}&`;
       if (priorityFilter && priorityFilter !== 'all') url += `priority=${priorityFilter}&`;
-      if (assignedToMe) url += `assigned_to_me=true&`;
+      if (assignedToMe) url += `assigned_to=${user?.id}&`;
       
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTickets(response.data);
+      // Handle response format from KB tickets endpoint
+      const data = response.data;
+      setTickets(data.tickets || []);
+      // Stats are included in the same response
+      if (data.stats) {
+        setStats(data.stats);
+      }
     } catch (err) {
+      console.error('Error fetching tickets:', err);
       toast.error('Falha ao carregar tickets');
     } finally {
       setLoading(false);
@@ -101,19 +109,12 @@ const TicketsDashboard = () => {
   };
 
   const fetchStats = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/tickets/internal/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setStats(response.data);
-    } catch (err) {
-      console.error('Failed to fetch stats');
-    }
+    // Stats are now fetched together with tickets, no need for separate call
   };
 
   const openTicketDetails = async (ticketId) => {
     try {
-      const response = await axios.get(`${API_URL}/api/tickets/${ticketId}`, {
+      const response = await axios.get(`${API_URL}/api/kb/admin/tickets/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTicketDetails(response.data);
@@ -125,9 +126,10 @@ const TicketsDashboard = () => {
 
   const assignToMe = async (ticketId) => {
     try {
-      await axios.post(`${API_URL}/api/tickets/internal/${ticketId}/assign`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/kb/admin/tickets/${ticketId}`, 
+        { assigned_to: user.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success('Ticket atribuído a si');
       fetchTickets();
       if (selectedTicket === ticketId) {
@@ -140,9 +142,10 @@ const TicketsDashboard = () => {
 
   const updateStatus = async (ticketId, newStatus) => {
     try {
-      await axios.post(`${API_URL}/api/tickets/internal/${ticketId}/status/${newStatus}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/kb/admin/tickets/${ticketId}`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success('Estado atualizado');
       fetchTickets();
       fetchStats();
@@ -156,9 +159,10 @@ const TicketsDashboard = () => {
 
   const updatePriority = async (ticketId, newPriority) => {
     try {
-      await axios.post(`${API_URL}/api/tickets/internal/${ticketId}/priority/${newPriority}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${API_URL}/api/kb/admin/tickets/${ticketId}`,
+        { priority: newPriority },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       toast.success('Prioridade atualizada');
       fetchTickets();
       if (selectedTicket === ticketId) {
@@ -175,12 +179,9 @@ const TicketsDashboard = () => {
     setSending(true);
     try {
       await axios.post(
-        `${API_URL}/api/tickets/${selectedTicket}/reply`,
-        null,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { message: replyMessage }
-        }
+        `${API_URL}/api/kb/admin/tickets/${selectedTicket}/reply`,
+        { message: replyMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Resposta enviada');
       setReplyMessage('');
@@ -382,12 +383,15 @@ const TicketsDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-white font-medium truncate">{ticket.subject}</p>
-                        <span className="text-lg">{regionFlags[ticket.region]}</span>
+                        {ticket.is_public_ticket && (
+                          <Badge className="bg-blue-500/20 text-blue-400 text-xs">Público</Badge>
+                        )}
+                        {ticket.region && <span className="text-lg">{regionFlags[ticket.region]}</span>}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-400">
                         <span className="flex items-center gap-1">
                           <User size={12} />
-                          {ticket.user_name}
+                          {ticket.user_name || ticket.user_email || 'Anónimo'}
                         </span>
                         <span>•</span>
                         <span>{categoryLabels[ticket.category] || ticket.category}</span>
@@ -422,7 +426,7 @@ const TicketsDashboard = () => {
 
                     <div className="flex items-center gap-1 text-gray-400">
                       <MessageSquare size={14} />
-                      <span className="text-sm">{ticket.message_count}</span>
+                      <span className="text-sm">{ticket.message_count || 0}</span>
                     </div>
 
                     <ChevronRight className="text-gray-500" size={20} />

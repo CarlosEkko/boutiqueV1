@@ -672,7 +672,15 @@ async def admin_list_tickets(
     tickets = await db.support_tickets.find(
         query,
         {"_id": 0}
-    ).sort([("priority", -1), ("updated_at", -1)]).to_list(200)
+    ).sort([("created_at", -1)]).to_list(200)
+    
+    # Add computed fields for each ticket
+    for ticket in tickets:
+        # Message count
+        ticket["message_count"] = len(ticket.get("messages", []))
+        # Ensure is_public_ticket field exists
+        if "is_public_ticket" not in ticket:
+            ticket["is_public_ticket"] = ticket.get("user_id") is None
     
     # Count by status
     stats = {
@@ -683,7 +691,21 @@ async def admin_list_tickets(
         "closed": await db.support_tickets.count_documents({"status": "closed"})
     }
     
-    return {"tickets": tickets, "stats": stats}
+    # Count by priority
+    priority_stats = {
+        "urgent": await db.support_tickets.count_documents({"priority": "urgent"}),
+        "high": await db.support_tickets.count_documents({"priority": "high"}),
+        "medium": await db.support_tickets.count_documents({"priority": "medium"}),
+        "low": await db.support_tickets.count_documents({"priority": "low"})
+    }
+    
+    return {
+        "tickets": tickets, 
+        "stats": {
+            "by_status": stats,
+            "by_priority": priority_stats
+        }
+    }
 
 
 @router.get("/admin/tickets/{ticket_id}")
