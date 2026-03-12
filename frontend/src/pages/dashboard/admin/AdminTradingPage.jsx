@@ -526,8 +526,11 @@ const AdminTradingPage = () => {
     <div className="space-y-6" data-testid="admin-trading-page">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-light text-white">Gestão de Trading</h1>
-        <p className="text-gray-400 mt-1">Configure taxas, limites e aprove transações</p>
+        <h1 className="text-3xl font-light text-white flex items-center gap-3">
+          <Settings className="text-gold-400" />
+          Configurações
+        </h1>
+        <p className="text-gray-400 mt-1">Configure taxas e limites de trading</p>
       </div>
 
       {/* Message */}
@@ -547,11 +550,6 @@ const AdminTradingPage = () => {
         <TabButton id="crypto-fees" icon={Coins} label="Taxas Crypto" />
         <TabButton id="fees" icon={DollarSign} label="Taxas Fiat" />
         <TabButton id="limits" icon={Users} label="Limites" />
-        <TabButton id="orders" icon={TrendingUp} label="Ordens" />
-        <TabButton id="transfers" icon={Building2} label="Depósitos Fiat" />
-        <TabButton id="crypto-withdrawals" icon={Coins} label="Levantamentos Crypto" />
-        <TabButton id="bank-accounts" icon={Banknote} label="Contas Bancárias" />
-        <TabButton id="withdrawals" icon={ArrowDownToLine} label="Levantamentos Fiat" />
       </div>
 
       {/* Crypto Fees Tab */}

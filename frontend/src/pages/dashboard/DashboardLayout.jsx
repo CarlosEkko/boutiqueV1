@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -74,6 +74,53 @@ const DashboardLayout = () => {
   const [menuStructure, setMenuStructure] = useState([]);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState({});
+
+  // Fetch notification counts for finance items
+  const fetchNotifications = useCallback(async () => {
+    if (!token || !user?.is_admin) return;
+    
+    try {
+      const [depositsRes, withdrawalsRes, ordersRes, cryptoRes, ticketsRes] = await Promise.allSettled([
+        axios.get(`${API_URL}/api/trading/admin/bank-transfers`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/trading/admin/fiat-withdrawals`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/trading/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/crypto-wallets/admin/withdrawals`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/kb/admin/tickets`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      const counts = {};
+      
+      if (depositsRes.status === 'fulfilled') {
+        const pending = depositsRes.value.data?.filter(d => d.status === 'pending' || d.status === 'awaiting_approval')?.length || 0;
+        if (pending > 0) counts['/dashboard/admin/fiat-deposits'] = pending;
+      }
+      
+      if (withdrawalsRes.status === 'fulfilled') {
+        const pending = withdrawalsRes.value.data?.filter(w => w.status === 'pending')?.length || 0;
+        if (pending > 0) counts['/dashboard/admin/fiat-withdrawals'] = pending;
+      }
+      
+      if (ordersRes.status === 'fulfilled') {
+        const pending = ordersRes.value.data?.filter(o => o.status === 'pending')?.length || 0;
+        if (pending > 0) counts['/dashboard/admin/orders'] = pending;
+      }
+      
+      if (cryptoRes.status === 'fulfilled') {
+        const pending = cryptoRes.value.data?.withdrawals?.filter(w => w.status === 'pending')?.length || 0;
+        if (pending > 0) counts['/dashboard/admin/crypto-withdrawals'] = pending;
+      }
+      
+      if (ticketsRes.status === 'fulfilled') {
+        const pending = ticketsRes.value.data?.filter(t => t.status === 'open' || t.status === 'pending')?.length || 0;
+        if (pending > 0) counts['/dashboard/admin/tickets'] = pending;
+      }
+
+      setNotifications(counts);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }, [token, user?.is_admin]);
 
   // Fetch menu structure from API
   useEffect(() => {
@@ -100,7 +147,6 @@ const DashboardLayout = () => {
         setExpandedMenus(newExpanded);
       } catch (err) {
         console.error('Failed to fetch menu structure:', err);
-        // Fallback to default portfolio menu for clients
         setMenuStructure([{
           department: 'portfolio',
           label: 'Portfolio',
@@ -117,6 +163,13 @@ const DashboardLayout = () => {
 
     fetchMenus();
   }, [token, location.pathname]);
+
+  // Fetch notifications periodically
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   const toggleMenu = (department) => {
     setExpandedMenus(prev => ({
@@ -145,43 +198,36 @@ const DashboardLayout = () => {
     return menu.items?.some(item => isPathActive(item.path, item.path === '/dashboard'));
   };
 
-  const NavItem = ({ to, icon: iconName, label, end }) => {
-    const Icon = getIcon(iconName);
-    return (
-      <NavLink
-        to={to}
-        end={end}
-        onClick={() => setMobileMenuOpen(false)}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
-            isActive
-              ? 'bg-gold-500/20 text-gold-400 border-l-2 border-gold-400'
-              : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
-          }`
-        }
-      >
-        <Icon size={18} />
-        {(sidebarOpen || mobileMenuOpen) && <span className="font-medium text-sm">{label}</span>}
-      </NavLink>
-    );
+  // Get total notifications for a department
+  const getDepartmentNotificationCount = (menu) => {
+    return menu.items?.reduce((total, item) => {
+      return total + (notifications[item.path] || 0);
+    }, 0) || 0;
   };
 
-  const SubNavItem = ({ to, icon: iconName, label }) => {
+  const SubNavItem = ({ to, icon: iconName, label, notificationCount }) => {
     const Icon = getIcon(iconName);
     return (
       <NavLink
         to={to}
         onClick={() => setMobileMenuOpen(false)}
         className={({ isActive }) =>
-          `flex items-center gap-3 pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
+          `flex items-center justify-between pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
             isActive
               ? 'bg-gold-500/10 text-gold-400'
               : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
           }`
         }
       >
-        <Icon size={14} />
-        {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
+        <div className="flex items-center gap-3">
+          <Icon size={14} />
+          {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
+        </div>
+        {notificationCount > 0 && (
+          <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+            {notificationCount > 99 ? '99+' : notificationCount}
+          </span>
+        )}
       </NavLink>
     );
   };
@@ -191,30 +237,9 @@ const DashboardLayout = () => {
     const DeptIcon = config.icon;
     const isExpanded = expandedMenus[menu.department];
     const isActive = isMenuActive(menu);
+    const deptNotificationCount = getDepartmentNotificationCount(menu);
 
-    // For Portfolio (client menu), show items directly without accordion
-    if (menu.department === 'portfolio') {
-      return (
-        <div className="space-y-1">
-          {sidebarOpen && (
-            <p className="px-4 text-xs text-gray-500 uppercase mb-2 tracking-wider">
-              {menu.label}
-            </p>
-          )}
-          {menu.items?.map((item) => (
-            <NavItem 
-              key={item.path} 
-              to={item.path} 
-              icon={item.icon} 
-              label={item.label}
-              end={item.path === '/dashboard'}
-            />
-          ))}
-        </div>
-      );
-    }
-
-    // For other departments, use accordion style
+    // All departments use accordion style now (including Portfolio)
     return (
       <div className="space-y-1">
         {sidebarOpen || isMobile ? (
@@ -230,6 +255,11 @@ const DashboardLayout = () => {
               <div className="flex items-center gap-3">
                 <DeptIcon size={18} />
                 <span className="font-medium text-sm">{menu.label}</span>
+                {deptNotificationCount > 0 && !isExpanded && (
+                  <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    {deptNotificationCount > 99 ? '99+' : deptNotificationCount}
+                  </span>
+                )}
               </div>
               {isExpanded ? (
                 <ChevronDown size={16} />
@@ -246,23 +276,29 @@ const DashboardLayout = () => {
                     to={item.path} 
                     icon={item.icon} 
                     label={item.label}
+                    notificationCount={notifications[item.path] || 0}
                   />
                 ))}
               </div>
             )}
           </>
         ) : (
-          // Collapsed mode - show just the icon
+          // Collapsed mode - show just the icon with notification badge
           <div className="relative group">
             <button
               onClick={() => toggleMenu(menu.department)}
-              className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 relative ${
                 isActive
                   ? `${config.bgColor} ${config.color}`
                   : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
               }`}
             >
               <DeptIcon size={20} />
+              {deptNotificationCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {deptNotificationCount > 9 ? '9+' : deptNotificationCount}
+                </span>
+              )}
             </button>
             {/* Tooltip */}
             <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 hidden group-hover:block z-50">
@@ -377,9 +413,12 @@ const DashboardLayout = () => {
           </NavLink>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-white p-2"
+            className="text-white p-2 relative"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {Object.values(notifications).reduce((a, b) => a + b, 0) > 0 && !mobileMenuOpen && (
+              <span className="absolute top-1 right-1 bg-red-500 w-2 h-2 rounded-full" />
+            )}
           </button>
         </div>
       </div>

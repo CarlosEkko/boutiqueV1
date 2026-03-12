@@ -125,7 +125,7 @@ DEPARTMENT_MENUS = {
         "icon": "Settings2",
         "items": [
             {"path": "/dashboard/admin/permissions", "label": "Permissões", "icon": "Lock"},
-            {"path": "/dashboard/admin/trading", "label": "Configurações Trading", "icon": "Sliders"},
+            {"path": "/dashboard/admin/trading", "label": "Configurações", "icon": "Sliders"},
         ]
     },
     Department.FINANCE: {

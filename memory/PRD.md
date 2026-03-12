@@ -38,20 +38,24 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 9. **Support Manager (Suporte Manager)** - Líder da equipa de suporte
 10. **Support Agent (Agente de Suporte)** - Atendimento ao cliente
 
-### Departments (6 areas)
-1. **Portfolio** - Dashboard do cliente (acesso de todos)
+### Departments (6 areas) - ALL in Accordion Style
+1. **Portfolio** - Dashboard do cliente (accordion expandido por padrão)
 2. **Admin** - Gestão de equipa, utilizadores, KYC, oportunidades
-3. **Gestão** - Permissões, configurações de trading
-4. **Financeiro** - Ordens, depósitos fiat, levantamentos
-5. **CRM** - Clientes, pipeline de vendas
-6. **Suporte** - Tickets, base de conhecimento
+3. **Gestão** - Permissões, Configurações (taxas/limites)
+4. **Financeiro** - Ordens, Depósitos Fiat, Levantamentos Fiat/Crypto (com notificações)
+5. **CRM** - Clientes, Pipeline de vendas
+6. **Suporte** - Tickets, Base de conhecimento
 
-### Role to Department Mapping
-- Admin/Global Manager: Todos os departamentos
-- Manager: Portfolio, Admin, CRM, Suporte
-- Sales Manager/Sales: Portfolio, CRM
-- Finance General/Local/Finance: Portfolio, Financeiro
-- Support Manager/Agent: Portfolio, Suporte
+### Notification Badges (Dec 2025)
+- Menu items show pending count badges (red circles)
+- Department headers show aggregated notification counts
+- Auto-refresh every 30 seconds
+- Items with pending approval: Deposits, Withdrawals, Orders, Tickets
+
+### UI Updates (Dec 2025)
+- Configurações page: Only shows Taxas Crypto, Taxas Fiat, Limites (removed financial tabs)
+- Financial pages: Expandable card design with details (Valor Bruto, Taxa, Valor Líquido, Data)
+- Bank details section in expanded cards
 
 ## Architecture
 ```
