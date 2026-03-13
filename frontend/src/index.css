@@ -363,3 +363,67 @@ button, a, input, textarea {
         border-bottom-color: inherit;
     }
 }
+
+
+/* Knowledge Base Article Content - Force dark theme */
+.kb-html-content,
+.kb-html-content * {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+.kb-html-content p,
+.kb-html-content span,
+.kb-html-content div,
+.kb-html-content li,
+.kb-html-content td,
+.kb-html-content th {
+    color: #d1d5db !important; /* gray-300 */
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+.kb-html-content h1,
+.kb-html-content h2,
+.kb-html-content h3,
+.kb-html-content h4,
+.kb-html-content h5,
+.kb-html-content h6,
+.kb-html-content strong,
+.kb-html-content b {
+    color: #ffffff !important;
+    background-color: transparent !important;
+}
+
+.kb-html-content a {
+    color: #D4AF37 !important; /* gold-400 */
+}
+
+.kb-html-content a:hover {
+    text-decoration: underline;
+}
+
+.kb-html-content ul,
+.kb-html-content ol {
+    color: #d1d5db !important;
+    padding-left: 1.5rem;
+}
+
+.kb-html-content table {
+    border-color: #3f3f46 !important; /* zinc-700 */
+}
+
+.kb-html-content pre,
+.kb-html-content code {
+    background-color: #18181b !important; /* zinc-900 */
+    color: #d1d5db !important;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.kb-html-content blockquote {
+    border-left: 3px solid #D4AF37;
+    padding-left: 1rem;
+    color: #9ca3af !important; /* gray-400 */
+    font-style: italic;
+}

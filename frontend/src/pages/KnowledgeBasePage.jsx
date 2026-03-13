@@ -283,9 +283,13 @@ const KnowledgeBasePage = () => {
                   prose-strong:text-white
                   prose-li:text-gray-300
                   prose-img:rounded-lg
+                  kb-article-content
                 ">
                   {currentArticle.content?.startsWith('<') ? (
-                    <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
+                    <div 
+                      className="kb-html-content"
+                      dangerouslySetInnerHTML={{ __html: currentArticle.content }} 
+                    />
                   ) : (
                     <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
                   )}
