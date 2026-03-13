@@ -81,14 +81,22 @@ const KnowledgeBasePage = () => {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [subcategories, setSubcategories] = useState([]);
   const [categoryArticles, setCategoryArticles] = useState({});
+  const [recentArticles, setRecentArticles] = useState([]);
+  const [popularArticles, setPopularArticles] = useState([]);
 
   // Fetch initial data for main page
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
+        const [catResponse, recentResponse, popularResponse] = await Promise.all([
+          axios.get(`${API_URL}/api/kb/categories`),
+          axios.get(`${API_URL}/api/kb/recent?limit=5`),
+          axios.get(`${API_URL}/api/kb/popular?limit=5`)
+        ]);
         setCategories(catResponse.data || []);
+        setRecentArticles(recentResponse.data || []);
+        setPopularArticles(popularResponse.data || []);
       } catch (err) {
         console.error('Error fetching data', err);
       } finally {
@@ -645,6 +653,73 @@ const KnowledgeBasePage = () => {
               );
             })}
           </div>
+
+          {/* Recent and Popular Articles */}
+          {(recentArticles.length > 0 || popularArticles.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
+              {/* Artigos Recentes */}
+              {recentArticles.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <Clock size={20} className="text-emerald-500" />
+                    <h2 className="text-xl font-light text-white">Artigos Recentes</h2>
+                  </div>
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 space-y-1">
+                    {recentArticles.map(article => (
+                      <Link
+                        key={article.id}
+                        to={`/help/article/${article.slug}`}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <FileText size={16} className="text-gray-500 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white group-hover:text-emerald-400 transition-colors truncate">
+                            {article.title}
+                          </p>
+                          {article.created_at && (
+                            <p className="text-xs text-gray-500">
+                              {new Date(article.created_at).toLocaleDateString('pt-PT')}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Artigos Populares */}
+              {popularArticles.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp size={20} className="text-gold-400" />
+                    <h2 className="text-xl font-light text-white">Artigos Populares</h2>
+                  </div>
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 space-y-1">
+                    {popularArticles.map(article => (
+                      <Link
+                        key={article.id}
+                        to={`/help/article/${article.slug}`}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-colors group"
+                      >
+                        <FileText size={16} className="text-gray-500 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white group-hover:text-gold-400 transition-colors truncate">
+                            {article.title}
+                          </p>
+                          {article.views !== undefined && (
+                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                              <Eye size={12} /> {article.views} visualizações
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Contact Support */}
           <div className="mt-12 text-center">
