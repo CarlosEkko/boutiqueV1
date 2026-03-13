@@ -46,6 +46,8 @@ import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
 import PublicSupportPage from "./pages/PublicSupportPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
+import CRMDashboard from "./pages/dashboard/crm/CRMDashboard";
+import CRMSuppliers from "./pages/dashboard/crm/CRMSuppliers";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -132,6 +134,11 @@ function AppRoutes() {
         <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
         <Route path="admin/clients" element={<AdminClients />} />
         <Route path="admin/pipeline" element={<AdminPipeline />} />
+        
+        {/* CRM Routes */}
+        <Route path="crm" element={<CRMDashboard />} />
+        <Route path="crm/dashboard" element={<CRMDashboard />} />
+        <Route path="crm/suppliers" element={<CRMSuppliers />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

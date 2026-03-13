@@ -51,6 +51,7 @@ from routes.uploads import router as uploads_router, set_db as set_uploads_db
 from routes.crypto_wallets import router as crypto_wallets_router, set_db as set_crypto_wallets_db
 from routes.knowledge_base import router as kb_router, set_db as set_kb_db
 from routes.permissions import router as permissions_router, set_db as set_permissions_db
+from routes.crm import router as crm_router
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -74,6 +75,7 @@ api_router.include_router(uploads_router)
 api_router.include_router(crypto_wallets_router)
 api_router.include_router(kb_router)
 api_router.include_router(permissions_router)
+api_router.include_router(crm_router)
 
 
 # Define Models
