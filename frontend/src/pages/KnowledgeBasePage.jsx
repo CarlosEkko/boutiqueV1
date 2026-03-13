@@ -97,6 +97,13 @@ const KnowledgeBasePage = () => {
     };
 
     if (!categorySlug && !articleSlug) {
+      // Reset state when navigating back to main page
+      setCurrentCategory(null);
+      setCurrentArticle(null);
+      setSubcategories([]);
+      setCategoryArticles({});
+      setRelatedArticles([]);
+      setFeedbackGiven(false);
       fetchData();
     }
   }, [categorySlug, articleSlug]);
