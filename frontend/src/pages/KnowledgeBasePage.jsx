@@ -576,7 +576,8 @@ const KnowledgeBasePage = () => {
               </div>
               <Button 
                 type="submit" 
-                className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-l-none rounded-r-lg"
+                className="h-12 px-6 text-white rounded-l-none rounded-r-lg"
+                style={{ backgroundColor: '#A57A50' }}
               >
                 Pesquisar
               </Button>
