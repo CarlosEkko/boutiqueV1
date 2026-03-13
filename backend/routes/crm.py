@@ -524,6 +524,9 @@ async def get_tasks(
             due_date = task["due_date"]
             if isinstance(due_date, str):
                 due_date = datetime.fromisoformat(due_date.replace("Z", "+00:00"))
+            # Handle both naive and aware datetimes
+            if due_date.tzinfo is None:
+                due_date = due_date.replace(tzinfo=timezone.utc)
             task["is_overdue"] = due_date < now
         else:
             task["is_overdue"] = False
