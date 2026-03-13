@@ -5,7 +5,8 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { 
   Search, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronDown,
   Book, 
   FileText, 
   HelpCircle, 
@@ -22,7 +23,8 @@ import {
   Folder,
   Headphones,
   MessageSquare,
-  Loader2
+  Loader2,
+  Shield
 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -40,8 +42,8 @@ const categoryIcons = {
   'policies': FileCheck,
   'terms': FileText,
   'trading': TrendingUp,
-  'seguranca': Scale,
-  'security': Scale,
+  'seguranca': Shield,
+  'security': Shield,
   'default': Folder
 };
 
@@ -60,6 +62,8 @@ const KnowledgeBasePage = () => {
   const [recentArticles, setRecentArticles] = useState([]);
   const [popularArticles, setPopularArticles] = useState([]);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [categoryArticles, setCategoryArticles] = useState({});
 
   useEffect(() => {
     fetchCategories();
@@ -109,11 +113,13 @@ const KnowledgeBasePage = () => {
   const fetchCategoryArticles = async (slug) => {
     setLoading(true);
     try {
-      const catResponse = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
-      setCurrentCategory(catResponse.data);
+      const response = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
+      // API returns { category: {...}, articles: [...] }
+      const categoryData = response.data.category || response.data;
+      const articlesData = response.data.articles || [];
       
-      const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${slug}`);
-      setArticles(artResponse.data.articles || []);
+      setCurrentCategory(categoryData);
+      setArticles(articlesData);
       setCurrentArticle(null);
     } catch (err) {
       console.error('Error fetching category', err);
@@ -181,6 +187,29 @@ const KnowledgeBasePage = () => {
       setFeedbackGiven(true);
     } catch (err) {
       console.error('Feedback error', err);
+    }
+  };
+
+  // Toggle category expansion and fetch articles
+  const toggleCategory = async (categoryId, categorySlug) => {
+    const isExpanded = expandedCategories[categoryId];
+    
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !isExpanded
+    }));
+
+    // Fetch articles if not already loaded
+    if (!isExpanded && !categoryArticles[categoryId]) {
+      try {
+        const response = await axios.get(`${API_URL}/api/kb/articles?category=${categorySlug}&limit=10`);
+        setCategoryArticles(prev => ({
+          ...prev,
+          [categoryId]: response.data.articles || []
+        }));
+      } catch (err) {
+        console.error('Error fetching category articles', err);
+      }
     }
   };
 
@@ -537,55 +566,137 @@ const KnowledgeBasePage = () => {
         </section>
       )}
 
-      {/* Categories */}
+      {/* Categories - Expandable Grid */}
       <section className="py-16 px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-light text-white mb-8">Explorar Categorias</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {categories.filter(cat => !cat.parent_id).map(category => {
               const Icon = getCategoryIcon(category.slug);
               const subcategories = categories.filter(c => c.parent_id === category.id);
+              const isExpanded = expandedCategories[category.id];
+              const catArticles = categoryArticles[category.id] || [];
               
               return (
-                <Link
+                <div 
                   key={category.id}
-                  to={`/help/${category.slug}`}
-                  className="p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
+                  className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl overflow-hidden transition-all duration-300"
                 >
-                  <div 
-                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                    style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
+                  {/* Category Header - Clickable */}
+                  <button
+                    onClick={() => toggleCategory(category.id, category.slug)}
+                    className="w-full p-6 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
                   >
-                    <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
-                  </div>
-                  <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors mb-2">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm text-gray-400 mb-3 line-clamp-2">
-                    {category.description}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <FileText size={12} />
-                    <span>{category.article_count || 0} artigos</span>
-                  </div>
-                  
-                  {/* Subcategories */}
-                  {subcategories.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-zinc-800">
-                      <p className="text-xs text-gray-500 mb-2">Subcategorias:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {subcategories.map(sub => (
-                          <Badge 
-                            key={sub.id} 
-                            className="bg-zinc-800 text-gray-400 border-0 text-xs"
-                          >
-                            {sub.name}
-                          </Badge>
-                        ))}
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
+                      >
+                        <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg font-medium text-white">
+                          {category.name}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {category.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-gray-500">
+                        {category.article_count || 0} artigos
+                      </span>
+                      {isExpanded ? (
+                        <ChevronDown size={20} className="text-gold-400" />
+                      ) : (
+                        <ChevronRight size={20} className="text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="border-t border-zinc-800/50 bg-zinc-950/50 animate-in slide-in-from-top-2 duration-200">
+                      {/* Subcategories */}
+                      {subcategories.length > 0 && (
+                        <div className="px-6 py-4 border-b border-zinc-800/30">
+                          <div className="flex flex-wrap gap-2">
+                            {subcategories.map(sub => (
+                              <Link
+                                key={sub.id}
+                                to={`/help/${sub.slug}`}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 hover:bg-gold-500/20 border border-zinc-700/50 hover:border-gold-500/30 rounded-full text-sm text-gray-300 hover:text-gold-400 transition-all"
+                              >
+                                <Folder size={14} />
+                                {sub.name}
+                                {sub.article_count > 0 && (
+                                  <span className="text-xs text-gray-500">({sub.article_count})</span>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Articles Preview */}
+                      <div className="p-4">
+                        {catArticles.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {catArticles.slice(0, 6).map(article => (
+                              <Link
+                                key={article.id}
+                                to={`/help/article/${article.slug}`}
+                                className="p-4 bg-zinc-900/50 border border-zinc-800/30 rounded-lg hover:border-gold-500/30 hover:bg-zinc-800/30 transition-all group"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <FileText size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-medium text-white group-hover:text-gold-400 transition-colors truncate">
+                                      {article.title}
+                                    </h4>
+                                    {article.summary && (
+                                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                        {article.summary}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gold-400 flex-shrink-0" />
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                            <span className="text-sm">Carregando artigos...</span>
+                          </div>
+                        )}
+
+                        {/* View All Button */}
+                        {catArticles.length > 6 && (
+                          <div className="mt-4 text-center">
+                            <Link
+                              to={`/help/${category.slug}`}
+                              className="inline-flex items-center gap-2 text-sm text-gold-400 hover:text-gold-300"
+                            >
+                              Ver todos os {category.article_count} artigos
+                              <ChevronRight size={14} />
+                            </Link>
+                          </div>
+                        )}
+
+                        {/* Empty State */}
+                        {catArticles.length === 0 && !loading && (
+                          <div className="text-center py-6 text-gray-500">
+                            <FileText size={24} className="mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">Nenhum artigo nesta categoria ainda.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </div>
