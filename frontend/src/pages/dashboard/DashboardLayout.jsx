@@ -133,18 +133,8 @@ const DashboardLayout = () => {
         });
         setMenuStructure(response.data.menus || []);
         
-        // Auto-expand menu that contains current path
-        const newExpanded = {};
-        response.data.menus?.forEach(menu => {
-          const hasActivePath = menu.items?.some(item => 
-            location.pathname === item.path || 
-            location.pathname.startsWith(item.path + '/')
-          );
-          if (hasActivePath) {
-            newExpanded[menu.department] = true;
-          }
-        });
-        setExpandedMenus(newExpanded);
+        // All menus start collapsed by default
+        setExpandedMenus({});
       } catch (err) {
         console.error('Failed to fetch menu structure:', err);
         setMenuStructure([{
