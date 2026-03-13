@@ -6,7 +6,6 @@ import Footer from '../components/Footer';
 import { 
   Search, 
   ChevronRight,
-  ChevronDown,
   Book, 
   FileText, 
   HelpCircle, 
@@ -21,9 +20,8 @@ import {
   Tag,
   TrendingUp,
   Folder,
-  Headphones,
-  MessageSquare,
-  Loader2,
+  MoreHorizontal,
+  Bell,
   Shield
 } from 'lucide-react';
 import { Input } from '../components/ui/input';
@@ -44,6 +42,12 @@ const categoryIcons = {
   'trading': TrendingUp,
   'seguranca': Shield,
   'security': Shield,
+  'account': HelpCircle,
+  'api': FileText,
+  'compliance': Scale,
+  'deposits': Folder,
+  'fees': FileCheck,
+  'payments': FileCheck,
   'default': Folder
 };
 
@@ -59,68 +63,86 @@ const KnowledgeBasePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [recentArticles, setRecentArticles] = useState([]);
-  const [popularArticles, setPopularArticles] = useState([]);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState({});
   const [categoryArticles, setCategoryArticles] = useState({});
+  const [subcategories, setSubcategories] = useState([]);
 
+  // Fetch initial data
   useEffect(() => {
-    fetchCategories();
-    fetchRecentArticles();
-    fetchPopularArticles();
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch all categories
+        const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
+        setCategories(catResponse.data || []);
 
-  useEffect(() => {
-    if (articleSlug) {
-      fetchArticle(articleSlug);
-    } else if (categorySlug) {
-      fetchCategoryArticles(categorySlug);
-    } else {
-      setCurrentCategory(null);
-      setCurrentArticle(null);
-      setLoading(false);
+        // Fetch articles for each main category
+        const mainCategories = (catResponse.data || []).filter(c => !c.parent_id);
+        const articlesMap = {};
+        
+        await Promise.all(mainCategories.map(async (cat) => {
+          try {
+            const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${cat.slug}&limit=5`);
+            articlesMap[cat.id] = artResponse.data.articles || [];
+          } catch (err) {
+            articlesMap[cat.id] = [];
+          }
+        }));
+        
+        setCategoryArticles(articlesMap);
+      } catch (err) {
+        console.error('Error fetching data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!categorySlug && !articleSlug) {
+      fetchData();
     }
   }, [categorySlug, articleSlug]);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/kb/categories`);
-      setCategories(response.data);
-    } catch (err) {
-      console.error('Error fetching categories', err);
+  // Handle category navigation
+  useEffect(() => {
+    if (categorySlug && !articleSlug) {
+      fetchCategoryData(categorySlug);
     }
-  };
+  }, [categorySlug, articleSlug]);
 
-  const fetchRecentArticles = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/kb/articles?limit=5&sort=recent`);
-      setRecentArticles(response.data.articles || []);
-    } catch (err) {
-      console.error('Error fetching recent articles', err);
+  // Handle article navigation
+  useEffect(() => {
+    if (articleSlug) {
+      fetchArticle(articleSlug);
     }
-  };
+  }, [articleSlug]);
 
-  const fetchPopularArticles = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/kb/articles?limit=5&sort=popular`);
-      setPopularArticles(response.data.articles || []);
-    } catch (err) {
-      console.error('Error fetching popular articles', err);
-    }
-  };
-
-  const fetchCategoryArticles = async (slug) => {
+  const fetchCategoryData = async (slug) => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
-      // API returns { category: {...}, articles: [...] }
       const categoryData = response.data.category || response.data;
       const articlesData = response.data.articles || [];
       
       setCurrentCategory(categoryData);
       setArticles(articlesData);
       setCurrentArticle(null);
+
+      // Fetch subcategories
+      const allCats = await axios.get(`${API_URL}/api/kb/categories`);
+      const subs = (allCats.data || []).filter(c => c.parent_id === categoryData.id);
+      setSubcategories(subs);
+
+      // Fetch articles for each subcategory
+      const subArticlesMap = {};
+      await Promise.all(subs.map(async (sub) => {
+        try {
+          const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${sub.slug}&limit=5`);
+          subArticlesMap[sub.id] = artResponse.data.articles || [];
+        } catch (err) {
+          subArticlesMap[sub.id] = [];
+        }
+      }));
+      setCategoryArticles(prev => ({ ...prev, ...subArticlesMap }));
     } catch (err) {
       console.error('Error fetching category', err);
       navigate('/help');
@@ -133,25 +155,15 @@ const KnowledgeBasePage = () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles/${slug}`);
-      // The API returns { article: {...}, category: {...}, related: [...] }
       const articleData = response.data.article || response.data;
       setCurrentArticle(articleData);
       
-      // Use category from response if available
       if (response.data.category) {
         setCurrentCategory(response.data.category);
-      } else if (articleData.category_id) {
-        const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
-        const cat = catResponse.data.find(c => c.id === articleData.category_id);
-        setCurrentCategory(cat);
       }
       
-      // Use related from response if available
       if (response.data.related) {
         setRelatedArticles(response.data.related);
-      } else if (articleData.category_id) {
-        const relatedResponse = await axios.get(`${API_URL}/api/kb/articles?category_id=${articleData.category_id}&limit=3`);
-        setRelatedArticles(relatedResponse.data.articles?.filter(a => a.slug !== slug) || []);
       }
     } catch (err) {
       console.error('Error fetching article', err);
@@ -162,11 +174,8 @@ const KnowledgeBasePage = () => {
   };
 
   const handleSearch = async (e) => {
-    e?.preventDefault();
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
     
     setSearching(true);
     try {
@@ -190,29 +199,6 @@ const KnowledgeBasePage = () => {
     }
   };
 
-  // Toggle category expansion and fetch articles
-  const toggleCategory = async (categoryId, categorySlug) => {
-    const isExpanded = expandedCategories[categoryId];
-    
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryId]: !isExpanded
-    }));
-
-    // Fetch articles if not already loaded
-    if (!isExpanded && !categoryArticles[categoryId]) {
-      try {
-        const response = await axios.get(`${API_URL}/api/kb/articles?category=${categorySlug}&limit=10`);
-        setCategoryArticles(prev => ({
-          ...prev,
-          [categoryId]: response.data.articles || []
-        }));
-      } catch (err) {
-        console.error('Error fetching category articles', err);
-      }
-    }
-  };
-
   const getCategoryIcon = (slug) => {
     const Icon = categoryIcons[slug?.toLowerCase()] || categoryIcons.default;
     return Icon;
@@ -221,12 +207,8 @@ const KnowledgeBasePage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
-        <Header />
-        <div className="pt-32 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
-        </div>
-        <Footer />
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-gold-400">Carregando...</div>
       </div>
     );
   }
@@ -234,154 +216,159 @@ const KnowledgeBasePage = () => {
   // Article View
   if (currentArticle) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-zinc-950">
         <Header />
         
-        <main className="pt-32 pb-20">
-          <div className="max-w-4xl mx-auto px-4">
-            {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm mb-8">
-              <Link to="/help" className="text-gray-400 hover:text-gold-400 transition-colors">
-                Centro de Ajuda
-              </Link>
-              <ChevronRight size={14} className="text-gray-600" />
-              {currentCategory && (
-                <>
-                  <Link 
-                    to={`/help/${currentCategory.slug}`}
-                    className="text-gray-400 hover:text-gold-400 transition-colors"
-                  >
-                    {currentCategory.name}
-                  </Link>
-                  <ChevronRight size={14} className="text-gray-600" />
-                </>
-              )}
-              <span className="text-gold-400">{currentArticle.title}</span>
-            </nav>
-
-            {/* Article */}
-            <article className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl overflow-hidden">
-              {/* Cover Image */}
-              {currentArticle.cover_image && (
-                <div className="w-full h-64 md:h-80 bg-zinc-800">
-                  <img 
-                    src={currentArticle.cover_image.startsWith('http') 
-                      ? currentArticle.cover_image 
-                      : `${API_URL}${currentArticle.cover_image}`}
-                    alt={currentArticle.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <div className="p-8 md:p-12">
-                <div className="mb-8">
-                  <h1 className="text-3xl md:text-4xl font-light text-white mb-4">
-                    {currentArticle.title}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Clock size={14} />
-                      {new Date(currentArticle.created_at).toLocaleDateString('pt-PT')}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye size={14} />
-                      {currentArticle.views || 0} visualizações
-                    </span>
-                    {currentArticle.tags?.map(tag => (
-                      <Badge key={tag} className="bg-gold-500/20 text-gold-400 border-0">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-              {/* Content - preserving inline styles from WYSIWYG editor */}
-              <div className="article-content prose prose-invert max-w-none">
-                <style>{`
-                  .article-content h1, .article-content h2, .article-content h3 { 
-                    font-weight: 300; 
-                  }
-                  .article-content p { 
-                    color: #d1d5db; 
-                    line-height: 1.75; 
-                  }
-                  .article-content a { 
-                    color: #d4a853; 
-                  }
-                  .article-content code { 
-                    color: #d4a853; 
-                    background: #27272a; 
-                    padding: 0 0.25rem;
-                    border-radius: 0.25rem;
-                  }
-                  .article-content blockquote { 
-                    border-left-color: #d4a853; 
-                    color: #9ca3af; 
-                  }
-                  .article-content li { 
-                    color: #d1d5db; 
-                  }
-                  .article-content img {
-                    max-width: 100%;
-                    border-radius: 0.5rem;
-                  }
-                `}</style>
-                {currentArticle.content?.startsWith('<') ? (
-                  <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
-                ) : (
-                  <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
-                )}
-              </div>
-
-              {/* Feedback */}
-              <div className="mt-12 pt-8 border-t border-zinc-800">
-                <p className="text-gray-400 mb-4">Este artigo foi útil?</p>
-                {feedbackGiven ? (
-                  <p className="text-gold-400">Obrigado pelo seu feedback!</p>
-                ) : (
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => handleFeedback(true)}
-                      variant="outline"
-                      className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
-                    >
-                      <ThumbsUp size={16} className="mr-2" /> Sim
-                    </Button>
-                    <Button
-                      onClick={() => handleFeedback(false)}
-                      variant="outline"
-                      className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
-                    >
-                      <ThumbsDown size={16} className="mr-2" /> Não
-                    </Button>
-                  </div>
-                )}
-              </div>
-              </div>
-            </article>
-
-            {/* Related Articles */}
-            {relatedArticles.length > 0 && (
-              <div className="mt-12">
-                <h3 className="text-xl font-light text-white mb-6">Artigos Relacionados</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {relatedArticles.map(article => (
-                    <Link
-                      key={article.id}
-                      to={`/help/article/${article.slug}`}
-                      className="p-4 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
-                    >
-                      <h4 className="text-white group-hover:text-gold-400 transition-colors">{article.title}</h4>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{article.summary}</p>
+        <main className="pt-24 pb-20">
+          <div className="max-w-7xl mx-auto px-4">
+            {/* Breadcrumb & Search */}
+            <div className="flex items-center justify-between mb-8">
+              <nav className="flex items-center gap-2 text-sm">
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
+                <span className="text-gray-600">/</span>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">HELP CENTER</Link>
+                {currentCategory && (
+                  <>
+                    <span className="text-gray-600">/</span>
+                    <Link to={`/help/${currentCategory.slug}`} className="text-gray-400 hover:text-gold-400">
+                      {currentCategory.name?.toUpperCase()}
                     </Link>
-                  ))}
+                  </>
+                )}
+              </nav>
+              <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search articles"
+                  className="w-64 bg-zinc-900 border-zinc-700 text-white"
+                />
+                <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
+                  <Search size={18} />
+                </Button>
+              </form>
+            </div>
+
+            <div className="flex gap-8">
+              {/* Main Content */}
+              <article className="flex-1 min-w-0">
+                {/* Cover Image */}
+                {currentArticle.cover_image && (
+                  <div className="w-full h-64 mb-8 rounded-lg overflow-hidden">
+                    <img 
+                      src={currentArticle.cover_image.startsWith('http') 
+                        ? currentArticle.cover_image 
+                        : `${API_URL}${currentArticle.cover_image}`}
+                      alt={currentArticle.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <h1 className="text-3xl md:text-4xl font-light text-white mb-8">
+                  {currentArticle.title}
+                </h1>
+
+                {/* Content */}
+                <div className="prose prose-invert max-w-none 
+                  prose-headings:font-light prose-headings:text-white
+                  prose-p:text-gray-300 prose-p:leading-relaxed
+                  prose-a:text-gold-400 prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-white
+                  prose-li:text-gray-300
+                  prose-img:rounded-lg
+                ">
+                  {currentArticle.content?.startsWith('<') ? (
+                    <div dangerouslySetInnerHTML={{ __html: currentArticle.content }} />
+                  ) : (
+                    <ReactMarkdown>{currentArticle.content}</ReactMarkdown>
+                  )}
                 </div>
-              </div>
-            )}
+              </article>
+
+              {/* Sidebar */}
+              <aside className="hidden lg:block w-80 flex-shrink-0">
+                {/* Follow Button */}
+                <div className="mb-6">
+                  <Button className="bg-gold-500 hover:bg-gold-400 text-black">
+                    <Bell size={16} className="mr-2" />
+                    Follow
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Subscribe to receive notifications from this article.
+                  </p>
+                </div>
+
+                {/* Category Articles */}
+                {currentCategory && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800">
+                      <Folder size={16} className="text-gray-400" />
+                      <span className="text-white font-medium">{currentCategory.name}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {relatedArticles.slice(0, 5).map(article => (
+                        <Link
+                          key={article.id}
+                          to={`/help/article/${article.slug}`}
+                          className={`flex items-start gap-2 text-sm py-1 hover:text-gold-400 transition-colors ${
+                            article.slug === currentArticle.slug ? 'text-gold-400' : 'text-gray-400'
+                          }`}
+                        >
+                          <FileText size={14} className="mt-0.5 flex-shrink-0" />
+                          <span>{article.title}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {currentArticle.tags?.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800">
+                      <Tag size={16} className="text-gray-400" />
+                      <span className="text-white font-medium">Tags</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {currentArticle.tags.map(tag => (
+                        <Badge 
+                          key={tag} 
+                          className="bg-zinc-800 text-gray-300 border border-zinc-700 hover:border-gold-500/50"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Related Articles */}
+                {relatedArticles.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800">
+                      <Folder size={16} className="text-gray-400" />
+                      <span className="text-white font-medium">Related Articles</span>
+                    </div>
+                    <div className="space-y-2">
+                      {relatedArticles.slice(0, 5).map(article => (
+                        <Link
+                          key={article.id}
+                          to={`/help/article/${article.slug}`}
+                          className="flex items-start gap-2 text-sm text-gray-400 hover:text-gold-400 py-1"
+                        >
+                          <FileText size={14} className="mt-0.5 flex-shrink-0" />
+                          <span>{article.title}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </aside>
+            </div>
 
             {/* Back Button */}
-            <div className="mt-8">
+            <div className="mt-8 pt-8 border-t border-zinc-800">
               <Button
                 onClick={() => navigate(currentCategory ? `/help/${currentCategory.slug}` : '/help')}
                 variant="outline"
@@ -398,77 +385,121 @@ const KnowledgeBasePage = () => {
     );
   }
 
-  // Category View
+  // Category View (with subcategories in grid)
   if (currentCategory) {
+    const Icon = getCategoryIcon(currentCategory.slug);
+    
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-zinc-950">
         <Header />
         
-        <main className="pt-32 pb-20">
-          <div className="max-w-6xl mx-auto px-4">
-            {/* Breadcrumb */}
-            <nav className="flex items-center gap-2 text-sm mb-8">
-              <Link to="/help" className="text-gray-400 hover:text-gold-400 transition-colors">
-                Centro de Ajuda
-              </Link>
-              <ChevronRight size={14} className="text-gray-600" />
-              <span className="text-gold-400">{currentCategory.name}</span>
-            </nav>
-
-            {/* Category Header */}
-            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl p-8 mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div 
-                  className="w-14 h-14 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${currentCategory.color || '#D4AF37'}20` }}
-                >
-                  {React.createElement(getCategoryIcon(currentCategory.slug), {
-                    size: 28,
-                    style: { color: currentCategory.color || '#D4AF37' }
-                  })}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-light text-white">{currentCategory.name}</h1>
-                  <p className="text-gray-400">{currentCategory.description}</p>
-                </div>
-              </div>
+        <main className="pt-24 pb-20">
+          <div className="max-w-7xl mx-auto px-4">
+            {/* Breadcrumb & Search */}
+            <div className="flex items-center justify-between mb-8">
+              <nav className="flex items-center gap-2 text-sm">
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
+                <span className="text-gray-600">/</span>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">HELP CENTER</Link>
+                <span className="text-gray-600">/</span>
+                <span className="text-gold-400">{currentCategory.name?.toUpperCase()}</span>
+              </nav>
+              <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search articles"
+                  className="w-64 bg-zinc-900 border-zinc-700 text-white"
+                />
+                <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
+                  <Search size={18} />
+                </Button>
+              </form>
             </div>
 
-            {/* Articles List */}
-            <div className="space-y-4">
-              {articles.length === 0 ? (
-                <div className="text-center py-12 bg-zinc-900/30 rounded-xl border border-zinc-800/50">
-                  <FileText size={48} className="mx-auto text-gray-600 mb-4" />
-                  <p className="text-gray-400">Nenhum artigo nesta categoria ainda.</p>
-                </div>
-              ) : (
-                articles.map(article => (
-                  <Link
-                    key={article.id}
-                    to={`/help/article/${article.slug}`}
-                    className="block p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors mb-2">
-                          {article.title}
-                        </h3>
-                        <p className="text-gray-400 text-sm line-clamp-2">{article.summary}</p>
-                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} />
-                            {new Date(article.created_at).toLocaleDateString('pt-PT')}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye size={12} />
-                            {article.views || 0}
-                          </span>
+            {/* Grid of Subcategories or Articles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {subcategories.length > 0 ? (
+                // Show subcategories with their articles
+                subcategories.map(sub => {
+                  const SubIcon = getCategoryIcon(sub.slug);
+                  const subArticles = categoryArticles[sub.id] || [];
+                  
+                  return (
+                    <div key={sub.id} className="bg-zinc-900/30 rounded-lg p-6">
+                      {/* Subcategory Header */}
+                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
+                        <div className="flex items-center gap-3">
+                          <SubIcon size={24} style={{ color: sub.color || '#D4AF37' }} />
+                          <div>
+                            <h3 className="text-white font-medium">{sub.name}</h3>
+                            <p className="text-xs text-gray-500">{sub.name}</p>
+                          </div>
                         </div>
+                        <MoreHorizontal size={20} className="text-gray-600" />
                       </div>
-                      <ChevronRight className="text-gray-600 group-hover:text-gold-400 transition-colors flex-shrink-0" />
+
+                      {/* Articles List */}
+                      <div className="space-y-3">
+                        {subArticles.slice(0, 5).map(article => (
+                          <Link
+                            key={article.id}
+                            to={`/help/article/${article.slug}`}
+                            className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
+                          >
+                            <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                            <span>{article.title}</span>
+                          </Link>
+                        ))}
+                        {subArticles.length === 0 && (
+                          <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
+                        )}
+                      </div>
+
+                      {/* More Link */}
+                      {subArticles.length > 5 && (
+                        <Link 
+                          to={`/help/${sub.slug}`}
+                          className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300 mt-4"
+                        >
+                          more <ChevronRight size={14} />
+                        </Link>
+                      )}
                     </div>
-                  </Link>
-                ))
+                  );
+                })
+              ) : (
+                // No subcategories - show articles directly in one card
+                <div className="bg-zinc-900/30 rounded-lg p-6 col-span-full max-w-md">
+                  {/* Category Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
+                    <div className="flex items-center gap-3">
+                      <Icon size={24} style={{ color: currentCategory.color || '#D4AF37' }} />
+                      <div>
+                        <h3 className="text-white font-medium">{currentCategory.name}</h3>
+                        <p className="text-xs text-gray-500">{currentCategory.description}</p>
+                      </div>
+                    </div>
+                    <MoreHorizontal size={20} className="text-gray-600" />
+                  </div>
+
+                  {/* Articles List */}
+                  <div className="space-y-3">
+                    {articles.map(article => (
+                      <Link
+                        key={article.id}
+                        to={`/help/article/${article.slug}`}
+                        className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
+                      >
+                        <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                        <span>{article.title}</span>
+                      </Link>
+                    ))}
+                    {articles.length === 0 && (
+                      <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -491,295 +522,124 @@ const KnowledgeBasePage = () => {
   }
 
   // Main Help Center View
+  const mainCategories = categories.filter(c => !c.parent_id);
+
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-zinc-950">
       <Header />
       
-      {/* Hero Section */}
-      <section className="relative min-h-[40vh] flex items-center justify-center overflow-hidden pt-20">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-zinc-900/50 to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gold-900/20 via-transparent to-transparent" />
-        
-        {/* Animated lines */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/20 to-transparent animate-pulse" />
-          <div className="absolute top-2/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-500/10 to-transparent animate-pulse" style={{ animationDelay: '1s' }} />
-        </div>
-        
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-12">
-          <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400/20 to-gold-600/20 border border-gold-500/30 flex items-center justify-center">
-            <Book size={36} className="text-gold-400" />
-          </div>
-          <h1 className="text-5xl md:text-6xl font-light text-white mb-6">
-            Centro de <span className="text-gold-400">Ajuda</span>
-          </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-            Como podemos ajudá-lo hoje?
-          </p>
-          
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+      <main className="pt-24 pb-20">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Breadcrumb & Search */}
+          <div className="flex items-center justify-between mb-8">
+            <nav className="flex items-center gap-2 text-sm">
+              <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
+              <span className="text-gray-600">/</span>
+              <span className="text-gold-400">HELP CENTER</span>
+            </nav>
+            <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
               <Input
-                type="text"
-                placeholder="Pesquisar artigos, FAQs, documentação..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-32 py-6 bg-zinc-900/80 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-500 rounded-xl text-lg"
+                placeholder="Search articles"
+                className="w-64 bg-zinc-900 border-zinc-700 text-white placeholder:text-gray-500"
               />
-              <Button 
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold-500 hover:bg-gold-400 text-black font-medium"
-                disabled={searching}
+              <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
+                <Search size={18} />
+              </Button>
+            </form>
+          </div>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mb-8 p-6 bg-zinc-900/30 rounded-lg">
+              <h2 className="text-white font-medium mb-4">Resultados da Pesquisa</h2>
+              <div className="space-y-3">
+                {searchResults.map(article => (
+                  <Link
+                    key={article.id}
+                    to={`/help/article/${article.slug}`}
+                    className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400"
+                  >
+                    <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                    <span>{article.title}</span>
+                  </Link>
+                ))}
+              </div>
+              <Button
+                onClick={() => setSearchResults([])}
+                variant="ghost"
+                size="sm"
+                className="mt-4 text-gray-400"
               >
-                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Pesquisar'}
+                Limpar pesquisa
               </Button>
             </div>
-          </form>
-        </div>
-      </section>
+          )}
 
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <section className="py-12 px-6">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-light text-white mb-6">
-              Resultados da Pesquisa ({searchResults.length})
-            </h2>
-            <div className="space-y-4">
-              {searchResults.map(article => (
-                <Link
-                  key={article.id}
-                  to={`/help/article/${article.slug}`}
-                  className="block p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-xl hover:border-gold-500/30 transition-all group"
-                >
-                  <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors">
-                    {article.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mt-2 line-clamp-2">{article.summary}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Categories - Expandable Grid */}
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-light text-white mb-8">Explorar Categorias</h2>
-          <div className="space-y-4">
-            {categories.filter(cat => !cat.parent_id).map(category => {
+          {/* Grid of Categories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {mainCategories.map(category => {
               const Icon = getCategoryIcon(category.slug);
-              const subcategories = categories.filter(c => c.parent_id === category.id);
-              const isExpanded = expandedCategories[category.id];
               const catArticles = categoryArticles[category.id] || [];
               
               return (
-                <div 
-                  key={category.id}
-                  className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl overflow-hidden transition-all duration-300"
-                >
-                  {/* Category Header - Clickable */}
-                  <button
-                    onClick={() => toggleCategory(category.id, category.slug)}
-                    className="w-full p-6 flex items-center justify-between hover:bg-zinc-800/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
+                <div key={category.id} className="bg-zinc-900/30 rounded-lg p-6">
+                  {/* Category Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
+                    <div className="flex items-center gap-3">
+                      <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
+                      <div>
+                        <h3 className="text-white font-medium uppercase">{category.name}</h3>
+                        <p className="text-xs text-gray-500 uppercase">{category.name}</p>
+                      </div>
+                    </div>
+                    <MoreHorizontal size={20} className="text-gray-600" />
+                  </div>
+
+                  {/* Articles List */}
+                  <div className="space-y-3">
+                    {catArticles.slice(0, 5).map(article => (
+                      <Link
+                        key={article.id}
+                        to={`/help/article/${article.slug}`}
+                        className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
                       >
-                        <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-lg font-medium text-white">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {category.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-gray-500">
-                        {category.article_count || 0} artigos
-                      </span>
-                      {isExpanded ? (
-                        <ChevronDown size={20} className="text-gold-400" />
-                      ) : (
-                        <ChevronRight size={20} className="text-gray-400" />
-                      )}
-                    </div>
-                  </button>
+                        <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                        <span>{article.title}</span>
+                      </Link>
+                    ))}
+                    {catArticles.length === 0 && (
+                      <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
+                    )}
+                  </div>
 
-                  {/* Expanded Content */}
-                  {isExpanded && (
-                    <div className="border-t border-zinc-800/50 bg-zinc-950/50 animate-in slide-in-from-top-2 duration-200">
-                      {/* Subcategories */}
-                      {subcategories.length > 0 && (
-                        <div className="px-6 py-4 border-b border-zinc-800/30">
-                          <div className="flex flex-wrap gap-2">
-                            {subcategories.map(sub => (
-                              <Link
-                                key={sub.id}
-                                to={`/help/${sub.slug}`}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 hover:bg-gold-500/20 border border-zinc-700/50 hover:border-gold-500/30 rounded-full text-sm text-gray-300 hover:text-gold-400 transition-all"
-                              >
-                                <Folder size={14} />
-                                {sub.name}
-                                {sub.article_count > 0 && (
-                                  <span className="text-xs text-gray-500">({sub.article_count})</span>
-                                )}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Articles Preview */}
-                      <div className="p-4">
-                        {catArticles.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {catArticles.slice(0, 6).map(article => (
-                              <Link
-                                key={article.id}
-                                to={`/help/article/${article.slug}`}
-                                className="p-4 bg-zinc-900/50 border border-zinc-800/30 rounded-lg hover:border-gold-500/30 hover:bg-zinc-800/30 transition-all group"
-                              >
-                                <div className="flex items-start gap-3">
-                                  <FileText size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-medium text-white group-hover:text-gold-400 transition-colors truncate">
-                                      {article.title}
-                                    </h4>
-                                    {article.summary && (
-                                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                        {article.summary}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <ChevronRight size={14} className="text-gray-600 group-hover:text-gold-400 flex-shrink-0" />
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-                            <span className="text-sm">Carregando artigos...</span>
-                          </div>
-                        )}
-
-                        {/* View All Button */}
-                        {catArticles.length > 6 && (
-                          <div className="mt-4 text-center">
-                            <Link
-                              to={`/help/${category.slug}`}
-                              className="inline-flex items-center gap-2 text-sm text-gold-400 hover:text-gold-300"
-                            >
-                              Ver todos os {category.article_count} artigos
-                              <ChevronRight size={14} />
-                            </Link>
-                          </div>
-                        )}
-
-                        {/* Empty State */}
-                        {catArticles.length === 0 && !loading && (
-                          <div className="text-center py-6 text-gray-500">
-                            <FileText size={24} className="mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">Nenhum artigo nesta categoria ainda.</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  {/* More Link */}
+                  {(catArticles.length > 5 || category.article_count > 5) && (
+                    <Link 
+                      to={`/help/${category.slug}`}
+                      className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300 mt-4"
+                    >
+                      more <ChevronRight size={14} />
+                    </Link>
                   )}
                 </div>
               );
             })}
           </div>
-        </div>
-      </section>
 
-      {/* Recent & Popular Articles */}
-      <section className="py-16 px-6 bg-zinc-900/20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Recent */}
-            <div>
-              <h2 className="text-xl font-light text-white mb-6 flex items-center gap-2">
-                <Clock size={20} className="text-gold-400" />
-                Artigos Recentes
-              </h2>
-              <div className="space-y-3">
-                {recentArticles.map(article => (
-                  <Link
-                    key={article.id}
-                    to={`/help/article/${article.slug}`}
-                    className="block p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-lg hover:border-gold-500/30 transition-all group"
-                  >
-                    <h4 className="text-white group-hover:text-gold-400 transition-colors">
-                      {article.title}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(article.created_at).toLocaleDateString('pt-PT')}
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Popular */}
-            <div>
-              <h2 className="text-xl font-light text-white mb-6 flex items-center gap-2">
-                <TrendingUp size={20} className="text-gold-400" />
-                Artigos Populares
-              </h2>
-              <div className="space-y-3">
-                {popularArticles.map(article => (
-                  <Link
-                    key={article.id}
-                    to={`/help/article/${article.slug}`}
-                    className="block p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-lg hover:border-gold-500/30 transition-all group"
-                  >
-                    <h4 className="text-white group-hover:text-gold-400 transition-colors">
-                      {article.title}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                      <Eye size={12} /> {article.views || 0} visualizações
-                    </p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Support */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-br from-gold-900/20 to-zinc-900/50 border border-gold-500/20 rounded-2xl p-12">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gold-500/20 flex items-center justify-center">
-              <Headphones size={32} className="text-gold-400" />
-            </div>
-            <h2 className="text-2xl font-light text-white mb-4">
-              Não encontrou o que procurava?
-            </h2>
-            <p className="text-gray-400 mb-8">
-              A nossa equipa de suporte está disponível para ajudar com qualquer questão.
-            </p>
-            <Link to="/support">
-              <Button className="bg-gold-500 hover:bg-gold-400 text-black font-medium px-8 py-6 text-lg">
-                <MessageSquare size={20} className="mr-2" />
-                Contactar Suporte
-              </Button>
+          {/* Contact Support */}
+          <div className="mt-12 text-center">
+            <p className="text-gray-400 mb-4">Não encontrou o que procurava?</p>
+            <Link 
+              to="/support"
+              className="inline-flex items-center gap-2 text-gold-400 hover:text-gold-300"
+            >
+              Contactar Suporte <ChevronRight size={16} />
             </Link>
           </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
     </div>
