@@ -546,7 +546,7 @@ const KnowledgeBasePage = () => {
       
       <main className="pt-24 pb-20">
         {/* Hero Section with Search */}
-        <div className="bg-zinc-900/50 border-b border-zinc-800 py-16 mb-12">
+        <div className="py-16 mb-12">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-light text-white mb-4">
               Centro de Ajuda
