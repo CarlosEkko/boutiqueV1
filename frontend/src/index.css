@@ -366,10 +366,19 @@ button, a, input, textarea {
 
 
 /* Knowledge Base Article Content - Force dark theme */
+.kb-article-content,
+.kb-html-content {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
 .kb-html-content,
 .kb-html-content * {
     background-color: transparent !important;
     background: transparent !important;
+    max-width: 100% !important;
 }
 
 .kb-html-content p,

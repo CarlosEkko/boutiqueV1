@@ -264,7 +264,7 @@ const KnowledgeBasePage = () => {
 
             <div className="flex gap-8">
               {/* Main Content */}
-              <article className="flex-1 min-w-0">
+              <article className="flex-1 min-w-0 overflow-hidden">
                 {/* Cover Image */}
                 {currentArticle.cover_image && (
                   <div className="w-full h-64 mb-8 rounded-lg overflow-hidden">
@@ -291,10 +291,11 @@ const KnowledgeBasePage = () => {
                   prose-li:text-gray-300
                   prose-img:rounded-lg
                   kb-article-content
+                  overflow-hidden break-words
                 ">
                   {currentArticle.content?.startsWith('<') ? (
                     <div 
-                      className="kb-html-content"
+                      className="kb-html-content break-words overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: currentArticle.content }} 
                     />
                   ) : (
