@@ -437,104 +437,67 @@ const KnowledgeBasePage = () => {
               </div>
             </div>
 
-            {/* Subcategories Navigation */}
-            {subcategories.length > 0 && (
-              <div className="flex flex-wrap gap-3 mb-8 pb-6 border-b border-zinc-800">
-                {subcategories.map(sub => {
-                  const SubIcon = getCategoryIcon(sub.slug, sub.icon);
-                  return (
-                    <Link
-                      key={sub.id}
-                      to={`/help/${sub.slug}`}
-                      className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 hover:border-gold-500/30 rounded-lg text-gray-300 hover:text-gold-400 transition-all"
-                    >
-                      <SubIcon size={16} />
-                      <span>{sub.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Grid of Subcategories with Articles */}
+            {/* Grid of Subcategories as clickable cards (no button bar) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {subcategories.length > 0 ? (
-                // Show subcategories with their articles
+                // Show subcategories as clickable cards
                 subcategories.map(sub => {
                   const SubIcon = getCategoryIcon(sub.slug, sub.icon);
                   const subArticles = categoryArticles[sub.id] || [];
                   
                   return (
-                    <div key={sub.id} className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-6">
-                      {/* Subcategory Header */}
-                      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-zinc-800">
+                    <Link
+                      key={sub.id}
+                      to={`/help/${sub.slug}`}
+                      className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-gold-500/30 rounded-lg p-6 transition-all"
+                    >
+                      {/* Subcategory Header - Clean design */}
+                      <div className="flex items-center gap-3">
                         <div 
                           className="w-10 h-10 rounded-lg flex items-center justify-center"
                           style={{ backgroundColor: `${sub.color || '#D4AF37'}20` }}
                         >
                           <SubIcon size={20} style={{ color: sub.color || '#D4AF37' }} />
                         </div>
-                        <div>
-                          <h3 className="text-white font-medium">{sub.name}</h3>
+                        <div className="flex-1">
+                          <h3 className="text-white font-medium group-hover:text-gold-400 transition-colors">{sub.name}</h3>
                           {sub.description && (
                             <p className="text-xs text-gray-500">{sub.description}</p>
                           )}
                         </div>
+                        <ChevronRight size={18} className="text-gray-600 group-hover:text-gold-400 transition-colors" />
                       </div>
-
-                      {/* Articles List */}
-                      <div className="space-y-3">
-                        {subArticles.map(article => (
-                          <Link
-                            key={article.id}
-                            to={`/help/article/${article.slug}`}
-                            className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
-                          >
-                            <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
-                            <span>{article.title}</span>
-                          </Link>
-                        ))}
-                        {subArticles.length === 0 && (
-                          <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
-                        )}
+                      
+                      {/* Article count */}
+                      <div className="mt-4 pt-4 border-t border-zinc-800 text-xs text-gray-500">
+                        {subArticles.length} artigo{subArticles.length !== 1 ? 's' : ''}
                       </div>
-
-                      {/* More Link */}
-                      {subArticles.length > 5 && (
-                        <Link 
-                          to={`/help/${sub.slug}`}
-                          className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300 mt-4"
-                        >
-                          mais <ChevronRight size={14} />
-                        </Link>
-                      )}
-                    </div>
+                    </Link>
                   );
                 })
               ) : (
-                // No subcategories - show articles directly
+                // No subcategories - show articles as individual cards
                 articles.length > 0 ? (
-                  <div className="col-span-full">
-                    <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-6">
-                      <div className="space-y-3">
-                        {articles.map(article => (
-                          <Link
-                            key={article.id}
-                            to={`/help/article/${article.slug}`}
-                            className="flex items-start gap-3 text-gray-300 hover:text-gold-400 transition-colors p-2 hover:bg-zinc-800/30 rounded-lg"
-                          >
-                            <FileText size={16} className="mt-0.5 flex-shrink-0 text-gray-500" />
-                            <div>
-                              <span className="block">{article.title}</span>
-                              {article.summary && (
-                                <span className="text-sm text-gray-500">{article.summary}</span>
-                              )}
-                            </div>
-                          </Link>
-                        ))}
+                  articles.map(article => (
+                    <Link
+                      key={article.id}
+                      to={`/help/article/${article.slug}`}
+                      className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-gold-500/30 rounded-lg p-6 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <FileText size={20} className="mt-0.5 flex-shrink-0 text-gray-500 group-hover:text-gold-400 transition-colors" />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-medium group-hover:text-gold-400 transition-colors mb-1">
+                            {article.title}
+                          </h3>
+                          {article.summary && (
+                            <p className="text-sm text-gray-500 line-clamp-2">{article.summary}</p>
+                          )}
+                        </div>
+                        <ChevronRight size={18} className="text-gray-600 group-hover:text-gold-400 transition-colors flex-shrink-0" />
                       </div>
-                    </div>
-                  </div>
+                    </Link>
+                  ))
                 ) : (
                   <div className="col-span-full text-center py-12">
                     <FileText size={48} className="mx-auto mb-4 text-gray-600" />
@@ -622,11 +585,10 @@ const KnowledgeBasePage = () => {
             </div>
           )}
 
-          {/* Grid of Categories - Clickable (no articles shown) */}
+          {/* Grid of Categories - Clickable (clean design, no subcategory buttons) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mainCategories.map(category => {
               const Icon = getCategoryIcon(category.slug, category.icon);
-              const catSubcategories = categories.filter(c => c.parent_id === category.id);
               
               return (
                 <Link
@@ -635,7 +597,7 @@ const KnowledgeBasePage = () => {
                   className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-gold-500/30 rounded-lg p-6 transition-all"
                 >
                   {/* Category Header */}
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-4">
                     <div 
                       className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
                       style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
@@ -653,27 +615,8 @@ const KnowledgeBasePage = () => {
                     <ChevronRight size={20} className="text-gray-600 group-hover:text-gold-400 transition-colors" />
                   </div>
 
-                  {/* Subcategories Preview */}
-                  {catSubcategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-800">
-                      {catSubcategories.slice(0, 4).map(sub => (
-                        <span 
-                          key={sub.id}
-                          className="text-xs px-2 py-1 bg-zinc-800/50 text-gray-400 rounded"
-                        >
-                          {sub.name}
-                        </span>
-                      ))}
-                      {catSubcategories.length > 4 && (
-                        <span className="text-xs px-2 py-1 text-gray-500">
-                          +{catSubcategories.length - 4} mais
-                        </span>
-                      )}
-                    </div>
-                  )}
-
                   {/* Article count */}
-                  <div className="mt-4 text-xs text-gray-500">
+                  <div className="mt-4 pt-4 border-t border-zinc-800 text-xs text-gray-500">
                     {category.article_count || 0} artigos
                   </div>
                 </Link>

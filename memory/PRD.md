@@ -256,3 +256,11 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - Backend: Port 8001 (internal), prefixed with /api
 - Frontend: Port 3000
 - MongoDB: Via MONGO_URL env var
+
+
+## Changelog
+
+### March 13, 2026 - Knowledge Base UI Cleanup
+- **Main KB page**: Removed subcategory buttons/tags from category cards - now shows only icon, name, description and article count
+- **Category page (e.g., FAQs)**: Removed top navigation buttons - subcategories now displayed only as clickable cards
+- **Subcategory page (e.g., Contas)**: Articles now displayed as individual cards instead of a list inside a single card
