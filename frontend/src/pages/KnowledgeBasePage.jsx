@@ -237,7 +237,7 @@ const KnowledgeBasePage = () => {
             {/* Breadcrumb & Search */}
             <div className="flex items-center justify-between mb-8">
               <nav className="flex items-center gap-2 text-sm">
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">Base de Conhecimento</Link>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Centro de Ajuda</Link>
                 {currentCategory && (
                   <>
                     <span className="text-gray-600">/</span>
@@ -416,7 +416,7 @@ const KnowledgeBasePage = () => {
             {/* Breadcrumb & Search */}
             <div className="flex items-center justify-between mb-8">
               <nav className="flex items-center gap-2 text-sm">
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">Base de Conhecimento</Link>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Centro de Ajuda</Link>
                 <span className="text-gray-600">/</span>
                 <span className="text-gold-400">{currentCategory.name}</span>
               </nav>
@@ -526,7 +526,7 @@ const KnowledgeBasePage = () => {
                 variant="outline"
                 className="border-zinc-700 text-gray-400 hover:text-white"
               >
-                <ArrowLeft size={16} className="mr-2" /> Voltar à Base de Conhecimento
+                <ArrowLeft size={16} className="mr-2" /> Voltar ao Centro de Ajuda
               </Button>
             </div>
           </div>
@@ -545,31 +545,38 @@ const KnowledgeBasePage = () => {
       <Header />
       
       <main className="pt-24 pb-20">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Breadcrumb & Search */}
-          <div className="flex items-center justify-between mb-8">
-            <nav className="flex items-center gap-2 text-sm">
-              <span className="text-gold-400">Base de Conhecimento</span>
-            </nav>
-            <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Pesquisar artigos"
-                className="w-64 bg-zinc-900 border-zinc-700 text-white placeholder:text-gray-500"
-              />
-              <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
-                <Search size={18} />
+        {/* Hero Section with Search */}
+        <div className="bg-zinc-900/50 border-b border-zinc-800 py-16 mb-12">
+          <div className="max-w-3xl mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-light text-white mb-4">
+              Centro de Ajuda
+            </h1>
+            <p className="text-gray-400 text-lg mb-8">
+              Como podemos ajudá-lo hoje?
+            </p>
+            
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="flex items-center max-w-xl mx-auto">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Pesquisar artigos, FAQs, documentação..."
+                  className="w-full pl-11 pr-4 py-3 h-12 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500 rounded-l-lg rounded-r-none focus:ring-0 focus:border-zinc-600"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-l-none rounded-r-lg"
+              >
+                Pesquisar
               </Button>
             </form>
           </div>
+        </div>
 
-          {/* Page Title */}
-          <div className="mb-12">
-            <h1 className="text-3xl font-light text-white mb-2">Base de Conhecimento</h1>
-            <p className="text-gray-400">Encontre respostas para as suas dúvidas</p>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4">
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mb-8 p-6 bg-zinc-900/30 border border-zinc-800 rounded-lg">
@@ -597,7 +604,10 @@ const KnowledgeBasePage = () => {
             </div>
           )}
 
-          {/* Grid of Categories - Clickable (clean design, no subcategory buttons) */}
+          {/* Section Title: Explorar Categorias */}
+          <h2 className="text-2xl font-light text-white mb-8">Explorar Categorias</h2>
+
+          {/* Grid of Categories */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mainCategories.map(category => {
               const Icon = getCategoryIcon(category.slug, category.icon);
@@ -606,30 +616,30 @@ const KnowledgeBasePage = () => {
                 <Link
                   key={category.id}
                   to={`/help/${category.slug}`}
-                  className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-gold-500/30 rounded-lg p-6 transition-all"
+                  className="group bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 rounded-xl p-6 transition-all"
                 >
-                  {/* Category Header */}
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
-                      style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
-                    >
-                      <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors">
-                        {category.name}
-                      </h3>
-                      {category.description && (
-                        <p className="text-sm text-gray-500 line-clamp-1">{category.description}</p>
-                      )}
-                    </div>
-                    <ChevronRight size={20} className="text-gray-600 group-hover:text-gold-400 transition-colors" />
+                  {/* Icon */}
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    style={{ backgroundColor: `${category.color || '#10B981'}30` }}
+                  >
+                    <Icon size={24} style={{ color: category.color || '#10B981' }} />
                   </div>
+                  
+                  {/* Category Name */}
+                  <h3 className="text-lg font-medium text-white mb-2 group-hover:text-gold-400 transition-colors">
+                    {category.name}
+                  </h3>
+                  
+                  {/* Description */}
+                  {category.description && (
+                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">{category.description}</p>
+                  )}
 
-                  {/* Article count */}
-                  <div className="mt-4 pt-4 border-t border-zinc-800 text-xs text-gray-500">
-                    {category.article_count || 0} artigos
+                  {/* Article count with icon */}
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <FileText size={14} />
+                    <span>{category.article_count || 0} artigos</span>
                   </div>
                 </Link>
               );
