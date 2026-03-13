@@ -111,6 +111,20 @@ const AdminKnowledgeBase = () => {
     setShowArticleModal(true);
   };
 
+  // Handle main category change in article form
+  const handleMainCategoryChange = (categoryId) => {
+    setSelectedMainCategory(categoryId);
+    // Check if this category has subcategories
+    const hasSubcategories = categories.some(c => c.parent_id === categoryId);
+    if (!hasSubcategories && categoryId) {
+      // No subcategories - use main category directly
+      setArticleForm({ ...articleForm, category_id: categoryId });
+    } else {
+      // Has subcategories - clear category_id until user selects subcategory
+      setArticleForm({ ...articleForm, category_id: '' });
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
     if (activeTab === 'articles') fetchArticles();
