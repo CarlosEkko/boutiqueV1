@@ -43,8 +43,42 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 2. **Admin** - Gestão de equipa, utilizadores, KYC, oportunidades
 3. **Gestão** - Permissões, Configurações (taxas/limites)
 4. **Financeiro** - Ordens, Depósitos Fiat, Levantamentos Fiat/Crypto (com notificações)
-5. **CRM** - Clientes, Pipeline de vendas
+5. **CRM** - Dashboard CRM, Fornecedores, Leads, Negociações, Contactos, Tarefas, Clientes KBEX, Pipeline de vendas
 6. **Suporte** - Tickets, Base de conhecimento
+
+## CRM Module (Implemented March 2026)
+
+### CRM Architecture
+```
+/app/backend/
+├── models/crm.py          # Pydantic models for all CRM entities
+└── routes/crm.py          # CRUD endpoints for CRM
+
+/app/frontend/src/pages/dashboard/crm/
+├── CRMDashboard.jsx       # Stats overview
+├── CRMSuppliers.jsx       # OTC suppliers management
+├── CRMLeads.jsx           # Leads management
+├── CRMDeals.jsx           # Deals pipeline
+├── CRMContacts.jsx        # Contact management
+└── CRMTasks.jsx           # Task board
+```
+
+### CRM API Endpoints
+- `GET /api/crm/dashboard` - Statistics
+- `GET/POST /api/crm/suppliers` - Suppliers CRUD
+- `GET/POST /api/crm/leads` - Leads CRUD
+- `POST /api/crm/leads/{id}/convert` - Convert lead to client
+- `GET/POST /api/crm/deals` - Deals CRUD
+- `GET/POST /api/crm/contacts` - Contacts CRUD
+- `GET/POST /api/crm/tasks` - Tasks CRUD
+- `GET /api/crm/enums/*` - Enum values (statuses, priorities, stages)
+
+### CRM Database Collections
+- `crm_suppliers`: OTC suppliers with wallet info, crypto categories
+- `crm_leads`: Potential clients with qualification scoring
+- `crm_deals`: Sales pipeline with stages and amounts
+- `crm_contacts`: People associated with suppliers/leads
+- `crm_tasks`: Follow-ups, calls, meetings with due dates
 
 ### Notification Badges (Dec 2025)
 - Menu items show pending count badges (red circles)
@@ -259,6 +293,14 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 
 ## Changelog
+
+### March 13, 2026 - CRM Module Complete
+- **CRM Dashboard**: Statistics overview with counts for suppliers, leads, deals, contacts, tasks, and pipeline value
+- **CRM Leads**: Full CRUD with status tracking (new, contacted, qualified, proposal, negotiation, won, lost), convert to client functionality
+- **CRM Deals**: Pipeline/Kanban view grouped by stage (Qualification, Proposal, Negotiation, Closed Won, Closed Lost), crypto amount tracking
+- **CRM Contacts**: Card grid view with contact details, links to suppliers/leads, preferred contact method
+- **CRM Tasks**: Kanban board (Pending, In Progress, Completed), priority levels (low, medium, high, urgent), due date with overdue detection
+- **Bug Fixed**: DateTime timezone comparison bug in tasks endpoint
 
 ### March 13, 2026 - Knowledge Base UI Cleanup
 - **Main KB page**: Removed subcategory buttons/tags from category cards - now shows only icon, name, description and article count
