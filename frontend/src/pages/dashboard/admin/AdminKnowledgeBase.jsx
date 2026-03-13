@@ -700,8 +700,19 @@ const AdminKnowledgeBase = () => {
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
                   >
                     <option value="">Selecionar...</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    {/* Show main categories with their subcategories */}
+                    {categories.filter(cat => !cat.parent_id).map(mainCat => (
+                      <React.Fragment key={mainCat.id}>
+                        <option value={mainCat.id} className="font-bold">
+                          {mainCat.name}
+                        </option>
+                        {/* Show subcategories indented */}
+                        {categories.filter(sub => sub.parent_id === mainCat.id).map(subCat => (
+                          <option key={subCat.id} value={subCat.id}>
+                            &nbsp;&nbsp;&nbsp;↳ {subCat.name}
+                          </option>
+                        ))}
+                      </React.Fragment>
                     ))}
                   </select>
                 </div>
