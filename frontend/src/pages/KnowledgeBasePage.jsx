@@ -20,9 +20,14 @@ import {
   Tag,
   TrendingUp,
   Folder,
-  MoreHorizontal,
   Bell,
-  Shield
+  Shield,
+  Users,
+  CreditCard,
+  Settings,
+  Lock,
+  Wallet,
+  BarChart
 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -31,7 +36,7 @@ import ReactMarkdown from 'react-markdown';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Icon mapping for categories
+// Icon mapping for categories - extended
 const categoryIcons = {
   'blog': Newspaper,
   'faqs': HelpCircle,
@@ -42,12 +47,23 @@ const categoryIcons = {
   'trading': TrendingUp,
   'seguranca': Shield,
   'security': Shield,
-  'account': HelpCircle,
-  'api': FileText,
+  'account': Users,
+  'accounts': Users,
+  'contas': Users,
+  'api': Settings,
   'compliance': Scale,
-  'deposits': Folder,
-  'fees': FileCheck,
-  'payments': FileCheck,
+  'deposits': Wallet,
+  'depositos': Wallet,
+  'fees': CreditCard,
+  'taxas': CreditCard,
+  'payments': CreditCard,
+  'pagamentos': CreditCard,
+  'withdrawals': Wallet,
+  'levantamentos': Wallet,
+  'kyc': Lock,
+  'verificacao': Lock,
+  'reports': BarChart,
+  'relatorios': BarChart,
   'default': Folder
 };
 
@@ -62,34 +78,17 @@ const KnowledgeBasePage = () => {
   const [relatedArticles, setRelatedArticles] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
-  const [categoryArticles, setCategoryArticles] = useState({});
   const [subcategories, setSubcategories] = useState([]);
+  const [categoryArticles, setCategoryArticles] = useState({});
 
-  // Fetch initial data
+  // Fetch initial data for main page
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch all categories
         const catResponse = await axios.get(`${API_URL}/api/kb/categories`);
         setCategories(catResponse.data || []);
-
-        // Fetch articles for each main category
-        const mainCategories = (catResponse.data || []).filter(c => !c.parent_id);
-        const articlesMap = {};
-        
-        await Promise.all(mainCategories.map(async (cat) => {
-          try {
-            const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${cat.slug}&limit=5`);
-            articlesMap[cat.id] = artResponse.data.articles || [];
-          } catch (err) {
-            articlesMap[cat.id] = [];
-          }
-        }));
-        
-        setCategoryArticles(articlesMap);
       } catch (err) {
         console.error('Error fetching data', err);
       } finally {
@@ -119,30 +118,35 @@ const KnowledgeBasePage = () => {
   const fetchCategoryData = async (slug) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
-      const categoryData = response.data.category || response.data;
-      const articlesData = response.data.articles || [];
+      // Get all categories first
+      const allCatsRes = await axios.get(`${API_URL}/api/kb/categories`);
+      const allCats = allCatsRes.data || [];
+      setCategories(allCats);
+
+      // Get the category by slug
+      const catResponse = await axios.get(`${API_URL}/api/kb/categories/${slug}`);
+      const categoryData = catResponse.data.category || catResponse.data;
+      const articlesData = catResponse.data.articles || [];
       
       setCurrentCategory(categoryData);
       setArticles(articlesData);
       setCurrentArticle(null);
 
-      // Fetch subcategories
-      const allCats = await axios.get(`${API_URL}/api/kb/categories`);
-      const subs = (allCats.data || []).filter(c => c.parent_id === categoryData.id);
+      // Get subcategories of this category
+      const subs = allCats.filter(c => c.parent_id === categoryData.id);
       setSubcategories(subs);
 
       // Fetch articles for each subcategory
       const subArticlesMap = {};
       await Promise.all(subs.map(async (sub) => {
         try {
-          const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${sub.slug}&limit=5`);
+          const artResponse = await axios.get(`${API_URL}/api/kb/articles?category=${sub.slug}&limit=10`);
           subArticlesMap[sub.id] = artResponse.data.articles || [];
         } catch (err) {
           subArticlesMap[sub.id] = [];
         }
       }));
-      setCategoryArticles(prev => ({ ...prev, ...subArticlesMap }));
+      setCategoryArticles(subArticlesMap);
     } catch (err) {
       console.error('Error fetching category', err);
       navigate('/help');
@@ -177,14 +181,11 @@ const KnowledgeBasePage = () => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     
-    setSearching(true);
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles?search=${encodeURIComponent(searchTerm)}`);
       setSearchResults(response.data.articles || []);
     } catch (err) {
       console.error('Search error', err);
-    } finally {
-      setSearching(false);
     }
   };
 
@@ -199,7 +200,12 @@ const KnowledgeBasePage = () => {
     }
   };
 
-  const getCategoryIcon = (slug) => {
+  const getCategoryIcon = (slug, icon) => {
+    // First check if category has a custom icon name
+    if (icon && categoryIcons[icon.toLowerCase()]) {
+      return categoryIcons[icon.toLowerCase()];
+    }
+    // Then check by slug
     const Icon = categoryIcons[slug?.toLowerCase()] || categoryIcons.default;
     return Icon;
   };
@@ -224,23 +230,23 @@ const KnowledgeBasePage = () => {
             {/* Breadcrumb & Search */}
             <div className="flex items-center justify-between mb-8">
               <nav className="flex items-center gap-2 text-sm">
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
-                <span className="text-gray-600">/</span>
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">HELP CENTER</Link>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Base de Conhecimento</Link>
                 {currentCategory && (
                   <>
                     <span className="text-gray-600">/</span>
                     <Link to={`/help/${currentCategory.slug}`} className="text-gray-400 hover:text-gold-400">
-                      {currentCategory.name?.toUpperCase()}
+                      {currentCategory.name}
                     </Link>
                   </>
                 )}
+                <span className="text-gray-600">/</span>
+                <span className="text-gold-400 truncate max-w-xs">{currentArticle.title}</span>
               </nav>
               <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search articles"
+                  placeholder="Pesquisar artigos"
                   className="w-64 bg-zinc-900 border-zinc-700 text-white"
                 />
                 <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
@@ -292,10 +298,10 @@ const KnowledgeBasePage = () => {
                 <div className="mb-6">
                   <Button className="bg-gold-500 hover:bg-gold-400 text-black">
                     <Bell size={16} className="mr-2" />
-                    Follow
+                    Seguir
                   </Button>
                   <p className="text-xs text-gray-500 mt-2">
-                    Subscribe to receive notifications from this article.
+                    Subscreva para receber notificações deste artigo.
                   </p>
                 </div>
 
@@ -348,7 +354,7 @@ const KnowledgeBasePage = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-zinc-800">
                       <Folder size={16} className="text-gray-400" />
-                      <span className="text-white font-medium">Related Articles</span>
+                      <span className="text-white font-medium">Artigos Relacionados</span>
                     </div>
                     <div className="space-y-2">
                       {relatedArticles.slice(0, 5).map(article => (
@@ -385,9 +391,9 @@ const KnowledgeBasePage = () => {
     );
   }
 
-  // Category View (with subcategories in grid)
+  // Category View - Shows all subcategories with articles
   if (currentCategory) {
-    const Icon = getCategoryIcon(currentCategory.slug);
+    const Icon = getCategoryIcon(currentCategory.slug, currentCategory.icon);
     
     return (
       <div className="min-h-screen bg-zinc-950">
@@ -398,17 +404,15 @@ const KnowledgeBasePage = () => {
             {/* Breadcrumb & Search */}
             <div className="flex items-center justify-between mb-8">
               <nav className="flex items-center gap-2 text-sm">
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
+                <Link to="/help" className="text-gray-400 hover:text-gold-400">Base de Conhecimento</Link>
                 <span className="text-gray-600">/</span>
-                <Link to="/help" className="text-gray-400 hover:text-gold-400">HELP CENTER</Link>
-                <span className="text-gray-600">/</span>
-                <span className="text-gold-400">{currentCategory.name?.toUpperCase()}</span>
+                <span className="text-gold-400">{currentCategory.name}</span>
               </nav>
               <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search articles"
+                  placeholder="Pesquisar artigos"
                   className="w-64 bg-zinc-900 border-zinc-700 text-white"
                 />
                 <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
@@ -417,31 +421,70 @@ const KnowledgeBasePage = () => {
               </form>
             </div>
 
-            {/* Grid of Subcategories or Articles */}
+            {/* Category Header */}
+            <div className="flex items-center gap-4 mb-8">
+              <div 
+                className="w-14 h-14 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${currentCategory.color || '#D4AF37'}20` }}
+              >
+                <Icon size={28} style={{ color: currentCategory.color || '#D4AF37' }} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-light text-white">{currentCategory.name}</h1>
+                {currentCategory.description && (
+                  <p className="text-gray-400">{currentCategory.description}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Subcategories Navigation */}
+            {subcategories.length > 0 && (
+              <div className="flex flex-wrap gap-3 mb-8 pb-6 border-b border-zinc-800">
+                {subcategories.map(sub => {
+                  const SubIcon = getCategoryIcon(sub.slug, sub.icon);
+                  return (
+                    <Link
+                      key={sub.id}
+                      to={`/help/${sub.slug}`}
+                      className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 hover:border-gold-500/30 rounded-lg text-gray-300 hover:text-gold-400 transition-all"
+                    >
+                      <SubIcon size={16} />
+                      <span>{sub.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Grid of Subcategories with Articles */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {subcategories.length > 0 ? (
                 // Show subcategories with their articles
                 subcategories.map(sub => {
-                  const SubIcon = getCategoryIcon(sub.slug);
+                  const SubIcon = getCategoryIcon(sub.slug, sub.icon);
                   const subArticles = categoryArticles[sub.id] || [];
                   
                   return (
-                    <div key={sub.id} className="bg-zinc-900/30 rounded-lg p-6">
+                    <div key={sub.id} className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-6">
                       {/* Subcategory Header */}
-                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
-                        <div className="flex items-center gap-3">
-                          <SubIcon size={24} style={{ color: sub.color || '#D4AF37' }} />
-                          <div>
-                            <h3 className="text-white font-medium">{sub.name}</h3>
-                            <p className="text-xs text-gray-500">{sub.name}</p>
-                          </div>
+                      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-zinc-800">
+                        <div 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${sub.color || '#D4AF37'}20` }}
+                        >
+                          <SubIcon size={20} style={{ color: sub.color || '#D4AF37' }} />
                         </div>
-                        <MoreHorizontal size={20} className="text-gray-600" />
+                        <div>
+                          <h3 className="text-white font-medium">{sub.name}</h3>
+                          {sub.description && (
+                            <p className="text-xs text-gray-500">{sub.description}</p>
+                          )}
+                        </div>
                       </div>
 
                       {/* Articles List */}
                       <div className="space-y-3">
-                        {subArticles.slice(0, 5).map(article => (
+                        {subArticles.map(article => (
                           <Link
                             key={article.id}
                             to={`/help/article/${article.slug}`}
@@ -462,44 +505,42 @@ const KnowledgeBasePage = () => {
                           to={`/help/${sub.slug}`}
                           className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300 mt-4"
                         >
-                          more <ChevronRight size={14} />
+                          mais <ChevronRight size={14} />
                         </Link>
                       )}
                     </div>
                   );
                 })
               ) : (
-                // No subcategories - show articles directly in one card
-                <div className="bg-zinc-900/30 rounded-lg p-6 col-span-full max-w-md">
-                  {/* Category Header */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
-                    <div className="flex items-center gap-3">
-                      <Icon size={24} style={{ color: currentCategory.color || '#D4AF37' }} />
-                      <div>
-                        <h3 className="text-white font-medium">{currentCategory.name}</h3>
-                        <p className="text-xs text-gray-500">{currentCategory.description}</p>
+                // No subcategories - show articles directly
+                articles.length > 0 ? (
+                  <div className="col-span-full">
+                    <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-6">
+                      <div className="space-y-3">
+                        {articles.map(article => (
+                          <Link
+                            key={article.id}
+                            to={`/help/article/${article.slug}`}
+                            className="flex items-start gap-3 text-gray-300 hover:text-gold-400 transition-colors p-2 hover:bg-zinc-800/30 rounded-lg"
+                          >
+                            <FileText size={16} className="mt-0.5 flex-shrink-0 text-gray-500" />
+                            <div>
+                              <span className="block">{article.title}</span>
+                              {article.summary && (
+                                <span className="text-sm text-gray-500">{article.summary}</span>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                    <MoreHorizontal size={20} className="text-gray-600" />
                   </div>
-
-                  {/* Articles List */}
-                  <div className="space-y-3">
-                    {articles.map(article => (
-                      <Link
-                        key={article.id}
-                        to={`/help/article/${article.slug}`}
-                        className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
-                      >
-                        <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
-                        <span>{article.title}</span>
-                      </Link>
-                    ))}
-                    {articles.length === 0 && (
-                      <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
-                    )}
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <FileText size={48} className="mx-auto mb-4 text-gray-600" />
+                    <p className="text-gray-400">Nenhum artigo nesta categoria ainda.</p>
                   </div>
-                </div>
+                )
               )}
             </div>
 
@@ -510,7 +551,7 @@ const KnowledgeBasePage = () => {
                 variant="outline"
                 className="border-zinc-700 text-gray-400 hover:text-white"
               >
-                <ArrowLeft size={16} className="mr-2" /> Voltar ao Centro de Ajuda
+                <ArrowLeft size={16} className="mr-2" /> Voltar à Base de Conhecimento
               </Button>
             </div>
           </div>
@@ -521,7 +562,7 @@ const KnowledgeBasePage = () => {
     );
   }
 
-  // Main Help Center View
+  // Main Help Center View - Only Categories (clickable)
   const mainCategories = categories.filter(c => !c.parent_id);
 
   return (
@@ -533,15 +574,13 @@ const KnowledgeBasePage = () => {
           {/* Breadcrumb & Search */}
           <div className="flex items-center justify-between mb-8">
             <nav className="flex items-center gap-2 text-sm">
-              <Link to="/help" className="text-gray-400 hover:text-gold-400">Help Center</Link>
-              <span className="text-gray-600">/</span>
-              <span className="text-gold-400">HELP CENTER</span>
+              <span className="text-gold-400">Base de Conhecimento</span>
             </nav>
             <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2">
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search articles"
+                placeholder="Pesquisar artigos"
                 className="w-64 bg-zinc-900 border-zinc-700 text-white placeholder:text-gray-500"
               />
               <Button type="submit" size="icon" variant="ghost" className="text-gray-400">
@@ -550,9 +589,15 @@ const KnowledgeBasePage = () => {
             </form>
           </div>
 
+          {/* Page Title */}
+          <div className="mb-12">
+            <h1 className="text-3xl font-light text-white mb-2">Base de Conhecimento</h1>
+            <p className="text-gray-400">Encontre respostas para as suas dúvidas</p>
+          </div>
+
           {/* Search Results */}
           {searchResults.length > 0 && (
-            <div className="mb-8 p-6 bg-zinc-900/30 rounded-lg">
+            <div className="mb-8 p-6 bg-zinc-900/30 border border-zinc-800 rounded-lg">
               <h2 className="text-white font-medium mb-4">Resultados da Pesquisa</h2>
               <div className="space-y-3">
                 {searchResults.map(article => (
@@ -577,53 +622,61 @@ const KnowledgeBasePage = () => {
             </div>
           )}
 
-          {/* Grid of Categories */}
+          {/* Grid of Categories - Clickable (no articles shown) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mainCategories.map(category => {
-              const Icon = getCategoryIcon(category.slug);
-              const catArticles = categoryArticles[category.id] || [];
+              const Icon = getCategoryIcon(category.slug, category.icon);
+              const catSubcategories = categories.filter(c => c.parent_id === category.id);
               
               return (
-                <div key={category.id} className="bg-zinc-900/30 rounded-lg p-6">
+                <Link
+                  key={category.id}
+                  to={`/help/${category.slug}`}
+                  className="group bg-zinc-900/30 border border-zinc-800/50 hover:border-gold-500/30 rounded-lg p-6 transition-all"
+                >
                   {/* Category Header */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
-                    <div className="flex items-center gap-3">
-                      <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
-                      <div>
-                        <h3 className="text-white font-medium uppercase">{category.name}</h3>
-                        <p className="text-xs text-gray-500 uppercase">{category.name}</p>
-                      </div>
-                    </div>
-                    <MoreHorizontal size={20} className="text-gray-600" />
-                  </div>
-
-                  {/* Articles List */}
-                  <div className="space-y-3">
-                    {catArticles.slice(0, 5).map(article => (
-                      <Link
-                        key={article.id}
-                        to={`/help/article/${article.slug}`}
-                        className="flex items-start gap-2 text-sm text-gray-300 hover:text-gold-400 transition-colors"
-                      >
-                        <FileText size={14} className="mt-0.5 flex-shrink-0 text-gray-500" />
-                        <span>{article.title}</span>
-                      </Link>
-                    ))}
-                    {catArticles.length === 0 && (
-                      <p className="text-sm text-gray-500">Nenhum artigo ainda.</p>
-                    )}
-                  </div>
-
-                  {/* More Link */}
-                  {(catArticles.length > 5 || category.article_count > 5) && (
-                    <Link 
-                      to={`/help/${category.slug}`}
-                      className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300 mt-4"
+                  <div className="flex items-center gap-4 mb-4">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
+                      style={{ backgroundColor: `${category.color || '#D4AF37'}20` }}
                     >
-                      more <ChevronRight size={14} />
-                    </Link>
+                      <Icon size={24} style={{ color: category.color || '#D4AF37' }} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg text-white group-hover:text-gold-400 transition-colors">
+                        {category.name}
+                      </h3>
+                      {category.description && (
+                        <p className="text-sm text-gray-500 line-clamp-1">{category.description}</p>
+                      )}
+                    </div>
+                    <ChevronRight size={20} className="text-gray-600 group-hover:text-gold-400 transition-colors" />
+                  </div>
+
+                  {/* Subcategories Preview */}
+                  {catSubcategories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-800">
+                      {catSubcategories.slice(0, 4).map(sub => (
+                        <span 
+                          key={sub.id}
+                          className="text-xs px-2 py-1 bg-zinc-800/50 text-gray-400 rounded"
+                        >
+                          {sub.name}
+                        </span>
+                      ))}
+                      {catSubcategories.length > 4 && (
+                        <span className="text-xs px-2 py-1 text-gray-500">
+                          +{catSubcategories.length - 4} mais
+                        </span>
+                      )}
+                    </div>
                   )}
-                </div>
+
+                  {/* Article count */}
+                  <div className="mt-4 text-xs text-gray-500">
+                    {category.article_count || 0} artigos
+                  </div>
+                </Link>
               );
             })}
           </div>

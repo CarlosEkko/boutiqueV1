@@ -50,11 +50,12 @@ const AdminKnowledgeBase = () => {
   const [articles, setArticles] = useState([]);
   const [editingArticle, setEditingArticle] = useState(null);
   const [articleForm, setArticleForm] = useState({
-    title: '', slug: '', summary: '', content: '', category_id: '', 
+    title: '', slug: '', summary: '', content: '', category_id: '', subcategory_id: '',
     tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
   });
   const [articleFilter, setArticleFilter] = useState({ status: '', category_id: '', search: '' });
   const [tagInput, setTagInput] = useState('');
+  const [selectedMainCategory, setSelectedMainCategory] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -235,18 +236,58 @@ const AdminKnowledgeBase = () => {
       });
       const article = response.data;
       setEditingArticle(id);
-      setArticleForm({
-        title: article.title,
-        slug: article.slug,
-        summary: article.summary || '',
-        content: article.content,
-        category_id: article.category_id,
-        tags: article.tags || [],
-        status: article.status,
-        is_featured: article.is_featured || false,
-        order: article.order || 0,
-        cover_image: article.cover_image || ''
-      });
+      
+      // Find the main category for this article
+      const articleCat = categories.find(c => c.id === article.category_id);
+      if (articleCat) {
+        // If it's a subcategory, find its parent
+        if (articleCat.parent_id) {
+          setSelectedMainCategory(articleCat.parent_id);
+          setArticleForm({
+            title: article.title,
+            slug: article.slug,
+            summary: article.summary || '',
+            content: article.content,
+            category_id: article.category_id,
+            subcategory_id: article.category_id,
+            tags: article.tags || [],
+            status: article.status,
+            is_featured: article.is_featured || false,
+            order: article.order || 0,
+            cover_image: article.cover_image || ''
+          });
+        } else {
+          // It's a main category
+          setSelectedMainCategory(article.category_id);
+          setArticleForm({
+            title: article.title,
+            slug: article.slug,
+            summary: article.summary || '',
+            content: article.content,
+            category_id: article.category_id,
+            subcategory_id: '',
+            tags: article.tags || [],
+            status: article.status,
+            is_featured: article.is_featured || false,
+            order: article.order || 0,
+            cover_image: article.cover_image || ''
+          });
+        }
+      } else {
+        setArticleForm({
+          title: article.title,
+          slug: article.slug,
+          summary: article.summary || '',
+          content: article.content,
+          category_id: article.category_id,
+          subcategory_id: '',
+          tags: article.tags || [],
+          status: article.status,
+          is_featured: article.is_featured || false,
+          order: article.order || 0,
+          cover_image: article.cover_image || ''
+        });
+      }
     } catch (err) {
       toast.error('Erro ao carregar artigo');
     }
@@ -266,8 +307,9 @@ const AdminKnowledgeBase = () => {
         toast.success('Artigo criado!');
       }
       setEditingArticle(null);
+      setSelectedMainCategory('');
       setArticleForm({
-        title: '', slug: '', summary: '', content: '', category_id: '',
+        title: '', slug: '', summary: '', content: '', category_id: '', subcategory_id: '',
         tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
       });
       fetchArticles();
@@ -691,29 +733,53 @@ const AdminKnowledgeBase = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Categoria</label>
                   <select
-                    value={articleForm.category_id}
-                    onChange={(e) => setArticleForm({ ...articleForm, category_id: e.target.value })}
+                    value={selectedMainCategory}
+                    onChange={(e) => {
+                      setSelectedMainCategory(e.target.value);
+                      // If selecting a main category directly, set it as the category_id
+                      const hasSubcategories = categories.some(c => c.parent_id === e.target.value);
+                      if (!hasSubcategories && e.target.value) {
+                        setArticleForm({ ...articleForm, category_id: e.target.value, subcategory_id: '' });
+                      } else {
+                        setArticleForm({ ...articleForm, category_id: '', subcategory_id: '' });
+                      }
+                    }}
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
                   >
                     <option value="">Selecionar...</option>
-                    {/* Show main categories with their subcategories */}
-                    {categories.filter(cat => !cat.parent_id).map(mainCat => (
-                      <React.Fragment key={mainCat.id}>
-                        <option value={mainCat.id} className="font-bold">
-                          {mainCat.name}
-                        </option>
-                        {/* Show subcategories indented */}
-                        {categories.filter(sub => sub.parent_id === mainCat.id).map(subCat => (
-                          <option key={subCat.id} value={subCat.id}>
-                            &nbsp;&nbsp;&nbsp;↳ {subCat.name}
-                          </option>
-                        ))}
-                      </React.Fragment>
+                    {categories.filter(cat => !cat.parent_id).map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Subcategoria</label>
+                  <select
+                    value={articleForm.subcategory_id || articleForm.category_id}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setArticleForm({ ...articleForm, category_id: e.target.value, subcategory_id: e.target.value });
+                      } else {
+                        // No subcategory selected, use main category
+                        setArticleForm({ ...articleForm, category_id: selectedMainCategory, subcategory_id: '' });
+                      }
+                    }}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
+                    disabled={!selectedMainCategory}
+                  >
+                    <option value="">
+                      {!selectedMainCategory ? 'Selecione categoria primeiro' : 'Nenhuma (usar categoria principal)'}
+                    </option>
+                    {selectedMainCategory && categories
+                      .filter(cat => cat.parent_id === selectedMainCategory)
+                      .map(subCat => (
+                        <option key={subCat.id} value={subCat.id}>{subCat.name}</option>
+                      ))
+                    }
                   </select>
                 </div>
                 <div>
