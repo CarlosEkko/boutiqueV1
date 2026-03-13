@@ -236,6 +236,88 @@ async def get_user_limits(tier: str) -> UserTradingLimits:
     return UserTradingLimits(**limits)
 
 
+async def get_bulk_crypto_prices(symbols: list) -> dict:
+    """Get prices for multiple cryptocurrencies in one API call"""
+    if not symbols:
+        return {}
+    
+    # Check cache first - get all cached prices
+    cache_valid_time = datetime.now(timezone.utc) - timedelta(seconds=60)
+    cached_prices = {}
+    symbols_to_fetch = []
+    
+    cached_cursor = db.crypto_prices_cache.find(
+        {"symbol": {"$in": symbols}},
+        {"_id": 0}
+    )
+    async for cached in cached_cursor:
+        cache_time = cached.get("updated_at")
+        if isinstance(cache_time, str):
+            cache_time = datetime.fromisoformat(cache_time)
+        if cache_time and cache_time > cache_valid_time:
+            cached_prices[cached["symbol"]] = cached
+        else:
+            symbols_to_fetch.append(cached["symbol"])
+    
+    # Add symbols not in cache at all
+    for symbol in symbols:
+        if symbol not in cached_prices and symbol not in symbols_to_fetch:
+            symbols_to_fetch.append(symbol)
+    
+    # If all prices are cached, return
+    if not symbols_to_fetch:
+        return cached_prices
+    
+    # Fetch missing prices from CoinMarketCap
+    if COINMARKETCAP_API_KEY:
+        try:
+            headers = {
+                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
+                "Accept": "application/json"
+            }
+            
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(
+                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
+                    params={"symbol": ",".join(symbols_to_fetch), "convert": "USD"},
+                    headers=headers
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                for symbol in symbols_to_fetch:
+                    crypto_data = data.get("data", {}).get(symbol)
+                    if crypto_data:
+                        # Handle case where symbol maps to multiple coins
+                        if isinstance(crypto_data, list):
+                            crypto_data = crypto_data[0]
+                        
+                        quote = crypto_data.get("quote", {}).get("USD", {})
+                        
+                        price_info = {
+                            "symbol": symbol,
+                            "name": crypto_data.get("name"),
+                            "price_usd": quote.get("price", 0),
+                            "change_24h": quote.get("percent_change_24h", 0),
+                            "market_cap": quote.get("market_cap"),
+                            "volume_24h": quote.get("volume_24h"),
+                            "updated_at": datetime.now(timezone.utc).isoformat()
+                        }
+                        
+                        cached_prices[symbol] = price_info
+                        
+                        # Update cache
+                        await db.crypto_prices_cache.update_one(
+                            {"symbol": symbol},
+                            {"$set": price_info},
+                            upsert=True
+                        )
+        except Exception as e:
+            print(f"Error fetching bulk prices: {e}")
+    
+    return cached_prices
+
+
 async def get_crypto_price(symbol: str) -> dict:
     """Get current crypto price from cache or CoinMarketCap"""
     # Check cache first
