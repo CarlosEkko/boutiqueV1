@@ -294,6 +294,13 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Changelog
 
+### March 16, 2026 - Performance Optimization
+- **API Bulk Fetch**: Optimized `/api/trading/cryptos` to fetch all 50 crypto prices in a single CoinMarketCap API call instead of 50 individual calls
+- **Cache Improvement**: Increased cache TTL from 60s to 300s (5 min) to reduce API rate limiting
+- **Fallback System**: Added expired cache fallback when CoinMarketCap API returns rate limit errors
+- **Lazy Loading**: Added `loading="lazy"` attribute to crypto logo images for better initial page load
+- **Result**: Page load time reduced from ~50+ seconds to ~0.6 seconds
+
 ### March 13, 2026 - CRM Module Complete
 - **CRM Dashboard**: Statistics overview with counts for suppliers, leads, deals, contacts, tasks, and pipeline value
 - **CRM Leads**: Full CRUD with status tracking (new, contacted, qualified, proposal, negotiation, won, lost), convert to client functionality

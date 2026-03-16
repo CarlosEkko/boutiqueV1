@@ -535,7 +535,7 @@ const WalletsPage = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center overflow-hidden">
                             {logo ? (
-                              <img src={logo} alt={wallet.asset_id} className="w-6 h-6 rounded-full" />
+                              <img src={logo} alt={wallet.asset_id} className="w-6 h-6 rounded-full" loading="lazy" />
                             ) : (
                               <span className="text-gold-400 text-xs font-bold">{wallet.asset_id?.slice(0, 2)}</span>
                             )}
@@ -586,6 +586,7 @@ const WalletsPage = () => {
                       src={cryptoPrices[selectedWallet.asset_id]?.logo} 
                       alt={selectedWallet.asset_id} 
                       className="w-10 h-10 rounded-full"
+                      loading="eager"
                     />
                   ) : (
                     <span className="text-gold-400 font-bold">{selectedWallet.asset_id?.slice(0, 2)}</span>

@@ -359,6 +359,7 @@ const ExchangePage = () => {
                 src={value.logo} 
                 alt={value.symbol} 
                 className="w-6 h-6 rounded-full"
+                loading="eager"
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             )}
@@ -393,6 +394,7 @@ const ExchangePage = () => {
                       src={crypto.logo} 
                       alt={crypto.symbol} 
                       className="w-6 h-6 rounded-full"
+                      loading="lazy"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )}

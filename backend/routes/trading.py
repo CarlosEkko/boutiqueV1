@@ -241,9 +241,13 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
     if not symbols:
         return {}
     
+    # Cache valid for 5 minutes (reduced API calls)
+    CACHE_TTL_SECONDS = 300
+    
     # Check cache first - get all cached prices
-    cache_valid_time = datetime.now(timezone.utc) - timedelta(seconds=60)
+    cache_valid_time = datetime.now(timezone.utc) - timedelta(seconds=CACHE_TTL_SECONDS)
     cached_prices = {}
+    expired_prices = {}  # Keep expired prices as fallback
     symbols_to_fetch = []
     
     cached_cursor = db.crypto_prices_cache.find(
@@ -257,6 +261,8 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
         if cache_time and cache_time > cache_valid_time:
             cached_prices[cached["symbol"]] = cached
         else:
+            # Keep expired cache as fallback
+            expired_prices[cached["symbol"]] = cached
             symbols_to_fetch.append(cached["symbol"])
     
     # Add symbols not in cache at all
@@ -314,6 +320,15 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
                         )
         except Exception as e:
             print(f"Error fetching bulk prices: {e}")
+            # Use expired prices as fallback when API fails
+            for symbol in symbols_to_fetch:
+                if symbol in expired_prices and symbol not in cached_prices:
+                    cached_prices[symbol] = expired_prices[symbol]
+    
+    # For symbols without any data, use expired cache
+    for symbol in symbols_to_fetch:
+        if symbol not in cached_prices and symbol in expired_prices:
+            cached_prices[symbol] = expired_prices[symbol]
     
     return cached_prices
 
@@ -1503,29 +1518,27 @@ async def get_available_cryptos(currency: str = "USD"):
         # Use the full list of 50 default cryptos
         cryptos = [c.copy() for c in DEFAULT_CRYPTOS]
     
-    # Fetch current prices and convert to requested currency
+    # Get all symbols to fetch prices for
+    symbols = [crypto["symbol"] for crypto in cryptos]
+    
+    # Fetch all prices in one API call (optimized)
+    all_prices = await get_bulk_crypto_prices(symbols)
+    
+    # Apply prices to cryptos
     for crypto in cryptos:
-        try:
-            price_info = await get_crypto_price(crypto["symbol"])
-            price_usd = price_info.get("price_usd", 0)
-            market_cap_usd = price_info.get("market_cap")
-            
-            crypto["price_usd"] = price_usd
-            crypto["price"] = convert_price(price_usd, currency, rates)
-            crypto["currency"] = currency
-            crypto["change_24h"] = price_info.get("change_24h", 0)
-            crypto["market_cap"] = convert_price(market_cap_usd, currency, rates) if market_cap_usd else None
-            
-            # Add logo URL
-            if crypto.get("cmc_id"):
-                crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
-        except Exception:
-            crypto["price_usd"] = 0
-            crypto["price"] = 0
-            crypto["currency"] = currency
-            crypto["change_24h"] = 0
-            if crypto.get("cmc_id"):
-                crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
+        price_info = all_prices.get(crypto["symbol"], {})
+        price_usd = price_info.get("price_usd") or 0
+        market_cap_usd = price_info.get("market_cap")
+        
+        crypto["price_usd"] = price_usd
+        crypto["price"] = convert_price(price_usd, currency, rates) if price_usd else 0
+        crypto["currency"] = currency
+        crypto["change_24h"] = price_info.get("change_24h") or 0
+        crypto["market_cap"] = convert_price(market_cap_usd, currency, rates) if market_cap_usd else None
+        
+        # Add logo URL
+        if crypto.get("cmc_id"):
+            crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
     
     return cryptos
 
