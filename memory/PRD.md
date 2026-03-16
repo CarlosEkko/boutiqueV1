@@ -364,9 +364,15 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ### March 16, 2026 - UI/UX Improvements
 - **Network Selector**: Changed from buttons to dropdown for selecting crypto networks (USDT on ERC20/TRC20/etc.)
+- **Network Logos**: Added CoinMarketCap logos for each network (ETH for ERC20, TRX for TRC20, etc.)
 - **Wallet Modal**: Added clear "Depositar" and "Levantar" buttons for crypto wallets
+- **Wallet Modal 4 Buttons**: Added "Comprar" and "Vender" buttons in addition to Depositar/Levantar
+  - Layout: 2x2 grid - Depositar/Levantar (row 1), Comprar/Vender (row 2)
 - **Withdrawal Page**: Added option for manual address entry OR whitelist selection (not just whitelist)
 - **Cancel Button**: Fixed text visibility on dark backgrounds
+- **Crypto Deposit Page**: Network selector with dropdown and logo buttons for multi-network assets
+- **Crypto Withdrawal Page**: Network selector with dropdown and logo buttons for multi-network assets
+- **Fireblocks Fix**: Corrected USDT TRC20 asset ID from `USDT_TRX` to `TRX_USDT_S2UZ`
 
 ### March 16, 2026 - Referral & Admission Fee System
 - **NEW: Referral System**: Staff can reference clients and earn commission on their transactions
