@@ -3,18 +3,63 @@ import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
+import { PieChart as RechartsPieChart, ResponsiveContainer, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { 
   Wallet, 
   TrendingUp, 
-  PieChart, 
   Clock,
   AlertCircle,
   CheckCircle,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  PieChart as PieChartIcon
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// CoinMarketCap logo URLs based on crypto symbol
+const getCryptoLogo = (symbol) => {
+  const cmcIds = {
+    'BTC': 1, 'ETH': 1027, 'USDT': 825, 'BNB': 1839, 'SOL': 5426,
+    'USDC': 3408, 'XRP': 52, 'STETH': 8085, 'DOGE': 74, 'ADA': 2010,
+    'TRX': 1958, 'AVAX': 5805, 'WBTC': 3717, 'LINK': 1975, 'TON': 11419,
+    'SUI': 20947, 'SHIB': 5994, 'HBAR': 4642, 'XLM': 512, 'BCH': 1831,
+    'DOT': 6636, 'LEO': 3957, 'LTC': 2, 'UNI': 7083, 'NEAR': 6535,
+    'ATOM': 3794, 'MATIC': 3890, 'POL': 3890, 'APT': 21794, 'PEPE': 24478,
+    'ICP': 8916, 'ETC': 1321, 'RENDER': 5690, 'CRO': 3635, 'FET': 3773,
+    'TAO': 22974, 'VET': 3077, 'MNT': 27075, 'ARB': 11841, 'ALGO': 4030,
+    'OP': 11840, 'FIL': 2280, 'KAS': 20396, 'AAVE': 7278, 'MKR': 1518,
+    'STX': 4847, 'RUNE': 4157, 'INJ': 7226, 'IMX': 10603, 'GRT': 6719,
+    'FTM': 3513, 'XTZ': 2011, 'FLOW': 4558, 'NEO': 1376
+  };
+  const cmcId = cmcIds[symbol?.toUpperCase()];
+  if (cmcId) {
+    return `https://s2.coinmarketcap.com/static/img/coins/64x64/${cmcId}.png`;
+  }
+  return null;
+};
+
+// Fiat currency flags (using flag CDN for better compatibility)
+const fiatFlags = {
+  'EUR': 'https://flagcdn.com/w40/eu.png',
+  'USD': 'https://flagcdn.com/w40/us.png',
+  'AED': 'https://flagcdn.com/w40/ae.png',
+  'BRL': 'https://flagcdn.com/w40/br.png'
+};
+
+// Colors for pie chart
+const CHART_COLORS = [
+  '#F7931A', // Bitcoin orange
+  '#627EEA', // Ethereum blue
+  '#26A17B', // Tether green
+  '#2775CA', // USDC blue
+  '#9945FF', // Solana purple
+  '#D4AF37', // Gold for fiat
+  '#E84142', // Red
+  '#F0B90B', // Binance yellow
+  '#00D395', // Mint
+  '#FF6B6B', // Coral
+];
 
 const DashboardOverview = () => {
   const { user, token } = useAuth();
@@ -141,7 +186,7 @@ const DashboardOverview = () => {
                 </p>
               </div>
               <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
-                <PieChart className="text-gold-400" size={24} />
+                <PieChartIcon className="text-gold-400" size={24} />
               </div>
             </div>
           </CardContent>
@@ -205,21 +250,94 @@ const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             {overview?.wallet_allocation?.length > 0 ? (
-              <div className="space-y-4">
-                {overview.wallet_allocation.map((asset, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-400 font-medium">
-                        {asset.asset?.slice(0, 2)}
+              <div className="space-y-6">
+                {/* Pie Chart */}
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={overview.wallet_allocation.map((asset, index) => ({
+                          name: asset.asset,
+                          value: asset.value_usd,
+                          color: CHART_COLORS[index % CHART_COLORS.length]
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {overview.wallet_allocation.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value) => formatCurrency(value)}
+                        contentStyle={{ 
+                          backgroundColor: '#18181b', 
+                          border: '1px solid #3f3f46',
+                          borderRadius: '8px',
+                          color: '#fff'
+                        }}
+                      />
+                      <Legend 
+                        formatter={(value) => <span className="text-gray-300 text-sm">{value}</span>}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Asset List with Logos */}
+                <div className="space-y-3 border-t border-gold-800/20 pt-4">
+                  {overview.wallet_allocation.map((asset, index) => {
+                    const isFiat = ['EUR', 'USD', 'AED', 'BRL'].includes(asset.asset);
+                    const logo = !isFiat ? getCryptoLogo(asset.asset) : null;
+                    const percentage = ((asset.value_usd / overview.total_portfolio_value) * 100).toFixed(1);
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
+                            style={{ backgroundColor: `${CHART_COLORS[index % CHART_COLORS.length]}20` }}
+                          >
+                            {isFiat ? (
+                              <img 
+                                src={fiatFlags[asset.asset]} 
+                                alt={asset.asset} 
+                                className="w-6 h-6 rounded-sm object-cover"
+                              />
+                            ) : logo ? (
+                              <img 
+                                src={logo} 
+                                alt={asset.asset} 
+                                className="w-7 h-7 rounded-full"
+                                loading="lazy"
+                                onError={(e) => { 
+                                  e.target.style.display = 'none'; 
+                                  e.target.parentElement.innerHTML = `<span class="text-gold-400 font-medium text-sm">${asset.asset?.slice(0, 2)}</span>`;
+                                }}
+                              />
+                            ) : (
+                              <span className="text-gold-400 font-medium text-sm">{asset.asset?.slice(0, 2)}</span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">{asset.asset}</p>
+                            <p className="text-sm text-gray-400">{asset.balance?.toFixed(asset.balance < 1 ? 6 : 2)}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white">{formatCurrency(asset.value_usd)}</p>
+                          <p className="text-sm" style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}>
+                            {percentage}%
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white">{asset.asset}</p>
-                        <p className="text-sm text-gray-400">{asset.balance?.toFixed(6)}</p>
-                      </div>
-                    </div>
-                    <p className="text-white">{formatCurrency(asset.value_usd)}</p>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">

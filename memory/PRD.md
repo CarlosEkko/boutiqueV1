@@ -294,6 +294,13 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Changelog
 
+### March 16, 2026 - Dashboard Portfolio Allocation Enhancement
+- **Pie Chart Added**: Donut chart visualization showing portfolio distribution using recharts
+- **Crypto Logos**: Added official CoinMarketCap logos for all cryptocurrencies (BTC, ETH, USDT, USDC, SOL, etc.)
+- **Fiat Flags**: Added flag images for fiat currencies (EUR, USD, AED, BRL) using flagcdn.com
+- **Percentages**: Each asset now shows its percentage of the total portfolio
+- **Color Coding**: Matching colors between chart segments and list items
+
 ### March 16, 2026 - Performance Optimization
 - **API Bulk Fetch**: Optimized `/api/trading/cryptos` to fetch all 50 crypto prices in a single CoinMarketCap API call instead of 50 individual calls
 - **Cache Improvement**: Increased cache TTL from 60s to 300s (5 min) to reduce API rate limiting
