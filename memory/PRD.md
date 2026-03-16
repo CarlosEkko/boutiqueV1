@@ -375,13 +375,24 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - Withdrawal fee commission (configurable %, default 5%)
   - Minimum payout threshold configurable
   - Commission tracking and payout management
-- **NEW: Admission Fee**: Annual membership fee for new clients
-  - Configurable amounts per currency (EUR, USD, AED, BRL)
+- **NEW: Admission Fee by Tier**: Annual membership fee for new clients
+  - Separate amounts for Standard/Premium/VIP tiers
+  - Configurable amounts per currency (EUR, USD, AED, BRL) x 3 tiers = 12 fields
   - Can be enabled/disabled globally
   - Grace period configurable
   - Admin approval workflow for payments
+- **NEW: 2FA Authentication**: Two-factor authentication system
+  - TOTP-based 2FA with pyotp library
+  - QR code generation for authenticator apps
+  - Setup, verify, and disable endpoints
+  - Integration with onboarding flow
+- **NEW: Onboarding Page**: Client onboarding wizard
+  - Step 1: Admission fee payment request
+  - Step 2: 2FA configuration (optional but recommended)
+  - Step 3: Completion redirect to dashboard
+- **Fireblocks Fix**: Corrected USDT TRC20 asset ID from `USDT_TRX` to `TRX_USDT_S2UZ`
 - **Admin Pages**: 
-  - `/dashboard/admin/settings` - Platform configuration (fees, admission)
+  - `/dashboard/admin/settings` - Platform configuration (fees by tier, admission)
   - `/dashboard/admin/referrals` - Referral management, transfer, commission payouts
 - **API Endpoints**:
   - `GET/PUT /api/referrals/settings` - Fee configuration
@@ -391,3 +402,6 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - `POST /api/referrals/{id}/transfer` - Transfer client to another staff
   - `POST /api/referrals/commission/record` - Record commission (internal)
   - `GET /api/referrals/admission-fee/status/{user_id}` - Check admission status
+  - `POST/GET /api/auth/2fa/setup` - 2FA setup with QR code
+  - `POST /api/auth/2fa/verify` - Verify TOTP code
+  - `GET /api/auth/2fa/status` - Check 2FA status
