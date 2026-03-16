@@ -1,598 +1,511 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
 import { 
-  ArrowUpRight,
-  Copy,
-  Wallet,
-  RefreshCw,
-  AlertCircle,
+  Send, 
+  Wallet, 
+  AlertTriangle, 
   CheckCircle,
-  Clock,
-  XCircle,
-  ChevronDown,
-  ChevronUp,
-  Search
+  ArrowRight,
+  Info,
+  Shield,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// CoinMarketCap logo URLs
+const getCryptoLogo = (symbol) => {
+  const cmcIds = {
+    'BTC': 1, 'ETH': 1027, 'USDT': 825, 'USDC': 3408, 'SOL': 5426,
+    'XRP': 52, 'BNB': 1839, 'ADA': 2010, 'DOGE': 74, 'LTC': 2,
+    'DOT': 6636, 'AVAX': 5805, 'MATIC': 3890, 'LINK': 1975
+  };
+  const cmcId = cmcIds[symbol?.toUpperCase()];
+  return cmcId ? `https://s2.coinmarketcap.com/static/img/coins/64x64/${cmcId}.png` : null;
+};
+
 const CryptoWithdrawalPage = () => {
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState('new');
-  const [loading, setLoading] = useState(false);
-  const [balances, setBalances] = useState([]);
-  const [withdrawals, setWithdrawals] = useState([]);
+  const { formatCurrency } = useCurrency();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [wallets, setWallets] = useState([]);
+  const [whitelist, setWhitelist] = useState([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [cryptoPrices, setCryptoPrices] = useState({});
-  const [expandedWithdrawal, setExpandedWithdrawal] = useState(null);
-  const [vaultStatus, setVaultStatus] = useState(null);
+  const [step, setStep] = useState(1); // 1: Select asset, 2: Enter details, 3: Confirm
   
   // Form state
   const [amount, setAmount] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
+  const [selectedWhitelistEntry, setSelectedWhitelistEntry] = useState(null);
   const [note, setNote] = useState('');
-  const [fees, setFees] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  
+  // Fee estimate (mock - would come from backend)
+  const networkFee = 0.0001;
+  const platformFee = 0.001; // 0.1%
 
   useEffect(() => {
-    fetchVaultStatus();
-    fetchBalances();
-    fetchWithdrawals();
-    fetchCryptoPrices();
+    fetchData();
   }, [token]);
 
-  const fetchVaultStatus = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/crypto-wallets/my-vault`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVaultStatus(response.data);
+      setLoading(true);
+      const [walletsRes, whitelistRes, withdrawalsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/dashboard/wallets`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/crypto-wallets/whitelist`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/crypto-wallets/withdrawals`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      
+      // Filter for crypto wallets with balance
+      const cryptoWallets = walletsRes.data.filter(w => 
+        w.asset_type === 'crypto' && w.balance > 0
+      );
+      setWallets(cryptoWallets);
+      setWhitelist(whitelistRes.data.whitelist || []);
+      setPendingWithdrawals(withdrawalsRes.data.filter(w => 
+        ['pending', 'approved', 'processing'].includes(w.status)
+      ));
     } catch (err) {
-      console.error('Failed to fetch vault status', err);
-    }
-  };
-
-  const fetchBalances = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/crypto-wallets/balances`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setBalances(response.data.balances || []);
-    } catch (err) {
-      console.error('Failed to fetch balances', err);
-    }
-  };
-
-  const fetchWithdrawals = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_URL}/api/crypto-wallets/withdrawals`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setWithdrawals(response.data || []);
-    } catch (err) {
-      console.error('Failed to fetch withdrawals', err);
+      toast.error('Falha ao carregar dados');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCryptoPrices = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=USD`);
-      const pricesMap = {};
-      response.data.forEach(c => {
-        pricesMap[c.symbol] = {
-          price: c.price_usd,
-          logo: c.logo,
-          name: c.name
-        };
-      });
-      setCryptoPrices(pricesMap);
-    } catch (err) {
-      console.error('Failed to fetch prices', err);
-    }
-  };
-
-  const fetchFees = async (symbol) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/trading/fees?crypto=${symbol}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFees(response.data);
-    } catch (err) {
-      console.error('Failed to fetch fees', err);
-    }
-  };
-
-  const handleAssetSelect = (asset) => {
-    setSelectedAsset(asset);
-    setAmount('');
-    setDestinationAddress('');
-    fetchFees(asset.asset);
+  const getWhitelistForAsset = (asset) => {
+    return whitelist.filter(w => w.asset === asset && w.is_active);
   };
 
   const calculateFees = () => {
-    if (!fees || !amount || isNaN(parseFloat(amount))) return null;
-    
-    const amountNum = parseFloat(amount);
-    const withdrawalFee = amountNum * (fees.withdrawal_fee_percent || 0.5) / 100;
-    const networkFee = fees.network_fee || 0;
-    const netAmount = amountNum - withdrawalFee - networkFee;
-    
+    const amountNum = parseFloat(amount) || 0;
+    const fee = amountNum * platformFee;
+    const netAmount = amountNum - fee - networkFee;
     return {
       amount: amountNum,
-      withdrawalFee,
+      platformFee: fee,
       networkFee,
-      netAmount: Math.max(0, netAmount)
+      netAmount: netAmount > 0 ? netAmount : 0
     };
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSelectAsset = (wallet) => {
+    setSelectedAsset(wallet);
+    setStep(2);
+    setAmount('');
+    setDestinationAddress('');
+    setSelectedWhitelistEntry(null);
+    setNote('');
+  };
+
+  const handleSelectWhitelistAddress = (entry) => {
+    setSelectedWhitelistEntry(entry);
+    setDestinationAddress(entry.address);
+  };
+
+  const handleMaxAmount = () => {
+    if (selectedAsset) {
+      const maxAmount = selectedAsset.balance - networkFee - (selectedAsset.balance * platformFee);
+      setAmount(maxAmount > 0 ? maxAmount.toFixed(8) : '0');
+    }
+  };
+
+  const handleContinue = () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('Insira um valor válido');
+      return;
+    }
     
-    if (!selectedAsset || !amount || !destinationAddress) {
-      toast.error('Por favor preencha todos os campos');
-      return;
-    }
-
-    const amountNum = parseFloat(amount);
-    if (amountNum <= 0) {
-      toast.error('Valor inválido');
-      return;
-    }
-
-    if (amountNum > selectedAsset.available) {
+    if (parseFloat(amount) > selectedAsset.balance) {
       toast.error('Saldo insuficiente');
       return;
     }
+    
+    if (!destinationAddress) {
+      toast.error('Selecione um endereço de destino');
+      return;
+    }
+    
+    setStep(3);
+  };
 
+  const handleSubmitWithdrawal = async () => {
     setSubmitting(true);
+    
     try {
-      await axios.post(
-        `${API_URL}/api/crypto-wallets/withdraw`,
-        {
-          asset: selectedAsset.asset,
-          amount: amountNum,
-          destination_address: destinationAddress,
-          note: note || undefined
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await axios.post(`${API_URL}/api/crypto-wallets/withdraw`, {
+        asset: selectedAsset.asset_id,
+        amount: parseFloat(amount),
+        destination_address: destinationAddress,
+        note: note || undefined
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      toast.success('Pedido de levantamento submetido! Aguardando aprovação.');
-      setAmount('');
-      setDestinationAddress('');
-      setNote('');
+      toast.success('Solicitação de levantamento enviada!');
+      setStep(1);
       setSelectedAsset(null);
-      fetchWithdrawals();
-      setActiveTab('history');
+      fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao processar pedido');
+      toast.error(err.response?.data?.detail || 'Falha ao processar levantamento');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const cancelWithdrawal = async (withdrawalId) => {
-    try {
-      await axios.post(
-        `${API_URL}/api/crypto-wallets/withdrawals/${withdrawalId}/cancel`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Levantamento cancelado');
-      fetchWithdrawals();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao cancelar');
-    }
+  const handleCancel = () => {
+    setStep(1);
+    setSelectedAsset(null);
+    setAmount('');
+    setDestinationAddress('');
+    setSelectedWhitelistEntry(null);
+    setNote('');
   };
 
-  const getStatusBadge = (status) => {
-    const styles = {
-      pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: Clock, label: 'Pendente' },
-      processing: { bg: 'bg-blue-500/20', text: 'text-blue-400', icon: RefreshCw, label: 'Processando' },
-      completed: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: CheckCircle, label: 'Concluído' },
-      failed: { bg: 'bg-red-500/20', text: 'text-red-400', icon: XCircle, label: 'Falhado' },
-      rejected: { bg: 'bg-red-500/20', text: 'text-red-400', icon: XCircle, label: 'Rejeitado' },
-      cancelled: { bg: 'bg-gray-500/20', text: 'text-gray-400', icon: XCircle, label: 'Cancelado' }
-    };
-    const style = styles[status] || styles.pending;
-    const Icon = style.icon;
-    
+  const fees = calculateFees();
+
+  if (loading) {
     return (
-      <Badge className={`${style.bg} ${style.text} border-0`}>
-        <Icon size={12} className="mr-1" />
-        {style.label}
-      </Badge>
-    );
-  };
-
-  const feeCalc = calculateFees();
-
-  // Check if vault is initialized
-  if (vaultStatus && !vaultStatus.has_vault) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Levantamento Crypto</h1>
-          <p className="text-gray-400">Retire criptomoedas para carteira externa</p>
-        </div>
-
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardContent className="p-8 text-center">
-            <Wallet size={48} className="text-gold-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">
-              Carteira Crypto Não Inicializada
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Inicialize a sua carteira crypto para poder fazer levantamentos.
-            </p>
-            <Button
-              onClick={async () => {
-                try {
-                  await axios.post(
-                    `${API_URL}/api/crypto-wallets/initialize`,
-                    {},
-                    { headers: { Authorization: `Bearer ${token}` } }
-                  );
-                  toast.success('Carteira inicializada!');
-                  fetchVaultStatus();
-                  fetchBalances();
-                } catch (err) {
-                  toast.error(err.response?.data?.detail || 'Erro ao inicializar');
-                }
-              }}
-              className="bg-gold-500 hover:bg-gold-600 text-black"
-            >
-              Inicializar Carteira
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-10 h-10 border-2 border-gold-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Levantamento Crypto</h1>
-        <p className="text-gray-400">Retire criptomoedas para carteira externa</p>
+        <h1 className="text-3xl font-light text-white">Levantamento Crypto</h1>
+        <p className="text-gray-400 mt-1">Envie criptomoedas para uma carteira externa</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <Button
-          variant={activeTab === 'new' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('new')}
-          className={activeTab === 'new' ? 'bg-emerald-500' : 'border-zinc-700'}
-        >
-          Novo Levantamento
-        </Button>
-        <Button
-          variant={activeTab === 'history' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('history')}
-          className={activeTab === 'history' ? 'bg-emerald-500' : 'border-zinc-700'}
-        >
-          Histórico ({withdrawals.length})
-        </Button>
+      {/* Pending Withdrawals Warning */}
+      {pendingWithdrawals.length > 0 && (
+        <Card className="bg-amber-900/20 border-amber-500/30">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="text-amber-400" size={20} />
+            <div>
+              <p className="text-amber-400 font-medium">
+                {pendingWithdrawals.length} levantamento(s) pendente(s)
+              </p>
+              <p className="text-amber-300/80 text-sm">
+                Aguardando aprovação do administrador
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step Progress */}
+      <div className="flex items-center justify-center gap-4 py-4">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step >= s ? 'bg-gold-500 text-black' : 'bg-zinc-700 text-gray-400'
+            }`}>
+              {s}
+            </div>
+            {s < 3 && (
+              <div className={`w-12 h-0.5 ${step > s ? 'bg-gold-500' : 'bg-zinc-700'}`} />
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center gap-8 text-sm text-gray-400 mb-6">
+        <span className={step === 1 ? 'text-gold-400' : ''}>Selecionar Ativo</span>
+        <span className={step === 2 ? 'text-gold-400' : ''}>Detalhes</span>
+        <span className={step === 3 ? 'text-gold-400' : ''}>Confirmar</span>
       </div>
 
-      {activeTab === 'new' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Asset Selection */}
-          <Card className="bg-zinc-900/50 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Wallet size={20} />
-                Selecionar Ativo
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {balances.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                  <AlertCircle size={32} className="mx-auto mb-2" />
-                  <p>Nenhum saldo disponível</p>
-                </div>
-              ) : (
-                balances.map(asset => (
-                  <button
-                    key={asset.fireblocks_asset_id}
-                    onClick={() => handleAssetSelect(asset)}
-                    className={`w-full p-4 rounded-lg border transition-all ${
-                      selectedAsset?.asset === asset.asset
-                        ? 'bg-emerald-500/20 border-emerald-500'
-                        : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {cryptoPrices[asset.asset]?.logo && (
-                          <img 
-                            src={cryptoPrices[asset.asset].logo} 
-                            alt={asset.asset}
-                            className="w-8 h-8 rounded-full"
-                          />
-                        )}
-                        <div className="text-left">
-                          <div className="font-medium text-white">{asset.asset}</div>
-                          <div className="text-xs text-gray-400">
-                            {cryptoPrices[asset.asset]?.name || asset.fireblocks_asset_id}
-                          </div>
-                        </div>
+      {/* Step 1: Select Asset */}
+      {step === 1 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {wallets.length === 0 ? (
+            <Card className="col-span-full bg-zinc-900/50 border-zinc-800">
+              <CardContent className="py-12 text-center">
+                <Wallet className="mx-auto text-gray-500 mb-4" size={48} />
+                <p className="text-gray-400">Nenhum saldo disponível para levantamento</p>
+                <p className="text-gray-500 text-sm mt-1">Deposite fundos primeiro</p>
+              </CardContent>
+            </Card>
+          ) : (
+            wallets.map((wallet) => {
+              const logo = getCryptoLogo(wallet.asset_id);
+              const hasWhitelist = getWhitelistForAsset(wallet.asset_id).length > 0;
+              
+              return (
+                <Card 
+                  key={wallet.id}
+                  className={`bg-zinc-900/50 border-gold-800/20 cursor-pointer transition-all ${
+                    hasWhitelist ? 'hover:border-gold-500/50' : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  onClick={() => hasWhitelist && handleSelectAsset(wallet)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      {logo && <img src={logo} alt={wallet.asset_id} className="w-10 h-10 rounded-full" />}
+                      <div className="flex-1">
+                        <p className="text-white font-medium">{wallet.asset_id}</p>
+                        <p className="text-gray-400 text-sm">{wallet.asset_name}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-white font-mono">
-                          {parseFloat(asset.available).toFixed(8)}
-                        </div>
-                        <div className="text-xs text-gray-400">Disponível</div>
+                        <p className="text-white">{wallet.balance?.toFixed(8)}</p>
+                        {!hasWhitelist && (
+                          <Badge className="bg-red-500/20 text-red-400 text-xs mt-1">
+                            <Shield size={10} className="mr-1" /> Sem whitelist
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                  </button>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Withdrawal Form */}
-          <Card className="bg-zinc-900/50 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <ArrowUpRight size={20} />
-                Detalhes do Levantamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!selectedAsset ? (
-                <div className="text-center py-8 text-gray-400">
-                  <p>Selecione um ativo para continuar</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Quantidade</label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="any"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00000000"
-                        className="bg-zinc-800 border-zinc-700 text-white pr-20"
-                        data-testid="withdrawal-amount"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setAmount(selectedAsset.available.toString())}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-emerald-400 hover:text-emerald-300"
-                      >
-                        MAX
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Disponível: {parseFloat(selectedAsset.available).toFixed(8)} {selectedAsset.asset}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Endereço de Destino</label>
-                    <Input
-                      type="text"
-                      value={destinationAddress}
-                      onChange={(e) => setDestinationAddress(e.target.value)}
-                      placeholder="Endereço da carteira externa"
-                      className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm"
-                      data-testid="withdrawal-address"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Nota (opcional)</label>
-                    <Input
-                      type="text"
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="Nota para referência"
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-
-                  {/* Fee Summary */}
-                  {feeCalc && (
-                    <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
-                      <div className="text-sm text-gray-400">Resumo</div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Quantidade</span>
-                        <span className="text-white">{feeCalc.amount.toFixed(8)} {selectedAsset.asset}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa ({fees?.withdrawal_fee_percent || 0.5}%)</span>
-                        <span className="text-yellow-400">-{feeCalc.withdrawalFee.toFixed(8)} {selectedAsset.asset}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa de Rede</span>
-                        <span className="text-yellow-400">-{feeCalc.networkFee.toFixed(8)} {selectedAsset.asset}</span>
-                      </div>
-                      <div className="border-t border-zinc-700 pt-2 flex justify-between font-medium">
-                        <span className="text-gray-300">Você Recebe</span>
-                        <span className="text-emerald-400">{feeCalc.netAmount.toFixed(8)} {selectedAsset.asset}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    disabled={submitting || !amount || !destinationAddress}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600"
-                    data-testid="submit-withdrawal-btn"
-                  >
-                    {submitting ? (
-                      <>
-                        <RefreshCw size={16} className="mr-2 animate-spin" />
-                        Processando...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowUpRight size={16} className="mr-2" />
-                        Solicitar Levantamento
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-xs text-gray-500 text-center">
-                    Levantamentos requerem aprovação administrativa
-                  </p>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
-      ) : (
-        /* History Tab */
-        <Card className="bg-zinc-900/50 border-zinc-800">
+      )}
+
+      {/* Step 2: Enter Details */}
+      {step === 2 && selectedAsset && (
+        <Card className="bg-zinc-900/50 border-gold-800/20 max-w-xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-white">Histórico de Levantamentos</CardTitle>
+            <CardTitle className="text-white flex items-center gap-3">
+              {getCryptoLogo(selectedAsset.asset_id) && (
+                <img 
+                  src={getCryptoLogo(selectedAsset.asset_id)} 
+                  alt={selectedAsset.asset_id} 
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              Levantar {selectedAsset.asset_id}
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <RefreshCw className="animate-spin text-gold-400" size={32} />
-              </div>
-            ) : withdrawals.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <Wallet size={32} className="mx-auto mb-2" />
-                <p>Nenhum levantamento encontrado</p>
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab('new')}
-                  className="mt-4 border-zinc-700"
+          <CardContent className="space-y-6">
+            {/* Balance */}
+            <div className="bg-zinc-800/50 rounded-lg p-4">
+              <p className="text-gray-400 text-sm">Saldo disponível</p>
+              <p className="text-2xl text-white font-light">
+                {selectedAsset.balance?.toFixed(8)} {selectedAsset.asset_id}
+              </p>
+            </div>
+
+            {/* Amount */}
+            <div>
+              <Label className="text-gray-300">Quantidade</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00000000"
+                  className="bg-zinc-800 border-zinc-700 text-white font-mono"
+                  step="0.00000001"
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={handleMaxAmount}
+                  className="border-gold-500 text-gold-400 hover:bg-gold-500/10"
                 >
-                  Fazer Primeiro Levantamento
+                  MAX
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {withdrawals.map(w => (
+            </div>
+
+            {/* Whitelist Addresses */}
+            <div>
+              <Label className="text-gray-300">Endereço de Destino</Label>
+              <p className="text-gray-500 text-xs mt-1 mb-2">
+                Selecione um endereço da sua whitelist
+              </p>
+              <div className="space-y-2">
+                {getWhitelistForAsset(selectedAsset.asset_id).map((entry) => (
                   <div
-                    key={w.id}
-                    className="bg-zinc-800/50 rounded-lg border border-zinc-700 overflow-hidden"
+                    key={entry.id}
+                    onClick={() => handleSelectWhitelistAddress(entry)}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedWhitelistEntry?.id === entry.id
+                        ? 'bg-gold-500/20 border border-gold-500'
+                        : 'bg-zinc-800 hover:bg-zinc-700 border border-transparent'
+                    }`}
                   >
-                    <button
-                      onClick={() => setExpandedWithdrawal(expandedWithdrawal === w.id ? null : w.id)}
-                      className="w-full p-4 text-left"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {cryptoPrices[w.asset]?.logo && (
-                            <img 
-                              src={cryptoPrices[w.asset].logo} 
-                              alt={w.asset}
-                              className="w-8 h-8 rounded-full"
-                            />
-                          )}
-                          <div>
-                            <div className="font-medium text-white">
-                              {w.amount} {w.asset}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {new Date(w.created_at).toLocaleDateString('pt-PT', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(w.status)}
-                          {expandedWithdrawal === w.id ? (
-                            <ChevronUp size={16} className="text-gray-400" />
-                          ) : (
-                            <ChevronDown size={16} className="text-gray-400" />
-                          )}
-                        </div>
-                      </div>
-                    </button>
-
-                    {expandedWithdrawal === w.id && (
-                      <div className="px-4 pb-4 space-y-3 border-t border-zinc-700 pt-3">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-400">Quantidade:</span>
-                            <span className="text-white ml-2">{w.amount} {w.asset}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-400">Taxa:</span>
-                            <span className="text-yellow-400 ml-2">{w.fee_amount?.toFixed(8)} {w.asset}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-400">Taxa de Rede:</span>
-                            <span className="text-yellow-400 ml-2">{w.network_fee?.toFixed(8)} {w.asset}</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-400">Valor Líquido:</span>
-                            <span className="text-emerald-400 ml-2">{w.net_amount?.toFixed(8)} {w.asset}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-sm">
-                          <span className="text-gray-400">Destino:</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <code className="text-xs text-white bg-zinc-900 px-2 py-1 rounded flex-1 truncate">
-                              {w.destination_address}
-                            </code>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(w.destination_address);
-                                toast.success('Endereço copiado');
-                              }}
-                            >
-                              <Copy size={14} />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {w.fireblocks_tx_id && (
-                          <div className="text-sm">
-                            <span className="text-gray-400">TX ID:</span>
-                            <code className="text-xs text-emerald-400 ml-2">{w.fireblocks_tx_id}</code>
-                          </div>
-                        )}
-
-                        {w.status === 'pending' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => cancelWithdrawal(w.id)}
-                            className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                          >
-                            <XCircle size={14} className="mr-1" />
-                            Cancelar
-                          </Button>
-                        )}
-
-                        {w.admin_note && (
-                          <div className="text-sm bg-zinc-900 p-2 rounded">
-                            <span className="text-gray-400">Nota Admin:</span>
-                            <p className="text-white">{w.admin_note}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <p className="text-white font-medium">{entry.label}</p>
+                    <p className="text-gray-400 text-sm font-mono truncate">{entry.address}</p>
                   </div>
                 ))}
               </div>
+              
+              {getWhitelistForAsset(selectedAsset.asset_id).length === 0 && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mt-2">
+                  <p className="text-red-400 text-sm flex items-center gap-2">
+                    <AlertTriangle size={16} />
+                    Nenhum endereço na whitelist para {selectedAsset.asset_id}
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="text-gold-400 p-0 mt-2"
+                    onClick={() => window.location.href = '/dashboard/whitelist'}
+                  >
+                    Adicionar endereço à whitelist →
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Note (optional) */}
+            <div>
+              <Label className="text-gray-300">Nota (opcional)</Label>
+              <Input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Descrição do levantamento"
+                className="bg-zinc-800 border-zinc-700 text-white mt-1"
+              />
+            </div>
+
+            {/* Fee Summary */}
+            {amount && parseFloat(amount) > 0 && (
+              <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Quantidade</span>
+                  <span className="text-white">{fees.amount.toFixed(8)} {selectedAsset.asset_id}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Taxa da plataforma (0.1%)</span>
+                  <span className="text-red-400">-{fees.platformFee.toFixed(8)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Taxa de rede (estimada)</span>
+                  <span className="text-red-400">-{fees.networkFee.toFixed(8)}</span>
+                </div>
+                <div className="border-t border-zinc-700 pt-2 mt-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300 font-medium">Você receberá</span>
+                    <span className="text-green-400 font-medium">
+                      {fees.netAmount.toFixed(8)} {selectedAsset.asset_id}
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={handleCancel} className="flex-1">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleContinue}
+                disabled={!amount || !destinationAddress}
+                className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+              >
+                Continuar <ArrowRight size={16} className="ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Confirm */}
+      {step === 3 && selectedAsset && (
+        <Card className="bg-zinc-900/50 border-gold-800/20 max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-white">Confirmar Levantamento</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Summary */}
+            <div className="bg-zinc-800/50 rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Ativo</span>
+                <div className="flex items-center gap-2">
+                  {getCryptoLogo(selectedAsset.asset_id) && (
+                    <img 
+                      src={getCryptoLogo(selectedAsset.asset_id)} 
+                      alt={selectedAsset.asset_id} 
+                      className="w-6 h-6 rounded-full"
+                    />
+                  )}
+                  <span className="text-white font-medium">{selectedAsset.asset_id}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Quantidade</span>
+                <span className="text-white">{parseFloat(amount).toFixed(8)}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Taxa total</span>
+                <span className="text-red-400">
+                  -{(fees.platformFee + fees.networkFee).toFixed(8)}
+                </span>
+              </div>
+              
+              <div className="border-t border-zinc-700 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300 font-medium">Valor final</span>
+                  <span className="text-green-400 text-xl font-medium">
+                    {fees.netAmount.toFixed(8)} {selectedAsset.asset_id}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Destination */}
+            <div className="bg-zinc-800/50 rounded-lg p-4">
+              <p className="text-gray-400 text-sm mb-2">Endereço de destino</p>
+              {selectedWhitelistEntry && (
+                <p className="text-gold-400 font-medium mb-1">{selectedWhitelistEntry.label}</p>
+              )}
+              <p className="text-white font-mono text-sm break-all">{destinationAddress}</p>
+            </div>
+
+            {/* Warning */}
+            <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4">
+              <div className="flex gap-3">
+                <AlertTriangle className="text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+                <div>
+                  <p className="text-amber-400 font-medium">Importante</p>
+                  <p className="text-amber-300/80 text-sm mt-1">
+                    Verifique cuidadosamente o endereço. Transações na blockchain são irreversíveis.
+                    Este levantamento requer aprovação de um administrador.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                Voltar
+              </Button>
+              <Button 
+                onClick={handleSubmitWithdrawal}
+                disabled={submitting}
+                className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCw className="animate-spin mr-2" size={16} />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={16} className="mr-2" />
+                    Confirmar Levantamento
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -53,6 +53,7 @@ import CRMDeals from "./pages/dashboard/crm/CRMDeals";
 import CRMContacts from "./pages/dashboard/crm/CRMContacts";
 import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
+import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -101,6 +102,7 @@ function AppRoutes() {
         <Route index element={<DashboardOverview />} />
         <Route path="wallets" element={<WalletsPage />} />
         <Route path="whitelist" element={<WhitelistPage />} />
+        <Route path="crypto-transactions" element={<CryptoTransactionsPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="roi" element={<ROIPage />} />

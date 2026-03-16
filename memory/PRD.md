@@ -294,6 +294,28 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Changelog
 
+### March 16, 2026 - Complete Crypto Transaction System
+- **Crypto Transactions Page**: Full transaction history with Fireblocks integration
+  - Filter by type (All/Deposits/Withdrawals)
+  - Search by asset, hash, or address
+  - Real-time status updates (auto-refresh for pending)
+  - Detailed modal with all transaction info
+  - Links to blockchain explorers
+  - Status indicators (Completed, Confirming, Pending, Failed)
+- **Crypto Withdrawal Page**: Full withdrawal flow
+  - Step 1: Select asset from available balances
+  - Step 2: Enter amount, select whitelist destination
+  - Step 3: Review and confirm
+  - Fee calculation (platform + network)
+  - Whitelist enforcement (can only send to whitelisted addresses)
+- **Backend Endpoints Added**:
+  - `GET /api/crypto-wallets/fireblocks/transactions` - Get all transactions
+  - `GET /api/crypto-wallets/fireblocks/transaction/{id}` - Transaction details
+  - `GET /api/crypto-wallets/deposits` - Deposit history
+- **Fireblocks Service Methods**:
+  - `get_transactions()` - Fetch transactions from Fireblocks
+  - `get_transaction_by_id()` - Get single transaction details
+
 ### March 16, 2026 - Fireblocks Integration Complete
 - **Fixed Fireblocks Connection**: Updated API base URL from `/v1` to correct format, fixed CSR generation with correct organization name
 - **Real Deposit Addresses**: Integrated Fireblocks vault creation and asset wallet generation

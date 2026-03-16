@@ -878,3 +878,202 @@ async def get_deposit_qrcode(
         "qr_data": qr_uri,
         "network": asset_info.get("fireblocks_asset_id")
     }
+
+
+
+# ==================== FIREBLOCKS TRANSACTION MONITORING ====================
+
+@router.get("/fireblocks/transactions")
+async def get_fireblocks_transactions(
+    limit: int = 50,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get transactions from Fireblocks for user's vault"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        return {"transactions": [], "message": "No crypto wallet found"}
+    
+    vault_id = vault.get("fireblocks_vault_id")
+    
+    try:
+        # Get transactions from Fireblocks
+        transactions = await FireblocksService.get_transactions(vault_id, limit)
+        
+        # Enrich with explorer URLs
+        enriched_transactions = []
+        for tx in transactions:
+            asset_id = tx.get("assetId", "").replace("_TEST", "")
+            symbol = asset_id.split("_")[0] if "_" in asset_id else asset_id
+            
+            tx_hash = tx.get("txHash")
+            enriched_tx = {
+                "id": tx.get("id"),
+                "fireblocks_tx_id": tx.get("id"),
+                "tx_hash": tx_hash,
+                "asset": symbol,
+                "fireblocks_asset_id": tx.get("assetId"),
+                "amount": float(tx.get("amount", 0)),
+                "amount_usd": float(tx.get("amountUSD", 0)),
+                "network_fee": float(tx.get("networkFee", 0)),
+                "fee_currency": tx.get("feeCurrency"),
+                "status": tx.get("status"),
+                "sub_status": tx.get("subStatus"),
+                "operation": tx.get("operation"),  # TRANSFER, CONTRACT_CALL, etc.
+                "source": tx.get("source", {}),
+                "destination": tx.get("destination", {}),
+                "destination_address": tx.get("destinationAddress"),
+                "created_at": tx.get("createdAt"),
+                "last_updated": tx.get("lastUpdated"),
+                "num_confirmations": tx.get("numOfConfirmations", 0),
+                "required_confirmations": tx.get("blockInfo", {}).get("blockHeight"),
+                "signed_by": tx.get("signedBy", []),
+                "created_by": tx.get("createdBy"),
+                "note": tx.get("note"),
+                "explorer_url": get_explorer_url(symbol, tx_hash) if tx_hash else None
+            }
+            enriched_transactions.append(enriched_tx)
+        
+        return {"transactions": enriched_transactions, "vault_id": vault_id}
+    
+    except Exception as e:
+        logger.error(f"Error getting Fireblocks transactions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get transactions: {str(e)}")
+
+
+@router.get("/fireblocks/transaction/{tx_id}")
+async def get_fireblocks_transaction_details(
+    tx_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get detailed transaction information from Fireblocks"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        raise HTTPException(status_code=404, detail="No crypto wallet found")
+    
+    try:
+        # Get transaction details from Fireblocks
+        tx = await FireblocksService.get_transaction_by_id(tx_id)
+        
+        if not tx:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        asset_id = tx.get("assetId", "").replace("_TEST", "")
+        symbol = asset_id.split("_")[0] if "_" in asset_id else asset_id
+        tx_hash = tx.get("txHash")
+        
+        # Build detailed response
+        details = {
+            "id": tx.get("id"),
+            "fireblocks_tx_id": tx.get("id"),
+            "tx_hash": tx_hash,
+            "asset": symbol,
+            "asset_name": get_asset_name(symbol),
+            "fireblocks_asset_id": tx.get("assetId"),
+            "amount": float(tx.get("amount", 0)),
+            "amount_usd": float(tx.get("amountUSD", 0)),
+            "network_fee": float(tx.get("networkFee", 0)),
+            "network_fee_usd": float(tx.get("networkFeeUSD", 0)) if tx.get("networkFeeUSD") else None,
+            "fee_currency": tx.get("feeCurrency"),
+            "status": tx.get("status"),
+            "sub_status": tx.get("subStatus"),
+            "operation": tx.get("operation"),
+            "source": {
+                "type": tx.get("source", {}).get("type"),
+                "id": tx.get("source", {}).get("id"),
+                "name": tx.get("source", {}).get("name")
+            },
+            "destination": {
+                "type": tx.get("destination", {}).get("type"),
+                "id": tx.get("destination", {}).get("id"),
+                "name": tx.get("destination", {}).get("name")
+            },
+            "destination_address": tx.get("destinationAddress"),
+            "destination_tag": tx.get("destinationTag"),
+            "created_at": tx.get("createdAt"),
+            "last_updated": tx.get("lastUpdated"),
+            "num_confirmations": tx.get("numOfConfirmations", 0),
+            "block_info": tx.get("blockInfo"),
+            "signed_by": tx.get("signedBy", []),
+            "created_by": tx.get("createdBy"),
+            "rejected_by": tx.get("rejectedBy"),
+            "note": tx.get("note"),
+            "explorer_url": get_explorer_url(symbol, tx_hash) if tx_hash else None
+        }
+        
+        return details
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting transaction details: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get transaction: {str(e)}")
+
+
+@router.get("/deposits")
+async def get_my_deposits(
+    limit: int = 50,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get deposit history from Fireblocks"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        return {"deposits": [], "message": "No crypto wallet found"}
+    
+    vault_id = vault.get("fireblocks_vault_id")
+    
+    try:
+        # Get incoming transactions
+        transactions = await FireblocksService.get_transactions(vault_id, limit)
+        
+        # Filter for deposits (incoming to this vault)
+        deposits = []
+        for tx in transactions:
+            dest = tx.get("destination", {})
+            if dest.get("id") == vault_id and dest.get("type") == "VAULT_ACCOUNT":
+                asset_id = tx.get("assetId", "").replace("_TEST", "")
+                symbol = asset_id.split("_")[0] if "_" in asset_id else asset_id
+                tx_hash = tx.get("txHash")
+                
+                deposits.append({
+                    "id": tx.get("id"),
+                    "tx_hash": tx_hash,
+                    "asset": symbol,
+                    "amount": float(tx.get("amount", 0)),
+                    "amount_usd": float(tx.get("amountUSD", 0)),
+                    "status": tx.get("status"),
+                    "source_address": tx.get("sourceAddress"),
+                    "created_at": tx.get("createdAt"),
+                    "num_confirmations": tx.get("numOfConfirmations", 0),
+                    "explorer_url": get_explorer_url(symbol, tx_hash) if tx_hash else None
+                })
+        
+        return {"deposits": deposits, "count": len(deposits)}
+    
+    except Exception as e:
+        logger.error(f"Error getting deposits: {e}")
+        return {"deposits": [], "error": str(e)}
+
+
+# Helper function for asset names
+def get_asset_name(symbol: str) -> str:
+    """Get full asset name from symbol"""
+    names = {
+        "BTC": "Bitcoin",
+        "ETH": "Ethereum",
+        "USDT": "Tether",
+        "USDC": "USD Coin",
+        "SOL": "Solana",
+        "XRP": "Ripple",
+        "BNB": "BNB",
+        "ADA": "Cardano",
+        "DOGE": "Dogecoin",
+        "DOT": "Polkadot",
+        "LTC": "Litecoin",
+        "AVAX": "Avalanche",
+        "MATIC": "Polygon",
+        "LINK": "Chainlink"
+    }
+    return names.get(symbol.upper(), symbol.upper())

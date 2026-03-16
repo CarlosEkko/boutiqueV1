@@ -168,3 +168,49 @@ class FireblocksService:
         except Exception as e:
             logger.error(f"Failed to get deposit addresses: {e}")
             raise
+
+
+    @classmethod
+    async def get_transactions(cls, vault_id: str = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get transactions for a vault account"""
+        try:
+            client = cls.get_client()
+            
+            # Build filter params
+            params = {}
+            if vault_id:
+                params["source_type"] = "VAULT_ACCOUNT"
+                params["source_id"] = vault_id
+            
+            # Get transactions - this returns a list
+            transactions = client.get_transactions(
+                limit=limit,
+                order_by="createdAt",
+                sort="DESC"
+            )
+            
+            # Filter for our vault if needed
+            if vault_id and isinstance(transactions, list):
+                filtered = []
+                for tx in transactions:
+                    source = tx.get("source", {})
+                    dest = tx.get("destination", {})
+                    if (source.get("id") == vault_id or dest.get("id") == vault_id):
+                        filtered.append(tx)
+                return filtered[:limit]
+            
+            return transactions if isinstance(transactions, list) else []
+        except Exception as e:
+            logger.error(f"Failed to get transactions: {e}")
+            return []
+    
+    @classmethod
+    async def get_transaction_by_id(cls, tx_id: str) -> Dict[str, Any]:
+        """Get detailed transaction by ID"""
+        try:
+            client = cls.get_client()
+            tx = client.get_transaction_by_id(tx_id)
+            return tx
+        except Exception as e:
+            logger.error(f"Failed to get transaction {tx_id}: {e}")
+            raise
