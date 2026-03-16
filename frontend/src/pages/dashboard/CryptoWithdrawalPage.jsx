@@ -15,11 +15,29 @@ import {
   ArrowRight,
   Info,
   Shield,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Network logos
+const NETWORK_LOGOS = {
+  'ERC20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+  'TRC20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1958.png',
+  'BEP20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+  'SOL': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+  'ALGO': 'https://s2.coinmarketcap.com/static/img/coins/64x64/4030.png',
+  'AVAX': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png',
+  'POLYGON': 'https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png',
+  'ARB': 'https://s2.coinmarketcap.com/static/img/coins/64x64/11841.png',
+  'OP': 'https://s2.coinmarketcap.com/static/img/coins/64x64/11840.png',
+  'BASE': 'https://s2.coinmarketcap.com/static/img/coins/64x64/27716.png',
+};
+
+// Multi-network assets
+const MULTI_NETWORK_ASSETS = ['USDT', 'USDC', 'DAI', 'WBTC', 'LINK', 'UNI', 'AAVE'];
 
 // CoinMarketCap logo URLs
 const getCryptoLogo = (symbol) => {
@@ -42,6 +60,11 @@ const CryptoWithdrawalPage = () => {
   const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [step, setStep] = useState(1); // 1: Select asset, 2: Enter details, 3: Confirm
+  
+  // Network selection
+  const [networks, setNetworks] = useState([]);
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
   
   // Form state
   const [amount, setAmount] = useState('');
@@ -100,7 +123,7 @@ const CryptoWithdrawalPage = () => {
     };
   };
 
-  const handleSelectAsset = (wallet) => {
+  const handleSelectAsset = async (wallet) => {
     setSelectedAsset(wallet);
     setStep(2);
     setAmount('');
@@ -109,6 +132,28 @@ const CryptoWithdrawalPage = () => {
     setNote('');
     setUseManualAddress(false);
     setManualAddress('');
+    setNetworks([]);
+    setSelectedNetwork(null);
+    
+    // Check if multi-network asset and fetch networks
+    if (MULTI_NETWORK_ASSETS.includes(wallet.asset_id)) {
+      setLoadingNetworks(true);
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/crypto-wallets/networks/${wallet.asset_id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const fetchedNetworks = response.data.networks || [];
+        setNetworks(fetchedNetworks);
+        if (fetchedNetworks.length > 0) {
+          setSelectedNetwork(fetchedNetworks[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch networks', err);
+      } finally {
+        setLoadingNetworks(false);
+      }
+    }
   };
 
   const handleSelectWhitelistAddress = (entry) => {
@@ -332,6 +377,72 @@ const CryptoWithdrawalPage = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Network Selection for multi-network assets */}
+            {networks.length > 1 && (
+              <div>
+                <Label className="text-gray-300">Rede de Envio</Label>
+                <p className="text-gray-500 text-xs mt-1 mb-2">
+                  Certifique-se que o endereço de destino suporta esta rede
+                </p>
+                
+                {loadingNetworks ? (
+                  <div className="flex items-center gap-2 text-gray-400 py-2">
+                    <RefreshCw className="animate-spin" size={14} />
+                    Carregando redes...
+                  </div>
+                ) : (
+                  <>
+                    {/* Dropdown selector */}
+                    <div className="relative mb-3">
+                      <select
+                        value={selectedNetwork?.network || ''}
+                        onChange={(e) => {
+                          const net = networks.find(n => n.network === e.target.value);
+                          if (net) setSelectedNetwork(net);
+                        }}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gold-500 appearance-none cursor-pointer pr-10"
+                      >
+                        {networks.map((net) => (
+                          <option key={net.network} value={net.network}>
+                            {net.network} - {net.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                    </div>
+                    
+                    {/* Network buttons with logos */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {networks.slice(0, 6).map((net) => (
+                        <button
+                          key={net.network}
+                          onClick={() => setSelectedNetwork(net)}
+                          className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                            selectedNetwork?.network === net.network
+                              ? 'bg-gold-500/20 border-gold-500'
+                              : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                          }`}
+                        >
+                          {NETWORK_LOGOS[net.network] && (
+                            <img 
+                              src={NETWORK_LOGOS[net.network]} 
+                              alt={net.network}
+                              className="w-6 h-6 rounded-full"
+                            />
+                          )}
+                          <span className={`text-xs ${
+                            selectedNetwork?.network === net.network ? 'text-gold-400' : 'text-gray-400'
+                          }`}>
+                            {net.network}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Address Selection - Manual OR Whitelist */}
             <div>

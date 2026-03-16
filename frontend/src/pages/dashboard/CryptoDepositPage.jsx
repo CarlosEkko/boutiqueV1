@@ -13,12 +13,30 @@ import {
   QrCode,
   Search,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Network logos
+const NETWORK_LOGOS = {
+  'ERC20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png', // ETH
+  'TRC20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1958.png', // TRX
+  'BEP20': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png', // BNB
+  'SOL': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png', // SOL
+  'ALGO': 'https://s2.coinmarketcap.com/static/img/coins/64x64/4030.png', // ALGO
+  'AVAX': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png', // AVAX
+  'POLYGON': 'https://s2.coinmarketcap.com/static/img/coins/64x64/3890.png', // MATIC
+  'ARB': 'https://s2.coinmarketcap.com/static/img/coins/64x64/11841.png', // ARB
+  'OP': 'https://s2.coinmarketcap.com/static/img/coins/64x64/11840.png', // OP
+  'BASE': 'https://s2.coinmarketcap.com/static/img/coins/64x64/27716.png', // BASE
+};
+
+// Multi-network assets
+const MULTI_NETWORK_ASSETS = ['USDT', 'USDC', 'DAI', 'WBTC', 'LINK', 'UNI', 'AAVE'];
 
 const CryptoDepositPage = () => {
   const { token } = useAuth();
@@ -31,6 +49,11 @@ const CryptoDepositPage = () => {
   const [depositAddress, setDepositAddress] = useState(null);
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [qrCode, setQrCode] = useState(null);
+  
+  // Network selection
+  const [networks, setNetworks] = useState([]);
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
 
   // Popular cryptos to show first
   const popularCryptos = ['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'BNB', 'ADA', 'DOGE', 'MATIC'];
@@ -87,12 +110,71 @@ const CryptoDepositPage = () => {
     }
   };
 
-  const getDepositAddress = async (symbol) => {
+  const getDepositAddress = async (symbol, network = null) => {
     setSelectedAsset(symbol);
     setLoadingAddress(true);
     setDepositAddress(null);
     setQrCode(null);
 
+    // Check if multi-network asset and fetch networks
+    if (MULTI_NETWORK_ASSETS.includes(symbol)) {
+      setLoadingNetworks(true);
+      try {
+        const netResponse = await axios.get(
+          `${API_URL}/api/crypto-wallets/networks/${symbol}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const fetchedNetworks = netResponse.data.networks || [];
+        setNetworks(fetchedNetworks);
+        
+        // Use provided network or default to first
+        const networkToUse = network || fetchedNetworks[0]?.network;
+        setSelectedNetwork(fetchedNetworks.find(n => n.network === networkToUse) || fetchedNetworks[0]);
+        
+        // Fetch address for selected network
+        if (networkToUse) {
+          await fetchAddressForNetwork(symbol, networkToUse);
+        }
+      } catch (err) {
+        console.error('Failed to fetch networks', err);
+        // Fallback to default fetch
+        await fetchDefaultAddress(symbol);
+      } finally {
+        setLoadingNetworks(false);
+      }
+    } else {
+      // Single network asset
+      setNetworks([]);
+      setSelectedNetwork(null);
+      await fetchDefaultAddress(symbol);
+    }
+    
+    setLoadingAddress(false);
+  };
+
+  const fetchAddressForNetwork = async (symbol, network) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/crypto-wallets/deposit-address/${symbol}/${network}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setDepositAddress(response.data);
+      
+      // Generate QR code
+      if (response.data.address) {
+        const qr = await QRCode.toDataURL(response.data.address, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#000000', light: '#ffffff' }
+        });
+        setQrCode(qr);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao obter endereço');
+    }
+  };
+
+  const fetchDefaultAddress = async (symbol) => {
     try {
       const response = await axios.get(
         `${API_URL}/api/crypto-wallets/deposit-address/${symbol}`,
@@ -105,16 +187,21 @@ const CryptoDepositPage = () => {
         const qr = await QRCode.toDataURL(response.data.address, {
           width: 200,
           margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#ffffff'
-          }
+          color: { dark: '#000000', light: '#ffffff' }
         });
         setQrCode(qr);
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao obter endereço');
-    } finally {
+    }
+  };
+
+  const handleNetworkChange = async (network) => {
+    const net = networks.find(n => n.network === network);
+    if (net) {
+      setSelectedNetwork(net);
+      setLoadingAddress(true);
+      await fetchAddressForNetwork(selectedAsset, network);
       setLoadingAddress(false);
     }
   };
@@ -307,6 +394,57 @@ const CryptoDepositPage = () => {
                   </div>
                 </div>
 
+                {/* Network Selector for multi-network assets */}
+                {networks.length > 1 && (
+                  <div>
+                    <label className="text-sm text-gray-400 mb-2 block">Selecionar Rede</label>
+                    <div className="relative">
+                      <select
+                        value={selectedNetwork?.network || ''}
+                        onChange={(e) => handleNetworkChange(e.target.value)}
+                        disabled={loadingAddress}
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gold-500 appearance-none cursor-pointer pr-10"
+                      >
+                        {networks.map((net) => (
+                          <option key={net.network} value={net.network}>
+                            {net.network} - {net.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                    </div>
+                    
+                    {/* Network cards with logos */}
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {networks.slice(0, 6).map((net) => (
+                        <button
+                          key={net.network}
+                          onClick={() => handleNetworkChange(net.network)}
+                          disabled={loadingAddress}
+                          className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                            selectedNetwork?.network === net.network
+                              ? 'bg-gold-500/20 border-gold-500'
+                              : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
+                          }`}
+                        >
+                          {NETWORK_LOGOS[net.network] && (
+                            <img 
+                              src={NETWORK_LOGOS[net.network]} 
+                              alt={net.network}
+                              className="w-6 h-6 rounded-full"
+                            />
+                          )}
+                          <span className={`text-xs ${
+                            selectedNetwork?.network === net.network ? 'text-gold-400' : 'text-gray-400'
+                          }`}>
+                            {net.network}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* QR Code */}
                 {qrCode && (
                   <div className="flex justify-center">
@@ -337,9 +475,18 @@ const CryptoDepositPage = () => {
 
                 {/* Network Info */}
                 <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-400">Rede</span>
-                    <span className="text-white">{depositAddress.network}</span>
+                    <div className="flex items-center gap-2">
+                      {selectedNetwork && NETWORK_LOGOS[selectedNetwork.network] && (
+                        <img 
+                          src={NETWORK_LOGOS[selectedNetwork.network]} 
+                          alt={selectedNetwork.network}
+                          className="w-5 h-5 rounded-full"
+                        />
+                      )}
+                      <span className="text-white">{depositAddress.network || selectedNetwork?.name}</span>
+                    </div>
                   </div>
                 </div>
 

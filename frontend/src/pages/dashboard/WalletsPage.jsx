@@ -19,7 +19,11 @@ import {
   X,
   Search,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -848,9 +852,9 @@ const WalletsPage = () => {
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="space-y-3">
                 {isFiat(selectedWallet.asset_id) ? (
-                  <>
+                  <div className="flex gap-3">
                     <Button 
                       className="flex-1 bg-emerald-600 hover:bg-emerald-500"
                       onClick={() => window.location.href = '/dashboard/fiat-deposit'}
@@ -865,27 +869,50 @@ const WalletsPage = () => {
                     >
                       Sacar
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <Button 
-                      className="flex-1 bg-green-600 hover:bg-green-500"
-                      onClick={() => {
-                        setSelectedWallet(null);
-                        // Show deposit info - the address is already shown above
-                        toast.success('Use o endereço acima para depositar ' + selectedWallet.asset_id);
-                      }}
-                      data-testid="deposit-crypto-btn"
-                    >
-                      Depositar
-                    </Button>
-                    <Button 
-                      className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
-                      onClick={() => window.location.href = `/dashboard/crypto-withdrawal?asset=${selectedWallet.asset_id}`}
-                      data-testid="withdraw-crypto-btn"
-                    >
-                      Levantar
-                    </Button>
+                    {/* Main actions - 2 columns */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        className="bg-green-600 hover:bg-green-500 flex flex-col items-center py-3"
+                        onClick={() => window.location.href = '/dashboard/crypto-deposit'}
+                        data-testid="deposit-crypto-btn"
+                      >
+                        <ArrowDownLeft size={18} className="mb-1" />
+                        <span className="text-sm">Depositar</span>
+                      </Button>
+                      <Button 
+                        className="bg-amber-600 hover:bg-amber-500 flex flex-col items-center py-3"
+                        onClick={() => window.location.href = `/dashboard/crypto-withdrawal?asset=${selectedWallet.asset_id}`}
+                        data-testid="withdraw-crypto-btn"
+                      >
+                        <ArrowUpRight size={18} className="mb-1" />
+                        <span className="text-sm">Levantar</span>
+                      </Button>
+                    </div>
+                    
+                    {/* Trading actions */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline"
+                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 flex flex-col items-center py-3"
+                        onClick={() => window.location.href = `/dashboard/exchange?action=buy&asset=${selectedWallet.asset_id}`}
+                        data-testid="buy-crypto-btn"
+                      >
+                        <TrendingUp size={18} className="mb-1" />
+                        <span className="text-sm">Comprar</span>
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 flex flex-col items-center py-3"
+                        onClick={() => window.location.href = `/dashboard/exchange?action=sell&asset=${selectedWallet.asset_id}`}
+                        data-testid="sell-crypto-btn"
+                      >
+                        <TrendingDown size={18} className="mb-1" />
+                        <span className="text-sm">Vender</span>
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>
