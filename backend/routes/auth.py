@@ -2,6 +2,11 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from datetime import datetime, timezone
 from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel, UserType, Region
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
+from pydantic import BaseModel
+import pyotp
+import qrcode
+import io
+import base64
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -12,6 +17,15 @@ db = None
 def set_db(database):
     global db
     db = database
+
+
+# 2FA Models
+class TwoFASetupResponse(BaseModel):
+    secret: str
+    qr_code: str
+    
+class TwoFAVerifyRequest(BaseModel):
+    code: str
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -333,4 +347,143 @@ async def deactivate_account(
     )
     
     return {"success": True, "message": "Conta desativada com sucesso"}
+
+
+
+# ==================== 2FA ENDPOINTS ====================
+
+@router.post("/2fa/setup", response_model=TwoFASetupResponse)
+async def setup_2fa(user_id: str = Depends(get_current_user_id)):
+    """Generate 2FA secret and QR code for user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.get("two_factor_enabled"):
+        raise HTTPException(status_code=400, detail="2FA já está ativo")
+    
+    # Generate secret
+    secret = pyotp.random_base32()
+    
+    # Create TOTP URI for QR code
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(
+        name=user.get("email"),
+        issuer_name="KBEX.io"
+    )
+    
+    # Generate QR code
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    
+    # Store secret temporarily (will be confirmed on verification)
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "two_factor_secret_temp": secret,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return TwoFASetupResponse(
+        secret=secret,
+        qr_code=f"data:image/png;base64,{qr_base64}"
+    )
+
+
+@router.post("/2fa/verify")
+async def verify_2fa(
+    request: TwoFAVerifyRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Verify 2FA code and enable 2FA for user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    secret = user.get("two_factor_secret_temp")
+    if not secret:
+        raise HTTPException(status_code=400, detail="2FA setup not initiated")
+    
+    # Verify code
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(request.code):
+        raise HTTPException(status_code=400, detail="Código inválido")
+    
+    # Enable 2FA
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "two_factor_enabled": True,
+                "two_factor_secret": secret,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$unset": {
+                "two_factor_secret_temp": ""
+            }
+        }
+    )
+    
+    return {"success": True, "message": "2FA ativado com sucesso"}
+
+
+@router.post("/2fa/disable")
+async def disable_2fa(
+    request: TwoFAVerifyRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Disable 2FA for user (requires current code)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.get("two_factor_enabled"):
+        raise HTTPException(status_code=400, detail="2FA não está ativo")
+    
+    secret = user.get("two_factor_secret")
+    if not secret:
+        raise HTTPException(status_code=400, detail="2FA secret not found")
+    
+    # Verify code
+    totp = pyotp.TOTP(secret)
+    if not totp.verify(request.code):
+        raise HTTPException(status_code=400, detail="Código inválido")
+    
+    # Disable 2FA
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "two_factor_enabled": False,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$unset": {
+                "two_factor_secret": ""
+            }
+        }
+    )
+    
+    return {"success": True, "message": "2FA desativado com sucesso"}
+
+
+@router.get("/2fa/status")
+async def get_2fa_status(user_id: str = Depends(get_current_user_id)):
+    """Check if 2FA is enabled for user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "enabled": user.get("two_factor_enabled", False)
+    }
 

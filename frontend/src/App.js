@@ -56,6 +56,7 @@ import CRMContacts from "./pages/dashboard/crm/CRMContacts";
 import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -91,6 +92,11 @@ function AppRoutes() {
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/onboarding" element={
+        <ProtectedRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      } />
       
       {/* Dashboard Routes - Protected */}
       <Route 

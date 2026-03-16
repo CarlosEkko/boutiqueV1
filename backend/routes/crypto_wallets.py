@@ -83,7 +83,7 @@ FIREBLOCKS_ASSET_MAP = {
 MULTI_NETWORK_ASSETS = {
     "USDT": [
         {"network": "ERC20", "fireblocks_id": "USDT_ERC20", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
-        {"network": "TRC20", "fireblocks_id": "USDT_TRX", "name": "Tron (TRC20)", "explorer": "https://tronscan.org/#/transaction/"},
+        {"network": "TRC20", "fireblocks_id": "TRX_USDT_S2UZ", "name": "Tron (TRC20)", "explorer": "https://tronscan.org/#/transaction/"},
         {"network": "BEP20", "fireblocks_id": "USDT_BSC", "name": "BNB Smart Chain (BEP20)", "explorer": "https://bscscan.com/tx/"},
         {"network": "SOL", "fireblocks_id": "USDT_SOL", "name": "Solana (SPL)", "explorer": "https://solscan.io/tx/"},
         {"network": "ALGO", "fireblocks_id": "USDT_ALGO", "name": "Algorand (ASA)", "explorer": "https://algoexplorer.io/tx/"},
