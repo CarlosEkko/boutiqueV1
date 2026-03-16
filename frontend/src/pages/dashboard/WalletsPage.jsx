@@ -81,12 +81,39 @@ const WalletsPage = () => {
       setNetworks(response.data.networks || []);
       if (response.data.networks?.length > 0) {
         setSelectedNetwork(response.data.networks[0]);
+        // Auto-fetch address for first network
+        handleNetworkChange(asset, response.data.networks[0].network);
       }
     } catch (err) {
       console.error('Failed to fetch networks:', err);
       setNetworks([]);
     } finally {
       setLoadingNetworks(false);
+    }
+  };
+
+  // Handle network change - fetch new address
+  const handleNetworkChange = async (asset, network) => {
+    setLoadingAddress(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/crypto-wallets/deposit-address/${asset}/${network}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Update selected wallet with the new address
+      if (selectedWallet?.asset_id === asset) {
+        setSelectedWallet(prev => ({ 
+          ...prev, 
+          address: response.data.address,
+          network: response.data.network,
+          network_name: response.data.network_name
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch address for network:', err);
+      toast.error('Falha ao obter endereço para esta rede');
+    } finally {
+      setLoadingAddress(false);
     }
   };
 
@@ -711,7 +738,7 @@ const WalletsPage = () => {
               {/* Crypto Deposit Section */}
               {!isFiat(selectedWallet.asset_id) && (
                 <div className="space-y-3">
-                  {/* Network Selector for multi-network assets */}
+                  {/* Network Selector for multi-network assets - Dropdown */}
                   {MULTI_NETWORK_ASSETS.includes(selectedWallet.asset_id) && (
                     <div>
                       <p className="text-sm text-gray-400 mb-2">Selecione a Rede</p>
@@ -721,22 +748,24 @@ const WalletsPage = () => {
                           Carregando redes...
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={selectedNetwork?.network || ''}
+                          onChange={(e) => {
+                            const net = networks.find(n => n.network === e.target.value);
+                            if (net) {
+                              setSelectedNetwork(net);
+                              handleNetworkChange(selectedWallet.asset_id, net.network);
+                            }
+                          }}
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gold-500 appearance-none cursor-pointer"
+                          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
+                        >
                           {networks.map((net) => (
-                            <button
-                              key={net.network}
-                              onClick={() => setSelectedNetwork(net)}
-                              className={`p-2 rounded-lg text-left text-sm transition-colors ${
-                                selectedNetwork?.network === net.network
-                                  ? 'bg-gold-500/20 border border-gold-500 text-gold-400'
-                                  : 'bg-zinc-800 border border-zinc-700 text-gray-300 hover:border-zinc-600'
-                              }`}
-                            >
-                              <p className="font-medium">{net.network}</p>
-                              <p className="text-xs text-gray-500">{net.name}</p>
-                            </button>
+                            <option key={net.network} value={net.network}>
+                              {net.network} - {net.name}
+                            </option>
                           ))}
-                        </div>
+                        </select>
                       )}
                     </div>
                   )}
@@ -820,18 +849,45 @@ const WalletsPage = () => {
               )}
 
               <div className="flex gap-3">
-                <Button 
-                  className={`flex-1 ${isFiat(selectedWallet.asset_id) ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-green-600 hover:bg-green-500'}`} 
-                  onClick={() => window.location.href = isFiat(selectedWallet.asset_id) ? '/dashboard/fiat-deposit' : '/dashboard/exchange'}
-                >
-                  {isFiat(selectedWallet.asset_id) ? 'Depositar' : 'Comprar'}
-                </Button>
-                <Button 
-                  className={`flex-1 ${isFiat(selectedWallet.asset_id) ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-gold-500 hover:bg-gold-400 text-black'}`}
-                  onClick={() => window.location.href = '/dashboard/exchange'}
-                >
-                  {isFiat(selectedWallet.asset_id) ? 'Sacar' : 'Vender'}
-                </Button>
+                {isFiat(selectedWallet.asset_id) ? (
+                  <>
+                    <Button 
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+                      onClick={() => window.location.href = '/dashboard/fiat-deposit'}
+                      data-testid="deposit-btn"
+                    >
+                      Depositar
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white"
+                      onClick={() => window.location.href = '/dashboard/fiat-withdraw'}
+                      data-testid="withdraw-btn"
+                    >
+                      Sacar
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      className="flex-1 bg-green-600 hover:bg-green-500"
+                      onClick={() => {
+                        setSelectedWallet(null);
+                        // Show deposit info - the address is already shown above
+                        toast.success('Use o endereço acima para depositar ' + selectedWallet.asset_id);
+                      }}
+                      data-testid="deposit-crypto-btn"
+                    >
+                      Depositar
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                      onClick={() => window.location.href = `/dashboard/crypto-withdrawal?asset=${selectedWallet.asset_id}`}
+                      data-testid="withdraw-crypto-btn"
+                    >
+                      Levantar
+                    </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

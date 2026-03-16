@@ -1222,7 +1222,7 @@ async def get_deposit_address_by_network(
     
     # Create new asset wallet in Fireblocks
     try:
-        await FireblocksService.create_asset_wallet(vault_id, fireblocks_asset_id)
+        await FireblocksService.create_vault_asset(vault_id, fireblocks_asset_id)
         
         # Get deposit address
         addresses = await FireblocksService.get_deposit_addresses(vault_id, fireblocks_asset_id)

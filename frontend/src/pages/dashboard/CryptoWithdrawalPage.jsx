@@ -48,6 +48,8 @@ const CryptoWithdrawalPage = () => {
   const [destinationAddress, setDestinationAddress] = useState('');
   const [selectedWhitelistEntry, setSelectedWhitelistEntry] = useState(null);
   const [note, setNote] = useState('');
+  const [useManualAddress, setUseManualAddress] = useState(false);
+  const [manualAddress, setManualAddress] = useState('');
   
   // Fee estimate (mock - would come from backend)
   const networkFee = 0.0001;
@@ -105,11 +107,21 @@ const CryptoWithdrawalPage = () => {
     setDestinationAddress('');
     setSelectedWhitelistEntry(null);
     setNote('');
+    setUseManualAddress(false);
+    setManualAddress('');
   };
 
   const handleSelectWhitelistAddress = (entry) => {
     setSelectedWhitelistEntry(entry);
     setDestinationAddress(entry.address);
+    setUseManualAddress(false);
+    setManualAddress('');
+  };
+
+  const handleManualAddressChange = (value) => {
+    setManualAddress(value);
+    setDestinationAddress(value);
+    setSelectedWhitelistEntry(null);
   };
 
   const handleMaxAmount = () => {
@@ -169,6 +181,8 @@ const CryptoWithdrawalPage = () => {
     setDestinationAddress('');
     setSelectedWhitelistEntry(null);
     setNote('');
+    setUseManualAddress(false);
+    setManualAddress('');
   };
 
   const fees = calculateFees();
@@ -246,10 +260,8 @@ const CryptoWithdrawalPage = () => {
               return (
                 <Card 
                   key={wallet.id}
-                  className={`bg-zinc-900/50 border-gold-800/20 cursor-pointer transition-all ${
-                    hasWhitelist ? 'hover:border-gold-500/50' : 'opacity-50 cursor-not-allowed'
-                  }`}
-                  onClick={() => hasWhitelist && handleSelectAsset(wallet)}
+                  className="bg-zinc-900/50 border-gold-800/20 cursor-pointer transition-all hover:border-gold-500/50"
+                  onClick={() => handleSelectAsset(wallet)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -260,9 +272,9 @@ const CryptoWithdrawalPage = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-white">{wallet.balance?.toFixed(8)}</p>
-                        {!hasWhitelist && (
-                          <Badge className="bg-red-500/20 text-red-400 text-xs mt-1">
-                            <Shield size={10} className="mr-1" /> Sem whitelist
+                        {hasWhitelist && (
+                          <Badge className="bg-green-500/20 text-green-400 text-xs mt-1">
+                            <Shield size={10} className="mr-1" /> Whitelist
                           </Badge>
                         )}
                       </div>
@@ -321,42 +333,103 @@ const CryptoWithdrawalPage = () => {
               </div>
             </div>
 
-            {/* Whitelist Addresses */}
+            {/* Address Selection - Manual OR Whitelist */}
             <div>
               <Label className="text-gray-300">Endereço de Destino</Label>
-              <p className="text-gray-500 text-xs mt-1 mb-2">
-                Selecione um endereço da sua whitelist
-              </p>
-              <div className="space-y-2">
-                {getWhitelistForAsset(selectedAsset.asset_id).map((entry) => (
-                  <div
-                    key={entry.id}
-                    onClick={() => handleSelectWhitelistAddress(entry)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedWhitelistEntry?.id === entry.id
-                        ? 'bg-gold-500/20 border border-gold-500'
-                        : 'bg-zinc-800 hover:bg-zinc-700 border border-transparent'
-                    }`}
-                  >
-                    <p className="text-white font-medium">{entry.label}</p>
-                    <p className="text-gray-400 text-sm font-mono truncate">{entry.address}</p>
-                  </div>
-                ))}
-              </div>
               
-              {getWhitelistForAsset(selectedAsset.asset_id).length === 0 && (
-                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mt-2">
-                  <p className="text-red-400 text-sm flex items-center gap-2">
-                    <AlertTriangle size={16} />
-                    Nenhum endereço na whitelist para {selectedAsset.asset_id}
+              {/* Toggle between manual and whitelist */}
+              <div className="flex gap-2 mt-2 mb-4">
+                <button
+                  onClick={() => {
+                    setUseManualAddress(false);
+                    setManualAddress('');
+                    if (!selectedWhitelistEntry) {
+                      setDestinationAddress('');
+                    }
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                    !useManualAddress
+                      ? 'bg-gold-500/20 border border-gold-500 text-gold-400'
+                      : 'bg-zinc-800 border border-zinc-700 text-gray-400 hover:border-zinc-600'
+                  }`}
+                >
+                  Whitelist
+                </button>
+                <button
+                  onClick={() => {
+                    setUseManualAddress(true);
+                    setSelectedWhitelistEntry(null);
+                    setDestinationAddress(manualAddress);
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                    useManualAddress
+                      ? 'bg-gold-500/20 border border-gold-500 text-gold-400'
+                      : 'bg-zinc-800 border border-zinc-700 text-gray-400 hover:border-zinc-600'
+                  }`}
+                >
+                  Endereço Manual
+                </button>
+              </div>
+
+              {/* Manual Address Input */}
+              {useManualAddress && (
+                <div className="space-y-2">
+                  <Input
+                    value={manualAddress}
+                    onChange={(e) => handleManualAddressChange(e.target.value)}
+                    placeholder={`Endereço ${selectedAsset.asset_id}...`}
+                    className="bg-zinc-800 border-zinc-700 text-white font-mono"
+                  />
+                  <p className="text-amber-400 text-xs flex items-center gap-1">
+                    <AlertTriangle size={12} />
+                    Verifique o endereço cuidadosamente. Transações são irreversíveis.
                   </p>
-                  <Button 
-                    variant="link" 
-                    className="text-gold-400 p-0 mt-2"
-                    onClick={() => window.location.href = '/dashboard/whitelist'}
-                  >
-                    Adicionar endereço à whitelist →
-                  </Button>
+                </div>
+              )}
+
+              {/* Whitelist Selection */}
+              {!useManualAddress && (
+                <div className="space-y-2">
+                  {getWhitelistForAsset(selectedAsset.asset_id).length > 0 ? (
+                    getWhitelistForAsset(selectedAsset.asset_id).map((entry) => (
+                      <div
+                        key={entry.id}
+                        onClick={() => handleSelectWhitelistAddress(entry)}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedWhitelistEntry?.id === entry.id
+                            ? 'bg-gold-500/20 border border-gold-500'
+                            : 'bg-zinc-800 hover:bg-zinc-700 border border-transparent'
+                        }`}
+                      >
+                        <p className="text-white font-medium">{entry.label}</p>
+                        <p className="text-gray-400 text-sm font-mono truncate">{entry.address}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 text-center">
+                      <p className="text-gray-400 text-sm mb-2">
+                        Nenhum endereço na whitelist para {selectedAsset.asset_id}
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-gold-500/50 text-gold-400 hover:bg-gold-500/10"
+                          onClick={() => setUseManualAddress(true)}
+                        >
+                          Usar endereço manual
+                        </Button>
+                        <Button 
+                          variant="link" 
+                          size="sm"
+                          className="text-gray-400 hover:text-white"
+                          onClick={() => window.location.href = '/dashboard/whitelist'}
+                        >
+                          Adicionar à whitelist →
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -400,7 +473,11 @@ const CryptoWithdrawalPage = () => {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handleCancel} className="flex-1">
+              <Button 
+                variant="outline" 
+                onClick={handleCancel} 
+                className="flex-1 border-zinc-600 text-white hover:bg-zinc-800 hover:text-white"
+              >
                 Cancelar
               </Button>
               <Button 
@@ -485,7 +562,11 @@ const CryptoWithdrawalPage = () => {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+              <Button 
+                variant="outline" 
+                onClick={() => setStep(2)} 
+                className="flex-1 border-zinc-600 text-white hover:bg-zinc-800 hover:text-white"
+              >
                 Voltar
               </Button>
               <Button 
