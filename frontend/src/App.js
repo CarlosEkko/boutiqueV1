@@ -34,7 +34,9 @@ import {
   AdminFiatWithdrawals,
   AdminCryptoWithdrawals,
   AdminClients,
-  AdminPipeline
+  AdminPipeline,
+  AdminSettings,
+  AdminReferrals
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -142,6 +144,8 @@ function AppRoutes() {
         <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
         <Route path="admin/clients" element={<AdminClients />} />
         <Route path="admin/pipeline" element={<AdminPipeline />} />
+        <Route path="admin/settings" element={<AdminSettings />} />
+        <Route path="admin/referrals" element={<AdminReferrals />} />
         
         {/* CRM Routes */}
         <Route path="crm" element={<CRMDashboard />} />

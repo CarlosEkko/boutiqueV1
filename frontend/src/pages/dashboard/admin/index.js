@@ -15,3 +15,5 @@ export { default as AdminFiatWithdrawals } from './AdminFiatWithdrawals';
 export { default as AdminCryptoWithdrawals } from './AdminCryptoWithdrawals';
 export { default as AdminClients } from './AdminClients';
 export { default as AdminPipeline } from './AdminPipeline';
+export { default as AdminSettings } from './AdminSettings';
+export { default as AdminReferrals } from './AdminReferrals';

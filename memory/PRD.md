@@ -361,3 +361,33 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Main KB page**: Removed subcategory buttons/tags from category cards - now shows only icon, name, description and article count
 - **Category page (e.g., FAQs)**: Removed top navigation buttons - subcategories now displayed only as clickable cards
 - **Subcategory page (e.g., Contas)**: Articles now displayed as individual cards instead of a list inside a single card
+
+### March 16, 2026 - UI/UX Improvements
+- **Network Selector**: Changed from buttons to dropdown for selecting crypto networks (USDT on ERC20/TRC20/etc.)
+- **Wallet Modal**: Added clear "Depositar" and "Levantar" buttons for crypto wallets
+- **Withdrawal Page**: Added option for manual address entry OR whitelist selection (not just whitelist)
+- **Cancel Button**: Fixed text visibility on dark backgrounds
+
+### March 16, 2026 - Referral & Admission Fee System
+- **NEW: Referral System**: Staff can reference clients and earn commission on their transactions
+  - Trading fee commission (configurable %, default 10%)
+  - Deposit fee commission (configurable %, default 5%)
+  - Withdrawal fee commission (configurable %, default 5%)
+  - Minimum payout threshold configurable
+  - Commission tracking and payout management
+- **NEW: Admission Fee**: Annual membership fee for new clients
+  - Configurable amounts per currency (EUR, USD, AED, BRL)
+  - Can be enabled/disabled globally
+  - Grace period configurable
+  - Admin approval workflow for payments
+- **Admin Pages**: 
+  - `/dashboard/admin/settings` - Platform configuration (fees, admission)
+  - `/dashboard/admin/referrals` - Referral management, transfer, commission payouts
+- **API Endpoints**:
+  - `GET/PUT /api/referrals/settings` - Fee configuration
+  - `POST /api/referrals/create` - Create client referral
+  - `GET /api/referrals/all` - List all referrals (admin)
+  - `GET /api/referrals/my-referrals` - Staff's own referrals
+  - `POST /api/referrals/{id}/transfer` - Transfer client to another staff
+  - `POST /api/referrals/commission/record` - Record commission (internal)
+  - `GET /api/referrals/admission-fee/status/{user_id}` - Check admission status
