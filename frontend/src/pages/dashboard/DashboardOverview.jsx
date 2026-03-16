@@ -273,12 +273,22 @@ const DashboardOverview = () => {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value) => formatCurrency(value)}
-                        contentStyle={{ 
-                          backgroundColor: '#18181b', 
-                          border: '1px solid #3f3f46',
-                          borderRadius: '8px',
-                          color: '#fff'
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0];
+                            return (
+                              <div style={{
+                                backgroundColor: '#18181b',
+                                border: '1px solid #3f3f46',
+                                borderRadius: '8px',
+                                padding: '10px 14px'
+                              }}>
+                                <p style={{ color: '#d4af37', fontWeight: 'bold', margin: 0 }}>{data.name}</p>
+                                <p style={{ color: '#ffffff', margin: '4px 0 0 0' }}>{formatCurrency(data.value)}</p>
+                              </div>
+                            );
+                          }
+                          return null;
                         }}
                       />
                       <Legend 
