@@ -871,49 +871,49 @@ const WalletsPage = () => {
                     </Button>
                   </div>
                 ) : (
-                  <>
-                    {/* Main actions - 2 columns */}
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-3">
+                    {/* Main actions - Depositar/Levantar */}
+                    <div className="grid grid-cols-2 gap-3">
                       <Button 
-                        className="bg-green-600 hover:bg-green-500 flex flex-col items-center py-3"
+                        className="bg-green-600 hover:bg-green-500 h-12"
                         onClick={() => window.location.href = '/dashboard/crypto-deposit'}
                         data-testid="deposit-crypto-btn"
                       >
-                        <ArrowDownLeft size={18} className="mb-1" />
-                        <span className="text-sm">Depositar</span>
+                        <ArrowDownLeft size={18} className="mr-2" />
+                        Depositar
                       </Button>
                       <Button 
-                        className="bg-amber-600 hover:bg-amber-500 flex flex-col items-center py-3"
+                        className="bg-amber-600 hover:bg-amber-500 h-12"
                         onClick={() => window.location.href = `/dashboard/crypto-withdrawal?asset=${selectedWallet.asset_id}`}
                         data-testid="withdraw-crypto-btn"
                       >
-                        <ArrowUpRight size={18} className="mb-1" />
-                        <span className="text-sm">Levantar</span>
+                        <ArrowUpRight size={18} className="mr-2" />
+                        Levantar
                       </Button>
                     </div>
                     
-                    {/* Trading actions */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Trading actions - Comprar/Vender */}
+                    <div className="grid grid-cols-2 gap-3">
                       <Button 
                         variant="outline"
-                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 flex flex-col items-center py-3"
+                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 h-12"
                         onClick={() => window.location.href = `/dashboard/exchange?action=buy&asset=${selectedWallet.asset_id}`}
                         data-testid="buy-crypto-btn"
                       >
-                        <TrendingUp size={18} className="mb-1" />
-                        <span className="text-sm">Comprar</span>
+                        <TrendingUp size={18} className="mr-2" />
+                        Comprar
                       </Button>
                       <Button 
                         variant="outline"
-                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 flex flex-col items-center py-3"
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 h-12"
                         onClick={() => window.location.href = `/dashboard/exchange?action=sell&asset=${selectedWallet.asset_id}`}
                         data-testid="sell-crypto-btn"
                       >
-                        <TrendingDown size={18} className="mb-1" />
-                        <span className="text-sm">Vender</span>
+                        <TrendingDown size={18} className="mr-2" />
+                        Vender
                       </Button>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </CardContent>
