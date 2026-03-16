@@ -93,6 +93,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
             {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
+            {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
             {"path": "/dashboard/crypto-deposit", "label": "Depósito Crypto", "icon": "Bitcoin"},
             {"path": "/dashboard/crypto-withdrawal", "label": "Levantamento Crypto", "icon": "Send"},
             {"path": "/dashboard/fiat-deposit", "label": "Depósito Fiat", "icon": "ArrowUpToLine"},

@@ -5,6 +5,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import { QRCodeSVG } from 'qrcode.react';
 import { 
   Wallet, 
   Copy, 
@@ -16,7 +17,9 @@ import {
   Bitcoin,
   Star,
   X,
-  Search
+  Search,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,6 +42,9 @@ const WalletsPage = () => {
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [initializingWallet, setInitializingWallet] = useState(false);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
   useEffect(() => {
     fetchWallets();
@@ -83,6 +89,64 @@ const WalletsPage = () => {
   const copyAddress = (address) => {
     navigator.clipboard.writeText(address);
     toast.success('Address copied to clipboard');
+  };
+
+  // Initialize Fireblocks wallet
+  const initializeCryptoWallet = async () => {
+    setInitializingWallet(true);
+    try {
+      await axios.post(`${API_URL}/api/crypto-wallets/initialize`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Crypto wallet initialized! Addresses being generated...');
+      // Refetch wallets after a short delay
+      setTimeout(() => {
+        fetchWallets();
+      }, 2000);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to initialize crypto wallet');
+    } finally {
+      setInitializingWallet(false);
+    }
+  };
+
+  // Get deposit address for an asset
+  const getDepositAddress = async (assetId) => {
+    setLoadingAddress(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/crypto-wallets/deposit-address/${assetId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Update the wallet with the new address
+      setWallets(prev => prev.map(w => 
+        w.asset_id === assetId ? { ...w, address: response.data.address } : w
+      ));
+      
+      if (selectedWallet?.asset_id === assetId) {
+        setSelectedWallet(prev => ({ ...prev, address: response.data.address }));
+      }
+      
+      toast.success(`Address generated for ${assetId}`);
+      return response.data.address;
+    } catch (err) {
+      toast.error(err.response?.data?.detail || `Failed to get address for ${assetId}`);
+      return null;
+    } finally {
+      setLoadingAddress(false);
+    }
+  };
+
+  // Generate QR code URI based on asset
+  const getQRCodeUri = (asset, address) => {
+    if (!address) return '';
+    const lowerAsset = asset.toLowerCase();
+    if (lowerAsset === 'btc') return `bitcoin:${address}`;
+    if (lowerAsset === 'eth' || lowerAsset === 'usdt' || lowerAsset === 'usdc' || lowerAsset === 'link' || lowerAsset === 'uni') return `ethereum:${address}`;
+    if (lowerAsset === 'ltc') return `litecoin:${address}`;
+    if (lowerAsset === 'doge') return `dogecoin:${address}`;
+    if (lowerAsset === 'xrp') return `ripple:${address}`;
+    return address;
   };
 
   const formatBalance = (balance, asset) => {
@@ -610,18 +674,73 @@ const WalletsPage = () => {
                 )}
               </div>
               
-              {!isFiat(selectedWallet.asset_id) && selectedWallet.address && (
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Endereço de Depósito</p>
-                  <div className="bg-zinc-800 rounded-lg p-3 flex items-center justify-between">
-                    <p className="text-white font-mono text-sm break-all">{selectedWallet.address}</p>
-                    <button
-                      onClick={() => copyAddress(selectedWallet.address)}
-                      className="ml-2 p-2 text-gold-400 hover:text-gold-300"
-                    >
-                      <Copy size={18} />
-                    </button>
+              {/* Crypto Deposit Section */}
+              {!isFiat(selectedWallet.asset_id) && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-400">Endereço de Depósito</p>
+                    {selectedWallet.address && (
+                      <button
+                        onClick={() => setShowQRCode(!showQRCode)}
+                        className="flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300"
+                      >
+                        <QrCode size={14} />
+                        {showQRCode ? 'Ocultar QR' : 'Mostrar QR'}
+                      </button>
+                    )}
                   </div>
+                  
+                  {selectedWallet.address ? (
+                    <>
+                      {/* QR Code */}
+                      {showQRCode && (
+                        <div className="flex justify-center p-4 bg-white rounded-lg">
+                          <QRCodeSVG 
+                            value={getQRCodeUri(selectedWallet.asset_id, selectedWallet.address)} 
+                            size={180}
+                            level="H"
+                            includeMargin={true}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Address */}
+                      <div className="bg-zinc-800 rounded-lg p-3 flex items-center justify-between">
+                        <p className="text-white font-mono text-sm break-all">{selectedWallet.address}</p>
+                        <button
+                          onClick={() => copyAddress(selectedWallet.address)}
+                          className="ml-2 p-2 text-gold-400 hover:text-gold-300"
+                        >
+                          <Copy size={18} />
+                        </button>
+                      </div>
+                      
+                      <div className="bg-amber-900/20 border border-amber-500/20 rounded-lg p-3">
+                        <p className="text-amber-400 text-xs flex items-center gap-2">
+                          <AlertCircle size={14} />
+                          Envie apenas {selectedWallet.asset_id} para este endereço. Enviar outros ativos pode resultar em perda de fundos.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-gray-400 text-sm mb-3">
+                        Nenhum endereço de depósito disponível
+                      </p>
+                      <Button
+                        onClick={() => getDepositAddress(selectedWallet.asset_id)}
+                        disabled={loadingAddress}
+                        className="bg-gold-500 hover:bg-gold-400 text-black"
+                      >
+                        {loadingAddress ? (
+                          <RefreshCw className="animate-spin mr-2" size={16} />
+                        ) : (
+                          <Plus size={16} className="mr-2" />
+                        )}
+                        Gerar Endereço
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -641,18 +760,12 @@ const WalletsPage = () => {
                   {isFiat(selectedWallet.asset_id) ? 'Depositar' : 'Comprar'}
                 </Button>
                 <Button 
-                  className={`flex-1 ${isFiat(selectedWallet.asset_id) ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-gold-500 hover:bg-gold-400'}`}
+                  className={`flex-1 ${isFiat(selectedWallet.asset_id) ? 'bg-zinc-700 hover:bg-zinc-600' : 'bg-gold-500 hover:bg-gold-400 text-black'}`}
                   onClick={() => window.location.href = '/dashboard/exchange'}
                 >
                   {isFiat(selectedWallet.asset_id) ? 'Sacar' : 'Vender'}
                 </Button>
               </div>
-
-              {!isFiat(selectedWallet.asset_id) && (
-                <p className="text-xs text-gray-500 text-center">
-                  Depósito e saque de cripto serão habilitados com a integração Fireblocks
-                </p>
-              )}
             </CardContent>
           </Card>
         </div>

@@ -294,6 +294,25 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 ## Changelog
 
+### March 16, 2026 - Fireblocks Integration Complete
+- **Fixed Fireblocks Connection**: Updated API base URL from `/v1` to correct format, fixed CSR generation with correct organization name
+- **Real Deposit Addresses**: Integrated Fireblocks vault creation and asset wallet generation
+  - BTC: Native SegWit (bc1...) addresses
+  - ETH/USDT/USDC: ERC20 (0x...) addresses  
+  - SOL: Solana addresses
+  - XRP: Ripple addresses
+- **QR Code for Deposits**: Added QRCodeSVG component for deposit addresses with proper URI schemes (bitcoin:, ethereum:, etc.)
+- **Address Auto-Update**: Dashboard wallets automatically sync with real Fireblocks addresses
+- **Whitelist Page**: Full whitelist management for withdrawal addresses
+  - Add/Edit/Delete whitelist entries
+  - Filter by asset, search by label or address
+  - Security warning about 24h activation period
+- **Backend Endpoints Added**:
+  - `POST /api/crypto-wallets/initialize` - Create Fireblocks vault
+  - `GET /api/crypto-wallets/deposit-address/{asset}` - Get/create deposit address
+  - `GET/POST/PUT/DELETE /api/crypto-wallets/whitelist` - Whitelist CRUD
+  - `GET /api/crypto-wallets/qrcode/{asset}` - QR code data
+
 ### March 16, 2026 - Dashboard Portfolio Allocation Enhancement
 - **Pie Chart Added**: Donut chart visualization showing portfolio distribution using recharts
 - **Crypto Logos**: Added official CoinMarketCap logos for all cryptocurrencies (BTC, ETH, USDT, USDC, SOL, etc.)

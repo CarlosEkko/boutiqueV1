@@ -24,60 +24,86 @@ def set_db(database):
     db = database
 
 
-# Fireblocks asset mapping - Sandbox uses _TEST suffix for testnet assets
-# For production, remove the _TEST suffix
+# Fireblocks asset mapping - Production assets
+# Use mainnet asset IDs for production
 FIREBLOCKS_ASSET_MAP = {
-    "BTC": "BTC_TEST",
-    "ETH": "ETH_TEST",
-    "USDT": "USDT_ERC20_TEST",
-    "USDC": "USDC_ERC20_TEST",
-    "SOL": "SOL_TEST",
-    "XRP": "XRP_TEST",
-    "BNB": "BNB_TEST",
-    "ADA": "ADA_TEST",
-    "DOGE": "DOGE_TEST",
-    "TRX": "TRX_TEST",
-    "AVAX": "AVAX_TEST",
-    "LINK": "LINK_TEST",
-    "DOT": "DOT_TEST",
-    "MATIC": "MATIC_POLYGON_TEST",
-    "LTC": "LTC_TEST",
-    "UNI": "UNI_ERC20_TEST",
-    "ATOM": "ATOM_TEST",
-    "XLM": "XLM_TEST",
-    "ALGO": "ALGO_TEST",
-    "FIL": "FIL_TEST",
-    "ETC": "ETC_TEST",
-    "XMR": "XMR_TEST",
-    "NEAR": "NEAR_TEST",
-    "HBAR": "HBAR_TEST",
-    "VET": "VET_TEST",
-    "AAVE": "AAVE_ERC20_TEST",
-    "GRT": "GRT_ERC20_TEST",
-    "FTM": "FTM_TEST",
-    "THETA": "THETA_TEST",
-    "SAND": "SAND_ERC20_TEST",
-    "AXS": "AXS_ERC20_TEST",
-    "MANA": "MANA_ERC20_TEST",
-    "EOS": "EOS_TEST",
-    "XTZ": "XTZ_TEST",
-    "FLOW": "FLOW_TEST",
-    "NEO": "NEO_TEST",
-    # For assets not in testnet, we'll use mainnet IDs
+    "BTC": "BTC",
+    "ETH": "ETH",
+    "USDT": "USDT_ERC20",
+    "USDC": "USDC",
+    "SOL": "SOL",
+    "XRP": "XRP",
+    "BNB": "BNB_BSC",
+    "ADA": "ADA",
+    "DOGE": "DOGE",
+    "TRX": "TRX",
+    "AVAX": "AVAX",
+    "LINK": "LINK",
+    "DOT": "DOT",
+    "MATIC": "MATIC_POLYGON",
+    "LTC": "LTC",
+    "UNI": "UNI",
+    "ATOM": "ATOM_COS",
+    "XLM": "XLM",
+    "ALGO": "ALGO",
+    "FIL": "FIL",
+    "ETC": "ETC",
+    "XMR": "XMR",
+    "NEAR": "NEAR",
+    "HBAR": "HBAR",
+    "VET": "VET",
+    "AAVE": "AAVE",
+    "GRT": "GRT",
+    "FTM": "FTM_FANTOM",
+    "THETA": "THETA",
+    "SAND": "SAND",
+    "AXS": "AXS",
+    "MANA": "MANA",
+    "EOS": "EOS",
+    "XTZ": "XTZ",
+    "FLOW": "FLOW",
+    "NEO": "NEO",
     "SHIB": "SHIB",
     "TON": "TON",
     "BCH": "BCH",
     "DAI": "DAI",
     "APT": "APT",
-    "OKB": "OKB",
+    "OKB": "OKB_ETH",
     "ARB": "ARB",
     "CRO": "CRO",
     "MKR": "MKR",
     "INJ": "INJ",
-    "OP": "OP",
+    "OP": "OP_ETH",
     "RUNE": "RUNE",
     "EGLD": "EGLD",
     "ICP": "ICP",
+}
+
+# Blockchain explorer URLs for each asset
+BLOCKCHAIN_EXPLORERS = {
+    "BTC": "https://blockchain.com/btc/tx/",
+    "ETH": "https://etherscan.io/tx/",
+    "USDT": "https://etherscan.io/tx/",
+    "USDC": "https://etherscan.io/tx/",
+    "SOL": "https://solscan.io/tx/",
+    "XRP": "https://xrpscan.com/tx/",
+    "BNB": "https://bscscan.com/tx/",
+    "ADA": "https://cardanoscan.io/transaction/",
+    "DOGE": "https://dogechain.info/tx/",
+    "TRX": "https://tronscan.org/#/transaction/",
+    "AVAX": "https://snowtrace.io/tx/",
+    "LINK": "https://etherscan.io/tx/",
+    "DOT": "https://polkadot.subscan.io/extrinsic/",
+    "MATIC": "https://polygonscan.com/tx/",
+    "LTC": "https://blockchair.com/litecoin/transaction/",
+    "ATOM": "https://www.mintscan.io/cosmos/txs/",
+    "XLM": "https://stellar.expert/explorer/public/tx/",
+    "ALGO": "https://algoexplorer.io/tx/",
+    "FIL": "https://filfox.info/en/message/",
+    "ETC": "https://blockscout.com/etc/mainnet/tx/",
+    "NEAR": "https://explorer.near.org/transactions/",
+    "HBAR": "https://hashscan.io/mainnet/transaction/",
+    "FTM": "https://ftmscan.com/tx/",
 }
 
 # Primary assets to create by default (most commonly used)
@@ -103,11 +129,31 @@ class WithdrawalApprovalRequest(BaseModel):
     admin_note: Optional[str] = None
 
 
+class WhitelistAddressRequest(BaseModel):
+    asset: str = Field(..., description="Asset symbol (BTC, ETH, etc.)")
+    address: str = Field(..., min_length=10, description="Withdrawal address")
+    label: str = Field(..., min_length=1, max_length=50, description="Label for this address")
+    network: Optional[str] = None
+
+
+class WhitelistUpdateRequest(BaseModel):
+    label: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 def get_fireblocks_asset_id(symbol: str) -> str:
     """Map our symbol to Fireblocks asset ID"""
-    return FIREBLOCKS_ASSET_MAP.get(symbol.upper(), f"{symbol.upper()}_TEST")
+    return FIREBLOCKS_ASSET_MAP.get(symbol.upper(), symbol.upper())
+
+
+def get_explorer_url(symbol: str, tx_id: str) -> str:
+    """Get blockchain explorer URL for a transaction"""
+    base_url = BLOCKCHAIN_EXPLORERS.get(symbol.upper(), "")
+    if base_url:
+        return f"{base_url}{tx_id}"
+    return None
 
 
 async def get_user_by_id(user_id: str) -> dict:
@@ -157,7 +203,7 @@ async def ensure_user_has_fireblocks_vault(user_id: str) -> dict:
 async def ensure_asset_in_vault(user_id: str, asset_symbol: str) -> dict:
     """Ensure an asset wallet exists in user's vault"""
     vault = await ensure_user_has_fireblocks_vault(user_id)
-    _ = vault.get("fireblocks_vault_id")
+    vault_id = vault.get("fireblocks_vault_id")
     
     # Check if asset already exists
     existing_assets = vault.get("assets", [])
@@ -265,7 +311,6 @@ async def get_deposit_address(
     if not vault:
         raise HTTPException(status_code=404, detail="Crypto wallet not initialized. Please initialize first.")
     
-    _ = vault.get("fireblocks_vault_id")
     asset_upper = asset.upper()
     
     # Check if asset exists in vault
@@ -307,7 +352,7 @@ async def get_crypto_balances(user_id: str = Depends(get_current_user_id)):
     if not vault:
         return {"balances": [], "message": "No crypto wallet found"}
     
-    _ = vault.get("fireblocks_vault_id")
+    vault_id = vault.get("fireblocks_vault_id")
     balances = []
     
     try:
@@ -637,3 +682,199 @@ async def fireblocks_webhook(request: dict):
         logger.info(f"Balance update for vault {vault_id}, asset {asset_id}: {balance}")
     
     return {"success": True}
+
+
+
+# ==================== WHITELIST ENDPOINTS ====================
+
+@router.get("/whitelist")
+async def get_my_whitelist(user_id: str = Depends(get_current_user_id)):
+    """Get user's whitelisted withdrawal addresses"""
+    whitelist = await db.crypto_whitelist.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"whitelist": whitelist, "count": len(whitelist)}
+
+
+@router.post("/whitelist")
+async def add_whitelist_address(
+    request: WhitelistAddressRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Add an address to the whitelist"""
+    # Check if address already exists for this asset
+    existing = await db.crypto_whitelist.find_one({
+        "user_id": user_id,
+        "asset": request.asset.upper(),
+        "address": request.address
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Address already in whitelist for this asset")
+    
+    whitelist_record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "asset": request.asset.upper(),
+        "fireblocks_asset_id": get_fireblocks_asset_id(request.asset),
+        "address": request.address,
+        "label": request.label,
+        "network": request.network,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.crypto_whitelist.insert_one(whitelist_record)
+    logger.info(f"Whitelist address added for user {user_id}: {request.asset} - {request.address[:10]}...")
+    
+    return {
+        "success": True,
+        "message": "Address added to whitelist",
+        "whitelist_id": whitelist_record["id"]
+    }
+
+
+@router.put("/whitelist/{whitelist_id}")
+async def update_whitelist_address(
+    whitelist_id: str,
+    request: WhitelistUpdateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Update a whitelisted address"""
+    whitelist = await db.crypto_whitelist.find_one({
+        "id": whitelist_id,
+        "user_id": user_id
+    })
+    
+    if not whitelist:
+        raise HTTPException(status_code=404, detail="Whitelist entry not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if request.label is not None:
+        update_data["label"] = request.label
+    if request.is_active is not None:
+        update_data["is_active"] = request.is_active
+    
+    await db.crypto_whitelist.update_one(
+        {"id": whitelist_id},
+        {"$set": update_data}
+    )
+    
+    return {"success": True, "message": "Whitelist entry updated"}
+
+
+@router.delete("/whitelist/{whitelist_id}")
+async def delete_whitelist_address(
+    whitelist_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Remove an address from the whitelist"""
+    result = await db.crypto_whitelist.delete_one({
+        "id": whitelist_id,
+        "user_id": user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Whitelist entry not found")
+    
+    return {"success": True, "message": "Address removed from whitelist"}
+
+
+@router.get("/whitelist/{asset}")
+async def get_whitelist_for_asset(
+    asset: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get whitelisted addresses for a specific asset"""
+    whitelist = await db.crypto_whitelist.find(
+        {"user_id": user_id, "asset": asset.upper(), "is_active": True},
+        {"_id": 0}
+    ).to_list(50)
+    
+    return {"asset": asset.upper(), "addresses": whitelist}
+
+
+# ==================== TRANSACTION HISTORY ====================
+
+@router.get("/transactions")
+async def get_crypto_transactions(
+    asset: Optional[str] = None,
+    tx_type: Optional[str] = None,
+    limit: int = 50,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get crypto transaction history with explorer links"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        return {"transactions": [], "message": "No crypto wallet found"}
+    
+    # Get withdrawals
+    query = {"user_id": user_id}
+    if asset:
+        query["asset"] = asset.upper()
+    if tx_type:
+        query["type"] = tx_type
+    
+    withdrawals = await db.crypto_withdrawals.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(limit)
+    
+    # Add explorer URLs to completed transactions
+    for tx in withdrawals:
+        if tx.get("fireblocks_tx_id") and tx.get("status") == "completed":
+            tx["explorer_url"] = get_explorer_url(tx.get("asset"), tx.get("fireblocks_tx_id"))
+    
+    return {"transactions": withdrawals}
+
+
+# ==================== QR CODE ENDPOINT ====================
+
+@router.get("/qrcode/{asset}")
+async def get_deposit_qrcode(
+    asset: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get QR code data for deposit address"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        raise HTTPException(status_code=404, detail="Crypto wallet not initialized")
+    
+    # Get asset info
+    assets = vault.get("assets", [])
+    asset_info = next((a for a in assets if a.get("symbol") == asset.upper()), None)
+    
+    if not asset_info or not asset_info.get("deposit_address"):
+        # Try to create the asset
+        asset_record = await ensure_asset_in_vault(user_id, asset.upper())
+        if not asset_record:
+            raise HTTPException(status_code=404, detail=f"No address found for {asset}")
+        asset_info = asset_record
+    
+    address = asset_info.get("deposit_address")
+    
+    # Generate QR code URI based on asset type
+    qr_uri = address
+    if asset.upper() == "BTC":
+        qr_uri = f"bitcoin:{address}"
+    elif asset.upper() == "ETH":
+        qr_uri = f"ethereum:{address}"
+    elif asset.upper() == "LTC":
+        qr_uri = f"litecoin:{address}"
+    elif asset.upper() == "DOGE":
+        qr_uri = f"dogecoin:{address}"
+    elif asset.upper() == "XRP":
+        qr_uri = f"ripple:{address}"
+    
+    return {
+        "asset": asset.upper(),
+        "address": address,
+        "qr_data": qr_uri,
+        "network": asset_info.get("fireblocks_asset_id")
+    }

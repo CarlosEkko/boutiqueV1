@@ -214,9 +214,21 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
     
     all_assets = fiat_assets + [{"asset_type": "crypto", **c} for c in crypto_assets]
     
+    # Get user's Fireblocks vault for real addresses
+    fireblocks_vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    fireblocks_assets = {}
+    if fireblocks_vault:
+        for asset in fireblocks_vault.get("assets", []):
+            fireblocks_assets[asset.get("symbol")] = asset.get("deposit_address")
+    
     # Create missing wallets
     for asset in all_assets:
         if asset["asset_id"] not in existing_asset_ids:
+            # Get real address from Fireblocks if available, otherwise None
+            real_address = None
+            if asset.get("asset_type") == "crypto" and asset["asset_id"] in fireblocks_assets:
+                real_address = fireblocks_assets[asset["asset_id"]]
+            
             new_wallet = {
                 "id": str(uuid.uuid4()),
                 "user_id": user_id,
@@ -224,7 +236,7 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
                 "asset_name": asset["asset_name"],
                 "asset_type": asset.get("asset_type", "crypto"),
                 "symbol": asset.get("symbol"),
-                "address": f"mock_{asset['asset_id'].lower()}_{user_id[:8]}" if asset.get("asset_type") == "crypto" else None,
+                "address": real_address,
                 "balance": 0,
                 "available_balance": 0,
                 "pending_balance": 0,
@@ -232,6 +244,41 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
             }
             await db.wallets.insert_one(new_wallet.copy())
             wallets.append(new_wallet)
+    
+    # Update existing crypto wallets with real Fireblocks addresses if needed
+    for wallet in wallets:
+        if wallet.get("asset_type") == "crypto":
+            asset_id = wallet.get("asset_id")
+            current_address = wallet.get("address")
+            real_address = fireblocks_assets.get(asset_id)
+            
+            # Check if address needs updating:
+            # 1. No address or mock address
+            # 2. BTC should start with bc1, 1, or 3 (not 0x)
+            # 3. SOL should be 32-44 chars base58 (not 0x)
+            # 4. XRP should start with r (not 0x)
+            # 5. Address doesn't match real Fireblocks address
+            needs_update = False
+            if not current_address or current_address.startswith("mock_"):
+                needs_update = True
+            elif asset_id == "BTC" and current_address.startswith("0x"):
+                needs_update = True  # BTC can't have 0x address
+            elif asset_id == "SOL" and current_address.startswith("0x"):
+                needs_update = True  # SOL can't have 0x address
+            elif asset_id == "XRP" and current_address.startswith("0x"):
+                needs_update = True  # XRP can't have 0x address
+            elif asset_id in ["DOGE", "LTC", "BCH"] and current_address.startswith("0x"):
+                needs_update = True  # These can't have 0x addresses
+            elif real_address and current_address != real_address:
+                # Address doesn't match real Fireblocks address - update it
+                needs_update = True
+            
+            if needs_update and real_address:
+                await db.wallets.update_one(
+                    {"user_id": user_id, "asset_id": asset_id},
+                    {"$set": {"address": real_address}}
+                )
+                wallet["address"] = real_address
     
     return wallets
 
