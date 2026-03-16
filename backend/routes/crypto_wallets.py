@@ -79,6 +79,55 @@ FIREBLOCKS_ASSET_MAP = {
     "ICP": "ICP",
 }
 
+# Multi-network assets - assets that exist on multiple blockchains
+MULTI_NETWORK_ASSETS = {
+    "USDT": [
+        {"network": "ERC20", "fireblocks_id": "USDT_ERC20", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "TRC20", "fireblocks_id": "USDT_TRX", "name": "Tron (TRC20)", "explorer": "https://tronscan.org/#/transaction/"},
+        {"network": "BEP20", "fireblocks_id": "USDT_BSC", "name": "BNB Smart Chain (BEP20)", "explorer": "https://bscscan.com/tx/"},
+        {"network": "SOL", "fireblocks_id": "USDT_SOL", "name": "Solana (SPL)", "explorer": "https://solscan.io/tx/"},
+        {"network": "ALGO", "fireblocks_id": "USDT_ALGO", "name": "Algorand (ASA)", "explorer": "https://algoexplorer.io/tx/"},
+        {"network": "AVAX", "fireblocks_id": "USDT_AVAX", "name": "Avalanche C-Chain", "explorer": "https://snowtrace.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "USDT_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+        {"network": "ARB", "fireblocks_id": "USDT_ARB", "name": "Arbitrum", "explorer": "https://arbiscan.io/tx/"},
+        {"network": "OP", "fireblocks_id": "USDT_OP", "name": "Optimism", "explorer": "https://optimistic.etherscan.io/tx/"},
+    ],
+    "USDC": [
+        {"network": "ERC20", "fireblocks_id": "USDC", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "SOL", "fireblocks_id": "USDC_SOL", "name": "Solana (SPL)", "explorer": "https://solscan.io/tx/"},
+        {"network": "ALGO", "fireblocks_id": "USDC_ALGO", "name": "Algorand (ASA)", "explorer": "https://algoexplorer.io/tx/"},
+        {"network": "AVAX", "fireblocks_id": "USDC_AVAX", "name": "Avalanche C-Chain", "explorer": "https://snowtrace.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "USDC_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+        {"network": "ARB", "fireblocks_id": "USDC_ARB", "name": "Arbitrum", "explorer": "https://arbiscan.io/tx/"},
+        {"network": "OP", "fireblocks_id": "USDC_OP", "name": "Optimism", "explorer": "https://optimistic.etherscan.io/tx/"},
+        {"network": "BASE", "fireblocks_id": "USDC_BASE", "name": "Base", "explorer": "https://basescan.org/tx/"},
+    ],
+    "DAI": [
+        {"network": "ERC20", "fireblocks_id": "DAI", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "DAI_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+        {"network": "ARB", "fireblocks_id": "DAI_ARB", "name": "Arbitrum", "explorer": "https://arbiscan.io/tx/"},
+        {"network": "OP", "fireblocks_id": "DAI_OP", "name": "Optimism", "explorer": "https://optimistic.etherscan.io/tx/"},
+    ],
+    "WBTC": [
+        {"network": "ERC20", "fireblocks_id": "WBTC", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "WBTC_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+    ],
+    "LINK": [
+        {"network": "ERC20", "fireblocks_id": "LINK", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "BEP20", "fireblocks_id": "LINK_BSC", "name": "BNB Smart Chain (BEP20)", "explorer": "https://bscscan.com/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "LINK_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+    ],
+    "UNI": [
+        {"network": "ERC20", "fireblocks_id": "UNI", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "UNI_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+        {"network": "ARB", "fireblocks_id": "UNI_ARB", "name": "Arbitrum", "explorer": "https://arbiscan.io/tx/"},
+    ],
+    "AAVE": [
+        {"network": "ERC20", "fireblocks_id": "AAVE", "name": "Ethereum (ERC20)", "explorer": "https://etherscan.io/tx/"},
+        {"network": "POLYGON", "fireblocks_id": "AAVE_POLYGON", "name": "Polygon (MATIC)", "explorer": "https://polygonscan.com/tx/"},
+    ],
+}
+
 # Blockchain explorer URLs for each asset
 BLOCKCHAIN_EXPLORERS = {
     "BTC": "https://blockchain.com/btc/tx/",
@@ -1077,3 +1126,133 @@ def get_asset_name(symbol: str) -> str:
         "LINK": "Chainlink"
     }
     return names.get(symbol.upper(), symbol.upper())
+
+
+
+# ==================== NETWORK ENDPOINTS ====================
+
+@router.get("/networks/{asset}")
+async def get_asset_networks(asset: str):
+    """Get available networks for a multi-network asset"""
+    asset_upper = asset.upper()
+    
+    if asset_upper in MULTI_NETWORK_ASSETS:
+        return {
+            "asset": asset_upper,
+            "is_multi_network": True,
+            "networks": MULTI_NETWORK_ASSETS[asset_upper]
+        }
+    
+    # Single network asset
+    fireblocks_id = FIREBLOCKS_ASSET_MAP.get(asset_upper, asset_upper)
+    explorer = BLOCKCHAIN_EXPLORERS.get(asset_upper, "")
+    
+    return {
+        "asset": asset_upper,
+        "is_multi_network": False,
+        "networks": [
+            {
+                "network": "native",
+                "fireblocks_id": fireblocks_id,
+                "name": get_asset_name(asset_upper),
+                "explorer": explorer
+            }
+        ]
+    }
+
+
+@router.get("/networks")
+async def get_all_multi_network_assets():
+    """Get list of all assets that support multiple networks"""
+    result = {}
+    for asset, networks in MULTI_NETWORK_ASSETS.items():
+        result[asset] = {
+            "name": get_asset_name(asset),
+            "network_count": len(networks),
+            "networks": [n["name"] for n in networks]
+        }
+    return {"multi_network_assets": result}
+
+
+@router.get("/deposit-address/{asset}/{network}")
+async def get_deposit_address_by_network(
+    asset: str,
+    network: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get deposit address for a specific asset on a specific network"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        raise HTTPException(status_code=404, detail="Crypto wallet not initialized")
+    
+    asset_upper = asset.upper()
+    network_upper = network.upper()
+    
+    # Find the fireblocks asset ID for this network
+    fireblocks_asset_id = None
+    network_info = None
+    
+    if asset_upper in MULTI_NETWORK_ASSETS:
+        for net in MULTI_NETWORK_ASSETS[asset_upper]:
+            if net["network"].upper() == network_upper:
+                fireblocks_asset_id = net["fireblocks_id"]
+                network_info = net
+                break
+    
+    if not fireblocks_asset_id:
+        # Fallback to default mapping
+        fireblocks_asset_id = FIREBLOCKS_ASSET_MAP.get(asset_upper, asset_upper)
+        network_info = {"network": "native", "name": get_asset_name(asset_upper)}
+    
+    vault_id = vault.get("fireblocks_vault_id")
+    
+    # Check if we already have this address
+    assets = vault.get("assets", [])
+    for existing_asset in assets:
+        if existing_asset.get("fireblocks_asset_id") == fireblocks_asset_id:
+            return {
+                "asset": asset_upper,
+                "network": network_info.get("network"),
+                "network_name": network_info.get("name"),
+                "fireblocks_asset_id": fireblocks_asset_id,
+                "address": existing_asset.get("deposit_address"),
+                "memo": existing_asset.get("memo")
+            }
+    
+    # Create new asset wallet in Fireblocks
+    try:
+        await FireblocksService.create_asset_wallet(vault_id, fireblocks_asset_id)
+        
+        # Get deposit address
+        addresses = await FireblocksService.get_deposit_addresses(vault_id, fireblocks_asset_id)
+        address = addresses[0].get("address") if addresses else None
+        memo = addresses[0].get("tag") if addresses else None
+        
+        # Save to database
+        new_asset_record = {
+            "symbol": f"{asset_upper}_{network_upper}",
+            "fireblocks_asset_id": fireblocks_asset_id,
+            "deposit_address": address,
+            "memo": memo,
+            "network": network_info.get("network"),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.user_fireblocks_vaults.update_one(
+            {"user_id": user_id},
+            {"$push": {"assets": new_asset_record}}
+        )
+        
+        return {
+            "asset": asset_upper,
+            "network": network_info.get("network"),
+            "network_name": network_info.get("name"),
+            "fireblocks_asset_id": fireblocks_asset_id,
+            "address": address,
+            "memo": memo
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to create {asset_upper} wallet on {network_upper}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create wallet: {str(e)}")

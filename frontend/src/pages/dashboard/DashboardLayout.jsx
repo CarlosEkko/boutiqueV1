@@ -200,7 +200,6 @@ const DashboardLayout = () => {
     return (
       <NavLink
         to={to}
-        onClick={() => setMobileMenuOpen(false)}
         className={({ isActive }) =>
           `flex items-center justify-between pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
             isActive

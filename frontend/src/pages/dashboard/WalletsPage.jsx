@@ -45,6 +45,12 @@ const WalletsPage = () => {
   const [showQRCode, setShowQRCode] = useState(false);
   const [initializingWallet, setInitializingWallet] = useState(false);
   const [loadingAddress, setLoadingAddress] = useState(false);
+  const [networks, setNetworks] = useState([]);
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
+
+  // Multi-network assets
+  const MULTI_NETWORK_ASSETS = ['USDT', 'USDC', 'DAI', 'WBTC', 'LINK', 'UNI', 'AAVE'];
 
   useEffect(() => {
     fetchWallets();
@@ -55,6 +61,34 @@ const WalletsPage = () => {
   useEffect(() => {
     fetchCryptoPrices();
   }, [currency]);
+
+  // Fetch networks when selecting a multi-network asset
+  useEffect(() => {
+    if (selectedWallet && MULTI_NETWORK_ASSETS.includes(selectedWallet.asset_id)) {
+      fetchNetworks(selectedWallet.asset_id);
+    } else {
+      setNetworks([]);
+      setSelectedNetwork(null);
+    }
+  }, [selectedWallet?.asset_id]);
+
+  const fetchNetworks = async (asset) => {
+    setLoadingNetworks(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/crypto-wallets/networks/${asset}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNetworks(response.data.networks || []);
+      if (response.data.networks?.length > 0) {
+        setSelectedNetwork(response.data.networks[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch networks:', err);
+      setNetworks([]);
+    } finally {
+      setLoadingNetworks(false);
+    }
+  };
 
   const fetchWallets = async () => {
     try {
@@ -677,8 +711,41 @@ const WalletsPage = () => {
               {/* Crypto Deposit Section */}
               {!isFiat(selectedWallet.asset_id) && (
                 <div className="space-y-3">
+                  {/* Network Selector for multi-network assets */}
+                  {MULTI_NETWORK_ASSETS.includes(selectedWallet.asset_id) && (
+                    <div>
+                      <p className="text-sm text-gray-400 mb-2">Selecione a Rede</p>
+                      {loadingNetworks ? (
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <RefreshCw className="animate-spin" size={14} />
+                          Carregando redes...
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {networks.map((net) => (
+                            <button
+                              key={net.network}
+                              onClick={() => setSelectedNetwork(net)}
+                              className={`p-2 rounded-lg text-left text-sm transition-colors ${
+                                selectedNetwork?.network === net.network
+                                  ? 'bg-gold-500/20 border border-gold-500 text-gold-400'
+                                  : 'bg-zinc-800 border border-zinc-700 text-gray-300 hover:border-zinc-600'
+                              }`}
+                            >
+                              <p className="font-medium">{net.network}</p>
+                              <p className="text-xs text-gray-500">{net.name}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-400">Endereço de Depósito</p>
+                    <p className="text-sm text-gray-400">
+                      Endereço de Depósito
+                      {selectedNetwork && ` (${selectedNetwork.network})`}
+                    </p>
                     {selectedWallet.address && (
                       <button
                         onClick={() => setShowQRCode(!showQRCode)}
