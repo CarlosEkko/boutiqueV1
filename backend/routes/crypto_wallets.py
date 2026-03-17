@@ -723,15 +723,191 @@ async def fireblocks_webhook(request: dict):
             )
     
     elif event_type == "VAULT_ACCOUNT_ASSET_UPDATE":
-        # Deposit received - could notify user here
+        # Balance update - update user's wallet balance
         vault_id = data.get("vaultAccountId")
         asset_id = data.get("assetId")
-        balance = data.get("available")
+        total_balance = float(data.get("total", 0))
+        available_balance = float(data.get("available", 0))
+        pending_balance = float(data.get("pending", 0))
         
-        logger.info(f"Balance update for vault {vault_id}, asset {asset_id}: {balance}")
+        logger.info(f"Balance update for vault {vault_id}, asset {asset_id}: total={total_balance}, available={available_balance}")
+        
+        # Find user by vault ID
+        vault = await db.user_fireblocks_vaults.find_one({"fireblocks_vault_id": str(vault_id)})
+        if vault:
+            user_id = vault.get("user_id")
+            
+            # Map Fireblocks asset ID to our asset ID
+            clean_asset_id = asset_id.replace("_TEST", "").replace("_ERC20", "").replace("_TEST3", "")
+            if clean_asset_id.endswith("_"):
+                clean_asset_id = clean_asset_id[:-1]
+            
+            # Update wallet balance
+            result = await db.wallets.update_one(
+                {"user_id": user_id, "asset_id": clean_asset_id},
+                {
+                    "$set": {
+                        "balance": total_balance,
+                        "available_balance": available_balance,
+                        "pending_balance": pending_balance,
+                        "last_fireblocks_sync": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Updated wallet balance for user {user_id}, asset {clean_asset_id}")
+    
+    elif event_type == "TRANSACTION_CREATED":
+        # New transaction created (incoming deposit)
+        tx_id = data.get("id")
+        tx_status = data.get("status")
+        tx_type = data.get("operation")  # TRANSFER, DEPOSIT, etc
+        destination = data.get("destination", {})
+        vault_id = destination.get("id")
+        asset_id = data.get("assetId")
+        amount = float(data.get("amount", 0))
+        
+        logger.info(f"New transaction {tx_id}: type={tx_type}, status={tx_status}, asset={asset_id}, amount={amount}")
+        
+        # Find user for this vault
+        if vault_id:
+            vault = await db.user_fireblocks_vaults.find_one({"fireblocks_vault_id": str(vault_id)})
+            if vault:
+                user_id = vault.get("user_id")
+                
+                # Map asset ID
+                clean_asset_id = asset_id.replace("_TEST", "").replace("_ERC20", "").replace("_TEST3", "")
+                if clean_asset_id.endswith("_"):
+                    clean_asset_id = clean_asset_id[:-1]
+                
+                # Record the transaction
+                tx_record = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "fireblocks_tx_id": tx_id,
+                    "type": "deposit" if tx_type in ["TRANSFER", "DEPOSIT"] else tx_type.lower(),
+                    "asset": clean_asset_id,
+                    "fireblocks_asset_id": asset_id,
+                    "amount": amount,
+                    "status": tx_status.lower(),
+                    "source": data.get("source", {}).get("address"),
+                    "destination_address": destination.get("address"),
+                    "tx_hash": data.get("txHash"),
+                    "fee": float(data.get("networkFee", 0)),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                await db.crypto_transactions.insert_one(tx_record)
+                logger.info(f"Recorded deposit transaction for user {user_id}: {amount} {clean_asset_id}")
+    
+    elif event_type == "TRANSACTION_STATUS_UPDATED":
+        # Transaction status changed
+        tx_id = data.get("id")
+        new_status = data.get("status")
+        tx_hash = data.get("txHash")
+        
+        logger.info(f"Transaction {tx_id} status updated to {new_status}")
+        
+        # Update transaction record
+        update_data = {
+            "status": new_status.lower(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        if tx_hash:
+            update_data["tx_hash"] = tx_hash
+        
+        await db.crypto_transactions.update_one(
+            {"fireblocks_tx_id": tx_id},
+            {"$set": update_data}
+        )
+        
+        # Also update withdrawals if this is an outgoing tx
+        await db.crypto_withdrawals.update_one(
+            {"fireblocks_tx_id": tx_id},
+            {"$set": update_data}
+        )
     
     return {"success": True}
 
+
+# ==================== TRANSACTIONS ENDPOINTS ====================
+
+@router.get("/transactions")
+async def get_crypto_transactions(
+    asset: Optional[str] = None,
+    tx_type: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 50,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get user's crypto transaction history"""
+    query = {"user_id": user_id}
+    
+    if asset:
+        query["asset"] = asset.upper()
+    if tx_type:
+        query["type"] = tx_type.lower()
+    if status:
+        query["status"] = status.lower()
+    
+    transactions = await db.crypto_transactions.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Also get withdrawals
+    withdrawal_query = {"user_id": user_id}
+    if asset:
+        withdrawal_query["asset"] = asset.upper()
+    if status:
+        withdrawal_query["status"] = status.lower()
+    
+    withdrawals = await db.crypto_withdrawals.find(
+        withdrawal_query,
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Add type to withdrawals
+    for w in withdrawals:
+        w["type"] = "withdrawal"
+    
+    # Merge and sort by date
+    all_transactions = transactions + withdrawals
+    all_transactions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    return {
+        "transactions": all_transactions[:limit],
+        "count": len(all_transactions)
+    }
+
+
+@router.get("/transactions/{tx_id}")
+async def get_transaction_detail(
+    tx_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get details of a specific transaction"""
+    # Try to find in transactions
+    tx = await db.crypto_transactions.find_one(
+        {"id": tx_id, "user_id": user_id},
+        {"_id": 0}
+    )
+    
+    if not tx:
+        # Try withdrawals
+        tx = await db.crypto_withdrawals.find_one(
+            {"id": tx_id, "user_id": user_id},
+            {"_id": 0}
+        )
+        if tx:
+            tx["type"] = "withdrawal"
+    
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    return tx
 
 
 # ==================== WHITELIST ENDPOINTS ====================
@@ -845,41 +1021,6 @@ async def get_whitelist_for_asset(
     ).to_list(50)
     
     return {"asset": asset.upper(), "addresses": whitelist}
-
-
-# ==================== TRANSACTION HISTORY ====================
-
-@router.get("/transactions")
-async def get_crypto_transactions(
-    asset: Optional[str] = None,
-    tx_type: Optional[str] = None,
-    limit: int = 50,
-    user_id: str = Depends(get_current_user_id)
-):
-    """Get crypto transaction history with explorer links"""
-    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
-    
-    if not vault:
-        return {"transactions": [], "message": "No crypto wallet found"}
-    
-    # Get withdrawals
-    query = {"user_id": user_id}
-    if asset:
-        query["asset"] = asset.upper()
-    if tx_type:
-        query["type"] = tx_type
-    
-    withdrawals = await db.crypto_withdrawals.find(
-        query,
-        {"_id": 0}
-    ).sort("created_at", -1).to_list(limit)
-    
-    # Add explorer URLs to completed transactions
-    for tx in withdrawals:
-        if tx.get("fireblocks_tx_id") and tx.get("status") == "completed":
-            tx["explorer_url"] = get_explorer_url(tx.get("asset"), tx.get("fireblocks_tx_id"))
-    
-    return {"transactions": withdrawals}
 
 
 # ==================== QR CODE ENDPOINT ====================

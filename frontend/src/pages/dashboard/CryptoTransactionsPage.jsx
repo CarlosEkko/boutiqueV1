@@ -69,7 +69,7 @@ const CryptoTransactionsPage = () => {
   const fetchTransactions = useCallback(async () => {
     try {
       setRefreshing(true);
-      const response = await axios.get(`${API_URL}/api/crypto-wallets/fireblocks/transactions?limit=100`, {
+      const response = await axios.get(`${API_URL}/api/crypto-wallets/transactions?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTransactions(response.data.transactions || []);

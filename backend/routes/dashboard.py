@@ -281,6 +281,7 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
                 wallet["address"] = real_address
     
     # Fetch real balances from Fireblocks and update wallets
+    # Only sync if Fireblocks vault exists and we can connect
     if fireblocks_vault:
         try:
             from services.fireblocks_service import FireblocksService
@@ -306,29 +307,33 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
                         "pending": float(fb_asset.get("pending", 0))
                     }
                 
-                # Update wallet balances
-                for wallet in wallets:
-                    if wallet.get("asset_type") == "crypto":
-                        asset_id = wallet.get("asset_id")
-                        if asset_id in fb_balances:
-                            balance_data = fb_balances[asset_id]
-                            wallet["balance"] = balance_data["total"]
-                            wallet["available_balance"] = balance_data["available"]
-                            wallet["pending_balance"] = balance_data["pending"]
-                            
-                            # Also update in database for persistence
-                            await db.wallets.update_one(
-                                {"user_id": user_id, "asset_id": asset_id},
-                                {"$set": {
-                                    "balance": balance_data["total"],
-                                    "available_balance": balance_data["available"],
-                                    "pending_balance": balance_data["pending"]
-                                }}
-                            )
+                # Update wallet balances ONLY if Fireblocks returns data
+                # This preserves webhook-updated balances when Fireblocks API fails
+                if fb_balances:
+                    for wallet in wallets:
+                        if wallet.get("asset_type") == "crypto":
+                            asset_id = wallet.get("asset_id")
+                            if asset_id in fb_balances:
+                                balance_data = fb_balances[asset_id]
+                                wallet["balance"] = balance_data["total"]
+                                wallet["available_balance"] = balance_data["available"]
+                                wallet["pending_balance"] = balance_data["pending"]
+                                
+                                # Also update in database for persistence
+                                await db.wallets.update_one(
+                                    {"user_id": user_id, "asset_id": asset_id},
+                                    {"$set": {
+                                        "balance": balance_data["total"],
+                                        "available_balance": balance_data["available"],
+                                        "pending_balance": balance_data["pending"],
+                                        "last_fireblocks_sync": datetime.now(timezone.utc).isoformat()
+                                    }}
+                                )
         except Exception as e:
             import logging
             logging.error(f"Error fetching Fireblocks balances: {e}")
-            # Continue with existing balances if Fireblocks fails
+            # On error, use balances from database (possibly updated via webhook)
+            # Don't reset balances to 0
     
     return wallets
 
