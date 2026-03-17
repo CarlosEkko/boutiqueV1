@@ -135,7 +135,7 @@ class CryptoPrice(BaseModel):
 class CryptoPricesResponse(BaseModel):
     prices: List[CryptoPrice]
     last_updated: datetime
-    source: str = "coinmarketcap"
+    source: str = "binance"
 
 # Cache for crypto prices
 crypto_cache: Dict[str, Any] = {
@@ -144,73 +144,60 @@ crypto_cache: Dict[str, Any] = {
     "cache_duration": 60  # Cache for 60 seconds
 }
 
-# CoinMarketCap API configuration
-COINMARKETCAP_API_URL = "https://pro-api.coinmarketcap.com/v1"
-COINMARKETCAP_API_KEY = os.environ.get("COINMARKETCAP_API_KEY", "")
+# Binance API configuration
+BINANCE_API_URL = "https://api.binance.com/api/v3"
 
-# Crypto symbols for CoinMarketCap
-CRYPTO_SYMBOLS = ["BTC", "ETH", "ADA", "SOL", "XRP", "BNB", "DOGE", "DOT"]
+# Crypto symbols with names
+CRYPTO_SYMBOLS_MAP = {
+    "BTC": "Bitcoin",
+    "ETH": "Ethereum",
+    "ADA": "Cardano",
+    "SOL": "Solana",
+    "XRP": "XRP",
+    "BNB": "BNB",
+    "DOGE": "Dogecoin",
+    "DOT": "Polkadot"
+}
 
 async def fetch_crypto_prices() -> List[CryptoPrice]:
-    """Fetch crypto prices from CoinMarketCap API"""
-    
-    if not COINMARKETCAP_API_KEY:
-        logger.error("CoinMarketCap API key not configured")
-        raise HTTPException(status_code=503, detail="CoinMarketCap API key not configured")
-    
-    headers = {
-        "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
-        "Accept": "application/json"
-    }
+    """Fetch crypto prices from Binance API"""
     
     async with httpx.AsyncClient(timeout=15.0) as client:
         try:
-            response = await client.get(
-                f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
-                params={
-                    "symbol": ",".join(CRYPTO_SYMBOLS),
-                    "convert": "USD"
-                },
-                headers=headers
-            )
+            # Get all 24h tickers from Binance
+            response = await client.get(f"{BINANCE_API_URL}/ticker/24hr")
             response.raise_for_status()
-            data = response.json()
+            all_tickers = response.json()
             
-            if data.get("status", {}).get("error_code", 0) != 0:
-                error_msg = data.get("status", {}).get("error_message", "Unknown error")
-                logger.error(f"CoinMarketCap API error: {error_msg}")
-                raise HTTPException(status_code=503, detail=f"CoinMarketCap API error: {error_msg}")
+            # Create a map of USDT pairs
+            binance_prices = {}
+            for ticker in all_tickers:
+                binance_symbol = ticker.get("symbol", "")
+                if binance_symbol.endswith("USDT"):
+                    base_symbol = binance_symbol[:-4]
+                    binance_prices[base_symbol] = ticker
             
             prices = []
-            crypto_data = data.get("data", {})
-            
-            for symbol in CRYPTO_SYMBOLS:
-                if symbol in crypto_data:
-                    crypto = crypto_data[symbol]
-                    # Handle case where symbol maps to multiple coins (use first)
-                    if isinstance(crypto, list):
-                        crypto = crypto[0]
+            for symbol, name in CRYPTO_SYMBOLS_MAP.items():
+                ticker_data = binance_prices.get(symbol)
+                
+                if ticker_data:
+                    price = float(ticker_data.get("lastPrice", 0))
+                    volume = float(ticker_data.get("volume", 0)) * price
                     
-                    quote = crypto.get("quote", {}).get("USD", {})
                     prices.append(CryptoPrice(
                         symbol=symbol,
-                        name=crypto.get("name", symbol),
-                        price=quote.get("price", 0),
-                        change_24h=quote.get("percent_change_24h", 0),
-                        market_cap=quote.get("market_cap"),
-                        volume_24h=quote.get("volume_24h")
+                        name=name,
+                        price=price,
+                        change_24h=float(ticker_data.get("priceChangePercent", 0)),
+                        market_cap=None,  # Binance doesn't provide market cap
+                        volume_24h=volume
                     ))
             
             return prices
             
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
-                logger.error("Invalid CoinMarketCap API key")
-                raise HTTPException(status_code=503, detail="Invalid API key")
-            elif e.response.status_code == 429:
-                logger.error("CoinMarketCap rate limit exceeded")
-                raise HTTPException(status_code=503, detail="Rate limit exceeded")
-            logger.error(f"HTTP error fetching crypto prices: {e}")
+            logger.error(f"HTTP error fetching crypto prices from Binance: {e}")
             raise HTTPException(status_code=503, detail="Unable to fetch crypto prices")
         except httpx.RequestError as e:
             logger.error(f"Request error fetching crypto prices: {e}")
@@ -222,7 +209,7 @@ async def fetch_crypto_prices() -> List[CryptoPrice]:
 @api_router.get("/crypto-prices", response_model=CryptoPricesResponse)
 async def get_crypto_prices():
     """
-    Get current crypto prices from CoinMarketCap API.
+    Get current crypto prices from Binance API.
     Results are cached for 60 seconds to avoid rate limiting.
     """
     global crypto_cache
@@ -238,11 +225,11 @@ async def get_crypto_prices():
             return CryptoPricesResponse(
                 prices=crypto_cache["data"],
                 last_updated=crypto_cache["last_fetch"],
-                source="coinmarketcap (cached)"
+                source="binance (cached)"
             )
     
     # Fetch fresh data
-    logger.info("Fetching fresh crypto prices from CoinMarketCap")
+    logger.info("Fetching fresh crypto prices from Binance")
     prices = await fetch_crypto_prices()
     
     # Update cache
@@ -252,7 +239,7 @@ async def get_crypto_prices():
     return CryptoPricesResponse(
         prices=prices,
         last_updated=current_time,
-        source="coinmarketcap"
+        source="binance"
     )
 
 # Include the router in the main app

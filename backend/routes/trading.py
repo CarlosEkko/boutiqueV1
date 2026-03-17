@@ -31,9 +31,13 @@ db = None
 # Stripe integration
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
 
-# CoinMarketCap
+# Binance API (replacing CoinMarketCap)
+BINANCE_API_KEY = os.environ.get("BINANCE_API_KEY", "")
+BINANCE_SECRET_KEY = os.environ.get("BINANCE_SECRET_KEY", "")
+BINANCE_API_URL = "https://api.binance.com/api/v3"
+
+# Keep CoinMarketCap key for logo URLs only (no API calls)
 COINMARKETCAP_API_KEY = os.environ.get("COINMARKETCAP_API_KEY", "")
-COINMARKETCAP_API_URL = "https://pro-api.coinmarketcap.com/v1"
 
 # Supported fiat currencies
 SUPPORTED_FIAT = ["USD", "EUR", "AED", "BRL"]
@@ -58,7 +62,7 @@ def set_db(database):
 # ==================== CURRENCY CONVERSION ====================
 
 async def get_exchange_rates() -> dict:
-    """Get current exchange rates from cache or fetch from API"""
+    """Get current exchange rates from cache or fetch from Binance/exchangerate API"""
     global EXCHANGE_RATES_CACHE
     
     now = datetime.now(timezone.utc)
@@ -69,39 +73,24 @@ async def get_exchange_rates() -> dict:
         if cache_age < 300:  # 5 minutes
             return EXCHANGE_RATES_CACHE["rates"]
     
-    # Try to fetch from CoinMarketCap (they have fiat conversion)
-    if COINMARKETCAP_API_KEY:
-        try:
-            headers = {
-                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
-                "Accept": "application/json"
-            }
+    # Try to fetch exchange rates using exchangerate-api (free, no key needed)
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Use free exchange rate API
+            response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
             
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                # Get USD price of a stable reference (USDT = 1 USD)
-                response = await client.get(
-                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
-                    params={"symbol": "USDT", "convert": "EUR,AED,BRL"},
-                    headers=headers
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    usdt_data = data.get("data", {}).get("USDT")
-                    if isinstance(usdt_data, list):
-                        usdt_data = usdt_data[0]
-                    
-                    if usdt_data:
-                        quotes = usdt_data.get("quote", {})
-                        EXCHANGE_RATES_CACHE["rates"] = {
-                            "USD": 1.0,
-                            "EUR": quotes.get("EUR", {}).get("price", 0.92),
-                            "AED": quotes.get("AED", {}).get("price", 3.67),
-                            "BRL": quotes.get("BRL", {}).get("price", 5.90)
-                        }
-                        EXCHANGE_RATES_CACHE["updated_at"] = now
-        except Exception as e:
-            print(f"Failed to fetch exchange rates: {e}")
+            if response.status_code == 200:
+                data = response.json()
+                rates = data.get("rates", {})
+                EXCHANGE_RATES_CACHE["rates"] = {
+                    "USD": 1.0,
+                    "EUR": rates.get("EUR", 0.92),
+                    "AED": rates.get("AED", 3.67),
+                    "BRL": rates.get("BRL", 5.90)
+                }
+                EXCHANGE_RATES_CACHE["updated_at"] = now
+    except Exception as e:
+        print(f"Failed to fetch exchange rates: {e}")
     
     return EXCHANGE_RATES_CACHE["rates"]
 
@@ -237,7 +226,7 @@ async def get_user_limits(tier: str) -> UserTradingLimits:
 
 
 async def get_bulk_crypto_prices(symbols: list) -> dict:
-    """Get prices for multiple cryptocurrencies in one API call"""
+    """Get prices for multiple cryptocurrencies using Binance API"""
     if not symbols:
         return {}
     
@@ -274,56 +263,59 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
     if not symbols_to_fetch:
         return cached_prices
     
-    # Fetch missing prices from CoinMarketCap
-    if COINMARKETCAP_API_KEY:
-        try:
-            headers = {
-                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
-                "Accept": "application/json"
-            }
+    # Fetch prices from Binance
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Get all ticker prices from Binance (single request for all symbols)
+            response = await client.get(f"{BINANCE_API_URL}/ticker/24hr")
+            response.raise_for_status()
+            all_tickers = response.json()
             
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
-                    params={"symbol": ",".join(symbols_to_fetch), "convert": "USD"},
-                    headers=headers
-                )
-                response.raise_for_status()
-                data = response.json()
-                
-                for symbol in symbols_to_fetch:
-                    crypto_data = data.get("data", {}).get(symbol)
-                    if crypto_data:
-                        # Handle case where symbol maps to multiple coins
-                        if isinstance(crypto_data, list):
-                            crypto_data = crypto_data[0]
-                        
-                        quote = crypto_data.get("quote", {}).get("USD", {})
-                        
-                        price_info = {
-                            "symbol": symbol,
-                            "name": crypto_data.get("name"),
-                            "price_usd": quote.get("price", 0),
-                            "change_24h": quote.get("percent_change_24h", 0),
-                            "market_cap": quote.get("market_cap"),
-                            "volume_24h": quote.get("volume_24h"),
-                            "updated_at": datetime.now(timezone.utc).isoformat()
-                        }
-                        
-                        cached_prices[symbol] = price_info
-                        
-                        # Update cache
-                        await db.crypto_prices_cache.update_one(
-                            {"symbol": symbol},
-                            {"$set": price_info},
-                            upsert=True
-                        )
-        except Exception as e:
-            print(f"Error fetching bulk prices: {e}")
-            # Use expired prices as fallback when API fails
+            # Create a map of symbol to price info
+            binance_prices = {}
+            for ticker in all_tickers:
+                # Binance uses pairs like BTCUSDT, extract the base symbol
+                binance_symbol = ticker.get("symbol", "")
+                if binance_symbol.endswith("USDT"):
+                    base_symbol = binance_symbol[:-4]  # Remove USDT suffix
+                    binance_prices[base_symbol] = {
+                        "price": float(ticker.get("lastPrice", 0)),
+                        "change_24h": float(ticker.get("priceChangePercent", 0)),
+                        "volume_24h": float(ticker.get("volume", 0)) * float(ticker.get("lastPrice", 0))
+                    }
+            
             for symbol in symbols_to_fetch:
-                if symbol in expired_prices and symbol not in cached_prices:
-                    cached_prices[symbol] = expired_prices[symbol]
+                price_data = binance_prices.get(symbol)
+                
+                if price_data and price_data["price"] > 0:
+                    # Get crypto name from defaults
+                    crypto_info = next((c for c in DEFAULT_CRYPTOS if c["symbol"] == symbol), None)
+                    crypto_name = crypto_info["name"] if crypto_info else symbol
+                    
+                    price_info = {
+                        "symbol": symbol,
+                        "name": crypto_name,
+                        "price_usd": price_data["price"],
+                        "change_24h": price_data["change_24h"],
+                        "market_cap": None,  # Binance doesn't provide market cap
+                        "volume_24h": price_data["volume_24h"],
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    cached_prices[symbol] = price_info
+                    
+                    # Update cache
+                    await db.crypto_prices_cache.update_one(
+                        {"symbol": symbol},
+                        {"$set": price_info},
+                        upsert=True
+                    )
+    except Exception as e:
+        print(f"Error fetching bulk prices from Binance: {e}")
+        # Use expired prices as fallback when API fails
+        for symbol in symbols_to_fetch:
+            if symbol in expired_prices and symbol not in cached_prices:
+                cached_prices[symbol] = expired_prices[symbol]
     
     # For symbols without any data, use expired cache
     for symbol in symbols_to_fetch:
@@ -334,7 +326,7 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
 
 
 async def get_crypto_price(symbol: str) -> dict:
-    """Get current crypto price from cache or CoinMarketCap"""
+    """Get current crypto price from cache or Binance API"""
     # Check cache first
     cached = await db.crypto_prices_cache.find_one({"symbol": symbol}, {"_id": 0})
     
@@ -347,52 +339,50 @@ async def get_crypto_price(symbol: str) -> dict:
         if (datetime.now(timezone.utc) - cache_time).total_seconds() < 60:
             return cached
     
-    # Fetch from CoinMarketCap
-    if not COINMARKETCAP_API_KEY:
-        raise HTTPException(status_code=503, detail="Price service not configured")
-    
-    headers = {
-        "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
-        "Accept": "application/json"
-    }
-    
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.get(
-            f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
-            params={"symbol": symbol, "convert": "USD"},
-            headers=headers
-        )
-        response.raise_for_status()
-        data = response.json()
-        
-        crypto_data = data.get("data", {}).get(symbol)
-        if not crypto_data:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency {symbol} not found")
-        
-        # Handle case where symbol maps to multiple coins
-        if isinstance(crypto_data, list):
-            crypto_data = crypto_data[0]
-        
-        quote = crypto_data.get("quote", {}).get("USD", {})
-        
-        price_info = {
-            "symbol": symbol,
-            "name": crypto_data.get("name"),
-            "price_usd": quote.get("price", 0),
-            "change_24h": quote.get("percent_change_24h", 0),
-            "market_cap": quote.get("market_cap"),
-            "volume_24h": quote.get("volume_24h"),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-        
-        # Update cache
-        await db.crypto_prices_cache.update_one(
-            {"symbol": symbol},
-            {"$set": price_info},
-            upsert=True
-        )
-        
-        return price_info
+    # Fetch from Binance
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Get 24h ticker for the symbol pair with USDT
+            binance_symbol = f"{symbol.upper()}USDT"
+            response = await client.get(
+                f"{BINANCE_API_URL}/ticker/24hr",
+                params={"symbol": binance_symbol}
+            )
+            response.raise_for_status()
+            ticker = response.json()
+            
+            # Get crypto name from defaults
+            crypto_info = next((c for c in DEFAULT_CRYPTOS if c["symbol"] == symbol.upper()), None)
+            crypto_name = crypto_info["name"] if crypto_info else symbol.upper()
+            
+            price_info = {
+                "symbol": symbol.upper(),
+                "name": crypto_name,
+                "price_usd": float(ticker.get("lastPrice", 0)),
+                "change_24h": float(ticker.get("priceChangePercent", 0)),
+                "market_cap": None,
+                "volume_24h": float(ticker.get("volume", 0)) * float(ticker.get("lastPrice", 0)),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            # Update cache
+            await db.crypto_prices_cache.update_one(
+                {"symbol": symbol.upper()},
+                {"$set": price_info},
+                upsert=True
+            )
+            
+            return price_info
+    except httpx.HTTPStatusError as e:
+        # If symbol not found on Binance, try with cached/expired data
+        if cached:
+            return cached
+        raise HTTPException(status_code=404, detail=f"Cryptocurrency {symbol} not found on Binance")
+    except Exception as e:
+        print(f"Error fetching price from Binance: {e}")
+        if cached:
+            return cached
+        raise HTTPException(status_code=503, detail="Price service temporarily unavailable")
 
 
 async def check_user_limits(user: dict, order_type: str, amount_usd: float) -> bool:
@@ -2605,7 +2595,7 @@ MARKETS_CACHE = {
 
 @router.get("/markets")
 async def get_markets_data(currency: str = "USD"):
-    """Get market data for all supported cryptocurrencies"""
+    """Get market data for all supported cryptocurrencies using Binance API"""
     global MARKETS_CACHE
     
     now = datetime.now(timezone.utc)
@@ -2617,59 +2607,66 @@ async def get_markets_data(currency: str = "USD"):
             # Return cached data converted to requested currency
             return await convert_markets_to_currency(MARKETS_CACHE["data"], currency)
     
-    # Fetch fresh data from CoinMarketCap
-    if COINMARKETCAP_API_KEY:
-        try:
-            headers = {
-                "X-CMC_PRO_API_KEY": COINMARKETCAP_API_KEY,
-                "Accept": "application/json"
-            }
+    # Fetch fresh data from Binance
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Get all 24h tickers from Binance
+            response = await client.get(f"{BINANCE_API_URL}/ticker/24hr")
             
-            # Get symbols from DEFAULT_CRYPTOS
-            symbols = ",".join([c["symbol"] for c in DEFAULT_CRYPTOS])
-            
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    f"{COINMARKETCAP_API_URL}/cryptocurrency/quotes/latest",
-                    params={"symbol": symbols, "convert": "USD"},
-                    headers=headers
-                )
+            if response.status_code == 200:
+                all_tickers = response.json()
                 
-                if response.status_code == 200:
-                    data = response.json()
-                    cmc_data = data.get("data", {})
+                # Create a map of USDT pairs
+                binance_prices = {}
+                for ticker in all_tickers:
+                    binance_symbol = ticker.get("symbol", "")
+                    if binance_symbol.endswith("USDT"):
+                        base_symbol = binance_symbol[:-4]
+                        binance_prices[base_symbol] = ticker
+                
+                markets = []
+                for idx, crypto in enumerate(DEFAULT_CRYPTOS):
+                    symbol = crypto["symbol"]
+                    ticker_data = binance_prices.get(symbol)
                     
-                    markets = []
-                    for crypto in DEFAULT_CRYPTOS:
-                        symbol = crypto["symbol"]
-                        cmc_info = cmc_data.get(symbol)
+                    if ticker_data:
+                        price = float(ticker_data.get("lastPrice", 0))
+                        volume = float(ticker_data.get("volume", 0)) * price
                         
-                        # Handle both single object and list response
-                        if isinstance(cmc_info, list):
-                            cmc_info = cmc_info[0] if cmc_info else None
-                        
-                        if cmc_info:
-                            quote = cmc_info.get("quote", {}).get("USD", {})
-                            markets.append({
-                                "symbol": symbol,
-                                "name": crypto["name"],
-                                "logo": get_crypto_logo_url(crypto["cmc_id"]),
-                                "price": quote.get("price", 0),
-                                "change_1h": quote.get("percent_change_1h", 0),
-                                "change_24h": quote.get("percent_change_24h", 0),
-                                "change_7d": quote.get("percent_change_7d", 0),
-                                "volume_24h": quote.get("volume_24h", 0),
-                                "market_cap": quote.get("market_cap", 0),
-                                "rank": cmc_info.get("cmc_rank", 0),
-                            })
-                    
-                    MARKETS_CACHE["data"] = markets
-                    MARKETS_CACHE["updated_at"] = now
-                    
-                    return await convert_markets_to_currency(markets, currency)
-        
-        except Exception as e:
-            print(f"Failed to fetch market data: {e}")
+                        markets.append({
+                            "symbol": symbol,
+                            "name": crypto["name"],
+                            "logo": get_crypto_logo_url(crypto["cmc_id"]),
+                            "price": price,
+                            "change_1h": 0,  # Binance doesn't provide 1h change in this endpoint
+                            "change_24h": float(ticker_data.get("priceChangePercent", 0)),
+                            "change_7d": 0,  # Would need separate API call
+                            "volume_24h": volume,
+                            "market_cap": 0,  # Binance doesn't provide market cap
+                            "rank": idx + 1,  # Use our list order as rank
+                        })
+                    else:
+                        # Crypto not found on Binance, add with zero values
+                        markets.append({
+                            "symbol": symbol,
+                            "name": crypto["name"],
+                            "logo": get_crypto_logo_url(crypto["cmc_id"]),
+                            "price": 0,
+                            "change_1h": 0,
+                            "change_24h": 0,
+                            "change_7d": 0,
+                            "volume_24h": 0,
+                            "market_cap": 0,
+                            "rank": idx + 1,
+                        })
+                
+                MARKETS_CACHE["data"] = markets
+                MARKETS_CACHE["updated_at"] = now
+                
+                return await convert_markets_to_currency(markets, currency)
+    
+    except Exception as e:
+        print(f"Failed to fetch market data from Binance: {e}")
     
     # Return cached or fallback data
     if MARKETS_CACHE["data"]:

@@ -421,6 +421,35 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - **Date**: March 17, 2026
 
 ## Known Issues (To Be Addressed)
-1. **CoinMarketCap API Rate Limiting** (P0): The free tier API is constantly hitting rate limits. Recommended to switch to CoinGecko API.
+1. ~~**CoinMarketCap API Rate Limiting** (P0): The free tier API is constantly hitting rate limits.~~ **RESOLVED** - Migrated to Binance API.
 2. **Safari Cursor Bug** (P2): Recurring issue with custom cursor not working correctly on Safari browser.
 3. **Onboarding Flow Redirection** (P1): Users with `is_onboarded=False` should be redirected to `/onboarding` after login. This redirection logic needs to be implemented in `AuthContext.jsx` or `App.js`.
+
+## API Migration: CoinMarketCap → Binance (March 17, 2026)
+
+**Reason for Migration:** CoinMarketCap's free API tier was constantly hitting rate limits, causing prices to not display correctly.
+
+**Changes Made:**
+1. **Backend Environment** (`backend/.env`):
+   - Added `BINANCE_API_KEY` and `BINANCE_SECRET_KEY`
+
+2. **Trading Routes** (`backend/routes/trading.py`):
+   - Replaced CoinMarketCap API calls with Binance API
+   - Updated `get_exchange_rates()` to use exchangerate-api.com (free, no key)
+   - Updated `get_bulk_crypto_prices()` to fetch from Binance's `/ticker/24hr` endpoint
+   - Updated `get_crypto_price()` for single crypto lookups
+   - Updated `get_markets_data()` for market overview
+
+3. **Server** (`backend/server.py`):
+   - Updated `/api/crypto-prices` endpoint to use Binance
+
+**API Endpoints Used:**
+- `https://api.binance.com/api/v3/ticker/24hr` - 24h price change statistics
+- `https://api.exchangerate-api.com/v4/latest/USD` - Fiat exchange rates (free)
+
+**Limitations of Binance API (vs CoinMarketCap):**
+- No market cap data
+- No 1h or 7d price changes (only 24h)
+- Prices are from USDT pairs only
+
+**Status:** WORKING - All prices now display correctly throughout the platform.
