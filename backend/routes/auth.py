@@ -101,7 +101,9 @@ async def register(user_data: UserCreate):
         is_approved=user_in_db.is_approved,
         is_admin=user_in_db.is_admin,
         kyc_status=user_in_db.kyc_status,
-        membership_level=user_in_db.membership_level
+        membership_level=user_in_db.membership_level,
+        is_onboarded=False,
+        two_factor_enabled=False
     )
     
     return TokenResponse(
@@ -163,7 +165,9 @@ async def login(credentials: UserLogin):
         membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD),
         user_type=user_doc.get("user_type", UserType.CLIENT),
         region=user_doc.get("region", Region.EUROPE),
-        internal_role=user_doc.get("internal_role")
+        internal_role=user_doc.get("internal_role"),
+        is_onboarded=user_doc.get("is_onboarded", False),
+        two_factor_enabled=user_doc.get("two_factor_enabled", False)
     )
     
     return TokenResponse(
@@ -206,7 +210,9 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)):
         membership_level=user_doc.get("membership_level", MembershipLevel.STANDARD),
         user_type=user_doc.get("user_type", UserType.CLIENT),
         region=user_doc.get("region", Region.EUROPE),
-        internal_role=user_doc.get("internal_role")
+        internal_role=user_doc.get("internal_role"),
+        is_onboarded=user_doc.get("is_onboarded", False),
+        two_factor_enabled=user_doc.get("two_factor_enabled", False)
     )
 
 
@@ -419,13 +425,14 @@ async def verify_2fa(
     if not totp.verify(request.code):
         raise HTTPException(status_code=400, detail="Código inválido")
     
-    # Enable 2FA
+    # Enable 2FA and mark as onboarded
     await db.users.update_one(
         {"id": user_id},
         {
             "$set": {
                 "two_factor_enabled": True,
                 "two_factor_secret": secret,
+                "is_onboarded": True,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             },
             "$unset": {
@@ -486,4 +493,25 @@ async def get_2fa_status(user_id: str = Depends(get_current_user_id)):
     return {
         "enabled": user.get("two_factor_enabled", False)
     }
+
+
+@router.post("/complete-onboarding")
+async def complete_onboarding(user_id: str = Depends(get_current_user_id)):
+    """Mark user as onboarded (can be called after skipping 2FA)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Mark as onboarded
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "is_onboarded": True,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"success": True, "message": "Onboarding completo"}
 

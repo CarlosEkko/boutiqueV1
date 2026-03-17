@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OnboardingPage = () => {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
@@ -144,6 +144,9 @@ const OnboardingPage = () => {
       toast.success('2FA configurado com sucesso!');
       setStep(3);
       
+      // Refresh user data to update is_onboarded status
+      await refreshUser();
+      
       // Redirect after animation
       setTimeout(() => {
         navigate('/dashboard');
@@ -164,9 +167,20 @@ const OnboardingPage = () => {
     }
   };
 
-  const skip2FA = () => {
-    // Allow skipping 2FA for now
-    navigate('/dashboard');
+  const skip2FA = async () => {
+    // Mark onboarding as complete without 2FA
+    try {
+      await axios.post(
+        `${API_URL}/api/auth/complete-onboarding`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.info('2FA ignorado. Pode configurar mais tarde nas definições.');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Failed to complete onboarding:', err);
+      navigate('/dashboard');
+    }
   };
 
   if (loading) {

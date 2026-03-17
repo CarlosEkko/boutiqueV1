@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import CryptoATMPage from "./pages/CryptoATMPage";
 import MarketsPage from "./pages/MarketsPage";
@@ -64,7 +64,8 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, needsOnboarding, user } = useAuth();
+  const location = useLocation();
   
   if (loading) {
     return (
@@ -76,6 +77,14 @@ const ProtectedRoute = ({ children }) => {
   
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Don't redirect to onboarding if already on onboarding page
+  const isOnboardingPage = location.pathname === '/onboarding';
+  
+  // Redirect to onboarding if user needs it (only for clients, not on onboarding page)
+  if (needsOnboarding() && user?.user_type === 'client' && !isOnboardingPage) {
+    return <Navigate to="/onboarding" replace />;
   }
   
   return children;

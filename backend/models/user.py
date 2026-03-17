@@ -142,6 +142,10 @@ class UserResponse(UserBase):
     # Internal fields
     is_admin: bool = False
     internal_role: Optional[str] = None  # String for JSON serialization
+    
+    # Onboarding fields
+    is_onboarded: bool = False
+    two_factor_enabled: bool = False
 
 
 class UserResponseAdmin(UserResponse):

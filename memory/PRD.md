@@ -423,7 +423,44 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 ## Known Issues (To Be Addressed)
 1. ~~**CoinMarketCap API Rate Limiting** (P0): The free tier API is constantly hitting rate limits.~~ **RESOLVED** - Migrated to Binance API.
 2. **Safari Cursor Bug** (P2): Recurring issue with custom cursor not working correctly on Safari browser.
-3. **Onboarding Flow Redirection** (P1): Users with `is_onboarded=False` should be redirected to `/onboarding` after login. This redirection logic needs to be implemented in `AuthContext.jsx` or `App.js`.
+3. ~~**Onboarding Flow Redirection** (P1): Users with `is_onboarded=False` should be redirected to `/onboarding` after login.~~ **RESOLVED** - Implemented full onboarding flow.
+
+## Onboarding Flow Implementation (March 17, 2026)
+
+**Changes Made:**
+
+1. **Backend Model** (`backend/models/user.py`):
+   - Added `is_onboarded: bool = False` to `UserResponse` model
+   - Added `two_factor_enabled: bool = False` to `UserResponse` model
+
+2. **Backend Routes** (`backend/routes/auth.py`):
+   - Updated `/me`, `/login`, `/register` endpoints to return `is_onboarded` and `two_factor_enabled`
+   - Added `POST /api/auth/complete-onboarding` endpoint for skipping 2FA
+   - Modified `/2fa/verify` to mark user as `is_onboarded=True` when 2FA is enabled
+
+3. **Frontend Auth Context** (`frontend/src/context/AuthContext.jsx`):
+   - Added `needsOnboarding()` function to check if user needs onboarding
+   - Added `refreshUser()` function to reload user data
+
+4. **Frontend Auth Page** (`frontend/src/pages/AuthPage.jsx`):
+   - Modified login/register handlers to redirect clients to `/onboarding` if not onboarded
+
+5. **Frontend App** (`frontend/src/App.js`):
+   - Added `useLocation` import for route checking
+   - Updated `ProtectedRoute` to redirect non-onboarded clients to `/onboarding`
+   - Added guard to prevent redirect loop when already on onboarding page
+
+6. **Frontend Onboarding Page** (`frontend/src/pages/OnboardingPage.jsx`):
+   - Updated `skip2FA` to call `/api/auth/complete-onboarding`
+   - Added `refreshUser()` call after 2FA verification
+
+**Onboarding Flow:**
+1. New client registers/logs in → Redirected to `/onboarding`
+2. Step 1: Pay Admission Fee (based on client tier: Standard/Premium/VIP)
+3. Step 2: Setup 2FA (optional - can skip)
+4. Step 3: Complete → Redirected to dashboard
+
+**Status:** WORKING - Tested with new user registration and admin login.
 
 ## API Migration: CoinMarketCap → Binance (March 17, 2026)
 

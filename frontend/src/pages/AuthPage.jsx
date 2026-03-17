@@ -55,14 +55,21 @@ const AuthPage = () => {
     setLoading(true);
 
     try {
+      let userData;
       if (isLogin) {
-        await login(formData.email, formData.password);
+        userData = await login(formData.email, formData.password);
         toast.success(t('auth.loginSuccess') || 'Login successful!');
       } else {
-        await register(formData);
+        userData = await register(formData);
         toast.success(t('auth.registerSuccess') || 'Account created successfully!');
       }
-      navigate('/profile');
+      
+      // Check if user needs onboarding (only for clients)
+      if (userData?.user_type === 'client' && !userData?.is_onboarded) {
+        navigate('/onboarding');
+      } else {
+        navigate('/profile');
+      }
     } catch (error) {
       const message = error.response?.data?.detail || 
         (isLogin ? 'Login failed' : 'Registration failed');

@@ -81,15 +81,39 @@ export const AuthProvider = ({ children }) => {
     return response.data;
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      try {
+        const response = await axios.get(`${API_URL}/api/auth/me`);
+        setUser(response.data);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to refresh user:', error);
+      }
+    }
+    return null;
+  };
+
+  // Check if user needs onboarding
+  const needsOnboarding = () => {
+    if (!user) return false;
+    // Internal users don't need onboarding
+    if (user.user_type === 'internal') return false;
+    // Check if onboarding is complete
+    return !user.is_onboarded;
+  };
+
   const value = {
     user,
     token,
     loading,
     isAuthenticated: !!user,
+    needsOnboarding,
     register,
     login,
     logout,
-    updateProfile
+    updateProfile,
+    refreshUser
   };
 
   return (
