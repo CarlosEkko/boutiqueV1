@@ -411,3 +411,16 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
   - `POST/GET /api/auth/2fa/setup` - 2FA setup with QR code
   - `POST /api/auth/2fa/verify` - Verify TOTP code
   - `GET /api/auth/2fa/status` - Check 2FA status
+
+## Bug Fixes (March 2026)
+
+### Knowledge Base Editor - Sticky Toolbar Fix
+- **Issue**: When editing articles with long content, the rich text editor toolbar would scroll out of view making text formatting impossible.
+- **Solution**: Added `position: sticky; top: 0; z-index: 10;` to the `.ql-toolbar` class in `frontend/src/components/RichTextEditor.jsx`.
+- **Status**: FIXED AND TESTED
+- **Date**: March 17, 2026
+
+## Known Issues (To Be Addressed)
+1. **CoinMarketCap API Rate Limiting** (P0): The free tier API is constantly hitting rate limits. Recommended to switch to CoinGecko API.
+2. **Safari Cursor Bug** (P2): Recurring issue with custom cursor not working correctly on Safari browser.
+3. **Onboarding Flow Redirection** (P1): Users with `is_onboarded=False` should be redirected to `/onboarding` after login. This redirection logic needs to be implemented in `AuthContext.jsx` or `App.js`.

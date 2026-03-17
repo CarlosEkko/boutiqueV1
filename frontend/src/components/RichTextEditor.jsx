@@ -8,6 +8,9 @@ const editorStyles = `
     background: rgb(39 39 42);
     border: 1px solid rgb(63 63 70);
     border-radius: 8px 8px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   
   .kb-editor .ql-toolbar .ql-stroke {
