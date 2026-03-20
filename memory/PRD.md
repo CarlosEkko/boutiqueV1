@@ -518,3 +518,30 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 - Prices are from USDT pairs only
 
 **Status:** WORKING - All prices now display correctly throughout the platform.
+
+
+## Bug Fix: 2FA bcrypt Compatibility (March 20, 2026)
+
+**Issue:** The 2FA (Two-Factor Authentication) system was completely broken. Backend logs showed:
+```
+AttributeError: module 'bcrypt' has no attribute '__about__'
+```
+
+**Root Cause:** Incompatibility between `bcrypt==4.1.3` and `passlib==1.7.4`. The newer version of bcrypt changed its internal module structure, removing the `__about__` attribute that passlib was trying to access.
+
+**Fix Applied:**
+1. Downgraded `bcrypt` from `4.1.3` to `4.0.1` in `requirements.txt`
+2. Restarted backend service
+
+**Affected Endpoints (Now Working):**
+- `POST /api/auth/2fa/setup` - Generate 2FA secret and QR code
+- `POST /api/auth/2fa/verify` - Verify and enable 2FA
+- `POST /api/auth/2fa/disable` - Disable 2FA
+- `GET /api/auth/2fa/status` - Check 2FA status
+
+**Testing Done:**
+- Verified backend logs show no bcrypt errors
+- Tested `/api/auth/2fa/status` endpoint - returns `{"enabled": false}`
+- Tested `/api/auth/2fa/setup` endpoint - returns secret and QR code successfully
+
+**Status:** FIXED ✅
