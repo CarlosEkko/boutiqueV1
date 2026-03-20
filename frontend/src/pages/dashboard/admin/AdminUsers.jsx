@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { formatNumber } from '../../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -21,6 +22,12 @@ import {
   DialogFooter,
   DialogDescription,
 } from '../../../components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../../../components/ui/tabs';
 import { 
   Users, 
   CheckCircle, 
@@ -38,7 +45,18 @@ import {
   AlertTriangle,
   Key,
   Copy,
-  RefreshCw
+  RefreshCw,
+  Info,
+  Wallet,
+  History,
+  UserCheck,
+  Building,
+  MapPin,
+  CreditCard,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,7 +73,10 @@ const AdminUsers = () => {
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [clientDetails, setClientDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
 
@@ -191,6 +212,32 @@ const AdminUsers = () => {
     setNewPassword('');
     setGeneratedPassword('');
     setShowPasswordDialog(true);
+  };
+
+  const openDetailsDialog = async (user) => {
+    setSelectedUser(user);
+    setClientDetails(null);
+    setShowDetailsDialog(true);
+    setLoadingDetails(true);
+    
+    try {
+      const response = await axios.get(`${API_URL}/api/admin/users/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setClientDetails(response.data);
+    } catch (err) {
+      toast.error('Falha ao carregar detalhes do cliente');
+      console.error('Error fetching client details:', err);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const getReferrerInfo = (details) => {
+    if (!details?.invited_by) return null;
+    // Find referrer in users list or return the ID
+    const referrer = users.find(u => u.id === details.invited_by);
+    return referrer || { id: details.invited_by, name: 'Account Manager', email: details.invited_by };
   };
 
   const updateKYC = async (userId, status) => {
@@ -380,6 +427,17 @@ const AdminUsers = () => {
                           Revogar
                         </Button>
                       )}
+                      
+                      {/* More Info Button */}
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); openDetailsDialog(user); }}
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-800/30 text-blue-400 hover:bg-blue-900/30"
+                      >
+                        <Info size={16} className="mr-1" />
+                        Mais Info
+                      </Button>
                     </div>
 
                     {/* Expand Icon */}
@@ -659,6 +717,395 @@ const AdminUsers = () => {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={(open) => {
+        setShowDetailsDialog(open);
+        if (!open) {
+          setClientDetails(null);
+          setSelectedUser(null);
+        }
+      }}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-gold-400">
+              <Info size={20} />
+              Detalhes do Cliente
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Informação completa de <span className="text-white font-medium">{selectedUser?.name}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gold-400">Carregando...</div>
+            </div>
+          ) : clientDetails ? (
+            <Tabs defaultValue="personal" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 bg-zinc-800">
+                <TabsTrigger value="personal" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
+                  <UserCheck size={16} className="mr-2" />
+                  Pessoal
+                </TabsTrigger>
+                <TabsTrigger value="manager" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
+                  <Building size={16} className="mr-2" />
+                  Manager
+                </TabsTrigger>
+                <TabsTrigger value="wallets" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
+                  <Wallet size={16} className="mr-2" />
+                  Carteiras
+                </TabsTrigger>
+                <TabsTrigger value="transactions" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
+                  <History size={16} className="mr-2" />
+                  Transações
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Personal Info Tab */}
+              <TabsContent value="personal" className="mt-4">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <UserCheck size={14} />
+                        <span className="text-xs uppercase">Nome</span>
+                      </div>
+                      <p className="text-white font-medium">{clientDetails.name || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <Mail size={14} />
+                        <span className="text-xs uppercase">Email</span>
+                      </div>
+                      <p className="text-white font-medium">{clientDetails.email || '-'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <Phone size={14} />
+                        <span className="text-xs uppercase">Telefone</span>
+                      </div>
+                      <p className="text-white font-medium">{clientDetails.phone || 'Não fornecido'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <MapPin size={14} />
+                        <span className="text-xs uppercase">País</span>
+                      </div>
+                      <p className="text-white font-medium">{clientDetails.country || 'Não fornecido'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <Globe size={14} />
+                        <span className="text-xs uppercase">Região</span>
+                      </div>
+                      <p className="text-white font-medium capitalize">{clientDetails.region || 'Não definida'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <Crown size={14} />
+                        <span className="text-xs uppercase">Nível</span>
+                      </div>
+                      <p className="text-white font-medium capitalize">{clientDetails.membership_level || 'Standard'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <Calendar size={14} />
+                        <span className="text-xs uppercase">Registado em</span>
+                      </div>
+                      <p className="text-white font-medium">{formatDate(clientDetails.created_at)}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <CheckCircle size={14} />
+                        <span className="text-xs uppercase">Estado</span>
+                      </div>
+                      <div className="flex gap-2">
+                        {clientDetails.is_approved ? (
+                          <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>
+                        ) : (
+                          <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>
+                        )}
+                        {clientDetails.is_active === false && (
+                          <Badge className="bg-red-900/30 text-red-400">Bloqueado</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* KYC Status */}
+                  <div className="p-4 bg-zinc-800/50 rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-400 mb-2">
+                      <UserCheck size={14} />
+                      <span className="text-xs uppercase">Estado KYC</span>
+                    </div>
+                    <Badge className={
+                      clientDetails.kyc_status === 'approved' ? 'bg-green-900/30 text-green-400' :
+                      clientDetails.kyc_status === 'pending' ? 'bg-gold-800/30 text-gold-400' :
+                      clientDetails.kyc_status === 'rejected' ? 'bg-red-900/30 text-red-400' :
+                      'bg-gray-900/30 text-gray-400'
+                    }>
+                      {clientDetails.kyc_status === 'approved' ? 'Aprovado' :
+                       clientDetails.kyc_status === 'pending' ? 'Pendente' :
+                       clientDetails.kyc_status === 'rejected' ? 'Rejeitado' : 'Não Iniciado'}
+                    </Badge>
+                  </div>
+
+                  {/* Invite Code Used */}
+                  {clientDetails.invite_code_used && (
+                    <div className="p-4 bg-zinc-800/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-400 mb-1">
+                        <CreditCard size={14} />
+                        <span className="text-xs uppercase">Código de Convite Usado</span>
+                      </div>
+                      <p className="text-white font-mono">{clientDetails.invite_code_used}</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Account Manager Tab */}
+              <TabsContent value="manager" className="mt-4">
+                <div className="space-y-4">
+                  {clientDetails.invited_by ? (
+                    <div className="p-6 bg-zinc-800/50 rounded-lg">
+                      <h4 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
+                        <Building size={18} />
+                        Account Manager / Referência
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-gray-400 text-sm">ID do Referenciador</span>
+                          <p className="text-white font-mono text-sm mt-1">{clientDetails.invited_by}</p>
+                        </div>
+                        {(() => {
+                          const referrer = getReferrerInfo(clientDetails);
+                          if (referrer && referrer.name !== 'Account Manager') {
+                            return (
+                              <>
+                                <div>
+                                  <span className="text-gray-400 text-sm">Nome</span>
+                                  <p className="text-white mt-1">{referrer.name}</p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-400 text-sm">Email</span>
+                                  <p className="text-white mt-1">{referrer.email}</p>
+                                </div>
+                              </>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-12 text-center bg-zinc-800/30 rounded-lg">
+                      <Building className="mx-auto mb-4 text-gray-500" size={48} />
+                      <h3 className="text-xl text-white mb-2">Sem Account Manager</h3>
+                      <p className="text-gray-400">Este cliente não foi referenciado por nenhum manager.</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Wallets Tab */}
+              <TabsContent value="wallets" className="mt-4">
+                <div className="space-y-4">
+                  {clientDetails.wallets && clientDetails.wallets.length > 0 ? (
+                    <>
+                      {/* Fiat Wallets */}
+                      <div>
+                        <h4 className="text-sm text-gray-400 uppercase mb-3 flex items-center gap-2">
+                          <CreditCard size={14} />
+                          Carteiras Fiat
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {clientDetails.wallets
+                            .filter(w => w.asset_type === 'fiat')
+                            .map((wallet, idx) => (
+                              <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg flex items-center justify-between">
+                                <div>
+                                  <p className="text-white font-medium">{wallet.asset}</p>
+                                  <p className="text-gray-400 text-sm">Fiat</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-white font-mono">{formatNumber(wallet.balance)} {wallet.asset}</p>
+                                  {wallet.pending_balance > 0 && (
+                                    <p className="text-gold-400 text-xs">Pendente: {formatNumber(wallet.pending_balance)}</p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                        {clientDetails.wallets.filter(w => w.asset_type === 'fiat').length === 0 && (
+                          <p className="text-gray-500 text-sm">Sem carteiras fiat</p>
+                        )}
+                      </div>
+
+                      {/* Crypto Wallets */}
+                      <div>
+                        <h4 className="text-sm text-gray-400 uppercase mb-3 flex items-center gap-2">
+                          <Wallet size={14} />
+                          Carteiras Crypto
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {clientDetails.wallets
+                            .filter(w => w.asset_type === 'crypto' || !w.asset_type)
+                            .map((wallet, idx) => (
+                              <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-white font-medium">{wallet.asset}</p>
+                                  <p className="text-white font-mono">{formatNumber(wallet.balance)}</p>
+                                </div>
+                                {wallet.address && (
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-gray-400 text-xs font-mono truncate flex-1">{wallet.address}</p>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(wallet.address);
+                                        toast.success('Endereço copiado');
+                                      }}
+                                    >
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                        {clientDetails.wallets.filter(w => w.asset_type === 'crypto' || !w.asset_type).length === 0 && (
+                          <p className="text-gray-500 text-sm">Sem carteiras crypto</p>
+                        )}
+                      </div>
+
+                      {/* Total Balance Summary */}
+                      <div className="p-4 bg-gold-900/20 border border-gold-800/30 rounded-lg">
+                        <h4 className="text-gold-400 font-medium mb-2">Resumo</h4>
+                        <p className="text-gray-400 text-sm">
+                          Total de carteiras: <span className="text-white">{clientDetails.wallets.length}</span>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-12 text-center bg-zinc-800/30 rounded-lg">
+                      <Wallet className="mx-auto mb-4 text-gray-500" size={48} />
+                      <h3 className="text-xl text-white mb-2">Sem Carteiras</h3>
+                      <p className="text-gray-400">Este cliente ainda não tem carteiras criadas.</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Transactions Tab */}
+              <TabsContent value="transactions" className="mt-4">
+                <div className="space-y-4">
+                  {clientDetails.transactions && clientDetails.transactions.length > 0 ? (
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {clientDetails.transactions.map((tx, idx) => (
+                        <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-full ${
+                              tx.type === 'deposit' || tx.type === 'buy' ? 'bg-green-900/30' : 
+                              tx.type === 'withdrawal' || tx.type === 'sell' ? 'bg-red-900/30' : 
+                              'bg-blue-900/30'
+                            }`}>
+                              {tx.type === 'deposit' || tx.type === 'buy' ? (
+                                <ArrowDownRight size={16} className="text-green-400" />
+                              ) : tx.type === 'withdrawal' || tx.type === 'sell' ? (
+                                <ArrowUpRight size={16} className="text-red-400" />
+                              ) : (
+                                <TrendingUp size={16} className="text-blue-400" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-white font-medium capitalize">{tx.type}</p>
+                              <p className="text-gray-400 text-xs">{formatDate(tx.created_at)}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-mono ${
+                              tx.type === 'deposit' || tx.type === 'buy' ? 'text-green-400' : 
+                              tx.type === 'withdrawal' || tx.type === 'sell' ? 'text-red-400' : 
+                              'text-white'
+                            }`}>
+                              {tx.type === 'deposit' || tx.type === 'buy' ? '+' : '-'}
+                              {formatNumber(tx.amount)} {tx.asset || tx.currency}
+                            </p>
+                            <Badge className={
+                              tx.status === 'completed' ? 'bg-green-900/30 text-green-400' :
+                              tx.status === 'pending' ? 'bg-gold-800/30 text-gold-400' :
+                              tx.status === 'failed' ? 'bg-red-900/30 text-red-400' :
+                              'bg-gray-900/30 text-gray-400'
+                            }>
+                              {tx.status === 'completed' ? 'Concluído' :
+                               tx.status === 'pending' ? 'Pendente' :
+                               tx.status === 'failed' ? 'Falhou' : tx.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-12 text-center bg-zinc-800/30 rounded-lg">
+                      <History className="mx-auto mb-4 text-gray-500" size={48} />
+                      <h3 className="text-xl text-white mb-2">Sem Transações</h3>
+                      <p className="text-gray-400">Este cliente ainda não realizou nenhuma transação.</p>
+                    </div>
+                  )}
+
+                  {/* Investments */}
+                  {clientDetails.investments && clientDetails.investments.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-sm text-gray-400 uppercase mb-3 flex items-center gap-2">
+                        <TrendingUp size={14} />
+                        Investimentos
+                      </h4>
+                      <div className="space-y-2">
+                        {clientDetails.investments.map((inv, idx) => (
+                          <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg flex items-center justify-between">
+                            <div>
+                              <p className="text-white font-medium">{inv.opportunity_name || 'Investimento'}</p>
+                              <p className="text-gray-400 text-xs">{formatDate(inv.created_at)}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-gold-400 font-mono">{formatNumber(inv.amount)} {inv.currency || 'EUR'}</p>
+                              <Badge className={
+                                inv.status === 'active' ? 'bg-green-900/30 text-green-400' :
+                                inv.status === 'completed' ? 'bg-blue-900/30 text-blue-400' :
+                                'bg-gray-900/30 text-gray-400'
+                              }>
+                                {inv.status === 'active' ? 'Ativo' : inv.status === 'completed' ? 'Concluído' : inv.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="p-12 text-center">
+              <AlertTriangle className="mx-auto mb-4 text-red-400" size={48} />
+              <h3 className="text-xl text-white mb-2">Erro ao carregar</h3>
+              <p className="text-gray-400">Não foi possível carregar os detalhes do cliente.</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowDetailsDialog(false)}
+              className="bg-zinc-700 hover:bg-zinc-600"
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

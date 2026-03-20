@@ -572,3 +572,36 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 - No ability to grant/revoke admin rights from this page
 
 **Status:** COMPLETED ✅
+
+
+## Client Details Modal "Mais Info" (March 20, 2026)
+
+**User Request:** Add a "More Info" button for each client that shows a detailed view with: personal info, account manager (referral), wallets/addresses/balances, and transaction history.
+
+**Implementation:**
+
+1. **New Button** - Added "Mais Info" button (blue, with Info icon) to each client row in the list.
+
+2. **Client Details Modal** - Full-featured modal with 4 tabs:
+   - **Pessoal (Personal)**: Name, Email, Phone, Country, Region, Membership Level, Registration Date, Account Status, KYC Status, Invite Code Used
+   - **Manager**: Shows the referrer/account manager who invited the client (ID, Name, Email if available)
+   - **Carteiras (Wallets)**: 
+     - Fiat Wallets section with balances
+     - Crypto Wallets section with balances and addresses (copy button)
+     - Summary with total wallet count
+   - **Transações (Transactions)**: 
+     - Transaction history with type icons (deposit/withdrawal/trade)
+     - Amount, status, and date for each
+     - Investment section (if applicable)
+
+3. **Backend Endpoint Used**: `GET /api/admin/users/{user_id}` - already existed, returns user details + wallets + transactions + investments.
+
+4. **Files Modified**:
+   - `frontend/src/pages/dashboard/admin/AdminUsers.jsx`: 
+     - Added Tabs component import
+     - Added state for details dialog
+     - Added `openDetailsDialog()` function
+     - Added "Mais Info" button
+     - Added complete details modal with 4 tabs
+
+**Status:** COMPLETED ✅
