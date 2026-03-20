@@ -13,8 +13,7 @@ import {
   QrCode,
   Search,
   CheckCircle,
-  AlertTriangle,
-  ChevronDown
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import QRCode from 'qrcode';
@@ -398,30 +397,15 @@ const CryptoDepositPage = () => {
                 {networks.length > 1 && (
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">Selecionar Rede</label>
-                    <div className="relative">
-                      <select
-                        value={selectedNetwork?.network || ''}
-                        onChange={(e) => handleNetworkChange(e.target.value)}
-                        disabled={loadingAddress}
-                        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-gold-500 appearance-none cursor-pointer pr-10"
-                      >
-                        {networks.map((net) => (
-                          <option key={net.network} value={net.network}>
-                            {net.network} - {net.name}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
-                    </div>
                     
                     {/* Network cards with logos */}
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       {networks.slice(0, 6).map((net) => (
                         <button
                           key={net.network}
                           onClick={() => handleNetworkChange(net.network)}
                           disabled={loadingAddress}
-                          className={`p-2 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                          className={`p-3 rounded-lg border flex flex-col items-center gap-2 transition-all ${
                             selectedNetwork?.network === net.network
                               ? 'bg-gold-500/20 border-gold-500'
                               : 'bg-zinc-800/50 border-zinc-700 hover:border-zinc-600'
@@ -431,10 +415,10 @@ const CryptoDepositPage = () => {
                             <img 
                               src={NETWORK_LOGOS[net.network]} 
                               alt={net.network}
-                              className="w-6 h-6 rounded-full"
+                              className="w-8 h-8 rounded-full"
                             />
                           )}
-                          <span className={`text-xs ${
+                          <span className={`text-sm font-medium ${
                             selectedNetwork?.network === net.network ? 'text-gold-400' : 'text-gray-400'
                           }`}>
                             {net.network}
@@ -447,7 +431,7 @@ const CryptoDepositPage = () => {
 
                 {/* QR Code */}
                 {qrCode && (
-                  <div className="flex justify-center">
+                  <div className="flex justify-center mt-6">
                     <div className="bg-white p-3 rounded-lg">
                       <img src={qrCode} alt="QR Code" className="w-48 h-48" />
                     </div>
