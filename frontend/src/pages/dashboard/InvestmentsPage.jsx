@@ -31,9 +31,6 @@ import {
   Wallet,
   RefreshCw,
   ArrowRight,
-  Lock,
-  Globe,
-  Users,
   Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -62,7 +59,8 @@ const InvestmentsPage = () => {
     setLoading(true);
     try {
       const [oppResponse, invResponse] = await Promise.all([
-        axios.get(`${API_URL}/api/dashboard/investments/opportunities/all`, {
+        // Use the endpoint that only returns eligible opportunities
+        axios.get(`${API_URL}/api/dashboard/investments/opportunities`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API_URL}/api/dashboard/investments/my`, {
@@ -285,7 +283,6 @@ const InvestmentsPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {opportunities.map((opp) => {
                 const progress = ((opp.current_pool || 0) / opp.total_pool) * 100;
-                const isEligible = opp.user_eligible;
                 const fixedRate = opp.fixed_rate || 0;
                 const variableRate = opp.variable_rate || 0;
                 const totalROI = fixedRate + variableRate;
@@ -293,9 +290,7 @@ const InvestmentsPage = () => {
                 return (
                   <Card 
                     key={opp.id} 
-                    className={`bg-zinc-900 border-zinc-800 transition-all ${
-                      isEligible ? 'hover:border-gold-500/50' : 'opacity-60'
-                    }`}
+                    className="bg-zinc-900 border-zinc-800 transition-all hover:border-gold-500/50"
                   >
                     <CardContent className="p-6">
                       {/* Header */}
@@ -364,33 +359,14 @@ const InvestmentsPage = () => {
                         </p>
                       </div>
 
-                      {/* Eligibility Notice */}
-                      {!isEligible && (
-                        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                          <div className="flex items-center gap-2 text-red-400 text-sm">
-                            <Lock size={14} />
-                            <span>{opp.ineligible_reason || 'Não elegível para esta oportunidade'}</span>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Action Button */}
                       <Button
                         onClick={() => openInvestDialog(opp)}
-                        disabled={!isEligible || opp.status !== 'open'}
+                        disabled={opp.status !== 'open'}
                         className="w-full bg-gold-500 hover:bg-gold-400 text-black disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isEligible ? (
-                          <>
-                            Investir Agora
-                            <ArrowRight size={16} className="ml-2" />
-                          </>
-                        ) : (
-                          <>
-                            <Lock size={16} className="mr-2" />
-                            Não Disponível
-                          </>
-                        )}
+                        Investir Agora
+                        <ArrowRight size={16} className="ml-2" />
                       </Button>
                     </CardContent>
                   </Card>
