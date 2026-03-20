@@ -821,20 +821,27 @@ async def get_admission_payments(
     """Get admission fee payments with optional status filter (Admin only)"""
     query = {}
     if status != "all":
-        query["status"] = status
+        # Handle "approved" filter to include both "approved" and "paid" statuses
+        if status == "approved":
+            query["status"] = {"$in": ["approved", "paid"]}
+        else:
+            query["status"] = status
     
     payments = await db.admission_payments.find(
         query,
         {"_id": 0}
     ).sort("created_at", -1).to_list(500)
     
-    # Enrich with user info
+    # Enrich with user info and normalize status
     for payment in payments:
         user = await db.users.find_one({"id": payment.get("user_id")}, {"_id": 0, "hashed_password": 0})
         if user:
             payment["user_name"] = user.get("name")
             payment["user_email"] = user.get("email")
             payment["tier"] = user.get("membership_level", "standard")
+        # Normalize "paid" to "approved" for frontend consistency
+        if payment.get("status") == "paid":
+            payment["status"] = "approved"
     
     return payments
 

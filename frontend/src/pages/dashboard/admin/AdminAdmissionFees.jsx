@@ -44,9 +44,10 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminAdmissionFees = () => {
   const { token } = useAuth();
-  const [payments, setPayments] = useState([]);
+  const [allPayments, setAllPayments] = useState([]);  // All payments for stats
+  const [filteredPayments, setFilteredPayments] = useState([]);  // Filtered for table
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('all');  // Default to 'all' to show everything
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -54,17 +55,28 @@ const AdminAdmissionFees = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
 
   useEffect(() => {
-    fetchPayments();
-  }, [filter]);
+    fetchAllPayments();
+  }, []);
 
-  const fetchPayments = async () => {
+  useEffect(() => {
+    // Filter payments based on selected filter
+    if (filter === 'all') {
+      setFilteredPayments(allPayments);
+    } else if (filter === 'approved') {
+      setFilteredPayments(allPayments.filter(p => p.status === 'approved' || p.status === 'paid'));
+    } else {
+      setFilteredPayments(allPayments.filter(p => p.status === filter));
+    }
+  }, [filter, allPayments]);
+
+  const fetchAllPayments = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${API_URL}/api/referrals/admission-fee/payments?status=${filter}`,
+        `${API_URL}/api/referrals/admission-fee/payments?status=all`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPayments(response.data);
+      setAllPayments(response.data);
     } catch (err) {
       console.error('Failed to fetch payments:', err);
       toast.error('Erro ao carregar pagamentos');
@@ -86,7 +98,7 @@ const AdminAdmissionFees = () => {
       toast.success('Pagamento aprovado com sucesso!');
       setShowApproveDialog(false);
       setSelectedPayment(null);
-      fetchPayments();
+      fetchAllPayments();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao aprovar pagamento');
     } finally {
@@ -107,7 +119,7 @@ const AdminAdmissionFees = () => {
       toast.success('Pagamento rejeitado');
       setShowRejectDialog(false);
       setSelectedPayment(null);
-      fetchPayments();
+      fetchAllPayments();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao rejeitar pagamento');
     } finally {
@@ -136,6 +148,7 @@ const AdminAdmissionFees = () => {
       case 'pending':
         return <Badge className="bg-yellow-500/20 text-yellow-400"><Clock size={12} className="mr-1" /> Pendente</Badge>;
       case 'approved':
+      case 'paid':
         return <Badge className="bg-green-500/20 text-green-400"><CheckCircle size={12} className="mr-1" /> Aprovado</Badge>;
       case 'rejected':
         return <Badge className="bg-red-500/20 text-red-400"><XCircle size={12} className="mr-1" /> Rejeitado</Badge>;
@@ -164,7 +177,7 @@ const AdminAdmissionFees = () => {
           </p>
         </div>
         <Button
-          onClick={fetchPayments}
+          onClick={fetchAllPayments}
           variant="outline"
           className="border-zinc-700 text-gray-300"
         >
@@ -181,7 +194,7 @@ const AdminAdmissionFees = () => {
               <div>
                 <p className="text-gray-400 text-sm">Pendentes</p>
                 <p className="text-2xl font-light text-yellow-400">
-                  {payments.filter(p => p.status === 'pending').length}
+                  {allPayments.filter(p => p.status === 'pending').length}
                 </p>
               </div>
               <Clock className="text-yellow-400" size={24} />
@@ -194,7 +207,7 @@ const AdminAdmissionFees = () => {
               <div>
                 <p className="text-gray-400 text-sm">Aprovados</p>
                 <p className="text-2xl font-light text-green-400">
-                  {payments.filter(p => p.status === 'approved').length}
+                  {allPayments.filter(p => p.status === 'approved' || p.status === 'paid').length}
                 </p>
               </div>
               <CheckCircle className="text-green-400" size={24} />
@@ -207,7 +220,7 @@ const AdminAdmissionFees = () => {
               <div>
                 <p className="text-gray-400 text-sm">Rejeitados</p>
                 <p className="text-2xl font-light text-red-400">
-                  {payments.filter(p => p.status === 'rejected').length}
+                  {allPayments.filter(p => p.status === 'rejected').length}
                 </p>
               </div>
               <XCircle className="text-red-400" size={24} />
@@ -220,7 +233,7 @@ const AdminAdmissionFees = () => {
               <div>
                 <p className="text-gray-400 text-sm">Total</p>
                 <p className="text-2xl font-light text-white">
-                  {payments.length}
+                  {allPayments.length}
                 </p>
               </div>
               <CreditCard className="text-gold-400" size={24} />
@@ -250,7 +263,7 @@ const AdminAdmissionFees = () => {
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="animate-spin text-gold-400" size={32} />
             </div>
-          ) : payments.length === 0 ? (
+          ) : filteredPayments.length === 0 ? (
             <div className="text-center py-12">
               <CreditCard className="mx-auto text-gray-600 mb-4" size={48} />
               <p className="text-gray-400">Nenhum pagamento encontrado</p>
@@ -268,7 +281,7 @@ const AdminAdmissionFees = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payments.map((payment) => (
+                {filteredPayments.map((payment) => (
                   <TableRow key={payment.id} className="border-zinc-800">
                     <TableCell>
                       <div className="flex items-center gap-2">
