@@ -263,16 +263,28 @@ async def ensure_asset_in_vault(user_id: str, asset_symbol: str) -> dict:
     # Create asset in Fireblocks
     try:
         fireblocks_asset_id = get_fireblocks_asset_id(asset_symbol)
-        _ = await FireblocksService.create_vault_asset(vault_id, fireblocks_asset_id)
+        
+        # Try to create, but handle "already exists" error
+        try:
+            _ = await FireblocksService.create_vault_asset(vault_id, fireblocks_asset_id)
+        except Exception as create_error:
+            error_str = str(create_error)
+            # If asset already exists in Fireblocks (code 1026), continue to get the address
+            if "1026" in error_str or "already exists" in error_str.lower():
+                logger.info(f"Asset {asset_symbol} already exists in vault {vault_id}, getting address")
+            else:
+                raise create_error
         
         # Get deposit address
         addresses = await FireblocksService.get_deposit_addresses(vault_id, fireblocks_asset_id)
         deposit_address = addresses[0].get("address") if addresses else None
+        memo = addresses[0].get("tag") if addresses else None
         
         asset_record = {
             "symbol": asset_symbol.upper(),
             "fireblocks_asset_id": fireblocks_asset_id,
             "deposit_address": deposit_address,
+            "memo": memo,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
@@ -285,7 +297,7 @@ async def ensure_asset_in_vault(user_id: str, asset_symbol: str) -> dict:
             }
         )
         
-        logger.info(f"Created asset {asset_symbol} for user {user_id}")
+        logger.info(f"Created/linked asset {asset_symbol} for user {user_id}")
         return asset_record
         
     except Exception as e:
@@ -1363,7 +1375,16 @@ async def get_deposit_address_by_network(
     
     # Create new asset wallet in Fireblocks
     try:
-        await FireblocksService.create_vault_asset(vault_id, fireblocks_asset_id)
+        # Try to create, but handle "already exists" error
+        try:
+            await FireblocksService.create_vault_asset(vault_id, fireblocks_asset_id)
+        except Exception as create_error:
+            error_str = str(create_error)
+            # If asset already exists in Fireblocks (code 1026), continue to get the address
+            if "1026" in error_str or "already exists" in error_str.lower():
+                logger.info(f"Asset {fireblocks_asset_id} already exists in vault {vault_id}, getting address")
+            else:
+                raise create_error
         
         # Get deposit address
         addresses = await FireblocksService.get_deposit_addresses(vault_id, fireblocks_asset_id)
