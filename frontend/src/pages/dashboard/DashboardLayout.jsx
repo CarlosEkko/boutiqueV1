@@ -40,7 +40,8 @@ import {
   Lock,
   Sliders,
   Receipt,
-  GitBranch
+  GitBranch,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -51,7 +52,7 @@ const iconMap = {
   LayoutDashboard, Wallet, History, TrendingUp, PieChart, Shield, Users, Gift,
   BarChart3, UserCheck, Globe, UserCog, Ticket, User, ArrowDownUp, DollarSign,
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
-  Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch
+  Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard
 };
 
 // Department icon and color mapping

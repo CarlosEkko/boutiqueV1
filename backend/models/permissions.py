@@ -130,6 +130,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
+            {"path": "/dashboard/admin/admission-fees", "label": "Taxas de Admissão", "icon": "CreditCard"},
         ]
     },
     Department.FINANCE: {

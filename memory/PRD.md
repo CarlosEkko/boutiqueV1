@@ -462,6 +462,34 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 
 **Status:** WORKING - Tested with new user registration and admin login.
 
+## Admin Admission Fee Management (March 20, 2026)
+
+**Problem:** There was no way for admins to view and approve admission fee payments requested by clients during onboarding.
+
+**Solution Implemented:**
+
+1. **New Admin Page** (`frontend/src/pages/dashboard/admin/AdminAdmissionFees.jsx`):
+   - Lists all admission fee payments with filters (Pending/Approved/Rejected/All)
+   - Shows statistics cards: Pending, Approved, Rejected, Total
+   - Table with client info, tier, amount, date, status
+   - Approve and Reject buttons with confirmation dialogs
+
+2. **New Backend Endpoints** (`backend/routes/referrals.py`):
+   - `GET /api/referrals/admission-fee/payments?status=pending` - List payments with filter
+   - `POST /api/referrals/admission-fee/{payment_id}/reject` - Reject a payment
+
+3. **Menu Integration**:
+   - Added "Taxas de Admissão" option in Gestão menu (`backend/models/permissions.py`)
+   - Added route in `App.js`
+
+**Admin Flow:**
+1. Admin navigates to Dashboard → Gestão → Taxas de Admissão
+2. Sees list of pending payments with client details
+3. Can Approve or Reject each payment
+4. Approved payments mark the user's admission fee as paid
+
+**Status:** WORKING - Admin can now manage admission fee approvals.
+
 ## API Migration: CoinMarketCap → Binance (March 17, 2026)
 
 **Reason for Migration:** CoinMarketCap's free API tier was constantly hitting rate limits, causing prices to not display correctly.

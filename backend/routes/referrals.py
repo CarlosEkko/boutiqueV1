@@ -783,6 +783,62 @@ async def approve_admission_payment(
     return {"success": True, "message": "Pagamento aprovado com sucesso"}
 
 
+@router.post("/admission-fee/{payment_id}/reject")
+async def reject_admission_payment(
+    payment_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Reject an admission fee payment (Admin only)"""
+    payment = await db.admission_payments.find_one({"id": payment_id})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    
+    if payment.get("status") != "pending":
+        raise HTTPException(status_code=400, detail="Pagamento não está pendente")
+    
+    # Update payment status to rejected
+    await db.admission_payments.update_one(
+        {"id": payment_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "rejected_at": datetime.now(timezone.utc).isoformat(),
+                "rejected_by": admin.get("email")
+            }
+        }
+    )
+    
+    logger.info(f"Admission fee payment {payment_id} rejected by {admin.get('email')}")
+    
+    return {"success": True, "message": "Pagamento rejeitado"}
+
+
+@router.get("/admission-fee/payments")
+async def get_admission_payments(
+    status: str = "pending",
+    admin: dict = Depends(get_admin_user)
+):
+    """Get admission fee payments with optional status filter (Admin only)"""
+    query = {}
+    if status != "all":
+        query["status"] = status
+    
+    payments = await db.admission_payments.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(500)
+    
+    # Enrich with user info
+    for payment in payments:
+        user = await db.users.find_one({"id": payment.get("user_id")}, {"_id": 0, "hashed_password": 0})
+        if user:
+            payment["user_name"] = user.get("name")
+            payment["user_email"] = user.get("email")
+            payment["tier"] = user.get("membership_level", "standard")
+    
+    return payments
+
+
 @router.get("/admission-fee/pending")
 async def get_pending_admission_payments(admin: dict = Depends(get_admin_user)):
     """Get all pending admission fee payments (Admin only)"""

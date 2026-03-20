@@ -17,3 +17,4 @@ export { default as AdminClients } from './AdminClients';
 export { default as AdminPipeline } from './AdminPipeline';
 export { default as AdminSettings } from './AdminSettings';
 export { default as AdminReferrals } from './AdminReferrals';
+export { default as AdminAdmissionFees } from './AdminAdmissionFees';
