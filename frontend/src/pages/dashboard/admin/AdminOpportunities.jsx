@@ -15,6 +15,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatNumber } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -311,7 +312,7 @@ const AdminOpportunities = () => {
                     </div>
                     <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                       <DollarSign className="mx-auto text-blue-400 mb-1" size={20} />
-                      <p className="text-xl text-white">{opp.total_pool.toLocaleString()}</p>
+                      <p className="text-xl text-white">{formatNumber(opp.total_pool, 0)}</p>
                       <p className="text-xs text-gray-400">{opp.currency}</p>
                     </div>
                   </div>
@@ -329,7 +330,7 @@ const AdminOpportunities = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                      {(opp.current_pool || 0).toLocaleString()} / {opp.total_pool.toLocaleString()} {opp.currency}
+                      {formatNumber(opp.current_pool || 0, 0)} / {formatNumber(opp.total_pool, 0)} {opp.currency}
                     </p>
                   </div>
 

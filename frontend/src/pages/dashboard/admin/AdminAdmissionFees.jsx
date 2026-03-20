@@ -140,7 +140,10 @@ const AdminAdmissionFees = () => {
 
   const formatAmount = (amount, currency) => {
     const symbols = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
-    return `${symbols[currency] || currency} ${amount?.toLocaleString() || '0'}`;
+    const value = parseFloat(amount || 0);
+    const parts = value.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${symbols[currency] || currency} ${parts.join('.')}`;
   };
 
   const getStatusBadge = (status) => {

@@ -151,7 +151,7 @@ const AdminOverview = () => {
           />
           <StatCard 
             title="Total Invested" 
-            value={`$${(stats?.investments?.total_invested_amount || 0).toLocaleString()}`}
+            value={`$${parseFloat(stats?.investments?.total_invested_amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}`}
             icon={DollarSign}
             color="text-green-400"
           />

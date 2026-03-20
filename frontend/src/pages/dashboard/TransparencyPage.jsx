@@ -127,7 +127,7 @@ const TransparencyPage = () => {
               {Object.entries(reserves.totals_by_asset).map(([asset, balance]) => (
                 <Card key={asset} className="bg-zinc-900/50 border-gold-800/20">
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-light text-white">{balance.toLocaleString()}</p>
+                    <p className="text-2xl font-light text-white">{parseFloat(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</p>
                     <p className="text-gold-400 font-medium">{asset}</p>
                   </CardContent>
                 </Card>
@@ -161,7 +161,7 @@ const TransparencyPage = () => {
                             <Badge className="bg-zinc-700 text-gray-300">{wallet.label}</Badge>
                           </div>
                           <p className="text-sm text-gray-400">
-                            Balance: <span className="text-white">{wallet.balance.toLocaleString()} {wallet.asset_id}</span>
+                            Balance: <span className="text-white">{wallet.parseFloat(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</span>
                           </p>
                         </div>
                       </div>

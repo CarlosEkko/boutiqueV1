@@ -222,7 +222,7 @@ const AdminFiatDeposits = () => {
                         </Badge>
                         <div>
                           <span className="text-white font-medium">
-                            {deposit.currency} {parseFloat(deposit.amount).toLocaleString()}
+                            {deposit.currency} {parseFloat(deposit.amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
                           </span>
                           <span className="text-gray-400 ml-2">
                             Ref: {deposit.reference || deposit.id?.slice(0, 10)}

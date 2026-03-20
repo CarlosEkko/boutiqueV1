@@ -271,7 +271,7 @@ const AdminTransparency = () => {
                             <p className="text-white font-medium">{wallet.asset_name}</p>
                             <Badge className="bg-zinc-700 text-gray-300">{wallet.label}</Badge>
                           </div>
-                          <p className="text-lg text-gold-400">{wallet.balance.toLocaleString()} {wallet.asset_id}</p>
+                          <p className="text-lg text-gold-400">{parseFloat(wallet.balance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</p>
                         </div>
                       </div>
 

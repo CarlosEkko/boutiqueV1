@@ -1308,7 +1308,7 @@ const AdminTradingPage = () => {
                           </span>
                           <div>
                             <span className="text-white font-medium">
-                              {transfer.currency} {transfer.amount?.toLocaleString()}
+                              {transfer.currency} {parseFloat(transfer.amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
                             </span>
                             <span className="text-gray-400 ml-2">
                               Ref: {transfer.reference_code}

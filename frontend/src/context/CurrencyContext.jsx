@@ -90,16 +90,15 @@ export const CurrencyProvider = ({ children }) => {
     return amountUSD * toRate;
   };
 
-  // Format currency with symbol
+  // Format currency with symbol (using space as thousand separator)
   const formatCurrency = (amount, currencyCode = null) => {
     const curr = currencyCode ? getCurrencyInfo(currencyCode) : currentCurrency;
     const value = parseFloat(amount || 0);
     
-    // Format based on currency
-    const formatted = value.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    // Format with 2 decimal places and space as thousand separator
+    const parts = value.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const formatted = parts.join('.');
     
     // Position symbol based on currency
     if (curr.code === 'EUR') {
@@ -115,11 +114,17 @@ export const CurrencyProvider = ({ children }) => {
     return `${curr.symbol}${formatted}`;
   };
 
-  // Format crypto amount
+  // Format crypto amount (with space as thousand separator)
   const formatCrypto = (amount, symbol = '', decimals = null) => {
     const value = parseFloat(amount || 0);
     const dec = decimals !== null ? decimals : (symbol === 'BTC' || symbol === 'ETH' ? 8 : 2);
-    const formatted = value.toFixed(dec);
+    
+    // Format with decimals and space as thousand separator
+    const fixed = value.toFixed(dec);
+    const parts = fixed.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const formatted = parts.join('.');
+    
     return symbol ? `${formatted} ${symbol}` : formatted;
   };
 

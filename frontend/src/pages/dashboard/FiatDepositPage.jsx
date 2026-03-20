@@ -19,6 +19,7 @@ import {
   Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatNumber } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -244,7 +245,7 @@ const FiatDepositPage = () => {
         </div>
         <div className="flex justify-between items-center mt-2">
           <span className="text-gray-400 text-sm">Valor</span>
-          <span className="text-white font-bold">{details.currency} {details.amount?.toLocaleString()}</span>
+          <span className="text-white font-bold">{details.currency} {details.amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span>
         </div>
       </div>
       
@@ -351,7 +352,7 @@ const FiatDepositPage = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Mínimo: {selectedCurrency.symbol}{selectedCurrency.min.toLocaleString()}
+                      Mínimo: {selectedCurrency.symbol}{selectedCurrency.min.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
                     </p>
                   </div>
 
@@ -522,7 +523,7 @@ const FiatDepositPage = () => {
                           </div>
                           <div>
                             <p className="text-white font-medium">
-                              {deposit.currency} {deposit.amount?.toLocaleString()}
+                              {deposit.currency} {deposit.amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
                             </p>
                             <p className="text-sm text-gray-400">
                               Ref: <span className="font-mono">{deposit.reference_code}</span>
@@ -618,7 +619,7 @@ const FiatDepositPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-gray-400">
-                <p>Depósito: <span className="text-white">{selectedDeposit.currency} {selectedDeposit.amount?.toLocaleString()}</span></p>
+                <p>Depósito: <span className="text-white">{selectedDeposit.currency} {selectedDeposit.amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span></p>
                 <p>Referência: <span className="text-emerald-400 font-mono">{selectedDeposit.reference_code}</span></p>
               </div>
 
