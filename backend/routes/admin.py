@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import List, Optional
 from models.user import (
@@ -864,34 +865,61 @@ async def deactivate_invite_code(
 
 # ==================== INVESTMENT OPPORTUNITIES ====================
 
+class CreateOpportunityRequest(BaseModel):
+    name: str
+    description: str = ""
+    type: str = "lending"
+    fixed_rate: float = 0
+    variable_rate: float = 0
+    expected_roi: float = 0
+    duration_days: int = 30
+    min_investment: float = 100
+    max_investment: float = 100000
+    total_pool: float = 1000000
+    risk_level: str = "medium"
+    currency: str = "USDT"
+    allowed_regions: List[str] = ["europe", "middle_east", "brazil"]
+    allowed_tiers: List[str] = ["standard", "premium", "vip"]
+
+
+@router.get("/opportunities")
+async def get_all_opportunities(
+    admin: dict = Depends(get_admin_user)
+):
+    """Get all investment opportunities (admin view)"""
+    opportunities = await db.investment_opportunities.find(
+        {},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return opportunities
+
+
 @router.post("/opportunities")
 async def create_investment_opportunity(
-    name: str,
-    description: str,
-    expected_roi: float,
-    duration_days: int,
-    min_investment: float,
-    max_investment: float,
-    total_pool: float,
-    risk_level: str = "medium",
-    currency: str = "USDT",
+    request: CreateOpportunityRequest,
     admin: dict = Depends(get_admin_user)
 ):
     """Create a new investment opportunity"""
     opportunity = {
         "id": str(uuid.uuid4()),
-        "name": name,
-        "description": description,
-        "type": "lending",
-        "expected_roi": expected_roi,
-        "duration_days": duration_days,
-        "min_investment": min_investment,
-        "max_investment": max_investment,
-        "risk_level": risk_level,
+        "name": request.name,
+        "description": request.description,
+        "type": request.type,
+        "fixed_rate": request.fixed_rate,
+        "variable_rate": request.variable_rate,
+        "expected_roi": request.expected_roi or (request.fixed_rate + request.variable_rate),
+        "duration_days": request.duration_days,
+        "min_investment": request.min_investment,
+        "max_investment": request.max_investment,
+        "risk_level": request.risk_level,
         "status": "open",
-        "total_pool": total_pool,
+        "total_pool": request.total_pool,
         "current_pool": 0,
-        "currency": currency,
+        "currency": request.currency,
+        "allowed_regions": request.allowed_regions,
+        "allowed_tiers": request.allowed_tiers,
+        "created_by": admin.get("email"),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     

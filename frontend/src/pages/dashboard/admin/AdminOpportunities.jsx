@@ -6,34 +6,66 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { Textarea } from '../../../components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../components/ui/select';
 import { 
   TrendingUp, 
   Plus,
   Edit,
   Percent,
   Clock,
-  DollarSign
+  DollarSign,
+  Globe,
+  Users,
+  RefreshCw,
+  Trash2,
+  Eye,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatNumber } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const REGIONS = [
+  { value: 'europe', label: 'Europa' },
+  { value: 'middle_east', label: 'Médio Oriente' },
+  { value: 'brazil', label: 'Brasil' },
+];
+
+const TIERS = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'premium', label: 'Premium' },
+  { value: 'vip', label: 'VIP' },
+];
+
 const AdminOpportunities = () => {
   const { token } = useAuth();
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingOpp, setEditingOpp] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    expected_roi: '',
+    type: 'lending',
+    fixed_rate: '',
+    variable_rate: '',
     duration_days: '',
     min_investment: '',
     max_investment: '',
     total_pool: '',
     risk_level: 'medium',
-    currency: 'USDT'
+    currency: 'USDT',
+    allowed_regions: ['europe', 'middle_east', 'brazil'],
+    allowed_tiers: ['standard', 'premium', 'vip']
   });
 
   useEffect(() => {
@@ -41,13 +73,14 @@ const AdminOpportunities = () => {
   }, [token]);
 
   const fetchOpportunities = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/dashboard/investments/opportunities`, {
+      const response = await axios.get(`${API_URL}/api/admin/opportunities`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOpportunities(response.data);
     } catch (err) {
-      toast.error('Failed to load opportunities');
+      toast.error('Erro ao carregar oportunidades');
     } finally {
       setLoading(false);
     }
@@ -58,29 +91,75 @@ const AdminOpportunities = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const toggleRegion = (region) => {
+    setFormData(prev => {
+      const current = prev.allowed_regions || [];
+      if (current.includes(region)) {
+        return { ...prev, allowed_regions: current.filter(r => r !== region) };
+      } else {
+        return { ...prev, allowed_regions: [...current, region] };
+      }
+    });
+  };
+
+  const toggleTier = (tier) => {
+    setFormData(prev => {
+      const current = prev.allowed_tiers || [];
+      if (current.includes(tier)) {
+        return { ...prev, allowed_tiers: current.filter(t => t !== tier) };
+      } else {
+        return { ...prev, allowed_tiers: [...current, tier] };
+      }
+    });
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      type: 'lending',
+      fixed_rate: '',
+      variable_rate: '',
+      duration_days: '',
+      min_investment: '',
+      max_investment: '',
+      total_pool: '',
+      risk_level: 'medium',
+      currency: 'USDT',
+      allowed_regions: ['europe', 'middle_east', 'brazil'],
+      allowed_tiers: ['standard', 'premium', 'vip']
+    });
+    setEditingOpp(null);
+    setShowCreateForm(false);
+  };
+
   const createOpportunity = async (e) => {
     e.preventDefault();
     try {
-      const params = new URLSearchParams(formData).toString();
-      await axios.post(`${API_URL}/api/admin/opportunities?${params}`, {}, {
+      const payload = {
+        ...formData,
+        fixed_rate: parseFloat(formData.fixed_rate) || 0,
+        variable_rate: parseFloat(formData.variable_rate) || 0,
+        expected_roi: (parseFloat(formData.fixed_rate) || 0) + (parseFloat(formData.variable_rate) || 0),
+        duration_days: parseInt(formData.duration_days) || 30,
+        min_investment: parseFloat(formData.min_investment) || 100,
+        max_investment: parseFloat(formData.max_investment) || 100000,
+        total_pool: parseFloat(formData.total_pool) || 1000000,
+      };
+
+      await axios.post(`${API_URL}/api/admin/opportunities`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Opportunity created successfully');
-      setShowCreateForm(false);
-      setFormData({
-        name: '',
-        description: '',
-        expected_roi: '',
-        duration_days: '',
-        min_investment: '',
-        max_investment: '',
-        total_pool: '',
-        risk_level: 'medium',
-        currency: 'USDT'
-      });
+      
+      toast.success('Oportunidade criada com sucesso');
+      resetForm();
       fetchOpportunities();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to create opportunity');
+      toast.error(err.response?.data?.detail || 'Erro ao criar oportunidade');
     }
   };
 
@@ -89,187 +168,300 @@ const AdminOpportunities = () => {
       await axios.put(`${API_URL}/api/admin/opportunities/${id}/status/${status}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Status updated to ${status}`);
+      toast.success(`Status atualizado para ${status}`);
       fetchOpportunities();
     } catch (err) {
-      toast.error('Failed to update status');
+      toast.error('Erro ao atualizar status');
     }
   };
 
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
-      case 'low': return 'bg-green-900/30 text-green-400';
-      case 'medium': return 'bg-gold-800/30 text-gold-400';
-      case 'high': return 'bg-red-900/30 text-red-400';
-      default: return 'bg-gray-900/30 text-gray-400';
+      case 'low': return 'bg-green-500/20 text-green-400';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-400';
+      case 'high': return 'bg-red-500/20 text-red-400';
+      default: return 'bg-gray-500/20 text-gray-400';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'open': return 'bg-green-900/30 text-green-400';
-      case 'active': return 'bg-blue-900/30 text-blue-400';
-      case 'completed': return 'bg-gray-900/30 text-gray-400';
-      case 'cancelled': return 'bg-red-900/30 text-red-400';
-      default: return 'bg-gray-900/30 text-gray-400';
+      case 'open': return 'bg-green-500/20 text-green-400';
+      case 'active': return 'bg-blue-500/20 text-blue-400';
+      case 'completed': return 'bg-gray-500/20 text-gray-400';
+      case 'cancelled': return 'bg-red-500/20 text-red-400';
+      default: return 'bg-gray-500/20 text-gray-400';
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Loading...</div>
-      </div>
-    );
-  }
+  const totalExpectedROI = (parseFloat(formData.fixed_rate) || 0) + (parseFloat(formData.variable_rate) || 0);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light text-white">Investment Opportunities</h1>
-          <p className="text-gray-400 mt-1">Create and manage lending pools</p>
+          <h1 className="text-2xl font-light text-white">Oportunidades de Investimento</h1>
+          <p className="text-gray-400 text-sm mt-1">Criar e gerir pools de investimento</p>
         </div>
-        <Button 
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="bg-gold-500 hover:bg-gold-400"
-        >
-          <Plus size={18} className="mr-2" />
-          {showCreateForm ? 'Cancel' : 'Create Opportunity'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={fetchOpportunities}
+            variant="outline"
+            className="border-zinc-700 text-gray-300"
+          >
+            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button 
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-gold-500 hover:bg-gold-400 text-black"
+          >
+            <Plus size={18} className="mr-2" />
+            {showCreateForm ? 'Cancelar' : 'Nova Oportunidade'}
+          </Button>
+        </div>
       </div>
 
-      {/* Create Form */}
+      {/* Create/Edit Form */}
       {showCreateForm && (
-        <Card className="bg-zinc-900/50 border-gold-800/20">
+        <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
-            <CardTitle className="text-white font-light">New Investment Opportunity</CardTitle>
+            <CardTitle className="text-white font-light">
+              {editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade de Investimento'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={createOpportunity} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <Label className="text-gray-300">Name</Label>
-                <Input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g., Kilf Lending Pool"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label className="text-gray-300">Description</Label>
-                <Input
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Brief description of the opportunity"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
+            <form onSubmit={createOpportunity} className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label className="text-gray-300">Nome</Label>
+                  <Input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="ex: Pool de Empréstimo USDT"
+                    required
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="text-gray-300">Descrição</Label>
+                  <Textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Descreva a oportunidade de investimento..."
+                    rows={3}
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-gray-300">Tipo</Label>
+                  <Select value={formData.type} onValueChange={(v) => handleSelectChange('type', v)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="lending">Empréstimo (Lending)</SelectItem>
+                      <SelectItem value="staking">Staking</SelectItem>
+                      <SelectItem value="liquidity">Liquidez</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-gray-300">Moeda</Label>
+                  <Select value={formData.currency} onValueChange={(v) => handleSelectChange('currency', v)}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="USDT">USDT</SelectItem>
+                      <SelectItem value="USDC">USDC</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
+              {/* ROI Configuration */}
+              <div className="bg-zinc-800/50 rounded-lg p-4">
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <Percent size={18} className="text-gold-400" />
+                  Configuração de Retorno (ROI)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-gray-300">Taxa Fixa (%)</Label>
+                    <Input
+                      name="fixed_rate"
+                      type="number"
+                      step="0.01"
+                      value={formData.fixed_rate}
+                      onChange={handleChange}
+                      placeholder="ex: 5"
+                      className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Retorno garantido</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">Taxa Variável (%)</Label>
+                    <Input
+                      name="variable_rate"
+                      type="number"
+                      step="0.01"
+                      value={formData.variable_rate}
+                      onChange={handleChange}
+                      placeholder="ex: 3"
+                      className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Depende da performance</p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">ROI Total Esperado (%)</Label>
+                    <div className="bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 mt-1">
+                      <span className="text-2xl font-light text-green-400">{totalExpectedROI.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Investment Limits */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-gray-300">Duração (dias)</Label>
+                  <Input
+                    name="duration_days"
+                    type="number"
+                    value={formData.duration_days}
+                    onChange={handleChange}
+                    placeholder="ex: 90"
+                    required
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-300">Investimento Mín.</Label>
+                  <Input
+                    name="min_investment"
+                    type="number"
+                    value={formData.min_investment}
+                    onChange={handleChange}
+                    placeholder="ex: 1000"
+                    required
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-300">Investimento Máx.</Label>
+                  <Input
+                    name="max_investment"
+                    type="number"
+                    value={formData.max_investment}
+                    onChange={handleChange}
+                    placeholder="ex: 100000"
+                    required
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-300">Pool Total</Label>
+                  <Input
+                    name="total_pool"
+                    type="number"
+                    value={formData.total_pool}
+                    onChange={handleChange}
+                    placeholder="ex: 1000000"
+                    required
+                    className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Risk Level */}
               <div>
-                <Label className="text-gray-300">Expected ROI (%)</Label>
-                <Input
-                  name="expected_roi"
-                  type="number"
-                  step="0.1"
-                  value={formData.expected_roi}
-                  onChange={handleChange}
-                  placeholder="e.g., 12.5"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
+                <Label className="text-gray-300">Nível de Risco</Label>
+                <Select value={formData.risk_level} onValueChange={(v) => handleSelectChange('risk_level', v)}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1 w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="low">Baixo</SelectItem>
+                    <SelectItem value="medium">Médio</SelectItem>
+                    <SelectItem value="high">Alto</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <Label className="text-gray-300">Duration (days)</Label>
-                <Input
-                  name="duration_days"
-                  type="number"
-                  value={formData.duration_days}
-                  onChange={handleChange}
-                  placeholder="e.g., 90"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
+              {/* Restrictions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Regions */}
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                    <Globe size={18} className="text-blue-400" />
+                    Regiões Permitidas
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {REGIONS.map((region) => (
+                      <button
+                        key={region.value}
+                        type="button"
+                        onClick={() => toggleRegion(region.value)}
+                        className={`px-3 py-2 rounded-lg border transition-all ${
+                          formData.allowed_regions?.includes(region.value)
+                            ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                            : 'bg-zinc-800 border-zinc-700 text-gray-400 hover:border-zinc-600'
+                        }`}
+                      >
+                        {formData.allowed_regions?.includes(region.value) && (
+                          <CheckCircle size={14} className="inline mr-1" />
+                        )}
+                        {region.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Client Tiers */}
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                    <Users size={18} className="text-purple-400" />
+                    Tiers de Cliente Permitidos
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {TIERS.map((tier) => (
+                      <button
+                        key={tier.value}
+                        type="button"
+                        onClick={() => toggleTier(tier.value)}
+                        className={`px-3 py-2 rounded-lg border transition-all ${
+                          formData.allowed_tiers?.includes(tier.value)
+                            ? 'bg-purple-500/20 border-purple-500 text-purple-400'
+                            : 'bg-zinc-800 border-zinc-700 text-gray-400 hover:border-zinc-600'
+                        }`}
+                      >
+                        {formData.allowed_tiers?.includes(tier.value) && (
+                          <CheckCircle size={14} className="inline mr-1" />
+                        )}
+                        {tier.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <Label className="text-gray-300">Min Investment</Label>
-                <Input
-                  name="min_investment"
-                  type="number"
-                  value={formData.min_investment}
-                  onChange={handleChange}
-                  placeholder="e.g., 1000"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-gray-300">Max Investment</Label>
-                <Input
-                  name="max_investment"
-                  type="number"
-                  value={formData.max_investment}
-                  onChange={handleChange}
-                  placeholder="e.g., 100000"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-gray-300">Total Pool Size</Label>
-                <Input
-                  name="total_pool"
-                  type="number"
-                  value={formData.total_pool}
-                  onChange={handleChange}
-                  placeholder="e.g., 500000"
-                  required
-                  className="bg-zinc-800 border-gold-800/30 text-white mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-gray-300">Risk Level</Label>
-                <select
-                  name="risk_level"
-                  value={formData.risk_level}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-gray-300">Currency</Label>
-                <select
-                  name="currency"
-                  value={formData.currency}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 bg-zinc-800 border border-gold-800/30 text-white rounded-md mt-1"
-                >
-                  <option value="USDT">USDT</option>
-                  <option value="USDC">USDC</option>
-                  <option value="BTC">BTC</option>
-                  <option value="ETH">ETH</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2">
-                <Button type="submit" className="w-full bg-gold-500 hover:bg-gold-400">
-                  Create Opportunity
+              {/* Submit */}
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={resetForm} className="border-zinc-700 text-gray-300">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-gold-500 hover:bg-gold-400 text-black">
+                  {editingOpp ? 'Guardar Alterações' : 'Criar Oportunidade'}
                 </Button>
               </div>
             </form>
@@ -278,54 +470,83 @@ const AdminOpportunities = () => {
       )}
 
       {/* Opportunities List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {opportunities.length > 0 ? (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {loading ? (
+          <div className="col-span-full flex items-center justify-center py-12">
+            <RefreshCw className="animate-spin text-gold-400" size={32} />
+          </div>
+        ) : opportunities.length > 0 ? (
           opportunities.map((opp) => {
             const progress = ((opp.current_pool || 0) / opp.total_pool) * 100;
+            const fixedRate = opp.fixed_rate || 0;
+            const variableRate = opp.variable_rate || 0;
             
             return (
-              <Card key={opp.id} className="bg-zinc-900/50 border-gold-800/20">
+              <Card key={opp.id} className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-all">
                 <CardContent className="p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-xl text-white font-medium">{opp.name}</h3>
-                      <p className="text-sm text-gray-400 mt-1">{opp.description}</p>
+                      <h3 className="text-lg text-white font-medium">{opp.name}</h3>
+                      <p className="text-sm text-gray-400">{opp.type}</p>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge className={getRiskColor(opp.risk_level)}>{opp.risk_level}</Badge>
-                      <Badge className={getStatusColor(opp.status)}>{opp.status}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getRiskColor(opp.risk_level)}>
+                        {opp.risk_level}
+                      </Badge>
+                      <Badge className={getStatusColor(opp.status)}>
+                        {opp.status}
+                      </Badge>
                     </div>
                   </div>
 
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+                  {/* Description */}
+                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                    {opp.description}
+                  </p>
+
+                  {/* ROI Breakdown */}
+                  <div className="grid grid-cols-3 gap-2 mb-4">
                     <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <Percent className="mx-auto text-green-400 mb-1" size={20} />
-                      <p className="text-xl text-white">{opp.expected_roi}%</p>
-                      <p className="text-xs text-gray-400">ROI</p>
+                      <p className="text-xs text-gray-400">Taxa Fixa</p>
+                      <p className="text-lg text-green-400 font-medium">{fixedRate}%</p>
                     </div>
                     <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <Clock className="mx-auto text-gold-400 mb-1" size={20} />
-                      <p className="text-xl text-white">{opp.duration_days}</p>
-                      <p className="text-xs text-gray-400">Days</p>
+                      <p className="text-xs text-gray-400">Taxa Variável</p>
+                      <p className="text-lg text-yellow-400 font-medium">{variableRate}%</p>
                     </div>
                     <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <DollarSign className="mx-auto text-blue-400 mb-1" size={20} />
-                      <p className="text-xl text-white">{formatNumber(opp.total_pool, 0)}</p>
+                      <DollarSign className="mx-auto text-blue-400 mb-1" size={16} />
+                      <p className="text-lg text-white">{formatNumber(opp.total_pool, 0)}</p>
                       <p className="text-xs text-gray-400">{opp.currency}</p>
                     </div>
                   </div>
 
-                  {/* Progress */}
+                  {/* Restrictions */}
+                  <div className="flex gap-4 mb-4 text-xs">
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Globe size={12} />
+                      {(opp.allowed_regions || []).map(r => r.charAt(0).toUpperCase()).join(', ')}
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Users size={12} />
+                      {(opp.allowed_tiers || []).map(t => t.charAt(0).toUpperCase()).join(', ')}
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <Clock size={12} />
+                      {opp.duration_days} dias
+                    </div>
+                  </div>
+
+                  {/* Pool Progress */}
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-400">Pool Progress</span>
+                      <span className="text-gray-400">Progresso do Pool</span>
                       <span className="text-white">{progress.toFixed(1)}%</span>
                     </div>
                     <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full"
+                        className="h-full bg-gradient-to-r from-gold-500 to-gold-400 rounded-full transition-all"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -334,34 +555,49 @@ const AdminOpportunities = () => {
                     </p>
                   </div>
 
-                  {/* Status Actions */}
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-gray-400 text-sm mr-2">Status:</span>
-                    {['open', 'active', 'completed', 'cancelled'].map((status) => (
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    {opp.status === 'open' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => updateStatus(opp.id, 'active')}
+                          className="bg-blue-600 hover:bg-blue-500 text-white"
+                        >
+                          Iniciar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatus(opp.id, 'cancelled')}
+                          className="border-red-600 text-red-400 hover:bg-red-600/20"
+                        >
+                          Cancelar
+                        </Button>
+                      </>
+                    )}
+                    {opp.status === 'active' && (
                       <Button
-                        key={status}
-                        onClick={() => updateStatus(opp.id, status)}
                         size="sm"
-                        variant={opp.status === status ? 'default' : 'outline'}
-                        className={opp.status === status 
-                          ? 'bg-gold-500 hover:bg-gold-400 text-xs' 
-                          : 'border-gold-800/30 text-gray-400 hover:text-white text-xs'
-                        }
+                        onClick={() => updateStatus(opp.id, 'completed')}
+                        className="bg-green-600 hover:bg-green-500 text-white"
                       >
-                        {status}
+                        Concluir
                       </Button>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
             );
           })
         ) : (
-          <Card className="col-span-full bg-zinc-900/50 border-gold-800/20">
+          <Card className="col-span-full bg-zinc-900 border-zinc-800">
             <CardContent className="p-12 text-center">
-              <TrendingUp className="mx-auto mb-4 text-gray-500" size={48} />
-              <h3 className="text-xl text-white mb-2">No Opportunities</h3>
-              <p className="text-gray-400">Create your first investment opportunity.</p>
+              <TrendingUp className="mx-auto text-gray-600 mb-4" size={48} />
+              <h3 className="text-xl text-white mb-2">Nenhuma Oportunidade</h3>
+              <p className="text-gray-400">
+                Clique em "Nova Oportunidade" para criar um pool de investimento.
+              </p>
             </CardContent>
           </Card>
         )}

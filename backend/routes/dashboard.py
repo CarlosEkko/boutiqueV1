@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from models.dashboard import (
     InvestmentOpportunity, UserInvestment, Transaction, 
@@ -404,7 +404,10 @@ async def get_investment_opportunities(
     status: Optional[InvestmentStatus] = InvestmentStatus.OPEN,
     user: dict = Depends(get_approved_user)
 ):
-    """Get available investment opportunities"""
+    """Get available investment opportunities filtered by user's region and tier"""
+    user_region = user.get("region", "europe").lower()
+    user_tier = user.get("membership_level", "standard").lower()
+    
     query = {}
     if status:
         query["status"] = status
@@ -413,6 +416,57 @@ async def get_investment_opportunities(
         query,
         {"_id": 0}
     ).to_list(100)
+    
+    # Filter by user's region and tier
+    filtered = []
+    for opp in opportunities:
+        allowed_regions = [r.lower() for r in opp.get("allowed_regions", ["europe", "middle_east", "brazil"])]
+        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", ["standard", "premium", "vip"])]
+        
+        # Check if user can access this opportunity
+        region_ok = user_region in allowed_regions or "all" in allowed_regions
+        tier_ok = user_tier in allowed_tiers or "all" in allowed_tiers
+        
+        if region_ok and tier_ok:
+            # Add eligibility info
+            opp["user_eligible"] = True
+            filtered.append(opp)
+    
+    return filtered
+
+
+@router.get("/investments/opportunities/all", response_model=List[dict])
+async def get_all_investment_opportunities(
+    status: Optional[InvestmentStatus] = None,
+    user: dict = Depends(get_approved_user)
+):
+    """Get ALL investment opportunities with eligibility status"""
+    user_region = user.get("region", "europe").lower()
+    user_tier = user.get("membership_level", "standard").lower()
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    opportunities = await db.investment_opportunities.find(
+        query,
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Add eligibility info to each opportunity
+    for opp in opportunities:
+        allowed_regions = [r.lower() for r in opp.get("allowed_regions", ["europe", "middle_east", "brazil"])]
+        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", ["standard", "premium", "vip"])]
+        
+        region_ok = user_region in allowed_regions or "all" in allowed_regions
+        tier_ok = user_tier in allowed_tiers or "all" in allowed_tiers
+        
+        opp["user_eligible"] = region_ok and tier_ok
+        opp["ineligible_reason"] = None
+        if not region_ok:
+            opp["ineligible_reason"] = f"Not available in your region ({user_region})"
+        elif not tier_ok:
+            opp["ineligible_reason"] = f"Requires {', '.join(allowed_tiers)} membership"
     
     return opportunities
 
@@ -454,6 +508,9 @@ async def invest_in_opportunity(
     user: dict = Depends(get_approved_user)
 ):
     """Invest in an opportunity"""
+    user_region = user.get("region", "europe").lower()
+    user_tier = user.get("membership_level", "standard").lower()
+    
     # Get opportunity
     opportunity = await db.investment_opportunities.find_one(
         {"id": opportunity_id, "status": InvestmentStatus.OPEN},
@@ -462,6 +519,22 @@ async def invest_in_opportunity(
     
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found or closed")
+    
+    # Check region eligibility
+    allowed_regions = [r.lower() for r in opportunity.get("allowed_regions", ["europe", "middle_east", "brazil"])]
+    if user_region not in allowed_regions and "all" not in allowed_regions:
+        raise HTTPException(
+            status_code=403,
+            detail=f"This opportunity is not available in your region"
+        )
+    
+    # Check tier eligibility
+    allowed_tiers = [t.lower() for t in opportunity.get("allowed_tiers", ["standard", "premium", "vip"])]
+    if user_tier not in allowed_tiers and "all" not in allowed_tiers:
+        raise HTTPException(
+            status_code=403,
+            detail=f"This opportunity requires {', '.join(allowed_tiers)} membership"
+        )
     
     # Validate amount
     if amount < opportunity.get("min_investment", 0):
@@ -496,10 +569,16 @@ async def invest_in_opportunity(
             detail="Insufficient balance"
         )
     
-    # Calculate expected return
-    roi = opportunity.get("expected_roi", 0) / 100
+    # Calculate expected return using fixed + variable rates
+    fixed_rate = opportunity.get("fixed_rate", 0) / 100
+    variable_rate = opportunity.get("variable_rate", 0) / 100
+    # For now, use full variable rate; actual may vary based on performance
+    total_rate = fixed_rate + variable_rate
+    expected_return = amount * total_rate
+    
+    # Calculate maturity date
     duration_days = opportunity.get("duration_days", 30)
-    expected_return = amount * roi
+    maturity_date = datetime.now(timezone.utc) + timedelta(days=duration_days)
     
     # Create investment
     investment = UserInvestment(
@@ -511,7 +590,10 @@ async def invest_in_opportunity(
     )
     
     inv_dict = investment.model_dump()
-    inv_dict["invested_at"] = inv_dict["invested_at"].isoformat()
+    inv_dict["invested_at"] = datetime.now(timezone.utc).isoformat()
+    inv_dict["maturity_date"] = maturity_date.isoformat()
+    inv_dict["fixed_rate"] = opportunity.get("fixed_rate", 0)
+    inv_dict["variable_rate"] = opportunity.get("variable_rate", 0)
     await db.user_investments.insert_one(inv_dict)
     
     # Update wallet balance

@@ -39,7 +39,12 @@ class InvestmentOpportunity(BaseModel):
     name: str
     description: str
     type: str = "lending"  # lending, staking, etc.
-    expected_roi: float  # percentage
+    
+    # ROI Configuration (Fixed + Variable)
+    fixed_rate: float = 0  # Fixed percentage rate
+    variable_rate: float = 0  # Variable percentage rate (depends on performance)
+    expected_roi: float = 0  # Total expected ROI (fixed + variable)
+    
     duration_days: int
     min_investment: float
     max_investment: float
@@ -48,7 +53,14 @@ class InvestmentOpportunity(BaseModel):
     total_pool: float
     current_pool: float = 0
     currency: str = "USDT"
+    
+    # Restrictions by Region and Client Tier
+    allowed_regions: List[str] = Field(default_factory=lambda: ["europe", "middle_east", "brazil"])
+    allowed_tiers: List[str] = Field(default_factory=lambda: ["standard", "premium", "vip"])
+    
+    # Metadata
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
