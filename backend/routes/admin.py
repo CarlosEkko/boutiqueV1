@@ -946,6 +946,32 @@ async def update_opportunity_status(
     return {"success": True, "message": f"Status updated to {status}"}
 
 
+@router.delete("/opportunities/{opportunity_id}")
+async def delete_opportunity(
+    opportunity_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete an investment opportunity"""
+    # Check if there are active investments
+    active_investments = await db.user_investments.count_documents({
+        "opportunity_id": opportunity_id,
+        "status": {"$in": ["active", "pending"]}
+    })
+    
+    if active_investments > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Não é possível eliminar. Existem {active_investments} investimentos ativos."
+        )
+    
+    result = await db.investment_opportunities.delete_one({"id": opportunity_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+    
+    return {"success": True, "message": "Oportunidade eliminada com sucesso"}
+
+
 # ==================== TRANSPARENCY ====================
 
 @router.post("/transparency/reports")

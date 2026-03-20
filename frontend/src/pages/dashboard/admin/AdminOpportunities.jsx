@@ -14,10 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../components/ui/dialog';
 import { 
   TrendingUp, 
   Plus,
-  Edit,
   Percent,
   Clock,
   DollarSign,
@@ -25,9 +32,10 @@ import {
   Users,
   RefreshCw,
   Trash2,
-  Eye,
   CheckCircle,
-  XCircle
+  AlertTriangle,
+  Filter,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatNumber } from '../../../utils/formatters';
@@ -46,12 +54,33 @@ const TIERS = [
   { value: 'vip', label: 'VIP' },
 ];
 
+const STATUSES = [
+  { value: 'all', label: 'Todos' },
+  { value: 'open', label: 'Aberto' },
+  { value: 'active', label: 'Ativo' },
+  { value: 'completed', label: 'Concluído' },
+  { value: 'cancelled', label: 'Cancelado' },
+];
+
 const AdminOpportunities = () => {
   const { token } = useAuth();
   const [opportunities, setOpportunities] = useState([]);
+  const [filteredOpportunities, setFilteredOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingOpp, setEditingOpp] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingOpp, setDeletingOpp] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  
+  // Filters
+  const [filters, setFilters] = useState({
+    status: 'all',
+    region: 'all',
+    tier: 'all',
+    search: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -72,6 +101,10 @@ const AdminOpportunities = () => {
     fetchOpportunities();
   }, [token]);
 
+  useEffect(() => {
+    applyFilters();
+  }, [opportunities, filters]);
+
   const fetchOpportunities = async () => {
     setLoading(true);
     try {
@@ -85,6 +118,51 @@ const AdminOpportunities = () => {
       setLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    let filtered = [...opportunities];
+
+    // Filter by status
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(opp => opp.status === filters.status);
+    }
+
+    // Filter by region
+    if (filters.region !== 'all') {
+      filtered = filtered.filter(opp => 
+        (opp.allowed_regions || []).includes(filters.region)
+      );
+    }
+
+    // Filter by tier
+    if (filters.tier !== 'all') {
+      filtered = filtered.filter(opp => 
+        (opp.allowed_tiers || []).includes(filters.tier)
+      );
+    }
+
+    // Filter by search
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      filtered = filtered.filter(opp => 
+        opp.name?.toLowerCase().includes(search) ||
+        opp.description?.toLowerCase().includes(search)
+      );
+    }
+
+    setFilteredOpportunities(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      status: 'all',
+      region: 'all',
+      tier: 'all',
+      search: ''
+    });
+  };
+
+  const hasActiveFilters = filters.status !== 'all' || filters.region !== 'all' || filters.tier !== 'all' || filters.search;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -133,7 +211,6 @@ const AdminOpportunities = () => {
       allowed_regions: ['europe', 'middle_east', 'brazil'],
       allowed_tiers: ['standard', 'premium', 'vip']
     });
-    setEditingOpp(null);
     setShowCreateForm(false);
   };
 
@@ -175,6 +252,30 @@ const AdminOpportunities = () => {
     }
   };
 
+  const confirmDelete = (opp) => {
+    setDeletingOpp(opp);
+    setShowDeleteDialog(true);
+  };
+
+  const deleteOpportunity = async () => {
+    if (!deletingOpp) return;
+    
+    setDeleting(true);
+    try {
+      await axios.delete(`${API_URL}/api/admin/opportunities/${deletingOpp.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Oportunidade eliminada com sucesso');
+      setShowDeleteDialog(false);
+      setDeletingOpp(null);
+      fetchOpportunities();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar oportunidade');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const getRiskColor = (risk) => {
     switch (risk?.toLowerCase()) {
       case 'low': return 'bg-green-500/20 text-green-400';
@@ -202,9 +303,24 @@ const AdminOpportunities = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-light text-white">Oportunidades de Investimento</h1>
-          <p className="text-gray-400 text-sm mt-1">Criar e gerir pools de investimento</p>
+          <p className="text-gray-400 text-sm mt-1">
+            {filteredOpportunities.length} de {opportunities.length} oportunidades
+          </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => setShowFilters(!showFilters)}
+            variant="outline"
+            className={`border-zinc-700 ${hasActiveFilters ? 'text-gold-400 border-gold-500' : 'text-gray-300'}`}
+          >
+            <Filter size={16} className="mr-2" />
+            Filtros
+            {hasActiveFilters && (
+              <span className="ml-2 px-1.5 py-0.5 bg-gold-500 text-black text-xs rounded">
+                {[filters.status !== 'all', filters.region !== 'all', filters.tier !== 'all', filters.search].filter(Boolean).length}
+              </span>
+            )}
+          </Button>
           <Button
             onClick={fetchOpportunities}
             variant="outline"
@@ -223,12 +339,101 @@ const AdminOpportunities = () => {
         </div>
       </div>
 
-      {/* Create/Edit Form */}
+      {/* Filters Panel */}
+      {showFilters && (
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              {/* Search */}
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-gray-400 text-xs">Pesquisar</Label>
+                <Input
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  placeholder="Nome ou descrição..."
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="w-40">
+                <Label className="text-gray-400 text-xs">Estado</Label>
+                <Select 
+                  value={filters.status} 
+                  onValueChange={(v) => setFilters(prev => ({ ...prev, status: v }))}
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    {STATUSES.map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Region Filter */}
+              <div className="w-40">
+                <Label className="text-gray-400 text-xs">Região</Label>
+                <Select 
+                  value={filters.region} 
+                  onValueChange={(v) => setFilters(prev => ({ ...prev, region: v }))}
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="all">Todas</SelectItem>
+                    {REGIONS.map(r => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tier Filter */}
+              <div className="w-40">
+                <Label className="text-gray-400 text-xs">Tier</Label>
+                <Select 
+                  value={filters.tier} 
+                  onValueChange={(v) => setFilters(prev => ({ ...prev, tier: v }))}
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="all">Todos</SelectItem>
+                    {TIERS.map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button
+                  onClick={clearFilters}
+                  variant="outline"
+                  size="sm"
+                  className="border-zinc-700 text-gray-400 hover:text-white"
+                >
+                  <X size={14} className="mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Form */}
       {showCreateForm && (
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-white font-light">
-              {editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade de Investimento'}
+              Nova Oportunidade de Investimento
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -461,7 +666,7 @@ const AdminOpportunities = () => {
                   Cancelar
                 </Button>
                 <Button type="submit" className="bg-gold-500 hover:bg-gold-400 text-black">
-                  {editingOpp ? 'Guardar Alterações' : 'Criar Oportunidade'}
+                  Criar Oportunidade
                 </Button>
               </div>
             </form>
@@ -475,8 +680,8 @@ const AdminOpportunities = () => {
           <div className="col-span-full flex items-center justify-center py-12">
             <RefreshCw className="animate-spin text-gold-400" size={32} />
           </div>
-        ) : opportunities.length > 0 ? (
-          opportunities.map((opp) => {
+        ) : filteredOpportunities.length > 0 ? (
+          filteredOpportunities.map((opp) => {
             const progress = ((opp.current_pool || 0) / opp.total_pool) * 100;
             const fixedRate = opp.fixed_rate || 0;
             const variableRate = opp.variable_rate || 0;
@@ -526,11 +731,14 @@ const AdminOpportunities = () => {
                   <div className="flex gap-4 mb-4 text-xs">
                     <div className="flex items-center gap-1 text-gray-400">
                       <Globe size={12} />
-                      {(opp.allowed_regions || []).map(r => r.charAt(0).toUpperCase()).join(', ')}
+                      {(opp.allowed_regions || []).map(r => {
+                        const region = REGIONS.find(reg => reg.value === r);
+                        return region?.label?.charAt(0) || r.charAt(0).toUpperCase();
+                      }).join(', ') || 'Todas'}
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
                       <Users size={12} />
-                      {(opp.allowed_tiers || []).map(t => t.charAt(0).toUpperCase()).join(', ')}
+                      {(opp.allowed_tiers || []).map(t => t.charAt(0).toUpperCase()).join(', ') || 'Todos'}
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
                       <Clock size={12} />
@@ -570,7 +778,7 @@ const AdminOpportunities = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => updateStatus(opp.id, 'cancelled')}
-                          className="border-red-600 text-red-400 hover:bg-red-600/20"
+                          className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/20"
                         >
                           Cancelar
                         </Button>
@@ -585,6 +793,15 @@ const AdminOpportunities = () => {
                         Concluir
                       </Button>
                     )}
+                    {/* Delete Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => confirmDelete(opp)}
+                      className="border-red-600 text-red-400 hover:bg-red-600/20 ml-auto"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -594,14 +811,79 @@ const AdminOpportunities = () => {
           <Card className="col-span-full bg-zinc-900 border-zinc-800">
             <CardContent className="p-12 text-center">
               <TrendingUp className="mx-auto text-gray-600 mb-4" size={48} />
-              <h3 className="text-xl text-white mb-2">Nenhuma Oportunidade</h3>
+              <h3 className="text-xl text-white mb-2">
+                {hasActiveFilters ? 'Nenhum Resultado' : 'Nenhuma Oportunidade'}
+              </h3>
               <p className="text-gray-400">
-                Clique em "Nova Oportunidade" para criar um pool de investimento.
+                {hasActiveFilters 
+                  ? 'Nenhuma oportunidade corresponde aos filtros selecionados.'
+                  : 'Clique em "Nova Oportunidade" para criar um pool de investimento.'}
               </p>
+              {hasActiveFilters && (
+                <Button onClick={clearFilters} variant="outline" className="mt-4 border-zinc-700 text-gray-300">
+                  Limpar Filtros
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-red-400" size={20} />
+              Eliminar Oportunidade
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Tem a certeza que deseja eliminar esta oportunidade?
+              Esta ação não pode ser revertida.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {deletingOpp && (
+            <div className="space-y-3 py-4">
+              <div className="p-4 bg-zinc-800 rounded-lg">
+                <p className="text-white font-medium">{deletingOpp.name}</p>
+                <p className="text-gray-400 text-sm">{deletingOpp.type} • {formatNumber(deletingOpp.total_pool, 0)} {deletingOpp.currency}</p>
+              </div>
+              
+              {(deletingOpp.current_pool || 0) > 0 && (
+                <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <AlertTriangle className="text-yellow-400 shrink-0 mt-0.5" size={16} />
+                  <p className="text-yellow-400 text-sm">
+                    Este pool tem {formatNumber(deletingOpp.current_pool || 0, 0)} {deletingOpp.currency} investidos.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              className="border-zinc-700 text-gray-300"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={deleteOpportunity}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              {deleting ? (
+                <RefreshCw className="animate-spin mr-2" size={16} />
+              ) : (
+                <Trash2 size={16} className="mr-2" />
+              )}
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
