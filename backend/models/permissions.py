@@ -115,7 +115,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin", "label": "Visão Geral", "icon": "BarChart3"},
             {"path": "/dashboard/admin/regional", "label": "Métricas Regionais", "icon": "Globe"},
             {"path": "/dashboard/admin/staff", "label": "Gestão de Equipa", "icon": "UserCog"},
-            {"path": "/dashboard/admin/users", "label": "Utilizadores", "icon": "Users"},
+            {"path": "/dashboard/admin/users", "label": "Clientes", "icon": "Users"},
             {"path": "/dashboard/admin/kyc", "label": "KYC/KYB", "icon": "UserCheck"},
             {"path": "/dashboard/admin/opportunities", "label": "Oportunidades", "icon": "TrendingUp"},
             {"path": "/dashboard/admin/transparency", "label": "Transparência", "icon": "Shield"},

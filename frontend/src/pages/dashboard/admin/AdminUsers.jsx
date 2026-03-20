@@ -25,7 +25,6 @@ import {
   Users, 
   CheckCircle, 
   XCircle,
-  Shield,
   Search,
   ChevronDown,
   ChevronUp,
@@ -37,7 +36,6 @@ import {
   Ban,
   Trash2,
   AlertTriangle,
-  Filter,
   Key,
   Copy,
   RefreshCw
@@ -204,30 +202,6 @@ const AdminUsers = () => {
       fetchUsers();
     } catch (err) {
       toast.error('Falha ao atualizar estado KYC');
-    }
-  };
-
-  const makeAdmin = async (userId) => {
-    try {
-      await axios.post(`${API_URL}/api/admin/users/${userId}/make-admin`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Utilizador é agora admin');
-      fetchUsers();
-    } catch (err) {
-      toast.error('Falha ao promover utilizador');
-    }
-  };
-
-  const removeAdmin = async (userId) => {
-    try {
-      await axios.post(`${API_URL}/api/admin/users/${userId}/remove-admin`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Direitos de admin removidos');
-      fetchUsers();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Falha ao remover direitos');
     }
   };
 
@@ -466,31 +440,6 @@ const AdminUsers = () => {
                            status === 'approved' ? 'Aprovado' : 'Rejeitado'}
                         </Button>
                       ))}
-                    </div>
-
-                    {/* Admin Toggle */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-gray-400 text-sm mr-2">Direitos Admin:</span>
-                      {user.is_admin ? (
-                        <Button
-                          onClick={() => removeAdmin(user.id)}
-                          size="sm"
-                          variant="outline"
-                          className="border-red-900/30 text-red-400 hover:bg-red-900/30"
-                        >
-                          <Shield size={14} className="mr-1" />
-                          Remover Admin
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => makeAdmin(user.id)}
-                          size="sm"
-                          className="bg-purple-600 hover:bg-purple-500"
-                        >
-                          <Crown size={14} className="mr-1" />
-                          Tornar Admin
-                        </Button>
-                      )}
                     </div>
 
                     {/* Block/Delete Actions */}

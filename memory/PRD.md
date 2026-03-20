@@ -545,3 +545,30 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 - Tested `/api/auth/2fa/setup` endpoint - returns secret and QR code successfully
 
 **Status:** FIXED ✅
+
+
+## Admin Clients Page Refactor (March 20, 2026)
+
+**User Request:** 
+1. Rename "Utilizadores" to "Clientes" in the admin menu
+2. Remove the "Tornar Admin" button from the user management page
+
+**Changes Made:**
+
+1. **Backend Menu Configuration** (`backend/models/permissions.py`):
+   - Changed menu label from "Utilizadores" to "Clientes"
+
+2. **Frontend Admin Users Page** (`frontend/src/pages/dashboard/admin/AdminUsers.jsx`):
+   - Removed the entire "Direitos Admin" section containing "Tornar Admin" and "Remover Admin" buttons
+   - Removed unused `makeAdmin()` and `removeAdmin()` functions
+   - Cleaned up unused imports (Shield, Filter)
+
+**UI After Changes:**
+- Menu shows "Clientes" under Admin section
+- Page title remains "Gestão de Clientes"
+- Expanded user view now only shows:
+  - Estado KYC (with status buttons)
+  - Ações: Alterar Password, Bloquear, Eliminar
+- No ability to grant/revoke admin rights from this page
+
+**Status:** COMPLETED ✅
