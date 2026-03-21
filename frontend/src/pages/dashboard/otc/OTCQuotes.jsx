@@ -645,13 +645,13 @@ const OTCQuotes = () => {
                     <SelectTrigger className="bg-zinc-800 border-gold-500/30">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-gold-500/30">
-                      <SelectItem value="auto">
+                    <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                      <SelectItem value="auto" className="text-white hover:bg-zinc-700">
                         <span className="flex items-center gap-2">
-                          <Zap size={14} /> Semi-Automático (Binance)
+                          <Zap size={14} /> Semi-Automático
                         </span>
                       </SelectItem>
-                      <SelectItem value="manual">
+                      <SelectItem value="manual" className="text-white hover:bg-zinc-700">
                         <span className="flex items-center gap-2">
                           <Calculator size={14} /> Manual
                         </span>
@@ -708,13 +708,13 @@ const OTCQuotes = () => {
                     <SelectTrigger className="bg-zinc-800 border-gold-500/30">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-gold-500/30">
-                      <SelectItem value="2">2 minutos</SelectItem>
-                      <SelectItem value="5">5 minutos</SelectItem>
-                      <SelectItem value="10">10 minutos</SelectItem>
-                      <SelectItem value="15">15 minutos</SelectItem>
-                      <SelectItem value="30">30 minutos</SelectItem>
-                      <SelectItem value="60">1 hora</SelectItem>
+                    <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                      <SelectItem value="2" className="text-white hover:bg-zinc-700">2 minutos</SelectItem>
+                      <SelectItem value="5" className="text-white hover:bg-zinc-700">5 minutos</SelectItem>
+                      <SelectItem value="10" className="text-white hover:bg-zinc-700">10 minutos</SelectItem>
+                      <SelectItem value="15" className="text-white hover:bg-zinc-700">15 minutos</SelectItem>
+                      <SelectItem value="30" className="text-white hover:bg-zinc-700">30 minutos</SelectItem>
+                      <SelectItem value="60" className="text-white hover:bg-zinc-700">1 hora</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
