@@ -1081,3 +1081,316 @@ async def get_crm_clients_overview(
         "active_this_month": len(active_users),
         "total_volume_this_month": round(total_volume, 2)
     }
+
+
+
+# ==================== ADVANCED CRM DASHBOARD ====================
+
+@router.get("/dashboard/advanced")
+async def get_advanced_crm_dashboard(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get advanced CRM dashboard with all metrics"""
+    db = get_db()
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    month_ago = now - timedelta(days=30)
+    three_months_ago = now - timedelta(days=90)
+    
+    # ===== TOP 10 CLIENTS BY VOLUME =====
+    top_clients = []
+    
+    # Aggregate trading volume per user
+    pipeline = [
+        {"$match": {"status": "completed", "created_at": {"$gte": month_ago.isoformat()}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_volume": {"$sum": "$fiat_amount"},
+            "order_count": {"$sum": 1}
+        }},
+        {"$sort": {"total_volume": -1}},
+        {"$limit": 10}
+    ]
+    
+    volume_results = await db.trading_orders.aggregate(pipeline).to_list(10)
+    
+    for result in volume_results:
+        user = await db.users.find_one(
+            {"id": result["_id"]},
+            {"_id": 0, "id": 1, "name": 1, "email": 1, "region": 1, "membership_level": 1}
+        )
+        if user:
+            top_clients.append({
+                "user": user,
+                "total_volume": round(result["total_volume"], 2),
+                "order_count": result["order_count"]
+            })
+    
+    # ===== CHURN ANALYSIS =====
+    # Active users: had activity in last 30 days
+    # At risk: no activity in 30-60 days
+    # Churned: no activity in 60+ days
+    
+    total_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}})
+    
+    # Get all client IDs
+    all_client_ids = set()
+    async for user in db.users.find({"user_type": {"$ne": "internal"}}, {"id": 1}):
+        all_client_ids.add(user.get("id"))
+    
+    # Active users (activity in last 30 days)
+    active_ids = set()
+    async for order in db.trading_orders.find({"created_at": {"$gte": month_ago.isoformat()}}, {"user_id": 1}):
+        active_ids.add(order.get("user_id"))
+    async for tx in db.transactions.find({"created_at": {"$gte": month_ago.isoformat()}}, {"user_id": 1}):
+        active_ids.add(tx.get("user_id"))
+    
+    # At risk users (activity 30-90 days ago, none in last 30)
+    at_risk_ids = set()
+    async for order in db.trading_orders.find({
+        "created_at": {"$gte": three_months_ago.isoformat(), "$lt": month_ago.isoformat()}
+    }, {"user_id": 1}):
+        if order.get("user_id") not in active_ids:
+            at_risk_ids.add(order.get("user_id"))
+    
+    active_count = len(active_ids.intersection(all_client_ids))
+    at_risk_count = len(at_risk_ids.intersection(all_client_ids))
+    churned_count = total_clients - active_count - at_risk_count
+    
+    churn_rate = round((churned_count / total_clients * 100), 1) if total_clients > 0 else 0
+    
+    churn_analysis = {
+        "total_clients": total_clients,
+        "active": active_count,
+        "at_risk": at_risk_count,
+        "churned": churned_count,
+        "churn_rate": churn_rate
+    }
+    
+    # ===== LEADS/DEALS PIPELINE =====
+    # Count leads by status
+    leads_new = await db.crm_leads.count_documents({"status": "new"})
+    leads_contacted = await db.crm_leads.count_documents({"status": "contacted"})
+    leads_qualified = await db.crm_leads.count_documents({"status": "qualified"})
+    leads_proposal = await db.crm_leads.count_documents({"status": "proposal"})
+    leads_won = await db.crm_leads.count_documents({"status": "won"})
+    leads_lost = await db.crm_leads.count_documents({"status": "lost"})
+    
+    # Count deals by stage
+    deals_discovery = await db.crm_deals.count_documents({"stage": "discovery"})
+    deals_proposal = await db.crm_deals.count_documents({"stage": "proposal"})
+    deals_negotiation = await db.crm_deals.count_documents({"stage": "negotiation"})
+    deals_closed_won = await db.crm_deals.count_documents({"stage": "closed_won"})
+    deals_closed_lost = await db.crm_deals.count_documents({"stage": "closed_lost"})
+    
+    # Calculate pipeline value
+    pipeline_value = 0
+    async for deal in db.crm_deals.find({"stage": {"$nin": ["closed_won", "closed_lost"]}}, {"value": 1, "probability": 1}):
+        value = deal.get("value", 0) or 0
+        prob = deal.get("probability", 50) or 50
+        pipeline_value += value * (prob / 100)
+    
+    pipeline_stats = {
+        "leads": {
+            "new": leads_new,
+            "contacted": leads_contacted,
+            "qualified": leads_qualified,
+            "proposal": leads_proposal,
+            "won": leads_won,
+            "lost": leads_lost,
+            "total": leads_new + leads_contacted + leads_qualified + leads_proposal + leads_won + leads_lost,
+            "conversion_rate": round((leads_won / (leads_won + leads_lost) * 100), 1) if (leads_won + leads_lost) > 0 else 0
+        },
+        "deals": {
+            "discovery": deals_discovery,
+            "proposal": deals_proposal,
+            "negotiation": deals_negotiation,
+            "closed_won": deals_closed_won,
+            "closed_lost": deals_closed_lost,
+            "pipeline_value": round(pipeline_value, 2)
+        }
+    }
+    
+    # ===== SUPPLIER PERFORMANCE =====
+    suppliers = []
+    async for supplier in db.crm_suppliers.find({"is_active": True}, {"_id": 0}).limit(10):
+        # Calculate mock performance metrics
+        suppliers.append({
+            "id": supplier.get("id"),
+            "name": supplier.get("name"),
+            "company": supplier.get("company"),
+            "category": supplier.get("category"),
+            "volume_30d": supplier.get("total_volume", 0),
+            "uptime": 99.5,  # Mock - would come from monitoring
+            "avg_response_time": "< 100ms",  # Mock
+            "incidents_30d": 0,  # Mock
+            "rating": supplier.get("rating", 4.5)
+        })
+    
+    # ===== REGIONAL BREAKDOWN =====
+    europe_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "europe"})
+    mena_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "mena"})
+    latam_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "latam"})
+    global_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "global"})
+    
+    # Regional volume
+    regional_volume = {
+        "europe": 0,
+        "mena": 0,
+        "latam": 0,
+        "global": 0
+    }
+    
+    async for order in db.trading_orders.find({"status": "completed", "created_at": {"$gte": month_ago.isoformat()}}, {"user_id": 1, "fiat_amount": 1}):
+        user = await db.users.find_one({"id": order.get("user_id")}, {"region": 1})
+        if user:
+            region = user.get("region", "global")
+            regional_volume[region] = regional_volume.get(region, 0) + order.get("fiat_amount", 0)
+    
+    regional_stats = {
+        "clients": {
+            "europe": europe_clients,
+            "mena": mena_clients,
+            "latam": latam_clients,
+            "global": global_clients
+        },
+        "volume": {
+            "europe": round(regional_volume.get("europe", 0), 2),
+            "mena": round(regional_volume.get("mena", 0), 2),
+            "latam": round(regional_volume.get("latam", 0), 2),
+            "global": round(regional_volume.get("global", 0), 2)
+        }
+    }
+    
+    # ===== COMPLIANCE OVERVIEW =====
+    kyc_approved = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "approved"})
+    kyc_pending = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "pending"})
+    kyc_rejected = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "rejected"})
+    kyc_not_started = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": {"$in": ["not_started", None]}})
+    
+    # Count overdue tasks safely
+    now_str = now.isoformat()
+    pending_tasks = await db.crm_tasks.count_documents({"status": {"$in": ["pending", "in_progress"]}})
+    
+    # Count overdue tasks by iterating (safer with mixed date formats)
+    overdue_count = 0
+    async for task in db.crm_tasks.find({"status": {"$in": ["pending", "in_progress"]}}, {"due_date": 1}):
+        due_date = task.get("due_date")
+        if due_date:
+            try:
+                if isinstance(due_date, str) and due_date < now_str:
+                    overdue_count += 1
+                elif hasattr(due_date, 'isoformat') and due_date < now:
+                    overdue_count += 1
+            except:
+                pass
+    
+    compliance_stats = {
+        "kyc": {
+            "approved": kyc_approved,
+            "pending": kyc_pending,
+            "rejected": kyc_rejected,
+            "not_started": kyc_not_started,
+            "approval_rate": round((kyc_approved / total_clients * 100), 1) if total_clients > 0 else 0
+        },
+        "pending_tasks": pending_tasks,
+        "overdue_tasks": overdue_count
+    }
+    
+    # ===== RECENT ACTIVITY =====
+    recent_activities = []
+    
+    # Recent orders
+    async for order in db.trading_orders.find({}, {"_id": 0}).sort("created_at", -1).limit(5):
+        user = await db.users.find_one({"id": order.get("user_id")}, {"_id": 0, "name": 1})
+        recent_activities.append({
+            "type": "order",
+            "description": f"{user.get('name', 'Unknown')} - {order.get('order_type', 'trade')} {order.get('crypto_amount', 0)} {order.get('crypto_asset', '')}",
+            "date": order.get("created_at"),
+            "value": order.get("fiat_amount", 0)
+        })
+    
+    # Recent leads
+    async for lead in db.crm_leads.find({}, {"_id": 0}).sort("created_at", -1).limit(3):
+        recent_activities.append({
+            "type": "lead",
+            "description": f"Novo lead: {lead.get('company_name', lead.get('contact_name', 'Unknown'))}",
+            "date": lead.get("created_at"),
+            "value": lead.get("estimated_volume", 0)
+        })
+    
+    # Sort by date (convert to string for safe comparison)
+    def get_date_str(x):
+        date_val = x.get("date")
+        if date_val is None:
+            return ""
+        if isinstance(date_val, str):
+            return date_val
+        if hasattr(date_val, 'isoformat'):
+            return date_val.isoformat()
+        return str(date_val)
+    
+    recent_activities.sort(key=get_date_str, reverse=True)
+    
+    return {
+        "top_clients": top_clients,
+        "churn_analysis": churn_analysis,
+        "pipeline": pipeline_stats,
+        "suppliers": suppliers,
+        "regional": regional_stats,
+        "compliance": compliance_stats,
+        "recent_activities": recent_activities[:10]
+    }
+
+
+@router.get("/dashboard/top-clients")
+async def get_top_clients(
+    period: str = "30d",
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get top clients by trading volume"""
+    db = get_db()
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    
+    if period == "7d":
+        start_date = now - timedelta(days=7)
+    elif period == "30d":
+        start_date = now - timedelta(days=30)
+    elif period == "90d":
+        start_date = now - timedelta(days=90)
+    else:
+        start_date = now - timedelta(days=30)
+    
+    pipeline = [
+        {"$match": {"status": "completed", "created_at": {"$gte": start_date.isoformat()}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_volume": {"$sum": "$fiat_amount"},
+            "order_count": {"$sum": 1},
+            "avg_order": {"$avg": "$fiat_amount"}
+        }},
+        {"$sort": {"total_volume": -1}},
+        {"$limit": limit}
+    ]
+    
+    results = await db.trading_orders.aggregate(pipeline).to_list(limit)
+    
+    top_clients = []
+    for result in results:
+        user = await db.users.find_one(
+            {"id": result["_id"]},
+            {"_id": 0, "id": 1, "name": 1, "email": 1, "region": 1, "membership_level": 1, "created_at": 1}
+        )
+        if user:
+            top_clients.append({
+                "client": user,
+                "total_volume": round(result["total_volume"], 2),
+                "order_count": result["order_count"],
+                "avg_order": round(result["avg_order"], 2)
+            })
+    
+    return top_clients

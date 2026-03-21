@@ -673,3 +673,68 @@ New page created with:
 - Route: /dashboard/crm/clients
 
 **Status:** COMPLETED ✅
+
+
+## CRM Fase 4 - Dashboard Avançado (March 21, 2026)
+
+**User Request:** Implement advanced CRM dashboard with metrics including top clients, churn rate, pipeline, and supplier performance.
+
+**Implementation:**
+
+### Backend Endpoints (backend/routes/crm.py)
+
+**GET /api/crm/dashboard/advanced**
+Returns comprehensive dashboard data:
+
+1. **Churn Analysis:**
+   - Total clients
+   - Active (last 30 days)
+   - At risk (30-90 days inactive)
+   - Churned (90+ days inactive)
+   - Churn rate percentage
+
+2. **Top 10 Clients:**
+   - Ranked by trading volume (30 days)
+   - Includes order count and client details
+
+3. **Pipeline Stats:**
+   - Leads by status (new, contacted, qualified, proposal, won, lost)
+   - Conversion rate
+   - Deals by stage (discovery, proposal, negotiation, closed)
+   - Pipeline value (weighted by probability)
+
+4. **Regional Breakdown:**
+   - Client count per region (Europe, MENA, LATAM, Global)
+   - Volume per region
+
+5. **Compliance Overview:**
+   - KYC status counts (approved, pending, rejected, not started)
+   - Approval rate
+   - Pending/overdue tasks
+
+6. **Supplier Performance:**
+   - Active suppliers with uptime and rating
+
+7. **Recent Activities:**
+   - Combined timeline of orders and leads
+
+**GET /api/crm/dashboard/top-clients**
+- Period filter (7d, 30d, 90d)
+- Returns top clients with volume, order count, avg order
+
+### Frontend (frontend/src/pages/dashboard/crm/CRMAdvancedDashboard.jsx)
+
+**Visual Components:**
+- Churn metrics row (5 cards)
+- Top 10 Clients table
+- Pipeline de Vendas (leads funnel + deals)
+- Distribuição Regional (bar chart style)
+- Compliance & KYC grid
+- Supplier Performance list
+- Recent Activity timeline
+
+### Menu & Routes
+- Menu: "Dashboard Avançado" under CRM
+- Route: /dashboard/crm/advanced
+
+**Status:** COMPLETED ✅

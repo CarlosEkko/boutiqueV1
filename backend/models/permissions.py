@@ -148,6 +148,7 @@ DEPARTMENT_MENUS = {
         "icon": "Users",
         "items": [
             {"path": "/dashboard/crm", "label": "Dashboard CRM", "icon": "LayoutDashboard"},
+            {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
             {"path": "/dashboard/crm/clients", "label": "Clientes 360°", "icon": "Eye"},
             {"path": "/dashboard/crm/suppliers", "label": "Fornecedores", "icon": "Handshake"},
             {"path": "/dashboard/crm/leads", "label": "Leads", "icon": "UserPlus"},
