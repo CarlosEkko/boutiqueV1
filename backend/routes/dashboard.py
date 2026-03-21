@@ -401,16 +401,20 @@ async def get_transactions(
 
 @router.get("/investments/opportunities", response_model=List[dict])
 async def get_investment_opportunities(
-    status: Optional[InvestmentStatus] = InvestmentStatus.OPEN,
+    status: Optional[InvestmentStatus] = None,
     user: dict = Depends(get_approved_user)
 ):
     """Get available investment opportunities filtered by user's region and tier"""
     user_region = user.get("region", "europe").lower()
     user_tier = user.get("membership_level", "standard").lower()
     
+    # By default, show open and active opportunities
     query = {}
     if status:
-        query["status"] = status
+        query["status"] = status.value
+    else:
+        # Show both open and active opportunities
+        query["status"] = {"$in": ["open", "active"]}
     
     opportunities = await db.investment_opportunities.find(
         query,
@@ -420,12 +424,12 @@ async def get_investment_opportunities(
     # Filter by user's region and tier
     filtered = []
     for opp in opportunities:
-        allowed_regions = [r.lower() for r in opp.get("allowed_regions", ["europe", "middle_east", "brazil"])]
-        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", ["standard", "premium", "vip"])]
+        allowed_regions = [r.lower() for r in opp.get("allowed_regions", [])]
+        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", [])]
         
-        # Check if user can access this opportunity
-        region_ok = user_region in allowed_regions or "all" in allowed_regions
-        tier_ok = user_tier in allowed_tiers or "all" in allowed_tiers
+        # Empty list means available to ALL
+        region_ok = len(allowed_regions) == 0 or user_region in allowed_regions or "all" in allowed_regions
+        tier_ok = len(allowed_tiers) == 0 or user_tier in allowed_tiers or "all" in allowed_tiers
         
         if region_ok and tier_ok:
             # Add eligibility info
@@ -455,11 +459,12 @@ async def get_all_investment_opportunities(
     
     # Add eligibility info to each opportunity
     for opp in opportunities:
-        allowed_regions = [r.lower() for r in opp.get("allowed_regions", ["europe", "middle_east", "brazil"])]
-        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", ["standard", "premium", "vip"])]
+        allowed_regions = [r.lower() for r in opp.get("allowed_regions", [])]
+        allowed_tiers = [t.lower() for t in opp.get("allowed_tiers", [])]
         
-        region_ok = user_region in allowed_regions or "all" in allowed_regions
-        tier_ok = user_tier in allowed_tiers or "all" in allowed_tiers
+        # Empty list means available to ALL
+        region_ok = len(allowed_regions) == 0 or user_region in allowed_regions or "all" in allowed_regions
+        tier_ok = len(allowed_tiers) == 0 or user_tier in allowed_tiers or "all" in allowed_tiers
         
         opp["user_eligible"] = region_ok and tier_ok
         opp["ineligible_reason"] = None
