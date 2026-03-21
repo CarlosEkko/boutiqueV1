@@ -167,8 +167,9 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/otc", "label": "Dashboard OTC", "icon": "LayoutDashboard"},
             {"path": "/dashboard/otc/leads", "label": "Leads OTC", "icon": "UserPlus"},
             {"path": "/dashboard/otc/pipeline", "label": "Pipeline", "icon": "Kanban"},
+            {"path": "/dashboard/otc/quotes", "label": "Cotações", "icon": "FileText"},
+            {"path": "/dashboard/otc/execution", "label": "Execução", "icon": "Zap"},
             {"path": "/dashboard/otc/clients", "label": "Clientes OTC", "icon": "Building"},
-            {"path": "/dashboard/otc/deals", "label": "Deals", "icon": "Handshake"},
         ]
     },
     Department.SUPPORT: {

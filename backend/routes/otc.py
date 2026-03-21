@@ -28,12 +28,6 @@ def set_db(database):
 def get_db():
     return db
 
-
-# Auth dependency placeholder - will be imported from auth routes
-async def get_current_user(token: str = None):
-    # This will be replaced with actual auth
-    pass
-
 from routes.auth import get_current_user
 
 
@@ -487,7 +481,7 @@ async def create_quote(
                 if response.status_code == 200:
                     market_price = float(response.json()["price"])
                     price_source = "binance"
-        except:
+        except Exception:
             if market_price is None:
                 raise HTTPException(status_code=400, detail="Could not fetch market price. Please provide manually.")
     
@@ -683,3 +677,294 @@ async def get_otc_enums():
         "deal_stages": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCDealStage],
         "funding_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundingType]
     }
+
+
+# ==================== QUOTES LIST & MARKET PRICE ====================
+
+@router.get("/quotes")
+async def get_otc_quotes(
+    status: Optional[str] = None,
+    deal_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all OTC quotes with filtering"""
+    db = get_db()
+    
+    query = {}
+    
+    if status and status != "all":
+        query["status"] = status
+    if deal_id:
+        query["deal_id"] = deal_id
+    
+    cursor = db.otc_quotes.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    quotes = await cursor.to_list(limit)
+    
+    # Enrich with deal info
+    for quote in quotes:
+        deal = await db.otc_deals.find_one({"id": quote.get("deal_id")}, {"_id": 0, "deal_number": 1, "client_name": 1})
+        if deal:
+            quote["deal_number"] = deal.get("deal_number")
+            quote["client_name"] = deal.get("client_name")
+    
+    total = await db.otc_quotes.count_documents(query)
+    
+    return {
+        "quotes": quotes,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/market-price")
+async def get_market_price(
+    base_asset: str,
+    quote_asset: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get current market price from Binance"""
+    try:
+        import httpx
+        
+        # Map common fiat currencies to USDT pairs
+        if quote_asset.upper() in ["EUR", "USD", "AED", "BRL"]:
+            # First get crypto/USDT price
+            symbol = f"{base_asset.upper()}USDT"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
+                if response.status_code == 200:
+                    crypto_usd_price = float(response.json()["price"])
+                    
+                    # Now convert to target fiat if needed
+                    if quote_asset.upper() != "USD":
+                        # Get fiat exchange rate
+                        fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
+                        if fiat_response.status_code == 200:
+                            rates = fiat_response.json().get("rates", {})
+                            fiat_rate = rates.get(quote_asset.upper(), 1)
+                            final_price = crypto_usd_price * fiat_rate
+                        else:
+                            final_price = crypto_usd_price
+                    else:
+                        final_price = crypto_usd_price
+                    
+                    return {
+                        "base_asset": base_asset.upper(),
+                        "quote_asset": quote_asset.upper(),
+                        "price": round(final_price, 2),
+                        "source": "binance",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+        else:
+            # Direct crypto pair
+            symbol = f"{base_asset.upper()}{quote_asset.upper()}"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
+                if response.status_code == 200:
+                    return {
+                        "base_asset": base_asset.upper(),
+                        "quote_asset": quote_asset.upper(),
+                        "price": float(response.json()["price"]),
+                        "source": "binance",
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    }
+        
+        raise HTTPException(status_code=404, detail=f"Price not found for {base_asset}/{quote_asset}")
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch market price: {str(e)}")
+
+
+@router.post("/quotes/{quote_id}/reject")
+async def reject_quote(
+    quote_id: str,
+    reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject a quote"""
+    db = get_db()
+    
+    quote = await db.otc_quotes.find_one({"id": quote_id})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    if quote.get("status") != QuoteStatus.SENT.value:
+        raise HTTPException(status_code=400, detail="Only sent quotes can be rejected")
+    
+    # Update quote
+    await db.otc_quotes.update_one(
+        {"id": quote_id},
+        {"$set": {
+            "status": QuoteStatus.REJECTED.value,
+            "client_response": reason or "Rejected by operator",
+            "response_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Move deal back to RFQ stage for new quote
+    await db.otc_deals.update_one(
+        {"id": quote.get("deal_id")},
+        {"$set": {
+            "stage": OTCDealStage.RFQ.value,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Quote rejected"}
+
+
+# ==================== EXECUTION ====================
+
+@router.post("/deals/{deal_id}/start-execution")
+async def start_execution(
+    deal_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Start execution process for an accepted deal"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    if deal.get("stage") != OTCDealStage.ACCEPTANCE.value:
+        raise HTTPException(status_code=400, detail="Deal must be in acceptance stage")
+    
+    # Get the accepted quote
+    quote = await db.otc_quotes.find_one({"deal_id": deal_id, "status": QuoteStatus.ACCEPTED.value})
+    if not quote:
+        raise HTTPException(status_code=400, detail="No accepted quote found")
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    # Determine expected funds
+    if deal.get("transaction_type") == TransactionType.BUY.value:
+        # Client sends fiat, receives crypto
+        funds_expected = quote.get("total_value", 0) + quote.get("fees", 0)
+        funds_expected_asset = quote.get("quote_asset")
+        delivery_asset = quote.get("base_asset")
+        delivery_amount = quote.get("amount")
+    else:
+        # Client sends crypto, receives fiat
+        funds_expected = quote.get("amount")
+        funds_expected_asset = quote.get("base_asset")
+        delivery_asset = quote.get("quote_asset")
+        delivery_amount = quote.get("total_value", 0) - quote.get("fees", 0)
+    
+    # Create execution record
+    execution = OTCExecution(
+        deal_id=deal_id,
+        quote_id=quote.get("id"),
+        status=ExecutionStatus.PENDING_FUNDS,
+        funding_type=deal.get("funding_type", FundingType.PREFUNDED),
+        funds_expected=funds_expected,
+        funds_expected_asset=funds_expected_asset,
+        delivery_asset=delivery_asset,
+        delivery_amount=delivery_amount,
+        executed_by=current_user_id
+    )
+    
+    await db.otc_executions.insert_one(execution.dict())
+    
+    # Update deal
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "stage": OTCDealStage.EXECUTION.value,
+            "execution_id": execution.id,
+            "executed_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "execution": execution.dict()}
+
+
+@router.get("/executions/{execution_id}")
+async def get_execution(
+    execution_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get execution details"""
+    db = get_db()
+    
+    execution = await db.otc_executions.find_one({"id": execution_id}, {"_id": 0})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    
+    return execution
+
+
+@router.post("/executions/{execution_id}/confirm-funds")
+async def confirm_funds_received(
+    execution_id: str,
+    amount: float,
+    tx_hash: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Confirm that funds have been received"""
+    db = get_db()
+    
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    
+    await db.otc_executions.update_one(
+        {"id": execution_id},
+        {"$set": {
+            "status": ExecutionStatus.FUNDS_RECEIVED.value,
+            "funds_received": amount,
+            "funds_received_at": datetime.now(timezone.utc).isoformat(),
+            "funds_tx_hash": tx_hash,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Funds confirmed"}
+
+
+@router.post("/executions/{execution_id}/complete")
+async def complete_execution(
+    execution_id: str,
+    executed_price: float,
+    delivery_tx_hash: Optional[str] = None,
+    delivery_address: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark execution as complete and move to settlement"""
+    db = get_db()
+    
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    
+    # Update execution
+    await db.otc_executions.update_one(
+        {"id": execution_id},
+        {"$set": {
+            "status": ExecutionStatus.EXECUTED.value,
+            "executed_amount": execution.get("delivery_amount"),
+            "executed_price": executed_price,
+            "delivery_tx_hash": delivery_tx_hash,
+            "delivery_address": delivery_address,
+            "delivery_at": datetime.now(timezone.utc).isoformat(),
+            "execution_venue": "internal",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Move deal to settlement
+    deal_id = execution.get("deal_id")
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "stage": OTCDealStage.SETTLEMENT.value,
+            "settled_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Execution completed, moved to settlement"}

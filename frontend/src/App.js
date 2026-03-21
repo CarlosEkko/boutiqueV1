@@ -60,6 +60,8 @@ import CRMAdvancedDashboard from "./pages/dashboard/crm/CRMAdvancedDashboard";
 import OTCDashboard from "./pages/dashboard/otc/OTCDashboard";
 import OTCLeads from "./pages/dashboard/otc/OTCLeads";
 import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
+import OTCQuotes from "./pages/dashboard/otc/OTCQuotes";
+import OTCExecution from "./pages/dashboard/otc/OTCExecution";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -184,6 +186,8 @@ function AppRoutes() {
         <Route path="otc" element={<OTCDashboard />} />
         <Route path="otc/leads" element={<OTCLeads />} />
         <Route path="otc/pipeline" element={<OTCPipeline />} />
+        <Route path="otc/quotes" element={<OTCQuotes />} />
+        <Route path="otc/execution" element={<OTCExecution />} />
         <Route path="otc/clients" element={<OTCDashboard />} />
         <Route path="otc/deals" element={<OTCPipeline />} />
       </Route>
