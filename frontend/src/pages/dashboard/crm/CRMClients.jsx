@@ -205,9 +205,9 @@ const CRMClients = () => {
         <div>
           <h1 className="text-3xl font-light text-white flex items-center gap-3">
             <Users className="text-gold-400" />
-            Clientes KBEX
+            Meus Clientes
           </h1>
-          <p className="text-gray-400 mt-1">Visão 360° dos clientes da plataforma</p>
+          <p className="text-gray-400 mt-1">Visão 360° dos seus clientes atribuídos</p>
         </div>
         <Button
           onClick={() => { fetchClients(); fetchOverview(); }}

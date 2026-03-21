@@ -131,6 +131,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
             {"path": "/dashboard/admin/admission-fees", "label": "Taxas de Admissão", "icon": "CreditCard"},
+            {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]
     },
     Department.FINANCE: {
@@ -148,8 +149,7 @@ DEPARTMENT_MENUS = {
         "icon": "Users",
         "items": [
             {"path": "/dashboard/crm", "label": "Dashboard CRM", "icon": "LayoutDashboard"},
-            {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
-            {"path": "/dashboard/crm/clients", "label": "Clientes 360°", "icon": "Eye"},
+            {"path": "/dashboard/crm/clients", "label": "Meus Clientes", "icon": "Eye"},
             {"path": "/dashboard/crm/suppliers", "label": "Fornecedores", "icon": "Handshake"},
             {"path": "/dashboard/crm/leads", "label": "Leads", "icon": "UserPlus"},
             {"path": "/dashboard/crm/deals", "label": "Negociações", "icon": "Target"},

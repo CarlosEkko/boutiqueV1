@@ -765,11 +765,19 @@ async def get_crm_clients(
     limit: int = 50,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get all clients with 360° view data for CRM"""
+    """Get clients with 360° view data for CRM - filtered by permissions"""
     db = get_db()
+    
+    # Check if user is admin (handle both dict and Pydantic object)
+    is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     
     # Build query - only clients (not internal users)
     query = {"user_type": {"$ne": "internal"}}
+    
+    # If not admin, only show clients where current user is the account manager
+    if not is_admin:
+        query["invited_by"] = current_user_id
     
     if region and region != "all":
         query["region"] = region
@@ -837,8 +845,12 @@ async def get_crm_client_detail(
     client_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get complete 360° view of a single client"""
+    """Get complete 360° view of a single client - with permission check"""
     db = get_db()
+    
+    # Check if user is admin (handle both dict and Pydantic object)
+    is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     
     # Get user
     user = await db.users.find_one(
@@ -848,6 +860,11 @@ async def get_crm_client_detail(
     
     if not user:
         raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Permission check: admin can see all, managers can only see their assigned clients
+    if not is_admin:
+        if user.get("invited_by") != current_user_id:
+            raise HTTPException(status_code=403, detail="Não tem permissão para ver este cliente")
     
     # Get all related data
     
@@ -1090,7 +1107,12 @@ async def get_crm_clients_overview(
 async def get_advanced_crm_dashboard(
     current_user: dict = Depends(get_current_user)
 ):
-    """Get advanced CRM dashboard with all metrics"""
+    """Get advanced CRM dashboard with all metrics - ADMIN ONLY"""
+    # Check if user is admin
+    is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Acesso restrito a administradores")
+    
     db = get_db()
     from datetime import timedelta
     
@@ -1350,7 +1372,12 @@ async def get_top_clients(
     limit: int = 10,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get top clients by trading volume"""
+    """Get top clients by trading volume - ADMIN ONLY"""
+    # Check if user is admin
+    is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Acesso restrito a administradores")
+    
     db = get_db()
     from datetime import timedelta
     

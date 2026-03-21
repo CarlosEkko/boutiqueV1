@@ -738,3 +738,46 @@ Returns comprehensive dashboard data:
 - Route: /dashboard/crm/advanced
 
 **Status:** COMPLETED ✅
+
+
+## CRM Permission Controls (March 21, 2026)
+
+**User Request:** 
+1. Move Dashboard Avançado to Admin menu (admin-only access)
+2. Restrict Clientes 360° to assigned managers and administrators
+
+**Implementation:**
+
+### Menu Changes (backend/models/permissions.py)
+- **Dashboard Avançado** moved from CRM menu to **Gestão** menu
+- **Clientes 360°** renamed to **Meus Clientes** in CRM menu
+
+### Backend Permission Logic (backend/routes/crm.py)
+
+**Dashboard Avançado Endpoints** (Admin-only):
+- `GET /api/crm/dashboard/advanced` - Returns 403 if not admin
+- `GET /api/crm/dashboard/top-clients` - Returns 403 if not admin
+
+**Clients 360° Endpoints** (Filtered by role):
+- `GET /api/crm/clients`:
+  - **Admin**: Sees ALL clients
+  - **Manager**: Sees only clients where `invited_by = current_user_id`
+  
+- `GET /api/crm/clients/{client_id}`:
+  - **Admin**: Can view any client
+  - **Manager**: Can only view if `client.invited_by = current_user_id`
+  - Returns 403 "Não tem permissão para ver este cliente" if unauthorized
+
+### Frontend Changes (frontend/src/pages/dashboard/crm/CRMClients.jsx)
+- Title changed to "Meus Clientes"
+- Subtitle: "Visão 360° dos seus clientes atribuídos"
+
+**Access Matrix:**
+
+| Feature | Admin | Manager |
+|---------|-------|---------|
+| Dashboard Avançado | ✅ | ❌ |
+| Meus Clientes (list) | All clients | Only assigned |
+| Cliente Detail 360° | Any client | Only assigned |
+
+**Status:** COMPLETED ✅
