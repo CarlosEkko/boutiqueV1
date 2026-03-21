@@ -858,18 +858,90 @@ Lead → Pre-Qualification → KYC/KYB → Approval → RFQ → Quote → Accept
 
 ### Menu Configuration (backend/models/permissions.py)
 - New Department: OTC_DESK
-- Menu items: Dashboard OTC, Leads OTC, Pipeline, Clientes OTC, Deals
+- Menu items: Dashboard OTC, Leads OTC, Pipeline, Cotações, Execução, Clientes OTC
 
 ### Routes (frontend/src/App.js)
 - /dashboard/otc - Dashboard
 - /dashboard/otc/leads - Leads management
 - /dashboard/otc/pipeline - Kanban view
+- /dashboard/otc/quotes - Quotes management (NEW)
+- /dashboard/otc/execution - Execution management (NEW)
 - /dashboard/otc/clients - Clients
-- /dashboard/otc/deals - Deals
 
 **Status:** PHASE 1 COMPLETED ✅
 
+
+## OTC Desk Module - Phase 2: Cotações & Execução (March 21, 2026)
+
+**User Request:** Implement advanced quoting with semi-automatic pricing (Binance) and execution workflow.
+
+**Implementation:**
+
+### New Backend Endpoints (backend/routes/otc.py)
+
+**Market Price:**
+- `GET /api/otc/market-price?base_asset=BTC&quote_asset=EUR` - Fetches real-time price from Binance API
+  - Converts crypto/USDT to target fiat (EUR, USD, AED, BRL) using exchangerate-api.com
+  - Returns: `{price, source: "binance", timestamp}`
+
+**Quotes Management:**
+- `GET /api/otc/quotes` - Lists all quotes with deal enrichment
+- `POST /api/otc/quotes` - Creates quote with spread calculation
+  - Semi-automatic mode: Uses Binance price + spread
+  - Manual mode: Uses operator-defined price
+- `POST /api/otc/quotes/{id}/accept` - Accepts quote, moves deal to acceptance stage
+- `POST /api/otc/quotes/{id}/reject` - Rejects quote, moves deal back to RFQ
+
+**Execution Management:**
+- `POST /api/otc/deals/{id}/start-execution` - Creates execution record with pending_funds status
+- `GET /api/otc/executions/{id}` - Gets execution details
+- `POST /api/otc/executions/{id}/confirm-funds` - Confirms funds received (amount, tx_hash)
+- `POST /api/otc/executions/{id}/complete` - Completes execution, moves deal to settlement
+
+### New Frontend Pages
+
+**OTCQuotes.jsx** (`/dashboard/otc/quotes`):
+- Stats cards: RFQ Pendentes, Cotações Enviadas, Aceitas, Expiradas
+- Tabs: RFQ Pendentes, Cotações Enviadas, Histórico
+- Create Quote Dialog:
+  - Real-time Binance price display
+  - Spread percentage configuration
+  - Manual price override option
+  - Quote preview with final price and total value
+  - Validity period selection (2-60 minutes)
+- Sent Quotes: Accept/Reject buttons, status badges
+
+**OTCExecution.jsx** (`/dashboard/otc/execution`):
+- Stats cards: Pendentes Execução, Em Execução, Em Liquidação
+- Tabs: Pendentes, Em Execução, Liquidação
+- Execution Dialog:
+  - Step 1: Start Execution (for accepted deals)
+  - Step 2: Confirm Funds (enter amount, tx hash)
+  - Step 3: Complete Execution (enter executed price, delivery info)
+
+### Menu Updated (backend/models/permissions.py)
+- Added "Cotações" with FileText icon
+- Added "Execução" with Zap icon
+
+**Quote Creation Flow:**
+1. Operator opens RFQ deal in Quotes page
+2. System fetches real-time BTC/EUR price from Binance (~$61,000)
+3. Operator configures spread (e.g., 1.5%) and validity (e.g., 10 min)
+4. System calculates: final_price = market_price + spread
+5. Quote is created and marked as "sent"
+
+**Execution Flow:**
+1. After quote acceptance, deal appears in Execution page
+2. Operator clicks "Iniciar Execução" → Creates execution record
+3. Operator confirms funds received with amount and tx_hash
+4. Operator completes execution with final price and delivery info
+5. Deal moves to Settlement stage
+
+**Testing:** 18/18 backend tests passed, all frontend features verified ✅
+
+**Status:** PHASE 2 COMPLETED ✅
+
 **Remaining Phases:**
-- Phase 2: Quotes & Execution (semi-automatic pricing, execution workflow)
 - Phase 3: Settlement & Invoicing (fiat/crypto settlement, invoice generation)
 - Phase 4: Dashboard & KPIs (advanced metrics, operator performance)
+
