@@ -747,3 +747,337 @@ async def get_forensic_status():
         "rejected": "Rejeitada"
     }
     return [{"value": e.value, "label": labels.get(e.value, e.value)} for e in ForensicStatus]
+
+
+
+# ==================== CRM CLIENTS (KBEX Clients 360° View) ====================
+
+@router.get("/clients")
+async def get_crm_clients(
+    region: Optional[str] = None,
+    tier: Optional[str] = None,
+    kyc_status: Optional[str] = None,
+    is_approved: Optional[bool] = None,
+    search: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all clients with 360° view data for CRM"""
+    db = get_db()
+    
+    # Build query - only clients (not internal users)
+    query = {"user_type": {"$ne": "internal"}}
+    
+    if region and region != "all":
+        query["region"] = region
+    if tier and tier != "all":
+        query["membership_level"] = tier
+    if kyc_status and kyc_status != "all":
+        query["kyc_status"] = kyc_status
+    if is_approved is not None:
+        query["is_approved"] = is_approved
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"phone": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Sort
+    sort_direction = -1 if sort_order == "desc" else 1
+    
+    cursor = db.users.find(
+        query,
+        {"_id": 0, "hashed_password": 0, "two_factor_secret": 0, "two_factor_secret_temp": 0}
+    ).sort(sort_by, sort_direction).skip(skip).limit(limit)
+    
+    clients = []
+    async for user in cursor:
+        user_id = user.get("id")
+        
+        # Get trading stats
+        trading_stats = await get_client_trading_stats(db, user_id)
+        
+        # Get wallet count
+        wallet_count = await db.wallets.count_documents({"user_id": user_id})
+        
+        # Get pending tickets
+        pending_tickets = await db.tickets.count_documents({
+            "user_id": user_id,
+            "status": {"$in": ["open", "pending", "in_progress"]}
+        })
+        
+        # Get transaction count
+        tx_count = await db.transactions.count_documents({"user_id": user_id})
+        
+        # Add computed fields
+        user["trading_stats"] = trading_stats
+        user["wallet_count"] = wallet_count
+        user["pending_tickets"] = pending_tickets
+        user["transaction_count"] = tx_count
+        
+        clients.append(user)
+    
+    # Get total count for pagination
+    total = await db.users.count_documents(query)
+    
+    return {
+        "clients": clients,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/clients/{client_id}")
+async def get_crm_client_detail(
+    client_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get complete 360° view of a single client"""
+    db = get_db()
+    
+    # Get user
+    user = await db.users.find_one(
+        {"id": client_id},
+        {"_id": 0, "hashed_password": 0, "two_factor_secret": 0, "two_factor_secret_temp": 0}
+    )
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Get all related data
+    
+    # 1. Wallets
+    wallets = await db.wallets.find({"user_id": client_id}, {"_id": 0}).to_list(100)
+    
+    # 2. Transactions (last 50)
+    transactions = await db.transactions.find(
+        {"user_id": client_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    # 3. Trading orders (last 50)
+    orders = await db.trading_orders.find(
+        {"user_id": client_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    # 4. Investments
+    investments = await db.user_investments.find(
+        {"user_id": client_id},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # 5. Support tickets
+    tickets = await db.tickets.find(
+        {"user_id": client_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    # 6. Fiat deposits
+    fiat_deposits = await db.fiat_deposits.find(
+        {"user_id": client_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    # 7. Trading stats
+    trading_stats = await get_client_trading_stats(db, client_id)
+    
+    # 8. Account manager (referrer)
+    account_manager = None
+    if user.get("invited_by"):
+        manager = await db.users.find_one(
+            {"id": user["invited_by"]},
+            {"_id": 0, "id": 1, "name": 1, "email": 1, "internal_role": 1}
+        )
+        if manager:
+            account_manager = manager
+    
+    # 9. Activity timeline (combine all interactions)
+    activities = []
+    
+    # Add transactions to timeline
+    for tx in transactions[:10]:
+        activities.append({
+            "type": "transaction",
+            "subtype": tx.get("type", "unknown"),
+            "description": f"{tx.get('type', 'Transação')} - {tx.get('amount', 0)} {tx.get('asset', tx.get('currency', ''))}",
+            "date": tx.get("created_at"),
+            "status": tx.get("status")
+        })
+    
+    # Add tickets to timeline
+    for ticket in tickets[:5]:
+        activities.append({
+            "type": "ticket",
+            "subtype": ticket.get("category", "support"),
+            "description": ticket.get("subject", "Ticket de suporte"),
+            "date": ticket.get("created_at"),
+            "status": ticket.get("status")
+        })
+    
+    # Add orders to timeline
+    for order in orders[:10]:
+        activities.append({
+            "type": "order",
+            "subtype": order.get("order_type", "trade"),
+            "description": f"{order.get('order_type', 'Ordem')} {order.get('crypto_asset', '')} - {order.get('crypto_amount', 0)}",
+            "date": order.get("created_at"),
+            "status": order.get("status")
+        })
+    
+    # Sort activities by date
+    activities.sort(key=lambda x: x.get("date") or "", reverse=True)
+    
+    return {
+        "client": user,
+        "wallets": wallets,
+        "transactions": transactions,
+        "orders": orders,
+        "investments": investments,
+        "tickets": tickets,
+        "fiat_deposits": fiat_deposits,
+        "trading_stats": trading_stats,
+        "account_manager": account_manager,
+        "activities": activities[:20]
+    }
+
+
+async def get_client_trading_stats(db, user_id: str) -> dict:
+    """Calculate trading statistics for a client"""
+    
+    # Get all orders
+    orders = await db.trading_orders.find(
+        {"user_id": user_id, "status": "completed"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    if not orders:
+        return {
+            "total_volume_eur": 0,
+            "total_orders": 0,
+            "buy_orders": 0,
+            "sell_orders": 0,
+            "favorite_pairs": [],
+            "avg_order_value": 0,
+            "last_trade_date": None,
+            "trading_frequency": "none"
+        }
+    
+    total_volume = 0
+    buy_count = 0
+    sell_count = 0
+    pairs_count = {}
+    
+    for order in orders:
+        total_volume += order.get("fiat_amount", 0)
+        
+        if order.get("order_type") == "buy":
+            buy_count += 1
+        elif order.get("order_type") == "sell":
+            sell_count += 1
+        
+        # Count pairs
+        pair = f"{order.get('crypto_asset', 'UNKNOWN')}/{order.get('fiat_currency', 'EUR')}"
+        pairs_count[pair] = pairs_count.get(pair, 0) + 1
+    
+    # Get favorite pairs (top 3)
+    sorted_pairs = sorted(pairs_count.items(), key=lambda x: x[1], reverse=True)
+    favorite_pairs = [p[0] for p in sorted_pairs[:3]]
+    
+    # Calculate frequency
+    total_orders = len(orders)
+    if total_orders == 0:
+        frequency = "none"
+    elif total_orders >= 20:
+        frequency = "high"
+    elif total_orders >= 5:
+        frequency = "medium"
+    else:
+        frequency = "low"
+    
+    # Get last trade date
+    last_trade = None
+    if orders:
+        last_order = max(orders, key=lambda x: x.get("created_at", ""))
+        last_trade = last_order.get("created_at")
+    
+    return {
+        "total_volume_eur": round(total_volume, 2),
+        "total_orders": total_orders,
+        "buy_orders": buy_count,
+        "sell_orders": sell_count,
+        "favorite_pairs": favorite_pairs,
+        "avg_order_value": round(total_volume / total_orders, 2) if total_orders > 0 else 0,
+        "last_trade_date": last_trade,
+        "trading_frequency": frequency
+    }
+
+
+@router.get("/clients/stats/overview")
+async def get_crm_clients_overview(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get overview statistics for CRM clients dashboard"""
+    db = get_db()
+    
+    # Total clients
+    total_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}})
+    
+    # By region
+    europe_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "europe"})
+    mena_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "mena"})
+    latam_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "latam"})
+    
+    # By tier
+    standard_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "standard"})
+    premium_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "premium"})
+    vip_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "vip"})
+    
+    # By KYC status
+    kyc_approved = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "approved"})
+    kyc_pending = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "pending"})
+    kyc_not_started = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": {"$in": ["not_started", None]}})
+    
+    # Active this month (made a transaction or order)
+    from datetime import datetime, timedelta
+    month_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    month_ago_str = month_ago.isoformat()
+    
+    # Get unique users with orders this month
+    active_users = set()
+    orders_cursor = db.trading_orders.find({"created_at": {"$gte": month_ago_str}}, {"user_id": 1})
+    async for order in orders_cursor:
+        active_users.add(order.get("user_id"))
+    
+    # Total trading volume this month
+    orders = await db.trading_orders.find(
+        {"created_at": {"$gte": month_ago_str}, "status": "completed"},
+        {"fiat_amount": 1}
+    ).to_list(10000)
+    total_volume = sum(o.get("fiat_amount", 0) for o in orders)
+    
+    return {
+        "total_clients": total_clients,
+        "by_region": {
+            "europe": europe_clients,
+            "mena": mena_clients,
+            "latam": latam_clients
+        },
+        "by_tier": {
+            "standard": standard_clients,
+            "premium": premium_clients,
+            "vip": vip_clients
+        },
+        "by_kyc": {
+            "approved": kyc_approved,
+            "pending": kyc_pending,
+            "not_started": kyc_not_started
+        },
+        "active_this_month": len(active_users),
+        "total_volume_this_month": round(total_volume, 2)
+    }

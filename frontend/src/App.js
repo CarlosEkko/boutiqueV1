@@ -55,6 +55,7 @@ import CRMLeads from "./pages/dashboard/crm/CRMLeads";
 import CRMDeals from "./pages/dashboard/crm/CRMDeals";
 import CRMContacts from "./pages/dashboard/crm/CRMContacts";
 import CRMTasks from "./pages/dashboard/crm/CRMTasks";
+import CRMClients from "./pages/dashboard/crm/CRMClients";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -172,6 +173,7 @@ function AppRoutes() {
         <Route path="crm/deals" element={<CRMDeals />} />
         <Route path="crm/contacts" element={<CRMContacts />} />
         <Route path="crm/tasks" element={<CRMTasks />} />
+        <Route path="crm/clients" element={<CRMClients />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

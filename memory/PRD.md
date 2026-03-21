@@ -605,3 +605,71 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
      - Added complete details modal with 4 tabs
 
 **Status:** COMPLETED ✅
+
+
+## CRM Fase 1 - Módulo de Clientes 360° (March 21, 2026)
+
+**User Request:** Integrate CRM Client Module with 360° view showing: trading profile, wallets/balances, transaction history, account manager, support tickets.
+
+**Implementation:**
+
+### Backend (backend/routes/crm.py)
+New endpoints added:
+- `GET /api/crm/clients` - List all clients with trading stats, wallet count, pending tickets
+- `GET /api/crm/clients/{client_id}` - Full 360° view of single client
+- `GET /api/crm/clients/stats/overview` - Dashboard statistics
+
+Helper function:
+- `get_client_trading_stats()` - Calculates trading volume, frequency, favorite pairs
+
+### Frontend (frontend/src/pages/dashboard/crm/CRMClients.jsx)
+New page created with:
+
+**Overview Dashboard:**
+- Total Clients, Active (30d), Volume (30d), VIP count, KYC Approved/Pending
+
+**Filters:**
+- Search by name/email/phone
+- Filter by Region (Europe, MENA, LATAM)
+- Filter by Tier (Standard, Premium, VIP)
+- Filter by KYC Status
+
+**Clients Table:**
+- Client info (avatar, name, email)
+- Region badge
+- Tier badge  
+- KYC status badge
+- Total trading volume
+- Trading frequency (High/Medium/Low/None)
+- Pending tickets count
+- "Ver 360°" button
+
+**360° View Modal (5 tabs):**
+1. **Resumo (Overview)**
+   - Personal info: name, email, phone, country, region, tier, KYC, registration date
+   - Trading profile: volume, orders, buys/sells, avg order, frequency, last trade, favorite pairs
+   - Account manager info
+   - Quick stats: wallets, transactions, orders, investments, tickets
+
+2. **Trading**
+   - Recent orders list with type, asset, amount, date
+
+3. **Carteiras (Wallets)**
+   - Grid of fiat and crypto wallets with balances
+   - Wallet addresses displayed
+
+4. **Atividade (Activity)**
+   - Combined timeline of transactions, orders, tickets
+
+5. **Suporte (Support)**
+   - List of support tickets with status, subject, date
+
+### Menu Updated (backend/models/permissions.py)
+- Added "Clientes 360°" to CRM menu with Eye icon
+- Path: /dashboard/crm/clients
+
+### Route Added (frontend/src/App.js)
+- Import CRMClients component
+- Route: /dashboard/crm/clients
+
+**Status:** COMPLETED ✅
