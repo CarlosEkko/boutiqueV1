@@ -362,7 +362,7 @@ const InvestmentsPage = () => {
                       {/* Action Button */}
                       <Button
                         onClick={() => openInvestDialog(opp)}
-                        disabled={opp.status !== 'open'}
+                        disabled={opp.status !== 'open' && opp.status !== 'active'}
                         className="w-full bg-gold-500 hover:bg-gold-400 text-black disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Investir Agora
