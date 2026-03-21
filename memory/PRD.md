@@ -781,3 +781,95 @@ Returns comprehensive dashboard data:
 | Cliente Detail 360° | Any client | Only assigned |
 
 **Status:** COMPLETED ✅
+
+
+## OTC Desk Module - Phase 1 (March 21, 2026)
+
+**User Request:** Create a complete OTC Desk CRM module as a separate menu with the following pipeline:
+Lead → Pre-Qualification → KYC/KYB → Approval → RFQ → Quote → Acceptance → Execution → Settlement → Invoice → Post-Sale
+
+**Implementation:**
+
+### Backend Models (backend/models/otc.py)
+
+**Enums:**
+- OTCLeadSource: website, referral, linkedin, event, broker, cold_outreach, existing_client
+- OTCLeadStatus: new, contacted, pre_qualified, not_qualified, kyc_pending, kyc_approved, active_client, lost
+- TransactionType: buy, sell, swap
+- SettlementMethod: sepa, swift, pix, faster_payments, usdt_onchain, usdc_onchain
+- OTCDealStage: lead, pre_qualification, kyc_kyb, approval, rfq, quote, acceptance, execution, settlement, invoice, post_sale, completed, cancelled
+- QuoteStatus, ExecutionStatus, SettlementStatus
+
+**Models:**
+- OTCLead: entity_name, contact, country, source, estimated_volume, target_asset, transaction_type, trading_frequency
+- OTCClient: user_id, lead_id, limits, settlement_method, funding_type, fireblocks_vault_id
+- OTCDeal: deal_number, client_id, stage, base_asset, quote_asset, amount, pricing, settlement_method
+- OTCQuote: deal_id, market_price, spread, final_price, expires_at, status
+- OTCExecution: deal_id, funding_type, funds tracking, delivery
+- OTCSettlement: deal_id, method, fiat/crypto details, tx_hash
+
+### Backend Routes (backend/routes/otc.py)
+
+**Lead Management:**
+- GET /api/otc/leads - List with filters
+- POST /api/otc/leads - Create new lead
+- GET /api/otc/leads/{id} - Get single lead
+- PUT /api/otc/leads/{id} - Update lead
+- POST /api/otc/leads/{id}/pre-qualify - Mark as qualified/not qualified
+- POST /api/otc/leads/{id}/convert-to-client - Convert to OTC client
+
+**Client Management:**
+- GET /api/otc/clients - List OTC clients
+- GET /api/otc/clients/{id} - Get client with deals and stats
+
+**Deal/Pipeline Management:**
+- GET /api/otc/deals - List all deals
+- GET /api/otc/deals/pipeline - Kanban view grouped by stage
+- POST /api/otc/deals - Create new deal (RFQ)
+- GET /api/otc/deals/{id} - Get deal with quotes/executions
+- POST /api/otc/deals/{id}/move-stage - Move to next stage
+
+**Quotes:**
+- POST /api/otc/quotes - Create quote (manual or semi-auto with Binance price)
+- POST /api/otc/quotes/{id}/accept - Accept quote
+
+**Dashboard:**
+- GET /api/otc/dashboard - KPIs: volumes, leads, clients, deals, pipeline counts
+- GET /api/otc/stats/enums - All enums for dropdowns
+
+### Frontend Pages (frontend/src/pages/dashboard/otc/)
+
+**OTCDashboard.jsx:**
+- Volume stats: 24h, 7d, 30d, Total Revenue
+- Lead stats: Total, New, Qualified, Converted, Conversion Rate
+- Client stats: Total, Active
+- Deal stats: Total, Active, Completed
+- Pipeline visual: RFQ → Quote → Acceptance → Execution → Settlement
+
+**OTCLeads.jsx:**
+- Leads table with filters (status, source, search)
+- Create lead dialog with all OTC-specific fields
+- Lead detail dialog with pre-qualify actions
+
+**OTCPipeline.jsx:**
+- Kanban board with columns for each stage
+- Deal cards showing: deal_number, client, amount, asset, value
+- Click to view deal details and move to next stage
+
+### Menu Configuration (backend/models/permissions.py)
+- New Department: OTC_DESK
+- Menu items: Dashboard OTC, Leads OTC, Pipeline, Clientes OTC, Deals
+
+### Routes (frontend/src/App.js)
+- /dashboard/otc - Dashboard
+- /dashboard/otc/leads - Leads management
+- /dashboard/otc/pipeline - Kanban view
+- /dashboard/otc/clients - Clients
+- /dashboard/otc/deals - Deals
+
+**Status:** PHASE 1 COMPLETED ✅
+
+**Remaining Phases:**
+- Phase 2: Quotes & Execution (semi-automatic pricing, execution workflow)
+- Phase 3: Settlement & Invoicing (fiat/crypto settlement, invoice generation)
+- Phase 4: Dashboard & KPIs (advanced metrics, operator performance)

@@ -26,6 +26,7 @@ class Department(str, Enum):
     MANAGEMENT = "management"
     FINANCE = "finance"
     CRM = "crm"
+    OTC_DESK = "otc_desk"
     SUPPORT = "support"
 
 
@@ -36,7 +37,8 @@ ROLE_PERMISSIONS = {
         Department.ADMIN, 
         Department.MANAGEMENT, 
         Department.FINANCE, 
-        Department.CRM, 
+        Department.CRM,
+        Department.OTC_DESK,
         Department.SUPPORT
     ],
     StaffRole.GLOBAL_MANAGER: [
@@ -156,6 +158,17 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/crm/contacts", "label": "Contactos", "icon": "Contact"},
             {"path": "/dashboard/crm/tasks", "label": "Tarefas", "icon": "CheckSquare"},
             {"path": "/dashboard/admin/pipeline", "label": "Pipeline de Vendas", "icon": "GitBranch"},
+        ]
+    },
+    Department.OTC_DESK: {
+        "label": "OTC Desk",
+        "icon": "Briefcase",
+        "items": [
+            {"path": "/dashboard/otc", "label": "Dashboard OTC", "icon": "LayoutDashboard"},
+            {"path": "/dashboard/otc/leads", "label": "Leads OTC", "icon": "UserPlus"},
+            {"path": "/dashboard/otc/pipeline", "label": "Pipeline", "icon": "Kanban"},
+            {"path": "/dashboard/otc/clients", "label": "Clientes OTC", "icon": "Building"},
+            {"path": "/dashboard/otc/deals", "label": "Deals", "icon": "Handshake"},
         ]
     },
     Department.SUPPORT: {

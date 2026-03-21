@@ -1,0 +1,685 @@
+"""
+OTC Desk Routes
+API endpoints for the OTC trading desk module
+"""
+
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional, List
+from datetime import datetime, timezone, timedelta
+import uuid
+
+from models.otc import (
+    OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, SettlementMethod,
+    OTCClient, OTCDeal, OTCDealStage, OTCQuote, QuoteStatus,
+    OTCExecution, ExecutionStatus, OTCSettlement, SettlementStatus,
+    CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
+    FundingType, TradingFrequency
+)
+
+router = APIRouter(prefix="/otc", tags=["OTC Desk"])
+
+# Database reference - will be set by server.py
+db = None
+
+def set_db(database):
+    global db
+    db = database
+
+def get_db():
+    return db
+
+
+# Auth dependency placeholder - will be imported from auth routes
+async def get_current_user(token: str = None):
+    # This will be replaced with actual auth
+    pass
+
+from routes.auth import get_current_user
+
+
+# ==================== OTC LEADS ====================
+
+@router.get("/leads")
+async def get_otc_leads(
+    status: Optional[str] = None,
+    source: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    search: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all OTC leads with filtering"""
+    db = get_db()
+    
+    query = {}
+    
+    if status and status != "all":
+        query["status"] = status
+    if source and source != "all":
+        query["source"] = source
+    if assigned_to:
+        query["assigned_to"] = assigned_to
+    if search:
+        query["$or"] = [
+            {"entity_name": {"$regex": search, "$options": "i"}},
+            {"contact_name": {"$regex": search, "$options": "i"}},
+            {"contact_email": {"$regex": search, "$options": "i"}}
+        ]
+    
+    cursor = db.otc_leads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    leads = await cursor.to_list(limit)
+    
+    total = await db.otc_leads.count_documents(query)
+    
+    return {
+        "leads": leads,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.post("/leads")
+async def create_otc_lead(
+    lead_data: CreateOTCLeadRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new OTC lead"""
+    db = get_db()
+    
+    lead = OTCLead(
+        **lead_data.dict(),
+        status=OTCLeadStatus.NEW
+    )
+    
+    await db.otc_leads.insert_one(lead.dict())
+    
+    return {"success": True, "lead": lead.dict()}
+
+
+@router.get("/leads/{lead_id}")
+async def get_otc_lead(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single OTC lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    return lead
+
+
+@router.put("/leads/{lead_id}")
+async def update_otc_lead(
+    lead_id: str,
+    update_data: UpdateOTCLeadRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an OTC lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+    update_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_dict}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    return {"success": True, "lead": updated_lead}
+
+
+@router.post("/leads/{lead_id}/pre-qualify")
+async def pre_qualify_lead(
+    lead_id: str,
+    qualified: bool,
+    volume_per_operation: Optional[float] = None,
+    current_exchange: Optional[str] = None,
+    problem_to_solve: Optional[str] = None,
+    rejection_reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Pre-qualify a lead - mark as qualified or not qualified"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    update = {
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if qualified:
+        update["status"] = OTCLeadStatus.PRE_QUALIFIED.value
+        if volume_per_operation:
+            update["volume_per_operation"] = volume_per_operation
+        if current_exchange:
+            update["current_exchange"] = current_exchange
+        if problem_to_solve:
+            update["problem_to_solve"] = problem_to_solve
+    else:
+        update["status"] = OTCLeadStatus.NOT_QUALIFIED.value
+        if rejection_reason:
+            update["rejection_reason"] = rejection_reason
+    
+    await db.otc_leads.update_one({"id": lead_id}, {"$set": update})
+    
+    return {"success": True, "status": update.get("status")}
+
+
+@router.post("/leads/{lead_id}/convert-to-client")
+async def convert_lead_to_client(
+    lead_id: str,
+    daily_limit_usd: float = 100000,
+    monthly_limit_usd: float = 1000000,
+    default_settlement: SettlementMethod = SettlementMethod.SEPA,
+    account_manager_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Convert a qualified lead to an OTC client"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    if lead.get("status") not in [OTCLeadStatus.KYC_APPROVED.value, OTCLeadStatus.PRE_QUALIFIED.value]:
+        raise HTTPException(status_code=400, detail="Lead must be KYC approved or pre-qualified")
+    
+    # Create OTC Client
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    client = OTCClient(
+        lead_id=lead_id,
+        entity_name=lead.get("entity_name"),
+        contact_name=lead.get("contact_name"),
+        contact_email=lead.get("contact_email"),
+        contact_phone=lead.get("contact_phone"),
+        country=lead.get("country"),
+        account_manager_id=account_manager_id or current_user_id,
+        daily_limit_usd=daily_limit_usd,
+        monthly_limit_usd=monthly_limit_usd,
+        default_settlement_method=default_settlement
+    )
+    
+    await db.otc_clients.insert_one(client.dict())
+    
+    # Update lead status
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "status": OTCLeadStatus.ACTIVE_CLIENT.value,
+            "converted_to_client_id": client.id,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "client": client.dict()}
+
+
+# ==================== OTC CLIENTS ====================
+
+@router.get("/clients")
+async def get_otc_clients(
+    is_active: Optional[bool] = None,
+    search: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all OTC clients"""
+    db = get_db()
+    
+    query = {}
+    
+    if is_active is not None:
+        query["is_active"] = is_active
+    if search:
+        query["$or"] = [
+            {"entity_name": {"$regex": search, "$options": "i"}},
+            {"contact_name": {"$regex": search, "$options": "i"}},
+            {"contact_email": {"$regex": search, "$options": "i"}}
+        ]
+    
+    cursor = db.otc_clients.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    clients = await cursor.to_list(limit)
+    
+    total = await db.otc_clients.count_documents(query)
+    
+    return {
+        "clients": clients,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/clients/{client_id}")
+async def get_otc_client(
+    client_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single OTC client with stats"""
+    db = get_db()
+    
+    client = await db.otc_clients.find_one({"id": client_id}, {"_id": 0})
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Get client's deals
+    deals = await db.otc_deals.find({"client_id": client_id}, {"_id": 0}).to_list(100)
+    
+    # Calculate stats
+    total_volume = sum(d.get("total_value", 0) for d in deals if d.get("stage") == OTCDealStage.COMPLETED.value)
+    total_trades = len([d for d in deals if d.get("stage") == OTCDealStage.COMPLETED.value])
+    
+    return {
+        "client": client,
+        "deals": deals,
+        "stats": {
+            "total_volume_usd": total_volume,
+            "total_trades": total_trades,
+            "active_deals": len([d for d in deals if d.get("stage") not in [OTCDealStage.COMPLETED.value, OTCDealStage.CANCELLED.value, OTCDealStage.REJECTED.value]])
+        }
+    }
+
+
+# ==================== OTC DEALS / PIPELINE ====================
+
+@router.get("/deals")
+async def get_otc_deals(
+    stage: Optional[str] = None,
+    client_id: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all OTC deals"""
+    db = get_db()
+    
+    query = {}
+    
+    if stage and stage != "all":
+        query["stage"] = stage
+    if client_id:
+        query["client_id"] = client_id
+    if assigned_to:
+        query["assigned_operator_id"] = assigned_to
+    
+    cursor = db.otc_deals.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    deals = await cursor.to_list(limit)
+    
+    total = await db.otc_deals.count_documents(query)
+    
+    return {
+        "deals": deals,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/deals/pipeline")
+async def get_otc_pipeline(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get deals grouped by pipeline stage for Kanban view"""
+    db = get_db()
+    
+    pipeline = {}
+    
+    # Get counts for each stage
+    for stage in OTCDealStage:
+        if stage.value not in ["completed", "cancelled", "rejected"]:
+            deals = await db.otc_deals.find(
+                {"stage": stage.value},
+                {"_id": 0}
+            ).sort("created_at", -1).to_list(50)
+            
+            pipeline[stage.value] = {
+                "deals": deals,
+                "count": len(deals),
+                "total_value": sum(d.get("total_value", 0) for d in deals)
+            }
+    
+    return pipeline
+
+
+@router.post("/deals")
+async def create_otc_deal(
+    deal_data: CreateOTCDealRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new OTC deal (RFQ)"""
+    db = get_db()
+    
+    # Verify client exists
+    client = await db.otc_clients.find_one({"id": deal_data.client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Generate deal number
+    count = await db.otc_deals.count_documents({})
+    deal_number = f"OTC-{datetime.now().year}-{str(count + 1).zfill(4)}"
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    deal = OTCDeal(
+        deal_number=deal_number,
+        client_id=deal_data.client_id,
+        client_name=client.get("entity_name"),
+        transaction_type=deal_data.transaction_type,
+        base_asset=deal_data.base_asset,
+        quote_asset=deal_data.quote_asset,
+        amount=deal_data.amount,
+        settlement_method=deal_data.settlement_method or client.get("default_settlement_method"),
+        funding_type=client.get("funding_type", FundingType.PREFUNDED),
+        stage=OTCDealStage.RFQ,
+        assigned_operator_id=current_user_id,
+        rfq_received_at=datetime.now(timezone.utc).isoformat(),
+        notes=deal_data.notes
+    )
+    
+    await db.otc_deals.insert_one(deal.dict())
+    
+    return {"success": True, "deal": deal.dict()}
+
+
+@router.get("/deals/{deal_id}")
+async def get_otc_deal(
+    deal_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single OTC deal with all related data"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id}, {"_id": 0})
+    
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    # Get related data
+    quotes = await db.otc_quotes.find({"deal_id": deal_id}, {"_id": 0}).to_list(10)
+    executions = await db.otc_executions.find({"deal_id": deal_id}, {"_id": 0}).to_list(10)
+    settlements = await db.otc_settlements.find({"deal_id": deal_id}, {"_id": 0}).to_list(10)
+    
+    return {
+        "deal": deal,
+        "quotes": quotes,
+        "executions": executions,
+        "settlements": settlements
+    }
+
+
+@router.post("/deals/{deal_id}/move-stage")
+async def move_deal_stage(
+    deal_id: str,
+    new_stage: OTCDealStage,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Move a deal to a different stage"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    update = {
+        "stage": new_stage.value,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if notes:
+        update["notes"] = (deal.get("notes", "") + f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M')}] {notes}").strip()
+    
+    # Set timestamp for specific stages
+    if new_stage == OTCDealStage.ACCEPTANCE:
+        update["accepted_at"] = datetime.now(timezone.utc).isoformat()
+    elif new_stage == OTCDealStage.EXECUTION:
+        update["executed_at"] = datetime.now(timezone.utc).isoformat()
+    elif new_stage == OTCDealStage.SETTLEMENT:
+        update["settled_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.otc_deals.update_one({"id": deal_id}, {"$set": update})
+    
+    return {"success": True, "stage": new_stage.value}
+
+
+# ==================== QUOTES ====================
+
+@router.post("/quotes")
+async def create_quote(
+    quote_data: CreateQuoteRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a quote for a deal"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": quote_data.deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    # Get market price if not manual
+    market_price = quote_data.market_price
+    price_source = "manual"
+    
+    if not quote_data.is_manual or market_price is None:
+        # Fetch from Binance (simplified)
+        try:
+            import httpx
+            symbol = f"{deal.get('base_asset')}{deal.get('quote_asset')}".upper()
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
+                if response.status_code == 200:
+                    market_price = float(response.json()["price"])
+                    price_source = "binance"
+        except:
+            if market_price is None:
+                raise HTTPException(status_code=400, detail="Could not fetch market price. Please provide manually.")
+    
+    # Calculate final price with spread
+    spread_amount = market_price * (quote_data.spread_percent / 100)
+    
+    # For buy orders, client pays more. For sell orders, client receives less.
+    if deal.get("transaction_type") == TransactionType.BUY.value:
+        final_price = market_price + spread_amount
+    else:
+        final_price = market_price - spread_amount
+    
+    total_value = deal.get("amount") * final_price
+    
+    # Calculate expiry
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=quote_data.valid_for_minutes)).isoformat()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    quote = OTCQuote(
+        deal_id=quote_data.deal_id,
+        base_asset=deal.get("base_asset"),
+        quote_asset=deal.get("quote_asset"),
+        amount=deal.get("amount"),
+        market_price=market_price,
+        spread_percent=quote_data.spread_percent,
+        final_price=final_price,
+        total_value=total_value,
+        fees=quote_data.fees,
+        is_manual=quote_data.is_manual,
+        price_source=price_source,
+        valid_for_minutes=quote_data.valid_for_minutes,
+        expires_at=expires_at,
+        status=QuoteStatus.SENT,
+        created_by=current_user_id
+    )
+    
+    await db.otc_quotes.insert_one(quote.dict())
+    
+    # Update deal
+    await db.otc_deals.update_one(
+        {"id": quote_data.deal_id},
+        {"$set": {
+            "stage": OTCDealStage.QUOTE.value,
+            "quote_id": quote.id,
+            "market_price": market_price,
+            "spread_percent": quote_data.spread_percent,
+            "final_price": final_price,
+            "total_value": total_value,
+            "fees": quote_data.fees,
+            "quote_sent_at": datetime.now(timezone.utc).isoformat(),
+            "quote_expires_at": expires_at,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "quote": quote.dict()}
+
+
+@router.post("/quotes/{quote_id}/accept")
+async def accept_quote(
+    quote_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Client accepts a quote"""
+    db = get_db()
+    
+    quote = await db.otc_quotes.find_one({"id": quote_id})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    # Check if expired
+    if datetime.fromisoformat(quote.get("expires_at").replace("Z", "+00:00")) < datetime.now(timezone.utc):
+        await db.otc_quotes.update_one({"id": quote_id}, {"$set": {"status": QuoteStatus.EXPIRED.value}})
+        raise HTTPException(status_code=400, detail="Quote has expired")
+    
+    # Update quote
+    await db.otc_quotes.update_one(
+        {"id": quote_id},
+        {"$set": {
+            "status": QuoteStatus.ACCEPTED.value,
+            "response_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Update deal
+    await db.otc_deals.update_one(
+        {"id": quote.get("deal_id")},
+        {"$set": {
+            "stage": OTCDealStage.ACCEPTANCE.value,
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Quote accepted"}
+
+
+# ==================== DASHBOARD / KPIs ====================
+
+@router.get("/dashboard")
+async def get_otc_dashboard(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get OTC Desk dashboard with KPIs"""
+    db = get_db()
+    
+    now = datetime.now(timezone.utc)
+    day_ago = (now - timedelta(days=1)).isoformat()
+    week_ago = (now - timedelta(days=7)).isoformat()
+    month_ago = (now - timedelta(days=30)).isoformat()
+    
+    # Lead stats
+    total_leads = await db.otc_leads.count_documents({})
+    new_leads = await db.otc_leads.count_documents({"status": OTCLeadStatus.NEW.value})
+    qualified_leads = await db.otc_leads.count_documents({"status": OTCLeadStatus.PRE_QUALIFIED.value})
+    converted_leads = await db.otc_leads.count_documents({"status": OTCLeadStatus.ACTIVE_CLIENT.value})
+    
+    # Client stats
+    total_clients = await db.otc_clients.count_documents({})
+    active_clients = await db.otc_clients.count_documents({"is_active": True})
+    
+    # Deal stats
+    total_deals = await db.otc_deals.count_documents({})
+    completed_deals = await db.otc_deals.count_documents({"stage": OTCDealStage.COMPLETED.value})
+    active_deals = await db.otc_deals.count_documents({
+        "stage": {"$nin": [OTCDealStage.COMPLETED.value, OTCDealStage.CANCELLED.value, OTCDealStage.REJECTED.value]}
+    })
+    
+    # Volume calculations
+    completed_deals_data = await db.otc_deals.find(
+        {"stage": OTCDealStage.COMPLETED.value},
+        {"total_value": 1, "settled_at": 1, "fees": 1}
+    ).to_list(10000)
+    
+    total_volume = sum(d.get("total_value", 0) for d in completed_deals_data)
+    total_revenue = sum(d.get("fees", 0) for d in completed_deals_data)
+    
+    # Volume by period
+    volume_24h = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= day_ago)
+    volume_7d = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= week_ago)
+    volume_30d = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= month_ago)
+    
+    # Pipeline by stage
+    pipeline = {}
+    for stage in OTCDealStage:
+        if stage.value not in ["completed", "cancelled", "rejected"]:
+            count = await db.otc_deals.count_documents({"stage": stage.value})
+            pipeline[stage.value] = count
+    
+    # Conversion rate
+    conversion_rate = (converted_leads / total_leads * 100) if total_leads > 0 else 0
+    
+    return {
+        "leads": {
+            "total": total_leads,
+            "new": new_leads,
+            "qualified": qualified_leads,
+            "converted": converted_leads,
+            "conversion_rate": round(conversion_rate, 1)
+        },
+        "clients": {
+            "total": total_clients,
+            "active": active_clients
+        },
+        "deals": {
+            "total": total_deals,
+            "completed": completed_deals,
+            "active": active_deals,
+            "pipeline": pipeline
+        },
+        "volume": {
+            "total": round(total_volume, 2),
+            "24h": round(volume_24h, 2),
+            "7d": round(volume_7d, 2),
+            "30d": round(volume_30d, 2)
+        },
+        "revenue": {
+            "total": round(total_revenue, 2)
+        }
+    }
+
+
+@router.get("/stats/enums")
+async def get_otc_enums():
+    """Get all OTC enums for frontend dropdowns"""
+    return {
+        "lead_sources": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCLeadSource],
+        "lead_statuses": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCLeadStatus],
+        "transaction_types": [{"value": e.value, "label": e.value.title()} for e in TransactionType],
+        "settlement_methods": [{"value": e.value, "label": e.value.replace("_", " ").upper()} for e in SettlementMethod],
+        "trading_frequencies": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in TradingFrequency],
+        "deal_stages": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCDealStage],
+        "funding_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundingType]
+    }

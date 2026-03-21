@@ -57,6 +57,9 @@ import CRMContacts from "./pages/dashboard/crm/CRMContacts";
 import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import CRMClients from "./pages/dashboard/crm/CRMClients";
 import CRMAdvancedDashboard from "./pages/dashboard/crm/CRMAdvancedDashboard";
+import OTCDashboard from "./pages/dashboard/otc/OTCDashboard";
+import OTCLeads from "./pages/dashboard/otc/OTCLeads";
+import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -176,6 +179,13 @@ function AppRoutes() {
         <Route path="crm/contacts" element={<CRMContacts />} />
         <Route path="crm/tasks" element={<CRMTasks />} />
         <Route path="crm/clients" element={<CRMClients />} />
+        
+        {/* OTC Desk Routes */}
+        <Route path="otc" element={<OTCDashboard />} />
+        <Route path="otc/leads" element={<OTCLeads />} />
+        <Route path="otc/pipeline" element={<OTCPipeline />} />
+        <Route path="otc/clients" element={<OTCDashboard />} />
+        <Route path="otc/deals" element={<OTCPipeline />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}
