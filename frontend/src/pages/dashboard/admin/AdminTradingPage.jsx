@@ -550,6 +550,7 @@ const AdminTradingPage = () => {
         <TabButton id="crypto-fees" icon={Coins} label="Taxas Crypto" />
         <TabButton id="fees" icon={DollarSign} label="Taxas Fiat" />
         <TabButton id="limits" icon={Users} label="Limites" />
+        <TabButton id="bank-accounts" icon={Building2} label="Contas Bancárias" />
       </div>
 
       {/* Crypto Fees Tab */}
