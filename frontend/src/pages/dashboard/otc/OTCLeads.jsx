@@ -73,7 +73,7 @@ const OTCLeads = () => {
     estimated_volume_usd: '',
     target_asset: 'BTC',
     transaction_type: 'buy',
-    trading_frequency: 'one_time',
+    trading_frequency: 'one_shot',
     volume_per_operation: '',
     execution_timeframe: 'flexible',
     preferred_settlement_methods: [],
@@ -143,7 +143,7 @@ const OTCLeads = () => {
         estimated_volume_usd: '',
         target_asset: 'BTC',
         transaction_type: 'buy',
-        trading_frequency: 'one_time',
+        trading_frequency: 'one_shot',
         volume_per_operation: '',
         execution_timeframe: 'flexible',
         preferred_settlement_methods: [],
@@ -520,10 +520,9 @@ const OTCLeads = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectItem value="one_time" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
+                  <SelectItem value="one_shot" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
                   <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diário</SelectItem>
                   <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
-                  <SelectItem value="monthly" className="text-white hover:bg-zinc-700">Mensal</SelectItem>
                   <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
                 </SelectContent>
               </Select>
