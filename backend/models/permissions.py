@@ -22,6 +22,7 @@ class StaffRole(str, Enum):
 class Department(str, Enum):
     """Menu departments/areas"""
     PORTFOLIO = "portfolio"
+    ACCOUNT = "account"
     ADMIN = "admin"
     MANAGEMENT = "management"
     FINANCE = "finance"
@@ -34,6 +35,7 @@ class Department(str, Enum):
 ROLE_PERMISSIONS = {
     StaffRole.ADMIN: [
         Department.PORTFOLIO, 
+        Department.ACCOUNT,
         Department.ADMIN, 
         Department.MANAGEMENT, 
         Department.FINANCE, 
@@ -43,6 +45,7 @@ ROLE_PERMISSIONS = {
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO, 
+        Department.ACCOUNT,
         Department.ADMIN, 
         Department.MANAGEMENT, 
         Department.FINANCE, 
@@ -51,36 +54,44 @@ ROLE_PERMISSIONS = {
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.ADMIN,
         Department.CRM,
         Department.SUPPORT
     ],
     StaffRole.SALES_MANAGER: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.CRM
     ],
     StaffRole.SALES: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.CRM
     ],
     StaffRole.FINANCE_GENERAL: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.FINANCE_LOCAL: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.FINANCE: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.SUPPORT_MANAGER: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.SUPPORT
     ],
     StaffRole.SUPPORT_AGENT: [
         Department.PORTFOLIO,
+        Department.ACCOUNT,
         Department.SUPPORT
     ],
 }
@@ -105,9 +116,15 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp"},
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
             {"path": "/dashboard/transparency", "label": "Transparência", "icon": "Shield"},
-            {"path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle"},
-            {"path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck"},
+        ]
+    },
+    Department.ACCOUNT: {
+        "label": "Conta",
+        "icon": "UserCircle",
+        "items": [
             {"path": "/profile", "label": "Meu Perfil", "icon": "User"},
+            {"path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck"},
+            {"path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle"},
         ]
     },
     Department.ADMIN: {

@@ -84,7 +84,7 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     )
     is_otc_client = otc_client is not None
     
-    # Clients only see Portfolio (and OTC if they are OTC clients)
+    # Clients only see Portfolio, Account (and OTC if they are OTC clients)
     if not is_admin and user_type != "internal" and not internal_role:
         client_menus = [
             {
@@ -92,6 +92,12 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                 "label": "Portfolio",
                 "icon": "LayoutDashboard",
                 "items": DEPARTMENT_MENUS[Department.PORTFOLIO]["items"]
+            },
+            {
+                "department": "account",
+                "label": "Conta",
+                "icon": "UserCircle",
+                "items": DEPARTMENT_MENUS[Department.ACCOUNT]["items"]
             }
         ]
         
