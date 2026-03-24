@@ -436,6 +436,107 @@ async def get_otc_client(
     }
 
 
+@router.put("/clients/{client_id}")
+async def update_otc_client(
+    client_id: str,
+    daily_limit_usd: Optional[float] = None,
+    monthly_limit_usd: Optional[float] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an OTC client"""
+    db = get_db()
+    
+    client = await db.otc_clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    update_dict = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if daily_limit_usd is not None:
+        update_dict["daily_limit_usd"] = daily_limit_usd
+    if monthly_limit_usd is not None:
+        update_dict["monthly_limit_usd"] = monthly_limit_usd
+    if status is not None:
+        update_dict["status"] = status
+    
+    await db.otc_clients.update_one(
+        {"id": client_id},
+        {"$set": update_dict}
+    )
+    
+    return {"success": True, "message": "Client updated"}
+
+
+@router.post("/clients/{client_id}/link-user")
+async def link_user_to_otc_client(
+    client_id: str,
+    body: dict = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Link a registered user to an OTC client - gives them access to OTC Trading Portal"""
+    from fastapi import Body
+    db = get_db()
+    
+    # Find the client
+    client = await db.otc_clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    # Get user_id from body
+    user_id = body.get("user_id") if body else None
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    # Verify the user exists
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user is already linked to another OTC client
+    existing_link = await db.otc_clients.find_one({"user_id": user_id, "id": {"$ne": client_id}})
+    if existing_link:
+        raise HTTPException(status_code=400, detail="User is already linked to another OTC client")
+    
+    # Update the client with the user_id and update contact_email to match
+    await db.otc_clients.update_one(
+        {"id": client_id},
+        {"$set": {
+            "user_id": user_id,
+            "contact_email": user.get("email"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "User linked to OTC client successfully"}
+
+
+@router.post("/clients/{client_id}/unlink-user")
+async def unlink_user_from_otc_client(
+    client_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove user access from OTC client - removes their access to OTC Trading Portal"""
+    db = get_db()
+    
+    client = await db.otc_clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    if not client.get("user_id"):
+        raise HTTPException(status_code=400, detail="Client has no linked user")
+    
+    # Remove the user_id from the client
+    await db.otc_clients.update_one(
+        {"id": client_id},
+        {"$set": {
+            "user_id": None,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "User unlinked from OTC client"}
+
+
 # ==================== OTC DEALS / PIPELINE ====================
 
 @router.get("/deals")
