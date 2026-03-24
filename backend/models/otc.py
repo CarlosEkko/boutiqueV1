@@ -102,6 +102,13 @@ class SettlementStatus(str, Enum):
     FAILED = "failed"
 
 
+class InvoiceStatus(str, Enum):
+    DRAFT = "draft"
+    SENT = "sent"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+
+
 class FundingType(str, Enum):
     PREFUNDED = "prefunded"
     POST_FUNDED = "post_funded"
@@ -378,16 +385,22 @@ class OTCInvoice(BaseModel):
     total: float
     
     # Status
-    status: str = "draft"  # draft, sent, paid
+    status: InvoiceStatus = InvoiceStatus.DRAFT
     sent_at: Optional[str] = None
     paid_at: Optional[str] = None
+    payment_reference: Optional[str] = None
+    
+    # Notes
+    notes: Optional[str] = None
     
     # PDF
     pdf_url: Optional[str] = None
     
     # Metadata
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     due_date: Optional[str] = None
+    created_by: Optional[str] = None
 
 
 # ==================== REQUEST/RESPONSE MODELS ====================

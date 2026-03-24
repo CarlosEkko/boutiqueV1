@@ -62,6 +62,8 @@ import OTCLeads from "./pages/dashboard/otc/OTCLeads";
 import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
 import OTCQuotes from "./pages/dashboard/otc/OTCQuotes";
 import OTCExecution from "./pages/dashboard/otc/OTCExecution";
+import OTCSettlement from "./pages/dashboard/otc/OTCSettlement";
+import OTCInvoices from "./pages/dashboard/otc/OTCInvoices";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -188,6 +190,8 @@ function AppRoutes() {
         <Route path="otc/pipeline" element={<OTCPipeline />} />
         <Route path="otc/quotes" element={<OTCQuotes />} />
         <Route path="otc/execution" element={<OTCExecution />} />
+        <Route path="otc/settlement" element={<OTCSettlement />} />
+        <Route path="otc/invoices" element={<OTCInvoices />} />
         <Route path="otc/clients" element={<OTCDashboard />} />
         <Route path="otc/deals" element={<OTCPipeline />} />
       </Route>

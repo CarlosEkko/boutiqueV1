@@ -169,6 +169,8 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/otc/pipeline", "label": "Pipeline", "icon": "Kanban"},
             {"path": "/dashboard/otc/quotes", "label": "Cotações", "icon": "FileText"},
             {"path": "/dashboard/otc/execution", "label": "Execução", "icon": "Zap"},
+            {"path": "/dashboard/otc/settlement", "label": "Liquidação", "icon": "Wallet"},
+            {"path": "/dashboard/otc/invoices", "label": "Faturas", "icon": "Receipt"},
             {"path": "/dashboard/otc/clients", "label": "Clientes OTC", "icon": "Building"},
         ]
     },

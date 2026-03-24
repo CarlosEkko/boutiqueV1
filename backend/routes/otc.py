@@ -12,6 +12,7 @@ from models.otc import (
     OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, SettlementMethod,
     OTCClient, OTCDeal, OTCDealStage, OTCQuote, QuoteStatus,
     OTCExecution, ExecutionStatus, OTCSettlement, SettlementStatus,
+    OTCInvoice, InvoiceStatus,
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
     FundingType, TradingFrequency
 )
@@ -968,3 +969,372 @@ async def complete_execution(
     )
     
     return {"success": True, "message": "Execution completed, moved to settlement"}
+
+
+# ==================== SETTLEMENT ====================
+
+@router.get("/settlements")
+async def list_settlements(
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """List all settlements"""
+    db = get_db()
+    
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    
+    cursor = db.otc_settlements.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    settlements = await cursor.to_list(limit)
+    
+    # Enrich with deal and client info
+    for settlement in settlements:
+        deal = await db.otc_deals.find_one({"id": settlement.get("deal_id")}, {"_id": 0})
+        if deal:
+            settlement["deal_number"] = deal.get("deal_number")
+            settlement["client_name"] = deal.get("client_name")
+            settlement["transaction_type"] = deal.get("transaction_type")
+            settlement["base_asset"] = deal.get("base_asset")
+            settlement["quote_asset"] = deal.get("quote_asset")
+            settlement["amount"] = deal.get("amount")
+            settlement["total_value"] = deal.get("total_value")
+    
+    total = await db.otc_settlements.count_documents(query)
+    
+    return {"settlements": settlements, "total": total}
+
+
+@router.post("/settlements")
+async def create_settlement(
+    deal_id: str,
+    method: str,
+    fiat_amount: Optional[float] = None,
+    fiat_currency: Optional[str] = None,
+    crypto_amount: Optional[float] = None,
+    crypto_asset: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a settlement record for a deal"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    if deal.get("stage") != OTCDealStage.SETTLEMENT.value:
+        raise HTTPException(status_code=400, detail="Deal must be in settlement stage")
+    
+    # Get execution
+    execution = await db.otc_executions.find_one({"deal_id": deal_id})
+    if not execution:
+        raise HTTPException(status_code=400, detail="No execution found for this deal")
+    
+    settlement = OTCSettlement(
+        deal_id=deal_id,
+        execution_id=execution.get("id"),
+        method=SettlementMethod(method),
+        fiat_amount=fiat_amount,
+        fiat_currency=fiat_currency,
+        crypto_amount=crypto_amount,
+        crypto_asset=crypto_asset
+    )
+    
+    await db.otc_settlements.insert_one(settlement.dict())
+    
+    # Update deal
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "settlement_id": settlement.id,
+            "settlement_method": method,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "settlement": settlement.dict()}
+
+
+@router.get("/settlements/{settlement_id}")
+async def get_settlement(
+    settlement_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get settlement details"""
+    db = get_db()
+    
+    settlement = await db.otc_settlements.find_one({"id": settlement_id}, {"_id": 0})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    
+    # Enrich with deal info
+    deal = await db.otc_deals.find_one({"id": settlement.get("deal_id")}, {"_id": 0})
+    if deal:
+        settlement["deal"] = deal
+    
+    return settlement
+
+
+@router.post("/settlements/{settlement_id}/confirm-fiat")
+async def confirm_fiat_settlement(
+    settlement_id: str,
+    bank_reference: str,
+    amount: float,
+    current_user: dict = Depends(get_current_user)
+):
+    """Confirm fiat settlement"""
+    db = get_db()
+    
+    settlement = await db.otc_settlements.find_one({"id": settlement_id})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    
+    await db.otc_settlements.update_one(
+        {"id": settlement_id},
+        {"$set": {
+            "status": SettlementStatus.IN_PROGRESS.value,
+            "fiat_amount": amount,
+            "bank_reference": bank_reference,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Fiat settlement confirmed"}
+
+
+@router.post("/settlements/{settlement_id}/confirm-crypto")
+async def confirm_crypto_settlement(
+    settlement_id: str,
+    tx_hash: str,
+    amount: float,
+    network: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Confirm crypto settlement"""
+    db = get_db()
+    
+    settlement = await db.otc_settlements.find_one({"id": settlement_id})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    
+    await db.otc_settlements.update_one(
+        {"id": settlement_id},
+        {"$set": {
+            "status": SettlementStatus.IN_PROGRESS.value,
+            "crypto_amount": amount,
+            "tx_hash": tx_hash,
+            "network": network,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Crypto settlement confirmed"}
+
+
+@router.post("/settlements/{settlement_id}/complete")
+async def complete_settlement(
+    settlement_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark settlement as complete and move deal to invoice stage"""
+    db = get_db()
+    
+    settlement = await db.otc_settlements.find_one({"id": settlement_id})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    # Update settlement
+    await db.otc_settlements.update_one(
+        {"id": settlement_id},
+        {"$set": {
+            "status": SettlementStatus.COMPLETED.value,
+            "confirmed_at": datetime.now(timezone.utc).isoformat(),
+            "confirmed_by": current_user_id,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Move deal to invoice stage
+    deal_id = settlement.get("deal_id")
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "stage": OTCDealStage.INVOICE.value,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Settlement completed, deal moved to invoice stage"}
+
+
+# ==================== INVOICES ====================
+
+@router.get("/invoices")
+async def list_invoices(
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """List all invoices"""
+    db = get_db()
+    
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    
+    cursor = db.otc_invoices.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    invoices = await cursor.to_list(limit)
+    
+    total = await db.otc_invoices.count_documents(query)
+    
+    return {"invoices": invoices, "total": total}
+
+
+async def generate_invoice_number(db) -> str:
+    """Generate unique invoice number"""
+    year = datetime.now().year
+    count = await db.otc_invoices.count_documents({})
+    return f"INV-{year}-{str(count + 1).zfill(5)}"
+
+
+@router.post("/invoices")
+async def create_invoice(
+    deal_id: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create an invoice for a deal"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal not found")
+    
+    if deal.get("stage") != OTCDealStage.INVOICE.value:
+        raise HTTPException(status_code=400, detail="Deal must be in invoice stage")
+    
+    # Get client info
+    client = await db.otc_clients.find_one({"id": deal.get("client_id")})
+    client_name = client.get("entity_name") if client else deal.get("client_name", "Unknown")
+    client_address = client.get("address") if client else None
+    
+    # Generate invoice number
+    invoice_number = await generate_invoice_number(db)
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    invoice = OTCInvoice(
+        invoice_number=invoice_number,
+        deal_id=deal_id,
+        client_id=deal.get("client_id"),
+        client_name=client_name,
+        client_address=client_address,
+        base_asset=deal.get("base_asset"),
+        quote_asset=deal.get("quote_asset"),
+        amount=deal.get("amount"),
+        price=deal.get("final_price", 0),
+        subtotal=deal.get("total_value", 0),
+        fees=deal.get("fees", 0),
+        total=deal.get("total_value", 0) + (deal.get("fees", 0) or 0),
+        notes=notes,
+        created_by=current_user_id
+    )
+    
+    await db.otc_invoices.insert_one(invoice.dict())
+    
+    # Update deal
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "invoice_id": invoice.id,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "invoice": invoice.dict()}
+
+
+@router.get("/invoices/{invoice_id}")
+async def get_invoice(
+    invoice_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get invoice details"""
+    db = get_db()
+    
+    invoice = await db.otc_invoices.find_one({"id": invoice_id}, {"_id": 0})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    # Enrich with deal info
+    deal = await db.otc_deals.find_one({"id": invoice.get("deal_id")}, {"_id": 0})
+    if deal:
+        invoice["deal"] = deal
+    
+    return invoice
+
+
+@router.post("/invoices/{invoice_id}/send")
+async def send_invoice(
+    invoice_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark invoice as sent"""
+    db = get_db()
+    
+    invoice = await db.otc_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    await db.otc_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "status": InvoiceStatus.SENT.value,
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Invoice marked as sent"}
+
+
+@router.post("/invoices/{invoice_id}/mark-paid")
+async def mark_invoice_paid(
+    invoice_id: str,
+    payment_reference: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark invoice as paid and complete the deal"""
+    db = get_db()
+    
+    invoice = await db.otc_invoices.find_one({"id": invoice_id})
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    # Update invoice
+    await db.otc_invoices.update_one(
+        {"id": invoice_id},
+        {"$set": {
+            "status": InvoiceStatus.PAID.value,
+            "paid_at": datetime.now(timezone.utc).isoformat(),
+            "payment_reference": payment_reference,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Move deal to post-sale/completed
+    deal_id = invoice.get("deal_id")
+    await db.otc_deals.update_one(
+        {"id": deal_id},
+        {"$set": {
+            "stage": OTCDealStage.COMPLETED.value,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Invoice marked as paid, deal completed"}
