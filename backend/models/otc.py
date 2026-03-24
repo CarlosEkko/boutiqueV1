@@ -34,6 +34,7 @@ class OTCLeadStatus(str, Enum):
     SETUP_PENDING = "setup_pending"
     ACTIVE_CLIENT = "active_client"
     LOST = "lost"
+    ARCHIVED = "archived"
 
 
 class TransactionType(str, Enum):

@@ -134,6 +134,55 @@ async def update_otc_lead(
     return {"success": True, "lead": updated_lead}
 
 
+@router.delete("/leads/{lead_id}")
+async def delete_otc_lead(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an OTC lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Don't allow deletion of active clients
+    if lead.get("status") == "active_client":
+        raise HTTPException(status_code=400, detail="Cannot delete an active client lead")
+    
+    await db.otc_leads.delete_one({"id": lead_id})
+    
+    return {"success": True, "message": "Lead deleted successfully"}
+
+
+@router.post("/leads/{lead_id}/archive")
+async def archive_otc_lead(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Archive an OTC lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Don't allow archiving of active clients
+    if lead.get("status") == "active_client":
+        raise HTTPException(status_code=400, detail="Cannot archive an active client lead")
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "status": "archived",
+            "archived_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Lead archived successfully"}
+
+
 @router.post("/leads/{lead_id}/pre-qualify")
 async def pre_qualify_lead(
     lead_id: str,

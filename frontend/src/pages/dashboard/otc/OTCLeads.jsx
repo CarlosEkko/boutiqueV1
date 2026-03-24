@@ -39,7 +39,9 @@ import {
   RefreshCw,
   ChevronRight,
   UserCheck,
-  Clock
+  Clock,
+  Trash2,
+  Archive
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -213,6 +215,37 @@ const OTCLeads = () => {
     }
   };
 
+  const handleDeleteLead = async (leadId) => {
+    if (!window.confirm('Tem certeza que deseja eliminar este lead? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+    try {
+      await axios.delete(`${API_URL}/api/otc/leads/${leadId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Lead eliminado com sucesso');
+      fetchLeads();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar lead');
+    }
+  };
+
+  const handleArchiveLead = async (leadId) => {
+    try {
+      await axios.post(`${API_URL}/api/otc/leads/${leadId}/archive`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Lead arquivado com sucesso');
+      fetchLeads();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao arquivar lead');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const colors = {
       new: 'bg-blue-900/30 text-blue-400',
@@ -222,7 +255,8 @@ const OTCLeads = () => {
       kyc_pending: 'bg-yellow-900/30 text-yellow-400',
       kyc_approved: 'bg-green-900/30 text-green-400',
       active_client: 'bg-green-900/30 text-green-400',
-      lost: 'bg-red-900/30 text-red-400'
+      lost: 'bg-red-900/30 text-red-400',
+      archived: 'bg-zinc-900/30 text-zinc-400'
     };
     const labels = {
       new: 'Novo',
@@ -232,7 +266,8 @@ const OTCLeads = () => {
       kyc_pending: 'KYC Pendente',
       kyc_approved: 'KYC Aprovado',
       active_client: 'Cliente Ativo',
-      lost: 'Perdido'
+      lost: 'Perdido',
+      archived: 'Arquivado'
     };
     return <Badge className={colors[status] || 'bg-gray-900/30 text-gray-400'}>{labels[status] || status}</Badge>;
   };
@@ -286,12 +321,13 @@ const OTCLeads = () => {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/30">
-                <SelectItem value="all">Todos Status</SelectItem>
-                <SelectItem value="new">Novo</SelectItem>
-                <SelectItem value="contacted">Contactado</SelectItem>
-                <SelectItem value="pre_qualified">Pré-Qualificado</SelectItem>
-                <SelectItem value="not_qualified">Não Qualificado</SelectItem>
-                <SelectItem value="active_client">Cliente Ativo</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-zinc-700">Todos Status</SelectItem>
+                <SelectItem value="new" className="text-white hover:bg-zinc-700">Novo</SelectItem>
+                <SelectItem value="contacted" className="text-white hover:bg-zinc-700">Contactado</SelectItem>
+                <SelectItem value="pre_qualified" className="text-white hover:bg-zinc-700">Pré-Qualificado</SelectItem>
+                <SelectItem value="not_qualified" className="text-white hover:bg-zinc-700">Não Qualificado</SelectItem>
+                <SelectItem value="active_client" className="text-white hover:bg-zinc-700">Cliente Ativo</SelectItem>
+                <SelectItem value="archived" className="text-white hover:bg-zinc-700">Arquivado</SelectItem>
               </SelectContent>
             </Select>
             
@@ -300,12 +336,12 @@ const OTCLeads = () => {
                 <SelectValue placeholder="Origem" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/30">
-                <SelectItem value="all">Todas Origens</SelectItem>
-                <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="referral">Referência</SelectItem>
-                <SelectItem value="linkedin">LinkedIn</SelectItem>
-                <SelectItem value="event">Evento</SelectItem>
-                <SelectItem value="broker">Broker</SelectItem>
+                <SelectItem value="all" className="text-white hover:bg-zinc-700">Todas Origens</SelectItem>
+                <SelectItem value="website" className="text-white hover:bg-zinc-700">Website</SelectItem>
+                <SelectItem value="referral" className="text-white hover:bg-zinc-700">Referência</SelectItem>
+                <SelectItem value="linkedin" className="text-white hover:bg-zinc-700">LinkedIn</SelectItem>
+                <SelectItem value="event" className="text-white hover:bg-zinc-700">Evento</SelectItem>
+                <SelectItem value="broker" className="text-white hover:bg-zinc-700">Broker</SelectItem>
               </SelectContent>
             </Select>
             
@@ -467,12 +503,12 @@ const OTCLeads = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30">
-                  <SelectItem value="website">Website</SelectItem>
-                  <SelectItem value="referral">Referência</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="event">Evento</SelectItem>
-                  <SelectItem value="broker">Broker</SelectItem>
-                  <SelectItem value="cold_outreach">Cold Outreach</SelectItem>
+                  <SelectItem value="website" className="text-white hover:bg-zinc-700">Website</SelectItem>
+                  <SelectItem value="referral" className="text-white hover:bg-zinc-700">Referência</SelectItem>
+                  <SelectItem value="linkedin" className="text-white hover:bg-zinc-700">LinkedIn</SelectItem>
+                  <SelectItem value="event" className="text-white hover:bg-zinc-700">Evento</SelectItem>
+                  <SelectItem value="broker" className="text-white hover:bg-zinc-700">Broker</SelectItem>
+                  <SelectItem value="cold_outreach" className="text-white hover:bg-zinc-700">Cold Outreach</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -769,6 +805,28 @@ const OTCLeads = () => {
                   </Button>
                 </div>
               ) : null}
+              
+              {/* Delete/Archive buttons - always visible except for active clients */}
+              {selectedLead.status !== 'active_client' && (
+                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
+                  <Button
+                    onClick={() => handleArchiveLead(selectedLead.id)}
+                    variant="outline"
+                    className="flex-1 border-gray-600 text-gray-400 hover:bg-gray-900/30"
+                  >
+                    <Archive size={16} className="mr-2" />
+                    Arquivar
+                  </Button>
+                  <Button
+                    onClick={() => handleDeleteLead(selectedLead.id)}
+                    variant="outline"
+                    className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
+                  >
+                    <Trash2 size={16} className="mr-2" />
+                    Eliminar
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
