@@ -533,6 +533,43 @@ async def remove_user_admin(
     return {"success": True, "message": f"Admin rights removed from {user['email']}"}
 
 
+@router.put("/users/{user_id}/assign-manager")
+async def assign_account_manager(
+    user_id: str,
+    body: dict,
+    admin: dict = Depends(get_admin_user)
+):
+    """Assign an account manager to a client"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    manager_id = body.get("manager_id")
+    
+    # If manager_id is provided, verify the manager exists and is internal staff
+    if manager_id:
+        manager = await db.users.find_one({"id": manager_id}, {"_id": 0})
+        if not manager:
+            raise HTTPException(status_code=404, detail="Manager not found")
+        if not manager.get("user_type") == "internal" and not manager.get("is_admin"):
+            raise HTTPException(status_code=400, detail="Selected user is not a staff member")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {
+            "$set": {
+                "assigned_to": manager_id if manager_id else None,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if manager_id:
+        return {"success": True, "message": "Account Manager assigned successfully"}
+    else:
+        return {"success": True, "message": "Account Manager removed"}
+
+
 @router.post("/users/{user_id}/block")
 async def block_user(
     user_id: str,
