@@ -47,6 +47,7 @@ const OnboardingPage = () => {
   }, [user, token]);
 
   const checkOnboardingStatus = async () => {
+    setLoading(true);
     try {
       // Check admission fee status
       const feeResponse = await axios.get(
@@ -57,6 +58,7 @@ const OnboardingPage = () => {
       
       // If fee is paid, check 2FA status
       if (feeResponse.data.paid) {
+        toast.success('Pagamento aprovado!');
         if (user.two_factor_enabled) {
           // Both done, redirect to dashboard
           navigate('/dashboard');
@@ -65,18 +67,24 @@ const OnboardingPage = () => {
           setStep(2);
         }
       } else if (feeResponse.data.pending_payment) {
-        // Has pending payment
+        // Has pending payment - show feedback
+        toast.info('Pagamento ainda aguarda aprovação do administrador.');
         setStep(1);
       } else if (!feeResponse.data.required) {
         // Fee not required, check 2FA
+        toast.success('Taxa não requerida!');
         if (user.two_factor_enabled) {
           navigate('/dashboard');
         } else {
           setStep(2);
         }
+      } else {
+        // Fee required but not paid
+        toast.info('Selecione uma moeda e solicite o pagamento.');
       }
     } catch (err) {
       console.error('Failed to check onboarding status:', err);
+      toast.error('Erro ao verificar estado. Tente novamente.');
       // If error, let user proceed (may be internal user)
       if (user?.user_type === 'internal') {
         navigate('/dashboard');
@@ -269,9 +277,10 @@ const OnboardingPage = () => {
                     variant="outline" 
                     className="w-full mt-4 border-zinc-600 text-white"
                     onClick={checkOnboardingStatus}
+                    disabled={loading}
                   >
-                    <RefreshCw size={16} className="mr-2" />
-                    Verificar Estado
+                    <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    {loading ? 'A verificar...' : 'Verificar Estado'}
                   </Button>
                 </div>
               ) : (
