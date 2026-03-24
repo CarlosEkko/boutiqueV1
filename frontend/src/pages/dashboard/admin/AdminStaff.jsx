@@ -44,6 +44,9 @@ const AdminStaff = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -151,6 +154,40 @@ const AdminStaff = () => {
     }
   };
 
+  const handlePermanentDelete = async () => {
+    if (!staffToDelete) return;
+    
+    if (staffToDelete.id === currentUser?.id) {
+      toast.error('Não pode eliminar a si mesmo');
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/api/admin/internal-users/${staffToDelete.id}/permanent`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Membro eliminado permanentemente');
+      fetchStaff();
+      setShowDeleteDialog(false);
+      setStaffToDelete(null);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao eliminar membro');
+    }
+  };
+
+  const handleReactivate = async (staffId) => {
+    try {
+      await axios.put(`${API_URL}/api/admin/internal-users/${staffId}`, 
+        { is_active: true },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Membro reativado');
+      fetchStaff();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao reativar membro');
+    }
+  };
+
   const openEditModal = (member) => {
     setSelectedStaff(member);
     setFormData({
@@ -245,10 +282,30 @@ const AdminStaff = () => {
         ))}
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
+        <Button
+          variant={activeTab === 'active' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('active')}
+          className={activeTab === 'active' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}
+        >
+          <CheckCircle size={16} className="mr-2" />
+          Ativos ({staff.filter(m => m.is_active !== false).length})
+        </Button>
+        <Button
+          variant={activeTab === 'inactive' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('inactive')}
+          className={activeTab === 'inactive' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}
+        >
+          <XCircle size={16} className="mr-2" />
+          Inativos ({staff.filter(m => m.is_active === false).length})
+        </Button>
+      </div>
+
       {/* Staff List */}
       <div className="space-y-3">
-        {staff.length > 0 ? (
-          staff.map((member) => (
+        {staff.filter(m => activeTab === 'active' ? m.is_active !== false : m.is_active === false).length > 0 ? (
+          staff.filter(m => activeTab === 'active' ? m.is_active !== false : m.is_active === false).map((member) => (
             <Card key={member.id} className={`border ${member.is_active ? 'bg-zinc-900/50 border-gold-800/20' : 'bg-zinc-950/50 border-red-900/20 opacity-60'}`}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -288,24 +345,55 @@ const AdminStaff = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
-                      <Button
-                        onClick={() => openEditModal(member)}
-                        size="sm"
-                        variant="outline"
-                        className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
-                      >
-                        <Edit size={14} className="mr-1" />
-                        Editar
-                      </Button>
-                      {member.id !== currentUser?.id && member.is_active && (
-                        <Button
-                          onClick={() => handleDeactivate(member.id)}
-                          size="sm"
-                          variant="outline"
-                          className="border-red-900/30 text-red-400 hover:bg-red-900/30"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                      {activeTab === 'active' ? (
+                        <>
+                          <Button
+                            onClick={() => openEditModal(member)}
+                            size="sm"
+                            variant="outline"
+                            className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
+                          >
+                            <Edit size={14} className="mr-1" />
+                            Editar
+                          </Button>
+                          {member.id !== currentUser?.id && (
+                            <Button
+                              onClick={() => handleDeactivate(member.id)}
+                              size="sm"
+                              variant="outline"
+                              className="border-red-900/30 text-red-400 hover:bg-red-900/30"
+                              title="Desativar"
+                            >
+                              <XCircle size={14} />
+                            </Button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={() => handleReactivate(member.id)}
+                            size="sm"
+                            variant="outline"
+                            className="border-green-800/30 text-green-400 hover:bg-green-900/30"
+                          >
+                            <CheckCircle size={14} className="mr-1" />
+                            Reativar
+                          </Button>
+                          {member.id !== currentUser?.id && (
+                            <Button
+                              onClick={() => {
+                                setStaffToDelete(member);
+                                setShowDeleteDialog(true);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="border-red-900/30 text-red-400 hover:bg-red-900/30"
+                              title="Eliminar Permanentemente"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -323,12 +411,66 @@ const AdminStaff = () => {
           <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-12 text-center">
               <UserCog className="mx-auto mb-4 text-gray-500" size={48} />
-              <h3 className="text-xl text-white mb-2">Sem Membros</h3>
-              <p className="text-gray-400">Crie o primeiro membro da equipa interna.</p>
+              <h3 className="text-xl text-white mb-2">
+                {activeTab === 'active' ? 'Sem Membros Ativos' : 'Sem Membros Inativos'}
+              </h3>
+              <p className="text-gray-400">
+                {activeTab === 'active' 
+                  ? 'Crie o primeiro membro da equipa interna.' 
+                  : 'Não existem membros inativos.'}
+              </p>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-900 border-red-500/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-red-400">
+              <Trash2 className="text-red-400" />
+              Eliminar Permanentemente
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/30">
+              <p className="text-red-300 text-sm">
+                <strong>Atenção!</strong> Esta ação é irreversível. O membro será eliminado permanentemente do sistema.
+              </p>
+            </div>
+            
+            {staffToDelete && (
+              <div className="p-3 bg-zinc-800/50 rounded-lg">
+                <p className="text-gray-400 text-xs uppercase mb-1">Membro a eliminar</p>
+                <p className="text-white font-medium">{staffToDelete.name}</p>
+                <p className="text-gray-400 text-sm">{staffToDelete.email}</p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setStaffToDelete(null);
+              }}
+              className="border-gray-600"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePermanentDelete}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Eliminar Permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>

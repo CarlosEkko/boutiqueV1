@@ -200,6 +200,25 @@ async def delete_internal_user(
     return {"success": True, "message": "Internal user deactivated"}
 
 
+@router.delete("/internal-users/{user_id}/permanent", response_model=dict)
+async def permanently_delete_internal_user(
+    user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Permanently delete an internal user from the database"""
+    if user_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    user = await db.users.find_one({"id": user_id, "user_type": "internal"})
+    if not user:
+        raise HTTPException(status_code=404, detail="Internal user not found")
+    
+    # Permanently delete from database
+    await db.users.delete_one({"id": user_id})
+    
+    return {"success": True, "message": "Internal user permanently deleted"}
+
+
 # ==================== CLIENT USER MANAGEMENT ====================
 
 @router.get("/users", response_model=List[dict])
