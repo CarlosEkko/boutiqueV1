@@ -631,9 +631,24 @@ async def get_admission_fee_status(user_id: str):
             "message": "Taxa de admissão não está ativa"
         }
     
-    # Get user to determine tier
+    # Get user to determine tier and type
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    client_tier = user.get("client_tier", "standard") if user else "standard"
+    if not user:
+        return {
+            "required": False,
+            "paid": True,
+            "message": "Utilizador não encontrado"
+        }
+    
+    # Internal users don't need to pay admission fee
+    if user.get("user_type") == "internal":
+        return {
+            "required": False,
+            "paid": True,
+            "message": "Taxa não aplicável a utilizadores internos"
+        }
+    
+    client_tier = user.get("client_tier", "standard")
     
     # Check if user has paid
     payment = await db.admission_payments.find_one(
