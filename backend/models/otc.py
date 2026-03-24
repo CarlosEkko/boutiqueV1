@@ -60,6 +60,14 @@ class TradingFrequency(str, Enum):
     MULTIPLE_DAILY = "multiple_daily"
 
 
+class ExecutionTimeframe(str, Enum):
+    URGENT = "urgent"
+    WITHIN_24H = "within_24h"
+    WITHIN_48H = "within_48h"
+    WITHIN_WEEK = "within_week"
+    FLEXIBLE = "flexible"
+
+
 class OTCDealStage(str, Enum):
     # Pipeline stages
     LEAD = "lead"
@@ -144,7 +152,8 @@ class OTCLead(BaseModel):
     volume_per_operation: Optional[float] = None
     current_exchange: Optional[str] = None
     problem_to_solve: Optional[str] = None
-    timeframe: Optional[str] = None
+    execution_timeframe: Optional[ExecutionTimeframe] = None
+    preferred_settlement_methods: Optional[List[str]] = None  # List of settlement methods
     
     # Assignment
     assigned_to: Optional[str] = None  # User ID

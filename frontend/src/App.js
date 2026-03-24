@@ -64,6 +64,7 @@ import OTCQuotes from "./pages/dashboard/otc/OTCQuotes";
 import OTCExecution from "./pages/dashboard/otc/OTCExecution";
 import OTCSettlement from "./pages/dashboard/otc/OTCSettlement";
 import OTCInvoices from "./pages/dashboard/otc/OTCInvoices";
+import ClientOTCPortal from "./pages/dashboard/ClientOTCPortal";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -194,6 +195,9 @@ function AppRoutes() {
         <Route path="otc/invoices" element={<OTCInvoices />} />
         <Route path="otc/clients" element={<OTCDashboard />} />
         <Route path="otc/deals" element={<OTCPipeline />} />
+        
+        {/* Client OTC Portal */}
+        <Route path="otc-trading" element={<ClientOTCPortal />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

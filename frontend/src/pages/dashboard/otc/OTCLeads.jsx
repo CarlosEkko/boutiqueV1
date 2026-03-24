@@ -37,7 +37,9 @@ import {
   TrendingUp,
   Building,
   RefreshCw,
-  ChevronRight
+  ChevronRight,
+  UserCheck,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -71,6 +73,12 @@ const OTCLeads = () => {
     estimated_volume_usd: '',
     target_asset: 'BTC',
     transaction_type: 'buy',
+    trading_frequency: 'one_time',
+    volume_per_operation: '',
+    execution_timeframe: 'flexible',
+    preferred_settlement_methods: [],
+    current_exchange: '',
+    problem_to_solve: '',
     notes: ''
   });
 
@@ -113,10 +121,13 @@ const OTCLeads = () => {
 
   const handleCreateLead = async () => {
     try {
-      await axios.post(`${API_URL}/api/otc/leads`, {
+      const payload = {
         ...formData,
-        estimated_volume_usd: parseFloat(formData.estimated_volume_usd) || 0
-      }, {
+        estimated_volume_usd: parseFloat(formData.estimated_volume_usd) || 0,
+        volume_per_operation: formData.volume_per_operation ? parseFloat(formData.volume_per_operation) : null
+      };
+      
+      await axios.post(`${API_URL}/api/otc/leads`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -132,11 +143,45 @@ const OTCLeads = () => {
         estimated_volume_usd: '',
         target_asset: 'BTC',
         transaction_type: 'buy',
+        trading_frequency: 'one_time',
+        volume_per_operation: '',
+        execution_timeframe: 'flexible',
+        preferred_settlement_methods: [],
+        current_exchange: '',
+        problem_to_solve: '',
         notes: ''
       });
       fetchLeads();
     } catch (err) {
       toast.error('Erro ao criar lead');
+    }
+  };
+
+  const handleAdvanceToKYC = async (leadId) => {
+    try {
+      await axios.post(`${API_URL}/api/otc/leads/${leadId}/advance-to-kyc`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Lead avançado para KYC');
+      fetchLeads();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao avançar para KYC');
+    }
+  };
+
+  const handleApproveKYC = async (leadId) => {
+    try {
+      await axios.post(`${API_URL}/api/otc/leads/${leadId}/approve-kyc`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('KYC aprovado!');
+      fetchLeads();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao aprovar KYC');
     }
   };
 
@@ -151,6 +196,20 @@ const OTCLeads = () => {
       setShowDetailDialog(false);
     } catch (err) {
       toast.error('Erro ao atualizar lead');
+    }
+  };
+
+  const handleConvertToClient = async (leadId) => {
+    try {
+      await axios.post(`${API_URL}/api/otc/leads/${leadId}/convert-to-client`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Lead convertido para cliente OTC!');
+      fetchLeads();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao converter para cliente');
     }
   };
 
@@ -433,23 +492,104 @@ const OTCLeads = () => {
                 <SelectTrigger className="bg-zinc-800 border-gold-500/30">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30">
-                  <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                  <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                  <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                  <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                  <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectItem value="BTC" className="text-white hover:bg-zinc-700">Bitcoin (BTC)</SelectItem>
+                  <SelectItem value="ETH" className="text-white hover:bg-zinc-700">Ethereum (ETH)</SelectItem>
+                  <SelectItem value="USDT" className="text-white hover:bg-zinc-700">Tether (USDT)</SelectItem>
+                  <SelectItem value="USDC" className="text-white hover:bg-zinc-700">USD Coin (USDC)</SelectItem>
+                  <SelectItem value="EUR" className="text-white hover:bg-zinc-700">Euro (EUR)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Novos campos */}
+            <div className="space-y-2">
+              <Label>Volume por Operação (USD)</Label>
+              <Input
+                type="number"
+                value={formData.volume_per_operation}
+                onChange={(e) => setFormData({...formData, volume_per_operation: e.target.value})}
+                placeholder="50000"
+                className="bg-zinc-800 border-gold-500/30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Frequência de Operações</Label>
+              <Select value={formData.trading_frequency} onValueChange={(v) => setFormData({...formData, trading_frequency: v})}>
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectItem value="one_time" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
+                  <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diário</SelectItem>
+                  <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
+                  <SelectItem value="monthly" className="text-white hover:bg-zinc-700">Mensal</SelectItem>
+                  <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Timeframe para Execução</Label>
+              <Select value={formData.execution_timeframe} onValueChange={(v) => setFormData({...formData, execution_timeframe: v})}>
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectItem value="urgent" className="text-white hover:bg-zinc-700">Urgente</SelectItem>
+                  <SelectItem value="within_24h" className="text-white hover:bg-zinc-700">Dentro de 24h</SelectItem>
+                  <SelectItem value="within_48h" className="text-white hover:bg-zinc-700">Dentro de 48h</SelectItem>
+                  <SelectItem value="within_week" className="text-white hover:bg-zinc-700">Dentro de 1 Semana</SelectItem>
+                  <SelectItem value="flexible" className="text-white hover:bg-zinc-700">Flexível</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Métodos de Liquidação Preferidos</Label>
+              <Select 
+                value={formData.preferred_settlement_methods[0] || ''} 
+                onValueChange={(v) => setFormData({...formData, preferred_settlement_methods: v ? [v] : []})}
+              >
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectValue placeholder="Selecionar método" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectItem value="sepa" className="text-white hover:bg-zinc-700">SEPA</SelectItem>
+                  <SelectItem value="swift" className="text-white hover:bg-zinc-700">SWIFT</SelectItem>
+                  <SelectItem value="pix" className="text-white hover:bg-zinc-700">PIX</SelectItem>
+                  <SelectItem value="faster_payments" className="text-white hover:bg-zinc-700">Faster Payments</SelectItem>
+                  <SelectItem value="usdt_onchain" className="text-white hover:bg-zinc-700">USDT On-Chain</SelectItem>
+                  <SelectItem value="usdc_onchain" className="text-white hover:bg-zinc-700">USDC On-Chain</SelectItem>
+                  <SelectItem value="crypto_onchain" className="text-white hover:bg-zinc-700">Crypto On-Chain</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Exchange Atual</Label>
+              <Input
+                value={formData.current_exchange}
+                onChange={(e) => setFormData({...formData, current_exchange: e.target.value})}
+                placeholder="Binance, Kraken, OTC Bank..."
+                className="bg-zinc-800 border-gold-500/30"
+              />
+            </div>
             <div className="space-y-2 col-span-2">
-              <Label>Notas</Label>
+              <Label>Problema a Resolver / Necessidade</Label>
+              <Textarea
+                value={formData.problem_to_solve}
+                onChange={(e) => setFormData({...formData, problem_to_solve: e.target.value})}
+                placeholder="Descreva a necessidade do cliente, problemas com a exchange atual, etc..."
+                className="bg-zinc-800 border-gold-500/30"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Notas Adicionais</Label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Notas adicionais sobre o lead..."
+                placeholder="Outras notas sobre o lead..."
                 className="bg-zinc-800 border-gold-500/30"
-                rows={3}
+                rows={2}
               />
             </div>
           </div>
@@ -535,9 +675,40 @@ const OTCLeads = () => {
                 </div>
               ) : selectedLead.status === 'pre_qualified' ? (
                 <div className="flex gap-3 pt-4 border-t border-gold-800/20">
-                  <Button className="flex-1 bg-gold-500 hover:bg-gold-400 text-black">
+                  <Button 
+                    onClick={() => handleAdvanceToKYC(selectedLead.id)}
+                    className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                  >
                     <ChevronRight size={16} className="mr-2" />
                     Avançar para KYC
+                  </Button>
+                </div>
+              ) : selectedLead.status === 'kyc_pending' ? (
+                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
+                  <Button 
+                    onClick={() => handleApproveKYC(selectedLead.id)}
+                    className="flex-1 bg-green-600 hover:bg-green-500"
+                  >
+                    <CheckCircle size={16} className="mr-2" />
+                    Aprovar KYC
+                  </Button>
+                  <Button
+                    onClick={() => handlePreQualify(selectedLead.id, false)}
+                    variant="outline"
+                    className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
+                  >
+                    <XCircle size={16} className="mr-2" />
+                    Rejeitar KYC
+                  </Button>
+                </div>
+              ) : selectedLead.status === 'kyc_approved' ? (
+                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
+                  <Button 
+                    onClick={() => handleConvertToClient(selectedLead.id)}
+                    className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                  >
+                    <UserCheck size={16} className="mr-2" />
+                    Converter para Cliente
                   </Button>
                 </div>
               ) : null}

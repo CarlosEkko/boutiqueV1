@@ -73,19 +73,40 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     is_admin = user.get("is_admin", False)
     user_type = user.get("user_type", "client")
     internal_role = user.get("internal_role")
+    user_email = user.get("email")
     
-    # Clients only see Portfolio
+    # Check if user is an OTC client
+    otc_client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": user_id},
+            {"contact_email": user_email}
+        ]}
+    )
+    is_otc_client = otc_client is not None
+    
+    # Clients only see Portfolio (and OTC if they are OTC clients)
     if not is_admin and user_type != "internal" and not internal_role:
-        return {
-            "menus": [
-                {
-                    "department": "portfolio",
-                    "label": "Portfolio",
-                    "icon": "LayoutDashboard",
-                    "items": DEPARTMENT_MENUS[Department.PORTFOLIO]["items"]
-                }
-            ]
-        }
+        client_menus = [
+            {
+                "department": "portfolio",
+                "label": "Portfolio",
+                "icon": "LayoutDashboard",
+                "items": DEPARTMENT_MENUS[Department.PORTFOLIO]["items"]
+            }
+        ]
+        
+        # Add OTC Trading menu if user is an OTC client
+        if is_otc_client:
+            client_menus.append({
+                "department": "otc_trading",
+                "label": "OTC Trading",
+                "icon": "Briefcase",
+                "items": [
+                    {"path": "/dashboard/otc-trading", "label": "OTC Desk", "icon": "Briefcase"}
+                ]
+            })
+        
+        return {"menus": client_menus}
     
     # Get custom permissions if any
     custom_perms = await db.user_permissions.find_one({"user_id": user_id}, {"_id": 0})

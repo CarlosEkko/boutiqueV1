@@ -12,7 +12,7 @@ from models.otc import (
     OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, SettlementMethod,
     OTCClient, OTCDeal, OTCDealStage, OTCQuote, QuoteStatus,
     OTCExecution, ExecutionStatus, OTCSettlement, SettlementStatus,
-    OTCInvoice, InvoiceStatus,
+    OTCInvoice, InvoiceStatus, ExecutionTimeframe,
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
     FundingType, TradingFrequency
 )
@@ -221,6 +221,102 @@ async def convert_lead_to_client(
     )
     
     return {"success": True, "client": client.dict()}
+
+
+@router.post("/leads/{lead_id}/advance-to-kyc")
+async def advance_lead_to_kyc(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Advance a pre-qualified lead to KYC stage"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    if lead.get("status") != OTCLeadStatus.PRE_QUALIFIED.value:
+        raise HTTPException(status_code=400, detail="Lead must be pre-qualified first")
+    
+    # Update lead status to KYC pending
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "status": OTCLeadStatus.KYC_PENDING.value,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    return {"success": True, "lead": updated_lead, "message": "Lead avançado para KYC"}
+
+
+@router.post("/leads/{lead_id}/approve-kyc")
+async def approve_lead_kyc(
+    lead_id: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Approve KYC for a lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    if lead.get("status") != OTCLeadStatus.KYC_PENDING.value:
+        raise HTTPException(status_code=400, detail="Lead must be in KYC pending status")
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    # Update lead status to KYC approved
+    update_data = {
+        "status": OTCLeadStatus.KYC_APPROVED.value,
+        "kyc_approved_at": datetime.now(timezone.utc).isoformat(),
+        "kyc_approved_by": current_user_id,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if notes:
+        update_data["kyc_notes"] = notes
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_data}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    return {"success": True, "lead": updated_lead, "message": "KYC aprovado"}
+
+
+@router.post("/leads/{lead_id}/reject-kyc")
+async def reject_lead_kyc(
+    lead_id: str,
+    reason: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject KYC for a lead"""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    if lead.get("status") != OTCLeadStatus.KYC_PENDING.value:
+        raise HTTPException(status_code=400, detail="Lead must be in KYC pending status")
+    
+    # Update lead status to not qualified
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "status": OTCLeadStatus.NOT_QUALIFIED.value,
+            "rejection_reason": f"KYC Rejeitado: {reason}",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    return {"success": True, "lead": updated_lead, "message": "KYC rejeitado"}
 
 
 # ==================== OTC CLIENTS ====================
@@ -676,7 +772,8 @@ async def get_otc_enums():
         "settlement_methods": [{"value": e.value, "label": e.value.replace("_", " ").upper()} for e in SettlementMethod],
         "trading_frequencies": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in TradingFrequency],
         "deal_stages": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCDealStage],
-        "funding_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundingType]
+        "funding_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundingType],
+        "execution_timeframes": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in ExecutionTimeframe]
     }
 
 
@@ -1338,3 +1435,281 @@ async def mark_invoice_paid(
     )
     
     return {"success": True, "message": "Invoice marked as paid, deal completed"}
+
+
+
+# ==================== CLIENT PORTAL ENDPOINTS ====================
+
+@router.get("/client/me")
+async def get_my_otc_client(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get the OTC client profile for the current user"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client by user_id or email
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]},
+        {"_id": 0}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    return client
+
+
+@router.get("/client/deals")
+async def get_my_otc_deals(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get deals for the current OTC client"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    # Get deals for this client
+    cursor = db.otc_deals.find(
+        {"client_id": client.get("id")},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit)
+    
+    deals = await cursor.to_list(limit)
+    total = await db.otc_deals.count_documents({"client_id": client.get("id")})
+    
+    return {"deals": deals, "total": total}
+
+
+@router.get("/client/quotes")
+async def get_my_otc_quotes(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get quotes for the current OTC client's deals"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    # Get client's deal IDs
+    deals_cursor = db.otc_deals.find({"client_id": client.get("id")}, {"id": 1})
+    deals = await deals_cursor.to_list(1000)
+    deal_ids = [d.get("id") for d in deals]
+    
+    # Get quotes for these deals
+    quotes_cursor = db.otc_quotes.find(
+        {"deal_id": {"$in": deal_ids}},
+        {"_id": 0}
+    ).sort("created_at", -1)
+    
+    quotes = await quotes_cursor.to_list(100)
+    
+    # Enrich with deal info
+    for quote in quotes:
+        deal = await db.otc_deals.find_one({"id": quote.get("deal_id")}, {"_id": 0, "deal_number": 1})
+        if deal:
+            quote["deal_number"] = deal.get("deal_number")
+    
+    return {"quotes": quotes}
+
+
+@router.post("/client/rfq")
+async def create_client_rfq(
+    transaction_type: str,
+    base_asset: str,
+    quote_asset: str,
+    amount: float,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new RFQ (Request for Quote) from client portal"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    # Generate deal number
+    year = datetime.now().year
+    count = await db.otc_deals.count_documents({})
+    deal_number = f"OTC-{year}-{str(count + 1).zfill(4)}"
+    
+    # Create the deal (RFQ)
+    deal = OTCDeal(
+        deal_number=deal_number,
+        client_id=client.get("id"),
+        client_name=client.get("entity_name"),
+        transaction_type=TransactionType(transaction_type),
+        base_asset=base_asset.upper(),
+        quote_asset=quote_asset.upper(),
+        amount=amount,
+        stage=OTCDealStage.RFQ,
+        notes=notes,
+        rfq_received_at=datetime.now(timezone.utc).isoformat()
+    )
+    
+    await db.otc_deals.insert_one(deal.dict())
+    
+    return {"success": True, "deal": deal.dict(), "message": "RFQ criado com sucesso"}
+
+
+@router.post("/client/quotes/{quote_id}/accept")
+async def client_accept_quote(
+    quote_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Accept a quote from client portal"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    # Get quote
+    quote = await db.otc_quotes.find_one({"id": quote_id})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    # Verify quote belongs to client's deal
+    deal = await db.otc_deals.find_one({"id": quote.get("deal_id")})
+    if not deal or deal.get("client_id") != client.get("id"):
+        raise HTTPException(status_code=403, detail="Quote does not belong to your deals")
+    
+    if quote.get("status") != QuoteStatus.SENT.value:
+        raise HTTPException(status_code=400, detail="Quote is not in pending status")
+    
+    # Check if expired
+    if quote.get("expires_at"):
+        expires = datetime.fromisoformat(quote.get("expires_at").replace('Z', '+00:00'))
+        if expires < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Quote has expired")
+    
+    # Accept the quote
+    await db.otc_quotes.update_one(
+        {"id": quote_id},
+        {"$set": {
+            "status": QuoteStatus.ACCEPTED.value,
+            "client_response": "Accepted by client",
+            "response_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Update deal stage and values
+    await db.otc_deals.update_one(
+        {"id": quote.get("deal_id")},
+        {"$set": {
+            "stage": OTCDealStage.ACCEPTANCE.value,
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "final_price": quote.get("final_price"),
+            "total_value": quote.get("total_value"),
+            "fees": quote.get("fees", 0),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Quote accepted"}
+
+
+@router.post("/client/quotes/{quote_id}/reject")
+async def client_reject_quote(
+    quote_id: str,
+    reason: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject a quote from client portal"""
+    db = get_db()
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
+    
+    # Find client
+    client = await db.otc_clients.find_one(
+        {"$or": [
+            {"user_id": current_user_id},
+            {"contact_email": current_user_email}
+        ]}
+    )
+    
+    if not client:
+        raise HTTPException(status_code=404, detail="Not an OTC client")
+    
+    # Get quote
+    quote = await db.otc_quotes.find_one({"id": quote_id})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    # Verify quote belongs to client's deal
+    deal = await db.otc_deals.find_one({"id": quote.get("deal_id")})
+    if not deal or deal.get("client_id") != client.get("id"):
+        raise HTTPException(status_code=403, detail="Quote does not belong to your deals")
+    
+    # Reject the quote
+    await db.otc_quotes.update_one(
+        {"id": quote_id},
+        {"$set": {
+            "status": QuoteStatus.REJECTED.value,
+            "client_response": reason or "Rejected by client",
+            "response_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Move deal back to RFQ stage
+    await db.otc_deals.update_one(
+        {"id": quote.get("deal_id")},
+        {"$set": {
+            "stage": OTCDealStage.RFQ.value,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": "Quote rejected"}
