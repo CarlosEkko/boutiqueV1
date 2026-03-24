@@ -56,7 +56,9 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  ExternalLink
+  ExternalLink,
+  UserCog,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -79,6 +81,11 @@ const AdminUsers = () => {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
+  
+  // Account Manager states
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [showAssignManagerDialog, setShowAssignManagerDialog] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState('');
 
   const regions = [
     { value: 'all', label: 'Todas Regiões', flag: '🌐' },
@@ -89,7 +96,44 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchStaffMembers();
   }, [token, filter, regionFilter]);
+
+  const fetchStaffMembers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/admin/users?user_type=internal`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const staff = (response.data || []).filter(u => u.user_type === 'internal' || u.is_admin);
+      setStaffMembers(staff);
+    } catch (err) {
+      console.error('Failed to fetch staff:', err);
+    }
+  };
+
+  const assignAccountManager = async () => {
+    if (!selectedUser) return;
+    try {
+      await axios.put(
+        `${API_URL}/api/admin/users/${selectedUser.id}/assign-manager`,
+        { manager_id: selectedManagerId === 'none' ? null : selectedManagerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(selectedManagerId && selectedManagerId !== 'none' ? 'Account Manager atribuído!' : 'Account Manager removido');
+      fetchUsers();
+      setShowAssignManagerDialog(false);
+      setSelectedUser(null);
+      setSelectedManagerId('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao atribuir Account Manager');
+    }
+  };
+
+  const getManagerName = (managerId) => {
+    if (!managerId) return null;
+    const manager = staffMembers.find(s => s.id === managerId);
+    return manager ? manager.name : 'Desconhecido';
+  };
 
   const fetchUsers = async () => {
     try {
@@ -406,6 +450,36 @@ const AdminUsers = () => {
 
                     {/* Quick Actions */}
                     <div className="flex items-center gap-2">
+                      {/* Account Manager Badge */}
+                      <div className="hidden lg:flex items-center gap-1">
+                        <UserCog size={14} className="text-gray-500" />
+                        {user.assigned_to ? (
+                          <Badge className="bg-green-900/30 text-green-400 text-xs border border-green-800/30">
+                            {getManagerName(user.assigned_to)}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-yellow-900/30 text-yellow-400 text-xs border border-yellow-800/30">
+                            Sem Manager
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Assign Manager Button */}
+                      <Button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setSelectedUser(user);
+                          setSelectedManagerId(user.assigned_to || 'none');
+                          setShowAssignManagerDialog(true);
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
+                        title="Atribuir Account Manager"
+                      >
+                        <UserCog size={16} />
+                      </Button>
+                      
                       {!user.is_approved && (
                         <Button
                           onClick={(e) => { e.stopPropagation(); approveUser(user.id); }}
@@ -1104,6 +1178,91 @@ const AdminUsers = () => {
               className="bg-zinc-700 hover:bg-zinc-600"
             >
               Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Account Manager Dialog */}
+      <Dialog open={showAssignManagerDialog} onOpenChange={(open) => {
+        setShowAssignManagerDialog(open);
+        if (!open) {
+          setSelectedUser(null);
+          setSelectedManagerId('');
+        }
+      }}>
+        <DialogContent className="bg-zinc-900 border-gold-500/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <UserCog className="text-gold-400" />
+              Atribuir Account Manager
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Client Info */}
+            <div className="p-3 bg-zinc-800/50 rounded-lg">
+              <p className="text-gray-400 text-xs uppercase mb-1">Cliente</p>
+              <p className="text-white font-medium">{selectedUser?.name}</p>
+              <p className="text-gray-400 text-sm">{selectedUser?.email}</p>
+            </div>
+            
+            {/* Current Manager Info */}
+            {selectedUser?.assigned_to && (
+              <div className="p-3 bg-green-900/20 rounded-lg border border-green-800/30">
+                <p className="text-gray-400 text-xs uppercase mb-1">Account Manager Atual</p>
+                <p className="text-green-400 font-medium">{getManagerName(selectedUser.assigned_to)}</p>
+              </div>
+            )}
+            
+            {/* Manager Selection */}
+            <div className="space-y-2">
+              <Label className="text-white">Selecionar Account Manager</Label>
+              <Select value={selectedManagerId || "none"} onValueChange={setSelectedManagerId}>
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectValue placeholder="Escolha um membro da equipa..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-gold-500/30 max-h-60">
+                  <SelectItem value="none" className="text-gray-400 hover:bg-zinc-700">
+                    <span className="flex items-center gap-2">
+                      <X size={14} />
+                      Remover Account Manager
+                    </span>
+                  </SelectItem>
+                  {staffMembers.map((staff) => (
+                    <SelectItem 
+                      key={staff.id} 
+                      value={staff.id}
+                      className="text-white hover:bg-zinc-700"
+                    >
+                      <div className="flex flex-col">
+                        <span>{staff.name}</span>
+                        <span className="text-xs text-gray-400">{staff.email} • {staff.internal_role || 'Admin'}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-gray-500 text-xs">
+                O Account Manager será responsável por este cliente.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAssignManagerDialog(false)}
+              className="border-gray-600"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={assignAccountManager}
+              className="bg-gold-500 hover:bg-gold-400 text-black"
+            >
+              <UserCog size={16} className="mr-2" />
+              {selectedManagerId && selectedManagerId !== 'none' ? 'Atribuir Manager' : 'Remover Manager'}
             </Button>
           </DialogFooter>
         </DialogContent>
