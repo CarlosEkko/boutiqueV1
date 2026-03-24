@@ -615,7 +615,7 @@ const OTCLeads = () => {
           </DialogHeader>
           
           {selectedLead && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Contacto</p>
@@ -629,13 +629,64 @@ const OTCLeads = () => {
                   {selectedLead.jurisdiction && <p className="text-gray-400 text-sm">{selectedLead.jurisdiction}</p>}
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Volume Estimado</p>
+                  <p className="text-gray-400 text-xs uppercase mb-1">Volume Estimado Total</p>
                   <p className="text-gold-400 font-mono text-xl">${formatNumber(selectedLead.estimated_volume_usd || 0)}</p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Asset / Tipo</p>
                   <p className="text-white">{selectedLead.target_asset} - {selectedLead.transaction_type?.toUpperCase()}</p>
                 </div>
+                
+                {/* New fields */}
+                {selectedLead.volume_per_operation && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Volume por Operação</p>
+                    <p className="text-white font-mono">${formatNumber(selectedLead.volume_per_operation)}</p>
+                  </div>
+                )}
+                {selectedLead.trading_frequency && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Frequência</p>
+                    <p className="text-white capitalize">
+                      {selectedLead.trading_frequency === 'one_shot' ? 'Única (One-shot)' :
+                       selectedLead.trading_frequency === 'daily' ? 'Diário' :
+                       selectedLead.trading_frequency === 'weekly' ? 'Semanal' :
+                       selectedLead.trading_frequency === 'multiple_daily' ? 'Múltiplas Diárias' :
+                       selectedLead.trading_frequency}
+                    </p>
+                  </div>
+                )}
+                {selectedLead.execution_timeframe && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Timeframe Execução</p>
+                    <p className="text-white capitalize">
+                      {selectedLead.execution_timeframe === 'within_24h' ? 'Dentro de 24h' :
+                       selectedLead.execution_timeframe === 'within_48h' ? 'Dentro de 48h' :
+                       selectedLead.execution_timeframe === 'within_week' ? 'Dentro de 1 semana' :
+                       selectedLead.execution_timeframe === 'flexible' ? 'Flexível' :
+                       selectedLead.execution_timeframe}
+                    </p>
+                  </div>
+                )}
+                {selectedLead.preferred_settlement_methods && selectedLead.preferred_settlement_methods.length > 0 && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Métodos de Liquidação</p>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedLead.preferred_settlement_methods.map((method, idx) => (
+                        <span key={idx} className="px-2 py-0.5 bg-gold-500/20 text-gold-400 text-xs rounded uppercase">
+                          {method}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedLead.current_exchange && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Exchange Atual</p>
+                    <p className="text-white">{selectedLead.current_exchange}</p>
+                  </div>
+                )}
+                
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Origem</p>
                   <p className="text-white capitalize">{selectedLead.source?.replace('_', ' ')}</p>
@@ -645,6 +696,13 @@ const OTCLeads = () => {
                   {getStatusBadge(selectedLead.status)}
                 </div>
               </div>
+              
+              {selectedLead.problem_to_solve && (
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-gray-400 text-xs uppercase mb-1">Problema / Necessidade</p>
+                  <p className="text-white whitespace-pre-wrap">{selectedLead.problem_to_solve}</p>
+                </div>
+              )}
               
               {selectedLead.notes && (
                 <div className="p-3 bg-zinc-800/50 rounded-lg">

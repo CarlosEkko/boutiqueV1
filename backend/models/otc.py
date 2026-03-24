@@ -428,6 +428,11 @@ class CreateOTCLeadRequest(BaseModel):
     transaction_type: TransactionType = TransactionType.BUY
     preferred_settlement: Optional[SettlementMethod] = None
     trading_frequency: Optional[TradingFrequency] = None
+    volume_per_operation: Optional[float] = None
+    execution_timeframe: Optional[ExecutionTimeframe] = None
+    preferred_settlement_methods: Optional[List[str]] = None
+    current_exchange: Optional[str] = None
+    problem_to_solve: Optional[str] = None
     notes: Optional[str] = None
 
 
