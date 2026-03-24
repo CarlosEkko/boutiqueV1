@@ -642,7 +642,7 @@ const OTCQuotes = () => {
                     value={quoteForm.is_manual ? 'manual' : 'auto'} 
                     onValueChange={(v) => setQuoteForm({...quoteForm, is_manual: v === 'manual'})}
                   >
-                    <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                    <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -705,7 +705,7 @@ const OTCQuotes = () => {
                     value={String(quoteForm.valid_for_minutes)} 
                     onValueChange={(v) => setQuoteForm({...quoteForm, valid_for_minutes: parseInt(v)})}
                   >
-                    <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                    <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">

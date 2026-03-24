@@ -592,7 +592,7 @@ const OTCSettlement = () => {
                   <div className="space-y-2">
                     <Label className="text-white">Método de Liquidação</Label>
                     <Select value={settlementMethod} onValueChange={setSettlementMethod}>
-                      <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                      <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -622,7 +622,7 @@ const OTCSettlement = () => {
                       <div className="space-y-2">
                         <Label>Moeda</Label>
                         <Select value={fiatCurrency} onValueChange={setFiatCurrency}>
-                          <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                          <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">

@@ -600,7 +600,7 @@ const ClientOTCPortal = () => {
                   value={rfqForm.transaction_type} 
                   onValueChange={(v) => setRfqForm({...rfqForm, transaction_type: v})}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -623,7 +623,7 @@ const ClientOTCPortal = () => {
                   value={rfqForm.base_asset} 
                   onValueChange={(v) => setRfqForm({...rfqForm, base_asset: v})}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -654,7 +654,7 @@ const ClientOTCPortal = () => {
                   value={rfqForm.quote_asset} 
                   onValueChange={(v) => setRfqForm({...rfqForm, quote_asset: v})}
                 >
-                  <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                  <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">

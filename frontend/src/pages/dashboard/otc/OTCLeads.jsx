@@ -317,7 +317,7 @@ const OTCLeads = () => {
             </div>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30">
+              <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/30">
@@ -332,7 +332,7 @@ const OTCLeads = () => {
             </Select>
             
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30">
+              <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white">
                 <SelectValue placeholder="Origem" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-gold-500/30">
@@ -499,7 +499,7 @@ const OTCLeads = () => {
             <div className="space-y-2">
               <Label>Origem</Label>
               <Select value={formData.source} onValueChange={(v) => setFormData({...formData, source: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30">
@@ -525,7 +525,7 @@ const OTCLeads = () => {
             <div className="space-y-2">
               <Label>Asset Pretendido</Label>
               <Select value={formData.target_asset} onValueChange={(v) => setFormData({...formData, target_asset: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -552,7 +552,7 @@ const OTCLeads = () => {
             <div className="space-y-2">
               <Label>Frequência de Operações</Label>
               <Select value={formData.trading_frequency} onValueChange={(v) => setFormData({...formData, trading_frequency: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -566,7 +566,7 @@ const OTCLeads = () => {
             <div className="space-y-2">
               <Label>Timeframe para Execução</Label>
               <Select value={formData.execution_timeframe} onValueChange={(v) => setFormData({...formData, execution_timeframe: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
@@ -584,7 +584,7 @@ const OTCLeads = () => {
                 value={formData.preferred_settlement_methods[0] || ''} 
                 onValueChange={(v) => setFormData({...formData, preferred_settlement_methods: v ? [v] : []})}
               >
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30">
+                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
                   <SelectValue placeholder="Selecionar método" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
