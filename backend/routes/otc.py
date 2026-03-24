@@ -373,7 +373,7 @@ async def get_otc_client(
     deals = await db.otc_deals.find({"client_id": client_id}, {"_id": 0}).to_list(100)
     
     # Calculate stats
-    total_volume = sum(d.get("total_value", 0) for d in deals if d.get("stage") == OTCDealStage.COMPLETED.value)
+    total_volume = sum((d.get("total_value") or 0) for d in deals if d.get("stage") == OTCDealStage.COMPLETED.value)
     total_trades = len([d for d in deals if d.get("stage") == OTCDealStage.COMPLETED.value])
     
     return {
@@ -443,7 +443,7 @@ async def get_otc_pipeline(
             pipeline[stage.value] = {
                 "deals": deals,
                 "count": len(deals),
-                "total_value": sum(d.get("total_value", 0) for d in deals)
+                "total_value": sum(d.get("total_value") or 0 for d in deals)
             }
     
     return pipeline
@@ -714,13 +714,13 @@ async def get_otc_dashboard(
         {"total_value": 1, "settled_at": 1, "fees": 1}
     ).to_list(10000)
     
-    total_volume = sum(d.get("total_value", 0) for d in completed_deals_data)
-    total_revenue = sum(d.get("fees", 0) for d in completed_deals_data)
+    total_volume = sum((d.get("total_value") or 0) for d in completed_deals_data)
+    total_revenue = sum((d.get("fees") or 0) for d in completed_deals_data)
     
     # Volume by period
-    volume_24h = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= day_ago)
-    volume_7d = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= week_ago)
-    volume_30d = sum(d.get("total_value", 0) for d in completed_deals_data if d.get("settled_at", "") >= month_ago)
+    volume_24h = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= day_ago)
+    volume_7d = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= week_ago)
+    volume_30d = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= month_ago)
     
     # Pipeline by stage
     pipeline = {}
@@ -941,7 +941,7 @@ async def start_execution(
     # Determine expected funds
     if deal.get("transaction_type") == TransactionType.BUY.value:
         # Client sends fiat, receives crypto
-        funds_expected = quote.get("total_value", 0) + quote.get("fees", 0)
+        funds_expected = (quote.get("total_value") or 0) + (quote.get("fees") or 0)
         funds_expected_asset = quote.get("quote_asset")
         delivery_asset = quote.get("base_asset")
         delivery_amount = quote.get("amount")
@@ -950,7 +950,7 @@ async def start_execution(
         funds_expected = quote.get("amount")
         funds_expected_asset = quote.get("base_asset")
         delivery_asset = quote.get("quote_asset")
-        delivery_amount = quote.get("total_value", 0) - quote.get("fees", 0)
+        delivery_amount = (quote.get("total_value") or 0) - (quote.get("fees") or 0)
     
     # Create execution record
     execution = OTCExecution(
@@ -1335,9 +1335,9 @@ async def create_invoice(
         quote_asset=deal.get("quote_asset"),
         amount=deal.get("amount"),
         price=deal.get("final_price", 0),
-        subtotal=deal.get("total_value", 0),
-        fees=deal.get("fees", 0),
-        total=deal.get("total_value", 0) + (deal.get("fees", 0) or 0),
+        subtotal=deal.get("total_value") or 0,
+        fees=deal.get("fees") or 0,
+        total=(deal.get("total_value") or 0) + (deal.get("fees") or 0),
         notes=notes,
         created_by=current_user_id
     )
