@@ -18,13 +18,15 @@ import {
   Edit,
   RotateCcw,
   CheckCircle,
+  XCircle,
   LayoutDashboard,
   Settings,
   Settings2,
   Landmark,
   Headphones,
   Shield,
-  Save
+  Save,
+  Briefcase
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +39,7 @@ const departmentIcons = {
   finance: Landmark,
   crm: Users,
   support: Headphones,
+  otc_desk: Briefcase,
 };
 
 const departmentColors = {
@@ -46,6 +49,7 @@ const departmentColors = {
   finance: 'bg-green-900/30 text-green-400 border-green-800/30',
   crm: 'bg-pink-900/30 text-pink-400 border-pink-800/30',
   support: 'bg-gold-900/30 text-gold-400 border-gold-800/30',
+  otc_desk: 'bg-amber-900/30 text-amber-400 border-amber-800/30',
 };
 
 const AdminPermissions = () => {
@@ -57,6 +61,7 @@ const AdminPermissions = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editPermissions, setEditPermissions] = useState([]);
+  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
 
   useEffect(() => {
     fetchData();
@@ -187,10 +192,30 @@ const AdminPermissions = () => {
         </CardContent>
       </Card>
 
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
+        <Button
+          variant={activeTab === 'active' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('active')}
+          className={activeTab === 'active' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}
+        >
+          <CheckCircle size={16} className="mr-2" />
+          Ativos ({staff.filter(m => m.is_active !== false).length})
+        </Button>
+        <Button
+          variant={activeTab === 'inactive' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('inactive')}
+          className={activeTab === 'inactive' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}
+        >
+          <XCircle size={16} className="mr-2" />
+          Inativos ({staff.filter(m => m.is_active === false).length})
+        </Button>
+      </div>
+
       {/* Staff Permissions List */}
       <div className="space-y-3">
-        {staff.length > 0 ? (
-          staff.map((member) => (
+        {staff.filter(m => activeTab === 'active' ? m.is_active !== false : m.is_active === false).length > 0 ? (
+          staff.filter(m => activeTab === 'active' ? m.is_active !== false : m.is_active === false).map((member) => (
             <Card 
               key={member.id} 
               className={`border ${member.is_active 
@@ -269,9 +294,13 @@ const AdminPermissions = () => {
           <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardContent className="p-12 text-center">
               <Users className="mx-auto mb-4 text-gray-500" size={48} />
-              <h3 className="text-xl text-white mb-2">Sem Membros da Equipa</h3>
+              <h3 className="text-xl text-white mb-2">
+                {activeTab === 'active' ? 'Sem Membros Ativos' : 'Sem Membros Inativos'}
+              </h3>
               <p className="text-gray-400">
-                Crie membros da equipa em "Gestão de Equipa" primeiro.
+                {activeTab === 'active' 
+                  ? 'Crie membros da equipa em "Gestão de Equipa" primeiro.' 
+                  : 'Não existem membros inativos.'}
               </p>
             </CardContent>
           </Card>
