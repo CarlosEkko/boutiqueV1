@@ -72,6 +72,7 @@ import OnboardingPage from "./pages/OnboardingPage";
 import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
+import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -184,6 +185,7 @@ function AppRoutes() {
         <Route path="admin/referrals" element={<AdminReferrals />} />
         <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
+        <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         
         {/* CRM Routes */}
         <Route path="crm" element={<CRMDashboard />} />

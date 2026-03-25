@@ -30,49 +30,19 @@ import {
   Landmark,
   ArrowLeft,
   QrCode,
-  ExternalLink
+  ExternalLink,
+  Building
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Bank details for transfers
-const BANK_DETAILS = {
-  EUR: {
-    bank_name: 'KBEX Financial Services',
-    iban: 'PT50 0000 0000 0000 0000 0000 0',
-    swift: 'KBEXPTPL',
-    reference: 'ADM-{USER_ID}'
-  },
-  USD: {
-    bank_name: 'KBEX Financial Services',
-    account_number: '1234567890',
-    routing_number: '021000021',
-    swift: 'KBEXUSNY',
-    reference: 'ADM-{USER_ID}'
-  },
-  AED: {
-    bank_name: 'KBEX Financial Services MENA',
-    iban: 'AE12 3456 7890 1234 5678 901',
-    swift: 'KBEXAEAD',
-    reference: 'ADM-{USER_ID}'
-  },
-  BRL: {
-    bank_name: 'KBEX Brasil',
-    bank_code: '001',
-    agency: '0001',
-    account: '12345-6',
-    pix: 'pagamentos@kbex.io',
-    reference: 'ADM-{USER_ID}'
-  }
-};
-
-// Crypto addresses
+// Crypto addresses (can also be fetched from API in the future)
 const CRYPTO_ADDRESSES = {
   BTC: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
   ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1',
-  USDT: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1', // ERC-20
-  USDC: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1'  // ERC-20
+  USDT: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1',
+  USDC: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1'
 };
 
 const OnboardingPage = () => {
@@ -93,6 +63,10 @@ const OnboardingPage = () => {
   const [copied, setCopied] = useState(false);
   const [copiedField, setCopiedField] = useState('');
   
+  // Company bank accounts
+  const [companyAccounts, setCompanyAccounts] = useState([]);
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+  
   // 2FA states
   const [twoFASecret, setTwoFASecret] = useState(null);
   const [twoFAQRCode, setTwoFAQRCode] = useState(null);
@@ -101,8 +75,18 @@ const OnboardingPage = () => {
   useEffect(() => {
     if (user) {
       checkOnboardingStatus();
+      fetchCompanyAccounts();
     }
   }, [user, token]);
+
+  const fetchCompanyAccounts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/company-bank-accounts/public`);
+      setCompanyAccounts(response.data || []);
+    } catch (err) {
+      console.error('Failed to fetch company accounts:', err);
+    }
+  };
 
   const checkOnboardingStatus = async () => {
     setLoading(true);
@@ -152,6 +136,11 @@ const OnboardingPage = () => {
   const openPaymentGateway = () => {
     setShowPaymentGateway(true);
     setPaymentMethod(null);
+    setSelectedBankAccount(null);
+  };
+
+  const getFilteredBankAccounts = () => {
+    return companyAccounts.filter(acc => acc.currency === selectedCurrency && acc.is_active);
   };
 
   const confirmPayment = async () => {
@@ -264,13 +253,8 @@ const OnboardingPage = () => {
     return admissionStatus.amounts[selectedCurrency]?.toLocaleString() || '0';
   };
 
-  const getBankDetails = () => {
-    return BANK_DETAILS[selectedCurrency] || BANK_DETAILS.EUR;
-  };
-
   const getReference = () => {
-    const details = getBankDetails();
-    return details.reference.replace('{USER_ID}', user?.id?.slice(0, 8).toUpperCase() || 'XXXXXX');
+    return `ADM-${user?.id?.slice(0, 8).toUpperCase() || 'XXXXXX'}`;
   };
 
   if (loading) {
@@ -715,10 +699,13 @@ const OnboardingPage = () => {
               </p>
             </div>
           ) : (
-            // Bank transfer details
+            // Bank transfer details - with account selection
             <div className="space-y-4 py-4">
               <button
-                onClick={() => setPaymentMethod(null)}
+                onClick={() => {
+                  setPaymentMethod(null);
+                  setSelectedBankAccount(null);
+                }}
                 className="flex items-center gap-2 text-gray-400 hover:text-white text-sm"
               >
                 <ArrowLeft size={16} />
@@ -731,120 +718,220 @@ const OnboardingPage = () => {
                 </p>
               </div>
 
-              <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs text-gray-500">Banco</p>
-                    <p className="text-white">{getBankDetails().bank_name}</p>
-                  </div>
-                </div>
-
-                {getBankDetails().iban && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">IBAN</p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
-                        {getBankDetails().iban}
-                      </code>
-                      <button 
-                        onClick={() => copyToClipboard(getBankDetails().iban, 'iban')}
-                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
-                      >
-                        {copied && copiedField === 'iban' ? (
-                          <Check className="text-green-400" size={16} />
-                        ) : (
-                          <Copy className="text-gray-400" size={16} />
-                        )}
-                      </button>
+              {/* Bank Account Selection */}
+              {getFilteredBankAccounts().length > 0 ? (
+                <>
+                  {!selectedBankAccount ? (
+                    <div className="space-y-3">
+                      <p className="text-gray-400 text-sm">Selecione a conta para transferência:</p>
+                      {getFilteredBankAccounts().map((account) => (
+                        <button
+                          key={account.id}
+                          onClick={() => setSelectedBankAccount(account)}
+                          className="w-full p-4 bg-zinc-800/50 rounded-xl border border-zinc-700 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                              <Building className="text-blue-400" size={20} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white font-medium">{account.bank_name}</p>
+                              <p className="text-gray-400 text-sm">{account.account_holder}</p>
+                              {account.iban && (
+                                <p className="text-gray-500 text-xs font-mono mt-1">
+                                  IBAN: {account.iban.slice(0, 4)} •••• {account.iban.slice(-4)}
+                                </p>
+                              )}
+                            </div>
+                            <ArrowRight className="text-gray-400" size={16} />
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <>
+                      {/* Selected Account Details */}
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-gray-400 text-sm">Conta selecionada:</p>
+                        <button
+                          onClick={() => setSelectedBankAccount(null)}
+                          className="text-blue-400 text-sm hover:underline"
+                        >
+                          Alterar
+                        </button>
+                      </div>
+                      
+                      <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-xs text-gray-500">Banco</p>
+                            <p className="text-white">{selectedBankAccount.bank_name}</p>
+                          </div>
+                        </div>
 
-                {getBankDetails().swift && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">SWIFT/BIC</p>
-                    <div className="flex items-center gap-2">
-                      <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
-                        {getBankDetails().swift}
-                      </code>
-                      <button 
-                        onClick={() => copyToClipboard(getBankDetails().swift, 'swift')}
-                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
-                      >
-                        {copied && copiedField === 'swift' ? (
-                          <Check className="text-green-400" size={16} />
-                        ) : (
-                          <Copy className="text-gray-400" size={16} />
+                        <div>
+                          <p className="text-xs text-gray-500">Titular</p>
+                          <p className="text-white">{selectedBankAccount.account_holder}</p>
+                        </div>
+
+                        {selectedBankAccount.iban && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">IBAN</p>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                                {selectedBankAccount.iban}
+                              </code>
+                              <button 
+                                onClick={() => copyToClipboard(selectedBankAccount.iban, 'iban')}
+                                className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                {copied && copiedField === 'iban' ? (
+                                  <Check className="text-green-400" size={16} />
+                                ) : (
+                                  <Copy className="text-gray-400" size={16} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {getBankDetails().pix && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Chave PIX</p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 bg-zinc-900 p-2 rounded text-emerald-400 text-sm font-mono">
-                        {getBankDetails().pix}
-                      </code>
-                      <button 
-                        onClick={() => copyToClipboard(getBankDetails().pix, 'pix')}
-                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
-                      >
-                        {copied && copiedField === 'pix' ? (
-                          <Check className="text-green-400" size={16} />
-                        ) : (
-                          <Copy className="text-gray-400" size={16} />
+                        {selectedBankAccount.swift_bic && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">SWIFT/BIC</p>
+                            <div className="flex items-center gap-2">
+                              <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                                {selectedBankAccount.swift_bic}
+                              </code>
+                              <button 
+                                onClick={() => copyToClipboard(selectedBankAccount.swift_bic, 'swift')}
+                                className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                {copied && copiedField === 'swift' ? (
+                                  <Check className="text-green-400" size={16} />
+                                ) : (
+                                  <Copy className="text-gray-400" size={16} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
                         )}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                <div className="pt-2 border-t border-zinc-700">
-                  <p className="text-xs text-gray-500 mb-1">Referência (OBRIGATÓRIO)</p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-gold-500/10 border border-gold-500/30 p-2 rounded text-gold-400 text-sm font-mono font-bold">
-                      {getReference()}
-                    </code>
-                    <button 
-                      onClick={() => copyToClipboard(getReference(), 'reference')}
-                      className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
-                    >
-                      {copied && copiedField === 'reference' ? (
-                        <Check className="text-green-400" size={16} />
-                      ) : (
-                        <Copy className="text-gray-400" size={16} />
-                      )}
-                    </button>
-                  </div>
-                </div>
+                        {selectedBankAccount.pix_key && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Chave PIX</p>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 bg-zinc-900 p-2 rounded text-emerald-400 text-sm font-mono">
+                                {selectedBankAccount.pix_key}
+                              </code>
+                              <button 
+                                onClick={() => copyToClipboard(selectedBankAccount.pix_key, 'pix')}
+                                className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                {copied && copiedField === 'pix' ? (
+                                  <Check className="text-green-400" size={16} />
+                                ) : (
+                                  <Copy className="text-gray-400" size={16} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
-                <div className="pt-2 border-t border-zinc-700">
-                  <p className="text-xs text-gray-500 mb-1">Montante</p>
-                  <p className="text-white text-xl font-bold">
-                    {getPaymentAmount()} {selectedCurrency}
+                        {selectedBankAccount.account_number && !selectedBankAccount.iban && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Número da Conta</p>
+                            <div className="flex items-center gap-2">
+                              <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                                {selectedBankAccount.account_number}
+                              </code>
+                              <button 
+                                onClick={() => copyToClipboard(selectedBankAccount.account_number, 'account')}
+                                className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                              >
+                                {copied && copiedField === 'account' ? (
+                                  <Check className="text-green-400" size={16} />
+                                ) : (
+                                  <Copy className="text-gray-400" size={16} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedBankAccount.routing_number && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Routing Number</p>
+                            <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                              {selectedBankAccount.routing_number}
+                            </code>
+                          </div>
+                        )}
+
+                        {selectedBankAccount.sort_code && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Sort Code</p>
+                            <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                              {selectedBankAccount.sort_code}
+                            </code>
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-zinc-700">
+                          <p className="text-xs text-gray-500 mb-1">Referência (OBRIGATÓRIO)</p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 bg-gold-500/10 border border-gold-500/30 p-2 rounded text-gold-400 text-sm font-mono font-bold">
+                              {getReference()}
+                            </code>
+                            <button 
+                              onClick={() => copyToClipboard(getReference(), 'reference')}
+                              className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                            >
+                              {copied && copiedField === 'reference' ? (
+                                <Check className="text-green-400" size={16} />
+                              ) : (
+                                <Copy className="text-gray-400" size={16} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-zinc-700">
+                          <p className="text-xs text-gray-500 mb-1">Montante</p>
+                          <p className="text-white text-xl font-bold">
+                            {getPaymentAmount()} {selectedCurrency}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={confirmPayment}
+                        disabled={submitting}
+                        className="w-full bg-blue-500 hover:bg-blue-400 text-white font-medium py-6"
+                      >
+                        {submitting ? (
+                          <RefreshCw className="animate-spin mr-2" size={20} />
+                        ) : (
+                          <CheckCircle size={20} className="mr-2" />
+                        )}
+                        Confirmar Transferência Efetuada
+                      </Button>
+
+                      <p className="text-center text-gray-500 text-xs">
+                        O pagamento será verificado em 1-2 dias úteis
+                      </p>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-6 text-center">
+                  <AlertTriangle className="mx-auto mb-3 text-amber-400" size={32} />
+                  <p className="text-amber-400 font-medium">Sem Contas Disponíveis</p>
+                  <p className="text-amber-300/80 text-sm mt-1">
+                    Não existem contas bancárias configuradas para {selectedCurrency}. 
+                    Por favor contacte o suporte ou escolha outra moeda.
                   </p>
                 </div>
-              </div>
-
-              <Button 
-                onClick={confirmPayment}
-                disabled={submitting}
-                className="w-full bg-blue-500 hover:bg-blue-400 text-white font-medium py-6"
-              >
-                {submitting ? (
-                  <RefreshCw className="animate-spin mr-2" size={20} />
-                ) : (
-                  <CheckCircle size={20} className="mr-2" />
-                )}
-                Confirmar Transferência Efetuada
-              </Button>
-
-              <p className="text-center text-gray-500 text-xs">
-                O pagamento será verificado em 1-2 dias úteis
-              </p>
+              )}
             </div>
           )}
         </DialogContent>

@@ -224,7 +224,8 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/fiat-deposits", "label": "Depósitos Fiat", "icon": "ArrowUpToLine"},
             {"path": "/dashboard/admin/fiat-withdrawals", "label": "Levantamentos Fiat", "icon": "ArrowDownToLine"},
             {"path": "/dashboard/admin/crypto-withdrawals", "label": "Levantamentos Crypto", "icon": "Bitcoin"},
-            {"path": "/dashboard/admin/bank-accounts", "label": "Contas Bancárias", "icon": "Landmark"},
+            {"path": "/dashboard/admin/bank-accounts", "label": "Contas de Clientes", "icon": "Users"},
+            {"path": "/dashboard/admin/company-accounts", "label": "Contas da Empresa", "icon": "Building"},
         ]
     },
     Department.CRM: {
