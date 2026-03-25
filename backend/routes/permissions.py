@@ -84,56 +84,37 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     )
     is_otc_client = otc_client is not None
     
-    # Clients see the new menu structure
+    # Clients see the new hierarchical menu structure
     if not is_admin and user_type != "internal" and not internal_role:
+        portfolio_data = DEPARTMENT_MENUS[Department.PORTFOLIO]
+        investimentos_data = DEPARTMENT_MENUS[Department.INVESTIMENTOS]
+        transparencia_data = DEPARTMENT_MENUS[Department.TRANSPARENCIA]
+        account_data = DEPARTMENT_MENUS[Department.ACCOUNT]
+        
         client_menus = [
             {
-                "department": "ativos",
-                "label": "Ativos",
-                "icon": "LayoutDashboard",
-                "items": DEPARTMENT_MENUS[Department.ATIVOS]["items"]
-            },
-            {
-                "department": "contas_seguranca",
-                "label": "Contas & Segurança",
-                "icon": "Shield",
-                "items": DEPARTMENT_MENUS[Department.CONTAS_SEGURANCA]["items"]
-            },
-            {
-                "department": "operacoes_crypto",
-                "label": "Operações Crypto",
-                "icon": "Bitcoin",
-                "items": DEPARTMENT_MENUS[Department.OPERACOES_CRYPTO]["items"]
-            },
-            {
-                "department": "operacoes_fiat",
-                "label": "Operações Fiat",
-                "icon": "Banknote",
-                "items": DEPARTMENT_MENUS[Department.OPERACOES_FIAT]["items"]
-            },
-            {
-                "department": "historico",
-                "label": "Histórico e Movimentos",
-                "icon": "History",
-                "items": DEPARTMENT_MENUS[Department.HISTORICO]["items"]
+                "department": "portfolio",
+                "label": portfolio_data["label"],
+                "icon": portfolio_data["icon"],
+                "submenus": portfolio_data.get("submenus", [])
             },
             {
                 "department": "investimentos",
-                "label": "Investimentos & Performance",
-                "icon": "TrendingUp",
-                "items": DEPARTMENT_MENUS[Department.INVESTIMENTOS]["items"]
+                "label": investimentos_data["label"],
+                "icon": investimentos_data["icon"],
+                "items": investimentos_data.get("items", [])
             },
             {
-                "department": "conformidade",
-                "label": "Conformidade & Transparência",
-                "icon": "FileCheck",
-                "items": DEPARTMENT_MENUS[Department.CONFORMIDADE]["items"]
+                "department": "transparencia",
+                "label": transparencia_data["label"],
+                "icon": transparencia_data["icon"],
+                "items": transparencia_data.get("items", [])
             },
             {
                 "department": "account",
-                "label": "Conta",
-                "icon": "UserCircle",
-                "items": DEPARTMENT_MENUS[Department.ACCOUNT]["items"]
+                "label": account_data["label"],
+                "icon": account_data["icon"],
+                "items": account_data.get("items", [])
             }
         ]
         
@@ -158,19 +139,24 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     role = internal_role or ("admin" if is_admin else "support_agent")
     accessible_depts = get_user_departments(role, custom_departments)
     
-    # Build menu structure
+    # Build menu structure for staff
     menus = []
     for dept_value in accessible_depts:
         try:
             dept = Department(dept_value)
             dept_info = DEPARTMENT_MENUS.get(dept)
             if dept_info:
-                menus.append({
+                menu_item = {
                     "department": dept_value,
                     "label": dept_info["label"],
                     "icon": dept_info["icon"],
-                    "items": dept_info["items"]
-                })
+                }
+                # Handle both submenus (for portfolio) and items
+                if "submenus" in dept_info:
+                    menu_item["submenus"] = dept_info["submenus"]
+                if "items" in dept_info:
+                    menu_item["items"] = dept_info["items"]
+                menus.append(menu_item)
         except ValueError:
             continue
     

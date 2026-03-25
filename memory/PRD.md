@@ -38,13 +38,49 @@ Build a website for a premium Crypto Boutique Exchange named KBEX.io targeting H
 9. **Support Manager (Suporte Manager)** - Líder da equipa de suporte
 10. **Support Agent (Agente de Suporte)** - Atendimento ao cliente
 
-### Departments (6 areas) - ALL in Accordion Style
-1. **Portfolio** - Dashboard do cliente (accordion expandido por padrão)
-2. **Admin** - Gestão de equipa, utilizadores, KYC, oportunidades
-3. **Gestão** - Permissões, Configurações (taxas/limites)
-4. **Financeiro** - Ordens, Depósitos Fiat, Levantamentos Fiat/Crypto (com notificações)
-5. **CRM** - Dashboard CRM, Fornecedores, Leads, Negociações, Contactos, Tarefas, Clientes KBEX, Pipeline de vendas
+### Menu Structure (Updated March 2026)
+
+#### Client Menu (3-Level Hierarchy)
+```
+Portefólio (Menu Principal)
+├── Ativos (Submenu)
+│   ├── Dashboard
+│   ├── Exchange
+│   ├── Carteiras
+│   └── Whitelist
+├── Operações Crypto (Submenu)
+│   ├── Depósito Crypto
+│   └── Levantamento Crypto
+├── Operações Fiat (Submenu)
+│   ├── Depósito Fiat
+│   └── Levantamento Fiat
+└── Transações (Item Direto)
+
+Investimentos
+├── Investimentos
+└── ROI
+
+Transparência
+└── Transparência
+
+Conta
+├── Meu Perfil
+├── Verificação KYC
+└── Suporte
+```
+
+#### Staff/Admin Menu (Additional Departments)
+1. **Admin** - Gestão de equipa, utilizadores, KYC, oportunidades
+2. **Gestão** - Permissões, Configurações (taxas/limites)
+3. **Financeiro** - Ordens, Depósitos Fiat, Levantamentos Fiat/Crypto (com notificações)
+4. **CRM** - Dashboard CRM, Fornecedores, Leads, Negociações, Contactos, Tarefas, Clientes KBEX, Pipeline de vendas
+5. **OTC Desk** - Dashboard OTC, Leads, Pipeline, Cotações, Execução, Liquidação, Faturas
 6. **Suporte** - Tickets, Base de conhecimento
+
+#### Menu Behavior
+- Menus só fecham quando clica no menu pai
+- Sub-menus permanecem abertos ao navegar entre itens
+- Auto-expansão baseada no path atual da página
 
 ## CRM Module (Implemented March 2026)
 

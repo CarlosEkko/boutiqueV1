@@ -46,7 +46,17 @@ import {
   FileCheck,
   UserCircle,
   Briefcase,
-  Activity
+  Activity,
+  Eye,
+  Handshake,
+  UserPlus,
+  Target,
+  Contact,
+  CheckSquare,
+  Kanban,
+  FileText,
+  Zap,
+  Building
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -58,23 +68,24 @@ const iconMap = {
   BarChart3, UserCheck, Globe, UserCog, Ticket, User, ArrowDownUp, DollarSign,
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
   Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
-  Banknote, FileCheck, UserCircle, Briefcase, Activity
+  Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
+  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building
 };
 
 // Department icon and color mapping
 const departmentConfig = {
-  // New client menu structure
-  ativos: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
-  contas_seguranca: { icon: Shield, color: 'text-green-400', bgColor: 'bg-green-500/20' },
-  operacoes_crypto: { icon: Bitcoin, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
-  operacoes_fiat: { icon: Banknote, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
-  historico: { icon: History, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  // Main client menus
+  portfolio: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   investimentos: { icon: TrendingUp, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
-  conformidade: { icon: FileCheck, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
+  transparencia: { icon: Shield, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
   account: { icon: UserCircle, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   otc_trading: { icon: Briefcase, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  // Submenu colors
+  ativos: { icon: Wallet, color: 'text-blue-300', bgColor: 'bg-blue-500/10' },
+  operacoes_crypto: { icon: Bitcoin, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
+  operacoes_fiat: { icon: Banknote, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
+  transacoes: { icon: History, color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
   // Admin/staff menus
-  portfolio: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   admin: { icon: Settings, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   management: { icon: Settings2, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
   finance: { icon: Landmark, color: 'text-green-400', bgColor: 'bg-green-500/20' },
@@ -92,6 +103,7 @@ const DashboardLayout = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuStructure, setMenuStructure] = useState([]);
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [expandedSubmenus, setExpandedSubmenus] = useState({});
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState({});
 
@@ -154,15 +166,24 @@ const DashboardLayout = () => {
         
         // All menus start collapsed by default
         setExpandedMenus({});
+        setExpandedSubmenus({});
       } catch (err) {
         console.error('Failed to fetch menu structure:', err);
+        // Fallback menu
         setMenuStructure([{
           department: 'portfolio',
-          label: 'Portfolio',
+          label: 'Portefolio',
           icon: 'LayoutDashboard',
-          items: [
-            { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-            { path: '/dashboard/wallets', label: 'Carteiras', icon: 'Wallet' },
+          submenus: [
+            {
+              id: 'ativos',
+              label: 'Ativos',
+              icon: 'Wallet',
+              items: [
+                { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+                { path: '/dashboard/wallets', label: 'Carteiras', icon: 'Wallet' },
+              ]
+            }
           ]
         }]);
       } finally {
@@ -171,38 +192,71 @@ const DashboardLayout = () => {
     };
 
     fetchMenus();
-  }, [token, location.pathname]);
+  }, [token]);
 
   // Fetch notifications periodically
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Auto-expand menu that contains current path
+  // Auto-expand menu and submenu that contains current path
   useEffect(() => {
     if (menuStructure.length === 0) return;
     
     const currentPath = location.pathname;
-    const menuToExpand = menuStructure.find(menu => 
-      menu.items?.some(item => 
-        currentPath === item.path || currentPath.startsWith(item.path + '/')
-      )
-    );
     
-    if (menuToExpand && !expandedMenus[menuToExpand.department]) {
-      setExpandedMenus(prev => ({
-        ...prev,
-        [menuToExpand.department]: true
-      }));
+    // Find which menu and submenu contains the current path
+    for (const menu of menuStructure) {
+      // Check if menu has submenus (hierarchical structure like Portfolio)
+      if (menu.submenus) {
+        for (const submenu of menu.submenus) {
+          // Check if submenu has a direct path (like Transacoes)
+          if (submenu.path && (currentPath === submenu.path || currentPath.startsWith(submenu.path + '/'))) {
+            setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
+            return;
+          }
+          // Check if any item in the submenu matches
+          if (submenu.items) {
+            const matchingItem = submenu.items.find(item => 
+              currentPath === item.path || currentPath.startsWith(item.path + '/')
+            );
+            if (matchingItem) {
+              setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
+              setExpandedSubmenus(prev => ({ ...prev, [submenu.id]: true }));
+              return;
+            }
+          }
+        }
+      }
+      
+      // Check flat items (for non-hierarchical menus like Investimentos)
+      if (menu.items) {
+        const matchingItem = menu.items.find(item => 
+          currentPath === item.path || currentPath.startsWith(item.path + '/')
+        );
+        if (matchingItem) {
+          setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
+          return;
+        }
+      }
     }
   }, [location.pathname, menuStructure]);
 
+  // Toggle main menu - only closes when clicking the parent
   const toggleMenu = (department) => {
     setExpandedMenus(prev => ({
       ...prev,
       [department]: !prev[department]
+    }));
+  };
+
+  // Toggle submenu
+  const toggleSubmenu = (submenuId) => {
+    setExpandedSubmenus(prev => ({
+      ...prev,
+      [submenuId]: !prev[submenuId]
     }));
   };
 
@@ -223,23 +277,48 @@ const DashboardLayout = () => {
   };
 
   const isMenuActive = (menu) => {
-    return menu.items?.some(item => isPathActive(item.path, item.path === '/dashboard'));
+    // Check submenus
+    if (menu.submenus) {
+      for (const submenu of menu.submenus) {
+        if (submenu.path && isPathActive(submenu.path)) return true;
+        if (submenu.items?.some(item => isPathActive(item.path, item.path === '/dashboard'))) return true;
+      }
+    }
+    // Check flat items
+    if (menu.items) {
+      return menu.items.some(item => isPathActive(item.path, item.path === '/dashboard'));
+    }
+    return false;
+  };
+
+  const isSubmenuActive = (submenu) => {
+    if (submenu.path) return isPathActive(submenu.path);
+    return submenu.items?.some(item => isPathActive(item.path, item.path === '/dashboard'));
   };
 
   // Get total notifications for a department
   const getDepartmentNotificationCount = (menu) => {
-    return menu.items?.reduce((total, item) => {
-      return total + (notifications[item.path] || 0);
-    }, 0) || 0;
+    let total = 0;
+    if (menu.submenus) {
+      for (const submenu of menu.submenus) {
+        if (submenu.items) {
+          total += submenu.items.reduce((sum, item) => sum + (notifications[item.path] || 0), 0);
+        }
+      }
+    }
+    if (menu.items) {
+      total += menu.items.reduce((sum, item) => sum + (notifications[item.path] || 0), 0);
+    }
+    return total;
   };
 
-  const SubNavItem = ({ to, icon: iconName, label, notificationCount }) => {
+  const NavItem = ({ to, icon: iconName, label, notificationCount }) => {
     const Icon = getIcon(iconName);
     return (
       <NavLink
         to={to}
         className={({ isActive }) =>
-          `flex items-center justify-between pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
+          `flex items-center justify-between pl-12 pr-4 py-2 rounded-lg transition-all duration-200 ${
             isActive
               ? 'bg-gold-500/10 text-gold-400'
               : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
@@ -259,14 +338,82 @@ const DashboardLayout = () => {
     );
   };
 
+  // Render submenu (second level) with items (third level)
+  const SubmenuSection = ({ submenu, parentExpanded }) => {
+    const config = departmentConfig[submenu.id] || { icon: LayoutDashboard, color: 'text-gray-400' };
+    const SubIcon = getIcon(submenu.icon) || config.icon;
+    const isExpanded = expandedSubmenus[submenu.id];
+    const isActive = isSubmenuActive(submenu);
+
+    // If submenu has a direct path (like Transacoes), render as a link
+    if (submenu.path && !submenu.items) {
+      return (
+        <NavLink
+          to={submenu.path}
+          className={({ isActive: linkActive }) =>
+            `flex items-center gap-3 pl-8 pr-4 py-2 rounded-lg transition-all duration-200 ${
+              linkActive
+                ? 'bg-gold-500/10 text-gold-400'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/30'
+            }`
+          }
+        >
+          <SubIcon size={16} />
+          <span className="text-sm">{submenu.label}</span>
+        </NavLink>
+      );
+    }
+
+    // Render as expandable submenu
+    return (
+      <div className="space-y-0.5">
+        <button
+          onClick={() => toggleSubmenu(submenu.id)}
+          className={`w-full flex items-center justify-between pl-8 pr-4 py-2 rounded-lg transition-all duration-200 ${
+            isActive
+              ? `${config.color} bg-zinc-800/50`
+              : 'text-gray-400 hover:text-gray-300 hover:bg-zinc-800/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <SubIcon size={16} />
+            <span className="text-sm font-medium">{submenu.label}</span>
+          </div>
+          {isExpanded ? (
+            <ChevronDown size={14} />
+          ) : (
+            <ChevronRight size={14} />
+          )}
+        </button>
+        
+        {isExpanded && submenu.items && (
+          <div className="space-y-0.5 animate-in slide-in-from-top-2 duration-200">
+            {submenu.items.map((item) => (
+              <NavItem 
+                key={item.path} 
+                to={item.path} 
+                icon={item.icon} 
+                label={item.label}
+                notificationCount={notifications[item.path] || 0}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Main menu section (first level)
   const MenuSection = ({ menu, isMobile = false }) => {
     const config = departmentConfig[menu.department] || departmentConfig.portfolio;
-    const DeptIcon = config.icon;
+    const DeptIcon = getIcon(menu.icon) || config.icon;
     const isExpanded = expandedMenus[menu.department];
     const isActive = isMenuActive(menu);
     const deptNotificationCount = getDepartmentNotificationCount(menu);
 
-    // All departments use accordion style now (including Portfolio)
+    const hasSubmenus = menu.submenus && menu.submenus.length > 0;
+    const hasItems = menu.items && menu.items.length > 0;
+
     return (
       <div className="space-y-1">
         {sidebarOpen || isMobile ? (
@@ -288,23 +435,49 @@ const DashboardLayout = () => {
                   </span>
                 )}
               </div>
-              {isExpanded ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
+              {(hasSubmenus || hasItems) && (
+                isExpanded ? (
+                  <ChevronDown size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )
               )}
             </button>
             
             {isExpanded && (
               <div className="mt-1 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
-                {menu.items?.map((item) => (
-                  <SubNavItem 
-                    key={item.path} 
-                    to={item.path} 
-                    icon={item.icon} 
-                    label={item.label}
-                    notificationCount={notifications[item.path] || 0}
+                {/* Render submenus (hierarchical structure) */}
+                {hasSubmenus && menu.submenus.map((submenu) => (
+                  <SubmenuSection 
+                    key={submenu.id} 
+                    submenu={submenu} 
+                    parentExpanded={isExpanded}
                   />
+                ))}
+                
+                {/* Render flat items (non-hierarchical menus) */}
+                {hasItems && !hasSubmenus && menu.items.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive: linkActive }) =>
+                      `flex items-center justify-between pl-10 pr-4 py-2 rounded-lg transition-all duration-200 ${
+                        linkActive
+                          ? 'bg-gold-500/10 text-gold-400'
+                          : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-800/30'
+                      }`
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      {React.createElement(getIcon(item.icon), { size: 14 })}
+                      <span className="text-sm">{item.label}</span>
+                    </div>
+                    {notifications[item.path] > 0 && (
+                      <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                        {notifications[item.path] > 99 ? '99+' : notifications[item.path]}
+                      </span>
+                    )}
+                  </NavLink>
                 ))}
               </div>
             )}
@@ -347,9 +520,10 @@ const DashboardLayout = () => {
     );
   }
 
-  // Separate portfolio from other menus
-  const portfolioMenu = menuStructure.find(m => m.department === 'portfolio');
-  const adminMenus = menuStructure.filter(m => m.department !== 'portfolio');
+  // Separate client menus from admin menus
+  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading'];
+  const clientMenus = menuStructure.filter(m => clientMenuDepts.includes(m.department));
+  const adminMenus = menuStructure.filter(m => !clientMenuDepts.includes(m.department));
 
   return (
     <div className="min-h-screen bg-black flex">
@@ -385,9 +559,13 @@ const DashboardLayout = () => {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {/* Portfolio Menu */}
-          {portfolioMenu && (
-            <MenuSection menu={portfolioMenu} />
+          {/* Client Menus */}
+          {clientMenus.length > 0 && (
+            <div className="space-y-2">
+              {clientMenus.map((menu) => (
+                <MenuSection key={menu.department} menu={menu} />
+              ))}
+            </div>
           )}
 
           {/* Admin/Staff Menus */}
@@ -395,7 +573,7 @@ const DashboardLayout = () => {
             <div className="pt-4 border-t border-gold-800/20 space-y-2">
               {sidebarOpen && (
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
-                  Gestão
+                  Gestao
                 </p>
               )}
               {adminMenus.map((menu) => (
@@ -454,16 +632,20 @@ const DashboardLayout = () => {
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16 overflow-y-auto">
           <nav className="p-4 space-y-4">
-            {/* Portfolio Menu */}
-            {portfolioMenu && (
-              <MenuSection menu={portfolioMenu} isMobile={true} />
+            {/* Client Menus */}
+            {clientMenus.length > 0 && (
+              <div className="space-y-2">
+                {clientMenus.map((menu) => (
+                  <MenuSection key={menu.department} menu={menu} isMobile={true} />
+                ))}
+              </div>
             )}
             
             {/* Admin/Staff Menus */}
             {adminMenus.length > 0 && (
               <div className="pt-4 mt-4 border-t border-gold-800/20 space-y-2">
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
-                  Gestão
+                  Gestao
                 </p>
                 {adminMenus.map((menu) => (
                   <MenuSection key={menu.department} menu={menu} isMobile={true} />
