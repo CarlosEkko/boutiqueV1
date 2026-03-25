@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '../../../components/ui/dialog';
 import { 
   Lock, 
@@ -26,7 +27,8 @@ import {
   Headphones,
   Shield,
   Save,
-  Briefcase
+  Briefcase,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -53,7 +55,7 @@ const departmentColors = {
 };
 
 const AdminPermissions = () => {
-  const { token } = useAuth();
+  const { token, user: currentUser } = useAuth();
   const [staff, setStaff] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -62,6 +64,8 @@ const AdminPermissions = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editPermissions, setEditPermissions] = useState([]);
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -132,6 +136,27 @@ const AdminPermissions = () => {
       fetchData();
     } catch (err) {
       toast.error('Falha ao restaurar permissões');
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!staffToDelete) return;
+    
+    if (staffToDelete.id === currentUser?.id) {
+      toast.error('Não pode eliminar a si mesmo');
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/api/admin/internal-users/${staffToDelete.id}/permanent`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Membro eliminado permanentemente');
+      fetchData();
+      setShowDeleteDialog(false);
+      setStaffToDelete(null);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao eliminar membro');
     }
   };
 
@@ -265,25 +290,55 @@ const AdminPermissions = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => openEditModal(member)}
-                      size="sm"
-                      variant="outline"
-                      className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
-                    >
-                      <Edit size={14} className="mr-1" />
-                      Editar
-                    </Button>
-                    {member.has_custom_permissions && (
-                      <Button
-                        onClick={() => resetPermissions(member.id)}
-                        size="sm"
-                        variant="outline"
-                        className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
-                        title="Restaurar permissões do cargo"
-                      >
-                        <RotateCcw size={14} />
-                      </Button>
+                    {activeTab === 'active' ? (
+                      <>
+                        <Button
+                          onClick={() => openEditModal(member)}
+                          size="sm"
+                          variant="outline"
+                          className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
+                        >
+                          <Edit size={14} className="mr-1" />
+                          Editar
+                        </Button>
+                        {member.has_custom_permissions && (
+                          <Button
+                            onClick={() => resetPermissions(member.id)}
+                            size="sm"
+                            variant="outline"
+                            className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
+                            title="Restaurar permissões do cargo"
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={() => openEditModal(member)}
+                          size="sm"
+                          variant="outline"
+                          className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
+                        >
+                          <Edit size={14} className="mr-1" />
+                          Editar
+                        </Button>
+                        {member.id !== currentUser?.id && (
+                          <Button
+                            onClick={() => {
+                              setStaffToDelete(member);
+                              setShowDeleteDialog(true);
+                            }}
+                            size="sm"
+                            variant="outline"
+                            className="border-red-900/30 text-red-400 hover:bg-red-900/30"
+                            title="Eliminar Permanentemente"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -374,6 +429,57 @@ const AdminPermissions = () => {
             >
               <Save size={16} className="mr-2" />
               Guardar Permissões
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-zinc-900 border-red-500/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl text-red-400">
+              <Trash2 className="text-red-400" />
+              Eliminar Permanentemente
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Esta ação é irreversível.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 bg-red-900/20 rounded-lg border border-red-800/30">
+              <p className="text-red-300 text-sm">
+                <strong>Atenção!</strong> O membro será eliminado permanentemente do sistema, incluindo todas as suas permissões personalizadas.
+              </p>
+            </div>
+            
+            {staffToDelete && (
+              <div className="p-3 bg-zinc-800/50 rounded-lg">
+                <p className="text-gray-400 text-xs uppercase mb-1">Membro a eliminar</p>
+                <p className="text-white font-medium">{staffToDelete.name}</p>
+                <p className="text-gray-400 text-sm">{staffToDelete.email}</p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setStaffToDelete(null);
+              }}
+              className="border-gray-600"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePermanentDelete}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Eliminar Permanentemente
             </Button>
           </DialogFooter>
         </DialogContent>
