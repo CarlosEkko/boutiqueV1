@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone
 from routes.admin import get_admin_user
@@ -17,197 +17,114 @@ def set_db(database):
     db = database
 
 
-# Default client menu structure
-DEFAULT_CLIENT_MENUS = {
-    "portfolio": {
-        "id": "portfolio",
-        "label": "Portefólio",
-        "icon": "LayoutDashboard",
-        "enabled": True,
-        "submenus": [
-            {
-                "id": "ativos",
-                "label": "Ativos",
-                "icon": "Wallet",
-                "enabled": True,
-                "items": [
-                    {"id": "dashboard", "path": "/dashboard", "label": "Dashboard", "icon": "LayoutDashboard", "enabled": True},
-                    {"id": "exchange", "path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp", "enabled": True},
-                    {"id": "wallets", "path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet", "enabled": True},
-                    {"id": "whitelist", "path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield", "enabled": True},
-                ]
-            },
-            {
-                "id": "operacoes_crypto",
-                "label": "Operações Crypto",
-                "icon": "Bitcoin",
-                "enabled": True,
-                "items": [
-                    {"id": "crypto_deposit", "path": "/dashboard/crypto-deposit", "label": "Depósito Crypto", "icon": "ArrowUpToLine", "enabled": True},
-                    {"id": "crypto_withdrawal", "path": "/dashboard/crypto-withdrawal", "label": "Levantamento Crypto", "icon": "Send", "enabled": True},
-                ]
-            },
-            {
-                "id": "operacoes_fiat",
-                "label": "Operações Fiat",
-                "icon": "Banknote",
-                "enabled": True,
-                "items": [
-                    {"id": "fiat_deposit", "path": "/dashboard/fiat-deposit", "label": "Depósito Fiat", "icon": "ArrowUpToLine", "enabled": True},
-                    {"id": "fiat_withdrawal", "path": "/dashboard/fiat-withdrawal", "label": "Levantamento Fiat", "icon": "ArrowDownToLine", "enabled": True},
-                ]
-            },
-            {
-                "id": "transacoes",
-                "label": "Transações",
-                "icon": "History",
-                "enabled": True,
-                "path": "/dashboard/transactions"
-            }
-        ]
-    },
-    "investimentos": {
-        "id": "investimentos",
-        "label": "Investimentos",
-        "icon": "TrendingUp",
-        "enabled": True,
-        "items": [
-            {"id": "investments", "path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp", "enabled": True},
-            {"id": "roi", "path": "/dashboard/roi", "label": "ROI", "icon": "PieChart", "enabled": True},
-        ]
-    },
-    "transparencia": {
-        "id": "transparencia",
-        "label": "Transparência",
-        "icon": "Shield",
-        "enabled": True,
-        "items": [
-            {"id": "transparency", "path": "/dashboard/transparency", "label": "Transparência", "icon": "Shield", "enabled": True},
-        ]
-    },
-    "perfil": {
-        "id": "perfil",
-        "label": "Perfil",
-        "icon": "UserCircle",
-        "enabled": True,
-        "items": [
-            {"id": "profile", "path": "/dashboard/profile", "label": "Meu Perfil", "icon": "User", "enabled": True},
-            {"id": "bank_accounts", "path": "/dashboard/bank-accounts", "label": "Dados Bancários", "icon": "Landmark", "enabled": True},
-            {"id": "security", "path": "/dashboard/security", "label": "Segurança", "icon": "Shield", "enabled": True},
-            {"id": "kyc", "path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck", "enabled": True},
-            {"id": "support", "path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle", "enabled": True},
-        ]
-    }
-}
+# Available menus for clients
+AVAILABLE_MENUS = [
+    {"value": "portfolio", "label": "Portefólio"},
+    {"value": "investimentos", "label": "Investimentos"},
+    {"value": "transparencia", "label": "Transparência"},
+    {"value": "perfil", "label": "Perfil"},
+    {"value": "otc_trading", "label": "OTC Trading"},
+]
+
+# Default menus (all menus)
+DEFAULT_CLIENT_MENUS = [m["value"] for m in AVAILABLE_MENUS]
 
 
-class MenuItemUpdate(BaseModel):
-    id: str
-    enabled: bool
+class ClientMenusUpdate(BaseModel):
+    menus: List[str]
 
 
-class MenuUpdate(BaseModel):
-    menu_id: str
-    enabled: bool
-    items: Optional[List[MenuItemUpdate]] = None
-    submenus: Optional[List[dict]] = None
+@router.get("/available")
+async def get_available_menus(admin: dict = Depends(get_admin_user)):
+    """Get list of available menus for clients"""
+    return {"menus": AVAILABLE_MENUS}
 
 
-@router.get("/config")
-async def get_client_menus_config(admin: dict = Depends(get_admin_user)):
-    """Get current client menu configuration (Admin only)"""
-    config = await db.platform_settings.find_one(
-        {"type": "client_menus"},
+@router.get("/clients")
+async def get_clients_with_menus(admin: dict = Depends(get_admin_user)):
+    """Get all clients with their menu permissions"""
+    # Get all client users (not internal/staff)
+    clients = await db.users.find(
+        {"user_type": {"$ne": "internal"}},
+        {"_id": 0, "hashed_password": 0}
+    ).sort("created_at", -1).to_list(500)
+    
+    # Get custom menu settings for clients
+    custom_settings = {}
+    menu_settings = await db.client_menu_settings.find({}, {"_id": 0}).to_list(500)
+    for setting in menu_settings:
+        custom_settings[setting.get("user_id")] = setting.get("menus", [])
+    
+    # Enrich clients with menu info
+    for client in clients:
+        user_id = client.get("id")
+        if user_id in custom_settings:
+            client["custom_menus"] = custom_settings[user_id]
+            client["effective_menus"] = custom_settings[user_id]
+            client["has_custom_menus"] = True
+        else:
+            client["custom_menus"] = None
+            client["effective_menus"] = DEFAULT_CLIENT_MENUS
+            client["has_custom_menus"] = False
+    
+    return clients
+
+
+@router.get("/client/{client_id}")
+async def get_client_menus(client_id: str, admin: dict = Depends(get_admin_user)):
+    """Get menu permissions for a specific client"""
+    # Get client
+    client = await db.users.find_one({"id": client_id}, {"_id": 0, "hashed_password": 0})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Get custom menu settings
+    settings = await db.client_menu_settings.find_one(
+        {"user_id": client_id},
         {"_id": 0}
     )
     
-    if not config:
-        # Return default configuration
+    if settings:
         return {
+            "client": client,
+            "menus": settings.get("menus", []),
+            "has_custom_menus": True
+        }
+    else:
+        return {
+            "client": client,
             "menus": DEFAULT_CLIENT_MENUS,
-            "updated_at": None,
-            "updated_by": None
+            "has_custom_menus": False
         }
-    
-    return config
 
 
-@router.get("/active")
-async def get_active_client_menus(user_id: str = Depends(get_current_user_id)):
-    """Get active menus for clients (filtered by enabled status)"""
-    config = await db.platform_settings.find_one(
-        {"type": "client_menus"},
-        {"_id": 0}
-    )
-    
-    menus = config.get("menus", DEFAULT_CLIENT_MENUS) if config else DEFAULT_CLIENT_MENUS
-    
-    # Filter to only enabled menus and items
-    active_menus = {}
-    for menu_id, menu in menus.items():
-        if not menu.get("enabled", True):
-            continue
-            
-        active_menu = {
-            "id": menu.get("id"),
-            "label": menu.get("label"),
-            "icon": menu.get("icon"),
-            "enabled": True
-        }
-        
-        # Handle items
-        if "items" in menu:
-            active_menu["items"] = [
-                item for item in menu["items"] 
-                if item.get("enabled", True)
-            ]
-        
-        # Handle submenus (nested structure)
-        if "submenus" in menu:
-            active_submenus = []
-            for submenu in menu["submenus"]:
-                if not submenu.get("enabled", True):
-                    continue
-                    
-                active_submenu = {
-                    "id": submenu.get("id"),
-                    "label": submenu.get("label"),
-                    "icon": submenu.get("icon"),
-                    "enabled": True
-                }
-                
-                if "path" in submenu:
-                    active_submenu["path"] = submenu["path"]
-                
-                if "items" in submenu:
-                    active_submenu["items"] = [
-                        item for item in submenu["items"]
-                        if item.get("enabled", True)
-                    ]
-                
-                active_submenus.append(active_submenu)
-            
-            active_menu["submenus"] = active_submenus
-        
-        active_menus[menu_id] = active_menu
-    
-    return {"menus": active_menus}
-
-
-@router.put("/config")
-async def update_client_menus_config(
-    menus: dict,
+@router.put("/client/{client_id}")
+async def update_client_menus(
+    client_id: str,
+    data: ClientMenusUpdate,
     admin: dict = Depends(get_admin_user)
 ):
-    """Update client menu configuration (Admin only)"""
+    """Update menu permissions for a client"""
+    # Verify client exists
+    client = await db.users.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Validate menus
+    valid_menu_values = [m["value"] for m in AVAILABLE_MENUS]
+    for menu in data.menus:
+        if menu not in valid_menu_values:
+            raise HTTPException(status_code=400, detail=f"Menu inválido: {menu}")
+    
     now = datetime.now(timezone.utc).isoformat()
     
-    await db.platform_settings.update_one(
-        {"type": "client_menus"},
+    # Update or create custom menu settings
+    await db.client_menu_settings.update_one(
+        {"user_id": client_id},
         {
             "$set": {
-                "type": "client_menus",
-                "menus": menus,
+                "user_id": client_id,
+                "menus": data.menus,
                 "updated_at": now,
                 "updated_by": admin.get("email")
             }
@@ -215,30 +132,33 @@ async def update_client_menus_config(
         upsert=True
     )
     
-    logger.info(f"Client menus updated by {admin.get('email')}")
+    logger.info(f"Client {client_id} menus updated by {admin.get('email')}: {data.menus}")
     
-    return {"success": True, "message": "Configuração de menus atualizada com sucesso"}
+    return {"success": True, "message": "Menus atualizados com sucesso"}
 
 
-@router.post("/reset")
-async def reset_client_menus(admin: dict = Depends(get_admin_user)):
-    """Reset client menus to default configuration (Admin only)"""
-    now = datetime.now(timezone.utc).isoformat()
+@router.delete("/client/{client_id}")
+async def reset_client_menus(client_id: str, admin: dict = Depends(get_admin_user)):
+    """Reset client menus to default (remove custom settings)"""
+    result = await db.client_menu_settings.delete_one({"user_id": client_id})
     
-    await db.platform_settings.update_one(
-        {"type": "client_menus"},
-        {
-            "$set": {
-                "type": "client_menus",
-                "menus": DEFAULT_CLIENT_MENUS,
-                "updated_at": now,
-                "updated_by": admin.get("email"),
-                "reset_at": now
-            }
-        },
-        upsert=True
+    if result.deleted_count > 0:
+        logger.info(f"Client {client_id} menus reset to default by {admin.get('email')}")
+        return {"success": True, "message": "Menus restaurados para padrão"}
+    else:
+        return {"success": True, "message": "Cliente já usa configuração padrão"}
+
+
+@router.get("/my-menus")
+async def get_my_menus(user_id: str = Depends(get_current_user_id)):
+    """Get current user's menu permissions"""
+    # Check if user has custom menu settings
+    settings = await db.client_menu_settings.find_one(
+        {"user_id": user_id},
+        {"_id": 0}
     )
     
-    logger.info(f"Client menus reset to default by {admin.get('email')}")
-    
-    return {"success": True, "message": "Menus restaurados para configuração padrão"}
+    if settings:
+        return {"menus": settings.get("menus", []), "is_custom": True}
+    else:
+        return {"menus": DEFAULT_CLIENT_MENUS, "is_custom": False}

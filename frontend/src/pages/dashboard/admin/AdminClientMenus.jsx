@@ -4,496 +4,383 @@ import { useAuth } from '../../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { Switch } from '../../../components/ui/switch';
+import { Checkbox } from '../../../components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from '../../../components/ui/dialog';
 import { 
   Menu,
-  LayoutDashboard,
-  Wallet,
-  Bitcoin,
-  Banknote,
-  History,
-  TrendingUp,
-  PieChart,
-  Shield,
-  UserCircle,
-  User,
-  Landmark,
-  UserCheck,
-  HelpCircle,
-  ArrowDownUp,
-  ArrowUpToLine,
-  ArrowDownToLine,
-  Send,
-  Save,
+  Users,
+  Edit,
   RotateCcw,
-  ChevronDown,
-  ChevronRight,
   CheckCircle,
   XCircle,
+  LayoutDashboard,
+  TrendingUp,
+  Shield,
+  UserCircle,
+  Briefcase,
+  Save,
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Icon mapping
-const iconMap = {
-  LayoutDashboard,
-  Wallet,
-  Bitcoin,
-  Banknote,
-  History,
-  TrendingUp,
-  PieChart,
-  Shield,
-  UserCircle,
-  User,
-  Landmark,
-  UserCheck,
-  HelpCircle,
-  ArrowDownUp,
-  ArrowUpToLine,
-  ArrowDownToLine,
-  Send,
-  Menu
+// Menu icons mapping
+const menuIcons = {
+  portfolio: LayoutDashboard,
+  investimentos: TrendingUp,
+  transparencia: Shield,
+  perfil: UserCircle,
+  otc_trading: Briefcase,
 };
 
-const getIcon = (iconName) => {
-  return iconMap[iconName] || Menu;
+// Menu colors mapping
+const menuColors = {
+  portfolio: 'bg-blue-900/30 text-blue-400 border-blue-800/30',
+  investimentos: 'bg-green-900/30 text-green-400 border-green-800/30',
+  transparencia: 'bg-purple-900/30 text-purple-400 border-purple-800/30',
+  perfil: 'bg-orange-900/30 text-orange-400 border-orange-800/30',
+  otc_trading: 'bg-amber-900/30 text-amber-400 border-amber-800/30',
 };
+
+// Available menus for clients
+const AVAILABLE_MENUS = [
+  { value: 'portfolio', label: 'Portefólio' },
+  { value: 'investimentos', label: 'Investimentos' },
+  { value: 'transparencia', label: 'Transparência' },
+  { value: 'perfil', label: 'Perfil' },
+  { value: 'otc_trading', label: 'OTC Trading' },
+];
 
 const AdminClientMenus = () => {
   const { token } = useAuth();
-  const [menus, setMenus] = useState({});
+  const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editMenus, setEditMenus] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState({});
-  const [expandedSubmenus, setExpandedSubmenus] = useState({});
-  const [showResetDialog, setShowResetDialog] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [updatedBy, setUpdatedBy] = useState(null);
+  const [activeTab, setActiveTab] = useState('active');
 
   useEffect(() => {
-    fetchMenuConfig();
+    fetchClients();
   }, [token]);
 
-  const fetchMenuConfig = async () => {
+  const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/client-menus/config`, {
+      const response = await axios.get(`${API_URL}/api/client-menus/clients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMenus(response.data.menus || {});
-      setLastUpdated(response.data.updated_at);
-      setUpdatedBy(response.data.updated_by);
-      
-      // Expand all menus by default
-      const expanded = {};
-      Object.keys(response.data.menus || {}).forEach(key => {
-        expanded[key] = true;
-      });
-      setExpandedMenus(expanded);
+      setClients(response.data || []);
     } catch (err) {
-      console.error('Failed to fetch menu config:', err);
-      toast.error('Erro ao carregar configuração de menus');
+      console.error('Failed to fetch clients:', err);
+      toast.error('Erro ao carregar clientes');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMenu = (menuId, enabled) => {
-    setMenus(prev => ({
-      ...prev,
-      [menuId]: {
-        ...prev[menuId],
-        enabled
-      }
-    }));
-    setHasChanges(true);
+  const openEditModal = (client) => {
+    setSelectedClient(client);
+    // If client has custom menus, use them; otherwise use all menus as default
+    setEditMenus(client.custom_menus || AVAILABLE_MENUS.map(m => m.value));
+    setShowEditModal(true);
   };
 
-  const toggleSubmenu = (menuId, submenuId, enabled) => {
-    setMenus(prev => ({
-      ...prev,
-      [menuId]: {
-        ...prev[menuId],
-        submenus: prev[menuId].submenus?.map(sub =>
-          sub.id === submenuId ? { ...sub, enabled } : sub
-        )
-      }
-    }));
-    setHasChanges(true);
-  };
-
-  const toggleItem = (menuId, itemId, enabled, submenuId = null) => {
-    setMenus(prev => {
-      if (submenuId) {
-        // Item is inside a submenu
-        return {
-          ...prev,
-          [menuId]: {
-            ...prev[menuId],
-            submenus: prev[menuId].submenus?.map(sub =>
-              sub.id === submenuId
-                ? {
-                    ...sub,
-                    items: sub.items?.map(item =>
-                      item.id === itemId ? { ...item, enabled } : item
-                    )
-                  }
-                : sub
-            )
-          }
-        };
+  const toggleMenu = (menuValue) => {
+    setEditMenus(prev => {
+      if (prev.includes(menuValue)) {
+        return prev.filter(m => m !== menuValue);
       } else {
-        // Item is directly in the menu
-        return {
-          ...prev,
-          [menuId]: {
-            ...prev[menuId],
-            items: prev[menuId].items?.map(item =>
-              item.id === itemId ? { ...item, enabled } : item
-            )
-          }
-        };
+        return [...prev, menuValue];
       }
     });
-    setHasChanges(true);
   };
 
-  const handleSave = async () => {
+  const saveMenuPermissions = async () => {
+    if (!selectedClient) return;
     setSaving(true);
+
     try {
       await axios.put(
-        `${API_URL}/api/client-menus/config`,
-        menus,
+        `${API_URL}/api/client-menus/client/${selectedClient.id}`,
+        { menus: editMenus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Configuração de menus guardada com sucesso!');
-      setHasChanges(false);
-      fetchMenuConfig();
+      toast.success('Menus atualizados com sucesso');
+      setShowEditModal(false);
+      fetchClients();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao guardar configuração');
+      toast.error(err.response?.data?.detail || 'Erro ao atualizar menus');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    setSaving(true);
+  const resetClientMenus = async (clientId) => {
     try {
-      await axios.post(
-        `${API_URL}/api/client-menus/reset`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Menus restaurados para configuração padrão!');
-      setShowResetDialog(false);
-      setHasChanges(false);
-      fetchMenuConfig();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao restaurar menus');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggleExpandMenu = (menuId) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuId]: !prev[menuId]
-    }));
-  };
-
-  const toggleExpandSubmenu = (submenuId) => {
-    setExpandedSubmenus(prev => ({
-      ...prev,
-      [submenuId]: !prev[submenuId]
-    }));
-  };
-
-  const countEnabledItems = (menu) => {
-    let total = 0;
-    let enabled = 0;
-    
-    if (menu.items) {
-      total += menu.items.length;
-      enabled += menu.items.filter(i => i.enabled !== false).length;
-    }
-    
-    if (menu.submenus) {
-      menu.submenus.forEach(sub => {
-        if (sub.items) {
-          total += sub.items.length;
-          enabled += sub.items.filter(i => i.enabled !== false).length;
-        }
-        if (sub.path) {
-          total += 1;
-          if (sub.enabled !== false) enabled += 1;
-        }
+      await axios.delete(`${API_URL}/api/client-menus/client/${clientId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      toast.success('Menus restaurados para padrão');
+      fetchClients();
+    } catch (err) {
+      toast.error('Erro ao restaurar menus');
     }
-    
-    return { total, enabled };
   };
+
+  const getTierBadge = (tier) => {
+    const tierConfig = {
+      standard: { label: 'Standard', className: 'bg-zinc-800 text-zinc-300 border-zinc-700' },
+      premium: { label: 'Premium', className: 'bg-gold-900/30 text-gold-400 border-gold-800/30' },
+      vip: { label: 'VIP', className: 'bg-purple-900/30 text-purple-400 border-purple-800/30' },
+    };
+    const config = tierConfig[tier] || tierConfig.standard;
+    return <Badge className={`${config.className} border`}>{config.label}</Badge>;
+  };
+
+  const MenuBadge = ({ menu }) => {
+    const Icon = menuIcons[menu] || Menu;
+    const colorClass = menuColors[menu] || 'bg-gray-900/30 text-gray-400 border-gray-800/30';
+    const menuInfo = AVAILABLE_MENUS.find(m => m.value === menu);
+    
+    return (
+      <Badge className={`${colorClass} border flex items-center gap-1`}>
+        <Icon size={12} />
+        {menuInfo?.label || menu}
+      </Badge>
+    );
+  };
+
+  const activeClients = clients.filter(c => c.is_active !== false);
+  const inactiveClients = clients.filter(c => c.is_active === false);
+  const displayedClients = activeTab === 'active' ? activeClients : inactiveClients;
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-gold-400" size={48} />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-gold-400" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6" data-testid="admin-client-menus">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Menu className="text-gold-400" />
-            Menus de Clientes
-          </h1>
-          <p className="text-gray-400 mt-1">
-            Configure quais menus e funcionalidades estão disponíveis para os clientes
-          </p>
-          {lastUpdated && (
-            <p className="text-xs text-gray-500 mt-2">
-              Última atualização: {new Date(lastUpdated).toLocaleString('pt-PT')} por {updatedBy}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowResetDialog(true)}
-            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-            disabled={saving}
-          >
-            <RotateCcw size={16} className="mr-2" />
-            Restaurar Padrão
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-            className="bg-gold-500 hover:bg-gold-400 text-black"
-          >
-            {saving ? (
-              <Loader2 className="animate-spin mr-2" size={16} />
-            ) : (
-              <Save size={16} className="mr-2" />
-            )}
-            Guardar Alterações
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-light text-white flex items-center gap-3">
+          <Menu className="text-gold-400" />
+          Menus de Clientes
+        </h1>
+        <p className="text-gray-400 mt-1">
+          Configure o acesso de cada cliente aos diferentes menus da plataforma
+        </p>
       </div>
 
-      {hasChanges && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-          <span className="text-yellow-400 text-sm">Tem alterações por guardar</span>
-        </div>
-      )}
+      {/* Menus Legend */}
+      <Card className="bg-zinc-900/30 border-gold-800/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-gray-400">Menus Disponíveis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_MENUS.map(menu => (
+              <MenuBadge key={menu.value} menu={menu.value} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Menu Cards */}
-      <div className="space-y-4">
-        {Object.entries(menus).map(([menuId, menu]) => {
-          const Icon = getIcon(menu.icon);
-          const isExpanded = expandedMenus[menuId];
-          const counts = countEnabledItems(menu);
-          const menuEnabled = menu.enabled !== false;
-          
-          return (
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gold-800/20 pb-2">
+        <Button
+          variant={activeTab === 'active' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('active')}
+          className={activeTab === 'active' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}
+        >
+          <CheckCircle size={16} className="mr-2" />
+          Ativos ({activeClients.length})
+        </Button>
+        <Button
+          variant={activeTab === 'inactive' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('inactive')}
+          className={activeTab === 'inactive' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}
+        >
+          <XCircle size={16} className="mr-2" />
+          Inativos ({inactiveClients.length})
+        </Button>
+      </div>
+
+      {/* Clients List */}
+      <div className="space-y-3">
+        {displayedClients.length > 0 ? (
+          displayedClients.map((client) => (
             <Card 
-              key={menuId} 
-              className={`border transition-all ${
-                menuEnabled 
-                  ? 'bg-zinc-900/50 border-gold-800/20' 
-                  : 'bg-zinc-950/50 border-zinc-800/30 opacity-60'
-              }`}
+              key={client.id} 
+              className={`border ${client.is_active !== false
+                ? 'bg-zinc-900/50 border-gold-800/20' 
+                : 'bg-zinc-950/50 border-red-900/20 opacity-60'}`}
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div 
-                    className="flex items-center gap-3 cursor-pointer flex-1"
-                    onClick={() => toggleExpandMenu(menuId)}
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="text-gray-400" size={20} />
-                    ) : (
-                      <ChevronRight className="text-gray-400" size={20} />
-                    )}
-                    <div className="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center">
-                      <Icon className="text-gold-400" size={20} />
+              <CardContent className="p-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  {/* Client Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gold-500/20 flex items-center justify-center">
+                      <span className="text-gold-400 font-bold">
+                        {client.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
                     </div>
                     <div>
-                      <CardTitle className="text-white text-lg">{menu.label}</CardTitle>
-                      <p className="text-xs text-gray-500">
-                        {counts.enabled}/{counts.total} itens ativos
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-medium">{client.name}</p>
+                        {client.has_custom_menus && (
+                          <Badge className="bg-orange-900/30 text-orange-400 text-xs border border-orange-800/30">
+                            Personalizado
+                          </Badge>
+                        )}
+                        {client.is_active === false && (
+                          <Badge className="bg-red-900/30 text-red-400 text-xs">Inativo</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-400">{client.email}</p>
+                      <div className="mt-1">
+                        {getTierBadge(client.membership_level || client.tier)}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge className={menuEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                      {menuEnabled ? <CheckCircle size={12} className="mr-1" /> : <XCircle size={12} className="mr-1" />}
-                      {menuEnabled ? 'Ativo' : 'Desativado'}
-                    </Badge>
-                    <Switch
-                      checked={menuEnabled}
-                      onCheckedChange={(checked) => toggleMenu(menuId, checked)}
-                    />
+
+                  {/* Menus Access */}
+                  <div className="flex-1 lg:px-4">
+                    <p className="text-xs text-gray-500 mb-2">Acesso aos Menus:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(client.effective_menus || AVAILABLE_MENUS.map(m => m.value)).map(menu => (
+                        <MenuBadge key={menu} menu={menu} />
+                      ))}
+                      {(!client.effective_menus || client.effective_menus.length === 0) && (
+                        <span className="text-gray-500 text-sm">Sem acesso</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => openEditModal(client)}
+                      size="sm"
+                      variant="outline"
+                      className="border-gold-800/30 text-gold-400 hover:bg-gold-900/30"
+                    >
+                      <Edit size={14} className="mr-1" />
+                      Editar
+                    </Button>
+                    {client.has_custom_menus && (
+                      <Button
+                        onClick={() => resetClientMenus(client.id)}
+                        size="sm"
+                        variant="outline"
+                        className="border-zinc-700 text-gray-400 hover:bg-zinc-800"
+                        title="Restaurar menus padrão"
+                      >
+                        <RotateCcw size={14} />
+                      </Button>
+                    )}
                   </div>
                 </div>
-              </CardHeader>
-              
-              {isExpanded && (
-                <CardContent className="pt-0">
-                  <div className="border-t border-zinc-800 pt-4 space-y-3">
-                    {/* Direct items */}
-                    {menu.items?.map(item => {
-                      const ItemIcon = getIcon(item.icon);
-                      const itemEnabled = item.enabled !== false && menuEnabled;
-                      
-                      return (
-                        <div 
-                          key={item.id}
-                          className={`flex items-center justify-between p-3 rounded-lg ${
-                            itemEnabled ? 'bg-zinc-800/50' : 'bg-zinc-900/30 opacity-50'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <ItemIcon className={itemEnabled ? 'text-gold-400' : 'text-gray-600'} size={18} />
-                            <div>
-                              <p className={itemEnabled ? 'text-white' : 'text-gray-500'}>{item.label}</p>
-                              <p className="text-xs text-gray-600">{item.path}</p>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={item.enabled !== false}
-                            onCheckedChange={(checked) => toggleItem(menuId, item.id, checked)}
-                            disabled={!menuEnabled}
-                          />
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Submenus */}
-                    {menu.submenus?.map(submenu => {
-                      const SubIcon = getIcon(submenu.icon);
-                      const submenuEnabled = submenu.enabled !== false && menuEnabled;
-                      const isSubExpanded = expandedSubmenus[submenu.id];
-                      
-                      return (
-                        <div key={submenu.id} className="space-y-2">
-                          <div 
-                            className={`flex items-center justify-between p-3 rounded-lg ${
-                              submenuEnabled ? 'bg-zinc-800/30' : 'bg-zinc-900/30 opacity-50'
-                            }`}
-                          >
-                            <div 
-                              className="flex items-center gap-3 cursor-pointer flex-1"
-                              onClick={() => toggleExpandSubmenu(submenu.id)}
-                            >
-                              {submenu.items ? (
-                                isSubExpanded ? (
-                                  <ChevronDown className="text-gray-500" size={16} />
-                                ) : (
-                                  <ChevronRight className="text-gray-500" size={16} />
-                                )
-                              ) : (
-                                <div className="w-4" />
-                              )}
-                              <SubIcon className={submenuEnabled ? 'text-gold-400' : 'text-gray-600'} size={18} />
-                              <div>
-                                <p className={submenuEnabled ? 'text-white' : 'text-gray-500'}>{submenu.label}</p>
-                                {submenu.path && (
-                                  <p className="text-xs text-gray-600">{submenu.path}</p>
-                                )}
-                              </div>
-                            </div>
-                            <Switch
-                              checked={submenu.enabled !== false}
-                              onCheckedChange={(checked) => toggleSubmenu(menuId, submenu.id, checked)}
-                              disabled={!menuEnabled}
-                            />
-                          </div>
-                          
-                          {/* Submenu items */}
-                          {isSubExpanded && submenu.items && (
-                            <div className="ml-8 space-y-2">
-                              {submenu.items.map(item => {
-                                const ItemIcon = getIcon(item.icon);
-                                const itemEnabled = item.enabled !== false && submenuEnabled;
-                                
-                                return (
-                                  <div 
-                                    key={item.id}
-                                    className={`flex items-center justify-between p-2 rounded-lg ${
-                                      itemEnabled ? 'bg-zinc-800/50' : 'bg-zinc-900/30 opacity-50'
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <ItemIcon className={itemEnabled ? 'text-gray-400' : 'text-gray-600'} size={16} />
-                                      <div>
-                                        <p className={`text-sm ${itemEnabled ? 'text-white' : 'text-gray-500'}`}>{item.label}</p>
-                                        <p className="text-xs text-gray-600">{item.path}</p>
-                                      </div>
-                                    </div>
-                                    <Switch
-                                      checked={item.enabled !== false}
-                                      onCheckedChange={(checked) => toggleItem(menuId, item.id, checked, submenu.id)}
-                                      disabled={!submenuEnabled}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              )}
+              </CardContent>
             </Card>
-          );
-        })}
+          ))
+        ) : (
+          <Card className="bg-zinc-900/50 border-gold-800/20">
+            <CardContent className="p-12 text-center">
+              <Users className="mx-auto mb-4 text-gray-500" size={48} />
+              <h3 className="text-xl text-white mb-2">
+                {activeTab === 'active' ? 'Sem Clientes Ativos' : 'Sem Clientes Inativos'}
+              </h3>
+              <p className="text-gray-400">
+                {activeTab === 'active' 
+                  ? 'Não existem clientes ativos no sistema.' 
+                  : 'Não existem clientes inativos.'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Reset Confirmation Dialog */}
-      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30">
+      {/* Edit Menus Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-white">Restaurar Menus</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Tem certeza que deseja restaurar os menus para a configuração padrão? 
-              Todas as alterações personalizadas serão perdidas.
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Menu className="text-gold-400" size={20} />
+              Editar Menus - {selectedClient?.name}
+            </DialogTitle>
           </DialogHeader>
-          <DialogFooter className="gap-2">
+
+          <div className="py-4">
+            <p className="text-sm text-gray-400 mb-4">
+              Selecione os menus que este cliente pode acessar.
+              Estas permissões personalizam o acesso padrão.
+            </p>
+
+            <div className="space-y-3">
+              {AVAILABLE_MENUS.map(menu => {
+                const Icon = menuIcons[menu.value] || Menu;
+                const isChecked = editMenus.includes(menu.value);
+                
+                return (
+                  <div 
+                    key={menu.value}
+                    onClick={() => toggleMenu(menu.value)}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                      isChecked 
+                        ? 'bg-gold-900/20 border border-gold-500/30' 
+                        : 'bg-zinc-800/50 border border-zinc-700/50 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <Checkbox 
+                      checked={isChecked}
+                      onCheckedChange={() => toggleMenu(menu.value)}
+                      className="data-[state=checked]:bg-gold-500 data-[state=checked]:border-gold-500"
+                    />
+                    <Icon size={20} className={isChecked ? 'text-gold-400' : 'text-gray-500'} />
+                    <div className="flex-1">
+                      <p className={`font-medium ${isChecked ? 'text-white' : 'text-gray-400'}`}>
+                        {menu.label}
+                      </p>
+                    </div>
+                    {isChecked && <CheckCircle size={16} className="text-gold-400" />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowResetDialog(false)}
-              className="border-zinc-700"
+              onClick={() => setShowEditModal(false)}
+              className="border-gold-800/30"
             >
               Cancelar
             </Button>
             <Button
-              onClick={handleReset}
+              onClick={saveMenuPermissions}
               disabled={saving}
-              className="bg-red-600 hover:bg-red-500 text-white"
+              className="bg-gold-500 hover:bg-gold-400 text-black"
             >
-              {saving ? <Loader2 className="animate-spin mr-2" size={16} /> : <RotateCcw size={16} className="mr-2" />}
-              Restaurar
+              {saving ? (
+                <Loader2 className="animate-spin mr-2" size={16} />
+              ) : (
+                <Save size={16} className="mr-2" />
+              )}
+              Guardar Menus
             </Button>
           </DialogFooter>
         </DialogContent>
