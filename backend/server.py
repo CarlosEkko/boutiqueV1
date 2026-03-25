@@ -56,6 +56,7 @@ from routes.referrals import router as referrals_router, set_db as set_referrals
 from routes.otc import router as otc_router, set_db as set_otc_db
 from routes.bank_accounts import router as bank_accounts_router, set_db as set_bank_accounts_db
 from routes.company_bank_accounts import router as company_bank_accounts_router, set_db as set_company_bank_accounts_db
+from routes.client_menus import router as client_menus_router, set_db as set_client_menus_db
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -71,6 +72,7 @@ set_referrals_db(db)
 set_otc_db(db)
 set_bank_accounts_db(db)
 set_company_bank_accounts_db(db)
+set_client_menus_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -88,6 +90,7 @@ api_router.include_router(referrals_router)
 api_router.include_router(otc_router)
 api_router.include_router(bank_accounts_router)
 api_router.include_router(company_bank_accounts_router)
+api_router.include_router(client_menus_router)
 
 
 # Define Models

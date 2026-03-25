@@ -209,6 +209,7 @@ DEPARTMENT_MENUS = {
         "icon": "Settings2",
         "items": [
             {"path": "/dashboard/admin/permissions", "label": "Permissões", "icon": "Lock"},
+            {"path": "/dashboard/admin/client-menus", "label": "Menus de Clientes", "icon": "Menu"},
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},

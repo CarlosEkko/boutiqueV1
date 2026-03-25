@@ -37,7 +37,8 @@ import {
   AdminPipeline,
   AdminSettings,
   AdminReferrals,
-  AdminAdmissionFees
+  AdminAdmissionFees,
+  AdminClientMenus
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -184,6 +185,7 @@ function AppRoutes() {
         <Route path="admin/settings" element={<AdminSettings />} />
         <Route path="admin/referrals" element={<AdminReferrals />} />
         <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
+        <Route path="admin/client-menus" element={<AdminClientMenus />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         
