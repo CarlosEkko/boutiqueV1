@@ -8,6 +8,13 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../components/ui/dialog';
+import {
   Shield,
   CreditCard,
   CheckCircle,
@@ -18,11 +25,55 @@ import {
   Smartphone,
   Lock,
   Copy,
-  Check
+  Check,
+  Bitcoin,
+  Landmark,
+  ArrowLeft,
+  QrCode,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Bank details for transfers
+const BANK_DETAILS = {
+  EUR: {
+    bank_name: 'KBEX Financial Services',
+    iban: 'PT50 0000 0000 0000 0000 0000 0',
+    swift: 'KBEXPTPL',
+    reference: 'ADM-{USER_ID}'
+  },
+  USD: {
+    bank_name: 'KBEX Financial Services',
+    account_number: '1234567890',
+    routing_number: '021000021',
+    swift: 'KBEXUSNY',
+    reference: 'ADM-{USER_ID}'
+  },
+  AED: {
+    bank_name: 'KBEX Financial Services MENA',
+    iban: 'AE12 3456 7890 1234 5678 901',
+    swift: 'KBEXAEAD',
+    reference: 'ADM-{USER_ID}'
+  },
+  BRL: {
+    bank_name: 'KBEX Brasil',
+    bank_code: '001',
+    agency: '0001',
+    account: '12345-6',
+    pix: 'pagamentos@kbex.io',
+    reference: 'ADM-{USER_ID}'
+  }
+};
+
+// Crypto addresses
+const CRYPTO_ADDRESSES = {
+  BTC: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
+  ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1',
+  USDT: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1', // ERC-20
+  USDC: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1'  // ERC-20
+};
 
 const OnboardingPage = () => {
   const { user, token, logout, refreshUser } = useAuth();
@@ -35,11 +86,17 @@ const OnboardingPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [hasShownToast, setHasShownToast] = useState(false);
   
+  // Payment gateway states
+  const [showPaymentGateway, setShowPaymentGateway] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(null); // 'crypto' or 'transfer'
+  const [selectedCrypto, setSelectedCrypto] = useState('BTC');
+  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState('');
+  
   // 2FA states
   const [twoFASecret, setTwoFASecret] = useState(null);
   const [twoFAQRCode, setTwoFAQRCode] = useState(null);
   const [verificationCode, setVerificationCode] = useState('');
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -60,36 +117,30 @@ const OnboardingPage = () => {
       // If fee is paid, check 2FA status
       if (feeResponse.data.paid) {
         if (user.two_factor_enabled) {
-          // Both done, redirect to dashboard
           navigate('/dashboard');
         } else {
-          // Fee paid, need 2FA
           setStep(2);
         }
       } else if (feeResponse.data.pending_payment) {
-        // Has pending payment - show feedback only once
         if (!hasShownToast) {
-          toast.info('Pagamento ainda aguarda aprovação do administrador.');
+          toast.info('Pagamento aguarda aprovação do administrador.');
           setHasShownToast(true);
         }
         setStep(1);
       } else if (!feeResponse.data.required) {
-        // Fee not required, check 2FA
         if (user.two_factor_enabled) {
           navigate('/dashboard');
         } else {
           setStep(2);
         }
       } else {
-        // Fee required but not paid - show info only once
         if (!hasShownToast) {
-          toast.info('Selecione uma moeda e solicite o pagamento.');
+          toast.info('Selecione uma moeda e faça o pagamento.');
           setHasShownToast(true);
         }
       }
     } catch (err) {
       console.error('Failed to check onboarding status:', err);
-      // If error, let user proceed (may be internal user)
       if (user?.user_type === 'internal') {
         navigate('/dashboard');
       }
@@ -98,27 +149,49 @@ const OnboardingPage = () => {
     }
   };
 
-  const requestAdmissionPayment = async () => {
+  const openPaymentGateway = () => {
+    setShowPaymentGateway(true);
+    setPaymentMethod(null);
+  };
+
+  const confirmPayment = async () => {
     setSubmitting(true);
     try {
+      const paymentData = {
+        currency: selectedCurrency,
+        payment_method: paymentMethod,
+        crypto_currency: paymentMethod === 'crypto' ? selectedCrypto : null
+      };
+      
       const response = await axios.post(
         `${API_URL}/api/referrals/admission-fee/request`,
-        null,
+        paymentData,
         { 
           headers: { Authorization: `Bearer ${token}` },
           params: { currency: selectedCurrency }
         }
       );
       
-      toast.success('Solicitação de pagamento criada');
-      
-      // Refresh status
+      toast.success('Pagamento registado! Aguarde confirmação.');
+      setShowPaymentGateway(false);
+      setPaymentMethod(null);
       checkOnboardingStatus();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao solicitar pagamento');
+      toast.error(err.response?.data?.detail || 'Erro ao registar pagamento');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setCopiedField(field);
+    toast.success('Copiado!');
+    setTimeout(() => {
+      setCopied(false);
+      setCopiedField('');
+    }, 2000);
   };
 
   const setup2FA = async () => {
@@ -155,11 +228,8 @@ const OnboardingPage = () => {
       
       toast.success('2FA configurado com sucesso!');
       setStep(3);
-      
-      // Refresh user data to update is_onboarded status
       await refreshUser();
       
-      // Redirect after animation using full refresh
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 2000);
@@ -170,17 +240,7 @@ const OnboardingPage = () => {
     }
   };
 
-  const copySecret = () => {
-    if (twoFASecret) {
-      navigator.clipboard.writeText(twoFASecret);
-      setCopied(true);
-      toast.success('Chave copiada!');
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const skip2FA = async () => {
-    // Mark onboarding as complete without 2FA
     setSubmitting(true);
     try {
       await axios.post(
@@ -188,11 +248,8 @@ const OnboardingPage = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Refresh user data to update is_onboarded status
-      const updatedUser = await refreshUser();
-      console.log('User updated after skip2FA:', updatedUser?.is_onboarded);
+      await refreshUser();
       toast.info('2FA ignorado. Pode configurar mais tarde nas definições.');
-      // Use window.location for a full refresh to ensure state is updated
       window.location.href = '/dashboard';
     } catch (err) {
       console.error('Failed to complete onboarding:', err);
@@ -200,6 +257,20 @@ const OnboardingPage = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const getPaymentAmount = () => {
+    if (!admissionStatus?.amounts) return '0';
+    return admissionStatus.amounts[selectedCurrency]?.toLocaleString() || '0';
+  };
+
+  const getBankDetails = () => {
+    return BANK_DETAILS[selectedCurrency] || BANK_DETAILS.EUR;
+  };
+
+  const getReference = () => {
+    const details = getBankDetails();
+    return details.reference.replace('{USER_ID}', user?.id?.slice(0, 8).toUpperCase() || 'XXXXXX');
   };
 
   if (loading) {
@@ -281,7 +352,7 @@ const OnboardingPage = () => {
                     </div>
                   </div>
                   <p className="text-gray-400 text-sm mt-3">
-                    O seu pedido está a aguardar aprovação do administrador. 
+                    O seu pagamento está a aguardar confirmação do administrador. 
                     Será notificado quando for aprovado.
                   </p>
                   <Button 
@@ -324,16 +395,12 @@ const OnboardingPage = () => {
                   </div>
 
                   <Button 
-                    onClick={requestAdmissionPayment}
+                    onClick={openPaymentGateway}
                     disabled={submitting}
                     className="w-full bg-gold-500 hover:bg-gold-400 text-black font-medium py-6"
                   >
-                    {submitting ? (
-                      <RefreshCw className="animate-spin mr-2" size={20} />
-                    ) : (
-                      <CreditCard size={20} className="mr-2" />
-                    )}
-                    Solicitar Pagamento
+                    <CreditCard size={20} className="mr-2" />
+                    Fazer Pagamento
                   </Button>
                 </>
               )}
@@ -359,7 +426,6 @@ const OnboardingPage = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {!twoFASecret ? (
-                // Show setup button
                 <>
                   <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-3">
@@ -412,7 +478,6 @@ const OnboardingPage = () => {
                   </Button>
                 </>
               ) : (
-                // Show QR code and verification
                 <>
                   <div className="bg-white rounded-lg p-4 flex justify-center">
                     {twoFAQRCode && (
@@ -431,10 +496,10 @@ const OnboardingPage = () => {
                         {twoFASecret}
                       </code>
                       <button 
-                        onClick={copySecret}
+                        onClick={() => copyToClipboard(twoFASecret, 'secret')}
                         className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
                       >
-                        {copied ? (
+                        {copied && copiedField === 'secret' ? (
                           <Check className="text-green-400" size={18} />
                         ) : (
                           <Copy className="text-gray-400" size={18} />
@@ -511,6 +576,279 @@ const OnboardingPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Payment Gateway Modal */}
+      <Dialog open={showPaymentGateway} onOpenChange={setShowPaymentGateway}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <CreditCard className="text-gold-400" />
+              Pagamento - {getPaymentAmount()} {selectedCurrency}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Escolha o método de pagamento
+            </DialogDescription>
+          </DialogHeader>
+
+          {!paymentMethod ? (
+            // Payment method selection
+            <div className="space-y-4 py-4">
+              <button
+                onClick={() => setPaymentMethod('crypto')}
+                className="w-full p-4 bg-zinc-800/50 rounded-xl border border-zinc-700 hover:border-orange-500/50 hover:bg-orange-900/10 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
+                    <Bitcoin className="text-orange-400" size={28} />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-white font-medium text-lg">Criptomoeda</p>
+                    <p className="text-gray-400 text-sm">BTC, ETH, USDT, USDC</p>
+                  </div>
+                  <ArrowRight className="text-gray-400 group-hover:text-orange-400 transition-colors" size={20} />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setPaymentMethod('transfer')}
+                className="w-full p-4 bg-zinc-800/50 rounded-xl border border-zinc-700 hover:border-blue-500/50 hover:bg-blue-900/10 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                    <Landmark className="text-blue-400" size={28} />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-white font-medium text-lg">Transferência Bancária</p>
+                    <p className="text-gray-400 text-sm">SEPA, SWIFT, PIX</p>
+                  </div>
+                  <ArrowRight className="text-gray-400 group-hover:text-blue-400 transition-colors" size={20} />
+                </div>
+              </button>
+            </div>
+          ) : paymentMethod === 'crypto' ? (
+            // Crypto payment details
+            <div className="space-y-4 py-4">
+              <button
+                onClick={() => setPaymentMethod(null)}
+                className="flex items-center gap-2 text-gray-400 hover:text-white text-sm"
+              >
+                <ArrowLeft size={16} />
+                Voltar
+              </button>
+
+              <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+                <p className="text-orange-400 text-sm flex items-center gap-2">
+                  <AlertTriangle size={16} />
+                  Envie apenas para a rede correta. Fundos enviados para a rede errada serão perdidos.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-400">Selecione a Criptomoeda</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {Object.keys(CRYPTO_ADDRESSES).map((crypto) => (
+                    <button
+                      key={crypto}
+                      onClick={() => setSelectedCrypto(crypto)}
+                      className={`p-3 rounded-lg text-center transition-colors ${
+                        selectedCrypto === crypto
+                          ? 'bg-orange-500/20 border border-orange-500 text-orange-400'
+                          : 'bg-zinc-800 border border-zinc-700 text-gray-300 hover:border-zinc-600'
+                      }`}
+                    >
+                      {crypto}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Endereço {selectedCrypto}</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-zinc-900 p-2 rounded text-orange-400 text-xs font-mono break-all">
+                      {CRYPTO_ADDRESSES[selectedCrypto]}
+                    </code>
+                    <button 
+                      onClick={() => copyToClipboard(CRYPTO_ADDRESSES[selectedCrypto], 'address')}
+                      className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                    >
+                      {copied && copiedField === 'address' ? (
+                        <Check className="text-green-400" size={16} />
+                      ) : (
+                        <Copy className="text-gray-400" size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Rede</p>
+                  <p className="text-white">
+                    {selectedCrypto === 'BTC' ? 'Bitcoin (BTC)' : 'Ethereum (ERC-20)'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Valor a enviar (aprox.)</p>
+                  <p className="text-white text-lg font-medium">
+                    {getPaymentAmount()} {selectedCurrency} em {selectedCrypto}
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={confirmPayment}
+                disabled={submitting}
+                className="w-full bg-orange-500 hover:bg-orange-400 text-black font-medium py-6"
+              >
+                {submitting ? (
+                  <RefreshCw className="animate-spin mr-2" size={20} />
+                ) : (
+                  <CheckCircle size={20} className="mr-2" />
+                )}
+                Confirmar Pagamento Efetuado
+              </Button>
+
+              <p className="text-center text-gray-500 text-xs">
+                Após confirmação na blockchain, o pagamento será verificado automaticamente
+              </p>
+            </div>
+          ) : (
+            // Bank transfer details
+            <div className="space-y-4 py-4">
+              <button
+                onClick={() => setPaymentMethod(null)}
+                className="flex items-center gap-2 text-gray-400 hover:text-white text-sm"
+              >
+                <ArrowLeft size={16} />
+                Voltar
+              </button>
+
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                <p className="text-blue-400 text-sm">
+                  <strong>Importante:</strong> Use a referência indicada para identificarmos o seu pagamento.
+                </p>
+              </div>
+
+              <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs text-gray-500">Banco</p>
+                    <p className="text-white">{getBankDetails().bank_name}</p>
+                  </div>
+                </div>
+
+                {getBankDetails().iban && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">IBAN</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                        {getBankDetails().iban}
+                      </code>
+                      <button 
+                        onClick={() => copyToClipboard(getBankDetails().iban, 'iban')}
+                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                      >
+                        {copied && copiedField === 'iban' ? (
+                          <Check className="text-green-400" size={16} />
+                        ) : (
+                          <Copy className="text-gray-400" size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {getBankDetails().swift && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">SWIFT/BIC</p>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-zinc-900 p-2 rounded text-blue-400 text-sm font-mono">
+                        {getBankDetails().swift}
+                      </code>
+                      <button 
+                        onClick={() => copyToClipboard(getBankDetails().swift, 'swift')}
+                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                      >
+                        {copied && copiedField === 'swift' ? (
+                          <Check className="text-green-400" size={16} />
+                        ) : (
+                          <Copy className="text-gray-400" size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {getBankDetails().pix && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Chave PIX</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 bg-zinc-900 p-2 rounded text-emerald-400 text-sm font-mono">
+                        {getBankDetails().pix}
+                      </code>
+                      <button 
+                        onClick={() => copyToClipboard(getBankDetails().pix, 'pix')}
+                        className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                      >
+                        {copied && copiedField === 'pix' ? (
+                          <Check className="text-green-400" size={16} />
+                        ) : (
+                          <Copy className="text-gray-400" size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-zinc-700">
+                  <p className="text-xs text-gray-500 mb-1">Referência (OBRIGATÓRIO)</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-gold-500/10 border border-gold-500/30 p-2 rounded text-gold-400 text-sm font-mono font-bold">
+                      {getReference()}
+                    </code>
+                    <button 
+                      onClick={() => copyToClipboard(getReference(), 'reference')}
+                      className="p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors"
+                    >
+                      {copied && copiedField === 'reference' ? (
+                        <Check className="text-green-400" size={16} />
+                      ) : (
+                        <Copy className="text-gray-400" size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-zinc-700">
+                  <p className="text-xs text-gray-500 mb-1">Montante</p>
+                  <p className="text-white text-xl font-bold">
+                    {getPaymentAmount()} {selectedCurrency}
+                  </p>
+                </div>
+              </div>
+
+              <Button 
+                onClick={confirmPayment}
+                disabled={submitting}
+                className="w-full bg-blue-500 hover:bg-blue-400 text-white font-medium py-6"
+              >
+                {submitting ? (
+                  <RefreshCw className="animate-spin mr-2" size={20} />
+                ) : (
+                  <CheckCircle size={20} className="mr-2" />
+                )}
+                Confirmar Transferência Efetuada
+              </Button>
+
+              <p className="text-center text-gray-500 text-xs">
+                O pagamento será verificado em 1-2 dias úteis
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

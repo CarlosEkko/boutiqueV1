@@ -1,12 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
-import jwt
-import os
+from utils.auth import get_current_user_id
 
-router = APIRouter(prefix="/api/bank-accounts", tags=["bank-accounts"])
+router = APIRouter(prefix="/bank-accounts", tags=["bank-accounts"])
 
 # We'll set the db reference from server.py
 db = None
@@ -14,17 +13,6 @@ db = None
 def set_db(database):
     global db
     db = database
-
-async def get_current_user_id(authorization: str = Header(...)):
-    """Extract user ID from JWT token"""
-    try:
-        token = authorization.replace("Bearer ", "")
-        payload = jwt.decode(token, os.environ.get('JWT_SECRET', 'your-secret-key'), algorithms=["HS256"])
-        return payload.get("user_id")
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
 
 class BankAccountCreate(BaseModel):
     account_holder: str
