@@ -212,7 +212,6 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
-            {"path": "/dashboard/admin/admission-fees", "label": "Taxas de Admissão", "icon": "CreditCard"},
             {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]
     },
@@ -221,6 +220,7 @@ DEPARTMENT_MENUS = {
         "icon": "Landmark",
         "items": [
             {"path": "/dashboard/admin/orders", "label": "Ordens de Trading", "icon": "Receipt"},
+            {"path": "/dashboard/admin/admission-fees", "label": "Taxas de Admissão", "icon": "CreditCard"},
             {"path": "/dashboard/admin/fiat-deposits", "label": "Depósitos Fiat", "icon": "ArrowUpToLine"},
             {"path": "/dashboard/admin/fiat-withdrawals", "label": "Levantamentos Fiat", "icon": "ArrowDownToLine"},
             {"path": "/dashboard/admin/crypto-withdrawals", "label": "Levantamentos Crypto", "icon": "Bitcoin"},
