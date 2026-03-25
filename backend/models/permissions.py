@@ -21,8 +21,16 @@ class StaffRole(str, Enum):
 
 class Department(str, Enum):
     """Menu departments/areas"""
-    PORTFOLIO = "portfolio"
+    # Client menus
+    ATIVOS = "ativos"
+    CONTAS_SEGURANCA = "contas_seguranca"
+    OPERACOES_CRYPTO = "operacoes_crypto"
+    OPERACOES_FIAT = "operacoes_fiat"
+    HISTORICO = "historico"
+    INVESTIMENTOS = "investimentos"
+    CONFORMIDADE = "conformidade"
     ACCOUNT = "account"
+    # Admin/Staff menus
     ADMIN = "admin"
     MANAGEMENT = "management"
     FINANCE = "finance"
@@ -34,7 +42,13 @@ class Department(str, Enum):
 # Role to Department access mapping
 ROLE_PERMISSIONS = {
     StaffRole.ADMIN: [
-        Department.PORTFOLIO, 
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.ADMIN, 
         Department.MANAGEMENT, 
@@ -44,7 +58,13 @@ ROLE_PERMISSIONS = {
         Department.SUPPORT
     ],
     StaffRole.GLOBAL_MANAGER: [
-        Department.PORTFOLIO, 
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.ADMIN, 
         Department.MANAGEMENT, 
@@ -53,44 +73,92 @@ ROLE_PERMISSIONS = {
         Department.SUPPORT
     ],
     StaffRole.MANAGER: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.ADMIN,
         Department.CRM,
         Department.SUPPORT
     ],
     StaffRole.SALES_MANAGER: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.CRM
     ],
     StaffRole.SALES: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.CRM
     ],
     StaffRole.FINANCE_GENERAL: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.FINANCE_LOCAL: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.FINANCE: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.FINANCE
     ],
     StaffRole.SUPPORT_MANAGER: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.SUPPORT
     ],
     StaffRole.SUPPORT_AGENT: [
-        Department.PORTFOLIO,
+        Department.ATIVOS,
+        Department.CONTAS_SEGURANCA,
+        Department.OPERACOES_CRYPTO,
+        Department.OPERACOES_FIAT,
+        Department.HISTORICO,
+        Department.INVESTIMENTOS,
+        Department.CONFORMIDADE,
         Department.ACCOUNT,
         Department.SUPPORT
     ],
@@ -99,22 +167,57 @@ ROLE_PERMISSIONS = {
 
 # Department menu items
 DEPARTMENT_MENUS = {
-    Department.PORTFOLIO: {
-        "label": "Portfolio",
+    Department.ATIVOS: {
+        "label": "Ativos",
         "icon": "LayoutDashboard",
         "items": [
             {"path": "/dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
+        ]
+    },
+    Department.CONTAS_SEGURANCA: {
+        "label": "Contas & Segurança",
+        "icon": "Shield",
+        "items": [
             {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
             {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
-            {"path": "/dashboard/crypto-transactions", "label": "Transações Crypto", "icon": "Activity"},
-            {"path": "/dashboard/crypto-deposit", "label": "Depósito Crypto", "icon": "Bitcoin"},
+        ]
+    },
+    Department.OPERACOES_CRYPTO: {
+        "label": "Operações Crypto",
+        "icon": "Bitcoin",
+        "items": [
+            {"path": "/dashboard/crypto-deposit", "label": "Depósito Crypto", "icon": "ArrowUpToLine"},
             {"path": "/dashboard/crypto-withdrawal", "label": "Levantamento Crypto", "icon": "Send"},
+        ]
+    },
+    Department.OPERACOES_FIAT: {
+        "label": "Operações Fiat",
+        "icon": "Banknote",
+        "items": [
             {"path": "/dashboard/fiat-deposit", "label": "Depósito Fiat", "icon": "ArrowUpToLine"},
             {"path": "/dashboard/fiat-withdrawal", "label": "Levantamento Fiat", "icon": "ArrowDownToLine"},
+        ]
+    },
+    Department.HISTORICO: {
+        "label": "Histórico e Movimentos",
+        "icon": "History",
+        "items": [
             {"path": "/dashboard/transactions", "label": "Transações", "icon": "History"},
+        ]
+    },
+    Department.INVESTIMENTOS: {
+        "label": "Investimentos & Performance",
+        "icon": "TrendingUp",
+        "items": [
             {"path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp"},
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
+        ]
+    },
+    Department.CONFORMIDADE: {
+        "label": "Conformidade & Transparência",
+        "icon": "FileCheck",
+        "items": [
             {"path": "/dashboard/transparency", "label": "Transparência", "icon": "Shield"},
         ]
     },

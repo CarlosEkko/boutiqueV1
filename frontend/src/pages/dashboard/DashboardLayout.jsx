@@ -41,7 +41,12 @@ import {
   Sliders,
   Receipt,
   GitBranch,
-  CreditCard
+  CreditCard,
+  Banknote,
+  FileCheck,
+  UserCircle,
+  Briefcase,
+  Activity
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -52,17 +57,30 @@ const iconMap = {
   LayoutDashboard, Wallet, History, TrendingUp, PieChart, Shield, Users, Gift,
   BarChart3, UserCheck, Globe, UserCog, Ticket, User, ArrowDownUp, DollarSign,
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
-  Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard
+  Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
+  Banknote, FileCheck, UserCircle, Briefcase, Activity
 };
 
 // Department icon and color mapping
 const departmentConfig = {
+  // New client menu structure
+  ativos: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
+  contas_seguranca: { icon: Shield, color: 'text-green-400', bgColor: 'bg-green-500/20' },
+  operacoes_crypto: { icon: Bitcoin, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
+  operacoes_fiat: { icon: Banknote, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
+  historico: { icon: History, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  investimentos: { icon: TrendingUp, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+  conformidade: { icon: FileCheck, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
+  account: { icon: UserCircle, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  otc_trading: { icon: Briefcase, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  // Admin/staff menus
   portfolio: { icon: LayoutDashboard, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   admin: { icon: Settings, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   management: { icon: Settings2, color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
   finance: { icon: Landmark, color: 'text-green-400', bgColor: 'bg-green-500/20' },
   crm: { icon: Users, color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
   support: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  otc_desk: { icon: Briefcase, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
 };
 
 const DashboardLayout = () => {
@@ -161,6 +179,25 @@ const DashboardLayout = () => {
     const interval = setInterval(fetchNotifications, 30000); // Every 30 seconds
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  // Auto-expand menu that contains current path
+  useEffect(() => {
+    if (menuStructure.length === 0) return;
+    
+    const currentPath = location.pathname;
+    const menuToExpand = menuStructure.find(menu => 
+      menu.items?.some(item => 
+        currentPath === item.path || currentPath.startsWith(item.path + '/')
+      )
+    );
+    
+    if (menuToExpand && !expandedMenus[menuToExpand.department]) {
+      setExpandedMenus(prev => ({
+        ...prev,
+        [menuToExpand.department]: true
+      }));
+    }
+  }, [location.pathname, menuStructure]);
 
   const toggleMenu = (department) => {
     setExpandedMenus(prev => ({

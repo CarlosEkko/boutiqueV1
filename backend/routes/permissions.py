@@ -84,14 +84,50 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     )
     is_otc_client = otc_client is not None
     
-    # Clients only see Portfolio, Account (and OTC if they are OTC clients)
+    # Clients see the new menu structure
     if not is_admin and user_type != "internal" and not internal_role:
         client_menus = [
             {
-                "department": "portfolio",
-                "label": "Portfolio",
+                "department": "ativos",
+                "label": "Ativos",
                 "icon": "LayoutDashboard",
-                "items": DEPARTMENT_MENUS[Department.PORTFOLIO]["items"]
+                "items": DEPARTMENT_MENUS[Department.ATIVOS]["items"]
+            },
+            {
+                "department": "contas_seguranca",
+                "label": "Contas & Segurança",
+                "icon": "Shield",
+                "items": DEPARTMENT_MENUS[Department.CONTAS_SEGURANCA]["items"]
+            },
+            {
+                "department": "operacoes_crypto",
+                "label": "Operações Crypto",
+                "icon": "Bitcoin",
+                "items": DEPARTMENT_MENUS[Department.OPERACOES_CRYPTO]["items"]
+            },
+            {
+                "department": "operacoes_fiat",
+                "label": "Operações Fiat",
+                "icon": "Banknote",
+                "items": DEPARTMENT_MENUS[Department.OPERACOES_FIAT]["items"]
+            },
+            {
+                "department": "historico",
+                "label": "Histórico e Movimentos",
+                "icon": "History",
+                "items": DEPARTMENT_MENUS[Department.HISTORICO]["items"]
+            },
+            {
+                "department": "investimentos",
+                "label": "Investimentos & Performance",
+                "icon": "TrendingUp",
+                "items": DEPARTMENT_MENUS[Department.INVESTIMENTOS]["items"]
+            },
+            {
+                "department": "conformidade",
+                "label": "Conformidade & Transparência",
+                "icon": "FileCheck",
+                "items": DEPARTMENT_MENUS[Department.CONFORMIDADE]["items"]
             },
             {
                 "department": "account",
