@@ -1078,6 +1078,36 @@ Perfil (Conta - Reorganized)
 **Status:** COMPLETED ✅
 
 
+## Unificação de Contas Bancárias da Empresa (March 25, 2026)
+
+**Problema Identificado:** Existiam 2 locais separados para gerir contas bancárias da empresa:
+1. `AdminTradingPage.jsx` - aba "Contas Bancárias" (usando `kbex_bank_accounts`)
+2. `AdminCompanyAccounts.jsx` (usando `company_bank_accounts`)
+
+**Solução Implementada:**
+- Unificado para usar APENAS `company_bank_accounts`
+- Removida a aba "Contas Bancárias" do AdminTradingPage
+- Um único local de gestão: **Financeiro → Contas da Empresa**
+
+**Alterações no Backend (`routes/trading.py`):**
+- Função `get_kbex_bank_account()` agora busca de `company_bank_accounts`
+- Endpoint `GET /api/trading/bank-details/{currency}` usa a collection unificada
+- Referência de depósito alterada para `DEP-{USER_ID}` (prefixo diferente de ADM-)
+
+**Alterações no Frontend (`AdminTradingPage.jsx`):**
+- Removida aba "Contas Bancárias"
+- Removidos estados: `kbexBankAccounts`, `editingBankAccount`, `newBankAccount`
+- Removidas funções: `fetchKbexBankAccounts`, `saveKbexBankAccount`, `deleteKbexBankAccount`
+
+**Diferenciação de Pagamentos por Referência:**
+| Tipo | Prefixo | Exemplo |
+|------|---------|---------|
+| Taxa de Admissão (Onboarding) | `ADM-` | ADM-8C4F2B1A |
+| Depósito Fiat (Trading) | `DEP` | DEPF3D9DF37 |
+
+**Status:** COMPLETED ✅
+
+
 ## Pending Issues & Backlog
 
 ### Issues
