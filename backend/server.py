@@ -54,6 +54,7 @@ from routes.permissions import router as permissions_router, set_db as set_permi
 from routes.crm import router as crm_router
 from routes.referrals import router as referrals_router, set_db as set_referrals_db
 from routes.otc import router as otc_router, set_db as set_otc_db
+from routes.bank_accounts import router as bank_accounts_router, set_db as set_bank_accounts_db
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -67,6 +68,7 @@ set_kb_db(db)
 set_permissions_db(db)
 set_referrals_db(db)
 set_otc_db(db)
+set_bank_accounts_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -82,6 +84,7 @@ api_router.include_router(permissions_router)
 api_router.include_router(crm_router)
 api_router.include_router(referrals_router)
 api_router.include_router(otc_router)
+api_router.include_router(bank_accounts_router)
 
 
 # Define Models

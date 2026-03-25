@@ -69,6 +69,8 @@ import ClientOTCPortal from "./pages/dashboard/ClientOTCPortal";
 import WhitelistPage from "./pages/dashboard/WhitelistPage";
 import CryptoTransactionsPage from "./pages/dashboard/CryptoTransactionsPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
+import SecurityPage from "./pages/dashboard/SecurityPage";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -140,6 +142,8 @@ function AppRoutes() {
         
         {/* Profile Route - inside dashboard layout */}
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="bank-accounts" element={<BankAccountsPage />} />
+        <Route path="security" element={<SecurityPage />} />
         
         {/* KYC Routes */}
         <Route path="kyc" element={<KYCStatus />} />

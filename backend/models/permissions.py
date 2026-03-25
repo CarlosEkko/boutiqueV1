@@ -184,6 +184,8 @@ DEPARTMENT_MENUS = {
         "icon": "UserCircle",
         "items": [
             {"path": "/dashboard/profile", "label": "Meu Perfil", "icon": "User"},
+            {"path": "/dashboard/bank-accounts", "label": "Dados Bancários", "icon": "Landmark"},
+            {"path": "/dashboard/security", "label": "Segurança", "icon": "Shield"},
             {"path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck"},
             {"path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle"},
         ]
