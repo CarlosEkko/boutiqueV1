@@ -112,7 +112,6 @@ function AppRoutes() {
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
       <Route path="/onboarding" element={
         <ProtectedRoute>
           <OnboardingPage />
@@ -136,6 +135,9 @@ function AppRoutes() {
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
+        
+        {/* Profile Route - inside dashboard layout */}
+        <Route path="profile" element={<ProfilePage />} />
         
         {/* KYC Routes */}
         <Route path="kyc" element={<KYCStatus />} />

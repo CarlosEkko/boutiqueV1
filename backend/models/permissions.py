@@ -180,10 +180,10 @@ DEPARTMENT_MENUS = {
         ]
     },
     Department.ACCOUNT: {
-        "label": "Conta",
+        "label": "Perfil",
         "icon": "UserCircle",
         "items": [
-            {"path": "/profile", "label": "Meu Perfil", "icon": "User"},
+            {"path": "/dashboard/profile", "label": "Meu Perfil", "icon": "User"},
             {"path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck"},
             {"path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle"},
         ]
