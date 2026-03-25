@@ -68,7 +68,7 @@ const AuthPage = () => {
       if (userData?.user_type === 'client' && !userData?.is_onboarded) {
         navigate('/onboarding');
       } else {
-        navigate('/profile');
+        navigate('/dashboard');
       }
     } catch (error) {
       const message = error.response?.data?.detail || 
