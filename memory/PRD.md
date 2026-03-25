@@ -981,3 +981,115 @@ Lead → Pre-Qualification → KYC/KYB → Approval → RFQ → Quote → Accept
 - Phase 3: Settlement & Invoicing (fiat/crypto settlement, invoice generation)
 - Phase 4: Dashboard & KPIs (advanced metrics, operator performance)
 
+
+## Dashboard Restructuring & Company Bank Accounts (March 25, 2026)
+
+**User Request:** Reorganize the client dashboard menu structure (3-levels deep), implement UI/UX improvements to the Profile section, create banking workflows (clients adding bank accounts and admins verifying them), and update the Onboarding Payment Gateway to support Crypto and Bank Transfers using dynamic company bank data configured by admins.
+
+### Dashboard Menu Structure (3-Level Deep)
+```
+Portefólio (Menu Principal)
+├── Ativos (Submenu - Level 2)
+│   ├── Dashboard (Item - Level 3)
+│   ├── Exchange
+│   ├── Carteiras
+│   └── Whitelist
+├── Operações Crypto (Submenu - Level 2)
+│   ├── Depósito Crypto (Item - Level 3)
+│   └── Levantamento Crypto
+├── Operações Fiat (Submenu - Level 2)
+│   ├── Depósito Fiat (Item - Level 3)
+│   └── Levantamento Fiat
+└── Transações (Item Direto - Level 2)
+
+Perfil (Conta - Reorganized)
+├── Meu Perfil - Basic user info
+├── Dados Bancários - User bank accounts management
+├── Segurança - 2FA settings, password change
+├── Verificação KYC
+└── Suporte
+```
+
+### Client Bank Accounts Module
+**Backend:** `/app/backend/routes/bank_accounts.py`
+- `GET /api/bank-accounts` - Get user's bank accounts
+- `POST /api/bank-accounts` - Add new bank account (status: pending)
+- `PUT /api/bank-accounts/{id}` - Update bank account
+- `DELETE /api/bank-accounts/{id}` - Delete bank account
+
+**Admin Verification:** `/app/backend/routes/bank_accounts.py`
+- `GET /api/admin/bank-accounts` - Get all pending bank accounts
+- `PUT /api/admin/bank-accounts/{id}/verify` - Approve/Reject bank account
+
+**Frontend:**
+- `BankAccountsPage.jsx` (`/dashboard/bank-accounts`) - User adds bank accounts
+- `AdminBankAccounts.jsx` (`/dashboard/admin/bank-accounts`) - Admin verifies accounts
+
+### Company Bank Accounts Module (Onboarding Payment Gateway)
+**Backend:** `/app/backend/routes/company_bank_accounts.py`
+- `GET /api/company-bank-accounts/public` - Get active accounts for payment (supports ?currency= filter)
+- `GET /api/company-bank-accounts/admin/all` - Get all accounts (admin only)
+- `POST /api/company-bank-accounts/admin` - Create new account
+- `PUT /api/company-bank-accounts/admin/{id}` - Update account
+- `DELETE /api/company-bank-accounts/admin/{id}` - Delete account
+
+**Frontend:**
+- `AdminCompanyAccounts.jsx` (`/dashboard/admin/company-accounts`) - Admin manages company bank accounts
+
+**Database Schema:**
+```javascript
+// company_bank_accounts collection
+{
+  id: string,
+  bank_name: string,
+  account_holder: string,
+  iban: string | null,
+  swift_bic: string | null,
+  account_number: string | null,
+  sort_code: string | null,
+  routing_number: string | null,
+  pix_key: string | null,  // For Brazil
+  country: string,
+  currency: string,  // EUR, USD, AED, BRL, etc.
+  is_active: boolean,
+  created_at: datetime,
+  updated_at: datetime
+}
+```
+
+### Onboarding Payment Gateway Integration
+**Updated:** `OnboardingPage.jsx`
+- Payment method selection: Crypto or Bank Transfer
+- Crypto: BTC, ETH, USDT, USDC with wallet addresses
+- Bank Transfer: 
+  - Fetches company accounts via `/api/company-bank-accounts/public`
+  - Filters accounts by selected currency (EUR, USD, AED, BRL)
+  - Shows account selection when multiple accounts exist
+  - Displays relevant fields: IBAN, SWIFT/BIC for EUR; PIX for BRL
+  - Copy buttons for all bank details
+  - Payment reference generated from user ID
+
+**Menu Location:** 
+- Financeiro > Contas de Clientes (AdminBankAccounts)
+- Financeiro > Contas da Empresa (AdminCompanyAccounts)
+
+**Testing:** 15/15 backend tests passed, all frontend features verified ✅
+
+**Status:** COMPLETED ✅
+
+
+## Pending Issues & Backlog
+
+### Issues
+1. **Safari Cursor Bug** (P2) - Recurring issue with cursor on Safari browser
+   - Needs investigation in `frontend/src/index.css` and layout components
+   - Requires user verification
+   
+2. **Fireblocks Integration** (P3) - Broken, waiting for new credentials
+
+### Upcoming Tasks
+- P1: OTC Desk - Phase 3 (Settlement & Invoicing)
+- P1: Populate Static Pages (Markets with CoinMarketCap, Trading with TradingView)
+- P2: OTC Desk - Phase 4 (Dashboard & KPIs)
+- P3: Whitelist functionality (waiting for requirements: IPs vs Crypto addresses vs Emails)
+
