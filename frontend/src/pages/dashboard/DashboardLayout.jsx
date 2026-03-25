@@ -201,13 +201,13 @@ const DashboardLayout = () => {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Auto-expand menu and submenu that contains current path
+  // Auto-expand menu that contains current path (but NOT submenus - they should be clicked)
   useEffect(() => {
     if (menuStructure.length === 0) return;
     
     const currentPath = location.pathname;
     
-    // Find which menu and submenu contains the current path
+    // Find which menu contains the current path - only expand the parent menu
     for (const menu of menuStructure) {
       // Check if menu has submenus (hierarchical structure like Portfolio)
       if (menu.submenus) {
@@ -217,14 +217,14 @@ const DashboardLayout = () => {
             setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
             return;
           }
-          // Check if any item in the submenu matches
+          // Check if any item in the submenu matches - only expand parent menu, not submenu
           if (submenu.items) {
             const matchingItem = submenu.items.find(item => 
               currentPath === item.path || currentPath.startsWith(item.path + '/')
             );
             if (matchingItem) {
               setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
-              setExpandedSubmenus(prev => ({ ...prev, [submenu.id]: true }));
+              // Don't auto-expand submenus - user must click to expand
               return;
             }
           }
