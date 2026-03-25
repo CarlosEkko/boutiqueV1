@@ -33,6 +33,7 @@ const OnboardingPage = () => {
   const [admissionStatus, setAdmissionStatus] = useState(null);
   const [selectedCurrency, setSelectedCurrency] = useState('EUR');
   const [submitting, setSubmitting] = useState(false);
+  const [hasShownToast, setHasShownToast] = useState(false);
   
   // 2FA states
   const [twoFASecret, setTwoFASecret] = useState(null);
@@ -58,7 +59,6 @@ const OnboardingPage = () => {
       
       // If fee is paid, check 2FA status
       if (feeResponse.data.paid) {
-        toast.success('Pagamento aprovado!');
         if (user.two_factor_enabled) {
           // Both done, redirect to dashboard
           navigate('/dashboard');
@@ -67,24 +67,28 @@ const OnboardingPage = () => {
           setStep(2);
         }
       } else if (feeResponse.data.pending_payment) {
-        // Has pending payment - show feedback
-        toast.info('Pagamento ainda aguarda aprovação do administrador.');
+        // Has pending payment - show feedback only once
+        if (!hasShownToast) {
+          toast.info('Pagamento ainda aguarda aprovação do administrador.');
+          setHasShownToast(true);
+        }
         setStep(1);
       } else if (!feeResponse.data.required) {
         // Fee not required, check 2FA
-        toast.success('Taxa não requerida!');
         if (user.two_factor_enabled) {
           navigate('/dashboard');
         } else {
           setStep(2);
         }
       } else {
-        // Fee required but not paid
-        toast.info('Selecione uma moeda e solicite o pagamento.');
+        // Fee required but not paid - show info only once
+        if (!hasShownToast) {
+          toast.info('Selecione uma moeda e solicite o pagamento.');
+          setHasShownToast(true);
+        }
       }
     } catch (err) {
       console.error('Failed to check onboarding status:', err);
-      toast.error('Erro ao verificar estado. Tente novamente.');
       // If error, let user proceed (may be internal user)
       if (user?.user_type === 'internal') {
         navigate('/dashboard');
@@ -155,9 +159,9 @@ const OnboardingPage = () => {
       // Refresh user data to update is_onboarded status
       await refreshUser();
       
-      // Redirect after animation
+      // Redirect after animation using full refresh
       setTimeout(() => {
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       }, 2000);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Código inválido');
@@ -177,17 +181,24 @@ const OnboardingPage = () => {
 
   const skip2FA = async () => {
     // Mark onboarding as complete without 2FA
+    setSubmitting(true);
     try {
       await axios.post(
         `${API_URL}/api/auth/complete-onboarding`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Refresh user data to update is_onboarded status
+      const updatedUser = await refreshUser();
+      console.log('User updated after skip2FA:', updatedUser?.is_onboarded);
       toast.info('2FA ignorado. Pode configurar mais tarde nas definições.');
-      navigate('/dashboard');
+      // Use window.location for a full refresh to ensure state is updated
+      window.location.href = '/dashboard';
     } catch (err) {
       console.error('Failed to complete onboarding:', err);
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -387,9 +398,17 @@ const OnboardingPage = () => {
                   <Button 
                     variant="ghost"
                     onClick={skip2FA}
+                    disabled={submitting}
                     className="w-full text-gray-400 hover:text-white"
                   >
-                    Configurar mais tarde
+                    {submitting ? (
+                      <>
+                        <RefreshCw className="animate-spin mr-2" size={16} />
+                        A processar...
+                      </>
+                    ) : (
+                      'Configurar mais tarde'
+                    )}
                   </Button>
                 </>
               ) : (
