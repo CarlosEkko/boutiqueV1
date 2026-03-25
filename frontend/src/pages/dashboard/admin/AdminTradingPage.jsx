@@ -71,21 +71,6 @@ const AdminTradingPage = () => {
   const [cryptoSearch, setCryptoSearch] = useState('');
   const [savingCrypto, setSavingCrypto] = useState(null);
 
-  // KBEX Bank Accounts state
-  const [kbexBankAccounts, setKbexBankAccounts] = useState([]);
-  const [editingBankAccount, setEditingBankAccount] = useState(null);
-  const [newBankAccount, setNewBankAccount] = useState({
-    currency: 'EUR',
-    bank_name: '',
-    account_name: 'KBEX Exchange Ltd',
-    iban: '',
-    swift_bic: '',
-    account_number: '',
-    routing_number: '',
-    bank_address: '',
-    instructions: ''
-  });
-
   // Fiat Withdrawals state
   const [withdrawals, setWithdrawals] = useState([]);
   const [withdrawalsFilter, setWithdrawalsFilter] = useState({ status: '', currency: '' });
@@ -102,7 +87,6 @@ const AdminTradingPage = () => {
     if (activeTab === 'limits') fetchLimits();
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'transfers') fetchTransfers();
-    if (activeTab === 'bank-accounts') fetchKbexBankAccounts();
     if (activeTab === 'withdrawals') fetchWithdrawals();
     if (activeTab === 'crypto-withdrawals') fetchCryptoWithdrawals();
   }, [activeTab, ordersFilter, transfersFilter, withdrawalsFilter, cryptoWithdrawalsFilter]);
@@ -252,62 +236,6 @@ const AdminTradingPage = () => {
       setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao salvar taxas' });
     } finally {
       setSavingCrypto(null);
-    }
-  };
-
-  // KBEX Bank Accounts functions
-  const fetchKbexBankAccounts = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_URL}/api/trading/admin/kbex-bank-accounts`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setKbexBankAccounts(response.data);
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Erro ao carregar contas bancárias' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveKbexBankAccount = async () => {
-    setSaving(true);
-    setMessage(null);
-    try {
-      if (editingBankAccount) {
-        await axios.put(`${API_URL}/api/trading/admin/kbex-bank-accounts/${editingBankAccount.currency}`, newBankAccount, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setMessage({ type: 'success', text: 'Conta bancária atualizada!' });
-      } else {
-        await axios.post(`${API_URL}/api/trading/admin/kbex-bank-accounts`, newBankAccount, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setMessage({ type: 'success', text: 'Conta bancária criada!' });
-      }
-      fetchKbexBankAccounts();
-      setEditingBankAccount(null);
-      setNewBankAccount({
-        currency: 'EUR', bank_name: '', account_name: 'KBEX Exchange Ltd',
-        iban: '', swift_bic: '', account_number: '', routing_number: '', bank_address: '', instructions: ''
-      });
-    } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao salvar conta bancária' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const deleteKbexBankAccount = async (currency) => {
-    if (!window.confirm(`Tem certeza que deseja excluir a conta bancária ${currency}?`)) return;
-    try {
-      await axios.delete(`${API_URL}/api/trading/admin/kbex-bank-accounts/${currency}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessage({ type: 'success', text: 'Conta bancária excluída!' });
-      fetchKbexBankAccounts();
-    } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.detail || 'Erro ao excluir' });
     }
   };
 
@@ -550,7 +478,6 @@ const AdminTradingPage = () => {
         <TabButton id="crypto-fees" icon={Coins} label="Taxas Crypto" />
         <TabButton id="fees" icon={DollarSign} label="Taxas Fiat" />
         <TabButton id="limits" icon={Users} label="Limites" />
-        <TabButton id="bank-accounts" icon={Building2} label="Contas Bancárias" />
       </div>
 
       {/* Crypto Fees Tab */}
@@ -1384,197 +1311,6 @@ const AdminTradingPage = () => {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Bank Accounts Tab */}
-      {activeTab === 'bank-accounts' && (
-        <Card className="bg-zinc-900/50 border-gold-800/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Banknote size={20} className="text-gold-400" />
-              Contas Bancárias KBEX
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Add/Edit Form */}
-            <div className="bg-zinc-800/50 rounded-lg p-6">
-              <h3 className="text-lg text-gold-400 mb-4">
-                {editingBankAccount ? `Editar Conta ${editingBankAccount.currency}` : 'Adicionar Nova Conta'}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Moeda</label>
-                  <select
-                    value={newBankAccount.currency}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, currency: e.target.value})}
-                    disabled={!!editingBankAccount}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
-                  >
-                    {SUPPORTED_CURRENCIES.map(c => (
-                      <option key={c.code} value={c.code}>{c.flag} {c.code} - {c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Nome do Banco</label>
-                  <Input
-                    value={newBankAccount.bank_name}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, bank_name: e.target.value})}
-                    placeholder="Ex: Banco Nacional de Portugal"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Nome da Conta</label>
-                  <Input
-                    value={newBankAccount.account_name}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, account_name: e.target.value})}
-                    placeholder="KBEX Exchange Ltd"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">IBAN</label>
-                  <Input
-                    value={newBankAccount.iban}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, iban: e.target.value})}
-                    placeholder="PT50 0000 0000 0000 0000 0000 0"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">SWIFT/BIC</label>
-                  <Input
-                    value={newBankAccount.swift_bic}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, swift_bic: e.target.value})}
-                    placeholder="BNPAFRPP"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Número da Conta</label>
-                  <Input
-                    value={newBankAccount.account_number}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, account_number: e.target.value})}
-                    placeholder="Para USD/outros"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Routing Number (USD)</label>
-                  <Input
-                    value={newBankAccount.routing_number}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, routing_number: e.target.value})}
-                    placeholder="Para transferências nos EUA"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-sm text-gray-400 mb-1 block">Endereço do Banco</label>
-                  <Input
-                    value={newBankAccount.bank_address}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, bank_address: e.target.value})}
-                    placeholder="Morada completa do banco"
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <label className="text-sm text-gray-400 mb-1 block">Instruções para o Cliente</label>
-                  <textarea
-                    value={newBankAccount.instructions}
-                    onChange={(e) => setNewBankAccount({...newBankAccount, instructions: e.target.value})}
-                    placeholder="Instruções adicionais para transferências..."
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white min-h-[80px]"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button
-                  className="bg-gold-500 hover:bg-gold-600 text-black"
-                  onClick={saveKbexBankAccount}
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save className="mr-2" size={18} />}
-                  {editingBankAccount ? 'Atualizar' : 'Criar Conta'}
-                </Button>
-                {editingBankAccount && (
-                  <Button
-                    variant="outline"
-                    className="border-zinc-700"
-                    onClick={() => {
-                      setEditingBankAccount(null);
-                      setNewBankAccount({
-                        currency: 'EUR', bank_name: '', account_name: 'KBEX Exchange Ltd',
-                        iban: '', swift_bic: '', account_number: '', routing_number: '', bank_address: '', instructions: ''
-                      });
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Existing Accounts */}
-            <div>
-              <h3 className="text-lg text-white mb-4">Contas Configuradas</h3>
-              {kbexBankAccounts.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">Nenhuma conta bancária configurada</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {kbexBankAccounts.map(account => (
-                    <div key={account.id} className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl">{SUPPORTED_CURRENCIES.find(c => c.code === account.currency)?.flag}</span>
-                          <span className="text-xl text-white font-medium">{account.currency}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-400 hover:text-white"
-                            onClick={() => {
-                              setEditingBankAccount(account);
-                              setNewBankAccount({
-                                currency: account.currency,
-                                bank_name: account.bank_name || '',
-                                account_name: account.account_name || '',
-                                iban: account.iban || '',
-                                swift_bic: account.swift_bic || '',
-                                account_number: account.account_number || '',
-                                routing_number: account.routing_number || '',
-                                bank_address: account.bank_address || '',
-                                instructions: account.instructions || ''
-                              });
-                            }}
-                          >
-                            <Edit size={16} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-400 hover:text-red-300"
-                            onClick={() => deleteKbexBankAccount(account.currency)}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-gray-400">Banco: <span className="text-white">{account.bank_name}</span></p>
-                        <p className="text-gray-400">Conta: <span className="text-white">{account.account_name}</span></p>
-                        {account.iban && <p className="text-gray-400">IBAN: <span className="text-white font-mono">{account.iban}</span></p>}
-                        {account.swift_bic && <p className="text-gray-400">SWIFT: <span className="text-white font-mono">{account.swift_bic}</span></p>}
-                        {account.account_number && <p className="text-gray-400">Nº Conta: <span className="text-white">{account.account_number}</span></p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}

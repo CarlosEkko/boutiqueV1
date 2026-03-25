@@ -1068,16 +1068,16 @@ async def delete_kbex_bank_account(currency: str, admin: dict = Depends(get_admi
 # Public endpoint to get bank details for a currency
 @router.get("/bank-details/{currency}", response_model=dict)
 async def get_bank_details_for_deposit(currency: str, user: dict = Depends(get_current_user)):
-    """Get KBEX bank details for making a deposit in a specific currency"""
-    account = await db.kbex_bank_accounts.find_one(
+    """Get KBEX bank details for making a deposit in a specific currency (uses unified company_bank_accounts)"""
+    account = await db.company_bank_accounts.find_one(
         {"currency": currency.upper(), "is_active": True},
-        {"_id": 0, "updated_by": 0}
+        {"_id": 0}
     )
     if not account:
         raise HTTPException(status_code=404, detail=f"Bank account for {currency} not available")
     
-    # Generate reference code for this user
-    reference_code = f"KBEX-{user['id'][:8].upper()}-{currency.upper()}"
+    # Generate reference code for this user (DEP prefix for deposits)
+    reference_code = f"DEP-{user['id'][:8].upper()}"
     
     return {
         "bank_details": account,
@@ -2199,8 +2199,9 @@ async def submit_transfer_proof(
 # ==================== USER: FIAT DEPOSITS ====================
 
 async def get_kbex_bank_account(currency: str) -> dict:
-    """Get KBEX bank account details from database for a specific currency"""
-    account = await db.kbex_bank_accounts.find_one(
+    """Get KBEX bank account details from company_bank_accounts collection (unified)"""
+    # Use unified company_bank_accounts collection
+    account = await db.company_bank_accounts.find_one(
         {"currency": currency.upper(), "is_active": True},
         {"_id": 0}
     )
@@ -2211,12 +2212,13 @@ async def get_kbex_bank_account(currency: str) -> dict:
     # Format response with consistent field names
     return {
         "bank_name": account.get("bank_name"),
-        "account_holder": account.get("account_name", "KBEX Exchange"),
+        "account_holder": account.get("account_holder", "KBEX Financial Services"),
         "iban": account.get("iban"),
         "bic": account.get("swift_bic"),
         "account_number": account.get("account_number"),
         "routing_number": account.get("routing_number"),
         "sort_code": account.get("sort_code"),
+        "pix_key": account.get("pix_key"),
         "bank_address": account.get("bank_address"),
         "instructions": account.get("instructions")
     }
