@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { getErrorMessage } from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -74,7 +75,7 @@ const FiatDepositPage = () => {
       setActiveStep('details');
       fetchDeposits();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao criar depósito');
+      toast.error(getErrorMessage(err, 'Erro ao criar depósito'));
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,7 @@ const FiatDepositPage = () => {
       fetchDeposits();
       setSelectedDeposit(null);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao enviar comprovante');
+      toast.error(getErrorMessage(err, 'Erro ao enviar comprovante'));
     }
   };
 
@@ -112,7 +113,7 @@ const FiatDepositPage = () => {
       toast.success('Depósito cancelado');
       fetchDeposits();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao cancelar depósito');
+      toast.error(getErrorMessage(err, 'Erro ao cancelar depósito'));
     }
   };
 

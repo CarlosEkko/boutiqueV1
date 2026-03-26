@@ -111,10 +111,30 @@ export const cleanNumberInput = (value) => {
   return value.replace(/[^\d.,-]/g, '');
 };
 
+/**
+ * Safely extract error message from API error response
+ * Handles Pydantic validation errors and other error formats
+ * @param {Error} err - Error object from axios catch
+ * @param {string} defaultMsg - Default message if extraction fails
+ * @returns {string} Human-readable error message
+ */
+export const getErrorMessage = (err, defaultMsg = 'Erro na operação') => {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(e => e.msg || e.message || String(e)).join(', ');
+  }
+  if (detail && typeof detail === 'object') {
+    return detail.msg || detail.message || JSON.stringify(detail);
+  }
+  return err?.message || defaultMsg;
+};
+
 export default {
   formatNumber,
   formatCurrency,
   formatCrypto,
   parseFormattedNumber,
-  cleanNumberInput
+  cleanNumberInput,
+  getErrorMessage
 };

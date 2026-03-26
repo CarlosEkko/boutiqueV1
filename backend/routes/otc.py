@@ -30,6 +30,15 @@ def get_db():
     return db
 
 from routes.auth import get_current_user
+from pydantic import BaseModel
+
+# Model for client RFQ request
+class ClientRFQRequest(BaseModel):
+    transaction_type: str
+    base_asset: str
+    quote_asset: str
+    amount: float
+    notes: Optional[str] = None
 
 
 # ==================== OTC LEADS ====================
@@ -1695,15 +1704,17 @@ async def get_my_otc_quotes(
 
 @router.post("/client/rfq")
 async def create_client_rfq(
-    transaction_type: str,
-    base_asset: str,
-    quote_asset: str,
-    amount: float,
-    notes: Optional[str] = None,
+    request: ClientRFQRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """Create a new RFQ (Request for Quote) from client portal"""
     db = get_db()
+    
+    transaction_type = request.transaction_type
+    base_asset = request.base_asset
+    quote_asset = request.quote_asset
+    amount = request.amount
+    notes = request.notes
     
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")

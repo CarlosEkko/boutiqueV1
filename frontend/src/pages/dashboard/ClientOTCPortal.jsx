@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { formatNumber } from '../../utils/formatters';
+import { formatNumber, getErrorMessage } from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -126,7 +126,7 @@ const ClientOTCPortal = () => {
       });
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao criar pedido');
+      toast.error(getErrorMessage(err, 'Erro ao criar pedido'));
     }
   };
 
@@ -140,7 +140,7 @@ const ClientOTCPortal = () => {
       setShowQuoteDialog(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao aceitar cotação');
+      toast.error(getErrorMessage(err, 'Erro ao aceitar cotação'));
     }
   };
 
@@ -154,7 +154,7 @@ const ClientOTCPortal = () => {
       setShowQuoteDialog(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao rejeitar cotação');
+      toast.error(getErrorMessage(err, 'Erro ao rejeitar cotação'));
     }
   };
 

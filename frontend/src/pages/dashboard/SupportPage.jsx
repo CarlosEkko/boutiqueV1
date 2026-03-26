@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { getErrorMessage } from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -77,7 +78,7 @@ const SupportPage = () => {
       setShowNewTicket(false);
       fetchTickets();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao criar ticket');
+      toast.error(getErrorMessage(err, 'Erro ao criar ticket'));
     } finally {
       setSubmitting(false);
     }
@@ -104,7 +105,7 @@ const SupportPage = () => {
       });
       setTickets(tickets.map(t => t.id === ticketId ? response.data : t));
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao enviar mensagem');
+      toast.error(getErrorMessage(err, 'Erro ao enviar mensagem'));
     } finally {
       setSubmitting(false);
     }
@@ -118,7 +119,7 @@ const SupportPage = () => {
       toast.success('Ticket fechado');
       fetchTickets();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao fechar ticket');
+      toast.error(getErrorMessage(err, 'Erro ao fechar ticket'));
     }
   };
 
