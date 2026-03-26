@@ -538,9 +538,9 @@ const OTCQuotes = () => {
                             <span className="text-gold-400 font-mono">${formatNumber(quote.total_value)}</span>
                           </td>
                           <td className="p-4">
-                            <Badge className={quote.price_source === 'binance' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400'}>
-                              {quote.price_source === 'binance' ? (
-                                <><Zap size={12} className="mr-1" /> Binance</>
+                            <Badge className={quote.price_source === 'binance' || quote.price_source === 'market' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400'}>
+                              {quote.price_source === 'binance' || quote.price_source === 'market' ? (
+                                <><Zap size={12} className="mr-1" /> Mercado</>
                               ) : (
                                 'Manual'
                               )}
@@ -610,7 +610,7 @@ const OTCQuotes = () => {
                   <div>
                     <p className="text-blue-400 text-sm font-medium flex items-center gap-2">
                       <Zap size={16} />
-                      Preço de Mercado (Binance)
+                      Preço de Mercado
                     </p>
                     {fetchingPrice ? (
                       <p className="text-white text-2xl font-mono mt-1">Carregando...</p>
@@ -831,8 +831,8 @@ const OTCQuotes = () => {
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Origem Preço</p>
-                  <Badge className={selectedQuote.price_source === 'binance' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400'}>
-                    {selectedQuote.price_source || 'Manual'}
+                  <Badge className={selectedQuote.price_source === 'binance' || selectedQuote.price_source === 'market' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400'}>
+                    {selectedQuote.price_source === 'binance' || selectedQuote.price_source === 'market' ? 'Mercado' : 'Manual'}
                   </Badge>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
