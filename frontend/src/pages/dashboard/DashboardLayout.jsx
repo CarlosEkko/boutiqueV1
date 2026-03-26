@@ -107,6 +107,7 @@ const DashboardLayout = () => {
   const [expandedSubmenus, setExpandedSubmenus] = useState({});
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState({});
+  const [allowedClientMenus, setAllowedClientMenus] = useState(null); // null = all allowed, array = restricted
 
   // Fetch notification counts for finance items
   const fetchNotifications = useCallback(async () => {
@@ -160,10 +161,25 @@ const DashboardLayout = () => {
       if (!token) return;
       
       try {
+        // Fetch menu structure
         const response = await axios.get(`${API_URL}/api/permissions/menus`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMenuStructure(response.data.menus || []);
+        
+        // Fetch personalized client menus (only for non-internal users)
+        if (user?.user_type !== 'internal' && !user?.is_admin) {
+          try {
+            const clientMenusRes = await axios.get(`${API_URL}/api/client-menus/my-menus`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (clientMenusRes.data.is_custom) {
+              setAllowedClientMenus(clientMenusRes.data.menus || []);
+            }
+          } catch (err) {
+            console.error('Failed to fetch client menus:', err);
+          }
+        }
         
         // All menus start collapsed by default
         setExpandedMenus({});
@@ -193,7 +209,7 @@ const DashboardLayout = () => {
     };
 
     fetchMenus();
-  }, [token]);
+  }, [token, user?.user_type, user?.is_admin]);
 
   // Fetch notifications periodically
   useEffect(() => {
@@ -523,7 +539,36 @@ const DashboardLayout = () => {
 
   // Separate client menus from admin menus
   const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading'];
-  const clientMenus = menuStructure.filter(m => clientMenuDepts.includes(m.department));
+  
+  // Filter client menus based on personalized settings
+  let clientMenus = menuStructure.filter(m => clientMenuDepts.includes(m.department));
+  
+  // If user has custom menu restrictions, apply them
+  if (allowedClientMenus !== null && Array.isArray(allowedClientMenus)) {
+    // Map 'account' to 'perfil' for consistency
+    const menuMapping = {
+      'portfolio': 'portfolio',
+      'investimentos': 'investimentos',
+      'transparencia': 'transparencia',
+      'perfil': 'account',
+      'otc_trading': 'otc_trading'
+    };
+    
+    // Reverse mapping for filtering
+    const deptToMenuKey = {
+      'portfolio': 'portfolio',
+      'investimentos': 'investimentos',
+      'transparencia': 'transparencia',
+      'account': 'perfil',
+      'otc_trading': 'otc_trading'
+    };
+    
+    clientMenus = clientMenus.filter(m => {
+      const menuKey = deptToMenuKey[m.department];
+      return allowedClientMenus.includes(menuKey) || allowedClientMenus.includes(m.department);
+    });
+  }
+  
   const adminMenus = menuStructure.filter(m => !clientMenuDepts.includes(m.department));
 
   return (
