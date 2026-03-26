@@ -224,38 +224,50 @@ async def fetch_crypto_prices() -> List[CryptoPrice]:
 @api_router.get("/crypto-prices", response_model=CryptoPricesResponse)
 async def get_crypto_prices():
     """
-    Get current crypto prices from Binance API.
-    Results are cached for 60 seconds to avoid rate limiting.
+    Get current crypto prices using the unified price source (MongoDB cache).
+    This ensures all pages show the same prices.
     """
-    global crypto_cache
+    from routes.trading import get_bulk_crypto_prices, DEFAULT_CRYPTOS
     
     current_time = datetime.now(timezone.utc)
     
-    # Check if cache is valid
-    if (crypto_cache["data"] is not None and 
-        crypto_cache["last_fetch"] is not None):
-        time_diff = (current_time - crypto_cache["last_fetch"]).total_seconds()
-        if time_diff < crypto_cache["cache_duration"]:
-            logger.info("Returning cached crypto prices")
-            return CryptoPricesResponse(
-                prices=crypto_cache["data"],
-                last_updated=crypto_cache["last_fetch"],
-                source="binance (cached)"
-            )
+    # Get all default crypto symbols
+    symbols = [c["symbol"] for c in DEFAULT_CRYPTOS]
     
-    # Fetch fresh data
-    logger.info("Fetching fresh crypto prices from Binance")
-    prices = await fetch_crypto_prices()
-    
-    # Update cache
-    crypto_cache["data"] = prices
-    crypto_cache["last_fetch"] = current_time
-    
-    return CryptoPricesResponse(
-        prices=prices,
-        last_updated=current_time,
-        source="binance"
-    )
+    try:
+        # Use the same source as Exchange/Trading pages
+        cached_prices = await get_bulk_crypto_prices(symbols)
+        
+        # Convert to CryptoPrice format
+        prices = []
+        for symbol, data in cached_prices.items():
+            prices.append(CryptoPrice(
+                symbol=data.get("symbol", symbol),
+                name=data.get("name", symbol),
+                price=data.get("price_usd", 0),
+                change_24h=data.get("change_24h", 0),
+                market_cap=data.get("market_cap"),
+                volume_24h=data.get("volume_24h", 0)
+            ))
+        
+        # Sort by a common order (BTC, ETH first, then alphabetically)
+        priority = {"BTC": 0, "ETH": 1}
+        prices.sort(key=lambda x: (priority.get(x.symbol, 100), x.symbol))
+        
+        return CryptoPricesResponse(
+            prices=prices,
+            last_updated=current_time,
+            source="market"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching crypto prices: {e}")
+        # Fallback to direct Binance call
+        prices = await fetch_crypto_prices()
+        return CryptoPricesResponse(
+            prices=prices,
+            last_updated=current_time,
+            source="market"
+        )
 
 # Include the router in the main app
 app.include_router(api_router)

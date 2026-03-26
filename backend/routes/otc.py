@@ -728,53 +728,27 @@ async def create_quote(
     price_source = "manual"
     
     if not quote_data.is_manual or market_price is None:
-        # First try to get from cached prices
+        # Use the same price source as Exchange page
         base_asset = deal.get('base_asset', '').upper()
         quote_asset = deal.get('quote_asset', '').upper()
         crypto_usd_price = None
         
         try:
-            from server import crypto_cache
-            if crypto_cache.get("data"):
-                for crypto in crypto_cache["data"]:
-                    if crypto.get("symbol", "").upper() == base_asset:
-                        crypto_usd_price = crypto.get("price")
-                        break
-        except Exception:
-            pass
+            from routes.trading import get_crypto_price
+            price_data = await get_crypto_price(base_asset)
+            crypto_usd_price = price_data.get("price_usd")
+        except Exception as e:
+            logger.error(f"Failed to get price from trading cache: {e}")
         
-        # Fallback to external APIs if not in cache
+        # Fallback to direct API call
         if crypto_usd_price is None:
             try:
                 import httpx
                 async with httpx.AsyncClient(timeout=10.0) as client:
-                    # Try Binance
                     symbol = f"{base_asset}USDT"
-                    try:
-                        response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
-                        if response.status_code == 200:
-                            crypto_usd_price = float(response.json()["price"])
-                    except Exception:
-                        pass
-                    
-                    # Fallback to CoinGecko
-                    if crypto_usd_price is None:
-                        coin_map = {
-                            "BTC": "bitcoin", "ETH": "ethereum", "USDT": "tether",
-                            "USDC": "usd-coin", "BNB": "binancecoin", "XRP": "ripple",
-                            "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin"
-                        }
-                        coin_id = coin_map.get(base_asset, base_asset.lower())
-                        try:
-                            response = await client.get(
-                                f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
-                            )
-                            if response.status_code == 200:
-                                data = response.json()
-                                if coin_id in data:
-                                    crypto_usd_price = float(data[coin_id]["usd"])
-                        except Exception:
-                            pass
+                    response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
+                    if response.status_code == 200:
+                        crypto_usd_price = float(response.json()["price"])
             except Exception:
                 pass
         
@@ -790,7 +764,6 @@ async def create_quote(
                                 rates = fiat_response.json().get("rates", {})
                                 market_price = crypto_usd_price * rates.get(quote_asset, 1)
                             else:
-                                # Fallback rates
                                 fallback_rates = {"EUR": 0.92, "AED": 3.67, "BRL": 5.0}
                                 market_price = crypto_usd_price * fallback_rates.get(quote_asset, 1)
                     except Exception:
@@ -1047,34 +1020,27 @@ async def get_market_price(
     quote_asset: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get current market price from cached data or external APIs"""
+    """Get current market price using the same source as Exchange/Trading pages"""
     db = get_db()
     
     try:
         import httpx
+        from routes.trading import get_crypto_price
         
         base_upper = base_asset.upper()
         quote_upper = quote_asset.upper()
-        crypto_usd_price = None
         
-        # Try to fetch from our own crypto-prices endpoint first (uses cache)
+        # Use the same price source as Exchange page (trading.py cache)
         try:
-            from server import crypto_cache
-            if crypto_cache.get("data"):
-                for crypto in crypto_cache["data"]:
-                    # crypto might be CryptoPrice object or dict
-                    symbol = getattr(crypto, 'symbol', None) or (crypto.get('symbol') if isinstance(crypto, dict) else None)
-                    price = getattr(crypto, 'price', None) or (crypto.get('price') if isinstance(crypto, dict) else None)
-                    if symbol and symbol.upper() == base_upper and price:
-                        crypto_usd_price = float(price)
-                        break
+            price_data = await get_crypto_price(base_upper)
+            crypto_usd_price = price_data.get("price_usd")
         except Exception as e:
-            logger.debug(f"Could not use crypto_cache: {e}")
+            logger.error(f"Failed to get price from trading cache: {e}")
+            crypto_usd_price = None
         
-        # If not in cache, try external APIs
+        # Fallback to direct API call if cache fails
         if crypto_usd_price is None:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                # Try Binance
                 try:
                     symbol = f"{base_upper}USDT"
                     response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
@@ -1082,26 +1048,6 @@ async def get_market_price(
                         crypto_usd_price = float(response.json()["price"])
                 except Exception:
                     pass
-                
-                # Fallback to CoinGecko
-                if crypto_usd_price is None:
-                    try:
-                        coin_map = {
-                            "BTC": "bitcoin", "ETH": "ethereum", "USDT": "tether",
-                            "USDC": "usd-coin", "BNB": "binancecoin", "XRP": "ripple",
-                            "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin",
-                            "DOT": "polkadot", "MATIC": "matic-network", "LTC": "litecoin"
-                        }
-                        coin_id = coin_map.get(base_upper, base_upper.lower())
-                        response = await client.get(
-                            f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
-                        )
-                        if response.status_code == 200:
-                            data = response.json()
-                            if coin_id in data and "usd" in data[coin_id]:
-                                crypto_usd_price = float(data[coin_id]["usd"])
-                    except Exception:
-                        pass
         
         if crypto_usd_price is None:
             raise HTTPException(status_code=404, detail=f"Preço não disponível para {base_asset}")
@@ -1109,7 +1055,6 @@ async def get_market_price(
         # Convert to target fiat if needed
         final_price = crypto_usd_price
         if quote_upper in ["EUR", "USD", "AED", "BRL"] and quote_upper != "USD":
-            # Try to get exchange rate
             try:
                 async with httpx.AsyncClient(timeout=5.0) as client:
                     fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
