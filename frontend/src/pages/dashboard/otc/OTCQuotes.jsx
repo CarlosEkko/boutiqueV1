@@ -75,6 +75,17 @@ const OTCQuotes = () => {
     fetchData();
   }, [token]);
 
+  // Auto-refresh market price every second when dialog is open
+  useEffect(() => {
+    if (showCreateDialog && selectedDeal && !quoteForm.is_manual) {
+      const interval = setInterval(() => {
+        fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset);
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [showCreateDialog, selectedDeal, quoteForm.is_manual]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -97,8 +108,8 @@ const OTCQuotes = () => {
     }
   };
 
-  const fetchMarketPrice = async (baseAsset, quoteAsset) => {
-    setFetchingPrice(true);
+  const fetchMarketPrice = async (baseAsset, quoteAsset, silent = false) => {
+    if (!silent) setFetchingPrice(true);
     try {
       const response = await axios.get(
         `${API_URL}/api/otc/market-price?base_asset=${baseAsset}&quote_asset=${quoteAsset}`,
@@ -107,9 +118,9 @@ const OTCQuotes = () => {
       setMarketPrice(response.data);
     } catch (err) {
       console.error('Failed to fetch market price:', err);
-      toast.error('Erro ao buscar preço de mercado');
+      if (!silent) toast.error('Erro ao buscar preço de mercado');
     } finally {
-      setFetchingPrice(false);
+      if (!silent) setFetchingPrice(false);
     }
   };
 

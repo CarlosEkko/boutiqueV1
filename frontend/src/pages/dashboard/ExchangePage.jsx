@@ -79,6 +79,15 @@ const ExchangePage = () => {
     fetchCryptos();
   }, [currency]);
 
+  // Auto-refresh prices every second for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchCryptos(true); // silent refresh
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [currency]);
+
   // Refetch fees when selected crypto changes (for buy/sell)
   useEffect(() => {
     if (selectedCrypto && (activeTab === 'buy' || activeTab === 'sell')) {
@@ -93,16 +102,49 @@ const ExchangePage = () => {
     }
   }, [fromCrypto?.symbol, activeTab]);
 
-  const fetchCryptos = async () => {
+  const fetchCryptos = async (silent = false) => {
     try {
       const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=${currency}`);
-      setCryptos(response.data);
-      if (response.data.length > 0) {
-        setSelectedCrypto(response.data[0]);
-        setFromCrypto(response.data[0]);
-        if (response.data.length > 1) {
-          setToCrypto(response.data[1]);
+      
+      // Update prices while preserving selections
+      setCryptos(prevCryptos => {
+        // If silent refresh, just update prices
+        if (silent && prevCryptos.length > 0) {
+          return response.data;
         }
+        return response.data;
+      });
+      
+      // Only set selections on initial load
+      if (!silent && response.data.length > 0) {
+        setSelectedCrypto(prev => prev || response.data[0]);
+        setFromCrypto(prev => prev || response.data[0]);
+        if (response.data.length > 1) {
+          setToCrypto(prev => prev || response.data[1]);
+        }
+      } else if (silent) {
+        // Update selected crypto prices on silent refresh
+        setSelectedCrypto(prev => {
+          if (prev) {
+            const updated = response.data.find(c => c.symbol === prev.symbol);
+            return updated || prev;
+          }
+          return prev;
+        });
+        setFromCrypto(prev => {
+          if (prev) {
+            const updated = response.data.find(c => c.symbol === prev.symbol);
+            return updated || prev;
+          }
+          return prev;
+        });
+        setToCrypto(prev => {
+          if (prev) {
+            const updated = response.data.find(c => c.symbol === prev.symbol);
+            return updated || prev;
+          }
+          return prev;
+        });
       }
     } catch (err) {
       console.error('Failed to fetch cryptos', err);

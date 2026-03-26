@@ -230,8 +230,8 @@ async def get_bulk_crypto_prices(symbols: list) -> dict:
     if not symbols:
         return {}
     
-    # Cache valid for 5 minutes (reduced API calls)
-    CACHE_TTL_SECONDS = 300
+    # Cache valid for 1 second (real-time updates)
+    CACHE_TTL_SECONDS = 1
     
     # Check cache first - get all cached prices
     cache_valid_time = datetime.now(timezone.utc) - timedelta(seconds=CACHE_TTL_SECONDS)
@@ -335,8 +335,8 @@ async def get_crypto_price(symbol: str) -> dict:
         if isinstance(cache_time, str):
             cache_time = datetime.fromisoformat(cache_time)
         
-        # Cache valid for 60 seconds
-        if (datetime.now(timezone.utc) - cache_time).total_seconds() < 60:
+        # Cache valid for 1 second (real-time updates)
+        if (datetime.now(timezone.utc) - cache_time).total_seconds() < 1:
             return cached
     
     # Fetch from Binance
