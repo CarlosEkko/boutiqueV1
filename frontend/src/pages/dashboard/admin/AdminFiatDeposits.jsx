@@ -63,7 +63,13 @@ const AdminFiatDeposits = () => {
       toast.success('Depósito aprovado com sucesso!');
       fetchDeposits();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao aprovar depósito');
+      const errorDetail = err.response?.data?.detail;
+      const errorMessage = typeof errorDetail === 'string' 
+        ? errorDetail 
+        : Array.isArray(errorDetail) 
+          ? errorDetail.map(e => e.msg || e.message || JSON.stringify(e)).join(', ')
+          : 'Erro ao aprovar depósito';
+      toast.error(errorMessage);
     } finally {
       setProcessing(null);
     }
@@ -82,7 +88,13 @@ const AdminFiatDeposits = () => {
       toast.success('Depósito rejeitado');
       fetchDeposits();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao rejeitar depósito');
+      const errorDetail = err.response?.data?.detail;
+      const errorMessage = typeof errorDetail === 'string' 
+        ? errorDetail 
+        : Array.isArray(errorDetail) 
+          ? errorDetail.map(e => e.msg || e.message || JSON.stringify(e)).join(', ')
+          : 'Erro ao rejeitar depósito';
+      toast.error(errorMessage);
     } finally {
       setProcessing(null);
     }

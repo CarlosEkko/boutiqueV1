@@ -118,7 +118,13 @@ const AdminClientMenus = () => {
       setShowEditModal(false);
       fetchClients();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao atualizar menus');
+      const errorDetail = err.response?.data?.detail;
+      const errorMessage = typeof errorDetail === 'string' 
+        ? errorDetail 
+        : Array.isArray(errorDetail) 
+          ? errorDetail.map(e => e.msg || e.message || String(e)).join(', ')
+          : 'Erro ao atualizar menus';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -132,7 +138,11 @@ const AdminClientMenus = () => {
       toast.success('Menus restaurados para padrão');
       fetchClients();
     } catch (err) {
-      toast.error('Erro ao restaurar menus');
+      const errorDetail = err.response?.data?.detail;
+      const errorMessage = typeof errorDetail === 'string' 
+        ? errorDetail 
+        : 'Erro ao restaurar menus';
+      toast.error(errorMessage);
     }
   };
 

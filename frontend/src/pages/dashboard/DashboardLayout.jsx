@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import CurrencySelector from '../../components/CurrencySelector';
+import NotificationBell from '../../components/dashboard/NotificationBell';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -616,15 +617,15 @@ const DashboardLayout = () => {
               <span className="text-gold-400">KB</span>EX
             </span>
           </NavLink>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-white p-2 relative"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            {Object.values(notifications).reduce((a, b) => a + b, 0) > 0 && !mobileMenuOpen && (
-              <span className="absolute top-1 right-1 bg-red-500 w-2 h-2 rounded-full" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-white p-2 relative"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -670,8 +671,9 @@ const DashboardLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
-        {/* Top Bar with Currency Selector */}
-        <div className="hidden md:flex justify-end items-center px-8 py-4 border-b border-zinc-800/50">
+        {/* Top Bar with Notifications and Currency Selector */}
+        <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4 border-b border-zinc-800/50">
+          <NotificationBell />
           <CurrencySelector />
         </div>
         <div className="md:p-8 p-4 pt-20 md:pt-4">
