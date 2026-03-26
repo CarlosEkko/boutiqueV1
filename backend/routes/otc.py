@@ -728,19 +728,28 @@ async def create_quote(
     price_source = "manual"
     
     if not quote_data.is_manual or market_price is None:
-        # Fetch from multiple sources with fallback
+        # First try to get from cached prices
+        base_asset = deal.get('base_asset', '').upper()
+        quote_asset = deal.get('quote_asset', '').upper()
+        crypto_usd_price = None
+        
         try:
-            import httpx
-            base_asset = deal.get('base_asset', '').upper()
-            quote_asset = deal.get('quote_asset', '').upper()
-            
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                # Handle fiat pairs
-                if quote_asset in ["EUR", "USD", "AED", "BRL"]:
-                    symbol = f"{base_asset}USDT"
-                    crypto_usd_price = None
-                    
+            from server import crypto_cache
+            if crypto_cache.get("data"):
+                for crypto in crypto_cache["data"]:
+                    if crypto.get("symbol", "").upper() == base_asset:
+                        crypto_usd_price = crypto.get("price")
+                        break
+        except Exception:
+            pass
+        
+        # Fallback to external APIs if not in cache
+        if crypto_usd_price is None:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=10.0) as client:
                     # Try Binance
+                    symbol = f"{base_asset}USDT"
                     try:
                         response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
                         if response.status_code == 200:
@@ -750,13 +759,13 @@ async def create_quote(
                     
                     # Fallback to CoinGecko
                     if crypto_usd_price is None:
+                        coin_map = {
+                            "BTC": "bitcoin", "ETH": "ethereum", "USDT": "tether",
+                            "USDC": "usd-coin", "BNB": "binancecoin", "XRP": "ripple",
+                            "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin"
+                        }
+                        coin_id = coin_map.get(base_asset, base_asset.lower())
                         try:
-                            coin_map = {
-                                "BTC": "bitcoin", "ETH": "ethereum", "USDT": "tether",
-                                "USDC": "usd-coin", "BNB": "binancecoin", "XRP": "ripple",
-                                "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin"
-                            }
-                            coin_id = coin_map.get(base_asset, base_asset.lower())
                             response = await client.get(
                                 f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
                             )
@@ -766,34 +775,33 @@ async def create_quote(
                                     crypto_usd_price = float(data[coin_id]["usd"])
                         except Exception:
                             pass
-                    
-                    if crypto_usd_price:
-                        # Convert to target fiat
-                        if quote_asset != "USD":
-                            try:
-                                fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
-                                if fiat_response.status_code == 200:
-                                    rates = fiat_response.json().get("rates", {})
-                                    market_price = crypto_usd_price * rates.get(quote_asset, 1)
-                                else:
-                                    market_price = crypto_usd_price
-                            except Exception:
-                                market_price = crypto_usd_price
-                        else:
-                            market_price = crypto_usd_price
-                        price_source = "market"
-                else:
-                    # Direct crypto pair
-                    symbol = f"{base_asset}{quote_asset}"
+            except Exception:
+                pass
+        
+        if crypto_usd_price:
+            # Convert to target fiat
+            if quote_asset in ["EUR", "USD", "AED", "BRL"]:
+                if quote_asset != "USD":
                     try:
-                        response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
-                        if response.status_code == 200:
-                            market_price = float(response.json()["price"])
-                            price_source = "market"
+                        import httpx
+                        async with httpx.AsyncClient(timeout=5.0) as client:
+                            fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
+                            if fiat_response.status_code == 200:
+                                rates = fiat_response.json().get("rates", {})
+                                market_price = crypto_usd_price * rates.get(quote_asset, 1)
+                            else:
+                                # Fallback rates
+                                fallback_rates = {"EUR": 0.92, "AED": 3.67, "BRL": 5.0}
+                                market_price = crypto_usd_price * fallback_rates.get(quote_asset, 1)
                     except Exception:
-                        pass
-        except Exception:
-            pass
+                        fallback_rates = {"EUR": 0.92, "AED": 3.67, "BRL": 5.0}
+                        market_price = crypto_usd_price * fallback_rates.get(quote_asset, 1)
+                else:
+                    market_price = crypto_usd_price
+                price_source = "market"
+            else:
+                market_price = crypto_usd_price
+                price_source = "market"
         
         if market_price is None:
             raise HTTPException(status_code=400, detail="Não foi possível obter o preço de mercado. Por favor insira manualmente.")
@@ -1039,47 +1047,52 @@ async def get_market_price(
     quote_asset: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Get current market price from multiple sources"""
+    """Get current market price from cached data or external APIs"""
+    db = get_db()
+    
     try:
         import httpx
         
-        # Map common fiat currencies to USDT pairs
-        if quote_asset.upper() in ["EUR", "USD", "AED", "BRL"]:
-            # First try to get crypto/USDT price from Binance
-            symbol = f"{base_asset.upper()}USDT"
-            crypto_usd_price = None
-            
+        base_upper = base_asset.upper()
+        quote_upper = quote_asset.upper()
+        crypto_usd_price = None
+        
+        # Try to fetch from our own crypto-prices endpoint first (uses cache)
+        try:
+            from server import crypto_cache
+            if crypto_cache.get("data"):
+                for crypto in crypto_cache["data"]:
+                    # crypto might be CryptoPrice object or dict
+                    symbol = getattr(crypto, 'symbol', None) or (crypto.get('symbol') if isinstance(crypto, dict) else None)
+                    price = getattr(crypto, 'price', None) or (crypto.get('price') if isinstance(crypto, dict) else None)
+                    if symbol and symbol.upper() == base_upper and price:
+                        crypto_usd_price = float(price)
+                        break
+        except Exception as e:
+            logger.debug(f"Could not use crypto_cache: {e}")
+        
+        # If not in cache, try external APIs
+        if crypto_usd_price is None:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                # Try Binance first
+                # Try Binance
                 try:
+                    symbol = f"{base_upper}USDT"
                     response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
                     if response.status_code == 200:
                         crypto_usd_price = float(response.json()["price"])
                 except Exception:
                     pass
                 
-                # Fallback to CoinGecko if Binance fails
+                # Fallback to CoinGecko
                 if crypto_usd_price is None:
                     try:
-                        coin_id = base_asset.lower()
-                        # Map common symbols to CoinGecko IDs
                         coin_map = {
-                            "btc": "bitcoin",
-                            "eth": "ethereum",
-                            "usdt": "tether",
-                            "usdc": "usd-coin",
-                            "bnb": "binancecoin",
-                            "xrp": "ripple",
-                            "ada": "cardano",
-                            "sol": "solana",
-                            "dot": "polkadot",
-                            "doge": "dogecoin",
-                            "matic": "matic-network",
-                            "ltc": "litecoin",
-                            "link": "chainlink",
+                            "BTC": "bitcoin", "ETH": "ethereum", "USDT": "tether",
+                            "USDC": "usd-coin", "BNB": "binancecoin", "XRP": "ripple",
+                            "SOL": "solana", "ADA": "cardano", "DOGE": "dogecoin",
+                            "DOT": "polkadot", "MATIC": "matic-network", "LTC": "litecoin"
                         }
-                        coin_id = coin_map.get(base_asset.lower(), base_asset.lower())
-                        
+                        coin_id = coin_map.get(base_upper, base_upper.lower())
                         response = await client.get(
                             f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd"
                         )
@@ -1089,51 +1102,38 @@ async def get_market_price(
                                 crypto_usd_price = float(data[coin_id]["usd"])
                     except Exception:
                         pass
-                
-                if crypto_usd_price is None:
-                    raise HTTPException(status_code=404, detail=f"Preço não disponível para {base_asset}")
-                
-                # Now convert to target fiat if needed
-                final_price = crypto_usd_price
-                if quote_asset.upper() != "USD":
-                    try:
-                        fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
-                        if fiat_response.status_code == 200:
-                            rates = fiat_response.json().get("rates", {})
-                            fiat_rate = rates.get(quote_asset.upper(), 1)
-                            final_price = crypto_usd_price * fiat_rate
-                    except Exception:
-                        pass
-                
-                return {
-                    "base_asset": base_asset.upper(),
-                    "quote_asset": quote_asset.upper(),
-                    "price": round(final_price, 2),
-                    "source": "market",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-        else:
-            # Direct crypto pair
-            symbol = f"{base_asset.upper()}{quote_asset.upper()}"
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                try:
-                    response = await client.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
-                    if response.status_code == 200:
-                        return {
-                            "base_asset": base_asset.upper(),
-                            "quote_asset": quote_asset.upper(),
-                            "price": float(response.json()["price"]),
-                            "source": "market",
-                            "timestamp": datetime.now(timezone.utc).isoformat()
-                        }
-                except Exception:
-                    pass
         
-        raise HTTPException(status_code=404, detail=f"Preço não disponível para {base_asset}/{quote_asset}")
+        if crypto_usd_price is None:
+            raise HTTPException(status_code=404, detail=f"Preço não disponível para {base_asset}")
+        
+        # Convert to target fiat if needed
+        final_price = crypto_usd_price
+        if quote_upper in ["EUR", "USD", "AED", "BRL"] and quote_upper != "USD":
+            # Try to get exchange rate
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    fiat_response = await client.get("https://api.exchangerate-api.com/v4/latest/USD")
+                    if fiat_response.status_code == 200:
+                        rates = fiat_response.json().get("rates", {})
+                        fiat_rate = rates.get(quote_upper, 1)
+                        final_price = crypto_usd_price * fiat_rate
+            except Exception:
+                # Use hardcoded approximate rates as fallback
+                fallback_rates = {"EUR": 0.92, "AED": 3.67, "BRL": 5.0}
+                final_price = crypto_usd_price * fallback_rates.get(quote_upper, 1)
+        
+        return {
+            "base_asset": base_upper,
+            "quote_asset": quote_upper,
+            "price": round(final_price, 2),
+            "source": "market",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
         
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error fetching market price: {e}")
         raise HTTPException(status_code=400, detail=f"Erro ao obter preço de mercado: {str(e)}")
 
 
