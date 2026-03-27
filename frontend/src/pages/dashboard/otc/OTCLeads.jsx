@@ -41,7 +41,10 @@ import {
   UserCheck,
   Clock,
   Trash2,
-  Archive
+  Archive,
+  AlertTriangle,
+  Link2,
+  User
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -63,6 +66,11 @@ const OTCLeads = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
+  
+  // Existing contact check
+  const [existingContact, setExistingContact] = useState(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [showExistingWarning, setShowExistingWarning] = useState(false);
   
   // Form
   const [formData, setFormData] = useState({
@@ -121,6 +129,90 @@ const OTCLeads = () => {
     }
   };
 
+  // Check if email already exists
+  const checkExistingEmail = async (email) => {
+    if (!email || email.length < 5) {
+      setExistingContact(null);
+      setShowExistingWarning(false);
+      return;
+    }
+    
+    setCheckingEmail(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/otc/check-existing?email=${encodeURIComponent(email)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const data = response.data;
+      if (data.existing_otc_client || data.existing_user || data.existing_lead) {
+        setExistingContact(data);
+        setShowExistingWarning(true);
+      } else {
+        setExistingContact(null);
+        setShowExistingWarning(false);
+      }
+    } catch (err) {
+      console.error('Failed to check existing email:', err);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
+  // Create OTC Client directly (skip lead workflow)
+  const handleCreateClientDirect = async () => {
+    if (!existingContact?.existing_user) return;
+    
+    try {
+      const user = existingContact.existing_user;
+      const params = new URLSearchParams({
+        entity_name: formData.entity_name || user.company_name || `${user.first_name} ${user.last_name}`,
+        contact_name: formData.contact_name || `${user.first_name} ${user.last_name}`,
+        contact_email: user.email,
+        country: formData.country || 'Portugal',
+        user_id: user.id
+      });
+      
+      if (formData.contact_phone) params.append('contact_phone', formData.contact_phone);
+      
+      await axios.post(`${API_URL}/api/otc/clients/create-direct?${params.toString()}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Cliente OTC criado com sucesso!');
+      setShowCreateDialog(false);
+      setShowExistingWarning(false);
+      setExistingContact(null);
+      resetForm();
+      fetchLeads();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao criar cliente');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      entity_name: '',
+      contact_name: '',
+      contact_email: '',
+      contact_phone: '',
+      country: '',
+      source: 'website',
+      estimated_volume_usd: '',
+      target_asset: 'BTC',
+      transaction_type: 'buy',
+      trading_frequency: 'one_shot',
+      volume_per_operation: '',
+      execution_timeframe: 'flexible',
+      preferred_settlement_methods: [],
+      current_exchange: '',
+      problem_to_solve: '',
+      notes: ''
+    });
+    setExistingContact(null);
+    setShowExistingWarning(false);
+  };
+
   const handleCreateLead = async () => {
     try {
       const payload = {
@@ -135,24 +227,8 @@ const OTCLeads = () => {
       
       toast.success('Lead criado com sucesso');
       setShowCreateDialog(false);
-      setFormData({
-        entity_name: '',
-        contact_name: '',
-        contact_email: '',
-        contact_phone: '',
-        country: '',
-        source: 'website',
-        estimated_volume_usd: '',
-        target_asset: 'BTC',
-        transaction_type: 'buy',
-        trading_frequency: 'one_shot',
-        volume_per_operation: '',
-        execution_timeframe: 'flexible',
-        preferred_settlement_methods: [],
-        current_exchange: '',
-        problem_to_solve: '',
-        notes: ''
-      });
+      setShowExistingWarning(false);
+      resetForm();
       fetchLeads();
     } catch (err) {
       toast.error('Erro ao criar lead');
@@ -473,10 +549,14 @@ const OTCLeads = () => {
               <Input
                 type="email"
                 value={formData.contact_email}
-                onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
+                onChange={(e) => {
+                  setFormData({...formData, contact_email: e.target.value});
+                }}
+                onBlur={(e) => checkExistingEmail(e.target.value)}
                 placeholder="email@empresa.com"
-                className="bg-zinc-800 border-gold-500/30"
+                className={`bg-zinc-800 border-gold-500/30 ${checkingEmail ? 'opacity-50' : ''}`}
               />
+              {checkingEmail && <p className="text-xs text-gray-400">Verificando...</p>}
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
@@ -629,12 +709,87 @@ const OTCLeads = () => {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-zinc-600">
+          {/* Existing Contact Warning */}
+          {showExistingWarning && existingContact && (
+            <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30 space-y-3">
+              <div className="flex items-center gap-2 text-yellow-400">
+                <AlertTriangle size={18} />
+                <span className="font-medium">Contacto Existente Encontrado</span>
+              </div>
+              
+              {existingContact.existing_otc_client && (
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-xs text-gray-400 uppercase mb-1">Cliente OTC Existente</p>
+                  <p className="text-white">{existingContact.existing_otc_client.entity_name}</p>
+                  <p className="text-gray-400 text-sm">{existingContact.existing_otc_client.contact_email}</p>
+                  <Badge className="mt-1 bg-green-900/30 text-green-400">
+                    {existingContact.existing_otc_client.status || 'Ativo'}
+                  </Badge>
+                </div>
+              )}
+              
+              {existingContact.existing_user && (
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User size={14} className="text-blue-400" />
+                    <p className="text-xs text-blue-400 uppercase">Utilizador Registado na Plataforma</p>
+                  </div>
+                  <p className="text-white">
+                    {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
+                  </p>
+                  <p className="text-gray-400 text-sm">{existingContact.existing_user.email}</p>
+                  {existingContact.existing_user.company_name && (
+                    <p className="text-gray-400 text-sm">{existingContact.existing_user.company_name}</p>
+                  )}
+                  <Badge className="mt-1 bg-blue-900/30 text-blue-400">
+                    KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
+                  </Badge>
+                </div>
+              )}
+              
+              {existingContact.existing_lead && (
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-xs text-gray-400 uppercase mb-1">Lead OTC Existente</p>
+                  <p className="text-white">{existingContact.existing_lead.entity_name}</p>
+                  <p className="text-gray-400 text-sm">{existingContact.existing_lead.contact_email}</p>
+                  <Badge className="mt-1 bg-purple-900/30 text-purple-400">
+                    {existingContact.existing_lead.status || 'Novo'}
+                  </Badge>
+                </div>
+              )}
+              
+              {/* Action buttons based on what exists */}
+              {existingContact.existing_user && !existingContact.existing_otc_client && (
+                <Button
+                  onClick={handleCreateClientDirect}
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
+                  data-testid="create-client-direct-btn"
+                >
+                  <Link2 size={16} className="mr-2" />
+                  Criar Cliente OTC Direto (Associar ao Utilizador)
+                </Button>
+              )}
+              
+              <p className="text-xs text-gray-400">
+                {existingContact.existing_otc_client 
+                  ? 'Este email já pertence a um cliente OTC. Pode continuar a criar um lead separado ou gerir o cliente existente.'
+                  : existingContact.existing_user
+                  ? 'Este utilizador já está registado. Pode criar um Cliente OTC diretamente ou continuar com o fluxo de Lead.'
+                  : 'Já existe um lead com este email. Pode continuar a criar outro ou gerir o lead existente.'}
+              </p>
+            </div>
+          )}
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => { setShowCreateDialog(false); resetForm(); }} className="border-zinc-600">
               Cancelar
             </Button>
-            <Button onClick={handleCreateLead} className="bg-gold-500 hover:bg-gold-400 text-black">
-              Criar Lead
+            <Button 
+              onClick={handleCreateLead} 
+              className="bg-gold-500 hover:bg-gold-400 text-black"
+              data-testid="create-lead-btn"
+            >
+              {showExistingWarning ? 'Criar Lead Mesmo Assim' : 'Criar Lead'}
             </Button>
           </DialogFooter>
         </DialogContent>

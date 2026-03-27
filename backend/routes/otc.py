@@ -88,6 +88,143 @@ async def get_otc_leads(
     }
 
 
+@router.get("/check-existing")
+async def check_existing_contact(
+    email: str,
+    entity_name: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Check if an email/entity already exists as:
+    - OTC Client
+    - Platform User (registered user)
+    - OTC Lead
+    Returns info to allow linking or warning about duplicates.
+    """
+    db = get_db()
+    
+    result = {
+        "email": email,
+        "entity_name": entity_name,
+        "existing_otc_client": None,
+        "existing_user": None,
+        "existing_lead": None
+    }
+    
+    # Check OTC Clients
+    otc_client = await db.otc_clients.find_one(
+        {"contact_email": {"$regex": f"^{email}$", "$options": "i"}},
+        {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1}
+    )
+    if otc_client:
+        result["existing_otc_client"] = otc_client
+    
+    # Check Platform Users
+    user = await db.users.find_one(
+        {"email": {"$regex": f"^{email}$", "$options": "i"}},
+        {"_id": 0, "id": 1, "email": 1, "first_name": 1, "last_name": 1, "company_name": 1, "kyc_status": 1, "created_at": 1}
+    )
+    if user:
+        result["existing_user"] = user
+    
+    # Check existing leads (not archived or lost)
+    existing_lead = await db.otc_leads.find_one(
+        {
+            "contact_email": {"$regex": f"^{email}$", "$options": "i"},
+            "status": {"$nin": ["archived", "lost", "active_client"]}
+        },
+        {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1}
+    )
+    if existing_lead:
+        result["existing_lead"] = existing_lead
+    
+    return result
+
+
+@router.post("/clients/create-direct")
+async def create_otc_client_direct(
+    entity_name: str,
+    contact_name: str,
+    contact_email: str,
+    country: str,
+    user_id: Optional[str] = None,
+    contact_phone: Optional[str] = None,
+    daily_limit_usd: float = 100000,
+    monthly_limit_usd: float = 1000000,
+    default_settlement: SettlementMethod = SettlementMethod.SEPA,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Create an OTC Client directly, bypassing the Lead workflow.
+    Useful when the contact is already a known/verified client or existing platform user.
+    """
+    db = get_db()
+    
+    # Check if client with this email already exists
+    existing_client = await db.otc_clients.find_one(
+        {"contact_email": {"$regex": f"^{contact_email}$", "$options": "i"}}
+    )
+    if existing_client:
+        raise HTTPException(status_code=400, detail="Cliente OTC com este email já existe")
+    
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    # Create OTC Client
+    client = OTCClient(
+        lead_id=None,  # No lead associated
+        user_id=user_id,  # Link to platform user if provided
+        entity_name=entity_name,
+        contact_name=contact_name,
+        contact_email=contact_email,
+        contact_phone=contact_phone,
+        country=country,
+        account_manager_id=current_user_id,
+        daily_limit_usd=daily_limit_usd,
+        monthly_limit_usd=monthly_limit_usd,
+        default_settlement_method=default_settlement,
+        notes=notes
+    )
+    
+    await db.otc_clients.insert_one(client.dict())
+    
+    return {"success": True, "client": client.dict(), "message": "Cliente OTC criado diretamente"}
+
+
+@router.post("/clients/link-to-user")
+async def link_otc_client_to_user(
+    client_id: str,
+    user_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Link an existing OTC Client to a platform user account.
+    """
+    db = get_db()
+    
+    # Verify client exists
+    client = await db.otc_clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente OTC não encontrado")
+    
+    # Verify user exists
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+    
+    # Update client with user_id
+    await db.otc_clients.update_one(
+        {"id": client_id},
+        {"$set": {
+            "user_id": user_id,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    updated_client = await db.otc_clients.find_one({"id": client_id}, {"_id": 0})
+    return {"success": True, "client": updated_client, "message": "Cliente vinculado ao utilizador"}
+
+
 @router.post("/leads")
 async def create_otc_lead(
     lead_data: CreateOTCLeadRequest,
