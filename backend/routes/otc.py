@@ -7,6 +7,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import uuid
+import logging
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 from models.otc import (
     OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, SettlementMethod,
