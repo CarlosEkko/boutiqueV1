@@ -14,7 +14,9 @@ import {
   User,
   ChevronRight,
   FileText,
-  Upload
+  Upload,
+  Zap,
+  Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,9 +28,11 @@ const KYCStatus = () => {
   const { t } = useLanguage();
   const [kycData, setKycData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sumsubConfigured, setSumsubConfigured] = useState(false);
 
   useEffect(() => {
     fetchKYCStatus();
+    checkSumsubConfig();
   }, []);
 
   const fetchKYCStatus = async () => {
@@ -39,6 +43,15 @@ const KYCStatus = () => {
       console.error('Error fetching KYC status:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkSumsubConfig = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/sumsub/config`);
+      setSumsubConfigured(response.data.configured);
+    } catch (err) {
+      console.error('Error checking Sumsub config:', err);
     }
   };
 
@@ -159,14 +172,41 @@ const KYCStatus = () => {
           </div>
 
           {kycStatus === 'not_started' && (
-            <Button 
-              onClick={() => startVerification('kyc')}
-              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
-              data-testid="start-kyc-btn"
-            >
-              {t('kyc.status.startKyc')}
-              <ChevronRight size={18} className="ml-2" />
-            </Button>
+            <div className="space-y-3">
+              {/* Sumsub - Automatic Verification */}
+              {sumsubConfigured && (
+                <Button 
+                  onClick={() => navigate('/dashboard/kyc/sumsub')}
+                  className="w-full bg-gold-500 hover:bg-gold-600 text-black"
+                  data-testid="start-sumsub-kyc-btn"
+                >
+                  <Zap size={18} className="mr-2" />
+                  Verificação Automática
+                  <ChevronRight size={18} className="ml-2" />
+                </Button>
+              )}
+              
+              {/* Manual KYC - Fallback */}
+              <Button 
+                onClick={() => startVerification('kyc')}
+                variant={sumsubConfigured ? "outline" : "default"}
+                className={sumsubConfigured 
+                  ? "w-full border-gold-500/30 text-gold-400 hover:bg-gold-900/20" 
+                  : "w-full bg-gold-500 hover:bg-gold-600 text-black"
+                }
+                data-testid="start-kyc-btn"
+              >
+                <Upload size={18} className="mr-2" />
+                {sumsubConfigured ? 'Upload Manual de Documentos' : t('kyc.status.startKyc')}
+                <ChevronRight size={18} className="ml-2" />
+              </Button>
+              
+              {sumsubConfigured && (
+                <p className="text-xs text-gray-500 text-center">
+                  A verificação automática inclui selfie com documento e é mais rápida
+                </p>
+              )}
+            </div>
           )}
 
           {kycStatus === 'in_progress' && (

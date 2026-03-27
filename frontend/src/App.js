@@ -50,6 +50,7 @@ import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
 import PublicSupportPage from "./pages/PublicSupportPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
+import SumsubKYC from "./pages/dashboard/kyc/SumsubKYC";
 import CRMDashboard from "./pages/dashboard/crm/CRMDashboard";
 import CRMSuppliers from "./pages/dashboard/crm/CRMSuppliers";
 import CRMLeads from "./pages/dashboard/crm/CRMLeads";
@@ -152,6 +153,7 @@ function AppRoutes() {
         <Route path="kyc" element={<KYCStatus />} />
         <Route path="kyc/kyc" element={<KYCForm />} />
         <Route path="kyc/kyb" element={<KYBForm />} />
+        <Route path="kyc/sumsub" element={<SumsubKYC />} />
         
         {/* Exchange */}
         <Route path="exchange" element={<ExchangePage />} />
