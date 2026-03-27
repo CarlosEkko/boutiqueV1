@@ -79,7 +79,7 @@ const OTCQuotes = () => {
   useEffect(() => {
     if (showCreateDialog && selectedDeal && !quoteForm.is_manual) {
       const interval = setInterval(() => {
-        fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset);
+        fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset, true);
       }, 1000);
       
       return () => clearInterval(interval);
