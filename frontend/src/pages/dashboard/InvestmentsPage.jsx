@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -41,6 +42,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const InvestmentsPage = () => {
   const { token, user } = useAuth();
   const { formatCurrency } = useCurrency();
+  const { t } = useLanguage();
   const [opportunities, setOpportunities] = useState([]);
   const [myInvestments, setMyInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
