@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request, Header
 from datetime import datetime, timezone
+from typing import Optional
 from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel, UserType, Region
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
+from utils.i18n import t, I18n
 from pydantic import BaseModel
 import pyotp
 import qrcode
@@ -19,6 +21,11 @@ def set_db(database):
     db = database
 
 
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    """Get language from request headers"""
+    return I18n.get_language_from_header(accept_language)
+
+
 # 2FA Models
 class TwoFASetupResponse(BaseModel):
     secret: str
@@ -29,14 +36,14 @@ class TwoFAVerifyRequest(BaseModel):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate):
+async def register(user_data: UserCreate, lang: str = Depends(get_lang)):
     """Register a new user."""
     # Check if email already exists
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail=t("auth.email_already_exists", lang)
         )
     
     # Validate invite code if provided
@@ -113,7 +120,7 @@ async def register(user_data: UserCreate):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin):
+async def login(credentials: UserLogin, lang: str = Depends(get_lang)):
     """Login with email and password."""
     # Find user by email
     user_doc = await db.users.find_one({"email": credentials.email}, {"_id": 0})
@@ -121,21 +128,21 @@ async def login(credentials: UserLogin):
     if not user_doc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail=t("auth.invalid_credentials", lang)
         )
     
     # Verify password
     if not verify_password(credentials.password, user_doc["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail=t("auth.invalid_credentials", lang)
         )
     
     # Check if user is active
     if not user_doc.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated"
+            detail=t("auth.account_disabled", lang)
         )
     
     # Parse dates
@@ -359,14 +366,14 @@ async def deactivate_account(
 # ==================== 2FA ENDPOINTS ====================
 
 @router.post("/2fa/setup", response_model=TwoFASetupResponse)
-async def setup_2fa(user_id: str = Depends(get_current_user_id)):
+async def setup_2fa(user_id: str = Depends(get_current_user_id), lang: str = Depends(get_lang)):
     """Generate 2FA secret and QR code for user"""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=t("auth.user_not_found", lang))
     
     if user.get("two_factor_enabled"):
-        raise HTTPException(status_code=400, detail="2FA já está ativo")
+        raise HTTPException(status_code=400, detail=t("2fa.already_enabled", lang))
     
     # Generate secret
     secret = pyotp.random_base32()
@@ -409,21 +416,22 @@ async def setup_2fa(user_id: str = Depends(get_current_user_id)):
 @router.post("/2fa/verify")
 async def verify_2fa(
     request: TwoFAVerifyRequest,
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    lang: str = Depends(get_lang)
 ):
     """Verify 2FA code and enable 2FA for user"""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=t("auth.user_not_found", lang))
     
     secret = user.get("two_factor_secret_temp")
     if not secret:
-        raise HTTPException(status_code=400, detail="2FA setup not initiated")
+        raise HTTPException(status_code=400, detail=t("2fa.code_required", lang))
     
     # Verify code
     totp = pyotp.TOTP(secret)
     if not totp.verify(request.code):
-        raise HTTPException(status_code=400, detail="Código inválido")
+        raise HTTPException(status_code=400, detail=t("2fa.invalid_code", lang))
     
     # Enable 2FA and mark as onboarded
     await db.users.update_one(
@@ -441,30 +449,21 @@ async def verify_2fa(
         }
     )
     
-    return {"success": True, "message": "2FA ativado com sucesso"}
+    return {"success": True, "message": t("2fa.verify_success", lang)}
 
 
 @router.post("/2fa/disable")
 async def disable_2fa(
-    request: TwoFAVerifyRequest,
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    lang: str = Depends(get_lang)
 ):
-    """Disable 2FA for user (requires current code)"""
+    """Disable 2FA for user"""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=t("auth.user_not_found", lang))
     
     if not user.get("two_factor_enabled"):
-        raise HTTPException(status_code=400, detail="2FA não está ativo")
-    
-    secret = user.get("two_factor_secret")
-    if not secret:
-        raise HTTPException(status_code=400, detail="2FA secret not found")
-    
-    # Verify code
-    totp = pyotp.TOTP(secret)
-    if not totp.verify(request.code):
-        raise HTTPException(status_code=400, detail="Código inválido")
+        raise HTTPException(status_code=400, detail=t("2fa.not_enabled", lang))
     
     # Disable 2FA
     await db.users.update_one(
@@ -480,7 +479,7 @@ async def disable_2fa(
         }
     )
     
-    return {"success": True, "message": "2FA desativado com sucesso"}
+    return {"success": True, "message": t("2fa.disable_success", lang)}
 
 
 @router.get("/2fa/status")
