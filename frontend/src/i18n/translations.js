@@ -3,6 +3,87 @@
 
 const translations = {
   EN: {
+    // Sidebar Menu Labels (maps backend labels to translations)
+    sidebar: {
+      // Main menus
+      portfolio: 'Portfolio',
+      investimentos: 'Investments',
+      transparencia: 'Transparency',
+      perfil: 'Profile',
+      admin: 'Admin',
+      gestao: 'Management',
+      financeiro: 'Finance',
+      crm: 'CRM',
+      otcDesk: 'OTC Desk',
+      suporte: 'Support',
+      // Submenus
+      ativos: 'Assets',
+      operacoesCrypto: 'Crypto Operations',
+      operacoesFiat: 'Fiat Operations',
+      transacoes: 'Transactions',
+      // Items - Portfolio
+      dashboard: 'Dashboard',
+      exchange: 'Exchange',
+      carteiras: 'Wallets',
+      whitelist: 'Whitelist',
+      depositoCrypto: 'Crypto Deposit',
+      levantamentoCrypto: 'Crypto Withdrawal',
+      depositoFiat: 'Fiat Deposit',
+      levantamentoFiat: 'Fiat Withdrawal',
+      // Items - Account
+      meuPerfil: 'My Profile',
+      dadosBancarios: 'Bank Details',
+      seguranca: 'Security',
+      verificacaoKyc: 'KYC Verification',
+      // Items - Admin
+      visaoGeral: 'Overview',
+      metricasRegionais: 'Regional Metrics',
+      gestaoEquipa: 'Staff Management',
+      clientes: 'Clients',
+      kycKyb: 'KYC/KYB',
+      oportunidades: 'Opportunities',
+      codigosConvite: 'Invite Codes',
+      // Items - Management
+      permissoes: 'Permissions',
+      menusClientes: 'Client Menus',
+      taxasLimites: 'Fees & Limits',
+      configuracoes: 'Settings',
+      referencias: 'Referrals',
+      dashboardAvancado: 'Advanced Dashboard',
+      // Items - Finance
+      ordensTrading: 'Trading Orders',
+      taxasAdmissao: 'Admission Fees',
+      depositosFiat: 'Fiat Deposits',
+      levantamentosFiat: 'Fiat Withdrawals',
+      levantamentosCrypto: 'Crypto Withdrawals',
+      contasClientes: 'Client Accounts',
+      contasEmpresa: 'Company Accounts',
+      // Items - CRM
+      dashboardCrm: 'CRM Dashboard',
+      meusClientes: 'My Clients',
+      fornecedores: 'Suppliers',
+      leads: 'Leads',
+      negociacoes: 'Deals',
+      contactos: 'Contacts',
+      tarefas: 'Tasks',
+      pipelineVendas: 'Sales Pipeline',
+      // Items - OTC Desk
+      dashboardOtc: 'OTC Dashboard',
+      leadsOtc: 'OTC Leads',
+      pipeline: 'Pipeline',
+      cotacoes: 'Quotes',
+      execucao: 'Execution',
+      liquidacao: 'Settlement',
+      faturas: 'Invoices',
+      clientesOtc: 'OTC Clients',
+      // Items - Support
+      ticketsSuporte: 'Support Tickets',
+      baseConhecimento: 'Knowledge Base',
+      // Section headers
+      gestaoLabel: 'Management',
+      loading: 'Loading...',
+    },
+
     // Navigation
     nav: {
       home: 'Home',
@@ -199,12 +280,20 @@ const translations = {
       overview: {
         welcome: 'Welcome back',
         portfolioValue: 'Portfolio Value',
+        totalPortfolio: 'Total Portfolio',
+        walletBalance: 'Wallet Balance',
         totalAssets: 'Total Assets',
         activeInvestments: 'Active Investments',
         pendingTransactions: 'Pending',
         recentActivity: 'Recent Activity',
+        recentTransactions: 'Recent Transactions',
+        portfolioAllocation: 'Portfolio Allocation',
         noActivity: 'No recent activity',
-        viewAll: 'View All'
+        noTransactionsYet: 'No transactions yet',
+        viewAll: 'View All',
+        totalInvested: 'Total Invested',
+        expectedReturns: 'Expected Returns',
+        heresYourPortfolio: "Here's your portfolio overview"
       },
       // Wallets
       wallets: {
@@ -513,6 +602,87 @@ const translations = {
   },
   
   PT: {
+    // Sidebar Menu Labels (maps backend labels to translations)
+    sidebar: {
+      // Main menus
+      portfolio: 'Portefólio',
+      investimentos: 'Investimentos',
+      transparencia: 'Transparência',
+      perfil: 'Perfil',
+      admin: 'Admin',
+      gestao: 'Gestão',
+      financeiro: 'Financeiro',
+      crm: 'CRM',
+      otcDesk: 'OTC Desk',
+      suporte: 'Suporte',
+      // Submenus
+      ativos: 'Ativos',
+      operacoesCrypto: 'Operações Crypto',
+      operacoesFiat: 'Operações Fiat',
+      transacoes: 'Transações',
+      // Items - Portfolio
+      dashboard: 'Dashboard',
+      exchange: 'Exchange',
+      carteiras: 'Carteiras',
+      whitelist: 'Whitelist',
+      depositoCrypto: 'Depósito Crypto',
+      levantamentoCrypto: 'Levantamento Crypto',
+      depositoFiat: 'Depósito Fiat',
+      levantamentoFiat: 'Levantamento Fiat',
+      // Items - Account
+      meuPerfil: 'Meu Perfil',
+      dadosBancarios: 'Dados Bancários',
+      seguranca: 'Segurança',
+      verificacaoKyc: 'Verificação KYC',
+      // Items - Admin
+      visaoGeral: 'Visão Geral',
+      metricasRegionais: 'Métricas Regionais',
+      gestaoEquipa: 'Gestão de Equipa',
+      clientes: 'Clientes',
+      kycKyb: 'KYC/KYB',
+      oportunidades: 'Oportunidades',
+      codigosConvite: 'Códigos de Convite',
+      // Items - Management
+      permissoes: 'Permissões',
+      menusClientes: 'Menus de Clientes',
+      taxasLimites: 'Taxas & Limites',
+      configuracoes: 'Configurações',
+      referencias: 'Referências',
+      dashboardAvancado: 'Dashboard Avançado',
+      // Items - Finance
+      ordensTrading: 'Ordens de Trading',
+      taxasAdmissao: 'Taxas de Admissão',
+      depositosFiat: 'Depósitos Fiat',
+      levantamentosFiat: 'Levantamentos Fiat',
+      levantamentosCrypto: 'Levantamentos Crypto',
+      contasClientes: 'Contas de Clientes',
+      contasEmpresa: 'Contas da Empresa',
+      // Items - CRM
+      dashboardCrm: 'Dashboard CRM',
+      meusClientes: 'Meus Clientes',
+      fornecedores: 'Fornecedores',
+      leads: 'Leads',
+      negociacoes: 'Negociações',
+      contactos: 'Contactos',
+      tarefas: 'Tarefas',
+      pipelineVendas: 'Pipeline de Vendas',
+      // Items - OTC Desk
+      dashboardOtc: 'Dashboard OTC',
+      leadsOtc: 'Leads OTC',
+      pipeline: 'Pipeline',
+      cotacoes: 'Cotações',
+      execucao: 'Execução',
+      liquidacao: 'Liquidação',
+      faturas: 'Faturas',
+      clientesOtc: 'Clientes OTC',
+      // Items - Support
+      ticketsSuporte: 'Tickets de Suporte',
+      baseConhecimento: 'Base de Conhecimento',
+      // Section headers
+      gestaoLabel: 'Gestão',
+      loading: 'A carregar...',
+    },
+
     // Navigation
     nav: {
       home: 'Início',
@@ -709,12 +879,20 @@ const translations = {
       overview: {
         welcome: 'Bem-vindo de volta',
         portfolioValue: 'Valor do Portfólio',
+        totalPortfolio: 'Portfólio Total',
+        walletBalance: 'Saldo da Carteira',
         totalAssets: 'Total de Ativos',
         activeInvestments: 'Investimentos Ativos',
         pendingTransactions: 'Pendentes',
         recentActivity: 'Atividade Recente',
+        recentTransactions: 'Transações Recentes',
+        portfolioAllocation: 'Alocação do Portfólio',
         noActivity: 'Sem atividade recente',
-        viewAll: 'Ver Tudo'
+        noTransactionsYet: 'Ainda sem transações',
+        viewAll: 'Ver Tudo',
+        totalInvested: 'Total Investido',
+        expectedReturns: 'Retornos Esperados',
+        heresYourPortfolio: 'Aqui está a visão geral do seu portfólio'
       },
       // Wallets
       wallets: {
@@ -1023,6 +1201,87 @@ const translations = {
   },
   
   AR: {
+    // Sidebar Menu Labels (maps backend labels to translations)
+    sidebar: {
+      // Main menus
+      portfolio: 'المحفظة',
+      investimentos: 'الاستثمارات',
+      transparencia: 'الشفافية',
+      perfil: 'الملف الشخصي',
+      admin: 'الإدارة',
+      gestao: 'الإدارة',
+      financeiro: 'المالية',
+      crm: 'إدارة العملاء',
+      otcDesk: 'مكتب OTC',
+      suporte: 'الدعم',
+      // Submenus
+      ativos: 'الأصول',
+      operacoesCrypto: 'عمليات العملات المشفرة',
+      operacoesFiat: 'العمليات النقدية',
+      transacoes: 'المعاملات',
+      // Items - Portfolio
+      dashboard: 'لوحة التحكم',
+      exchange: 'التداول',
+      carteiras: 'المحافظ',
+      whitelist: 'القائمة البيضاء',
+      depositoCrypto: 'إيداع العملات المشفرة',
+      levantamentoCrypto: 'سحب العملات المشفرة',
+      depositoFiat: 'إيداع نقدي',
+      levantamentoFiat: 'سحب نقدي',
+      // Items - Account
+      meuPerfil: 'ملفي الشخصي',
+      dadosBancarios: 'البيانات المصرفية',
+      seguranca: 'الأمان',
+      verificacaoKyc: 'التحقق من الهوية',
+      // Items - Admin
+      visaoGeral: 'نظرة عامة',
+      metricasRegionais: 'المقاييس الإقليمية',
+      gestaoEquipa: 'إدارة الفريق',
+      clientes: 'العملاء',
+      kycKyb: 'KYC/KYB',
+      oportunidades: 'الفرص',
+      codigosConvite: 'رموز الدعوة',
+      // Items - Management
+      permissoes: 'الصلاحيات',
+      menusClientes: 'قوائم العملاء',
+      taxasLimites: 'الرسوم والحدود',
+      configuracoes: 'الإعدادات',
+      referencias: 'الإحالات',
+      dashboardAvancado: 'لوحة تحكم متقدمة',
+      // Items - Finance
+      ordensTrading: 'أوامر التداول',
+      taxasAdmissao: 'رسوم القبول',
+      depositosFiat: 'الإيداعات النقدية',
+      levantamentosFiat: 'السحوبات النقدية',
+      levantamentosCrypto: 'سحوبات العملات المشفرة',
+      contasClientes: 'حسابات العملاء',
+      contasEmpresa: 'حسابات الشركة',
+      // Items - CRM
+      dashboardCrm: 'لوحة إدارة العملاء',
+      meusClientes: 'عملائي',
+      fornecedores: 'الموردون',
+      leads: 'العملاء المحتملون',
+      negociacoes: 'الصفقات',
+      contactos: 'جهات الاتصال',
+      tarefas: 'المهام',
+      pipelineVendas: 'خط المبيعات',
+      // Items - OTC Desk
+      dashboardOtc: 'لوحة تحكم OTC',
+      leadsOtc: 'عملاء OTC المحتملون',
+      pipeline: 'خط الأنابيب',
+      cotacoes: 'عروض الأسعار',
+      execucao: 'التنفيذ',
+      liquidacao: 'التسوية',
+      faturas: 'الفواتير',
+      clientesOtc: 'عملاء OTC',
+      // Items - Support
+      ticketsSuporte: 'تذاكر الدعم',
+      baseConhecimento: 'قاعدة المعرفة',
+      // Section headers
+      gestaoLabel: 'الإدارة',
+      loading: 'جاري التحميل...',
+    },
+
     // Navigation
     nav: {
       home: 'الرئيسية',
@@ -1216,12 +1475,20 @@ const translations = {
       overview: {
         welcome: 'مرحباً بعودتك',
         portfolioValue: 'قيمة المحفظة',
+        totalPortfolio: 'إجمالي المحفظة',
+        walletBalance: 'رصيد المحفظة',
         totalAssets: 'إجمالي الأصول',
         activeInvestments: 'الاستثمارات النشطة',
         pendingTransactions: 'قيد الانتظار',
         recentActivity: 'النشاط الأخير',
+        recentTransactions: 'المعاملات الأخيرة',
+        portfolioAllocation: 'توزيع المحفظة',
         noActivity: 'لا يوجد نشاط حديث',
-        viewAll: 'عرض الكل'
+        noTransactionsYet: 'لا توجد معاملات بعد',
+        viewAll: 'عرض الكل',
+        totalInvested: 'إجمالي المستثمر',
+        expectedReturns: 'العوائد المتوقعة',
+        heresYourPortfolio: 'إليك نظرة عامة على محفظتك'
       },
       wallets: {
         title: 'محافظك',

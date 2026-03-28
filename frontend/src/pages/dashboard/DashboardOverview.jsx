@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -63,6 +64,7 @@ const CHART_COLORS = [
 
 const DashboardOverview = () => {
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -156,9 +158,9 @@ const DashboardOverview = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-light text-white">
-            Welcome back, <span className="text-gold-400">{user?.name?.split(' ')[0]}</span>
+            {t('dashboard.overview.welcome')}, <span className="text-gold-400">{user?.name?.split(' ')[0]}</span>
           </h1>
-          <p className="text-gray-400 mt-1">Here's your portfolio overview</p>
+          <p className="text-gray-400 mt-1">{t('dashboard.overview.heresYourPortfolio')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge className={`${
@@ -180,7 +182,7 @@ const DashboardOverview = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Total Portfolio</p>
+                <p className="text-sm text-gray-400">{t('dashboard.overview.totalPortfolio')}</p>
                 <p className="text-2xl font-light text-white mt-1">
                   {formatCurrency(overview?.total_portfolio_value)}
                 </p>
@@ -196,7 +198,7 @@ const DashboardOverview = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Wallet Balance</p>
+                <p className="text-sm text-gray-400">{t('dashboard.overview.walletBalance')}</p>
                 <p className="text-2xl font-light text-white mt-1">
                   {formatCurrency(overview?.wallet_value)}
                 </p>
@@ -212,7 +214,7 @@ const DashboardOverview = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Total Invested</p>
+                <p className="text-sm text-gray-400">{t('dashboard.overview.totalInvested')}</p>
                 <p className="text-2xl font-light text-white mt-1">
                   {formatCurrency(overview?.invested_value)}
                 </p>
@@ -228,7 +230,7 @@ const DashboardOverview = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Expected Returns</p>
+                <p className="text-sm text-gray-400">{t('dashboard.overview.expectedReturns')}</p>
                 <p className="text-2xl font-light text-green-400 mt-1">
                   +{formatCurrency(overview?.expected_returns)}
                 </p>
@@ -246,7 +248,7 @@ const DashboardOverview = () => {
         {/* Allocation */}
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
-            <CardTitle className="text-white font-light">Portfolio Allocation</CardTitle>
+            <CardTitle className="text-white font-light">{t('dashboard.overview.portfolioAllocation')}</CardTitle>
           </CardHeader>
           <CardContent>
             {overview?.wallet_allocation?.length > 0 ? (
@@ -361,7 +363,7 @@ const DashboardOverview = () => {
         {/* Recent Transactions */}
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
-            <CardTitle className="text-white font-light">Recent Transactions</CardTitle>
+            <CardTitle className="text-white font-light">{t('dashboard.overview.recentTransactions')}</CardTitle>
           </CardHeader>
           <CardContent>
             {overview?.recent_transactions?.length > 0 ? (
@@ -399,7 +401,7 @@ const DashboardOverview = () => {
             ) : (
               <div className="text-center py-8 text-gray-400">
                 <Clock className="mx-auto mb-2" size={32} />
-                <p>No transactions yet</p>
+                <p>{t('dashboard.overview.noTransactionsYet')}</p>
               </div>
             )}
           </CardContent>

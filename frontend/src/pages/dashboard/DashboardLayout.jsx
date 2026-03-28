@@ -95,11 +95,104 @@ const departmentConfig = {
   otc_desk: { icon: Briefcase, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
 };
 
+// Translation mapping for menu labels from backend to frontend i18n keys
+const labelTranslationMap = {
+  // Main menus (department labels)
+  'Portefólio': 'sidebar.portfolio',
+  'Portfolio': 'sidebar.portfolio',
+  'Investimentos': 'sidebar.investimentos',
+  'Transparência': 'sidebar.transparencia',
+  'Perfil': 'sidebar.perfil',
+  'Admin': 'sidebar.admin',
+  'Gestão': 'sidebar.gestao',
+  'Financeiro': 'sidebar.financeiro',
+  'CRM': 'sidebar.crm',
+  'OTC Desk': 'sidebar.otcDesk',
+  'Suporte': 'sidebar.suporte',
+  // Submenus
+  'Ativos': 'sidebar.ativos',
+  'Operações Crypto': 'sidebar.operacoesCrypto',
+  'Operações Fiat': 'sidebar.operacoesFiat',
+  'Transações': 'sidebar.transacoes',
+  // Items - Portfolio
+  'Dashboard': 'sidebar.dashboard',
+  'Exchange': 'sidebar.exchange',
+  'Carteiras': 'sidebar.carteiras',
+  'Whitelist': 'sidebar.whitelist',
+  'Depósito Crypto': 'sidebar.depositoCrypto',
+  'Levantamento Crypto': 'sidebar.levantamentoCrypto',
+  'Depósito Fiat': 'sidebar.depositoFiat',
+  'Levantamento Fiat': 'sidebar.levantamentoFiat',
+  // Items - Account
+  'Meu Perfil': 'sidebar.meuPerfil',
+  'Dados Bancários': 'sidebar.dadosBancarios',
+  'Segurança': 'sidebar.seguranca',
+  'Verificação KYC': 'sidebar.verificacaoKyc',
+  // Items - Admin
+  'Visão Geral': 'sidebar.visaoGeral',
+  'Métricas Regionais': 'sidebar.metricasRegionais',
+  'Gestão de Equipa': 'sidebar.gestaoEquipa',
+  'Clientes': 'sidebar.clientes',
+  'KYC/KYB': 'sidebar.kycKyb',
+  'Oportunidades': 'sidebar.oportunidades',
+  'Códigos Convite': 'sidebar.codigosConvite',
+  // Items - Management
+  'Permissões': 'sidebar.permissoes',
+  'Menus de Clientes': 'sidebar.menusClientes',
+  'Taxas & Limites': 'sidebar.taxasLimites',
+  'Configurações': 'sidebar.configuracoes',
+  'Referências': 'sidebar.referencias',
+  'Dashboard Avançado': 'sidebar.dashboardAvancado',
+  // Items - Finance
+  'Ordens de Trading': 'sidebar.ordensTrading',
+  'Taxas de Admissão': 'sidebar.taxasAdmissao',
+  'Depósitos Fiat': 'sidebar.depositosFiat',
+  'Levantamentos Fiat': 'sidebar.levantamentosFiat',
+  'Levantamentos Crypto': 'sidebar.levantamentosCrypto',
+  'Contas de Clientes': 'sidebar.contasClientes',
+  'Contas da Empresa': 'sidebar.contasEmpresa',
+  // Items - CRM
+  'Dashboard CRM': 'sidebar.dashboardCrm',
+  'Meus Clientes': 'sidebar.meusClientes',
+  'Fornecedores': 'sidebar.fornecedores',
+  'Leads': 'sidebar.leads',
+  'Negociações': 'sidebar.negociacoes',
+  'Contactos': 'sidebar.contactos',
+  'Tarefas': 'sidebar.tarefas',
+  'Pipeline de Vendas': 'sidebar.pipelineVendas',
+  // Items - OTC Desk
+  'Dashboard OTC': 'sidebar.dashboardOtc',
+  'Leads OTC': 'sidebar.leadsOtc',
+  'Pipeline': 'sidebar.pipeline',
+  'Cotações': 'sidebar.cotacoes',
+  'Execução': 'sidebar.execucao',
+  'Liquidação': 'sidebar.liquidacao',
+  'Faturas': 'sidebar.faturas',
+  'Clientes OTC': 'sidebar.clientesOtc',
+  // Items - Support
+  'Tickets de Suporte': 'sidebar.ticketsSuporte',
+  'Base de Conhecimento': 'sidebar.baseConhecimento',
+  // Misc
+  'ROI': 'dashboard.nav.roi',
+  'Investimentos': 'sidebar.investimentos',
+};
+
 const DashboardLayout = () => {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  
+  // Helper to translate labels from backend
+  const translateLabel = (label) => {
+    const key = labelTranslationMap[label];
+    if (key) {
+      const translated = t(key, label);
+      return translated !== key ? translated : label;
+    }
+    return label;
+  };
+  
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuStructure, setMenuStructure] = useState([]);
@@ -344,7 +437,7 @@ const DashboardLayout = () => {
       >
         <div className="flex items-center gap-3">
           <Icon size={14} />
-          {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{label}</span>}
+          {(sidebarOpen || mobileMenuOpen) && <span className="text-sm">{translateLabel(label)}</span>}
         </div>
         {notificationCount > 0 && (
           <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
@@ -376,7 +469,7 @@ const DashboardLayout = () => {
           }
         >
           <SubIcon size={16} />
-          <span className="text-sm">{submenu.label}</span>
+          <span className="text-sm">{translateLabel(submenu.label)}</span>
         </NavLink>
       );
     }
@@ -394,7 +487,7 @@ const DashboardLayout = () => {
         >
           <div className="flex items-center gap-3">
             <SubIcon size={16} />
-            <span className="text-sm font-medium">{submenu.label}</span>
+            <span className="text-sm font-medium">{translateLabel(submenu.label)}</span>
           </div>
           {isExpanded ? (
             <ChevronDown size={14} />
@@ -445,7 +538,7 @@ const DashboardLayout = () => {
             >
               <div className="flex items-center gap-3">
                 <DeptIcon size={18} />
-                <span className="font-medium text-sm">{menu.label}</span>
+                <span className="font-medium text-sm">{translateLabel(menu.label)}</span>
                 {deptNotificationCount > 0 && !isExpanded && (
                   <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                     {deptNotificationCount > 99 ? '99+' : deptNotificationCount}
@@ -487,7 +580,7 @@ const DashboardLayout = () => {
                   >
                     <div className="flex items-center gap-3">
                       {React.createElement(getIcon(item.icon), { size: 14 })}
-                      <span className="text-sm">{item.label}</span>
+                      <span className="text-sm">{translateLabel(item.label)}</span>
                     </div>
                     {notifications[item.path] > 0 && (
                       <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
@@ -520,7 +613,7 @@ const DashboardLayout = () => {
             {/* Tooltip */}
             <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 hidden group-hover:block z-50">
               <div className="bg-zinc-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                {menu.label}
+                {translateLabel(menu.label)}
               </div>
             </div>
           </div>
@@ -532,7 +625,7 @@ const DashboardLayout = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-gold-400">Carregando...</div>
+        <div className="text-gold-400">{t('sidebar.loading')}</div>
       </div>
     );
   }
@@ -619,7 +712,7 @@ const DashboardLayout = () => {
             <div className="pt-4 border-t border-gold-800/20 space-y-2">
               {sidebarOpen && (
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
-                  Gestao
+                  {t('sidebar.gestaoLabel')}
                 </p>
               )}
               {adminMenus.map((menu) => (
@@ -691,7 +784,7 @@ const DashboardLayout = () => {
             {adminMenus.length > 0 && (
               <div className="pt-4 mt-4 border-t border-gold-800/20 space-y-2">
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
-                  Gestao
+                  {t('sidebar.gestaoLabel')}
                 </p>
                 {adminMenus.map((menu) => (
                   <MenuSection key={menu.department} menu={menu} isMobile={true} />
