@@ -37,12 +37,12 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Crypto addresses (can also be fetched from API in the future)
+// Crypto addresses from Fireblocks Vault "Cofre Tx anual" (Vault ID: 69)
 const CRYPTO_ADDRESSES = {
-  BTC: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
-  ETH: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1',
-  USDT: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1',
-  USDC: '0x742d35Cc6634C0532925a3b844Bc9e7595f1B1e1'
+  BTC: 'bc1q83zcsh5kmtac53kwjjn2yh6wpujgnac79cdxyf',
+  ETH: '0x8a64196045B2E213e9cC0ab93865639CE93c8dbC',
+  USDT: '0x8a64196045B2E213e9cC0ab93865639CE93c8dbC',
+  USDC: '0x8a64196045B2E213e9cC0ab93865639CE93c8dbC'
 };
 
 const OnboardingPage = () => {
