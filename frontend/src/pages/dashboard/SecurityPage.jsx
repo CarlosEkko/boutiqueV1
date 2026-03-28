@@ -52,6 +52,12 @@ const SecurityPage = () => {
   // Anti-phishing
   const [antiPhishingCode, setAntiPhishingCode] = useState('');
 
+  // 2FA setup
+  const [twoFASecret, setTwoFASecret] = useState(null);
+  const [twoFAQRCode, setTwoFAQRCode] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [setting2FA, setSetting2FA] = useState(false);
+
   // Activity log
   const [activityLog, setActivityLog] = useState([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
@@ -138,6 +144,63 @@ const SecurityPage = () => {
       }, 2000);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Falha ao desativar conta');
+    }
+  };
+
+  // 2FA Functions
+  const handleOpen2FADialog = async () => {
+    setShow2FADialog(true);
+    setSetting2FA(true);
+    setVerificationCode('');
+    
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/2fa/setup`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTwoFASecret(response.data.secret);
+      setTwoFAQRCode(response.data.qr_code);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Falha ao configurar 2FA');
+      setShow2FADialog(false);
+    } finally {
+      setSetting2FA(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) {
+      toast.error('Insira o código de 6 dígitos');
+      return;
+    }
+    
+    try {
+      await axios.post(`${API_URL}/api/auth/2fa/verify`, {
+        code: verificationCode
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('2FA ativado com sucesso!');
+      setShow2FADialog(false);
+      setSecuritySettings(prev => ({ ...prev, two_factor_enabled: true }));
+      setTwoFASecret(null);
+      setTwoFAQRCode(null);
+      setVerificationCode('');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Código inválido');
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/2fa/disable`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('2FA desativado');
+      setSecuritySettings(prev => ({ ...prev, two_factor_enabled: false }));
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Falha ao desativar 2FA');
     }
   };
 
@@ -229,12 +292,12 @@ const SecurityPage = () => {
                 </div>
               </div>
               <Button 
-                onClick={() => setShow2FADialog(true)}
+                onClick={handleOpen2FADialog}
                 size="sm" 
                 variant={securitySettings.two_factor_enabled ? "outline" : "default"}
                 className={securitySettings.two_factor_enabled ? "border-emerald-800/30 text-emerald-400" : "bg-emerald-500 hover:bg-emerald-600"}
               >
-                {securitySettings.two_factor_enabled ? 'Ativado' : 'Ativar'}
+                {securitySettings.two_factor_enabled ? 'Gerir' : 'Ativar'}
               </Button>
             </div>
 
@@ -475,18 +538,83 @@ const SecurityPage = () => {
               Autenticação 2FA
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4 text-center">
-            <div className="bg-zinc-800 p-4 rounded-lg mb-4">
-              <p className="text-gray-400 text-sm">Esta funcionalidade estará disponível em breve.</p>
+          
+          {setting2FA ? (
+            <div className="py-8 text-center">
+              <RefreshCw className="animate-spin mx-auto text-gold-400 mb-4" size={32} />
+              <p className="text-gray-400">A gerar código QR...</p>
             </div>
-            <p className="text-xs text-gray-500">
-              A autenticação de dois fatores adiciona uma camada extra de segurança à sua conta.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setShow2FADialog(false)} className="w-full bg-emerald-500 hover:bg-emerald-600">
-              Entendido
+          ) : securitySettings.two_factor_enabled ? (
+            <div className="py-4 text-center">
+              <div className="bg-emerald-900/20 p-4 rounded-lg mb-4 border border-emerald-500/30">
+                <CheckCircle className="mx-auto text-emerald-400 mb-2" size={32} />
+                <p className="text-emerald-400 font-medium">2FA está ativo</p>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                A autenticação de dois fatores está a proteger a sua conta.
+              </p>
+              <Button 
+                onClick={handleDisable2FA} 
+                variant="destructive"
+                className="w-full"
+              >
+                Desativar 2FA
+              </Button>
+            </div>
+          ) : twoFAQRCode ? (
+            <div className="py-4 space-y-4">
+              <div className="bg-white p-4 rounded-lg mx-auto w-fit">
+                <img src={twoFAQRCode} alt="QR Code 2FA" className="w-48 h-48" />
+              </div>
+              
+              <div className="bg-zinc-800 p-3 rounded-lg">
+                <p className="text-xs text-gray-400 mb-1">Chave secreta (backup):</p>
+                <p className="font-mono text-sm text-gold-400 break-all">{twoFASecret}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Código de Verificação</Label>
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  className="bg-zinc-800 border-zinc-700 text-center text-2xl tracking-widest"
+                />
+                <p className="text-xs text-gray-500">
+                  Insira o código de 6 dígitos do Google Authenticator
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="py-4 text-center">
+              <p className="text-gray-400">Erro ao carregar QR code. Tente novamente.</p>
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShow2FADialog(false);
+                setTwoFASecret(null);
+                setTwoFAQRCode(null);
+                setVerificationCode('');
+              }} 
+              className="border-zinc-700"
+            >
+              Cancelar
             </Button>
+            {twoFAQRCode && !securitySettings.two_factor_enabled && (
+              <Button 
+                onClick={handleVerify2FA} 
+                className="bg-emerald-500 hover:bg-emerald-600"
+                disabled={verificationCode.length !== 6}
+              >
+                Verificar e Ativar
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
