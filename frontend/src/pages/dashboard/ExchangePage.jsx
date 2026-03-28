@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -27,6 +28,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const ExchangePage = () => {
   const { token, user } = useAuth();
   const { currency, currentCurrency, formatCurrency, convertFromUSD, convertToUSD } = useCurrency();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('buy');
   const [cryptos, setCryptos] = useState([]);
@@ -462,8 +464,8 @@ const ExchangePage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light text-white">Exchange</h1>
-          <p className="text-gray-400 mt-1">Compre, venda e converta criptomoedas</p>
+          <h1 className="text-3xl font-light text-white">{t('dashboard.exchange.title')}</h1>
+          <p className="text-gray-400 mt-1">{t('dashboard.exchange.subtitle')}</p>
         </div>
         <Button
           variant="outline"
@@ -471,7 +473,7 @@ const ExchangePage = () => {
           onClick={() => setShowOrders(!showOrders)}
           data-testid="toggle-orders-btn"
         >
-          {showOrders ? 'Esconder Ordens' : 'Ver Minhas Ordens'}
+          {showOrders ? t('nav.hideOrders') : t('dashboard.exchange.viewMyOrders')}
         </Button>
       </div>
 
@@ -579,7 +581,7 @@ const ExchangePage = () => {
                 data-testid="buy-tab"
               >
                 <TrendingUp className="inline mr-2" size={18} />
-                Comprar
+                {t('dashboard.exchange.buy')}
               </button>
               <button
                 className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
@@ -591,7 +593,7 @@ const ExchangePage = () => {
                 data-testid="sell-tab"
               >
                 <TrendingDown className="inline mr-2" size={18} />
-                Vender
+                {t('dashboard.exchange.sell')}
               </button>
               <button
                 className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
@@ -603,7 +605,7 @@ const ExchangePage = () => {
                 data-testid="swap-tab"
               >
                 <ArrowDownUp className="inline mr-2" size={18} />
-                Converter
+                {t('dashboard.exchange.convert')}
               </button>
             </div>
 
@@ -612,7 +614,7 @@ const ExchangePage = () => {
               {activeTab === 'buy' && (
                 <div className="space-y-6">
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Criptomoeda</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.cryptocurrency')}</label>
                     <CryptoSelector 
                       value={selectedCrypto} 
                       onChange={setSelectedCrypto}
@@ -622,7 +624,7 @@ const ExchangePage = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Valor em {currency}</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.valueIn')} {currency}</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
                       <Input
@@ -636,13 +638,13 @@ const ExchangePage = () => {
                     </div>
                     {limits && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Limite: {formatCurrency(convertFromUSD(limits.limits?.min_buy_amount))} - {formatCurrency(convertFromUSD(limits.limits?.max_buy_amount))}
+                        {t('dashboard.exchange.limit')}: {formatCurrency(convertFromUSD(limits.limits?.min_buy_amount))} - {formatCurrency(convertFromUSD(limits.limits?.max_buy_amount))}
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Método de Pagamento</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.paymentMethod')}</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         className={`p-4 rounded-lg border transition-all ${
@@ -654,7 +656,7 @@ const ExchangePage = () => {
                         data-testid="payment-card-btn"
                       >
                         <CreditCard className="mx-auto mb-2" size={24} />
-                        <span className="text-sm">Cartão</span>
+                        <span className="text-sm">{t('dashboard.exchange.card')}</span>
                       </button>
                       <button
                         className={`p-4 rounded-lg border transition-all ${
@@ -666,7 +668,7 @@ const ExchangePage = () => {
                         data-testid="payment-bank-btn"
                       >
                         <Building2 className="mx-auto mb-2" size={24} />
-                        <span className="text-sm">Transferência</span>
+                        <span className="text-sm">{t('dashboard.exchange.bankTransfer')}</span>
                       </button>
                     </div>
                   </div>
@@ -675,17 +677,17 @@ const ExchangePage = () => {
                   {buyPreview && amount && (
                     <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Você receberá</span>
+                        <span className="text-gray-400">{t('dashboard.cryptoWithdrawal.youWillReceive')}</span>
                         <span className="text-white font-medium">
                           {buyPreview.cryptoAmount.toFixed(6)} {selectedCrypto?.symbol}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa</span>
+                        <span className="text-gray-400">{t('dashboard.fiatWithdrawal.fee')}</span>
                         <span className="text-gray-300">{formatCurrency(buyPreview.fee)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa de Rede</span>
+                        <span className="text-gray-400">{t('dashboard.cryptoWithdrawal.networkFee')}</span>
                         <span className="text-gray-300">{formatCurrency(buyPreview.networkFee)}</span>
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
@@ -708,7 +710,7 @@ const ExchangePage = () => {
                     ) : (
                       <TrendingUp className="mr-2" size={18} />
                     )}
-                    {loading ? 'Processando...' : 'Comprar'}
+                    {loading ? t('admin.common.loading') : t('dashboard.exchange.buy')}
                   </Button>
                 </div>
               )}

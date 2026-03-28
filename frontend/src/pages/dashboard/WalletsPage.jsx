@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -35,6 +36,7 @@ const WATCHLIST_KEY = 'kbex_crypto_watchlist';
 const WalletsPage = () => {
   const { token } = useAuth();
   const { currency, formatCurrency, convertFromUSD, currentCurrency } = useCurrency();
+  const { t } = useLanguage();
   const [wallets, setWallets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedWallet, setSelectedWallet] = useState(null);
@@ -446,8 +448,8 @@ const WalletsPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-light text-white">Minhas Carteiras</h1>
-          <p className="text-gray-400 mt-1">Gerencie suas carteiras de criptomoedas e moedas fiat</p>
+          <h1 className="text-3xl font-light text-white">{t('dashboard.wallets.title')}</h1>
+          <p className="text-gray-400 mt-1">{t('dashboard.wallets.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button 
@@ -456,7 +458,7 @@ const WalletsPage = () => {
             data-testid="fiat-deposit-btn"
           >
             <Banknote size={18} className="mr-2" />
-            Depositar Fiat
+            {t('dashboard.wallets.depositFiat')}
           </Button>
           <Button 
             variant="outline"
@@ -464,7 +466,7 @@ const WalletsPage = () => {
             onClick={fetchWallets}
           >
             <RefreshCw size={18} className="mr-2" />
-            Atualizar
+            {t('dashboard.wallets.refresh')}
           </Button>
         </div>
       </div>
@@ -480,7 +482,7 @@ const WalletsPage = () => {
           onClick={() => setActiveTab('all')}
           data-testid="tab-all"
         >
-          Todas
+          {t('dashboard.wallets.all')}
         </button>
         <button
           className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
@@ -492,7 +494,7 @@ const WalletsPage = () => {
           data-testid="tab-fiat"
         >
           <Banknote size={16} />
-          Fiat
+          {t('dashboard.wallets.fiat')}
         </button>
         <button
           className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
@@ -504,7 +506,7 @@ const WalletsPage = () => {
           data-testid="tab-crypto"
         >
           <Bitcoin size={16} />
-          Cripto
+          {t('dashboard.wallets.crypto')}
         </button>
         <button
           className={`px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 font-medium ${
@@ -516,7 +518,7 @@ const WalletsPage = () => {
           data-testid="tab-watchlist"
         >
           <Star size={16} />
-          Watchlist
+          {t('dashboard.wallets.watchlist')}
         </button>
       </div>
 
@@ -527,7 +529,7 @@ const WalletsPage = () => {
           <div>
             <h2 className="text-lg font-medium text-emerald-400 mb-6 flex items-center gap-2">
               <Banknote size={20} />
-              Carteiras Fiat
+              {t('dashboard.wallets.fiatWallets')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {fiatWallets.map((wallet) => (
@@ -542,7 +544,7 @@ const WalletsPage = () => {
           <div>
             <h2 className="text-lg font-medium text-gold-400 mb-6 flex items-center gap-2">
               <Bitcoin size={20} />
-              Carteiras Crypto com Saldo ({cryptoWithBalance.length})
+              {t('dashboard.wallets.cryptoWallets')} ({cryptoWithBalance.length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {cryptoWithBalance.map((wallet) => (

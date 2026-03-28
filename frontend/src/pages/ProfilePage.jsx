@@ -180,7 +180,7 @@ const ProfilePage = () => {
           onClick={() => window.location.reload()}
         >
           <RefreshCw size={14} className="mr-2" />
-          Atualizar
+          {t('profile.myProfile.refresh')}
         </Button>
       </div>
 
@@ -198,7 +198,7 @@ const ProfilePage = () => {
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
                 <Badge className={`${user.kyc_status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'} border-0`}>
                   <Shield size={12} className="mr-1" />
-                  {user.kyc_status === 'approved' ? 'KYC Verificado' : 'KYC Pendente'}
+                  {user.kyc_status === 'approved' ? t('profile.myProfile.kycVerified') : t('profile.myProfile.kycPending')}
                 </Badge>
                 <Badge className="bg-gold-500/20 text-gold-400 border-0">
                   {user.membership_level === 'vip' || user.membership_level === 'elite' ? 'Elite' :
@@ -213,7 +213,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="text-center md:text-right">
-              <p className="text-sm text-gray-400">Número de Cliente</p>
+              <p className="text-sm text-gray-400">{t('profile.myProfile.clientNumber')}</p>
               <div className="flex items-center gap-2 justify-center md:justify-end">
                 <p className="text-lg font-mono text-gold-400">{getClientNumber()}</p>
                 <button onClick={() => copyToClipboard(getClientNumber())} className="text-gray-400 hover:text-gold-400">
@@ -231,22 +231,22 @@ const ProfilePage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <CreditCard className="text-gold-400" size={20} />
-              Limites da Conta
+              {t('profile.myProfile.accountLimits')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Fiat Deposit */}
             <div>
               <h4 className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                <ArrowDownCircle size={14} /> Depósito Moeda Fiduciária
+                <ArrowDownCircle size={14} /> {t('profile.myProfile.fiatDepositLimits')}
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Diário</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.daily')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.fiat_deposit_daily)}</p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Mensal</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.monthly')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.fiat_deposit_monthly)}</p>
                 </div>
               </div>
@@ -255,15 +255,15 @@ const ProfilePage = () => {
             {/* Fiat Withdrawal */}
             <div>
               <h4 className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                <ArrowUpCircle size={14} /> Levantamento Moeda Fiduciária
+                <ArrowUpCircle size={14} /> {t('profile.myProfile.fiatWithdrawalLimits')}
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Diário</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.daily')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.fiat_withdrawal_daily)}</p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Mensal</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.monthly')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.fiat_withdrawal_monthly)}</p>
                 </div>
               </div>
@@ -272,25 +272,25 @@ const ProfilePage = () => {
             {/* Crypto Limits */}
             <div>
               <h4 className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                <Bitcoin size={14} /> Depósito Criptomoedas
+                <Bitcoin size={14} /> {t('profile.myProfile.cryptoDepositLimits')}
               </h4>
               <div className="p-3 bg-zinc-800/50 rounded-lg">
-                <p className="text-xs text-gray-500">Diário</p>
+                <p className="text-xs text-gray-500">{t('profile.myProfile.daily')}</p>
                 <p className="text-emerald-400 font-medium">{formatLimit(accountLimits.crypto_deposit_daily)}</p>
               </div>
             </div>
 
             <div>
               <h4 className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                <Bitcoin size={14} /> Levantamento Criptomoedas
+                <Bitcoin size={14} /> {t('profile.myProfile.cryptoWithdrawalLimits')}
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Diário</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.daily')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.crypto_withdrawal_daily)}</p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500">Mensal</p>
+                  <p className="text-xs text-gray-500">{t('profile.myProfile.monthly')}</p>
                   <p className="text-white font-medium">{formatLimit(accountLimits.crypto_withdrawal_monthly)}</p>
                 </div>
               </div>
@@ -303,19 +303,19 @@ const ProfilePage = () => {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white flex items-center gap-2">
               <User className="text-gold-400" size={20} />
-              Informações Pessoais
+              {t('profile.myProfile.personalInfo')}
             </CardTitle>
             {!editing ? (
               <Button onClick={() => setEditing(true)} size="sm" variant="outline" className="border-zinc-700">
-                <Edit2 size={14} className="mr-1" /> Editar
+                <Edit2 size={14} className="mr-1" /> {t('profile.myProfile.editProfile')}
               </Button>
             ) : (
               <div className="flex gap-2">
                 <Button onClick={handleCancel} size="sm" variant="outline" className="border-zinc-700">
-                  <X size={14} className="mr-1" /> Cancelar
+                  <X size={14} className="mr-1" /> {t('common.cancel')}
                 </Button>
                 <Button onClick={handleSave} size="sm" className="bg-emerald-500 hover:bg-emerald-600" disabled={saving}>
-                  <Save size={14} className="mr-1" /> {saving ? 'A guardar...' : 'Guardar'}
+                  <Save size={14} className="mr-1" /> {saving ? t('common.saving') : t('common.save')}
                 </Button>
               </div>
             )}
@@ -323,11 +323,11 @@ const ProfilePage = () => {
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-zinc-800/50 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1"><Hash size={12} /> Nº Cliente</p>
+                <p className="text-xs text-gray-500 flex items-center gap-1"><Hash size={12} /> {t('profile.myProfile.clientNumber')}</p>
                 <p className="text-white font-mono">{getClientNumber()}</p>
               </div>
               <div className="p-3 bg-zinc-800/50 rounded-lg">
-                <p className="text-xs text-gray-500 flex items-center gap-1"><Globe size={12} /> País</p>
+                <p className="text-xs text-gray-500 flex items-center gap-1"><Globe size={12} /> {t('profile.myProfile.country')}</p>
                 {editing ? (
                   <Select value={formData.country} onValueChange={handleCountryChange}>
                     <SelectTrigger className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1">
@@ -346,7 +346,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
-              <p className="text-xs text-gray-500 flex items-center gap-1"><User size={12} /> Nome Legal</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1"><User size={12} /> {t('profile.myProfile.legalName')}</p>
               {editing ? (
                 <Input name="name" value={formData.name} onChange={handleChange} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
@@ -355,7 +355,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
-              <p className="text-xs text-gray-500 flex items-center gap-1"><Calendar size={12} /> Data de Nascimento</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1"><Calendar size={12} /> {t('profile.myProfile.dateOfBirth')}</p>
               {editing ? (
                 <Input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
@@ -364,14 +364,14 @@ const ProfilePage = () => {
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
-              <p className="text-xs text-gray-500 flex items-center gap-1"><FileText size={12} /> Documentos</p>
-              <p className="text-white">{user.kyc_status === 'approved' ? 'Verificados' : 'Pendentes'}</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1"><FileText size={12} /> {t('profile.myProfile.documents')}</p>
+              <p className="text-white">{user.kyc_status === 'approved' ? t('profile.myProfile.verified') : t('profile.myProfile.kycPending')}</p>
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
-              <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin size={12} /> Endereço</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin size={12} /> {t('profile.myProfile.address')}</p>
               {editing ? (
-                <Input name="address" value={formData.address} onChange={handleChange} placeholder="Endereço completo" className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
+                <Input name="address" value={formData.address} onChange={handleChange} placeholder={t('profile.myProfile.address')} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
                 <p className="text-white">{user.address || '-'}</p>
               )}
