@@ -1123,3 +1123,40 @@ Perfil (Conta - Reorganized)
 - P2: OTC Desk - Phase 4 (Dashboard & KPIs)
 - P3: Whitelist functionality (waiting for requirements: IPs vs Crypto addresses vs Emails)
 
+
+## Frontend i18n Complete Translation (March 28, 2026)
+
+**Problema Identificado:** Os menus da sidebar e conteúdo do dashboard não estavam traduzidos apesar do backend i18n estar completo. Os labels vinham do backend em português hardcoded.
+
+**Solução Implementada:**
+
+**1. Traduções da Sidebar (translations.js):**
+- Adicionada secção `sidebar` com 70+ chaves para menus, submenus e items
+- Traduções completas para EN, PT, AR
+- Inclui: Portefólio, Investimentos, Transparência, Perfil, Admin, Gestão, Financeiro, CRM, OTC Desk, Suporte
+
+**2. Sistema de Mapeamento de Labels (DashboardLayout.jsx):**
+- Criado `labelTranslationMap` que mapeia labels do backend para chaves i18n
+- Função `translateLabel()` converte labels para a língua selecionada
+- Aplicado a: `NavItem`, `SubmenuSection`, `MenuSection`
+- Label "Gestão" da secção admin agora usa `t('sidebar.gestaoLabel')`
+
+**3. Dashboard Overview Traduzido (DashboardOverview.jsx):**
+- Welcome message: `t('dashboard.overview.welcome')`
+- Portfolio subtitle: `t('dashboard.overview.heresYourPortfolio')`
+- Stats cards: `totalPortfolio`, `walletBalance`, `totalInvested`, `expectedReturns`
+- Chart title: `t('dashboard.overview.portfolioAllocation')`
+- Transactions: `t('dashboard.overview.recentTransactions')`, `noTransactionsYet`
+
+**Ficheiros Alterados:**
+- `/app/frontend/src/i18n/translations.js` - 80+ novas chaves de tradução
+- `/app/frontend/src/pages/dashboard/DashboardLayout.jsx` - translateLabel system
+- `/app/frontend/src/pages/dashboard/DashboardOverview.jsx` - i18n hooks
+
+**Testes Realizados:**
+- Backend: 12/12 testes passaram (auth, trading, admin, OTC, sumsub)
+- Frontend: Todas traduções verificadas (sidebar, dashboard, login page)
+- Language selector (EN/PT/AR) funcional na homepage
+
+**Status:** COMPLETED ✅
+
