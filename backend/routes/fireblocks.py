@@ -48,6 +48,15 @@ class TransactionResponse(BaseModel):
     destination: Dict[str, Any]
     created_at: Optional[datetime] = None
 
+class CreateOnboardingVaultRequest(BaseModel):
+    vault_name: str = Field(default="Cofre Tx anual", description="Name for the vault")
+    assets: List[str] = Field(default=["BTC", "ETH", "USDT_ERC20", "USDC"], description="List of asset IDs")
+
+class CreateOnboardingVaultResponse(BaseModel):
+    vault_id: str
+    vault_name: str
+    assets: List[Dict[str, Any]]
+
 # Routes
 @router.get("/health")
 async def fireblocks_health():
@@ -79,6 +88,27 @@ async def create_vault_account(request: CreateVaultRequest):
         return {"message": "Vault account created", "account": account}
     except Exception as e:
         logger.error(f"Error creating vault account: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/create-onboarding-vault")
+async def create_onboarding_vault(request: CreateOnboardingVaultRequest):
+    """
+    Create a vault for onboarding annual payments with BTC, ETH, USDT, USDC wallets.
+    Returns the vault ID and all wallet addresses.
+    """
+    try:
+        result = await FireblocksService.create_vault_with_assets(
+            name=request.vault_name,
+            asset_ids=request.assets,
+            hidden=False
+        )
+        return {
+            "success": True,
+            "message": f"Vault '{request.vault_name}' criado com sucesso",
+            "data": result
+        }
+    except Exception as e:
+        logger.error(f"Error creating onboarding vault: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/vault-accounts/{vault_id}")

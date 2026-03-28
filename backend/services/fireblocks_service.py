@@ -214,3 +214,81 @@ class FireblocksService:
         except Exception as e:
             logger.error(f"Failed to get transaction {tx_id}: {e}")
             raise
+
+    @classmethod
+    async def create_vault_with_assets(
+        cls, 
+        name: str, 
+        asset_ids: List[str] = None,
+        hidden: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Create a vault account and initialize it with multiple asset wallets.
+        
+        Args:
+            name: Name for the vault (e.g., "Cofre Tx anual")
+            asset_ids: List of asset IDs to create (e.g., ["BTC", "ETH", "USDT_ERC20", "USDC"])
+            hidden: Whether to hide vault from UI
+            
+        Returns:
+            Dict with vault info and created assets
+        """
+        if asset_ids is None:
+            asset_ids = ["BTC", "ETH", "USDT_ERC20", "USDC"]
+        
+        try:
+            # Create the vault
+            vault = await cls.create_vault_account(name=name, hidden=hidden)
+            vault_id = vault.get('id')
+            
+            if not vault_id:
+                raise ValueError("Failed to get vault ID after creation")
+            
+            logger.info(f"Created vault '{name}' with ID: {vault_id}")
+            
+            # Create assets and get addresses
+            created_assets = []
+            for asset_id in asset_ids:
+                try:
+                    asset = await cls.create_vault_asset(vault_id=vault_id, asset_id=asset_id)
+                    
+                    # Get the deposit address
+                    address_info = await cls.get_deposit_address(vault_id=vault_id, asset_id=asset_id)
+                    
+                    created_assets.append({
+                        "asset_id": asset_id,
+                        "address": address_info.get('address', ''),
+                        "tag": address_info.get('tag', ''),
+                        "legacy_address": address_info.get('legacyAddress', '')
+                    })
+                    
+                    logger.info(f"Created {asset_id} wallet in vault {vault_id}")
+                except Exception as e:
+                    logger.error(f"Failed to create {asset_id} in vault {vault_id}: {e}")
+                    created_assets.append({
+                        "asset_id": asset_id,
+                        "error": str(e)
+                    })
+            
+            return {
+                "vault_id": vault_id,
+                "vault_name": name,
+                "assets": created_assets
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to create vault with assets: {e}")
+            raise
+
+    @classmethod
+    async def get_deposit_address(cls, vault_id: str, asset_id: str) -> Dict[str, Any]:
+        """Get deposit address for an asset in a vault"""
+        try:
+            client = cls.get_client()
+            addresses = client.get_deposit_addresses(vault_account_id=vault_id, asset_id=asset_id)
+            if addresses and len(addresses) > 0:
+                return addresses[0]
+            return {"address": "", "tag": ""}
+        except Exception as e:
+            logger.error(f"Failed to get deposit address for {asset_id} in vault {vault_id}: {e}")
+            return {"address": "", "tag": ""}
