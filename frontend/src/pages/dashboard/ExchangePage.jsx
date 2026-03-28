@@ -656,33 +656,36 @@ const ExchangePage = () => {
                     />
                   </div>
                   
-                  {/* Input Mode Toggle */}
+                  {/* Amount Input with Segmented Control */}
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <button
-                        type="button"
-                        onClick={() => setInputMode('fiat')}
-                        className={`px-4 py-2 text-sm rounded-lg transition-all ${
-                          inputMode === 'fiat'
-                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
-                            : 'bg-zinc-800 text-gray-400 border border-zinc-700 hover:border-zinc-600'
-                        }`}
-                        data-testid="input-mode-fiat"
-                      >
-                        {t('dashboard.exchange.valueIn')} {currency}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setInputMode('crypto')}
-                        className={`px-4 py-2 text-sm rounded-lg transition-all ${
-                          inputMode === 'crypto'
-                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
-                            : 'bg-zinc-800 text-gray-400 border border-zinc-700 hover:border-zinc-600'
-                        }`}
-                        data-testid="input-mode-crypto"
-                      >
-                        {t('dashboard.cryptoWithdrawal.quantity') || 'Quantidade'} {selectedCrypto?.symbol || ''}
-                      </button>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm text-gray-400">{t('dashboard.exchange.amount') || 'Montante'}</label>
+                      <div className="flex bg-zinc-800 rounded-full p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setInputMode('fiat')}
+                          className={`px-3 py-1 text-xs rounded-full transition-all ${
+                            inputMode === 'fiat' 
+                              ? 'bg-gold-600/80 text-white' 
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                          data-testid="input-mode-fiat"
+                        >
+                          {currency}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInputMode('crypto')}
+                          className={`px-3 py-1 text-xs rounded-full transition-all ${
+                            inputMode === 'crypto' 
+                              ? 'bg-gold-600/80 text-white' 
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                          data-testid="input-mode-crypto"
+                        >
+                          {selectedCrypto?.symbol || 'BTC'}
+                        </button>
+                      </div>
                     </div>
                     
                     {inputMode === 'fiat' ? (
@@ -711,6 +714,16 @@ const ExchangePage = () => {
                           {selectedCrypto?.symbol}
                         </span>
                       </div>
+                    )}
+                    
+                    {/* Conversion hint */}
+                    {((inputMode === 'fiat' && amount) || (inputMode === 'crypto' && cryptoAmount)) && selectedCrypto && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        ≈ {inputMode === 'fiat' 
+                          ? `${(parseFloat(amount) / (selectedCrypto.price || selectedCrypto.price_usd || 1)).toFixed(6)} ${selectedCrypto.symbol}`
+                          : formatCurrency(parseFloat(cryptoAmount) * (selectedCrypto.price || selectedCrypto.price_usd || 0))
+                        }
+                      </p>
                     )}
                     
                     {limits && (

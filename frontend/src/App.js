@@ -46,7 +46,6 @@ import FiatWithdrawalPage from "./pages/dashboard/FiatWithdrawalPage";
 import CryptoDepositPage from "./pages/dashboard/CryptoDepositPage";
 import CryptoWithdrawalPage from "./pages/dashboard/CryptoWithdrawalPage";
 import SupportPage from "./pages/dashboard/SupportPage";
-import ExchangePrototypes from "./pages/dashboard/prototypes/ExchangePrototypes";
 import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
 import PublicSupportPage from "./pages/PublicSupportPage";
@@ -158,7 +157,6 @@ function AppRoutes() {
         
         {/* Exchange */}
         <Route path="exchange" element={<ExchangePage />} />
-        <Route path="exchange-prototypes" element={<ExchangePrototypes />} />
         <Route path="fiat-deposit" element={<FiatDepositPage />} />
         <Route path="fiat-withdrawal" element={<FiatWithdrawalPage />} />
         <Route path="crypto-deposit" element={<CryptoDepositPage />} />

@@ -25,7 +25,8 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 ### Session - December 2025
 
 #### Exchange Page Enhancements (2025-03-28)
-- **Toggle Fiat/Crypto Input**: Users can now enter buy amount in fiat (EUR, USD, etc.) OR crypto units (BTC, ETH, etc.)
+- **Segmented Control Toggle**: Elegant pill-style toggle (EUR | BTC) for switching between fiat and crypto input modes
+- **Auto Conversion Display**: Shows "≈ X BTC" or "≈ €X" below input based on selected mode
 - **Removed Fees Block**: Removed the fees display block from the exchange page sidebar
 
 #### Multi-Currency System
