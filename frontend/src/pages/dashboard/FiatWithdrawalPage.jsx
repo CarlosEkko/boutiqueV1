@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -33,6 +34,7 @@ const CURRENCIES = [
 const FiatWithdrawalPage = () => {
   const { token } = useAuth();
   const { formatCurrency } = useCurrency();
+  const { t } = useLanguage();
   
   const [wallets, setWallets] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
@@ -110,23 +112,23 @@ const FiatWithdrawalPage = () => {
     
     const amountNum = parseFloat(amount);
     if (!amountNum || amountNum <= 0) {
-      toast.error('Insira um valor válido');
+      toast.error(t('dashboard.fiatWithdrawal.enterValidAmount') || 'Enter a valid amount');
       return;
     }
 
     const balance = getWalletBalance(selectedCurrency);
     if (amountNum > balance) {
-      toast.error('Saldo insuficiente');
+      toast.error(t('dashboard.fiatWithdrawal.insufficientBalance') || 'Insufficient balance');
       return;
     }
 
     if (!bankDetails.bank_name || !bankDetails.account_holder) {
-      toast.error('Preencha o nome do banco e titular da conta');
+      toast.error(t('dashboard.fiatWithdrawal.fillBankDetails') || 'Fill in bank name and account holder');
       return;
     }
 
     if (!bankDetails.iban && !bankDetails.account_number) {
-      toast.error('Preencha o IBAN ou número da conta');
+      toast.error(t('dashboard.fiatWithdrawal.fillIbanOrAccount') || 'Fill in IBAN or account number');
       return;
     }
 
@@ -141,7 +143,7 @@ const FiatWithdrawalPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      toast.success('Pedido de levantamento enviado com sucesso!');
+      toast.success(t('dashboard.fiatWithdrawal.requestSuccess') || 'Withdrawal request submitted successfully!');
       
       // Reset form
       setAmount('');
@@ -160,24 +162,24 @@ const FiatWithdrawalPage = () => {
       setActiveTab('history');
       
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao enviar pedido');
+      toast.error(err.response?.data?.detail || t('dashboard.fiatWithdrawal.requestError') || 'Error submitting request');
     } finally {
       setSubmitting(false);
     }
   };
 
   const cancelWithdrawal = async (withdrawalId) => {
-    if (!window.confirm('Tem certeza que deseja cancelar este pedido?')) return;
+    if (!window.confirm(t('dashboard.fiatWithdrawal.confirmCancel') || 'Are you sure you want to cancel this request?')) return;
     
     try {
       await axios.post(`${API_URL}/api/trading/fiat-withdrawal/${withdrawalId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Pedido cancelado');
+      toast.success(t('dashboard.fiatWithdrawal.requestCancelled') || 'Request cancelled');
       fetchWithdrawals();
       fetchWallets();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao cancelar');
+      toast.error(err.response?.data?.detail || t('dashboard.fiatWithdrawal.cancelError') || 'Error cancelling');
     }
   };
 
@@ -190,11 +192,11 @@ const FiatWithdrawalPage = () => {
       cancelled: 'bg-gray-500/20 text-gray-400'
     };
     const labels = {
-      pending: 'Pendente',
-      processing: 'Processando',
-      completed: 'Concluído',
-      rejected: 'Rejeitado',
-      cancelled: 'Cancelado'
+      pending: t('dashboard.fiatWithdrawal.statusPending') || 'Pending',
+      processing: t('dashboard.fiatWithdrawal.statusProcessing') || 'Processing',
+      completed: t('dashboard.fiatWithdrawal.statusCompleted') || 'Completed',
+      rejected: t('dashboard.fiatWithdrawal.statusRejected') || 'Rejected',
+      cancelled: t('dashboard.fiatWithdrawal.statusCancelled') || 'Cancelled'
     };
     return (
       <span className={`text-xs px-2 py-1 rounded ${styles[status] || styles.pending}`}>
@@ -227,8 +229,8 @@ const FiatWithdrawalPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-light text-white">Levantamento Fiat</h1>
-        <p className="text-gray-400 mt-1">Transfira fundos para sua conta bancária</p>
+        <h1 className="text-3xl font-light text-white">{t('dashboard.fiatWithdrawal.title')}</h1>
+        <p className="text-gray-400 mt-1">{t('dashboard.fiatWithdrawal.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -242,7 +244,7 @@ const FiatWithdrawalPage = () => {
           onClick={() => setActiveTab('request')}
         >
           <ArrowDownToLine size={18} />
-          Novo Pedido
+          {t('dashboard.fiatWithdrawal.newRequest')}
         </button>
         <button
           className={`px-5 py-2.5 rounded-lg transition-colors font-medium flex items-center gap-2 ${
@@ -253,7 +255,7 @@ const FiatWithdrawalPage = () => {
           onClick={() => setActiveTab('history')}
         >
           <History size={18} />
-          Histórico ({withdrawals.length})
+          {t('dashboard.fiatWithdrawal.history')} ({withdrawals.length})
         </button>
       </div>
 
@@ -266,14 +268,14 @@ const FiatWithdrawalPage = () => {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <ArrowDownToLine size={20} className="text-gold-400" />
-                  Solicitar Levantamento
+                  {t('dashboard.fiatWithdrawal.requestWithdrawal')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Currency Selection */}
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Selecione a Moeda</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.fiatWithdrawal.selectCurrency')}</label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {CURRENCIES.map(curr => {
                         const balance = getWalletBalance(curr.code);
@@ -301,7 +303,7 @@ const FiatWithdrawalPage = () => {
 
                   {/* Amount */}
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Valor a Levantar</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.fiatWithdrawal.amountToWithdraw')}</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                         {currencyInfo?.symbol}
@@ -317,7 +319,7 @@ const FiatWithdrawalPage = () => {
                       />
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      Disponível: {currencyInfo?.symbol}{getWalletBalance(selectedCurrency).toFixed(2)}
+                      {t('dashboard.fiatWithdrawal.available')}: {currencyInfo?.symbol}{getWalletBalance(selectedCurrency).toFixed(2)}
                     </p>
                   </div>
 
@@ -325,26 +327,26 @@ const FiatWithdrawalPage = () => {
                   <div className="border-t border-zinc-800 pt-6">
                     <h3 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
                       <Building2 size={20} />
-                      Dados Bancários para Recebimento
+                      {t('dashboard.fiatWithdrawal.bankDetailsForReceiving')}
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-gray-400 mb-1 block">Nome do Banco *</label>
+                        <label className="text-sm text-gray-400 mb-1 block">{t('dashboard.fiatWithdrawal.bankName')} *</label>
                         <Input
                           value={bankDetails.bank_name}
                           onChange={(e) => setBankDetails({...bankDetails, bank_name: e.target.value})}
-                          placeholder="Ex: Banco de Portugal"
+                          placeholder={t('dashboard.fiatWithdrawal.bankNamePlaceholder') || 'Ex: Bank of Portugal'}
                           className="bg-zinc-800 border-zinc-700 text-white"
                           required
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-gray-400 mb-1 block">Titular da Conta *</label>
+                        <label className="text-sm text-gray-400 mb-1 block">{t('dashboard.fiatWithdrawal.accountHolder')} *</label>
                         <Input
                           value={bankDetails.account_holder}
                           onChange={(e) => setBankDetails({...bankDetails, account_holder: e.target.value})}
-                          placeholder="Nome completo"
+                          placeholder={t('dashboard.fiatWithdrawal.fullName') || 'Full name'}
                           className="bg-zinc-800 border-zinc-700 text-white"
                           required
                         />
@@ -368,20 +370,20 @@ const FiatWithdrawalPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-gray-400 mb-1 block">Número da Conta</label>
+                        <label className="text-sm text-gray-400 mb-1 block">{t('dashboard.fiatWithdrawal.accountNumber')}</label>
                         <Input
                           value={bankDetails.account_number}
                           onChange={(e) => setBankDetails({...bankDetails, account_number: e.target.value})}
-                          placeholder="Para USD ou outros"
+                          placeholder={t('dashboard.fiatWithdrawal.forUsdOrOther') || 'For USD or other'}
                           className="bg-zinc-800 border-zinc-700 text-white"
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-gray-400 mb-1 block">Routing Number (USD)</label>
+                        <label className="text-sm text-gray-400 mb-1 block">{t('dashboard.fiatWithdrawal.routingNumber')} (USD)</label>
                         <Input
                           value={bankDetails.routing_number}
                           onChange={(e) => setBankDetails({...bankDetails, routing_number: e.target.value})}
-                          placeholder="Para transferências EUA"
+                          placeholder={t('dashboard.fiatWithdrawal.forUsTransfers') || 'For US transfers'}
                           className="bg-zinc-800 border-zinc-700 text-white"
                         />
                       </div>
@@ -396,12 +398,12 @@ const FiatWithdrawalPage = () => {
                     {submitting ? (
                       <>
                         <Loader2 className="animate-spin mr-2" size={20} />
-                        Processando...
+                        {t('dashboard.fiatWithdrawal.processing')}
                       </>
                     ) : (
                       <>
                         <ArrowDownToLine className="mr-2" size={20} />
-                        Solicitar Levantamento
+                        {t('dashboard.fiatWithdrawal.requestWithdrawal')}
                       </>
                     )}
                   </Button>
@@ -414,24 +416,24 @@ const FiatWithdrawalPage = () => {
           <div>
             <Card className="bg-zinc-900/50 border-gold-800/20 sticky top-4">
               <CardHeader>
-                <CardTitle className="text-white">Resumo</CardTitle>
+                <CardTitle className="text-white">{t('dashboard.fiatWithdrawal.summary')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Valor</span>
+                  <span className="text-gray-400">{t('dashboard.fiatWithdrawal.amount')}</span>
                   <span className="text-white">
                     {currencyInfo?.symbol}{parseFloat(amount || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Taxa (0.5%)</span>
+                  <span className="text-gray-400">{t('dashboard.fiatWithdrawal.fee')} (0.5%)</span>
                   <span className="text-red-400">
                     -{currencyInfo?.symbol}{fee.toFixed(2)}
                   </span>
                 </div>
                 <div className="border-t border-zinc-700 pt-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Valor Líquido</span>
+                    <span className="text-gray-400">{t('dashboard.fiatWithdrawal.netAmount')}</span>
                     <span className="text-green-400 text-xl font-medium">
                       {currencyInfo?.symbol}{netAmount.toFixed(2)}
                     </span>
@@ -442,8 +444,8 @@ const FiatWithdrawalPage = () => {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="text-yellow-400 flex-shrink-0 mt-0.5" size={18} />
                     <div className="text-sm text-gray-400">
-                      <p className="mb-2">O levantamento será processado em até 2 dias úteis após aprovação.</p>
-                      <p>Taxa mínima: {currencyInfo?.symbol}5.00</p>
+                      <p className="mb-2">{t('dashboard.fiatWithdrawal.processingTime')}</p>
+                      <p>{t('dashboard.fiatWithdrawal.minimumFee')}: {currencyInfo?.symbol}5.00</p>
                     </div>
                   </div>
                 </div>
@@ -459,19 +461,19 @@ const FiatWithdrawalPage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <History size={20} className="text-gold-400" />
-              Histórico de Levantamentos
+              {t('dashboard.fiatWithdrawal.withdrawalHistory')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {withdrawals.length === 0 ? (
               <div className="text-center py-12">
                 <ArrowDownToLine className="mx-auto text-gray-600 mb-4" size={48} />
-                <p className="text-gray-400">Nenhum levantamento realizado</p>
+                <p className="text-gray-400">{t('dashboard.fiatWithdrawal.noWithdrawals')}</p>
                 <Button
                   className="mt-4 bg-gold-500 hover:bg-gold-600 text-black"
                   onClick={() => setActiveTab('request')}
                 >
-                  Fazer Primeiro Levantamento
+                  {t('dashboard.fiatWithdrawal.makeFirstWithdrawal')}
                 </Button>
               </div>
             ) : (
@@ -519,25 +521,25 @@ const FiatWithdrawalPage = () => {
                         <div className="px-4 pb-4 border-t border-zinc-700 pt-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                             <div>
-                              <p className="text-gray-400">Valor Bruto</p>
+                              <p className="text-gray-400">{t('dashboard.fiatWithdrawal.grossAmount')}</p>
                               <p className="text-white">{curr?.symbol}{withdrawal.amount?.toFixed(2)}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Taxa</p>
+                              <p className="text-gray-400">{t('dashboard.fiatWithdrawal.fee')}</p>
                               <p className="text-red-400">-{curr?.symbol}{withdrawal.fee_amount?.toFixed(2)}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Valor Líquido</p>
+                              <p className="text-gray-400">{t('dashboard.fiatWithdrawal.netAmount')}</p>
                               <p className="text-green-400">{curr?.symbol}{withdrawal.net_amount?.toFixed(2)}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Data</p>
+                              <p className="text-gray-400">{t('dashboard.fiatWithdrawal.date')}</p>
                               <p className="text-white">{new Date(withdrawal.created_at).toLocaleString('pt-PT')}</p>
                             </div>
                           </div>
 
                           <div className="bg-zinc-900/50 rounded-lg p-4 mb-4">
-                            <p className="text-gray-400 text-sm mb-2">Conta de Destino</p>
+                            <p className="text-gray-400 text-sm mb-2">{t('dashboard.fiatWithdrawal.destinationAccount')}</p>
                             <p className="text-white">{withdrawal.bank_name}</p>
                             <p className="text-gray-400">{withdrawal.account_holder}</p>
                             {withdrawal.iban && (
@@ -548,7 +550,7 @@ const FiatWithdrawalPage = () => {
                           {withdrawal.rejection_reason && (
                             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
                               <p className="text-red-400 text-sm">
-                                <strong>Motivo da rejeição:</strong> {withdrawal.rejection_reason}
+                                <strong>{t('dashboard.fiatWithdrawal.rejectionReason')}:</strong> {withdrawal.rejection_reason}
                               </p>
                             </div>
                           )}
@@ -556,7 +558,7 @@ const FiatWithdrawalPage = () => {
                           {withdrawal.transaction_reference && (
                             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
                               <p className="text-green-400 text-sm">
-                                <strong>Referência:</strong> {withdrawal.transaction_reference}
+                                <strong>{t('dashboard.fiatWithdrawal.reference')}:</strong> {withdrawal.transaction_reference}
                               </p>
                             </div>
                           )}
@@ -569,7 +571,7 @@ const FiatWithdrawalPage = () => {
                               onClick={() => cancelWithdrawal(withdrawal.id)}
                             >
                               <XCircle size={16} className="mr-1" />
-                              Cancelar Pedido
+                              {t('dashboard.fiatWithdrawal.cancelRequest')}
                             </Button>
                           )}
                         </div>

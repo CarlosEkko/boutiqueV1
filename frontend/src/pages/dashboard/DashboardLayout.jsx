@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import CurrencySelector from '../../components/CurrencySelector';
+import LanguageSelector from '../../components/LanguageSelector';
 import NotificationBell from '../../components/dashboard/NotificationBell';
 import { 
   LayoutDashboard, 
@@ -812,6 +813,7 @@ const DashboardLayout = () => {
         {/* Top Bar with Notifications and Currency Selector */}
         <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4 border-b border-zinc-800/50">
           <NotificationBell />
+          <LanguageSelector />
           <CurrencySelector />
         </div>
         <div className="md:p-8 p-4 pt-20 md:pt-4">

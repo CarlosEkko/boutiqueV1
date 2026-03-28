@@ -24,6 +24,16 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 
 ### Session - December 2025
 
+#### Language Selector Component (2025-03-28)
+- Added `LanguageSelector.jsx` component with globe icon + EN | PT | AR toggle
+- Integrated into dashboard header alongside currency selector
+- Real-time language switching across the entire application
+
+#### Frontend Translations - FiatDeposit & FiatWithdrawal (2025-03-28)
+- Fully translated `FiatDepositPage.jsx` to EN/PT
+- Fully translated `FiatWithdrawalPage.jsx` to EN/PT
+- Added 50+ translation keys to `translations.js`
+
 #### Exchange Page Enhancements (2025-03-28)
 - **Segmented Control Toggle**: Elegant pill-style toggle (EUR | BTC) for switching between fiat and crypto input modes
 - **Auto Conversion Display**: Shows "≈ X BTC" or "≈ €X" below input based on selected mode
