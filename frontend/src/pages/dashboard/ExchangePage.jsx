@@ -50,6 +50,10 @@ const ExchangePage = () => {
   // For sell
   const [sellAmount, setSellAmount] = useState('');
   
+  // Input mode toggle (fiat or crypto units)
+  const [inputMode, setInputMode] = useState('fiat'); // 'fiat' or 'crypto'
+  const [cryptoAmount, setCryptoAmount] = useState('');
+  
   // Payment status polling
   const [pollingStatus, setPollingStatus] = useState(null);
 
@@ -221,7 +225,17 @@ const ExchangePage = () => {
   };
 
   const handleBuy = async () => {
-    if (!selectedCrypto || !amount) return;
+    if (!selectedCrypto) return;
+    
+    // Determine fiat amount based on input mode
+    let fiatAmountToSend;
+    if (inputMode === 'fiat') {
+      if (!amount) return;
+      fiatAmountToSend = parseFloat(amount);
+    } else {
+      if (!cryptoAmount || !buyPreview) return;
+      fiatAmountToSend = buyPreview.total;
+    }
     
     setLoading(true);
     setOrderResult(null);
@@ -231,7 +245,7 @@ const ExchangePage = () => {
         `${API_URL}/api/trading/buy`,
         {
           crypto_symbol: selectedCrypto.symbol,
-          fiat_amount: parseFloat(amount),
+          fiat_amount: fiatAmountToSend,
           payment_method: paymentMethod,
           network: selectedCrypto.networks?.[0]
         },
@@ -317,25 +331,44 @@ const ExchangePage = () => {
   };
 
   const calculateBuyPreview = () => {
-    if (!selectedCrypto || !amount || !fees) return null;
+    if (!selectedCrypto || !fees) return null;
     
-    const fiatAmount = parseFloat(amount);
-    // Use price in selected currency
     const price = selectedCrypto.price || selectedCrypto.price_usd || 0;
     const feePercent = fees.buy_fee_percent || 2;
     const networkFee = convertFromUSD(fees.network_fees?.ethereum || 5);
     
-    const feeAmount = Math.max(fiatAmount * (feePercent / 100), convertFromUSD(5));
-    const usableAmount = fiatAmount - feeAmount - networkFee;
-    const cryptoAmount = usableAmount / price;
+    let fiatAmount, cryptoAmountResult;
     
-    return {
-      cryptoAmount: cryptoAmount > 0 ? cryptoAmount : 0,
-      fee: feeAmount,
-      networkFee,
-      total: fiatAmount,
-      price
-    };
+    if (inputMode === 'fiat') {
+      if (!amount) return null;
+      fiatAmount = parseFloat(amount);
+      const feeAmount = Math.max(fiatAmount * (feePercent / 100), convertFromUSD(5));
+      const usableAmount = fiatAmount - feeAmount - networkFee;
+      cryptoAmountResult = usableAmount / price;
+      
+      return {
+        cryptoAmount: cryptoAmountResult > 0 ? cryptoAmountResult : 0,
+        fee: feeAmount,
+        networkFee,
+        total: fiatAmount,
+        price
+      };
+    } else {
+      if (!cryptoAmount) return null;
+      const targetCrypto = parseFloat(cryptoAmount);
+      // Work backwards: total = (cryptoAmount * price + networkFee) / (1 - feePercent/100)
+      const baseValue = targetCrypto * price + networkFee;
+      fiatAmount = baseValue / (1 - feePercent / 100);
+      const feeAmount = fiatAmount * (feePercent / 100);
+      
+      return {
+        cryptoAmount: targetCrypto,
+        fee: feeAmount,
+        networkFee,
+        total: fiatAmount,
+        price
+      };
+    }
   };
 
   const calculateSellPreview = () => {
@@ -623,19 +656,63 @@ const ExchangePage = () => {
                     />
                   </div>
                   
+                  {/* Input Mode Toggle */}
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.valueIn')} {currency}</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="bg-zinc-800 border-zinc-700 text-white pl-10"
-                        data-testid="buy-amount-input"
-                      />
+                    <div className="flex items-center gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setInputMode('fiat')}
+                        className={`px-4 py-2 text-sm rounded-lg transition-all ${
+                          inputMode === 'fiat'
+                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
+                            : 'bg-zinc-800 text-gray-400 border border-zinc-700 hover:border-zinc-600'
+                        }`}
+                        data-testid="input-mode-fiat"
+                      >
+                        {t('dashboard.exchange.valueIn')} {currency}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInputMode('crypto')}
+                        className={`px-4 py-2 text-sm rounded-lg transition-all ${
+                          inputMode === 'crypto'
+                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/50'
+                            : 'bg-zinc-800 text-gray-400 border border-zinc-700 hover:border-zinc-600'
+                        }`}
+                        data-testid="input-mode-crypto"
+                      >
+                        {t('dashboard.cryptoWithdrawal.quantity') || 'Quantidade'} {selectedCrypto?.symbol || ''}
+                      </button>
                     </div>
+                    
+                    {inputMode === 'fiat' ? (
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
+                        <Input
+                          type="number"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="bg-zinc-800 border-zinc-700 text-white pl-10"
+                          data-testid="buy-amount-input"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          value={cryptoAmount}
+                          onChange={(e) => setCryptoAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="bg-zinc-800 border-zinc-700 text-white pr-16"
+                          data-testid="buy-crypto-amount-input"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          {selectedCrypto?.symbol}
+                        </span>
+                      </div>
+                    )}
+                    
                     {limits && (
                       <p className="text-xs text-gray-500 mt-1">
                         {t('dashboard.exchange.limit')}: {formatCurrency(convertFromUSD(limits.limits?.min_buy_amount))} - {formatCurrency(convertFromUSD(limits.limits?.max_buy_amount))}
@@ -674,7 +751,7 @@ const ExchangePage = () => {
                   </div>
 
                   {/* Preview */}
-                  {buyPreview && amount && (
+                  {buyPreview && (
                     <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">{t('dashboard.cryptoWithdrawal.youWillReceive')}</span>
@@ -702,7 +779,7 @@ const ExchangePage = () => {
                   <Button
                     className="w-full bg-green-500 hover:bg-green-600 text-white py-3"
                     onClick={handleBuy}
-                    disabled={loading || !amount || !selectedCrypto}
+                    disabled={loading || (!amount && !cryptoAmount) || !selectedCrypto}
                     data-testid="buy-submit-btn"
                   >
                     {loading ? (
@@ -1026,29 +1103,6 @@ const ExchangePage = () => {
                       width: `${Math.min((limits.usage?.daily_buy_used || 0) / limits.limits?.daily_buy_limit * 100, 100)}%` 
                     }}
                   />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Fees Info */}
-          {fees && (
-            <Card className="bg-zinc-900/50 border-gold-800/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-white">Taxas</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Compra</span>
-                  <span className="text-white">{fees.buy_fee_percent}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Venda</span>
-                  <span className="text-white">{fees.sell_fee_percent}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Conversão</span>
-                  <span className="text-white">{fees.swap_fee_percent}%</span>
                 </div>
               </CardContent>
             </Card>
