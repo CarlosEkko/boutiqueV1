@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Header, Depends
 from datetime import datetime, timezone
 from typing import List, Optional
 from models.permissions import (
@@ -6,6 +6,7 @@ from models.permissions import (
     PermissionUpdate, get_user_departments
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
 

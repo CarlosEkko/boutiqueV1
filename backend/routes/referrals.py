@@ -2,7 +2,7 @@
 Referral System Routes - Client Referrals and Fee Management
 Handles referral tracking, commission calculation, and client assignment
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Header, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -10,6 +10,7 @@ import uuid
 import logging
 
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 from routes.admin import get_admin_user, get_internal_user, get_manager_or_admin
 
 logger = logging.getLogger(__name__)

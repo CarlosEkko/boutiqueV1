@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi import APIRouter, HTTPException, status, Depends, Request, Header
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from pydantic import BaseModel
@@ -21,9 +21,16 @@ from models.trading import (
     FiatWithdrawal, FiatWithdrawalRequest, WithdrawalStatus
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 from routes.admin import get_admin_user, get_internal_user
 
 router = APIRouter(prefix="/trading", tags=["Trading"])
+
+# Database reference
+db = None
+
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
 
 # Database reference
 db = None

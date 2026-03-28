@@ -2,7 +2,7 @@
 Crypto Wallets Routes - Fireblocks Integration for User Crypto Wallets
 Handles wallet creation, deposit addresses, withdrawals
 """
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Header
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
@@ -11,6 +11,7 @@ import uuid
 
 from services.fireblocks_service import FireblocksService
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 from routes.admin import get_admin_user
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,9 @@ db = None
 def set_db(database):
     global db
     db = database
+
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
 
 
 # Fireblocks asset mapping - Production assets

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form, Header
 from datetime import datetime, timezone
 from typing import Optional, List
 from models.kyc import (
@@ -7,6 +7,7 @@ from models.kyc import (
     VerificationType, Representative, CompanyType
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 import uuid
 import os
 import aiofiles
@@ -25,6 +26,10 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 def set_db(database):
     global db
     db = database
+
+
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
 
 
 # ==================== KYC VERIFICATION ====================

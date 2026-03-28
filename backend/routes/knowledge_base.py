@@ -1,7 +1,7 @@
 """
 Knowledge Base Routes - Articles, Categories, and Support Tickets
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Header, Depends, Query
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
@@ -14,6 +14,7 @@ from models.knowledge_base import (
     TicketStatus, TicketPriority, TicketMessage, TicketReply
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 from routes.admin import get_admin_user
 
 router = APIRouter(prefix="/kb", tags=["Knowledge Base"])

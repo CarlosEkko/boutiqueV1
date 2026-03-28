@@ -3,7 +3,7 @@ OTC Desk Routes
 API endpoints for the OTC trading desk module
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -20,6 +20,7 @@ from models.otc import (
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
     FundingType, TradingFrequency
 )
+from utils.i18n import t, I18n
 
 router = APIRouter(prefix="/otc", tags=["OTC Desk"])
 
@@ -32,6 +33,9 @@ def set_db(database):
 
 def get_db():
     return db
+
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
 
 from routes.auth import get_current_user
 from pydantic import BaseModel

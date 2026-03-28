@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Header
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -7,6 +7,7 @@ from models.user import (
     Region, InternalRole, UserType, InternalUserCreate, InternalUserUpdate
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 from passlib.context import CryptContext
 import uuid
 import secrets
@@ -23,20 +24,24 @@ def set_db(database):
     db = database
 
 
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
+
+
 # ==================== ROLE-BASED ACCESS ====================
 
-async def get_admin_user(user_id: str = Depends(get_current_user_id)):
+async def get_admin_user(user_id: str = Depends(get_current_user_id), lang: str = Depends(get_lang)):
     """Check if user is admin"""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=t("auth.user_not_found", lang))
     
     # Check admin access (legacy is_admin or new internal_role)
     is_admin = user.get("is_admin", False)
     internal_role = user.get("internal_role")
     
     if not is_admin and internal_role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+        raise HTTPException(status_code=403, detail=t("general.forbidden", lang))
     
     return user
 

@@ -1,7 +1,7 @@
 """
 CRM Routes for KBEX Exchange
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Header, Depends, Query
 from typing import List, Optional
 from datetime import datetime, timezone
 from bson import ObjectId

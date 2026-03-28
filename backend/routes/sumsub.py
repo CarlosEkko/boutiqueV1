@@ -2,7 +2,7 @@
 Sumsub KYC Integration Routes
 Handles applicant creation, access token generation, and webhooks
 """
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, Header
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
@@ -15,6 +15,7 @@ import json
 import logging
 
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -27,6 +28,9 @@ db = None
 def set_db(database):
     global db
     db = database
+
+def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
+    return I18n.get_language_from_header(accept_language)
 
 # Sumsub Configuration
 SUMSUB_APP_TOKEN = os.getenv("SUMSUB_APP_TOKEN", "")

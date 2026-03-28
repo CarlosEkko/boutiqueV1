@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Header, status, Depends
 from datetime import datetime, timezone
 from typing import List, Optional
 from models.user import (
@@ -6,6 +6,7 @@ from models.user import (
     TicketCategory, TicketResponse, Region, UserType
 )
 from utils.auth import get_current_user_id
+from utils.i18n import t, I18n
 import uuid
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
