@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { 
   Users, 
@@ -19,6 +20,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const RegionalDashboard = () => {
   const { token, user } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +37,7 @@ const RegionalDashboard = () => {
       setStats(response.data);
     } catch (err) {
       console.error('Failed to load regional stats', err);
-      setError('Falha ao carregar estatísticas regionais');
+      setError(t('admin.common.error'));
     } finally {
       setLoading(false);
     }
@@ -44,7 +46,7 @@ const RegionalDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Carregando...</div>
+        <div className="text-gold-400">{t('admin.common.loading')}</div>
       </div>
     );
   }
@@ -58,7 +60,7 @@ const RegionalDashboard = () => {
   }
 
   const regionNames = {
-    europe: { name: 'Europa', flag: '🇪🇺', color: 'blue' },
+    europe: { name: t('admin.regional.byRegion') === 'Por Região' ? 'Europa' : 'Europe', flag: '🇪🇺', color: 'blue' },
     mena: { name: 'MENA', flag: '🌍', color: 'amber' },
     latam: { name: 'LATAM', flag: '🌎', color: 'green' }
   };
@@ -92,7 +94,7 @@ const RegionalDashboard = () => {
             {data.tickets.urgent > 0 && (
               <span className="ml-auto flex items-center gap-1 text-red-400 text-sm">
                 <AlertTriangle size={16} />
-                {data.tickets.urgent} urgente{data.tickets.urgent > 1 ? 's' : ''}
+                {data.tickets.urgent} {t('support.priorityLabels.urgent').toLowerCase()}
               </span>
             )}
           </CardTitle>
@@ -101,18 +103,18 @@ const RegionalDashboard = () => {
           {/* Clients Section */}
           <div>
             <h4 className="text-sm text-gray-400 mb-3 flex items-center gap-2">
-              <Users size={14} /> Clientes
+              <Users size={14} /> {t('admin.clients.title')}
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <MetricCard 
                 value={data.clients.total} 
-                label="Total" 
+                label={t('admin.regional.totalClients')} 
                 icon={Users}
                 color={region.color}
               />
               <MetricCard 
                 value={data.clients.approved} 
-                label="Aprovados" 
+                label={t('admin.kyc.approved')} 
                 icon={CheckCircle}
                 color="green"
               />

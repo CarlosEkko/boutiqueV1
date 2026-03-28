@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -39,6 +40,7 @@ const MULTI_NETWORK_ASSETS = ['USDT', 'USDC', 'DAI', 'WBTC', 'LINK', 'UNI', 'AAV
 
 const CryptoDepositPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [vaultStatus, setVaultStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(false);
@@ -249,19 +251,18 @@ const CryptoDepositPage = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Depósito Crypto</h1>
-          <p className="text-gray-400">Receba criptomoedas na sua carteira KBEX</p>
+          <h1 className="text-2xl font-bold text-white">{t('dashboard.cryptoDeposit.title')}</h1>
+          <p className="text-gray-400">{t('dashboard.cryptoDeposit.subtitle')}</p>
         </div>
 
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardContent className="p-8 text-center">
             <Wallet size={48} className="text-gold-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
-              Inicialize a Sua Carteira Crypto
+              {t('dashboard.cryptoDeposit.initializeWallet')}
             </h3>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Para receber criptomoedas, precisa primeiro inicializar a sua carteira. 
-              Isto irá criar endereços de depósito únicos para cada moeda.
+              {t('dashboard.cryptoDeposit.initializeDesc')}
             </p>
             <Button
               onClick={initializeWallet}
@@ -271,12 +272,12 @@ const CryptoDepositPage = () => {
               {initializing ? (
                 <>
                   <RefreshCw size={16} className="mr-2 animate-spin" />
-                  Inicializando...
+                  {t('dashboard.cryptoDeposit.initializing')}
                 </>
               ) : (
                 <>
                   <Wallet size={16} className="mr-2" />
-                  Inicializar Carteira
+                  {t('dashboard.cryptoDeposit.initializeBtn')}
                 </>
               )}
             </Button>
@@ -291,8 +292,8 @@ const CryptoDepositPage = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Depósito Crypto</h1>
-        <p className="text-gray-400">Selecione uma moeda para obter o endereço de depósito</p>
+        <h1 className="text-2xl font-bold text-white">{t('dashboard.cryptoDeposit.title')}</h1>
+        <p className="text-gray-400">{t('dashboard.cryptoDeposit.selectCurrencyToSee')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -301,13 +302,13 @@ const CryptoDepositPage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Search size={20} />
-              Selecionar Moeda
+              {t('dashboard.cryptoDeposit.selectCurrency')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
               type="text"
-              placeholder="Pesquisar moeda..."
+              placeholder={t('dashboard.cryptoDeposit.searchCurrency')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-zinc-800 border-zinc-700 text-white"
@@ -342,7 +343,7 @@ const CryptoDepositPage = () => {
                           {symbol}
                           {isPopular && (
                             <Badge className="bg-gold-500/20 text-gold-400 text-xs border-0">
-                              Popular
+                              {t('dashboard.cryptoDeposit.popular')}
                             </Badge>
                           )}
                         </div>
@@ -362,19 +363,19 @@ const CryptoDepositPage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <ArrowDownLeft size={20} />
-              Endereço de Depósito
+              {t('dashboard.cryptoDeposit.depositAddress')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!selectedAsset ? (
               <div className="text-center py-12 text-gray-400">
                 <QrCode size={48} className="mx-auto mb-4 opacity-50" />
-                <p>Selecione uma moeda para ver o endereço</p>
+                <p>{t('dashboard.cryptoDeposit.selectCurrencyToSee')}</p>
               </div>
             ) : loadingAddress ? (
               <div className="text-center py-12">
                 <RefreshCw size={32} className="animate-spin text-gold-400 mx-auto mb-4" />
-                <p className="text-gray-400">A gerar endereço...</p>
+                <p className="text-gray-400">{t('dashboard.cryptoDeposit.generatingAddress')}</p>
               </div>
             ) : depositAddress ? (
               <div className="space-y-6">
@@ -396,7 +397,7 @@ const CryptoDepositPage = () => {
                 {/* Network Selector for multi-network assets */}
                 {networks.length > 1 && (
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Selecionar Rede</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.cryptoDeposit.selectNetwork')}</label>
                     
                     {/* Network cards with logos */}
                     <div className="grid grid-cols-3 gap-2">
@@ -440,11 +441,11 @@ const CryptoDepositPage = () => {
 
                 {/* Address */}
                 <div>
-                  <label className="text-sm text-gray-400 mb-2 block">Endereço</label>
+                  <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.cryptoDeposit.address')}</label>
                   <div className="flex gap-2">
                     <Input
                       type="text"
-                      value={depositAddress.address || 'A gerar...'}
+                      value={depositAddress.address || t('dashboard.cryptoDeposit.generatingAddress')}
                       readOnly
                       className="bg-zinc-800 border-zinc-700 text-white font-mono text-sm"
                     />
@@ -460,7 +461,7 @@ const CryptoDepositPage = () => {
                 {/* Network Info */}
                 <div className="bg-zinc-800/50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-400">Rede</span>
+                    <span className="text-gray-400">{t('dashboard.cryptoDeposit.network')}</span>
                     <div className="flex items-center gap-2">
                       {selectedNetwork && NETWORK_LOGOS[selectedNetwork.network] && (
                         <img 
@@ -478,10 +479,9 @@ const CryptoDepositPage = () => {
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex gap-3">
                   <AlertTriangle className="text-yellow-400 shrink-0" size={20} />
                   <div className="text-sm">
-                    <p className="text-yellow-400 font-medium mb-1">Importante</p>
+                    <p className="text-yellow-400 font-medium mb-1">{t('dashboard.cryptoDeposit.important')}</p>
                     <p className="text-gray-400">
-                      Envie apenas {selectedAsset} para este endereço. 
-                      Enviar outros ativos pode resultar em perda permanente.
+                      {t('dashboard.cryptoDeposit.sendOnly').replace('{asset}', selectedAsset)}
                     </p>
                   </div>
                 </div>
@@ -489,13 +489,13 @@ const CryptoDepositPage = () => {
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <AlertTriangle size={32} className="mx-auto mb-2 text-red-400" />
-                <p>Erro ao obter endereço</p>
+                <p>{t('dashboard.cryptoDeposit.errorGettingAddress')}</p>
                 <Button
                   variant="outline"
                   onClick={() => getDepositAddress(selectedAsset)}
                   className="mt-4 border-zinc-700"
                 >
-                  Tentar Novamente
+                  {t('dashboard.cryptoDeposit.tryAgain')}
                 </Button>
               </div>
             )}

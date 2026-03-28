@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -39,6 +40,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminStaff = () => {
   const { token, user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -243,7 +245,7 @@ const AdminStaff = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Carregando...</div>
+        <div className="text-gold-400">{t('admin.common.loading')}</div>
       </div>
     );
   }
@@ -255,16 +257,16 @@ const AdminStaff = () => {
         <div>
           <h1 className="text-3xl font-light text-white flex items-center gap-3">
             <UserCog className="text-gold-400" />
-            Gestão de Equipa
+            {t('admin.staff.title')}
           </h1>
-          <p className="text-gray-400 mt-1">Gerir utilizadores internos e permissões</p>
+          <p className="text-gray-400 mt-1">{t('admin.staff.subtitle')}</p>
         </div>
         <Button
           onClick={() => { resetForm(); setShowCreateModal(true); }}
           className="bg-gold-500 hover:bg-gold-400"
         >
           <Plus size={18} className="mr-2" />
-          Novo Membro
+          {t('admin.staff.addStaff')}
         </Button>
       </div>
 
@@ -290,7 +292,7 @@ const AdminStaff = () => {
           className={activeTab === 'active' ? 'bg-gold-500 text-black' : 'text-gray-400 hover:text-white'}
         >
           <CheckCircle size={16} className="mr-2" />
-          Ativos ({staff.filter(m => m.is_active !== false).length})
+          {t('admin.staff.active')} ({staff.filter(m => m.is_active !== false).length})
         </Button>
         <Button
           variant={activeTab === 'inactive' ? 'default' : 'ghost'}

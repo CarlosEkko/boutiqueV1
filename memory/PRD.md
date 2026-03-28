@@ -1160,3 +1160,46 @@ Perfil (Conta - Reorganized)
 
 **Status:** COMPLETED ✅
 
+
+## Traduções Expandidas do Frontend (March 28, 2026 - Sessão 2)
+
+**Problema:** Múltiplas páginas não estavam traduzidas:
+- Operações Crypto (Depósito, Levantamento)
+- Operações Fiat (Depósito, Levantamento)
+- Perfil (Meu Perfil, Dados Bancários, Segurança)
+- Admin (Dashboard Regional, Gestão de Equipa, Clientes, KYC, Configurações)
+
+**Solução Implementada:**
+
+**1. Traduções adicionadas ao translations.js:**
+- `dashboard.cryptoDeposit` - 25+ chaves para depósitos crypto
+- `dashboard.cryptoWithdrawal` - 35+ chaves para levantamentos crypto
+- `dashboard.fiatDeposit` - 40+ chaves para depósitos fiat
+- `dashboard.fiatWithdrawal` - 30+ chaves para levantamentos fiat
+- `profile.myProfile` - 12 chaves para perfil
+- `profile.bankDetails` - 15 chaves para dados bancários
+- `profile.security` - 20+ chaves para segurança
+- `support` - 15+ chaves para suporte
+- `admin.common` - Labels comuns admin
+- `admin.regional` - Dashboard regional
+- `admin.staff` - Gestão de equipa
+- `admin.clients` - Gestão de clientes
+- `admin.kyc` - Verificações KYC/KYB
+- `admin.opportunities` - Oportunidades de investimento
+- `admin.clientMenus` - Menus de clientes
+- `admin.settings` - Configurações
+
+**2. Páginas atualizadas com i18n hook:**
+- `CryptoDepositPage.jsx` - Tradução completa
+- `CryptoWithdrawalPage.jsx` - Tradução completa
+- `ProfilePage.jsx` - Tradução completa
+- `SecurityPage.jsx` - Tradução completa
+- `RegionalDashboard.jsx` - Tradução completa
+- `AdminStaff.jsx` - Tradução completa
+
+**Verificação:**
+- Lint passou em todos os ficheiros
+- Screenshots verificaram traduções funcionais
+
+**Status:** COMPLETED ✅
+

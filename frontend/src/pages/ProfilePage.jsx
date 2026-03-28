@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -31,6 +32,7 @@ const COUNTRIES = [
 
 const ProfilePage = () => {
   const { user, loading, isAuthenticated, updateProfile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [editing, setEditing] = useState(false);
@@ -156,7 +158,7 @@ const ProfilePage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-gold-400 text-lg">Carregando...</div>
+        <div className="text-gold-400 text-lg">{t('admin.common.loading')}</div>
       </div>
     );
   }
@@ -168,8 +170,8 @@ const ProfilePage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Meu Perfil</h1>
-          <p className="text-gray-400">Gerir informações pessoais da conta</p>
+          <h1 className="text-2xl font-bold text-white">{t('profile.myProfile.title')}</h1>
+          <p className="text-gray-400">{t('profile.myProfile.subtitle')}</p>
         </div>
         <Button
           variant="outline"

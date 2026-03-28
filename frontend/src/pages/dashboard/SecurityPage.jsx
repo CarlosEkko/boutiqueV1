@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -25,6 +26,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const SecurityPage = () => {
   const { user, token, logout } = useAuth();
+  const { t } = useLanguage();
   
   // Security settings
   const [securitySettings, setSecuritySettings] = useState({
@@ -241,9 +243,9 @@ const SecurityPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Shield className="text-gold-400" />
-            Segurança
+            {t('profile.security.title')}
           </h1>
-          <p className="text-gray-400">Proteja a sua conta com configurações de segurança avançadas</p>
+          <p className="text-gray-400">{t('profile.security.subtitle')}</p>
         </div>
         <Button
           variant="outline"
@@ -252,7 +254,7 @@ const SecurityPage = () => {
           onClick={() => window.location.reload()}
         >
           <RefreshCw size={14} className="mr-2" />
-          Atualizar
+          {t('admin.common.refresh')}
         </Button>
       </div>
 

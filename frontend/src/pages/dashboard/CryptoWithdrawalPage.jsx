@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -53,6 +54,7 @@ const getCryptoLogo = (symbol) => {
 const CryptoWithdrawalPage = () => {
   const { token } = useAuth();
   const { formatCurrency } = useCurrency();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [wallets, setWallets] = useState([]);
@@ -244,8 +246,8 @@ const CryptoWithdrawalPage = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-light text-white">Levantamento Crypto</h1>
-        <p className="text-gray-400 mt-1">Envie criptomoedas para uma carteira externa</p>
+        <h1 className="text-3xl font-light text-white">{t('dashboard.cryptoWithdrawal.title')}</h1>
+        <p className="text-gray-400 mt-1">{t('dashboard.cryptoWithdrawal.subtitle')}</p>
       </div>
 
       {/* Pending Withdrawals Warning */}
@@ -255,10 +257,10 @@ const CryptoWithdrawalPage = () => {
             <AlertTriangle className="text-amber-400" size={20} />
             <div>
               <p className="text-amber-400 font-medium">
-                {pendingWithdrawals.length} levantamento(s) pendente(s)
+                {pendingWithdrawals.length} {t('dashboard.cryptoWithdrawal.pendingWithdrawals')}
               </p>
               <p className="text-amber-300/80 text-sm">
-                Aguardando aprovação do administrador
+                {t('dashboard.cryptoWithdrawal.awaitingApproval')}
               </p>
             </div>
           </CardContent>
@@ -281,9 +283,9 @@ const CryptoWithdrawalPage = () => {
         ))}
       </div>
       <div className="flex justify-center gap-8 text-sm text-gray-400 mb-6">
-        <span className={step === 1 ? 'text-gold-400' : ''}>Selecionar Ativo</span>
-        <span className={step === 2 ? 'text-gold-400' : ''}>Detalhes</span>
-        <span className={step === 3 ? 'text-gold-400' : ''}>Confirmar</span>
+        <span className={step === 1 ? 'text-gold-400' : ''}>{t('dashboard.cryptoWithdrawal.selectAsset')}</span>
+        <span className={step === 2 ? 'text-gold-400' : ''}>{t('dashboard.cryptoWithdrawal.details')}</span>
+        <span className={step === 3 ? 'text-gold-400' : ''}>{t('dashboard.cryptoWithdrawal.confirm')}</span>
       </div>
 
       {/* Step 1: Select Asset */}
@@ -293,8 +295,8 @@ const CryptoWithdrawalPage = () => {
             <Card className="col-span-full bg-zinc-900/50 border-zinc-800">
               <CardContent className="py-12 text-center">
                 <Wallet className="mx-auto text-gray-500 mb-4" size={48} />
-                <p className="text-gray-400">Nenhum saldo disponível para levantamento</p>
-                <p className="text-gray-500 text-sm mt-1">Deposite fundos primeiro</p>
+                <p className="text-gray-400">{t('dashboard.cryptoWithdrawal.noBalanceAvailable')}</p>
+                <p className="text-gray-500 text-sm mt-1">{t('dashboard.cryptoWithdrawal.depositFirst')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -319,7 +321,7 @@ const CryptoWithdrawalPage = () => {
                         <p className="text-white">{wallet.balance?.toFixed(8)}</p>
                         {hasWhitelist && (
                           <Badge className="bg-green-500/20 text-green-400 text-xs mt-1">
-                            <Shield size={10} className="mr-1" /> Whitelist
+                            <Shield size={10} className="mr-1" /> {t('dashboard.cryptoWithdrawal.whitelist')}
                           </Badge>
                         )}
                       </div>
@@ -344,7 +346,7 @@ const CryptoWithdrawalPage = () => {
                   className="w-8 h-8 rounded-full"
                 />
               )}
-              Levantar {selectedAsset.asset_id}
+              {t('dashboard.cryptoWithdrawal.withdraw')} {selectedAsset.asset_id}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
