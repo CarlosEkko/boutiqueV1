@@ -1,181 +1,156 @@
-<analysis>**original_problem_statement**:
-The user wants to build a website for a premium Crypto Boutique Exchange named **KBEX.io**.
+<analysis>**original_problem_statement**: 
+The user is building **KBEX.io**, a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals. Core features include an Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, and automated KYC via Sumsub.
+PRODUCT REQUIREMENTS: 
+- Fully translated platform (PT, EN, AR).
+- Quiet luxury, trust, and exclusivity in UI/UX.
+- Comprehensive OTC CRM with strict qualification and workflows.
 
-**PRODUCT REQUIREMENTS:**
--   **Target Audience:** High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies.
--   **Geographic Focus:** Europe, Middle East, Brazil.
--   **Products/Services:** Exchange, Crypto ATM Network, Launchpad, ICO, Institutional Custody.
--   **Tone & Style:** Quiet luxury, trust, exclusivity, clear, serious, and sophisticated.
--   **Implemented Features in this Session:**
-    -   A new page for buying, selling, and converting cryptocurrencies.
-    -   Payment integration with Stripe (for credit cards) and a manual Bank Transfer system with admin approval.
-    -   Creation of Fiat Wallets (EUR, USD, AED, BRL).
-    -   A complete Fiat Deposit flow, where users request a deposit, receive bank details, and an admin approves the transaction to credit the user's wallet.
-    -   A global multi-currency system, allowing users to select a display currency (EUR, USD, AED, BRL) which updates all crypto prices and values across the platform.
-    -   Updated the wallet page to show crypto balances converted to the selected fiat currency.
--   **Latest User Request:** Trading fees should be configurable for each fiat currency individually (e.g., different fees for EUR pairs vs. BRL pairs).
+**User's preferred language**: **Portuguese**. (You MUST automatically detect the user's primary language from their messages inside the trajectory tag and INSTRUCT next agent to respond in the user's preferred language only). The user communicates entirely in Portuguese. All agent responses, plans, and summaries MUST be in Portuguese.
 
-**User's preferred language**: Portuguese. The next agent MUST respond in Portuguese.
-
-**what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB platform deployed on the user's VPS. It includes JWT authentication, KYC, a multi-currency client dashboard, and a comprehensive RBAC admin panel. This session added a complete trading and fiat management system:
--   **Exchange Page**: Users can buy, sell, and convert the top 50 cryptocurrencies.
--   **Fiat System**: Users have fiat wallets (EUR, USD, AED, BRL) and can deposit funds via bank transfer, which requires admin approval.
--   **Multi-Currency**: The entire user dashboard now operates in a selected fiat currency (EUR, USD, AED, BRL), with a currency selector in the header. All prices, balances, and limits are displayed in the chosen currency.
--   **Admin Panel**: Admins can manage trading fees/limits and approve fiat deposits.
+**what currently exists?** 
+A full-stack React/FastAPI/MongoDB platform deployed via Docker on a VPS. It includes multi-currency viewing, fiat deposits, and an extensive OTC CRM. In this session, the OTC system was heavily upgraded: a horizontal card layout for leads, a complete 11-step OTC workflow (Creation → Setup → RFQ → Execution → Invoice → Post-Sale), Brevo integration for onboarding emails, and highly polished, multi-step modals for lead creation and pre-qualification.
 
 **Last working item**:
--   **Last item agent was working**: The agent was in the process of updating the trading fee management system to be configurable per fiat currency. The backend models and API endpoints were updated to handle per-currency fees. The agent was about to modify the frontend admin page () to allow admins to set these individualized fees.
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N
--   **Which testing method agent to use?**: both. The backend needs to be tested to ensure the new per-currency fee logic is applied correctly during trades. The frontend needs to be tested to verify the new admin UI for setting these fees works as expected.
--   **User Testing Done**: N
+    - Last item agent was working: The user submitted a new request in the final message: On the frontend landing page, Solicitar Acesso (Request Access) must generate an OTC Lead, and the standard Sign In / Register creation flow must be removed from the Auth page.
+    - Status: NOT STARTED 
+    - Agent Testing Done: N
+    - Which testing method agent to use? both (Backend curl to test the lead generation via public endpoint without auth, and Screenshot tool to verify the Auth page no longer has the registration option).
+    - User Testing Done: N
 
-**All Pending/In progress Issue list**:
--   **Issue 1**: (P1) Safari cursor bug.
--   **Issue 2**: (P2) Fireblocks Integration is broken.
--   **Issue 3**: (P3) Whitelist functionality is missing.
-
-**Issues Detail**:
--   **Issue 1**:
-    -   **Description**: The mouse cursor does not function correctly on the Safari browser. This is a recurring problem.
-    -   **Next debug checklist**:
-        1.  Review  for global cursor styles.
-        2.  Inspect  to remove any custom cursor logic remnants.
-        3.  This requires careful code inspection, as direct testing on Safari is not possible. Final verification must be done by the user.
-    -   **Why fix this issue and what will be achieved with the fix?**: Ensures a usable experience for Safari users.
-    -   **Status**: NOT STARTED
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: Frontend (User verification required)
-    -   **Blocked on other issue**: None
--   **Issue 2**:
-    -   **Description**: The Fireblocks integration fails with authentication errors, likely due to invalid API/private keys.
-    -   **Why fix this issue and what will be achieved with the fix?**: This is a blocker for real wallet management and institutional custody features.
-    -   **Status**: BLOCKED (Waiting for the user to provide new credentials).
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Backend
-    -   **Blocked on other issue**: None
--   **Issue 3**:
-    -   **Description**: The user noted that whitelist functions are not visible for the admin. This feature has not been implemented yet.
-    -   **Next debug checklist**: Ask the user for requirements: should the whitelist be for crypto withdrawal addresses, user registration emails, or IP addresses?
-    -   **Why fix this issue and what will be achieved with the fix?**: Adds an important security layer.
-    -   **Status**: NOT STARTED (Blocked on user input)
-    -   **Is recurring issue?**: N
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on other issue**: None
+**All Pending/In progress Issue list**:  
+  Issue 1: Reroute Request Access to Lead Creation & Disable Public Registration (P0)
+  Issue 2: Safari cursor bug (P1)
+  Issue 3: Incomplete Frontend Translations (P1)
+  Issue 4: Fireblocks Integration broken (P2)
+  
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: None. Just requested in the last message.
+     - Next debug checklist: 
+       1. Identify the public landing page component containing the Solicitar Acesso form.
+       2. Connect this form to  (ensure the endpoint allows unauthenticated requests for new leads, or create a specific public endpoint).
+       3. Open  and remove/hide the UI toggle that allows users to create a new account directly.
+     - Why fix this issue and what will be achieved with the fix? Enforces the exclusive invite/approval only nature of the boutique exchange.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on other issue: None
+  - Issue 2: 
+     - Attempted fixes: None in this session.
+     - Next debug checklist: Review  and  for custom cursor styles causing Safari incompatibilities.
+     - Why fix this issue and what will be achieved with the fix? Standardizes UI across browsers.
+     - Status: NOT STARTED
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? Frontend (User verification required)
+     - Blocked on other issue: None
+  - Issue 3:
+     - Attempted fixes: Agent from the previous fork did partial work, but it was abandoned to focus on OTC UI.
+     - Next debug checklist: Map remaining strings in  for pages like Identity Verification, Support, etc.
+     - Why fix this issue and what will be achieved with the fix? 100% localization.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend
+     - Blocked on other issue: None
 
 **In progress Task List**:
--   **Task 1**: Implement individualized trading fees per currency. (P0 - HIGHEST PRIORITY)
-    -   **Where to resume**: The backend has been updated. The next step is to modify the frontend page . The UI should change from a single set of fee inputs to a tabbed interface or section for each supported fiat currency (EUR, USD, AED, BRL), allowing the admin to set and save fees for each one independently.
-    -   **What will be achieved with this?**: Fulfills the user's request for granular control over trading fees based on the fiat currency used in the transaction.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: Both
-    -   **Blocked on something**: No
+ None. All tasks from the previous session were completed.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks**:
-    -   **P1: Populate Static Pages**:
-        -   **Markets Page**: Integrate real-time data from CoinMarketCap.
-        -   **Trading Page**: Integrate a TradingView chart widget.
--   **Future Tasks**:
-    -   **P2: Implement Whitelist Functionality**: Once requirements are gathered, build the backend and frontend for the chosen whitelist feature.
-    -   **P3: Build out Product Pages**: Create content and functionality for the Launchpad and ICO sections.
-    -   **P3: Add Full Translations**: Translate all new UI elements into English and Arabic.
-    -   **P4: Enhance Dashboard with Financial Data**: Add charts and transaction history (this is dependent on fixing the Fireblocks integration).
+    Upcoming Tasks:
+    - P1: Implement TradingView chart widgets on Trading/Markets pages.
+    - P2: Refactor 1-second HTTP polling to WebSockets for crypto prices.
+    Future Tasks:
+    - P2: Implement Whitelist functionality.
+    - P3: Build out Product Pages (Launchpad and ICO).
 
 **Completed work in this session**
--   **Buy/Sell/Convert Page**: Implemented the full-featured exchange page for users.
--   **Stripe & Bank Transfer Integration**: Added payment options for credit cards (Stripe) and a manual approval flow for bank transfers.
--   **Fiat Wallets & Deposit System**: Created fiat wallets (EUR, USD, AED, BRL) and a complete deposit workflow with admin oversight.
--   **Global Multi-Currency System**: Implemented a  in React and corresponding backend logic to allow all financial data on the platform to be displayed in the user's selected fiat currency.
--   **Wallet Page UI Update**: The user's wallet page now shows crypto asset values converted to the selected fiat currency.
--   **Admin Trading Management**: Created pages for admins to manage fees, limits, and approve transfers.
+- Redesigned OTC Leads list to a horizontal card layout with status badges and quick actions. (DONE)
+- Implemented an 11-step OTC workflow in the backend (, ). (DONE)
+- Configured Brevo email integration in  to send onboarding emails to new leads. (DONE)
+- Fixed  routing in  so email onboarding links open the  in registration mode. (DONE)
+- Redesigned the New Lead modal in  into a 3-step wizard (Verification, Pre-Qualification, Setup). (DONE)
+- Enhanced the Existing Contact Found UI alert with gradients, animations, and quick actions. (DONE)
+- Upgraded  to visually handle stages 5 through 11 (RFQ, Quote, Acceptance, Execution, Settlement, Invoice, Post-Sale) with stage-specific buttons. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   None. The agent addressed all user requests from this session, though the last one is still in progress.
+   - Issue 1: Safari cursor bug (recurring).
+   - Issue 2: Frontend Translations remain incomplete.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork**: Safari cursor bug.
--   **Recurrence count**: 2
--   **Status**: NOT STARTED
+  - Issue recurrence in previous fork: Safari cursor bug
+  - Recurrence count: 11+
+  - Status: NOT STARTED
+  Note: This is a persistent, minor CSS issue that keeps getting deprioritized in favor of larger feature requests.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend**: React, React Router, Tailwind CSS, Shadcn UI, React Context API (for multi-currency).
--   **Backend**: FastAPI, Pydantic, Motor (for MongoDB).
--   **Database**: MongoDB.
--   **Deployment**: Docker, Nginx, Let's Encrypt.
+- Frontend: React, Tailwind CSS, Shadcn UI, React Context.
+- Backend: FastAPI, Pydantic, MongoDB (Motor).
+- Deployment: Docker, Docker-Compose on user's VPS.
+- Integrations: Brevo API for transactional emails.
 
 **key DB schema**
--   **users**: 
--   **wallets**: 
--   **trading_fees**:  (Structure changed to be per-currency)
--   **trading_limits**: 
--   **fiat_deposits**: 
+  - : {..., workflow_stage: int, status: str, pre_qualification_data: dict, red_flags: list}
 
 **changes in tech stack**
--   None.
+  - Added  logic via  connecting to the Brevo API.
 
-**All files of reference**
--   **Current Task**: , , .
--   **Multi-Currency**: , , , .
--   **Fiat Deposits**: , .
+**All files of reference** 
+  -  (Heavily edited, handles CRM UI and multi-step modals).
+  -  (Handles deal flow from RFQ to Post-Sale).
+  -  (Target file for removing public registration).
+  -  (Target file for checking public landing page routes).
+  -  (API logic for leads).
 
-**Areas that need refactoring**:
--   The production  uses  as a workaround, while local development likely still relies on . This divergence should be resolved to prevent environment-specific bugs.
+**Areas that need refactoring**: 
+-  has grown to over 2,300 lines due to the inclusion of massive multi-step modals. It should ideally be broken down into smaller components (e.g., , ) in a future sprint.
 
 **key api endpoints**
--    (Buy/Sell/Convert)
--    (Now accepts )
--   
--    (Now accepts )
--    (Now accepts a currency-specific payload)
--   
--   
--   
--   
+-  (Creates lead, triggers Brevo email)
+-  (Advances lead through workflow)
 
-**Critical Info for New Agent**
--   **Você DEVE responder em português.**
--   Your immediate priority is to finish the implementation of **individualized trading fees per currency**. This involves updating the frontend admin page () to allow setting fees for EUR, USD, AED, and BRL. The backend is already prepared for this.
--   The application is **LIVE**. Guide the user through the established deployment workflow (GitHub push -> VPS pull & build) for any changes.
--   The production database is separate. Do not assume data from the preview environment exists on the live server.
+**Critical Info for New Agent** 
+- **Você DEVE responder em português.**
+- **Immediate Task:** The user wants to enforce exclusivity. The public Register/Sign Up form must be removed from . Instead, the public landing page's Solicitar Acesso (Request Access) form should hit the backend to generate an OTC Lead.
+- The user deploys changes manually via  and  on their VPS. Guide them with these commands if you change the backend or routing.
 
-**documents and test reports created in this job**
--    (Backend tests for initial trading feature passed 25/25).
--    was updated multiple times with completed features.
+**documents and test reports created in this job** 
+  -  (Updated heavily with OTC pipeline additions)
 
-**Last 10 User Messages and any pending HUMAN messages**
-1.  **User Request**: Trading fees should be individualized by currency. (IN PROGRESS)
-2.  **User Report**: Crypto wallet values don't change with the selected currency. (RESOLVED)
-3.  **User Request**: Implement a full multi-currency platform for crypto/fiat pairs. (RESOLVED)
-4.  **User Request**: Implement fiat deposit functionality. (RESOLVED)
-5.  **User Request**: Add fiat wallets (EUR, USD, AED, BRL). (RESOLVED)
-6.  **User Clarification**: Provided detailed requirements for the Buy/Sell/Convert page (Stripe, bank transfers, admin-configurable fees, Top 50 coins). (RESOLVED)
+**Last 10 User Messages and any pending HUMAN messages** 
+ 1. User: Asked to configure Brevo.
+ 2. Agent: Updated env variables and successfully sent a test email.
+ 3. User: Asked how to add variables to  on VPS. Agent provided steps.
+ 4. User: Faced Docker permission errors. Agent explained how to use .
+ 5. User: Complained the email registration link led to a black page. 
+ 6. Agent: Fixed routing in  to map  to .
+ 7. User: Complained the Client already exists alert in the New Lead modal appears too late in the flow.
+ 8. Agent: Converted the modal into a 3-step wizard, putting the alert at the very top. Implemented Step 2 and 3 UI.
+ 9. User: Asked to finish stages 5-11 of the OTC pipeline. Agent updated .
+ 10. User: Asked to improve the UI of the Existing Contact alert. Agent redesigned it.
+ 11. **Pending Human Message**: No Front end, o solicitar acesso deve gerar uma Lead , e quero que remova do auth o sign in. (On the frontend, requesting access must generate a Lead, and I want you to remove the sign-in/registration option from auth).
 
 **Project Health Check:**
--   **Broken**: Fireblocks Integration.
--   **In Progress**: Per-currency fee management UI, Safari cursor bug.
--   **Mocked**: Exchange rate sources are from CoinMarketCap, but real trading execution is not connected to an exchange.
--   **Live**: The core application, including a functional multi-currency trading and fiat deposit system, is deployed on the user's domain.
+- Broken: Fireblocks Integration.
+- Mocked: WebSockets (using 1s HTTP polling).
 
-**3rd Party Integrations**
--   **CoinMarketCap**: For live crypto prices.
--   **Stripe**: Integrated for credit card payments on the Buy/Sell page.
--   **Fireblocks**: Wallet management (**BLOCKED**).
--   **Let's Encrypt / Certbot**: Used on the VPS for SSL.
+**3rd Party Integrations** 
+ - Brevo (Emails) — requires User API Key (Configured this session)
+ - Sumsub (KYC) — requires User API Key
+ - Fireblocks (Wallets) — requires User API Key
+ - Stripe (Payments) — requires User API Key
+ - CoinMarketCap (Rates) — requires User API Key
 
 **Testing status**
--   **Testing agent used after significant changes**: YES (for the initial trading backend).
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None.
--   **Known regressions**: None.
+  - Testing agent used after significant changes: YES (Testing agent run after backend OTC workflow changes).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None
+  - Known regressions: None currently.
 
 **Credentials to test flow:**
-Credentials are for the **LIVE VPS** and can be used for the preview environment:
--   **Admin**:  / 
+  - Admin:  / 
 
 **What agent forgot to execute**
--   The agent did not complete the final user request to implement the frontend UI for per-currency trading fees. The work was left halfway through.</analysis>
+The agent did not process the very last user message (Message 300) regarding linking the landing page form to Lead generation and removing public registration. It was left pending. Additionally, the agent did not resume the frontend translation task from previous handoffs.</analysis>

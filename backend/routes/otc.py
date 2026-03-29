@@ -274,6 +274,72 @@ async def link_otc_client_to_user(
     return {"success": True, "client": updated_client, "message": "Cliente vinculado ao utilizador"}
 
 
+class PublicLeadRequest(BaseModel):
+    """Public lead request - minimal fields for website form"""
+    name: str
+    email: str
+    phone: Optional[str] = None
+    message: Optional[str] = None
+
+
+@router.post("/leads/public")
+async def create_public_lead(lead_data: PublicLeadRequest):
+    """Create an OTC lead from the public website - no auth required"""
+    db = get_db()
+    
+    # Check if a lead with this email already exists (not archived/lost)
+    existing = await db.otc_leads.find_one({
+        "contact_email": {"$regex": f"^{lead_data.email}$", "$options": "i"},
+        "status": {"$nin": ["archived", "lost"]}
+    })
+    if existing:
+        return {
+            "success": True,
+            "already_exists": True,
+            "message": "O seu pedido já foi recebido. A nossa equipa entrará em contacto brevemente."
+        }
+    
+    lead = OTCLead(
+        entity_name=lead_data.name,
+        contact_name=lead_data.name,
+        contact_email=lead_data.email,
+        contact_phone=lead_data.phone,
+        country="",
+        source=OTCLeadSource.WEBSITE,
+        source_detail="Formulário público - Solicitar Acesso",
+        notes=lead_data.message if lead_data.message else None,
+        status=OTCLeadStatus.NEW,
+        workflow_stage=1,
+        activity_log=[{
+            "action": "lead_created",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user_id": "public_website",
+            "details": "Lead criado via formulário público do website"
+        }]
+    )
+    
+    await db.otc_leads.insert_one(lead.dict())
+    
+    # Try to send notification email via Brevo
+    try:
+        from services.email_service import email_service
+        if email_service:
+            await email_service.send_onboarding_email(
+                to_email=lead_data.email,
+                to_name=lead_data.name,
+                entity_name=lead_data.name,
+                registration_link=f"https://kbex.io/register?ref=otc&lead={lead.id}",
+            )
+    except Exception as e:
+        logger.warning(f"Failed to send welcome email to new public lead: {e}")
+    
+    return {
+        "success": True,
+        "already_exists": False,
+        "message": "Pedido de acesso recebido com sucesso. A nossa equipa entrará em contacto brevemente."
+    }
+
+
 @router.post("/leads")
 async def create_otc_lead(
     lead_data: CreateOTCLeadRequest,

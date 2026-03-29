@@ -118,8 +118,8 @@ function AppRoutes() {
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
-      <Route path="/register" element={<AuthPage initialMode="register" />} />
-      <Route path="/login" element={<AuthPage initialMode="login" />} />
+      <Route path="/register" element={<Navigate to="/auth" replace />} />
+      <Route path="/login" element={<AuthPage />} />
       {/* Redirect old /profile to new location */}
       <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
       <Route path="/onboarding" element={

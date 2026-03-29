@@ -4,19 +4,22 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../i18n';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ContactCTA = () => {
   const { t, isRTL } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    company: '',
+    phone: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -25,17 +28,39 @@ const ContactCTA = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock submission
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    toast.success(isRTL ? 'تم إرسال الطلب بنجاح!' : 'Request submitted successfully!');
+    setLoading(true);
     
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({ name: '', email: '', company: '', message: '' });
-    }, 3000);
+    try {
+      const response = await fetch(`${API_URL}/api/otc/leads/public`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message || null
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setSubmitted(true);
+        toast.success(data.message);
+        setTimeout(() => {
+          setSubmitted(false);
+          setFormData({ name: '', email: '', phone: '', message: '' });
+        }, 5000);
+      } else {
+        toast.error(data.detail || 'Erro ao enviar pedido');
+      }
+    } catch (error) {
+      toast.error('Erro de conexão. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,8 +116,9 @@ const ContactCTA = () => {
                           onChange={handleChange}
                           required
                           className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
-                          placeholder="John Doe"
+                          placeholder="João Silva"
                           dir={isRTL ? 'rtl' : 'ltr'}
+                          data-testid="contact-name-input"
                         />
                       </div>
 
@@ -108,23 +134,25 @@ const ContactCTA = () => {
                           onChange={handleChange}
                           required
                           className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
-                          placeholder="john@company.com"
+                          placeholder="joao@empresa.com"
                           dir="ltr"
+                          data-testid="contact-email-input"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="company" className="text-gray-300">
+                        <Label htmlFor="phone" className="text-gray-300">
                           {t('contact.form.phone')}
                         </Label>
                         <Input
-                          id="company"
-                          name="company"
-                          value={formData.company}
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
                           onChange={handleChange}
                           className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="+351 123 456 789"
                           dir="ltr"
+                          data-testid="contact-phone-input"
                         />
                       </div>
 
@@ -139,18 +167,24 @@ const ContactCTA = () => {
                           onChange={handleChange}
                           rows={4}
                           className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white placeholder:text-gray-500 resize-none transition-colors duration-300"
-                          placeholder={isRTL ? 'أخبرنا عن احتياجاتك...' : 'Tell us about your needs...'}
+                          placeholder={isRTL ? 'أخبرنا عن احتياجاتك...' : 'Conte-nos sobre as suas necessidades...'}
                           dir={isRTL ? 'rtl' : 'ltr'}
+                          data-testid="contact-message-input"
                         />
                       </div>
 
                       <Button
                         type="submit"
                         size="lg"
+                        disabled={loading}
                         className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-gold-800/30 transition-all duration-300 group"
+                        data-testid="contact-submit-btn"
                       >
-                        {t('contact.form.submit')}
-                        <ArrowRight className={`${isRTL ? 'mr-2 rotate-180 group-hover:-translate-x-1' : 'ml-2 group-hover:translate-x-1'} transition-transform duration-300`} size={20} />
+                        {loading ? (
+                          <Loader2 className="animate-spin mr-2" size={20} />
+                        ) : null}
+                        {loading ? (t('auth.processing') || 'A processar...') : t('contact.form.submit')}
+                        {!loading && <ArrowRight className={`${isRTL ? 'mr-2 rotate-180 group-hover:-translate-x-1' : 'ml-2 group-hover:translate-x-1'} transition-transform duration-300`} size={20} />}
                       </Button>
                     </form>
                   ) : (
@@ -158,13 +192,13 @@ const ContactCTA = () => {
                       <div className="w-20 h-20 bg-gradient-to-br from-gold-500/20 to-gold-600/20 rounded-full flex items-center justify-center mb-6 animate-scale-in">
                         <CheckCircle2 className="text-gold-400" size={40} />
                       </div>
-                      <h3 className="text-2xl font-light text-white mb-3">
-                        {isRTL ? 'تم استلام الطلب' : 'Request Received'}
+                      <h3 className="text-2xl font-light text-white mb-3" data-testid="contact-success-title">
+                        {isRTL ? 'تم استلام الطلب' : 'Pedido Recebido'}
                       </h3>
                       <p className="text-gray-400 max-w-sm">
                         {isRTL 
                           ? 'شكراً لاهتمامك. سيقوم فريقنا بمراجعة طلبك والتواصل معك قريباً.'
-                          : 'Thank you for your interest. Our team will review your request and contact you shortly.'}
+                          : 'Obrigado pelo seu interesse. A nossa equipa irá analisar o seu pedido e entrar em contacto brevemente.'}
                       </p>
                     </div>
                   )}

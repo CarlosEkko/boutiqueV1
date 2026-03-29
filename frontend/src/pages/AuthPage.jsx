@@ -6,38 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-import { Eye, EyeOff, User, Mail, Phone, Globe, Lock, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
 
-const COUNTRIES = [
-  { code: 'PT', name: 'Portugal' },
-  { code: 'BR', name: 'Brasil' },
-  { code: 'ES', name: 'España' },
-  { code: 'UK', name: 'United Kingdom' },
-  { code: 'US', name: 'United States' },
-  { code: 'DE', name: 'Deutschland' },
-  { code: 'FR', name: 'France' },
-  { code: 'IT', name: 'Italia' },
-  { code: 'CH', name: 'Schweiz / Suisse' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'SA', name: 'Saudi Arabia' },
-  { code: 'QA', name: 'Qatar' }
-];
-
-const AuthPage = ({ initialMode = 'login' }) => {
-  const [isLogin, setIsLogin] = useState(initialMode === 'login');
+const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    password: '',
-    phone: '',
-    country: ''
+    password: ''
   });
 
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
 
@@ -46,33 +26,21 @@ const AuthPage = ({ initialMode = 'login' }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCountryChange = (value) => {
-    setFormData(prev => ({ ...prev, country: value }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      let userData;
-      if (isLogin) {
-        userData = await login(formData.email, formData.password);
-        toast.success(t('auth.loginSuccess') || 'Login successful!');
-      } else {
-        userData = await register(formData);
-        toast.success(t('auth.registerSuccess') || 'Account created successfully!');
-      }
+      const userData = await login(formData.email, formData.password);
+      toast.success(t('auth.loginSuccess') || 'Login successful!');
       
-      // Check if user needs onboarding (only for clients)
       if (userData?.user_type === 'client' && !userData?.is_onboarded) {
         navigate('/onboarding');
       } else {
         navigate('/dashboard');
       }
     } catch (error) {
-      const message = error.response?.data?.detail || 
-        (isLogin ? 'Login failed' : 'Registration failed');
+      const message = error.response?.data?.detail || 'Login failed';
       toast.error(message);
     } finally {
       setLoading(false);
@@ -104,40 +72,15 @@ const AuthPage = ({ initialMode = 'login' }) => {
           </div>
           
           <CardTitle className="text-2xl font-light text-white">
-            {isLogin 
-              ? (t('auth.welcomeBack') || 'Welcome Back') 
-              : (t('auth.createAccount') || 'Create Account')}
+            {t('auth.welcomeBack') || 'Welcome Back'}
           </CardTitle>
           <CardDescription className="text-gray-400">
-            {isLogin 
-              ? (t('auth.loginDescription') || 'Sign in to access your account')
-              : (t('auth.registerDescription') || 'Join our exclusive platform')}
+            {t('auth.loginDescription') || 'Sign in to access your account'}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name field - only for register */}
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-300 flex items-center gap-2">
-                  <User size={16} className="text-gold-400" />
-                  {t('auth.fullName') || 'Full Name'}
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="João Silva"
-                  className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
-                  data-testid="register-name-input"
-                />
-              </div>
-            )}
-
             {/* Email field */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300 flex items-center gap-2">
@@ -186,54 +129,6 @@ const AuthPage = ({ initialMode = 'login' }) => {
               </div>
             </div>
 
-            {/* Phone and Country - only for register */}
-            {!isLogin && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-gray-300 flex items-center gap-2">
-                    <Phone size={16} className="text-gold-400" />
-                    {t('auth.phone') || 'Phone Number'}
-                  </Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="+351 912 345 678"
-                    className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
-                    data-testid="register-phone-input"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="country" className="text-gray-300 flex items-center gap-2">
-                    <Globe size={16} className="text-gold-400" />
-                    {t('auth.country') || 'Country'}
-                  </Label>
-                  <Select value={formData.country} onValueChange={handleCountryChange}>
-                    <SelectTrigger 
-                      className="bg-zinc-800/50 border-gold-800/30 text-white focus:border-gold-400"
-                      data-testid="register-country-select"
-                    >
-                      <SelectValue placeholder={t('auth.selectCountry') || 'Select your country'} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-gold-800/30">
-                      {COUNTRIES.map(country => (
-                        <SelectItem 
-                          key={country.code} 
-                          value={country.code}
-                          className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30"
-                        >
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
             {/* Submit button */}
             <Button
               type="submit"
@@ -243,28 +138,21 @@ const AuthPage = ({ initialMode = 'login' }) => {
             >
               {loading 
                 ? (t('auth.processing') || 'Processing...') 
-                : isLogin 
-                  ? (t('auth.signIn') || 'Sign In')
-                  : (t('auth.createAccount') || 'Create Account')}
+                : (t('auth.signIn') || 'Sign In')}
             </Button>
           </form>
 
-          {/* Toggle login/register */}
+          {/* Request Access link */}
           <div className="mt-6 text-center">
             <p className="text-gray-400">
-              {isLogin 
-                ? (t('auth.noAccount') || "Don't have an account?")
-                : (t('auth.haveAccount') || 'Already have an account?')}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
+              {t('auth.noAccount') || "Don't have an account?"}
+              <Link
+                to="/#contact"
                 className="ml-2 text-gold-400 hover:text-gold-300 transition-colors font-medium"
-                data-testid="toggle-auth-mode"
+                data-testid="request-access-link"
               >
-                {isLogin 
-                  ? (t('auth.signUp') || 'Sign Up')
-                  : (t('auth.signIn') || 'Sign In')}
-              </button>
+                {t('nav.requestAccess') || 'Solicitar Acesso'}
+              </Link>
             </p>
           </div>
         </CardContent>
