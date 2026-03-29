@@ -1,251 +1,97 @@
-# KBEX.io - Product Requirements Document
+# KBEX.io — Product Requirements Document
 
-## Original Problem Statement
-Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeting High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals and companies in Europe, Middle East, and Brazil.
+## Overview
+KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals. Core features include an Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, and automated KYC via Sumsub.
 
-## Target Audience
-- High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals
-- Companies requiring crypto exchange services
-- Geographic focus: Europe, Middle East, Brazil
+## Core Requirements
+- Fully translated platform (PT, EN, AR)
+- "Quiet luxury", trust, and exclusivity in UI/UX
+- Comprehensive OTC CRM with strict qualification and workflows
+- Invite/approval-only access model (no public registration)
 
-## Core Products/Services
-1. Exchange (Buy/Sell/Convert)
-2. Crypto ATM Network
-3. Launchpad
-4. ICO
-5. Institutional Custody
+## Tech Stack
+- **Frontend**: React, Tailwind CSS, Shadcn UI, GSAP animations
+- **Backend**: FastAPI, Pydantic, MongoDB (Motor)
+- **Deployment**: Docker, Docker-Compose on VPS (kbex.io)
+- **Integrations**: Brevo (emails), Sumsub (KYC), Fireblocks (wallets), Stripe (payments), CoinMarketCap/Binance (rates)
 
-## Tone & Style
-"Quiet luxury," trust, exclusivity, clear, serious, and sophisticated.
+## User Personas
+- **Admin/Operator**: Manages OTC desk, CRM, leads, clients
+- **Client (HNW/UHNW)**: Accesses exchange, OTC trading, wallets after approval
 
----
+## Access Model
+- Public website visitors can only "Solicitar Acesso" (Request Access) which generates an OTC Lead
+- No public registration — AuthPage is login-only
+- Accounts are created internally by admin after lead qualification
 
 ## Implemented Features
 
-### Session - March 2026
+### Landing Page & Auth
+- Animated hero with GSAP transitions
+- Public "Solicitar Acesso" form creates OTC Lead via `POST /api/otc/leads/public` (no auth required)
+- Duplicate email protection (prevents duplicate leads)
+- Auth page: Login only, no public registration
+- `/register` route redirects to `/auth`
+- "Solicitar Acesso" link on login page redirects to landing page contact form
 
-#### OTC Workflow Enhancement - 11 Stages (2026-03-29)
-- **Complete OTC Workflow Implementation** with 11 stages:
-  1. Criação do Lead
-  2. Verificação de Cliente (verifica se já existe na BD)
-  3. Pré-Qualificação (tipo cliente, volume, objectivo, fonte fundos, canal liquidação)
-  4. Setup Operacional (limites, gestor, canal comunicação)
-  5. RFQ (Request for Quote)
-  6. Cotação
-  7. Aceitação
-  8. Execução
-  9. Liquidação
-  10. Confirmação & Invoice
-  11. Pós-Venda
+### OTC Desk (11-Step Workflow)
+1. Lead Creation
+2. Client Verification
+3. Pre-Qualification
+4. Operational Setup
+5. RFQ
+6. Quote
+7. Acceptance
+8. Execution
+9. Settlement
+10. Invoice
+11. Post-Sale
 
-- **Modal "Nova Lead" Redesenhado**:
-  - Alerta de "Contacto Existente" agora aparece NO TOPO do modal
-  - Step indicator visual (1-2-3)
-  - Formulário simplificado
+### OTC CRM
+- Horizontal card layout for leads with status badges
+- Multi-step modals for lead creation and pre-qualification
+- "Existing Contact Found" alert with quick actions
+- Pipeline view for deal flow (RFQ to Post-Sale)
 
-- **Modal de Pré-Qualificação (Step 2) - COMPLETO**:
-  - Tipo de Cliente: Retalho, HNWI, Empresa, Fundo/Instituição
-  - Volume Esperado: 1ª Operação, Mensal, Frequência
-  - Objectivo: Trading, Tesouraria, Arbitragem, Remessas, OTC B2B, Outras
-  - Fonte dos Fundos: Rendimentos, Empresa, Crypto Holdings, Venda Ativos, Herança, etc.
-  - Canal Liquidação: Transf. Bancária, Stablecoins, On-Chain, Off-Chain
-  - Jurisdição Bancária
-  - **Bandeiras Vermelhas Interativas** (checkboxes):
-    - País de Alto Risco (FATF)
-    - Actividades Incompatíveis
-    - Pressa Excessiva
-    - Incapaz Justificar Fundos
-    - Respostas Inconsistentes
-    - Exposição PEP
+### Email Integration
+- Brevo transactional emails for onboarding
+- Auto-sends welcome email on new public lead creation
 
-- **Modal de Setup Operacional (Step 3) - COMPLETO**:
-  - Acesso & Atribuição: Gestor de Conta, Acesso Portal OTC
-  - Limites de Trading: Diário e Mensal (USD)
-  - Método de Liquidação: SEPA, SWIFT, PIX, Faster Payments, USDT/USDC
-  - Dados Bancários/Wallet
-  - Canal de Comunicação: Email, Telegram, WhatsApp, Signal
+### Dashboard & Admin
+- Multi-currency viewing, fiat deposits
+- KYC management via Sumsub
+- Staff management, permissions, referrals
+- Bank accounts, company accounts
+- Knowledge base, support tickets
 
-- **Backend APIs Implementados**:
-  - `GET /api/otc/workflow/stages` - Definição das 11 etapas com enums
-  - `POST /api/otc/leads/{id}/verify-client` - Verifica cliente existente
-  - `POST /api/otc/leads/{id}/send-onboarding-email` - Envia email Brevo
-  - `POST /api/otc/leads/{id}/pre-qualification` - Pré-qualificação completa
-  - `POST /api/otc/leads/{id}/add-red-flag` - Adiciona red flags
-  - `POST /api/otc/leads/{id}/operational-setup` - Setup operacional
+## Key API Endpoints
+- `POST /api/otc/leads/public` — Public lead creation (no auth)
+- `POST /api/otc/leads` — Internal lead creation (auth required)
+- `PUT /api/otc/leads/{id}/stage` — Advance lead through workflow
+- `GET /api/otc/leads` — List leads with filtering
+- `POST /api/otc/deals` — Create OTC deal
+- `POST /api/otc/quotes` — Create quote for deal
 
-- **Novos Modelos de Dados**:
-  - `ClientType`: retail, hnwi, company, fund_institution
-  - `OperationObjective`: trading, treasury, arbitrage, remittances, otc_b2b, other
-  - `FundSource`: income, company, crypto_holdings, asset_sale, inheritance, investment_returns
-  - `SettlementChannel`: bank_transfer, stablecoins, on_chain, off_chain
-  - `RedFlagType`: high_risk_country, incompatible_activities, excessive_urgency, etc.
-  - `FATF_HIGH_RISK_COUNTRIES`: Lista de 20 países de alto risco
+## Key DB Collections
+- `otc_leads`: {workflow_stage, status, pre_qualification_data, red_flags, source, contact_*}
+- `otc_clients`: {entity_name, contact_*, daily/monthly_limit, settlement_method}
+- `otc_deals`: {deal_number, client_id, stage, amount, pricing}
+- `users`: {email, password, user_type, kyc_status, is_admin}
 
-- **Detecção Automática de Red Flags**:
-  - País de alto risco (FATF) detectado automaticamente na criação do lead
-  - Jurisdição bancária de alto risco detectada na pré-qualificação
-
-- **Integração Brevo para Emails** (MOCKED - precisa BREVO_API_KEY):
-  - Email de onboarding para novos clientes
-  - Email de lembrete KYC para documentos expirados
-
-- **Frontend - Novos Modais**:
-  - Modal de Pré-Qualificação com todos os campos do workflow
-  - Modal de Setup Operacional
-  - Botões de acção específicos por status do lead
-
-#### OTC Leads UX/UI Improvements (2026-03-29)
-- **Redesigned Leads List to Card Layout**: Replaced the traditional table with horizontal cards for each lead
-  - Status icon on left (color-coded: green=active, blue=new, purple=contacted, yellow=kyc pending, red=lost, gray=archived)
-  - Contact name + entity + email/country/source inline
-  - Estimated volume displayed prominently on the right
-  - Asset badges (BTC, ETH, USDT, etc.)
-  - Status badge (Cliente Ativo, KYC Pendente, Novo, etc.)
-  - Action buttons: Advance (context-aware), Edit, Delete
-- **Redesigned "Existing Contact Found" Alert**: New gradient design with amber/gold colors, better visibility
-- **Expanded Contact Check Triggers**: Now checks by email, entity name, AND contact name
-- **360° Client View Modal**: Full client overview with Personal Info, Trading Profile, Account Manager, Quick Summary
-- **Backend API Update**: `/api/otc/check-existing` now supports entity_name and contact_name parameters
-
-### Session - December 2025
-
-#### Language Selector Component (2025-03-28)
-- Added `LanguageSelector.jsx` component with globe icon + EN | PT | AR toggle
-- Integrated into dashboard header alongside currency selector
-- Real-time language switching across the entire application
-
-#### Frontend Translations - FiatDeposit & FiatWithdrawal (2025-03-28)
-- Fully translated `FiatDepositPage.jsx` to EN/PT
-- Fully translated `FiatWithdrawalPage.jsx` to EN/PT
-- Added 50+ translation keys to `translations.js`
-
-#### Exchange Page Enhancements (2025-03-28)
-- **Segmented Control Toggle**: Elegant pill-style toggle (EUR | BTC) for switching between fiat and crypto input modes
-- **Auto Conversion Display**: Shows "≈ X BTC" or "≈ €X" below input based on selected mode
-- **Removed Fees Block**: Removed the fees display block from the exchange page sidebar
-
-#### Multi-Currency System
-- Global currency selector (EUR, USD, AED, BRL)
-- All prices and balances converted to selected currency
-- CurrencyContext for state management
-
-#### Fiat Wallet System
-- Fiat wallets (EUR, USD, AED, BRL)
-- Fiat deposit workflow with admin approval
-- Bank transfer details with reference codes
-
-#### Trading System
-- Buy/Sell/Convert cryptocurrencies
-- Payment methods: Credit Card (Stripe), Bank Transfer
-- Real-time price updates (1-second polling)
-- Order history and tracking
-
-#### Authentication & Security
-- JWT authentication
-- 2FA support
-- KYC integration (Sumsub WebSDK)
-- Role-based access control (RBAC)
-
-#### Admin Panel
-- Client management
-- Staff management
-- Trading fee/limit configuration
-- Fiat deposit approval
-- Regional dashboard
-
-#### Internationalization
-- Backend API i18n complete
-- Frontend translations: PT, EN, AR (in progress)
-
----
-
-## Known Issues
-
-### P0 - Critical
-- None currently
-
-### P1 - High Priority
-1. **Safari Cursor Bug** - Mouse cursor not functioning correctly on Safari browser (Recurring issue)
-2. **Frontend Translations Incomplete** - Several pages still have hardcoded Portuguese text
-
-### P2 - Medium Priority
-1. **Fireblocks Integration** - Blocked waiting for valid API credentials
-2. **HTTP Polling Performance** - 1-second polling causing VPS strain, needs WebSocket refactor
-
-### P3 - Low Priority
-1. **Whitelist Functionality** - Not implemented yet, awaiting requirements
-
----
+## Pending Issues
+- P1: Safari cursor bug (recurring 11+ times, CSS incompatibility)
+- P1: Incomplete frontend translations (translations.js)
+- P2: Fireblocks integration broken (requires API key debugging)
 
 ## Upcoming Tasks
+- P1: TradingView chart widgets on Trading/Markets pages
+- P2: Refactor 1s HTTP polling to WebSockets for crypto prices
+- P2: Whitelist functionality
+- P3: Product Pages (Launchpad and ICO)
 
-### P1 Priority
-- Complete frontend translations (FiatDepositPage, FiatWithdrawalPage, KYC pages, Support, etc.)
-- TradingView chart widgets on Trading/Markets pages
-- Fix Safari cursor bug
+## Refactoring Needed
+- OTCLeads.jsx (2300+ lines) should be broken into smaller components
 
-### P2 Priority
-- Implement whitelist functionality
-- Refactor HTTP polling to WebSockets
-- OTC Desk Phase 3 (Settlement & Invoicing)
-
-### P3 Priority
-- CRM enhancements (Suppliers module)
-- Build out Product Pages (Launchpad, ICO)
-- Full translations for EN and AR
-
----
-
-## Technical Architecture
-
-### Frontend
-- React 18
-- React Router
-- Tailwind CSS
-- Shadcn UI components
-- React Context API (Auth, Currency, Language)
-
-### Backend
-- FastAPI
-- Pydantic
-- Motor (MongoDB async driver)
-
-### Database
-- MongoDB
-
-### 3rd Party Integrations
-- **CoinMarketCap**: Live crypto prices
-- **Stripe**: Credit card payments
-- **Sumsub**: KYC/KYB verification
-- **Fireblocks**: Wallet management (BLOCKED)
-
-### Deployment
-- Docker
-- Nginx
-- Let's Encrypt SSL
-
----
-
-## Key Files Reference
-
-### Frontend
-- `/app/frontend/src/pages/dashboard/ExchangePage.jsx` - Trading page
-- `/app/frontend/src/contexts/CurrencyContext.jsx` - Multi-currency state
-- `/app/frontend/src/i18n/translations.js` - Translation strings
-- `/app/frontend/src/components/dashboard/CurrencySelector.jsx` - Currency switcher
-
-### Backend
-- `/app/backend/routes/trading.py` - Trading API endpoints
-- `/app/backend/models/trading.py` - Pydantic models
-- `/app/backend/utils/i18n.py` - Backend localization
-
----
-
-## Test Credentials
-- **Admin**: `carlos@kryptobox.io` / `senha123`
-- **Client**: `teste.frances@teste.com` / `senha123`
-
----
-
-## User's Preferred Language
-**Portuguese** - All agent responses should be in Portuguese.
+## Credentials
+- Admin: carlos@kryptobox.io / senha123
+- VPS: https://kbex.io
