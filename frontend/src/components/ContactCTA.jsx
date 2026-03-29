@@ -33,7 +33,7 @@ const ContactCTA = () => {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_URL}/api/otc/leads/public`, {
+      const response = await fetch(`${API_URL}/api/crm/leads/public`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

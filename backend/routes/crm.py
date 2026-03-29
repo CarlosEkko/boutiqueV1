@@ -5,7 +5,11 @@ from fastapi import APIRouter, HTTPException, Header, Depends, Query
 from typing import List, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
+from pydantic import BaseModel
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 from models.crm import (
     SupplierCreate, SupplierUpdate, SupplierResponse,
@@ -18,6 +22,79 @@ from models.crm import (
 from routes.auth import get_current_user
 
 router = APIRouter(prefix="/crm", tags=["CRM"])
+
+
+# ==================== PUBLIC LEAD ENDPOINT ====================
+
+class PublicLeadRequest(BaseModel):
+    """Public lead request - minimal fields for website form"""
+    name: str
+    email: str
+    phone: Optional[str] = None
+    message: Optional[str] = None
+
+
+@router.post("/leads/public")
+async def create_public_lead(lead_data: PublicLeadRequest):
+    """Create a CRM lead from the public website - no auth required"""
+    db = get_db()
+
+    # Check if a lead with this email already exists (not lost)
+    existing = await db.crm_leads.find_one({
+        "email": {"$regex": f"^{lead_data.email}$", "$options": "i"},
+        "status": {"$nin": ["lost"]}
+    })
+    if existing:
+        return {
+            "success": True,
+            "already_exists": True,
+            "message": "O seu pedido já foi recebido. A nossa equipa entrará em contacto brevemente."
+        }
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "name": lead_data.name,
+        "email": lead_data.email,
+        "phone": lead_data.phone,
+        "source": "Website",
+        "status": LeadStatus.NEW.value,
+        "interest": "Solicitar Acesso",
+        "notes": lead_data.message,
+        "is_qualified": False,
+        "qualification_score": 0,
+        "interested_cryptos": [],
+        "preferred_currency": "EUR",
+        "tags": ["website", "solicitar-acesso"],
+        "created_at": now,
+        "updated_at": now,
+        "created_by": "public_website",
+        "converted_to_client": False,
+        "converted_at": None,
+    }
+
+    await db.crm_leads.insert_one(doc)
+
+    # Send confirmation email via Brevo
+    email_sent = False
+    try:
+        from services.email_service import email_service
+        if email_service:
+            email_result = await email_service.send_access_request_confirmation(
+                to_email=lead_data.email,
+                to_name=lead_data.name,
+            )
+            email_sent = email_result.get("success", False)
+            if not email_sent:
+                logger.warning(f"Email not sent to {lead_data.email}: {email_result.get('error', 'unknown')}")
+    except Exception as e:
+        logger.warning(f"Failed to send confirmation email: {e}")
+
+    return {
+        "success": True,
+        "already_exists": False,
+        "email_sent": email_sent,
+        "message": "Pedido de acesso recebido com sucesso. A nossa equipa entrará em contacto brevemente."
+    }
 
 # ==================== HELPERS ====================
 
