@@ -69,8 +69,10 @@ const OTCLeads = () => {
   
   // Existing contact check
   const [existingContact, setExistingContact] = useState(null);
-  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [checkingContact, setCheckingContact] = useState(false);
   const [showExistingWarning, setShowExistingWarning] = useState(false);
+  const [show360Modal, setShow360Modal] = useState(false);
+  const [selected360User, setSelected360User] = useState(null);
   
   // Form
   const [formData, setFormData] = useState({
@@ -129,18 +131,21 @@ const OTCLeads = () => {
     }
   };
 
-  // Check if email already exists
-  const checkExistingEmail = async (email) => {
-    if (!email || email.length < 5) {
-      setExistingContact(null);
-      setShowExistingWarning(false);
+  // Check if email, entity name or contact name already exists
+  const checkExistingContact = async (field, value) => {
+    if (!value || value.length < 3) {
       return;
     }
     
-    setCheckingEmail(true);
+    setCheckingContact(true);
     try {
+      const params = new URLSearchParams();
+      if (field === 'email') params.append('email', value);
+      if (field === 'entity_name') params.append('entity_name', value);
+      if (field === 'contact_name') params.append('contact_name', value);
+      
       const response = await axios.get(
-        `${API_URL}/api/otc/check-existing?email=${encodeURIComponent(email)}`,
+        `${API_URL}/api/otc/check-existing?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -148,15 +153,21 @@ const OTCLeads = () => {
       if (data.existing_otc_client || data.existing_user || data.existing_lead) {
         setExistingContact(data);
         setShowExistingWarning(true);
-      } else {
-        setExistingContact(null);
-        setShowExistingWarning(false);
       }
     } catch (err) {
-      console.error('Failed to check existing email:', err);
+      console.error('Failed to check existing contact:', err);
     } finally {
-      setCheckingEmail(false);
+      setCheckingContact(false);
     }
+  };
+
+  // Legacy function for backward compatibility
+  const checkExistingEmail = (email) => checkExistingContact('email', email);
+
+  // Open 360° view modal
+  const open360View = (contact) => {
+    setSelected360User(contact);
+    setShow360Modal(true);
   };
 
   // Create OTC Client directly (skip lead workflow)
@@ -531,6 +542,7 @@ const OTCLeads = () => {
               <Input
                 value={formData.entity_name}
                 onChange={(e) => setFormData({...formData, entity_name: e.target.value})}
+                onBlur={(e) => checkExistingContact('entity_name', e.target.value)}
                 placeholder="Empresa ou Nome"
                 className="bg-zinc-800 border-gold-500/30"
               />
@@ -540,6 +552,7 @@ const OTCLeads = () => {
               <Input
                 value={formData.contact_name}
                 onChange={(e) => setFormData({...formData, contact_name: e.target.value})}
+                onBlur={(e) => checkExistingContact('contact_name', e.target.value)}
                 placeholder="Nome completo"
                 className="bg-zinc-800 border-gold-500/30"
               />
@@ -552,11 +565,11 @@ const OTCLeads = () => {
                 onChange={(e) => {
                   setFormData({...formData, contact_email: e.target.value});
                 }}
-                onBlur={(e) => checkExistingEmail(e.target.value)}
+                onBlur={(e) => checkExistingContact('email', e.target.value)}
                 placeholder="email@empresa.com"
-                className={`bg-zinc-800 border-gold-500/30 ${checkingEmail ? 'opacity-50' : ''}`}
+                className={`bg-zinc-800 border-gold-500/30 ${checkingContact ? 'opacity-50' : ''}`}
               />
-              {checkingEmail && <p className="text-xs text-gray-400">Verificando...</p>}
+              {checkingContact && <p className="text-xs text-gray-400">Verificando...</p>}
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
@@ -709,74 +722,133 @@ const OTCLeads = () => {
             </div>
           </div>
           
-          {/* Existing Contact Warning */}
+          {/* Existing Contact Warning - Improved Design */}
           {showExistingWarning && existingContact && (
-            <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30 space-y-3">
-              <div className="flex items-center gap-2 text-yellow-400">
-                <AlertTriangle size={18} />
-                <span className="font-medium">Contacto Existente Encontrado</span>
+            <div className="bg-gradient-to-r from-amber-950/40 to-amber-900/20 rounded-xl border-2 border-amber-500/50 p-5 space-y-4 shadow-lg shadow-amber-500/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <AlertTriangle size={22} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-amber-400 font-semibold text-lg">Contacto Existente Encontrado</h3>
+                    <p className="text-amber-300/70 text-sm">Foi encontrado um registo correspondente no sistema</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowExistingWarning(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <XCircle size={20} />
+                </button>
               </div>
               
+              {/* Existing OTC Client Card */}
               {existingContact.existing_otc_client && (
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Cliente OTC Existente</p>
-                  <p className="text-white">{existingContact.existing_otc_client.entity_name}</p>
-                  <p className="text-gray-400 text-sm">{existingContact.existing_otc_client.contact_email}</p>
-                  <Badge className="mt-1 bg-green-900/30 text-green-400">
-                    {existingContact.existing_otc_client.status || 'Ativo'}
-                  </Badge>
-                </div>
-              )}
-              
-              {existingContact.existing_user && (
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User size={14} className="text-blue-400" />
-                    <p className="text-xs text-blue-400 uppercase">Utilizador Registado na Plataforma</p>
-                  </div>
-                  <p className="text-white">
-                    {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
-                  </p>
-                  <p className="text-gray-400 text-sm">{existingContact.existing_user.email}</p>
-                  {existingContact.existing_user.company_name && (
-                    <p className="text-gray-400 text-sm">{existingContact.existing_user.company_name}</p>
-                  )}
-                  <Badge className="mt-1 bg-blue-900/30 text-blue-400">
-                    KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
-                  </Badge>
-                </div>
-              )}
-              
-              {existingContact.existing_lead && (
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-xs text-gray-400 uppercase mb-1">Lead OTC Existente</p>
-                  <p className="text-white">{existingContact.existing_lead.entity_name}</p>
-                  <p className="text-gray-400 text-sm">{existingContact.existing_lead.contact_email}</p>
-                  <Badge className="mt-1 bg-purple-900/30 text-purple-400">
-                    {existingContact.existing_lead.status || 'Novo'}
-                  </Badge>
-                </div>
-              )}
-              
-              {/* Action buttons based on what exists */}
-              {existingContact.existing_user && !existingContact.existing_otc_client && (
-                <Button
-                  onClick={handleCreateClientDirect}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white"
-                  data-testid="create-client-direct-btn"
+                <div 
+                  className="p-4 bg-zinc-900/80 rounded-lg border border-green-500/30 cursor-pointer hover:border-green-500/60 transition-all"
+                  onClick={() => open360View(existingContact.existing_otc_client)}
                 >
-                  <Link2 size={16} className="mr-2" />
-                  Criar Cliente OTC Direto (Associar ao Utilizador)
-                </Button>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-green-400 uppercase font-medium tracking-wider">Cliente OTC Existente</span>
+                    <Badge className="bg-green-900/50 text-green-400 border border-green-500/30">
+                      {existingContact.existing_otc_client.status || 'Ativo'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <Building className="text-green-400" size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium text-lg">{existingContact.existing_otc_client.entity_name}</p>
+                      <p className="text-gray-400 text-sm">{existingContact.existing_otc_client.contact_email}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10">
+                      <Eye size={14} className="mr-1" /> Ver 360°
+                    </Button>
+                  </div>
+                </div>
               )}
               
-              <p className="text-xs text-gray-400">
-                {existingContact.existing_otc_client 
-                  ? 'Este email já pertence a um cliente OTC. Pode continuar a criar um lead separado ou gerir o cliente existente.'
-                  : existingContact.existing_user
-                  ? 'Este utilizador já está registado. Pode criar um Cliente OTC diretamente ou continuar com o fluxo de Lead.'
-                  : 'Já existe um lead com este email. Pode continuar a criar outro ou gerir o lead existente.'}
-              </p>
+              {/* Existing Platform User Card */}
+              {existingContact.existing_user && (
+                <div 
+                  className="p-4 bg-zinc-900/80 rounded-lg border border-blue-500/30 cursor-pointer hover:border-blue-500/60 transition-all"
+                  onClick={() => open360View(existingContact.existing_user)}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-blue-400 uppercase font-medium tracking-wider">Utilizador Registado na Plataforma</span>
+                    <Badge className="bg-blue-900/50 text-blue-400 border border-blue-500/30">
+                      KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <User className="text-blue-400" size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium text-lg">
+                        {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
+                      </p>
+                      <p className="text-gray-400 text-sm">{existingContact.existing_user.email}</p>
+                      {existingContact.existing_user.company_name && (
+                        <p className="text-gray-500 text-xs">{existingContact.existing_user.company_name}</p>
+                      )}
+                    </div>
+                    <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                      <Eye size={14} className="mr-1" /> Ver 360°
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Existing Lead Card */}
+              {existingContact.existing_lead && (
+                <div 
+                  className="p-4 bg-zinc-900/80 rounded-lg border border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-all"
+                  onClick={() => { setSelectedLead(existingContact.existing_lead); setShowDetailDialog(true); }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-purple-400 uppercase font-medium tracking-wider">Lead OTC Existente</span>
+                    <Badge className="bg-purple-900/50 text-purple-400 border border-purple-500/30">
+                      {existingContact.existing_lead.status || 'Novo'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <UserPlus className="text-purple-400" size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium text-lg">{existingContact.existing_lead.entity_name}</p>
+                      <p className="text-gray-400 text-sm">{existingContact.existing_lead.contact_email}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+                      <Eye size={14} className="mr-1" /> Ver Lead
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                {existingContact.existing_user && !existingContact.existing_otc_client && (
+                  <Button
+                    onClick={handleCreateClientDirect}
+                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white"
+                    data-testid="create-client-direct-btn"
+                  >
+                    <Link2 size={16} className="mr-2" />
+                    Criar Cliente OTC (Associar ao Utilizador)
+                  </Button>
+                )}
+                <Button
+                  onClick={() => setShowExistingWarning(false)}
+                  variant="outline"
+                  className="flex-1 border-zinc-600 text-gray-300 hover:bg-zinc-800"
+                >
+                  Ignorar e Continuar
+                </Button>
+              </div>
             </div>
           )}
           
@@ -797,7 +869,7 @@ const OTCLeads = () => {
 
       {/* Lead Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl">
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <Building size={20} />
@@ -979,6 +1051,210 @@ const OTCLeads = () => {
                   >
                     <Trash2 size={16} className="mr-2" />
                     Eliminar
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      {/* 360° Client View Modal */}
+      <Dialog open={show360Modal} onOpenChange={setShow360Modal}>
+        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
+              <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center">
+                <Eye size={18} className="text-gold-400" />
+              </div>
+              Visão 360° do Cliente
+            </DialogTitle>
+            {selected360User && (
+              <p className="text-gray-400 text-sm mt-1">
+                {selected360User.entity_name || `${selected360User.first_name} ${selected360User.last_name}`} - {selected360User.contact_email || selected360User.email}
+              </p>
+            )}
+          </DialogHeader>
+          
+          {selected360User && (
+            <div className="space-y-6 py-4">
+              {/* Tabs */}
+              <div className="flex gap-2 border-b border-zinc-800 pb-3">
+                <Button size="sm" className="bg-gold-500/20 text-gold-400 hover:bg-gold-500/30">
+                  Resumo
+                </Button>
+                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                  Trading
+                </Button>
+                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                  Carteiras
+                </Button>
+                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                  Atividade
+                </Button>
+                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
+                  Suporte
+                </Button>
+              </div>
+              
+              {/* Content Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Personal Info Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                      <User size={16} />
+                      Informação Pessoal
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Nome:</span>
+                      <span className="text-white">{selected360User.contact_name || `${selected360User.first_name || ''} ${selected360User.last_name || ''}`}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Email:</span>
+                      <span className="text-white">{selected360User.contact_email || selected360User.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Telefone:</span>
+                      <span className="text-white">{selected360User.contact_phone || selected360User.phone || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">País:</span>
+                      <span className="text-white">{selected360User.country || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Região:</span>
+                      <Badge className="bg-blue-900/30 text-blue-400">{selected360User.region || 'Europa'}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Nível:</span>
+                      <Badge className="bg-zinc-800 text-white">{selected360User.client_tier || 'Standard'}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">KYC:</span>
+                      <Badge className={`${selected360User.kyc_status === 'approved' ? 'bg-green-900/30 text-green-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                        {selected360User.kyc_status === 'approved' ? 'Aprovado' : 'Pendente'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Registado:</span>
+                      <span className="text-white">{selected360User.created_at ? new Date(selected360User.created_at).toLocaleDateString('pt-PT') : '-'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Trading Profile Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                      <TrendingUp size={16} />
+                      Perfil de Trading
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Volume Total:</span>
+                      <span className="text-white font-mono">€{formatNumber(selected360User.total_volume || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Total Ordens:</span>
+                      <span className="text-white">{selected360User.total_orders || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Compras:</span>
+                      <span className="text-green-400">{selected360User.buy_orders || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Vendas:</span>
+                      <span className="text-red-400">{selected360User.sell_orders || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Média por Ordem:</span>
+                      <span className="text-white font-mono">€{formatNumber(selected360User.avg_order_value || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Frequência:</span>
+                      <Badge className="bg-zinc-800 text-gray-300">{selected360User.trading_frequency || 'Nenhuma'}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Última Trade:</span>
+                      <span className="text-white">{selected360User.last_trade_at ? new Date(selected360User.last_trade_at).toLocaleDateString('pt-PT') : '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Pares Favoritos:</span>
+                      <span className="text-white">{selected360User.favorite_pairs || '-'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Account Manager Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                      <Building size={16} />
+                      Account Manager
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selected360User.account_manager ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
+                          <User className="text-gold-400" size={20} />
+                        </div>
+                        <div>
+                          <p className="text-white">{selected360User.account_manager}</p>
+                          <p className="text-gray-400 text-sm">Account Manager</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">Sem account manager atribuído</p>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                {/* Quick Summary Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                      <TrendingUp size={16} />
+                      Resumo Rápido
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Carteiras:</span>
+                      <span className="text-white">{selected360User.wallets_count || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Transações:</span>
+                      <span className="text-white">{selected360User.transactions_count || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Ordens:</span>
+                      <span className="text-white">{selected360User.orders_count || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Investimentos:</span>
+                      <span className="text-white">{selected360User.investments_count || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Tickets:</span>
+                      <span className="text-white">{selected360User.tickets_count || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Action Buttons */}
+              {existingContact?.existing_user && !existingContact?.existing_otc_client && (
+                <div className="pt-4 border-t border-zinc-800">
+                  <Button
+                    onClick={() => { setShow360Modal(false); handleCreateClientDirect(); }}
+                    className="w-full bg-gold-500 hover:bg-gold-400 text-black"
+                  >
+                    <Link2 size={16} className="mr-2" />
+                    Criar Cliente OTC (Associar a Este Utilizador)
                   </Button>
                 </div>
               )}

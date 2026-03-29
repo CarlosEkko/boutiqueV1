@@ -24,6 +24,12 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 
 ### Session - December 2025
 
+#### OTC Leads UX/UI Improvements (2025-03-29)
+- **Redesigned "Existing Contact Found" Alert**: New gradient design with amber/gold colors, better visibility
+- **Expanded Contact Check Triggers**: Now checks by email, entity name, AND contact name
+- **360° Client View Modal**: Full client overview with Personal Info, Trading Profile, Account Manager, Quick Summary
+- **Backend API Update**: `/api/otc/check-existing` now supports entity_name and contact_name parameters
+
 #### Language Selector Component (2025-03-28)
 - Added `LanguageSelector.jsx` component with globe icon + EN | PT | AR toggle
 - Integrated into dashboard header alongside currency selector

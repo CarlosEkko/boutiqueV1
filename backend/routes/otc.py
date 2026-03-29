@@ -94,12 +94,13 @@ async def get_otc_leads(
 
 @router.get("/check-existing")
 async def check_existing_contact(
-    email: str,
+    email: Optional[str] = None,
     entity_name: Optional[str] = None,
+    contact_name: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Check if an email/entity already exists as:
+    Check if an email/entity/contact name already exists as:
     - OTC Client
     - Platform User (registered user)
     - OTC Lead
@@ -110,37 +111,79 @@ async def check_existing_contact(
     result = {
         "email": email,
         "entity_name": entity_name,
+        "contact_name": contact_name,
         "existing_otc_client": None,
         "existing_user": None,
         "existing_lead": None
     }
     
+    # Build query conditions
+    otc_client_conditions = []
+    user_conditions = []
+    lead_conditions = []
+    
+    if email and len(email) >= 3:
+        otc_client_conditions.append({"contact_email": {"$regex": f"^{email}$", "$options": "i"}})
+        user_conditions.append({"email": {"$regex": f"^{email}$", "$options": "i"}})
+        lead_conditions.append({"contact_email": {"$regex": f"^{email}$", "$options": "i"}})
+    
+    if entity_name and len(entity_name) >= 3:
+        otc_client_conditions.append({"entity_name": {"$regex": entity_name, "$options": "i"}})
+        user_conditions.append({"company_name": {"$regex": entity_name, "$options": "i"}})
+        lead_conditions.append({"entity_name": {"$regex": entity_name, "$options": "i"}})
+    
+    if contact_name and len(contact_name) >= 3:
+        otc_client_conditions.append({"contact_name": {"$regex": contact_name, "$options": "i"}})
+        # For users, split first/last name check
+        name_parts = contact_name.split()
+        if len(name_parts) >= 2:
+            user_conditions.append({
+                "$or": [
+                    {"first_name": {"$regex": name_parts[0], "$options": "i"}, "last_name": {"$regex": name_parts[-1], "$options": "i"}},
+                    {"first_name": {"$regex": contact_name, "$options": "i"}},
+                    {"last_name": {"$regex": contact_name, "$options": "i"}}
+                ]
+            })
+        else:
+            user_conditions.append({
+                "$or": [
+                    {"first_name": {"$regex": contact_name, "$options": "i"}},
+                    {"last_name": {"$regex": contact_name, "$options": "i"}}
+                ]
+            })
+        lead_conditions.append({"contact_name": {"$regex": contact_name, "$options": "i"}})
+    
     # Check OTC Clients
-    otc_client = await db.otc_clients.find_one(
-        {"contact_email": {"$regex": f"^{email}$", "$options": "i"}},
-        {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1}
-    )
-    if otc_client:
-        result["existing_otc_client"] = otc_client
+    if otc_client_conditions:
+        otc_client = await db.otc_clients.find_one(
+            {"$or": otc_client_conditions},
+            {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1, "country": 1, "region": 1, "client_tier": 1}
+        )
+        if otc_client:
+            result["existing_otc_client"] = otc_client
     
     # Check Platform Users
-    user = await db.users.find_one(
-        {"email": {"$regex": f"^{email}$", "$options": "i"}},
-        {"_id": 0, "id": 1, "email": 1, "first_name": 1, "last_name": 1, "company_name": 1, "kyc_status": 1, "created_at": 1}
-    )
-    if user:
-        result["existing_user"] = user
+    if user_conditions:
+        user = await db.users.find_one(
+            {"$or": user_conditions},
+            {"_id": 0, "id": 1, "email": 1, "first_name": 1, "last_name": 1, "company_name": 1, "kyc_status": 1, "created_at": 1, "country": 1, "region": 1, "client_tier": 1, "phone": 1}
+        )
+        if user:
+            result["existing_user"] = user
     
     # Check existing leads (not archived or lost)
-    existing_lead = await db.otc_leads.find_one(
-        {
-            "contact_email": {"$regex": f"^{email}$", "$options": "i"},
-            "status": {"$nin": ["archived", "lost", "active_client"]}
-        },
-        {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1}
-    )
-    if existing_lead:
-        result["existing_lead"] = existing_lead
+    if lead_conditions:
+        existing_lead = await db.otc_leads.find_one(
+            {
+                "$and": [
+                    {"$or": lead_conditions},
+                    {"status": {"$nin": ["archived", "lost", "active_client"]}}
+                ]
+            },
+            {"_id": 0, "id": 1, "entity_name": 1, "contact_name": 1, "contact_email": 1, "status": 1, "created_at": 1, "country": 1}
+        )
+        if existing_lead:
+            result["existing_lead"] = existing_lead
     
     return result
 
