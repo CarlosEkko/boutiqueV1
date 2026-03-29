@@ -44,7 +44,8 @@ import {
   Archive,
   AlertTriangle,
   Link2,
-  User
+  User,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -867,193 +868,260 @@ const OTCLeads = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Lead Detail Dialog */}
+      {/* Lead Detail Dialog - Redesigned like 360° Modal */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-gold-400 flex items-center gap-2">
-              <Building size={20} />
-              {selectedLead?.entity_name}
+        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <Building size={18} className="text-purple-400" />
+              </div>
+              Lead OTC - {selectedLead?.entity_name}
             </DialogTitle>
+            {selectedLead && (
+              <p className="text-gray-400 text-sm mt-1">
+                {selectedLead.contact_name} - {selectedLead.contact_email}
+              </p>
+            )}
           </DialogHeader>
           
           {selectedLead && (
-            <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Contacto</p>
-                  <p className="text-white">{selectedLead.contact_name}</p>
-                  <p className="text-gray-400 text-sm">{selectedLead.contact_email}</p>
-                  {selectedLead.contact_phone && <p className="text-gray-400 text-sm">{selectedLead.contact_phone}</p>}
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Localização</p>
-                  <p className="text-white">{selectedLead.country}</p>
-                  {selectedLead.jurisdiction && <p className="text-gray-400 text-sm">{selectedLead.jurisdiction}</p>}
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Volume Estimado Total</p>
-                  <p className="text-gold-400 font-mono text-xl">${formatNumber(selectedLead.estimated_volume_usd || 0)}</p>
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Asset / Tipo</p>
-                  <p className="text-white">{selectedLead.target_asset} - {selectedLead.transaction_type?.toUpperCase()}</p>
-                </div>
-                
-                {/* New fields */}
-                {selectedLead.volume_per_operation && (
-                  <div className="p-3 bg-zinc-800/50 rounded-lg">
-                    <p className="text-gray-400 text-xs uppercase mb-1">Volume por Operação</p>
-                    <p className="text-white font-mono">${formatNumber(selectedLead.volume_per_operation)}</p>
-                  </div>
-                )}
-                {selectedLead.trading_frequency && (
-                  <div className="p-3 bg-zinc-800/50 rounded-lg">
-                    <p className="text-gray-400 text-xs uppercase mb-1">Frequência</p>
-                    <p className="text-white capitalize">
-                      {selectedLead.trading_frequency === 'one_shot' ? 'Única (One-shot)' :
-                       selectedLead.trading_frequency === 'daily' ? 'Diário' :
-                       selectedLead.trading_frequency === 'weekly' ? 'Semanal' :
-                       selectedLead.trading_frequency === 'multiple_daily' ? 'Múltiplas Diárias' :
-                       selectedLead.trading_frequency}
-                    </p>
-                  </div>
-                )}
-                {selectedLead.execution_timeframe && (
-                  <div className="p-3 bg-zinc-800/50 rounded-lg">
-                    <p className="text-gray-400 text-xs uppercase mb-1">Timeframe Execução</p>
-                    <p className="text-white capitalize">
-                      {selectedLead.execution_timeframe === 'within_24h' ? 'Dentro de 24h' :
-                       selectedLead.execution_timeframe === 'within_48h' ? 'Dentro de 48h' :
-                       selectedLead.execution_timeframe === 'within_week' ? 'Dentro de 1 semana' :
-                       selectedLead.execution_timeframe === 'flexible' ? 'Flexível' :
-                       selectedLead.execution_timeframe}
-                    </p>
-                  </div>
-                )}
-                {selectedLead.preferred_settlement_methods && selectedLead.preferred_settlement_methods.length > 0 && (
-                  <div className="p-3 bg-zinc-800/50 rounded-lg">
-                    <p className="text-gray-400 text-xs uppercase mb-1">Métodos de Liquidação</p>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedLead.preferred_settlement_methods.map((method, idx) => (
-                        <span key={idx} className="px-2 py-0.5 bg-gold-500/20 text-gold-400 text-xs rounded uppercase">
-                          {method}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedLead.current_exchange && (
-                  <div className="p-3 bg-zinc-800/50 rounded-lg">
-                    <p className="text-gray-400 text-xs uppercase mb-1">Exchange Atual</p>
-                    <p className="text-white">{selectedLead.current_exchange}</p>
-                  </div>
-                )}
-                
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Origem</p>
-                  <p className="text-white capitalize">{selectedLead.source?.replace('_', ' ')}</p>
-                </div>
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Status</p>
+            <div className="space-y-6 py-4">
+              {/* Status Badge */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-400 text-sm">Status:</span>
                   {getStatusBadge(selectedLead.status)}
                 </div>
+                <span className="text-gray-500 text-sm">
+                  Criado: {new Date(selectedLead.created_at).toLocaleDateString('pt-PT')}
+                </span>
               </div>
               
-              {selectedLead.problem_to_solve && (
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Problema / Necessidade</p>
-                  <p className="text-white whitespace-pre-wrap">{selectedLead.problem_to_solve}</p>
-                </div>
-              )}
-              
-              {selectedLead.notes && (
-                <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Notas</p>
-                  <p className="text-white whitespace-pre-wrap">{selectedLead.notes}</p>
-                </div>
-              )}
+              {/* Content Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Contact Info Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+                      <User size={16} />
+                      Informação de Contacto
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Nome:</span>
+                      <span className="text-white">{selectedLead.contact_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Email:</span>
+                      <span className="text-white">{selectedLead.contact_email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Telefone:</span>
+                      <span className="text-white">{selectedLead.contact_phone || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">País:</span>
+                      <span className="text-white">{selectedLead.country || '-'}</span>
+                    </div>
+                    {selectedLead.jurisdiction && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Jurisdição:</span>
+                        <span className="text-white">{selectedLead.jurisdiction}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Origem:</span>
+                      <Badge className="bg-zinc-800 text-gray-300 capitalize">{selectedLead.source?.replace('_', ' ')}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Trading Profile Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+                      <TrendingUp size={16} />
+                      Perfil de Trading
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Volume Total:</span>
+                      <span className="text-gold-400 font-mono font-medium">${formatNumber(selectedLead.estimated_volume_usd || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Por Operação:</span>
+                      <span className="text-white font-mono">${formatNumber(selectedLead.volume_per_operation || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Asset:</span>
+                      <span className="text-white">{selectedLead.target_asset || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Tipo:</span>
+                      <Badge className="bg-blue-900/30 text-blue-400 uppercase">{selectedLead.transaction_type || '-'}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Frequência:</span>
+                      <Badge className="bg-zinc-800 text-gray-300">
+                        {selectedLead.trading_frequency === 'one_shot' ? 'Única' :
+                         selectedLead.trading_frequency === 'daily' ? 'Diário' :
+                         selectedLead.trading_frequency === 'weekly' ? 'Semanal' :
+                         selectedLead.trading_frequency === 'multiple_daily' ? 'Múltiplas/Dia' :
+                         selectedLead.trading_frequency || '-'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Timeframe:</span>
+                      <span className="text-white">
+                        {selectedLead.execution_timeframe === 'within_24h' ? '24h' :
+                         selectedLead.execution_timeframe === 'within_48h' ? '48h' :
+                         selectedLead.execution_timeframe === 'within_week' ? '1 semana' :
+                         selectedLead.execution_timeframe === 'flexible' ? 'Flexível' :
+                         selectedLead.execution_timeframe || '-'}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Settlement Methods Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+                      <Building size={16} />
+                      Liquidação & Exchange
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <span className="text-gray-400 text-sm">Métodos Preferidos:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedLead.preferred_settlement_methods && selectedLead.preferred_settlement_methods.length > 0 ? (
+                          selectedLead.preferred_settlement_methods.map((method, idx) => (
+                            <Badge key={idx} className="bg-gold-500/20 text-gold-400 uppercase text-xs">
+                              {method}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">Não especificado</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Exchange Atual:</span>
+                      <span className="text-white">{selectedLead.current_exchange || '-'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Notes Card */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-purple-400 text-sm flex items-center gap-2">
+                      <FileText size={16} />
+                      Notas & Necessidades
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {selectedLead.problem_to_solve && (
+                      <div>
+                        <span className="text-gray-400 text-sm">Problema/Necessidade:</span>
+                        <p className="text-white text-sm mt-1 whitespace-pre-wrap bg-zinc-800/50 p-2 rounded">{selectedLead.problem_to_solve}</p>
+                      </div>
+                    )}
+                    {selectedLead.notes && (
+                      <div>
+                        <span className="text-gray-400 text-sm">Notas Adicionais:</span>
+                        <p className="text-white text-sm mt-1 whitespace-pre-wrap bg-zinc-800/50 p-2 rounded">{selectedLead.notes}</p>
+                      </div>
+                    )}
+                    {!selectedLead.problem_to_solve && !selectedLead.notes && (
+                      <p className="text-gray-500 text-center py-4">Sem notas registadas</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
               
               {/* Action Buttons */}
-              {selectedLead.status === 'new' || selectedLead.status === 'contacted' ? (
-                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
-                  <Button
-                    onClick={() => handlePreQualify(selectedLead.id, true)}
-                    className="flex-1 bg-green-600 hover:bg-green-500"
-                  >
-                    <CheckCircle size={16} className="mr-2" />
-                    Pré-Qualificar
-                  </Button>
-                  <Button
-                    onClick={() => handlePreQualify(selectedLead.id, false)}
-                    variant="outline"
-                    className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
-                  >
-                    <XCircle size={16} className="mr-2" />
-                    Não Qualificado
-                  </Button>
-                </div>
-              ) : selectedLead.status === 'pre_qualified' ? (
-                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
+              <div className="pt-4 border-t border-zinc-800">
+                {selectedLead.status === 'new' || selectedLead.status === 'contacted' ? (
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handlePreQualify(selectedLead.id, true)}
+                      className="flex-1 bg-green-600 hover:bg-green-500"
+                    >
+                      <CheckCircle size={16} className="mr-2" />
+                      Pré-Qualificar
+                    </Button>
+                    <Button
+                      onClick={() => handlePreQualify(selectedLead.id, false)}
+                      variant="outline"
+                      className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
+                    >
+                      <XCircle size={16} className="mr-2" />
+                      Não Qualificado
+                    </Button>
+                  </div>
+                ) : selectedLead.status === 'pre_qualified' ? (
                   <Button 
                     onClick={() => handleAdvanceToKYC(selectedLead.id)}
-                    className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                    className="w-full bg-gold-500 hover:bg-gold-400 text-black"
                   >
                     <ChevronRight size={16} className="mr-2" />
                     Avançar para KYC
                   </Button>
-                </div>
-              ) : selectedLead.status === 'kyc_pending' ? (
-                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
-                  <Button 
-                    onClick={() => handleApproveKYC(selectedLead.id)}
-                    className="flex-1 bg-green-600 hover:bg-green-500"
-                  >
-                    <CheckCircle size={16} className="mr-2" />
-                    Aprovar KYC
-                  </Button>
-                  <Button
-                    onClick={() => handlePreQualify(selectedLead.id, false)}
-                    variant="outline"
-                    className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
-                  >
-                    <XCircle size={16} className="mr-2" />
-                    Rejeitar KYC
-                  </Button>
-                </div>
-              ) : selectedLead.status === 'kyc_approved' ? (
-                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
+                ) : selectedLead.status === 'kyc_pending' ? (
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => handleApproveKYC(selectedLead.id)}
+                      className="flex-1 bg-green-600 hover:bg-green-500"
+                    >
+                      <CheckCircle size={16} className="mr-2" />
+                      Aprovar KYC
+                    </Button>
+                    <Button
+                      onClick={() => handlePreQualify(selectedLead.id, false)}
+                      variant="outline"
+                      className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
+                    >
+                      <XCircle size={16} className="mr-2" />
+                      Rejeitar KYC
+                    </Button>
+                  </div>
+                ) : selectedLead.status === 'kyc_approved' ? (
                   <Button 
                     onClick={() => handleConvertToClient(selectedLead.id)}
-                    className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                    className="w-full bg-gold-500 hover:bg-gold-400 text-black"
                   >
                     <UserCheck size={16} className="mr-2" />
                     Converter para Cliente
                   </Button>
-                </div>
-              ) : null}
-              
-              {/* Delete/Archive buttons - always visible except for active clients */}
-              {selectedLead.status !== 'active_client' && (
-                <div className="flex gap-3 pt-4 border-t border-gold-800/20">
-                  <Button
-                    onClick={() => handleArchiveLead(selectedLead.id)}
-                    variant="outline"
-                    className="flex-1 border-gray-600 text-gray-400 hover:bg-gray-900/30"
-                  >
-                    <Archive size={16} className="mr-2" />
-                    Arquivar
-                  </Button>
-                  <Button
-                    onClick={() => handleDeleteLead(selectedLead.id)}
-                    variant="outline"
-                    className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
-                  >
-                    <Trash2 size={16} className="mr-2" />
-                    Eliminar
-                  </Button>
-                </div>
-              )}
+                ) : null}
+                
+                {/* Delete/Archive buttons */}
+                {selectedLead.status !== 'active_client' && (
+                  <div className="flex gap-3 mt-3">
+                    <Button
+                      onClick={() => handleArchiveLead(selectedLead.id)}
+                      variant="outline"
+                      className="flex-1 border-gray-600 text-gray-400 hover:bg-gray-900/30"
+                    >
+                      <Archive size={16} className="mr-2" />
+                      Arquivar
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteLead(selectedLead.id)}
+                      variant="outline"
+                      className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"
+                    >
+                      <Trash2 size={16} className="mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
