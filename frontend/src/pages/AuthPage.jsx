@@ -25,8 +25,8 @@ const COUNTRIES = [
   { code: 'QA', name: 'Qatar' }
 ];
 
-const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthPage = ({ initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
