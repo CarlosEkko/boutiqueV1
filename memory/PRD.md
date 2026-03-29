@@ -25,6 +25,13 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 ### Session - December 2025
 
 #### OTC Leads UX/UI Improvements (2025-03-29)
+- **Redesigned Leads List to Card Layout**: Replaced the traditional table with horizontal cards for each lead
+  - Status icon on left (color-coded: green=active, blue=new, purple=contacted, yellow=kyc pending, red=lost, gray=archived)
+  - Contact name + entity + email/country/source inline
+  - Estimated volume displayed prominently on the right
+  - Asset badges (BTC, ETH, USDT, etc.)
+  - Status badge (Cliente Ativo, KYC Pendente, Novo, etc.)
+  - Action buttons: Advance (context-aware), Edit, Delete
 - **Redesigned "Existing Contact Found" Alert**: New gradient design with amber/gold colors, better visibility
 - **Expanded Contact Check Triggers**: Now checks by email, entity name, AND contact name
 - **360° Client View Modal**: Full client overview with Personal Info, Trading Profile, Account Manager, Quick Summary

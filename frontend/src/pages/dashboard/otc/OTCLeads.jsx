@@ -440,92 +440,179 @@ const OTCLeads = () => {
         </CardContent>
       </Card>
 
-      {/* Leads Table */}
-      <Card className="bg-zinc-900/50 border-gold-800/20">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-gold-400">Carregando...</div>
-            </div>
-          ) : leads.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gold-800/20">
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Entidade</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Contacto</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">País</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Volume Est.</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Asset</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Origem</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Status</th>
-                    <th className="text-left p-4 text-gray-400 text-sm font-medium">Data</th>
-                    <th className="text-right p-4 text-gray-400 text-sm font-medium">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leads.map((lead) => (
-                    <tr key={lead.id} className="border-b border-gold-800/10 hover:bg-gold-900/10">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center">
-                            <Building className="text-gold-400" size={18} />
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">{lead.entity_name}</p>
-                            <p className="text-gray-400 text-xs">{lead.contact_name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-gray-300 text-sm">{lead.contact_email}</p>
-                        {lead.contact_phone && (
-                          <p className="text-gray-500 text-xs">{lead.contact_phone}</p>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <span className="text-white">{lead.country}</span>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-gold-400 font-mono">
-                          ${formatNumber(lead.estimated_volume_usd || 0)}
+      {/* Leads Cards */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gold-400">Carregando...</div>
+        </div>
+      ) : leads.length > 0 ? (
+        <div className="space-y-3">
+          {leads.map((lead) => {
+            // Define status icon and colors
+            const getStatusIcon = (status) => {
+              switch(status) {
+                case 'active_client':
+                case 'kyc_approved':
+                  return { icon: CheckCircle, bgColor: 'bg-green-500/20', iconColor: 'text-green-400', borderColor: 'border-green-500/30' };
+                case 'pre_qualified':
+                case 'contacted':
+                  return { icon: Clock, bgColor: 'bg-purple-500/20', iconColor: 'text-purple-400', borderColor: 'border-purple-500/30' };
+                case 'kyc_pending':
+                  return { icon: Clock, bgColor: 'bg-yellow-500/20', iconColor: 'text-yellow-400', borderColor: 'border-yellow-500/30' };
+                case 'not_qualified':
+                case 'lost':
+                  return { icon: XCircle, bgColor: 'bg-red-500/20', iconColor: 'text-red-400', borderColor: 'border-red-500/30' };
+                case 'archived':
+                  return { icon: Archive, bgColor: 'bg-gray-500/20', iconColor: 'text-gray-400', borderColor: 'border-gray-500/30' };
+                default: // new
+                  return { icon: UserPlus, bgColor: 'bg-blue-500/20', iconColor: 'text-blue-400', borderColor: 'border-blue-500/30' };
+              }
+            };
+            
+            const statusConfig = getStatusIcon(lead.status);
+            const StatusIcon = statusConfig.icon;
+            
+            return (
+              <Card 
+                key={lead.id} 
+                className={`bg-zinc-900/80 border ${statusConfig.borderColor} hover:bg-zinc-900 transition-all cursor-pointer`}
+                onClick={() => { setSelectedLead(lead); setShowDetailDialog(true); }}
+                data-testid={`lead-card-${lead.id}`}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-5">
+                    {/* Status Icon */}
+                    <div className={`w-14 h-14 rounded-xl ${statusConfig.bgColor} flex items-center justify-center flex-shrink-0`}>
+                      <StatusIcon size={28} className={statusConfig.iconColor} />
+                    </div>
+                    
+                    {/* Lead Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-white font-medium text-lg">{lead.contact_name || 'Lead'}</h3>
+                        <span className="text-gray-500">•</span>
+                        <span className="flex items-center gap-1 text-gray-400 text-sm">
+                          <Building size={14} />
+                          {lead.entity_name}
                         </span>
-                      </td>
-                      <td className="p-4">
-                        <Badge className="bg-zinc-700">{lead.target_asset || '-'}</Badge>
-                      </td>
-                      <td className="p-4">
-                        <span className="text-gray-300 capitalize">{lead.source?.replace('_', ' ')}</span>
-                      </td>
-                      <td className="p-4">{getStatusBadge(lead.status)}</td>
-                      <td className="p-4">
-                        <span className="text-gray-400 text-sm">{formatDate(lead.created_at)}</span>
-                      </td>
-                      <td className="p-4 text-right">
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Mail size={14} />
+                          {lead.contact_email}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Globe size={14} />
+                          {lead.country || 'N/A'}
+                        </span>
+                        <span className="flex items-center gap-1 capitalize">
+                          <TrendingUp size={14} />
+                          {lead.source?.replace('_', ' ') || 'Website'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Volume */}
+                    <div className="text-right flex-shrink-0 mr-4">
+                      <p className="text-gray-400 text-xs uppercase mb-1">Volume Estimado</p>
+                      <p className="text-gold-400 font-mono text-xl">
+                        $ {formatNumber(lead.estimated_volume_usd || 0)}
+                      </p>
+                    </div>
+                    
+                    {/* Asset Badges */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge className="bg-zinc-700 text-gray-300 font-mono">{lead.target_asset || 'BTC'}</Badge>
+                      {lead.transaction_type === 'both' && (
+                        <Badge className="bg-zinc-700 text-gray-300 font-mono">ETH</Badge>
+                      )}
+                    </div>
+                    
+                    {/* Status Badge */}
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(lead.status)}
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {/* Advance Button - only show for actionable statuses */}
+                      {(lead.status === 'new' || lead.status === 'contacted' || lead.status === 'pre_qualified' || lead.status === 'kyc_pending' || lead.status === 'kyc_approved') && (
                         <Button
-                          onClick={() => { setSelectedLead(lead); setShowDetailDialog(true); }}
-                          size="sm"
+                          size="icon"
                           variant="outline"
-                          className="border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
+                          className="w-10 h-10 border-green-500/30 text-green-400 hover:bg-green-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (lead.status === 'new' || lead.status === 'contacted') {
+                              handlePreQualify(lead.id, true);
+                            } else if (lead.status === 'pre_qualified') {
+                              handleAdvanceToKYC(lead.id);
+                            } else if (lead.status === 'kyc_pending') {
+                              handleApproveKYC(lead.id);
+                            } else if (lead.status === 'kyc_approved') {
+                              handleConvertToClient(lead.id);
+                            }
+                          }}
+                          title={
+                            lead.status === 'new' || lead.status === 'contacted' ? 'Pré-Qualificar' :
+                            lead.status === 'pre_qualified' ? 'Avançar para KYC' :
+                            lead.status === 'kyc_pending' ? 'Aprovar KYC' :
+                            lead.status === 'kyc_approved' ? 'Converter para Cliente' : 'Avançar'
+                          }
+                          data-testid={`advance-lead-${lead.id}`}
                         >
-                          <Eye size={14} className="mr-1" />
-                          Ver
+                          <ChevronRight size={18} />
                         </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="p-12 text-center">
-              <UserPlus className="mx-auto mb-4 text-gray-500" size={48} />
-              <h3 className="text-xl text-white mb-2">Sem Leads</h3>
-              <p className="text-gray-400">Crie o primeiro lead OTC para começar.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      )}
+                      
+                      {/* Edit/View Button */}
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="w-10 h-10 border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLead(lead);
+                          setShowDetailDialog(true);
+                        }}
+                        title="Ver Detalhes"
+                        data-testid={`view-lead-${lead.id}`}
+                      >
+                        <Edit size={18} />
+                      </Button>
+                      
+                      {/* Delete Button */}
+                      {lead.status !== 'active_client' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-red-500/30 text-red-400 hover:bg-red-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteLead(lead.id);
+                          }}
+                          title="Eliminar Lead"
+                          data-testid={`delete-lead-${lead.id}`}
+                        >
+                          <Trash2 size={18} />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardContent className="p-12 text-center">
+            <UserPlus className="mx-auto mb-4 text-gray-500" size={48} />
+            <h3 className="text-xl text-white mb-2">Sem Leads</h3>
+            <p className="text-gray-400">Crie o primeiro lead OTC para começar.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create Lead Dialog - Redesigned like 360° Modal */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
