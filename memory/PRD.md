@@ -7,7 +7,7 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 - Fully translated platform (PT, EN, AR)
 - "Quiet luxury", trust, and exclusivity in UI/UX
 - Comprehensive OTC CRM with strict qualification and workflows
-- Invite/approval-only access model (no public registration)
+- Invite/approval-only access model (no public registration on main site)
 
 ## Tech Stack
 - **Frontend**: React, Tailwind CSS, Shadcn UI, GSAP animations
@@ -15,73 +15,62 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 - **Deployment**: Docker, Docker-Compose on VPS (kbex.io)
 - **Integrations**: Brevo (emails), Sumsub (KYC), Fireblocks (wallets), Stripe (payments), CoinMarketCap/Binance (rates)
 
-## User Personas
-- **Admin/Operator**: Manages OTC desk, CRM, leads, clients
-- **Client (HNW/UHNW)**: Accesses exchange, OTC trading, wallets after approval
-
 ## Access Model
-- Public website visitors can only "Solicitar Acesso" (Request Access) which generates an OTC Lead
-- No public registration — AuthPage is login-only
-- Accounts are created internally by admin after lead qualification
+- Public visitors → "Solicitar Acesso" form → creates CRM Lead (POST /api/crm/leads/public)
+- Admin qualifies lead → can convert to OTC Lead (POST /api/crm/leads/{id}/convert-to-otc)
+- Approved leads receive direct link: https://kbex.io/register to create account
+- /auth page = Login only (no sign up toggle)
+- /register page = Full registration form (Name, Email, Password, Phone, Country)
 
 ## Implemented Features
 
-### Landing Page & Auth
-- Animated hero with GSAP transitions
-- Public "Solicitar Acesso" form creates OTC Lead via `POST /api/otc/leads/public` (no auth required)
-- Duplicate email protection (prevents duplicate leads)
-- Auth page: Login only, no public registration
-- `/register` route redirects to `/auth`
-- "Solicitar Acesso" link on login page redirects to landing page contact form
+### Landing Page & Auth (Updated 29/03/2026)
+- Public "Solicitar Acesso" form creates **CRM Lead** via POST /api/crm/leads/public
+- Duplicate email protection
+- Confirmation email sent via Brevo (template: "Pedido de Acesso Recebido")
+- /auth = Login only, with "Solicitar Acesso" link
+- /register = Standalone registration page for approved leads
+- GSAP animated hero section
+
+### CRM General (Updated 29/03/2026)
+- Public lead creation endpoint (no auth)
+- Lead management with cards, filters, search
+- **Convert to OTC Lead** button on each lead card
+- Convert to Client functionality
+- Deals, Contacts, Tasks, Suppliers modules
 
 ### OTC Desk (11-Step Workflow)
-1. Lead Creation
-2. Client Verification
-3. Pre-Qualification
-4. Operational Setup
-5. RFQ
-6. Quote
-7. Acceptance
-8. Execution
-9. Settlement
-10. Invoice
-11. Post-Sale
-
-### OTC CRM
-- Horizontal card layout for leads with status badges
-- Multi-step modals for lead creation and pre-qualification
-- "Existing Contact Found" alert with quick actions
-- Pipeline view for deal flow (RFQ to Post-Sale)
+1. Lead Creation → 2. Client Verification → 3. Pre-Qualification → 4. Operational Setup
+5. RFQ → 6. Quote → 7. Acceptance → 8. Execution → 9. Settlement → 10. Invoice → 11. Post-Sale
 
 ### Email Integration
-- Brevo transactional emails for onboarding
-- Auto-sends welcome email on new public lead creation
+- Brevo transactional emails
+- New template: "Pedido de Acesso Recebido" for public leads
+- Onboarding email for registered leads
 
 ### Dashboard & Admin
 - Multi-currency viewing, fiat deposits
 - KYC management via Sumsub
 - Staff management, permissions, referrals
-- Bank accounts, company accounts
-- Knowledge base, support tickets
 
 ## Key API Endpoints
-- `POST /api/otc/leads/public` — Public lead creation (no auth)
-- `POST /api/otc/leads` — Internal lead creation (auth required)
-- `PUT /api/otc/leads/{id}/stage` — Advance lead through workflow
-- `GET /api/otc/leads` — List leads with filtering
-- `POST /api/otc/deals` — Create OTC deal
-- `POST /api/otc/quotes` — Create quote for deal
+- `POST /api/crm/leads/public` — Public CRM lead creation (no auth)
+- `POST /api/crm/leads/{id}/convert-to-otc` — Convert CRM lead to OTC lead (auth)
+- `POST /api/crm/leads/{id}/convert` — Convert lead to client (auth)
+- `POST /api/otc/leads` — Internal OTC lead creation (auth)
+- `PUT /api/otc/leads/{id}/stage` — Advance OTC lead through workflow
+- `POST /api/auth/register` — Account registration
+- `POST /api/auth/login` — Account login
 
 ## Key DB Collections
+- `crm_leads`: {name, email, phone, source, status, tags, is_qualified, ...}
 - `otc_leads`: {workflow_stage, status, pre_qualification_data, red_flags, source, contact_*}
-- `otc_clients`: {entity_name, contact_*, daily/monthly_limit, settlement_method}
-- `otc_deals`: {deal_number, client_id, stage, amount, pricing}
 - `users`: {email, password, user_type, kyc_status, is_admin}
 
 ## Pending Issues
 - P1: Safari cursor bug (recurring 11+ times, CSS incompatibility)
 - P1: Incomplete frontend translations (translations.js)
-- P2: Fireblocks integration broken (requires API key debugging)
+- P2: Fireblocks integration broken
 
 ## Upcoming Tasks
 - P1: TradingView chart widgets on Trading/Markets pages
@@ -91,7 +80,3 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 
 ## Refactoring Needed
 - OTCLeads.jsx (2300+ lines) should be broken into smaller components
-
-## Credentials
-- Admin: carlos@kryptobox.io / senha123
-- VPS: https://kbex.io
