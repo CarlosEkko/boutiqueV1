@@ -38,6 +38,33 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
   10. Confirmação & Invoice
   11. Pós-Venda
 
+- **Modal "Nova Lead" Redesenhado**:
+  - Alerta de "Contacto Existente" agora aparece NO TOPO do modal
+  - Step indicator visual (1-2-3)
+  - Formulário simplificado
+
+- **Modal de Pré-Qualificação (Step 2) - COMPLETO**:
+  - Tipo de Cliente: Retalho, HNWI, Empresa, Fundo/Instituição
+  - Volume Esperado: 1ª Operação, Mensal, Frequência
+  - Objectivo: Trading, Tesouraria, Arbitragem, Remessas, OTC B2B, Outras
+  - Fonte dos Fundos: Rendimentos, Empresa, Crypto Holdings, Venda Ativos, Herança, etc.
+  - Canal Liquidação: Transf. Bancária, Stablecoins, On-Chain, Off-Chain
+  - Jurisdição Bancária
+  - **Bandeiras Vermelhas Interativas** (checkboxes):
+    - País de Alto Risco (FATF)
+    - Actividades Incompatíveis
+    - Pressa Excessiva
+    - Incapaz Justificar Fundos
+    - Respostas Inconsistentes
+    - Exposição PEP
+
+- **Modal de Setup Operacional (Step 3) - COMPLETO**:
+  - Acesso & Atribuição: Gestor de Conta, Acesso Portal OTC
+  - Limites de Trading: Diário e Mensal (USD)
+  - Método de Liquidação: SEPA, SWIFT, PIX, Faster Payments, USDT/USDC
+  - Dados Bancários/Wallet
+  - Canal de Comunicação: Email, Telegram, WhatsApp, Signal
+
 - **Backend APIs Implementados**:
   - `GET /api/otc/workflow/stages` - Definição das 11 etapas com enums
   - `POST /api/otc/leads/{id}/verify-client` - Verifica cliente existente
