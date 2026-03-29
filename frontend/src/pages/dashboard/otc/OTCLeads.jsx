@@ -855,9 +855,9 @@ const OTCLeads = () => {
         </Card>
       )}
 
-      {/* Create Lead Dialog - Redesigned like 360° Modal */}
+      {/* Create Lead Dialog - Multi-Step Wizard */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-zinc-800 pb-4">
             <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
               <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center">
@@ -865,12 +865,143 @@ const OTCLeads = () => {
               </div>
               Novo Lead OTC
             </DialogTitle>
-            <p className="text-gray-400 text-sm mt-1">
-              Preencha os dados do potencial cliente
-            </p>
+            
+            {/* Step Indicator */}
+            <div className="flex items-center gap-2 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gold-500 flex items-center justify-center text-black font-bold text-sm">1</div>
+                <span className="text-gold-400 text-sm font-medium">Dados & Verificação</span>
+              </div>
+              <ChevronRight size={16} className="text-zinc-600" />
+              <div className="flex items-center gap-2 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-sm">2</div>
+                <span className="text-zinc-400 text-sm">Pré-Qualificação</span>
+              </div>
+              <ChevronRight size={16} className="text-zinc-600" />
+              <div className="flex items-center gap-2 opacity-50">
+                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-sm">3</div>
+                <span className="text-zinc-400 text-sm">Setup Operacional</span>
+              </div>
+            </div>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
+            {/* EXISTING CONTACT WARNING - ALWAYS AT TOP */}
+            {showExistingWarning && existingContact && (
+              <div className="bg-gradient-to-r from-amber-950/60 to-amber-900/40 rounded-xl border-2 border-amber-500/60 p-5 space-y-4 shadow-lg shadow-amber-500/20 animate-pulse-once">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/30 flex items-center justify-center">
+                      <AlertTriangle size={28} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-amber-300 font-bold text-xl">⚠️ Contacto Existente Encontrado!</h3>
+                      <p className="text-amber-200/80 text-sm">Verifique se deseja criar um novo lead ou utilizar o existente</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setShowExistingWarning(false)}
+                    className="text-gray-400 hover:text-white transition-colors p-2"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                </div>
+                
+                {/* Existing OTC Client */}
+                {existingContact.existing_otc_client && (
+                  <div className="p-4 bg-green-950/50 rounded-lg border-2 border-green-500/50 hover:border-green-400 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs text-green-400 uppercase font-bold tracking-wider">✓ CLIENTE OTC ACTIVO</span>
+                      <Badge className="bg-green-500/30 text-green-300 border border-green-400/50 text-sm">
+                        {existingContact.existing_otc_client.status || 'Ativo'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-green-500/30 flex items-center justify-center">
+                        <Building className="text-green-300" size={28} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">{existingContact.existing_otc_client.entity_name}</p>
+                        <p className="text-green-300 text-sm">{existingContact.existing_otc_client.contact_email}</p>
+                      </div>
+                      <Button 
+                        onClick={() => open360View(existingContact.existing_otc_client)}
+                        className="bg-green-600 hover:bg-green-500 text-white"
+                      >
+                        <Eye size={16} className="mr-2" /> Ver Cliente
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Existing Platform User */}
+                {existingContact.existing_user && (
+                  <div className="p-4 bg-blue-950/50 rounded-lg border-2 border-blue-500/50 hover:border-blue-400 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs text-blue-400 uppercase font-bold tracking-wider">UTILIZADOR REGISTADO</span>
+                      <Badge className="bg-blue-500/30 text-blue-300 border border-blue-400/50 text-sm">
+                        KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-blue-500/30 flex items-center justify-center">
+                        <User className="text-blue-300" size={28} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">
+                          {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
+                        </p>
+                        <p className="text-blue-300 text-sm">{existingContact.existing_user.email}</p>
+                      </div>
+                      <Button 
+                        onClick={() => open360View(existingContact.existing_user)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white"
+                      >
+                        <Eye size={16} className="mr-2" /> Ver Utilizador
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Existing Lead */}
+                {existingContact.existing_lead && (
+                  <div className="p-4 bg-purple-950/50 rounded-lg border-2 border-purple-500/50 hover:border-purple-400 transition-all">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs text-purple-400 uppercase font-bold tracking-wider">LEAD OTC EXISTENTE</span>
+                      <Badge className="bg-purple-500/30 text-purple-300 border border-purple-400/50 text-sm">
+                        {existingContact.existing_lead.status || 'Novo'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-purple-500/30 flex items-center justify-center">
+                        <UserPlus className="text-purple-300" size={28} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">{existingContact.existing_lead.entity_name}</p>
+                        <p className="text-purple-300 text-sm">{existingContact.existing_lead.contact_email}</p>
+                      </div>
+                      <Button 
+                        onClick={() => { setSelectedLead(existingContact.existing_lead); setShowDetailDialog(true); setShowCreateDialog(false); }}
+                        className="bg-purple-600 hover:bg-purple-500 text-white"
+                      >
+                        <Eye size={16} className="mr-2" /> Ver Lead
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 pt-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 border-amber-500/50 text-amber-300 hover:bg-amber-900/30"
+                    onClick={() => setShowExistingWarning(false)}
+                  >
+                    Ignorar e Continuar com Novo Lead
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             {/* Contact Information Card */}
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader className="pb-3">
@@ -911,7 +1042,7 @@ const OTCLeads = () => {
                       placeholder="email@empresa.com"
                       className={`bg-zinc-800 border-zinc-700 text-white ${checkingContact ? 'opacity-50' : ''}`}
                     />
-                    {checkingContact && <p className="text-xs text-gray-400">Verificando...</p>}
+                    {checkingContact && <p className="text-xs text-gold-400 animate-pulse">🔍 Verificando contacto existente...</p>}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-gray-400">Telefone</Label>
@@ -927,7 +1058,7 @@ const OTCLeads = () => {
                     <Input
                       value={formData.country}
                       onChange={(e) => setFormData({...formData, country: e.target.value})}
-                      placeholder="Portugal"
+                      placeholder="PT, BR, AE..."
                       className="bg-zinc-800 border-zinc-700 text-white"
                     />
                   </div>
@@ -956,11 +1087,11 @@ const OTCLeads = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
                   <TrendingUp size={16} />
-                  Perfil de Trading
+                  Perfil de Trading (Opcional)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label className="text-gray-400">Volume Estimado Total (USD)</Label>
                     <Input
@@ -972,27 +1103,16 @@ const OTCLeads = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-400">Volume por Operação (USD)</Label>
-                    <Input
-                      type="number"
-                      value={formData.volume_per_operation}
-                      onChange={(e) => setFormData({...formData, volume_per_operation: e.target.value})}
-                      placeholder="50000"
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label className="text-gray-400">Asset Pretendido</Label>
                     <Select value={formData.target_asset} onValueChange={(v) => setFormData({...formData, target_asset: v})}>
                       <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectValue />
+                        <SelectValue placeholder="Selecionar" />
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                         <SelectItem value="BTC" className="text-white hover:bg-zinc-700">Bitcoin (BTC)</SelectItem>
                         <SelectItem value="ETH" className="text-white hover:bg-zinc-700">Ethereum (ETH)</SelectItem>
                         <SelectItem value="USDT" className="text-white hover:bg-zinc-700">Tether (USDT)</SelectItem>
                         <SelectItem value="USDC" className="text-white hover:bg-zinc-700">USD Coin (USDC)</SelectItem>
-                        <SelectItem value="EUR" className="text-white hover:bg-zinc-700">Euro (EUR)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1003,38 +1123,9 @@ const OTCLeads = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectItem value="buy" className="text-white hover:bg-zinc-700">Compra (Buy)</SelectItem>
-                        <SelectItem value="sell" className="text-white hover:bg-zinc-700">Venda (Sell)</SelectItem>
+                        <SelectItem value="buy" className="text-white hover:bg-zinc-700">Compra</SelectItem>
+                        <SelectItem value="sell" className="text-white hover:bg-zinc-700">Venda</SelectItem>
                         <SelectItem value="both" className="text-white hover:bg-zinc-700">Ambos</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-400">Frequência de Operações</Label>
-                    <Select value={formData.trading_frequency} onValueChange={(v) => setFormData({...formData, trading_frequency: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectItem value="one_shot" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
-                        <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diário</SelectItem>
-                        <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
-                        <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-400">Timeframe para Execução</Label>
-                    <Select value={formData.execution_timeframe} onValueChange={(v) => setFormData({...formData, execution_timeframe: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectItem value="urgent" className="text-white hover:bg-zinc-700">Urgente</SelectItem>
-                        <SelectItem value="within_24h" className="text-white hover:bg-zinc-700">Dentro de 24h</SelectItem>
-                        <SelectItem value="within_48h" className="text-white hover:bg-zinc-700">Dentro de 48h</SelectItem>
-                        <SelectItem value="within_week" className="text-white hover:bg-zinc-700">Dentro de 1 Semana</SelectItem>
-                        <SelectItem value="flexible" className="text-white hover:bg-zinc-700">Flexível</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1042,219 +1133,47 @@ const OTCLeads = () => {
               </CardContent>
             </Card>
             
-            {/* Settlement & Notes Card */}
+            {/* Notes Card */}
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
-                  <Building size={16} />
-                  Liquidação & Notas
+                  <FileText size={16} />
+                  Notas (Opcional)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-gray-400">Método de Liquidação Preferido</Label>
-                    <Select 
-                      value={formData.preferred_settlement_methods[0] || ''} 
-                      onValueChange={(v) => setFormData({...formData, preferred_settlement_methods: v ? [v] : []})}
-                    >
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectValue placeholder="Selecionar método" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        <SelectItem value="sepa" className="text-white hover:bg-zinc-700">SEPA</SelectItem>
-                        <SelectItem value="swift" className="text-white hover:bg-zinc-700">SWIFT</SelectItem>
-                        <SelectItem value="pix" className="text-white hover:bg-zinc-700">PIX</SelectItem>
-                        <SelectItem value="faster_payments" className="text-white hover:bg-zinc-700">Faster Payments</SelectItem>
-                        <SelectItem value="usdt_onchain" className="text-white hover:bg-zinc-700">USDT On-Chain</SelectItem>
-                        <SelectItem value="usdc_onchain" className="text-white hover:bg-zinc-700">USDC On-Chain</SelectItem>
-                        <SelectItem value="crypto_onchain" className="text-white hover:bg-zinc-700">Crypto On-Chain</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-gray-400">Exchange Atual</Label>
-                    <Input
-                      value={formData.current_exchange}
-                      onChange={(e) => setFormData({...formData, current_exchange: e.target.value})}
-                      placeholder="Binance, Kraken, OTC Bank..."
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-gray-400">Problema a Resolver / Necessidade</Label>
-                    <Textarea
-                      value={formData.problem_to_solve}
-                      onChange={(e) => setFormData({...formData, problem_to_solve: e.target.value})}
-                      placeholder="Descreva a necessidade do cliente, problemas com a exchange atual, etc..."
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                      rows={2}
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-gray-400">Notas Adicionais</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                      placeholder="Outras notas sobre o lead..."
-                      className="bg-zinc-800 border-zinc-700 text-white"
-                      rows={2}
-                    />
-                  </div>
-                </div>
+                <Textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  placeholder="Notas sobre o lead, contexto da primeira conversa, etc..."
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                  rows={3}
+                />
               </CardContent>
             </Card>
-          
-          {/* Existing Contact Warning - Improved Design */}
-          {showExistingWarning && existingContact && (
-            <div className="bg-gradient-to-r from-amber-950/40 to-amber-900/20 rounded-xl border-2 border-amber-500/50 p-5 space-y-4 shadow-lg shadow-amber-500/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <AlertTriangle size={22} className="text-amber-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-amber-400 font-semibold text-lg">Contacto Existente Encontrado</h3>
-                    <p className="text-amber-300/70 text-sm">Foi encontrado um registo correspondente no sistema</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setShowExistingWarning(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <XCircle size={20} />
-                </button>
-              </div>
-              
-              {/* Existing OTC Client Card */}
-              {existingContact.existing_otc_client && (
-                <div 
-                  className="p-4 bg-zinc-900/80 rounded-lg border border-green-500/30 cursor-pointer hover:border-green-500/60 transition-all"
-                  onClick={() => open360View(existingContact.existing_otc_client)}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-green-400 uppercase font-medium tracking-wider">Cliente OTC Existente</span>
-                    <Badge className="bg-green-900/50 text-green-400 border border-green-500/30">
-                      {existingContact.existing_otc_client.status || 'Ativo'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Building className="text-green-400" size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-lg">{existingContact.existing_otc_client.entity_name}</p>
-                      <p className="text-gray-400 text-sm">{existingContact.existing_otc_client.contact_email}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10">
-                      <Eye size={14} className="mr-1" /> Ver 360°
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Existing Platform User Card */}
-              {existingContact.existing_user && (
-                <div 
-                  className="p-4 bg-zinc-900/80 rounded-lg border border-blue-500/30 cursor-pointer hover:border-blue-500/60 transition-all"
-                  onClick={() => open360View(existingContact.existing_user)}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-blue-400 uppercase font-medium tracking-wider">Utilizador Registado na Plataforma</span>
-                    <Badge className="bg-blue-900/50 text-blue-400 border border-blue-500/30">
-                      KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <User className="text-blue-400" size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-lg">
-                        {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
-                      </p>
-                      <p className="text-gray-400 text-sm">{existingContact.existing_user.email}</p>
-                      {existingContact.existing_user.company_name && (
-                        <p className="text-gray-500 text-xs">{existingContact.existing_user.company_name}</p>
-                      )}
-                    </div>
-                    <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
-                      <Eye size={14} className="mr-1" /> Ver 360°
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Existing Lead Card */}
-              {existingContact.existing_lead && (
-                <div 
-                  className="p-4 bg-zinc-900/80 rounded-lg border border-purple-500/30 cursor-pointer hover:border-purple-500/60 transition-all"
-                  onClick={() => { setSelectedLead(existingContact.existing_lead); setShowDetailDialog(true); }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-purple-400 uppercase font-medium tracking-wider">Lead OTC Existente</span>
-                    <Badge className="bg-purple-900/50 text-purple-400 border border-purple-500/30">
-                      {existingContact.existing_lead.status || 'Novo'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                      <UserPlus className="text-purple-400" size={24} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-lg">{existingContact.existing_lead.entity_name}</p>
-                      <p className="text-gray-400 text-sm">{existingContact.existing_lead.contact_email}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
-                      <Eye size={14} className="mr-1" /> Ver Lead
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                {existingContact.existing_user && !existingContact.existing_otc_client && (
-                  <Button
-                    onClick={handleCreateClientDirect}
-                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white"
-                    data-testid="create-client-direct-btn"
-                  >
-                    <Link2 size={16} className="mr-2" />
-                    Criar Cliente OTC (Associar ao Utilizador)
-                  </Button>
-                )}
-                <Button
-                  onClick={() => setShowExistingWarning(false)}
-                  variant="outline"
-                  className="flex-1 border-zinc-600 text-gray-300 hover:bg-zinc-800"
-                >
-                  Ignorar e Continuar
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter className="border-t border-zinc-800 pt-4 mt-4">
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
-              <Button 
-                variant="outline" 
-                onClick={() => { setShowCreateDialog(false); resetForm(); }} 
-                className="flex-1 border-zinc-600 text-gray-300 hover:bg-zinc-800"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCreateLead} 
-                className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
-                data-testid="create-lead-btn"
-              >
-                <UserPlus size={16} className="mr-2" />
-                {showExistingWarning ? 'Criar Lead Mesmo Assim' : 'Criar Lead'}
-              </Button>
-            </div>
-          </DialogFooter>
           </div>
+          
+          <DialogFooter className="border-t border-zinc-800 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCreateDialog(false)} 
+              className="border-zinc-700 text-gray-300"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateLead}
+              className="bg-gold-500 text-black hover:bg-gold-600"
+              disabled={!formData.entity_name || !formData.contact_name || !formData.contact_email || !formData.country || loading}
+            >
+              {loading ? 'Criando...' : (
+                <>
+                  <UserPlus size={16} className="mr-2" />
+                  Criar Lead
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
