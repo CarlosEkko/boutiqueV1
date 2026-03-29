@@ -22,9 +22,52 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 
 ## Implemented Features
 
-### Session - December 2025
+### Session - March 2026
 
-#### OTC Leads UX/UI Improvements (2025-03-29)
+#### OTC Workflow Enhancement - 11 Stages (2026-03-29)
+- **Complete OTC Workflow Implementation** with 11 stages:
+  1. Criação do Lead
+  2. Verificação de Cliente (verifica se já existe na BD)
+  3. Pré-Qualificação (tipo cliente, volume, objectivo, fonte fundos, canal liquidação)
+  4. Setup Operacional (limites, gestor, canal comunicação)
+  5. RFQ (Request for Quote)
+  6. Cotação
+  7. Aceitação
+  8. Execução
+  9. Liquidação
+  10. Confirmação & Invoice
+  11. Pós-Venda
+
+- **Backend APIs Implementados**:
+  - `GET /api/otc/workflow/stages` - Definição das 11 etapas com enums
+  - `POST /api/otc/leads/{id}/verify-client` - Verifica cliente existente
+  - `POST /api/otc/leads/{id}/send-onboarding-email` - Envia email Brevo
+  - `POST /api/otc/leads/{id}/pre-qualification` - Pré-qualificação completa
+  - `POST /api/otc/leads/{id}/add-red-flag` - Adiciona red flags
+  - `POST /api/otc/leads/{id}/operational-setup` - Setup operacional
+
+- **Novos Modelos de Dados**:
+  - `ClientType`: retail, hnwi, company, fund_institution
+  - `OperationObjective`: trading, treasury, arbitrage, remittances, otc_b2b, other
+  - `FundSource`: income, company, crypto_holdings, asset_sale, inheritance, investment_returns
+  - `SettlementChannel`: bank_transfer, stablecoins, on_chain, off_chain
+  - `RedFlagType`: high_risk_country, incompatible_activities, excessive_urgency, etc.
+  - `FATF_HIGH_RISK_COUNTRIES`: Lista de 20 países de alto risco
+
+- **Detecção Automática de Red Flags**:
+  - País de alto risco (FATF) detectado automaticamente na criação do lead
+  - Jurisdição bancária de alto risco detectada na pré-qualificação
+
+- **Integração Brevo para Emails** (MOCKED - precisa BREVO_API_KEY):
+  - Email de onboarding para novos clientes
+  - Email de lembrete KYC para documentos expirados
+
+- **Frontend - Novos Modais**:
+  - Modal de Pré-Qualificação com todos os campos do workflow
+  - Modal de Setup Operacional
+  - Botões de acção específicos por status do lead
+
+#### OTC Leads UX/UI Improvements (2026-03-29)
 - **Redesigned Leads List to Card Layout**: Replaced the traditional table with horizontal cards for each lead
   - Status icon on left (color-coded: green=active, blue=new, purple=contacted, yellow=kyc pending, red=lost, gray=archived)
   - Contact name + entity + email/country/source inline
@@ -36,6 +79,8 @@ Build a website for a premium Crypto Boutique Exchange named **KBEX.io** targeti
 - **Expanded Contact Check Triggers**: Now checks by email, entity name, AND contact name
 - **360° Client View Modal**: Full client overview with Personal Info, Trading Profile, Account Manager, Quick Summary
 - **Backend API Update**: `/api/otc/check-existing` now supports entity_name and contact_name parameters
+
+### Session - December 2025
 
 #### Language Selector Component (2025-03-28)
 - Added `LanguageSelector.jsx` component with globe icon + EN | PT | AR toggle

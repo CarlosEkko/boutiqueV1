@@ -45,7 +45,9 @@ import {
   AlertTriangle,
   Link2,
   User,
-  FileText
+  FileText,
+  Settings,
+  Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -75,6 +77,33 @@ const OTCLeads = () => {
   const [show360Modal, setShow360Modal] = useState(false);
   const [selected360User, setSelected360User] = useState(null);
   
+  // Workflow states
+  const [showPreQualDialog, setShowPreQualDialog] = useState(false);
+  const [showSetupDialog, setShowSetupDialog] = useState(false);
+  const [workflowEnums, setWorkflowEnums] = useState(null);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [preQualData, setPreQualData] = useState({
+    client_type: '',
+    first_operation_value: '',
+    expected_frequency: '',
+    estimated_monthly_volume: '',
+    operation_objective: '',
+    operation_objective_detail: '',
+    fund_source: '',
+    fund_source_detail: '',
+    settlement_channel: '',
+    bank_jurisdiction: '',
+    notes: ''
+  });
+  const [setupData, setSetupData] = useState({
+    daily_limit: '',
+    monthly_limit: '',
+    settlement_method: '',
+    account_manager_id: '',
+    communication_channel_type: 'email',
+    notes: ''
+  });
+  
   // Form
   const [formData, setFormData] = useState({
     entity_name: '',
@@ -97,6 +126,7 @@ const OTCLeads = () => {
 
   useEffect(() => {
     fetchEnums();
+    fetchWorkflowEnums();
     fetchLeads();
   }, [token, statusFilter, sourceFilter]);
 
@@ -108,6 +138,108 @@ const OTCLeads = () => {
       setEnums(response.data);
     } catch (err) {
       console.error('Failed to fetch enums:', err);
+    }
+  };
+
+  const fetchWorkflowEnums = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/otc/workflow/stages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWorkflowEnums(response.data);
+    } catch (err) {
+      console.error('Failed to fetch workflow enums:', err);
+    }
+  };
+
+  // Verify if client exists (Stage 2)
+  const handleVerifyClient = async (leadId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/otc/leads/${leadId}/verify-client`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setVerificationResult(response.data);
+      toast.success(response.data.message);
+      fetchLeads();
+      return response.data;
+    } catch (err) {
+      toast.error('Erro ao verificar cliente');
+      return null;
+    }
+  };
+
+  // Send onboarding email (Stage 2)
+  const handleSendOnboardingEmail = async (leadId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/otc/leads/${leadId}/send-onboarding-email`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.simulated) {
+        toast.info('Email simulado (Brevo não configurado)');
+      } else {
+        toast.success('Email de onboarding enviado!');
+      }
+      fetchLeads();
+    } catch (err) {
+      toast.error('Erro ao enviar email');
+    }
+  };
+
+  // Submit pre-qualification (Stage 3)
+  const handleSubmitPreQual = async () => {
+    if (!selectedLead) return;
+    
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/otc/leads/${selectedLead.id}/pre-qualification`,
+        preQualData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Pré-qualificação submetida!');
+      if (response.data.red_flags_detected?.length > 0) {
+        toast.warning(`Red flags detectados: ${response.data.red_flags_detected.join(', ')}`);
+      }
+      setShowPreQualDialog(false);
+      fetchLeads();
+    } catch (err) {
+      toast.error('Erro ao submeter pré-qualificação');
+    }
+  };
+
+  // Submit operational setup (Stage 4)
+  const handleSubmitSetup = async () => {
+    if (!selectedLead) return;
+    
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/otc/leads/${selectedLead.id}/operational-setup`,
+        setupData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Setup operacional completo!');
+      setShowSetupDialog(false);
+      fetchLeads();
+    } catch (err) {
+      toast.error('Erro ao submeter setup operacional');
+    }
+  };
+
+  // Add red flag
+  const handleAddRedFlag = async (leadId, flagType, notes) => {
+    try {
+      await axios.post(
+        `${API_URL}/api/otc/leads/${leadId}/add-red-flag?flag_type=${flagType}&notes=${encodeURIComponent(notes || '')}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Red flag adicionada');
+      fetchLeads();
+    } catch (err) {
+      toast.error('Erro ao adicionar red flag');
     }
   };
 
@@ -535,33 +667,142 @@ const OTCLeads = () => {
                     
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      {/* Advance Button - only show for actionable statuses */}
-                      {(lead.status === 'new' || lead.status === 'contacted' || lead.status === 'pre_qualified' || lead.status === 'kyc_pending' || lead.status === 'kyc_approved') && (
+                      {/* Workflow Action Buttons based on status */}
+                      
+                      {/* New Lead -> Verify Client */}
+                      {lead.status === 'new' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const result = await handleVerifyClient(lead.id);
+                            if (result) {
+                              setSelectedLead(lead);
+                              setVerificationResult(result);
+                              // Show appropriate next step based on result
+                              if (result.action_needed === 'start_onboarding') {
+                                if (window.confirm('Cliente não existe. Enviar email de onboarding?')) {
+                                  await handleSendOnboardingEmail(lead.id);
+                                }
+                              } else if (result.action_needed === 'proceed_to_otc') {
+                                toast.success('Cliente existente com KYC válido. Prosseguir para pré-qualificação.');
+                              }
+                            }
+                          }}
+                          title="Verificar Cliente"
+                          data-testid={`verify-lead-${lead.id}`}
+                        >
+                          <UserCheck size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* Contacted -> Pre-Qualification */}
+                      {lead.status === 'contacted' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-purple-500/30 text-purple-400 hover:bg-purple-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLead(lead);
+                            setPreQualData({
+                              client_type: '',
+                              first_operation_value: lead.volume_per_operation || '',
+                              expected_frequency: lead.trading_frequency || '',
+                              estimated_monthly_volume: lead.estimated_volume_usd || '',
+                              operation_objective: '',
+                              operation_objective_detail: '',
+                              fund_source: '',
+                              fund_source_detail: '',
+                              settlement_channel: '',
+                              bank_jurisdiction: '',
+                              notes: ''
+                            });
+                            setShowPreQualDialog(true);
+                          }}
+                          title="Pré-Qualificação"
+                          data-testid={`prequal-lead-${lead.id}`}
+                        >
+                          <FileText size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* Pre-Qualified -> KYC */}
+                      {lead.status === 'pre_qualified' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdvanceToKYC(lead.id);
+                          }}
+                          title="Avançar para KYC"
+                          data-testid={`kyc-lead-${lead.id}`}
+                        >
+                          <ChevronRight size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* KYC Pending -> Approve */}
+                      {lead.status === 'kyc_pending' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApproveKYC(lead.id);
+                          }}
+                          title="Aprovar KYC"
+                          data-testid={`approve-kyc-${lead.id}`}
+                        >
+                          <CheckCircle size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* KYC Approved -> Setup Operacional */}
+                      {lead.status === 'kyc_approved' && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-cyan-500/30 text-cyan-400 hover:bg-cyan-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLead(lead);
+                            setSetupData({
+                              daily_limit: lead.daily_limit_set || '100000',
+                              monthly_limit: lead.monthly_limit_set || '1000000',
+                              settlement_method: lead.settlement_method_defined || '',
+                              account_manager_id: lead.assigned_to || '',
+                              communication_channel_type: lead.communication_channel_type || 'email',
+                              notes: ''
+                            });
+                            setShowSetupDialog(true);
+                          }}
+                          title="Setup Operacional"
+                          data-testid={`setup-lead-${lead.id}`}
+                        >
+                          <Settings size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* Setup Pending -> Convert to Client */}
+                      {lead.status === 'setup_pending' && (
                         <Button
                           size="icon"
                           variant="outline"
                           className="w-10 h-10 border-green-500/30 text-green-400 hover:bg-green-900/20"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (lead.status === 'new' || lead.status === 'contacted') {
-                              handlePreQualify(lead.id, true);
-                            } else if (lead.status === 'pre_qualified') {
-                              handleAdvanceToKYC(lead.id);
-                            } else if (lead.status === 'kyc_pending') {
-                              handleApproveKYC(lead.id);
-                            } else if (lead.status === 'kyc_approved') {
-                              handleConvertToClient(lead.id);
-                            }
+                            handleConvertToClient(lead.id);
                           }}
-                          title={
-                            lead.status === 'new' || lead.status === 'contacted' ? 'Pré-Qualificar' :
-                            lead.status === 'pre_qualified' ? 'Avançar para KYC' :
-                            lead.status === 'kyc_pending' ? 'Aprovar KYC' :
-                            lead.status === 'kyc_approved' ? 'Converter para Cliente' : 'Avançar'
-                          }
-                          data-testid={`advance-lead-${lead.id}`}
+                          title="Converter para Cliente"
+                          data-testid={`convert-lead-${lead.id}`}
                         >
-                          <ChevronRight size={18} />
+                          <UserPlus size={18} />
                         </Button>
                       )}
                       
@@ -1477,6 +1718,310 @@ const OTCLeads = () => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Pre-Qualification Dialog */}
+      <Dialog open={showPreQualDialog} onOpenChange={setShowPreQualDialog}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-gold-400 text-xl flex items-center gap-2">
+              <FileText size={20} />
+              Pré-Qualificação - {selectedLead?.entity_name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Client Type */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Tipo de Cliente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select value={preQualData.client_type} onValueChange={(v) => setPreQualData({...preQualData, client_type: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue placeholder="Selecionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="retail" className="text-white hover:bg-zinc-700">Retalho</SelectItem>
+                    <SelectItem value="hnwi" className="text-white hover:bg-zinc-700">HNWI (Alto Património)</SelectItem>
+                    <SelectItem value="company" className="text-white hover:bg-zinc-700">Empresa</SelectItem>
+                    <SelectItem value="fund_institution" className="text-white hover:bg-zinc-700">Fundo / Instituição</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+
+            {/* Expected Volume */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Volume Esperado</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-gray-400 text-xs">Valor 1ª Operação (USD)</Label>
+                  <Input
+                    type="number"
+                    value={preQualData.first_operation_value}
+                    onChange={(e) => setPreQualData({...preQualData, first_operation_value: e.target.value})}
+                    placeholder="50000"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-400 text-xs">Volume Mensal Estimado (USD)</Label>
+                  <Input
+                    type="number"
+                    value={preQualData.estimated_monthly_volume}
+                    onChange={(e) => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})}
+                    placeholder="200000"
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-gray-400 text-xs">Frequência Pretendida</Label>
+                  <Select value={preQualData.expected_frequency} onValueChange={(v) => setPreQualData({...preQualData, expected_frequency: v})}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                      <SelectValue placeholder="Selecionar" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="one_shot" className="text-white hover:bg-zinc-700">Única</SelectItem>
+                      <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
+                      <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diária</SelectItem>
+                      <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Operation Objective */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Objectivo da Operação</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={preQualData.operation_objective} onValueChange={(v) => setPreQualData({...preQualData, operation_objective: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue placeholder="Selecionar objectivo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="trading" className="text-white hover:bg-zinc-700">Trading</SelectItem>
+                    <SelectItem value="treasury" className="text-white hover:bg-zinc-700">Tesouraria</SelectItem>
+                    <SelectItem value="arbitrage" className="text-white hover:bg-zinc-700">Arbitragem</SelectItem>
+                    <SelectItem value="remittances" className="text-white hover:bg-zinc-700">Remessas</SelectItem>
+                    <SelectItem value="otc_b2b" className="text-white hover:bg-zinc-700">OTC B2B</SelectItem>
+                    <SelectItem value="other" className="text-white hover:bg-zinc-700">Outras</SelectItem>
+                  </SelectContent>
+                </Select>
+                {preQualData.operation_objective === 'other' && (
+                  <Input
+                    value={preQualData.operation_objective_detail}
+                    onChange={(e) => setPreQualData({...preQualData, operation_objective_detail: e.target.value})}
+                    placeholder="Especificar objectivo..."
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Fund Source */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Fonte dos Fundos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={preQualData.fund_source} onValueChange={(v) => setPreQualData({...preQualData, fund_source: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue placeholder="Selecionar fonte" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="income" className="text-white hover:bg-zinc-700">Rendimentos</SelectItem>
+                    <SelectItem value="company" className="text-white hover:bg-zinc-700">Empresa</SelectItem>
+                    <SelectItem value="crypto_holdings" className="text-white hover:bg-zinc-700">Crypto Holdings Pré-existentes</SelectItem>
+                    <SelectItem value="asset_sale" className="text-white hover:bg-zinc-700">Venda de Ativos</SelectItem>
+                    <SelectItem value="inheritance" className="text-white hover:bg-zinc-700">Herança</SelectItem>
+                    <SelectItem value="investment_returns" className="text-white hover:bg-zinc-700">Retorno de Investimentos</SelectItem>
+                    <SelectItem value="other" className="text-white hover:bg-zinc-700">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={preQualData.fund_source_detail}
+                  onChange={(e) => setPreQualData({...preQualData, fund_source_detail: e.target.value})}
+                  placeholder="Detalhes adicionais..."
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </CardContent>
+            </Card>
+
+            {/* Settlement Channel */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Canal de Liquidação</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={preQualData.settlement_channel} onValueChange={(v) => setPreQualData({...preQualData, settlement_channel: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectValue placeholder="Selecionar canal" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="bank_transfer" className="text-white hover:bg-zinc-700">Transferência Bancária</SelectItem>
+                    <SelectItem value="stablecoins" className="text-white hover:bg-zinc-700">Stablecoins</SelectItem>
+                    <SelectItem value="on_chain" className="text-white hover:bg-zinc-700">On-Chain</SelectItem>
+                    <SelectItem value="off_chain" className="text-white hover:bg-zinc-700">Off-Chain</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div>
+                  <Label className="text-gray-400 text-xs">Jurisdição da Conta Bancária</Label>
+                  <Input
+                    value={preQualData.bank_jurisdiction}
+                    onChange={(e) => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})}
+                    placeholder="Ex: PT, DE, UK..."
+                    className="bg-zinc-800 border-zinc-700 text-white"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notes */}
+            <Card className="bg-zinc-800/50 border-zinc-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-gold-400 text-sm">Notas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={preQualData.notes}
+                  onChange={(e) => setPreQualData({...preQualData, notes: e.target.value})}
+                  placeholder="Notas adicionais sobre a pré-qualificação..."
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                  rows={4}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Red Flags Warning */}
+          <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle size={18} className="text-amber-400" />
+              <span className="text-amber-400 font-medium">Bandeiras Vermelhas a Verificar</span>
+            </div>
+            <ul className="text-amber-200 text-sm space-y-1 list-disc list-inside">
+              <li>País de Alto Risco (FATF)</li>
+              <li>Actividades Incompatíveis</li>
+              <li>Pressa Excessiva</li>
+              <li>Incapacidade de justificar fonte dos fundos</li>
+              <li>Inconsistência nas respostas</li>
+            </ul>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPreQualDialog(false)} className="border-zinc-700 text-gray-300">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmitPreQual}
+              className="bg-gold-500 text-black hover:bg-gold-600"
+              disabled={!preQualData.client_type || !preQualData.fund_source || !preQualData.settlement_channel}
+            >
+              Submeter Pré-Qualificação
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Operational Setup Dialog */}
+      <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-gold-400 text-xl flex items-center gap-2">
+              <Settings size={20} />
+              Setup Operacional - {selectedLead?.entity_name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-gray-400">Limite Diário (USD)</Label>
+              <Input
+                type="number"
+                value={setupData.daily_limit}
+                onChange={(e) => setSetupData({...setupData, daily_limit: e.target.value})}
+                placeholder="100000"
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-400">Limite Mensal (USD)</Label>
+              <Input
+                type="number"
+                value={setupData.monthly_limit}
+                onChange={(e) => setSetupData({...setupData, monthly_limit: e.target.value})}
+                placeholder="1000000"
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-400">Método de Liquidação</Label>
+              <Select value={setupData.settlement_method} onValueChange={(v) => setSetupData({...setupData, settlement_method: v})}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectValue placeholder="Selecionar método" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="sepa" className="text-white hover:bg-zinc-700">SEPA</SelectItem>
+                  <SelectItem value="swift" className="text-white hover:bg-zinc-700">SWIFT</SelectItem>
+                  <SelectItem value="pix" className="text-white hover:bg-zinc-700">PIX</SelectItem>
+                  <SelectItem value="usdt_onchain" className="text-white hover:bg-zinc-700">USDT On-Chain</SelectItem>
+                  <SelectItem value="usdc_onchain" className="text-white hover:bg-zinc-700">USDC On-Chain</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-gray-400">Canal de Comunicação</Label>
+              <Select value={setupData.communication_channel_type} onValueChange={(v) => setSetupData({...setupData, communication_channel_type: v})}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="email" className="text-white hover:bg-zinc-700">Email</SelectItem>
+                  <SelectItem value="telegram" className="text-white hover:bg-zinc-700">Telegram</SelectItem>
+                  <SelectItem value="whatsapp" className="text-white hover:bg-zinc-700">WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-gray-400">ID do Gestor de Conta</Label>
+              <Input
+                value={setupData.account_manager_id}
+                onChange={(e) => setSetupData({...setupData, account_manager_id: e.target.value})}
+                placeholder="ID do gestor atribuído"
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-gray-400">Notas</Label>
+              <Textarea
+                value={setupData.notes}
+                onChange={(e) => setSetupData({...setupData, notes: e.target.value})}
+                placeholder="Notas sobre o setup..."
+                className="bg-zinc-800 border-zinc-700 text-white"
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSetupDialog(false)} className="border-zinc-700 text-gray-300">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmitSetup}
+              className="bg-gold-500 text-black hover:bg-gold-600"
+              disabled={!setupData.daily_limit || !setupData.monthly_limit || !setupData.settlement_method || !setupData.account_manager_id}
+            >
+              Completar Setup
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

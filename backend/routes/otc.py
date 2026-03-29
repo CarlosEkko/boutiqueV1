@@ -18,7 +18,9 @@ from models.otc import (
     OTCExecution, ExecutionStatus, OTCSettlement, SettlementStatus,
     OTCInvoice, InvoiceStatus, ExecutionTimeframe,
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
-    FundingType, TradingFrequency
+    FundingType, TradingFrequency, PreQualificationRequest, OperationalSetupRequest,
+    ClientType, OperationObjective, FundSource, SettlementChannel, RedFlagType,
+    FATF_HIGH_RISK_COUNTRIES
 )
 from utils.i18n import t, I18n
 
@@ -277,17 +279,418 @@ async def create_otc_lead(
     lead_data: CreateOTCLeadRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new OTC lead"""
+    """Create a new OTC lead - Stage 1 of the workflow"""
     db = get_db()
+    
+    # Check for high-risk country (FATF list)
+    country_code = lead_data.country.upper() if lead_data.country else ""
+    is_high_risk = country_code in FATF_HIGH_RISK_COUNTRIES
+    
+    # Initialize red flags
+    red_flags = []
+    if is_high_risk:
+        red_flags.append(RedFlagType.HIGH_RISK_COUNTRY.value)
     
     lead = OTCLead(
         **lead_data.dict(),
-        status=OTCLeadStatus.NEW
+        status=OTCLeadStatus.NEW,
+        workflow_stage=1,
+        is_high_risk_country=is_high_risk,
+        red_flags=red_flags if red_flags else None,
+        activity_log=[{
+            "action": "lead_created",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+            "details": "Lead criado no sistema"
+        }]
     )
     
     await db.otc_leads.insert_one(lead.dict())
     
     return {"success": True, "lead": lead.dict()}
+
+
+# ==================== WORKFLOW ENDPOINTS ====================
+
+@router.post("/leads/{lead_id}/verify-client")
+async def verify_existing_client(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Stage 2: Verify if client already exists in the database.
+    Checks KYC status, trading limits, and compliance history.
+    Returns action needed: proceed_to_otc, request_documents, start_onboarding
+    """
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    email = lead.get("contact_email", "").lower()
+    entity_name = lead.get("entity_name", "")
+    
+    result = {
+        "lead_id": lead_id,
+        "existing_client": None,
+        "existing_user": None,
+        "action_needed": "start_onboarding",  # Default action
+        "kyc_status": None,
+        "trading_limits_ok": False,
+        "compliance_ok": False,
+        "expired_documents": [],
+        "message": ""
+    }
+    
+    # Check if client exists in OTC clients
+    existing_client = await db.otc_clients.find_one({
+        "$or": [
+            {"contact_email": {"$regex": f"^{email}$", "$options": "i"}},
+            {"entity_name": {"$regex": f"^{entity_name}$", "$options": "i"}}
+        ]
+    }, {"_id": 0})
+    
+    if existing_client:
+        result["existing_client"] = existing_client
+        result["kyc_status"] = existing_client.get("kyc_status", "pending")
+        
+        # Check KYC status
+        kyc_ok = existing_client.get("kyc_status") == "approved"
+        
+        # Check trading limits
+        limits_ok = existing_client.get("daily_limit_usd", 0) > 0
+        
+        # Check compliance (simplified - check if active)
+        compliance_ok = existing_client.get("is_active", False)
+        
+        result["trading_limits_ok"] = limits_ok
+        result["compliance_ok"] = compliance_ok
+        
+        if kyc_ok and limits_ok and compliance_ok:
+            result["action_needed"] = "proceed_to_otc"
+            result["message"] = "Cliente existente com KYC válido. Pode prosseguir para OTC."
+        else:
+            # Check for expired documents
+            expired_docs = []
+            if not kyc_ok:
+                expired_docs.append("Verificação KYC")
+            if not limits_ok:
+                expired_docs.append("Limites de Trading")
+            
+            result["expired_documents"] = expired_docs
+            result["action_needed"] = "request_documents"
+            result["message"] = f"Cliente existente mas necessita atualização: {', '.join(expired_docs)}"
+    else:
+        # Check if user exists in platform users
+        existing_user = await db.users.find_one({
+            "email": {"$regex": f"^{email}$", "$options": "i"}
+        }, {"_id": 0, "id": 1, "email": 1, "first_name": 1, "last_name": 1, "kyc_status": 1})
+        
+        if existing_user:
+            result["existing_user"] = existing_user
+            result["kyc_status"] = existing_user.get("kyc_status")
+            
+            if existing_user.get("kyc_status") == "approved":
+                result["action_needed"] = "convert_to_client"
+                result["message"] = "Utilizador registado com KYC aprovado. Converter para cliente OTC."
+            else:
+                result["action_needed"] = "complete_kyc"
+                result["message"] = "Utilizador registado mas KYC pendente."
+        else:
+            result["action_needed"] = "start_onboarding"
+            result["message"] = "Cliente novo. Enviar email de onboarding."
+    
+    # Update lead with verification results
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "kyc_status_checked": True,
+            "existing_client_id": existing_client.get("id") if existing_client else None,
+            "trading_limits_approved": result["trading_limits_ok"],
+            "compliance_history_ok": result["compliance_ok"],
+            "documents_expired": result["expired_documents"],
+            "workflow_stage": 2,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        "$push": {
+            "activity_log": {
+                "action": "client_verified",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+                "details": result["message"]
+            }
+        }}
+    )
+    
+    return result
+
+
+@router.post("/leads/{lead_id}/send-onboarding-email")
+async def send_onboarding_email(
+    lead_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Stage 2: Send onboarding email to new client for platform registration.
+    """
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Import email service
+    try:
+        from services.email_service import email_service
+    except ImportError:
+        logger.warning("Email service not available")
+        email_service = None
+    
+    contact_email = lead.get("contact_email")
+    contact_name = lead.get("contact_name")
+    entity_name = lead.get("entity_name")
+    
+    # Generate registration link (placeholder - should be dynamic)
+    registration_link = f"https://kbex.io/register?ref=otc&lead={lead_id}"
+    
+    email_result = {"success": False, "simulated": True}
+    
+    if email_service:
+        email_result = await email_service.send_onboarding_email(
+            to_email=contact_email,
+            to_name=contact_name,
+            entity_name=entity_name,
+            registration_link=registration_link,
+        )
+    
+    # Update lead
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": {
+            "onboarding_email_sent": True,
+            "onboarding_email_sent_at": datetime.now(timezone.utc).isoformat(),
+            "status": OTCLeadStatus.CONTACTED.value,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        "$push": {
+            "activity_log": {
+                "action": "onboarding_email_sent",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+                "details": f"Email de onboarding enviado para {contact_email}",
+                "email_result": email_result
+            }
+        }}
+    )
+    
+    return {
+        "success": True,
+        "email_sent": email_result.get("success", False),
+        "simulated": email_result.get("simulated", True),
+        "message": "Email de onboarding enviado" if email_result.get("success") else "Email simulado (Brevo não configurado)"
+    }
+
+
+@router.post("/leads/{lead_id}/pre-qualification")
+async def submit_pre_qualification(
+    lead_id: str,
+    data: PreQualificationRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Stage 3: Submit pre-qualification data for the lead.
+    Automatically detects red flags based on provided information.
+    """
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Detect red flags
+    red_flags = lead.get("red_flags", []) or []
+    
+    # Check bank jurisdiction for high-risk
+    if data.bank_jurisdiction and data.bank_jurisdiction.upper() in FATF_HIGH_RISK_COUNTRIES:
+        if RedFlagType.HIGH_RISK_COUNTRY.value not in red_flags:
+            red_flags.append(RedFlagType.HIGH_RISK_COUNTRY.value)
+    
+    # Build update dict
+    update_data = {
+        "client_type": data.client_type.value,
+        "first_operation_value": data.first_operation_value,
+        "expected_frequency": data.expected_frequency.value,
+        "estimated_monthly_volume": data.estimated_monthly_volume,
+        "operation_objective": data.operation_objective.value,
+        "operation_objective_detail": data.operation_objective_detail,
+        "fund_source": data.fund_source.value,
+        "fund_source_detail": data.fund_source_detail,
+        "settlement_channel": data.settlement_channel.value,
+        "bank_jurisdiction": data.bank_jurisdiction,
+        "preferred_settlement_methods": data.preferred_settlement_methods,
+        "red_flags": red_flags if red_flags else None,
+        "status": OTCLeadStatus.PRE_QUALIFIED.value,
+        "workflow_stage": 3,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    if data.notes:
+        existing_notes = lead.get("notes", "") or ""
+        update_data["notes"] = f"{existing_notes}\n[Pré-Qualificação] {data.notes}".strip()
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_data,
+        "$push": {
+            "activity_log": {
+                "action": "pre_qualification_completed",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+                "details": f"Pré-qualificação completa. Tipo: {data.client_type.value}, Objetivo: {data.operation_objective.value}"
+            }
+        }}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    
+    return {
+        "success": True,
+        "lead": updated_lead,
+        "red_flags_detected": red_flags,
+        "message": "Pré-qualificação submetida com sucesso"
+    }
+
+
+@router.post("/leads/{lead_id}/add-red-flag")
+async def add_red_flag(
+    lead_id: str,
+    flag_type: str,
+    notes: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a red flag to a lead (informational only)."""
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    red_flags = lead.get("red_flags", []) or []
+    
+    if flag_type not in red_flags:
+        red_flags.append(flag_type)
+    
+    update_data = {
+        "red_flags": red_flags,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    if notes:
+        existing_notes = lead.get("red_flags_notes", "") or ""
+        update_data["red_flags_notes"] = f"{existing_notes}\n[{flag_type}] {notes}".strip()
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_data,
+        "$push": {
+            "activity_log": {
+                "action": "red_flag_added",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+                "details": f"Red flag adicionado: {flag_type}"
+            }
+        }}
+    )
+    
+    return {"success": True, "red_flags": red_flags}
+
+
+@router.post("/leads/{lead_id}/operational-setup")
+async def submit_operational_setup(
+    lead_id: str,
+    data: OperationalSetupRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Stage 4: Complete operational setup for the lead.
+    Sets up portal access, manager, limits, and communication channel.
+    """
+    db = get_db()
+    
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    
+    # Verify lead is pre-qualified or KYC approved
+    valid_statuses = [OTCLeadStatus.PRE_QUALIFIED.value, OTCLeadStatus.KYC_APPROVED.value]
+    if lead.get("status") not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Lead must be pre-qualified or KYC approved")
+    
+    update_data = {
+        "otc_portal_access_granted": True,
+        "manager_assigned": True,
+        "assigned_to": data.account_manager_id,
+        "daily_limit_set": data.daily_limit,
+        "monthly_limit_set": data.monthly_limit,
+        "settlement_method_defined": data.settlement_method.value,
+        "communication_channel_created": True,
+        "communication_channel_type": data.communication_channel_type,
+        "status": OTCLeadStatus.SETUP_PENDING.value,
+        "workflow_stage": 4,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    if data.notes:
+        existing_notes = lead.get("notes", "") or ""
+        update_data["notes"] = f"{existing_notes}\n[Setup] {data.notes}".strip()
+    
+    await db.otc_leads.update_one(
+        {"id": lead_id},
+        {"$set": update_data,
+        "$push": {
+            "activity_log": {
+                "action": "operational_setup_completed",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+                "details": f"Setup operacional completo. Limite diário: ${data.daily_limit:,.2f}, Mensal: ${data.monthly_limit:,.2f}"
+            }
+        }}
+    )
+    
+    updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
+    
+    return {
+        "success": True,
+        "lead": updated_lead,
+        "message": "Setup operacional completo. Lead pronto para RFQ."
+    }
+
+
+@router.get("/workflow/stages")
+async def get_workflow_stages():
+    """Get all workflow stages definition"""
+    return {
+        "stages": [
+            {"number": 1, "name": "lead", "label": "Criação do Lead", "status_required": None},
+            {"number": 2, "name": "verification", "label": "Verificação de Cliente", "status_required": "new"},
+            {"number": 3, "name": "pre_qualification", "label": "Pré-Qualificação", "status_required": "contacted"},
+            {"number": 4, "name": "setup", "label": "Setup Operacional", "status_required": "pre_qualified"},
+            {"number": 5, "name": "rfq", "label": "RFQ", "status_required": "setup_pending"},
+            {"number": 6, "name": "quote", "label": "Cotação", "status_required": None},
+            {"number": 7, "name": "acceptance", "label": "Aceitação", "status_required": None},
+            {"number": 8, "name": "execution", "label": "Execução", "status_required": None},
+            {"number": 9, "name": "settlement", "label": "Liquidação", "status_required": None},
+            {"number": 10, "name": "invoice", "label": "Confirmação & Invoice", "status_required": None},
+            {"number": 11, "name": "post_sale", "label": "Pós-Venda", "status_required": None},
+        ],
+        "client_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in ClientType],
+        "operation_objectives": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OperationObjective],
+        "fund_sources": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundSource],
+        "settlement_channels": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in SettlementChannel],
+        "red_flag_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in RedFlagType],
+        "fatf_high_risk_countries": FATF_HIGH_RISK_COUNTRIES,
+    }
 
 
 @router.get("/leads/{lead_id}")

@@ -61,6 +61,80 @@ class TradingFrequency(str, Enum):
     MULTIPLE_DAILY = "multiple_daily"
 
 
+class ClientType(str, Enum):
+    """Type of OTC client"""
+    RETAIL = "retail"
+    HNWI = "hnwi"  # High Net Worth Individual
+    COMPANY = "company"
+    FUND_INSTITUTION = "fund_institution"
+
+
+class OperationObjective(str, Enum):
+    """Objective of the OTC operation"""
+    TRADING = "trading"
+    TREASURY = "treasury"
+    ARBITRAGE = "arbitrage"
+    REMITTANCES = "remittances"
+    OTC_B2B = "otc_b2b"
+    OTHER = "other"
+
+
+class FundSource(str, Enum):
+    """Source of funds for operations"""
+    INCOME = "income"
+    COMPANY = "company"
+    CRYPTO_HOLDINGS = "crypto_holdings"
+    ASSET_SALE = "asset_sale"
+    INHERITANCE = "inheritance"
+    INVESTMENT_RETURNS = "investment_returns"
+    OTHER = "other"
+
+
+class SettlementChannel(str, Enum):
+    """Settlement channel preference"""
+    BANK_TRANSFER = "bank_transfer"
+    STABLECOINS = "stablecoins"
+    ON_CHAIN = "on_chain"
+    OFF_CHAIN = "off_chain"
+
+
+class RedFlagType(str, Enum):
+    """Types of red flags for compliance"""
+    HIGH_RISK_COUNTRY = "high_risk_country"
+    INCOMPATIBLE_ACTIVITIES = "incompatible_activities"
+    EXCESSIVE_URGENCY = "excessive_urgency"
+    UNABLE_TO_JUSTIFY_FUNDS = "unable_to_justify_funds"
+    INCONSISTENT_ANSWERS = "inconsistent_answers"
+    PEP_EXPOSURE = "pep_exposure"
+    SANCTIONS_MATCH = "sanctions_match"
+    OTHER = "other"
+
+
+# FATF High-Risk Jurisdictions List (Updated 2025)
+FATF_HIGH_RISK_COUNTRIES = [
+    "AF",  # Afghanistan
+    "MM",  # Myanmar
+    "KP",  # North Korea
+    "IR",  # Iran
+    "YE",  # Yemen
+    "SY",  # Syria
+    "ML",  # Mali
+    "BF",  # Burkina Faso
+    "CF",  # Central African Republic
+    "CD",  # Democratic Republic of Congo
+    "LY",  # Libya
+    "SS",  # South Sudan
+    "SO",  # Somalia
+    "VU",  # Vanuatu
+    "HT",  # Haiti
+    "PH",  # Philippines (Grey List)
+    "ZA",  # South Africa (Grey List)
+    "TZ",  # Tanzania (Grey List)
+    "NG",  # Nigeria (Grey List)
+    "VN",  # Vietnam (Grey List)
+]
+
+
 class ExecutionTimeframe(str, Enum):
     URGENT = "urgent"
     WITHIN_24H = "within_24h"
@@ -136,11 +210,42 @@ class OTCLead(BaseModel):
     contact_phone: Optional[str] = None
     country: str
     jurisdiction: Optional[str] = None
+    bank_jurisdiction: Optional[str] = None  # Jurisdiction of bank account
     
     # Lead Details
     source: OTCLeadSource = OTCLeadSource.WEBSITE
     source_detail: Optional[str] = None  # e.g., broker name, event name
     status: OTCLeadStatus = OTCLeadStatus.NEW
+    workflow_stage: int = 1  # 1-11 representing the workflow stages
+    
+    # === PRE-QUALIFICATION FIELDS ===
+    
+    # Client Type
+    client_type: Optional[ClientType] = None
+    
+    # Expected Volume
+    first_operation_value: Optional[float] = None  # Value of first operation
+    expected_frequency: Optional[TradingFrequency] = None
+    estimated_monthly_volume: Optional[float] = None
+    
+    # Operation Objective
+    operation_objective: Optional[OperationObjective] = None
+    operation_objective_detail: Optional[str] = None  # For "OTHER" type
+    
+    # Fund Source
+    fund_source: Optional[FundSource] = None
+    fund_source_detail: Optional[str] = None  # Additional details
+    
+    # Settlement Channel
+    settlement_channel: Optional[SettlementChannel] = None
+    preferred_settlement_methods: Optional[List[str]] = None  # List of settlement methods
+    
+    # Red Flags (Informational)
+    red_flags: Optional[List[str]] = None  # List of RedFlagType values detected
+    red_flags_notes: Optional[str] = None  # Compliance notes
+    is_high_risk_country: bool = False
+    
+    # === LEGACY FIELDS ===
     
     # OTC Specifics
     estimated_volume_usd: float = 0
@@ -149,12 +254,36 @@ class OTCLead(BaseModel):
     preferred_settlement: Optional[SettlementMethod] = None
     trading_frequency: Optional[TradingFrequency] = None
     
-    # Pre-qualification
+    # Pre-qualification (Legacy)
     volume_per_operation: Optional[float] = None
     current_exchange: Optional[str] = None
     problem_to_solve: Optional[str] = None
     execution_timeframe: Optional[ExecutionTimeframe] = None
-    preferred_settlement_methods: Optional[List[str]] = None  # List of settlement methods
+    
+    # === WORKFLOW FIELDS ===
+    
+    # Client Verification (Stage 2)
+    existing_client_id: Optional[str] = None  # If client already exists
+    kyc_status_checked: bool = False
+    kyc_expiry_date: Optional[str] = None
+    trading_limits_approved: bool = False
+    compliance_history_ok: bool = False
+    documents_expired: Optional[List[str]] = None  # List of expired documents
+    
+    # Onboarding (Stage 2 - New Client)
+    onboarding_email_sent: bool = False
+    onboarding_email_sent_at: Optional[str] = None
+    registration_completed: bool = False
+    registration_completed_at: Optional[str] = None
+    
+    # Setup Operacional (Stage 4)
+    otc_portal_access_granted: bool = False
+    manager_assigned: bool = False
+    daily_limit_set: Optional[float] = None
+    monthly_limit_set: Optional[float] = None
+    settlement_method_defined: Optional[str] = None
+    communication_channel_created: bool = False
+    communication_channel_type: Optional[str] = None  # telegram, whatsapp, email
     
     # Assignment
     assigned_to: Optional[str] = None  # User ID
@@ -162,11 +291,17 @@ class OTCLead(BaseModel):
     # Notes & History
     notes: Optional[str] = None
     rejection_reason: Optional[str] = None
+    activity_log: Optional[List[dict]] = None  # List of activity entries
     
     # Metadata
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     converted_to_client_id: Optional[str] = None
+    
+    # KYC Approval
+    kyc_approved_at: Optional[str] = None
+    kyc_approved_by: Optional[str] = None
+    kyc_notes: Optional[str] = None
     
 
 class OTCClient(BaseModel):
@@ -422,8 +557,23 @@ class CreateOTCLeadRequest(BaseModel):
     contact_phone: Optional[str] = None
     country: str
     jurisdiction: Optional[str] = None
+    bank_jurisdiction: Optional[str] = None
     source: OTCLeadSource = OTCLeadSource.WEBSITE
     source_detail: Optional[str] = None
+    
+    # Pre-qualification fields
+    client_type: Optional[ClientType] = None
+    first_operation_value: Optional[float] = None
+    expected_frequency: Optional[TradingFrequency] = None
+    estimated_monthly_volume: Optional[float] = None
+    operation_objective: Optional[OperationObjective] = None
+    operation_objective_detail: Optional[str] = None
+    fund_source: Optional[FundSource] = None
+    fund_source_detail: Optional[str] = None
+    settlement_channel: Optional[SettlementChannel] = None
+    preferred_settlement_methods: Optional[List[str]] = None
+    
+    # Legacy fields
     estimated_volume_usd: float = 0
     target_asset: Optional[str] = None
     transaction_type: TransactionType = TransactionType.BUY
@@ -431,9 +581,35 @@ class CreateOTCLeadRequest(BaseModel):
     trading_frequency: Optional[TradingFrequency] = None
     volume_per_operation: Optional[float] = None
     execution_timeframe: Optional[ExecutionTimeframe] = None
-    preferred_settlement_methods: Optional[List[str]] = None
     current_exchange: Optional[str] = None
     problem_to_solve: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PreQualificationRequest(BaseModel):
+    """Request model for pre-qualification data"""
+    client_type: ClientType
+    first_operation_value: float
+    expected_frequency: TradingFrequency
+    estimated_monthly_volume: float
+    operation_objective: OperationObjective
+    operation_objective_detail: Optional[str] = None
+    fund_source: FundSource
+    fund_source_detail: Optional[str] = None
+    settlement_channel: SettlementChannel
+    bank_jurisdiction: Optional[str] = None
+    preferred_settlement_methods: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+
+class OperationalSetupRequest(BaseModel):
+    """Request model for operational setup (Stage 4)"""
+    daily_limit: float
+    monthly_limit: float
+    settlement_method: SettlementMethod
+    account_manager_id: str
+    communication_channel_type: str  # telegram, whatsapp, email
+    communication_channel_id: Optional[str] = None  # Group ID or handle
     notes: Optional[str] = None
 
 
@@ -443,7 +619,26 @@ class UpdateOTCLeadRequest(BaseModel):
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
     country: Optional[str] = None
+    jurisdiction: Optional[str] = None
+    bank_jurisdiction: Optional[str] = None
     status: Optional[OTCLeadStatus] = None
+    workflow_stage: Optional[int] = None
+    
+    # Pre-qualification fields
+    client_type: Optional[ClientType] = None
+    first_operation_value: Optional[float] = None
+    expected_frequency: Optional[TradingFrequency] = None
+    estimated_monthly_volume: Optional[float] = None
+    operation_objective: Optional[OperationObjective] = None
+    operation_objective_detail: Optional[str] = None
+    fund_source: Optional[FundSource] = None
+    fund_source_detail: Optional[str] = None
+    settlement_channel: Optional[SettlementChannel] = None
+    preferred_settlement_methods: Optional[List[str]] = None
+    red_flags: Optional[List[str]] = None
+    red_flags_notes: Optional[str] = None
+    
+    # Legacy fields
     estimated_volume_usd: Optional[float] = None
     target_asset: Optional[str] = None
     transaction_type: Optional[TransactionType] = None
