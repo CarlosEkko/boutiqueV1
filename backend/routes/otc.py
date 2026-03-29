@@ -320,22 +320,27 @@ async def create_public_lead(lead_data: PublicLeadRequest):
     
     await db.otc_leads.insert_one(lead.dict())
     
-    # Try to send notification email via Brevo
+    # Try to send confirmation email via Brevo
+    email_sent = False
     try:
         from services.email_service import email_service
         if email_service:
-            await email_service.send_onboarding_email(
+            email_result = await email_service.send_access_request_confirmation(
                 to_email=lead_data.email,
                 to_name=lead_data.name,
-                entity_name=lead_data.name,
-                registration_link=f"https://kbex.io/register?ref=otc&lead={lead.id}",
             )
+            email_sent = email_result.get("success", False)
+            if not email_sent:
+                logger.warning(f"Email not sent to {lead_data.email}: {email_result.get('error', 'unknown')}")
+            else:
+                logger.info(f"Confirmation email sent to {lead_data.email}")
     except Exception as e:
-        logger.warning(f"Failed to send welcome email to new public lead: {e}")
+        logger.warning(f"Failed to send confirmation email to new public lead: {e}")
     
     return {
         "success": True,
         "already_exists": False,
+        "email_sent": email_sent,
         "message": "Pedido de acesso recebido com sucesso. A nossa equipa entrará em contacto brevemente."
     }
 

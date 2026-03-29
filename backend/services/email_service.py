@@ -94,6 +94,61 @@ class BrevoEmailService:
             logger.error(f"Error sending email to {to_email}: {str(e)}")
             return {"success": False, "error": str(e)}
     
+    async def send_access_request_confirmation(
+        self,
+        to_email: str,
+        to_name: str,
+    ) -> Dict[str, Any]:
+        """Send confirmation email when someone requests access via public form."""
+        
+        subject = "KBEX.io - Pedido de Acesso Recebido"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="pt">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #0a0a0a; margin: 0; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #18181b; border-radius: 12px; padding: 40px; border: 1px solid #d4af3720;">
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #d4af37; padding-bottom: 20px;">
+                    <h1 style="color: #d4af37; margin: 0; font-size: 28px; font-weight: 300;">KBEX.io</h1>
+                    <p style="color: #a1a1aa; margin: 10px 0 0 0; font-size: 14px;">Premium Crypto Exchange</p>
+                </div>
+                
+                <p style="color: #ffffff;">Caro(a) {to_name},</p>
+                
+                <p style="color: #d4d4d8;">Obrigado pelo seu interesse na KBEX.io. Recebemos o seu pedido de acesso à nossa plataforma exclusiva.</p>
+                
+                <div style="background-color: #27272a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #d4af37; margin: 0 0 15px 0; font-size: 16px;">O que acontece agora?</h3>
+                    <ol style="color: #d4d4d8; margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">A nossa equipa irá analisar o seu perfil</li>
+                        <li style="margin-bottom: 8px;">Entraremos em contacto para conhecer as suas necessidades</li>
+                        <li style="margin-bottom: 8px;">Após aprovação, receberá as credenciais de acesso</li>
+                        <li style="margin-bottom: 8px;">Comece a operar com condições exclusivas</li>
+                    </ol>
+                </div>
+                
+                <p style="color: #d4d4d8;">O prazo habitual de resposta é de <strong style="color: #d4af37;">24 a 48 horas úteis</strong>.</p>
+                
+                <p style="color: #d4d4d8;">Se tiver alguma questão urgente, pode contactar-nos através de <a href="mailto:otc@kbex.io" style="color: #d4af37;">otc@kbex.io</a>.</p>
+                
+                <p style="color: #ffffff; margin-top: 30px;">Com os melhores cumprimentos,<br><span style="color: #d4af37;">Equipa KBEX.io</span></p>
+                
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #27272a; color: #71717a; font-size: 12px;">
+                    <p style="margin: 0;">Este email foi enviado para {to_email}</p>
+                    <p style="margin: 5px 0;">KBEX.io - Premium Crypto Exchange</p>
+                    <p style="margin: 5px 0;">Europa | Médio Oriente | Brasil</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return await self.send_email(to_email, to_name, subject, html_content)
+
     async def send_onboarding_email(
         self,
         to_email: str,
