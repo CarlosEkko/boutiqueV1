@@ -78,6 +78,18 @@ const OTCLeads = () => {
   const [show360Modal, setShow360Modal] = useState(false);
   const [selected360User, setSelected360User] = useState(null);
   
+  // New Deal modal
+  const [showNewDealModal, setShowNewDealModal] = useState(false);
+  const [newDealClient, setNewDealClient] = useState(null);
+  const [newDealData, setNewDealData] = useState({
+    transaction_type: 'buy',
+    base_asset: 'BTC',
+    quote_asset: 'EUR',
+    amount: '',
+    settlement_method: '',
+    notes: ''
+  });
+  
   // Workflow states
   const [showPreQualDialog, setShowPreQualDialog] = useState(false);
   const [showSetupDialog, setShowSetupDialog] = useState(false);
@@ -302,6 +314,45 @@ const OTCLeads = () => {
   const open360View = (contact) => {
     setSelected360User(contact);
     setShow360Modal(true);
+  };
+
+  const openNewDeal = (client) => {
+    setNewDealClient(client);
+    setNewDealData({
+      transaction_type: 'buy',
+      base_asset: 'BTC',
+      quote_asset: 'EUR',
+      amount: '',
+      settlement_method: client?.default_settlement_method || '',
+      notes: ''
+    });
+    setShowNewDealModal(true);
+  };
+
+  const createDeal = async () => {
+    if (!newDealClient?.id || !newDealData.amount) {
+      toast.error('Preencha o valor da operação');
+      return;
+    }
+    try {
+      await axios.post(`${API_URL}/api/otc/deals`, {
+        client_id: newDealClient.id,
+        transaction_type: newDealData.transaction_type,
+        base_asset: newDealData.base_asset,
+        quote_asset: newDealData.quote_asset,
+        amount: parseFloat(newDealData.amount),
+        settlement_method: newDealData.settlement_method || null,
+        notes: newDealData.notes || null
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Operação criada com sucesso!');
+      setShowNewDealModal(false);
+      setShowCreateDialog(false);
+      setShowExistingWarning(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao criar operação');
+    }
   };
 
   // Create OTC Client directly (skip lead workflow)
@@ -960,8 +1011,9 @@ const OTCLeads = () => {
                           </Button>
                           <Button
                             variant="outline"
-                            onClick={(e) => { e.stopPropagation(); /* TODO: Create deal */ }}
+                            onClick={(e) => { e.stopPropagation(); openNewDeal(existingContact.existing_otc_client); }}
                             className="border-green-500/50 text-green-400 hover:bg-green-900/30"
+                            data-testid="new-operation-btn"
                           >
                             <Plus size={16} className="mr-2" /> Nova Operação
                           </Button>
@@ -2238,6 +2290,124 @@ const OTCLeads = () => {
             >
               <CheckCircle size={16} className="mr-2" />
               Completar Setup & Activar Cliente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Deal/Operation Modal */}
+      <Dialog open={showNewDealModal} onOpenChange={setShowNewDealModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Nova Operação OTC</DialogTitle>
+            {newDealClient && (
+              <p className="text-sm text-gray-400 mt-1">
+                Cliente: <span className="text-gold-400">{newDealClient.entity_name}</span>
+              </p>
+            )}
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-400 text-sm">Tipo de Operação</Label>
+                <Select value={newDealData.transaction_type} onValueChange={(v) => setNewDealData(p => ({...p, transaction_type: v}))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="deal-type-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectItem value="buy" className="text-white">Compra</SelectItem>
+                    <SelectItem value="sell" className="text-white">Venda</SelectItem>
+                    <SelectItem value="swap" className="text-white">Swap</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-400 text-sm">Montante *</Label>
+                <Input 
+                  type="number"
+                  value={newDealData.amount}
+                  onChange={(e) => setNewDealData(p => ({...p, amount: e.target.value}))}
+                  placeholder="100000"
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  data-testid="deal-amount-input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-gray-400 text-sm">Ativo Base</Label>
+                <Select value={newDealData.base_asset} onValueChange={(v) => setNewDealData(p => ({...p, base_asset: v}))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="deal-base-asset">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    {['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'BNB'].map(c => (
+                      <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-gray-400 text-sm">Ativo Cotação</Label>
+                <Select value={newDealData.quote_asset} onValueChange={(v) => setNewDealData(p => ({...p, quote_asset: v}))}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="deal-quote-asset">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                    {['EUR', 'USD', 'GBP', 'BRL', 'USDT', 'USDC', 'BTC'].map(c => (
+                      <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-gray-400 text-sm">Método de Liquidação</Label>
+              <Select value={newDealData.settlement_method} onValueChange={(v) => setNewDealData(p => ({...p, settlement_method: v}))}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="deal-settlement">
+                  <SelectValue placeholder="Selecionar..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="sepa" className="text-white">SEPA</SelectItem>
+                  <SelectItem value="swift" className="text-white">SWIFT</SelectItem>
+                  <SelectItem value="pix" className="text-white">PIX</SelectItem>
+                  <SelectItem value="faster_payments" className="text-white">Faster Payments</SelectItem>
+                  <SelectItem value="usdt_onchain" className="text-white">USDT On-chain</SelectItem>
+                  <SelectItem value="usdc_onchain" className="text-white">USDC On-chain</SelectItem>
+                  <SelectItem value="crypto_onchain" className="text-white">Crypto On-chain</SelectItem>
+                  <SelectItem value="internal" className="text-white">Internal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-gray-400 text-sm">Notas</Label>
+              <Textarea
+                value={newDealData.notes}
+                onChange={(e) => setNewDealData(p => ({...p, notes: e.target.value}))}
+                placeholder="Observações sobre a operação..."
+                className="bg-zinc-800 border-zinc-700 text-white mt-1 resize-none"
+                rows={3}
+                data-testid="deal-notes"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewDealModal(false)} className="border-zinc-700 text-gray-300">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={createDeal}
+              disabled={!newDealData.amount}
+              className="bg-gold-500 hover:bg-gold-400 text-black"
+              data-testid="create-deal-submit"
+            >
+              <Plus size={16} className="mr-2" />
+              Criar Operação
             </Button>
           </DialogFooter>
         </DialogContent>
