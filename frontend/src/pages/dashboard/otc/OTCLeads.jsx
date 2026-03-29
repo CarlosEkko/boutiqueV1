@@ -887,118 +887,216 @@ const OTCLeads = () => {
           </DialogHeader>
           
           <div className="space-y-6 py-4">
-            {/* EXISTING CONTACT WARNING - ALWAYS AT TOP */}
+            {/* EXISTING CONTACT WARNING - REDESIGNED */}
             {showExistingWarning && existingContact && (
-              <div className="bg-gradient-to-r from-amber-950/60 to-amber-900/40 rounded-xl border-2 border-amber-500/60 p-5 space-y-4 shadow-lg shadow-amber-500/20 animate-pulse-once">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/30 flex items-center justify-center">
-                      <AlertTriangle size={28} className="text-amber-400" />
+              <div className="relative overflow-hidden rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-950/80 via-zinc-900 to-zinc-950">
+                {/* Animated Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10 animate-pulse" />
+                
+                {/* Header */}
+                <div className="relative p-5 border-b border-amber-500/30 bg-amber-950/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                          <AlertTriangle size={28} className="text-black" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center animate-bounce">
+                          <span className="text-white text-xs font-bold">!</span>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-amber-400 font-bold text-2xl">Contacto Já Existe</h3>
+                        <p className="text-amber-200/70 text-sm mt-1">Este contacto já está registado no sistema KBEX</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-amber-300 font-bold text-xl">⚠️ Contacto Existente Encontrado!</h3>
-                      <p className="text-amber-200/80 text-sm">Verifique se deseja criar um novo lead ou utilizar o existente</p>
-                    </div>
+                    <button 
+                      onClick={() => setShowExistingWarning(false)}
+                      className="w-10 h-10 rounded-xl bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors"
+                    >
+                      <XCircle size={20} className="text-gray-400" />
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => setShowExistingWarning(false)}
-                    className="text-gray-400 hover:text-white transition-colors p-2"
-                  >
-                    <XCircle size={24} />
-                  </button>
                 </div>
                 
-                {/* Existing OTC Client */}
-                {existingContact.existing_otc_client && (
-                  <div className="p-4 bg-green-950/50 rounded-lg border-2 border-green-500/50 hover:border-green-400 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-green-400 uppercase font-bold tracking-wider">✓ CLIENTE OTC ACTIVO</span>
-                      <Badge className="bg-green-500/30 text-green-300 border border-green-400/50 text-sm">
-                        {existingContact.existing_otc_client.status || 'Ativo'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-green-500/30 flex items-center justify-center">
-                        <Building className="text-green-300" size={28} />
+                {/* Content */}
+                <div className="relative p-5 space-y-4">
+                  {/* Existing OTC Client */}
+                  {existingContact.existing_otc_client && (
+                    <div className="group p-5 rounded-xl bg-gradient-to-r from-green-950/60 to-green-900/30 border border-green-500/40 hover:border-green-400 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 cursor-pointer"
+                         onClick={() => open360View(existingContact.existing_otc_client)}>
+                      <div className="flex items-center gap-5">
+                        {/* Icon */}
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <Building className="text-white" size={32} />
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold uppercase tracking-wider border border-green-500/30">
+                              ✓ Cliente OTC Activo
+                            </span>
+                            <Badge className="bg-green-600 text-white border-0 shadow-lg">
+                              {existingContact.existing_otc_client.status?.replace('_', ' ') || 'Ativo'}
+                            </Badge>
+                          </div>
+                          <p className="text-white font-bold text-xl group-hover:text-green-300 transition-colors">
+                            {existingContact.existing_otc_client.entity_name}
+                          </p>
+                          <p className="text-green-300/80 text-sm mt-1 flex items-center gap-2">
+                            <Mail size={14} />
+                            {existingContact.existing_otc_client.contact_email}
+                          </p>
+                        </div>
+                        
+                        {/* Action */}
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            onClick={(e) => { e.stopPropagation(); open360View(existingContact.existing_otc_client); }}
+                            className="bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/30"
+                          >
+                            <Eye size={16} className="mr-2" /> Ver Visão 360°
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); /* TODO: Create deal */ }}
+                            className="border-green-500/50 text-green-400 hover:bg-green-900/30"
+                          >
+                            <Plus size={16} className="mr-2" /> Nova Operação
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-white font-bold text-lg">{existingContact.existing_otc_client.entity_name}</p>
-                        <p className="text-green-300 text-sm">{existingContact.existing_otc_client.contact_email}</p>
-                      </div>
-                      <Button 
-                        onClick={() => open360View(existingContact.existing_otc_client)}
-                        className="bg-green-600 hover:bg-green-500 text-white"
-                      >
-                        <Eye size={16} className="mr-2" /> Ver Cliente
-                      </Button>
+                      
+                      {/* Quick Stats */}
+                      {existingContact.existing_otc_client.total_volume && (
+                        <div className="mt-4 pt-4 border-t border-green-500/20 grid grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <p className="text-green-400 text-xs uppercase">Volume Total</p>
+                            <p className="text-white font-mono text-lg">${formatNumber(existingContact.existing_otc_client.total_volume || 0)}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-green-400 text-xs uppercase">Operações</p>
+                            <p className="text-white font-mono text-lg">{existingContact.existing_otc_client.deal_count || 0}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-green-400 text-xs uppercase">Desde</p>
+                            <p className="text-white font-mono text-lg">{existingContact.existing_otc_client.created_at?.split('T')[0] || '-'}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Existing Platform User */}
+                  {existingContact.existing_user && (
+                    <div className="group p-5 rounded-xl bg-gradient-to-r from-blue-950/60 to-blue-900/30 border border-blue-500/40 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer"
+                         onClick={() => open360View(existingContact.existing_user)}>
+                      <div className="flex items-center gap-5">
+                        {/* Icon */}
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <User className="text-white" size={32} />
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider border border-blue-500/30">
+                              Utilizador Registado
+                            </span>
+                            <Badge className={`${existingContact.existing_user.kyc_status === 'approved' ? 'bg-green-600' : 'bg-yellow-600'} text-white border-0 shadow-lg`}>
+                              KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
+                            </Badge>
+                          </div>
+                          <p className="text-white font-bold text-xl group-hover:text-blue-300 transition-colors">
+                            {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
+                          </p>
+                          <p className="text-blue-300/80 text-sm mt-1 flex items-center gap-2">
+                            <Mail size={14} />
+                            {existingContact.existing_user.email}
+                          </p>
+                        </div>
+                        
+                        {/* Action */}
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            onClick={(e) => { e.stopPropagation(); open360View(existingContact.existing_user); }}
+                            className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
+                          >
+                            <Eye size={16} className="mr-2" /> Ver Visão 360°
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); handleCreateClientDirect(); }}
+                            className="border-blue-500/50 text-blue-400 hover:bg-blue-900/30"
+                          >
+                            <UserPlus size={16} className="mr-2" /> Criar Cliente OTC
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Existing Lead */}
+                  {existingContact.existing_lead && (
+                    <div className="group p-5 rounded-xl bg-gradient-to-r from-purple-950/60 to-purple-900/30 border border-purple-500/40 hover:border-purple-400 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer"
+                         onClick={() => { setSelectedLead(existingContact.existing_lead); setShowDetailDialog(true); setShowCreateDialog(false); }}>
+                      <div className="flex items-center gap-5">
+                        {/* Icon */}
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <UserPlus className="text-white" size={32} />
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold uppercase tracking-wider border border-purple-500/30">
+                              Lead OTC Existente
+                            </span>
+                            <Badge className="bg-purple-600 text-white border-0 shadow-lg">
+                              {existingContact.existing_lead.status?.replace('_', ' ') || 'Novo'}
+                            </Badge>
+                          </div>
+                          <p className="text-white font-bold text-xl group-hover:text-purple-300 transition-colors">
+                            {existingContact.existing_lead.entity_name}
+                          </p>
+                          <p className="text-purple-300/80 text-sm mt-1 flex items-center gap-2">
+                            <Mail size={14} />
+                            {existingContact.existing_lead.contact_email}
+                          </p>
+                        </div>
+                        
+                        {/* Action */}
+                        <Button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setSelectedLead(existingContact.existing_lead); 
+                            setShowDetailDialog(true); 
+                            setShowCreateDialog(false); 
+                          }}
+                          className="bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30"
+                        >
+                          <Eye size={16} className="mr-2" /> Ver Lead
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
-                {/* Existing Platform User */}
-                {existingContact.existing_user && (
-                  <div className="p-4 bg-blue-950/50 rounded-lg border-2 border-blue-500/50 hover:border-blue-400 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-blue-400 uppercase font-bold tracking-wider">UTILIZADOR REGISTADO</span>
-                      <Badge className="bg-blue-500/30 text-blue-300 border border-blue-400/50 text-sm">
-                        KYC: {existingContact.existing_user.kyc_status || 'Pendente'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-blue-500/30 flex items-center justify-center">
-                        <User className="text-blue-300" size={28} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white font-bold text-lg">
-                          {existingContact.existing_user.first_name} {existingContact.existing_user.last_name}
-                        </p>
-                        <p className="text-blue-300 text-sm">{existingContact.existing_user.email}</p>
-                      </div>
-                      <Button 
-                        onClick={() => open360View(existingContact.existing_user)}
-                        className="bg-blue-600 hover:bg-blue-500 text-white"
-                      >
-                        <Eye size={16} className="mr-2" /> Ver Utilizador
-                      </Button>
-                    </div>
+                {/* Footer Actions */}
+                <div className="relative p-5 border-t border-amber-500/20 bg-zinc-950/50">
+                  <div className="flex items-center justify-between">
+                    <p className="text-amber-200/60 text-sm">
+                      💡 Pode utilizar o registo existente ou criar um novo lead
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowExistingWarning(false)}
+                      className="border-amber-500/50 text-amber-400 hover:bg-amber-900/30"
+                    >
+                      Ignorar e Criar Novo Lead
+                    </Button>
                   </div>
-                )}
-                
-                {/* Existing Lead */}
-                {existingContact.existing_lead && (
-                  <div className="p-4 bg-purple-950/50 rounded-lg border-2 border-purple-500/50 hover:border-purple-400 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-purple-400 uppercase font-bold tracking-wider">LEAD OTC EXISTENTE</span>
-                      <Badge className="bg-purple-500/30 text-purple-300 border border-purple-400/50 text-sm">
-                        {existingContact.existing_lead.status || 'Novo'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-purple-500/30 flex items-center justify-center">
-                        <UserPlus className="text-purple-300" size={28} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white font-bold text-lg">{existingContact.existing_lead.entity_name}</p>
-                        <p className="text-purple-300 text-sm">{existingContact.existing_lead.contact_email}</p>
-                      </div>
-                      <Button 
-                        onClick={() => { setSelectedLead(existingContact.existing_lead); setShowDetailDialog(true); setShowCreateDialog(false); }}
-                        className="bg-purple-600 hover:bg-purple-500 text-white"
-                      >
-                        <Eye size={16} className="mr-2" /> Ver Lead
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex gap-3 pt-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 border-amber-500/50 text-amber-300 hover:bg-amber-900/30"
-                    onClick={() => setShowExistingWarning(false)}
-                  >
-                    Ignorar e Continuar com Novo Lead
-                  </Button>
                 </div>
               </div>
             )}
