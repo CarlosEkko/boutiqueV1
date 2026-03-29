@@ -61,12 +61,13 @@ const OTCPipeline = () => {
   });
 
   const stages = [
-    { key: 'rfq', label: 'RFQ', color: 'border-blue-500', bgColor: 'bg-blue-500/10', textColor: 'text-blue-400' },
-    { key: 'quote', label: 'Quote', color: 'border-purple-500', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400' },
-    { key: 'acceptance', label: 'Aceitacao', color: 'border-gold-500', bgColor: 'bg-gold-500/10', textColor: 'text-gold-400' },
-    { key: 'execution', label: 'Execucao', color: 'border-orange-500', bgColor: 'bg-orange-500/10', textColor: 'text-orange-400' },
-    { key: 'settlement', label: 'Liquidacao', color: 'border-green-500', bgColor: 'bg-green-500/10', textColor: 'text-green-400' },
-    { key: 'invoice', label: 'Invoice', color: 'border-teal-500', bgColor: 'bg-teal-500/10', textColor: 'text-teal-400' },
+    { key: 'rfq', label: 'RFQ', color: 'border-blue-500', bgColor: 'bg-blue-500/10', textColor: 'text-blue-400', icon: '📋' },
+    { key: 'quote', label: 'Cotação', color: 'border-purple-500', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400', icon: '💰' },
+    { key: 'acceptance', label: 'Aceitação', color: 'border-gold-500', bgColor: 'bg-gold-500/10', textColor: 'text-gold-400', icon: '✅' },
+    { key: 'execution', label: 'Execução', color: 'border-orange-500', bgColor: 'bg-orange-500/10', textColor: 'text-orange-400', icon: '⚡' },
+    { key: 'settlement', label: 'Liquidação', color: 'border-emerald-500', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400', icon: '🏦' },
+    { key: 'invoice', label: 'Invoice', color: 'border-teal-500', bgColor: 'bg-teal-500/10', textColor: 'text-teal-400', icon: '📄' },
+    { key: 'post_sale', label: 'Pós-Venda', color: 'border-green-500', bgColor: 'bg-green-500/10', textColor: 'text-green-400', icon: '🤝' },
   ];
 
   useEffect(() => {
@@ -254,7 +255,10 @@ const OTCPipeline = () => {
               {/* Stage Header */}
               <div className={`p-3 rounded-t-lg border-t-4 ${stage.color} bg-zinc-900/80`}>
                 <div className="flex items-center justify-between">
-                  <h3 className={`font-medium ${stage.textColor}`}>{stage.label}</h3>
+                  <h3 className={`font-medium ${stage.textColor} flex items-center gap-2`}>
+                    <span>{stage.icon}</span>
+                    {stage.label}
+                  </h3>
                   <Badge className="bg-zinc-700">{stageData.count}</Badge>
                 </div>
                 {stageData.total_value > 0 && (
@@ -390,19 +394,140 @@ const OTCPipeline = () => {
                     data-testid="create-quote-btn"
                   >
                     <Calculator size={16} className="mr-2" />
-                    Criar Cotacao
+                    Criar Cotação
                   </Button>
                 )}
                 
-                {/* For other stages: Show Move to Next Stage button */}
-                {selectedDeal.stage !== 'rfq' && getNextStage(selectedDeal.stage) && (
+                {/* For Quote stage: Accept/Reject */}
+                {selectedDeal.stage === 'quote' && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleMoveStage(selectedDeal.id, 'acceptance')}
+                      className="flex-1 bg-green-600 hover:bg-green-500 text-white"
+                    >
+                      ✅ Cliente Aceitou
+                    </Button>
+                    <Button
+                      onClick={() => handleMoveStage(selectedDeal.id, 'cancelled')}
+                      variant="outline"
+                      className="flex-1 border-red-500/30 text-red-400 hover:bg-red-900/20"
+                    >
+                      ❌ Recusado
+                    </Button>
+                  </div>
+                )}
+                
+                {/* For Acceptance stage: Move to Execution */}
+                {selectedDeal.stage === 'acceptance' && (
                   <Button
-                    onClick={() => handleMoveStage(selectedDeal.id, getNextStage(selectedDeal.stage))}
-                    className="w-full bg-gold-500 hover:bg-gold-400 text-black"
+                    onClick={() => handleMoveStage(selectedDeal.id, 'execution')}
+                    className="w-full bg-orange-600 hover:bg-orange-500 text-white"
                   >
-                    <ChevronRight size={16} className="mr-2" />
-                    Mover para {stages.find(s => s.key === getNextStage(selectedDeal.stage))?.label}
+                    <Zap size={16} className="mr-2" />
+                    Iniciar Execução
                   </Button>
+                )}
+                
+                {/* For Execution stage: Move to Settlement */}
+                {selectedDeal.stage === 'execution' && (
+                  <Button
+                    onClick={() => handleMoveStage(selectedDeal.id, 'settlement')}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
+                  >
+                    🏦 Execução Completa → Liquidação
+                  </Button>
+                )}
+                
+                {/* For Settlement stage: Confirm settlement and create Invoice */}
+                {selectedDeal.stage === 'settlement' && (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-emerald-900/20 border border-emerald-500/30 rounded-lg">
+                      <p className="text-emerald-400 text-sm font-medium mb-2">📋 Checklist de Liquidação:</p>
+                      <ul className="text-gray-300 text-sm space-y-1">
+                        <li>• Fundos recebidos do cliente</li>
+                        <li>• Crypto/Fiat transferido</li>
+                        <li>• Confirmação de transação</li>
+                      </ul>
+                    </div>
+                    <Button
+                      onClick={() => handleMoveStage(selectedDeal.id, 'invoice')}
+                      className="w-full bg-teal-600 hover:bg-teal-500 text-white"
+                    >
+                      📄 Liquidação Completa → Criar Invoice
+                    </Button>
+                  </div>
+                )}
+                
+                {/* For Invoice stage: Mark as complete and move to Post-Sale */}
+                {selectedDeal.stage === 'invoice' && (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-teal-900/20 border border-teal-500/30 rounded-lg">
+                      <p className="text-teal-400 text-sm font-medium mb-2">📄 Invoice:</p>
+                      <p className="text-gray-300 text-sm">
+                        Deal #{selectedDeal.deal_number}<br/>
+                        Cliente: {selectedDeal.client_name}<br/>
+                        Valor: ${formatNumber(selectedDeal.total_value || 0)}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-teal-500/30 text-teal-400 hover:bg-teal-900/20"
+                      >
+                        📧 Enviar Invoice
+                      </Button>
+                      <Button
+                        onClick={() => handleMoveStage(selectedDeal.id, 'post_sale')}
+                        className="flex-1 bg-green-600 hover:bg-green-500 text-white"
+                      >
+                        🤝 Concluir → Pós-Venda
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* For Post-Sale stage: Follow-up actions */}
+                {selectedDeal.stage === 'post_sale' && (
+                  <div className="space-y-2">
+                    <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+                      <p className="text-green-400 text-sm font-medium mb-2">🎉 Operação Concluída!</p>
+                      <p className="text-gray-300 text-sm">
+                        Ações de pós-venda disponíveis:
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        className="border-green-500/30 text-green-400 hover:bg-green-900/20"
+                      >
+                        📞 Agendar Follow-up
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
+                      >
+                        🔄 Nova Operação
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
+                      >
+                        ⭐ Pedir Feedback
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-purple-500/30 text-purple-400 hover:bg-purple-900/20"
+                      >
+                        📊 Ver Histórico
+                      </Button>
+                    </div>
+                    <Button
+                      onClick={() => handleMoveStage(selectedDeal.id, 'completed')}
+                      className="w-full bg-zinc-700 hover:bg-zinc-600 text-white"
+                    >
+                      ✅ Arquivar Operação
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
