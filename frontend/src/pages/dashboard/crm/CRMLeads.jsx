@@ -206,6 +206,20 @@ const CRMLeads = () => {
     }
   };
 
+  const convertToOTC = async (id) => {
+    if (!window.confirm('Converter este lead em Lead OTC?')) return;
+    
+    try {
+      await axios.post(`${API_URL}/api/crm/leads/${id}/convert-to-otc`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Lead convertido para OTC com sucesso!');
+      fetchLeads();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao converter para OTC');
+    }
+  };
+
   const toggleCrypto = (crypto) => {
     setForm(prev => ({
       ...prev,
@@ -381,15 +395,29 @@ const CRMLeads = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                       {lead.status !== 'won' && lead.status !== 'lost' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => convertLead(lead.id)}
-                          className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/30"
-                          title="Converter em Cliente"
-                        >
-                          <ArrowRight size={14} />
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => convertToOTC(lead.id)}
+                            className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
+                            title="Converter em Lead OTC"
+                            data-testid={`convert-to-otc-${lead.id}`}
+                          >
+                            <TrendingUp size={14} className="mr-1" />
+                            <span className="hidden lg:inline text-xs">OTC</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => convertLead(lead.id)}
+                            className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/30"
+                            title="Converter em Cliente"
+                            data-testid={`convert-to-client-${lead.id}`}
+                          >
+                            <ArrowRight size={14} />
+                          </Button>
+                        </>
                       )}
                       <Button
                         variant="outline"

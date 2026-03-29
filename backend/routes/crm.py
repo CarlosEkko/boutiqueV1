@@ -341,6 +341,60 @@ async def convert_lead_to_client(lead_id: str, current_user: dict = Depends(get_
     
     return {"message": "Lead converted to client", "lead_id": lead_id}
 
+
+@router.post("/leads/{lead_id}/convert-to-otc")
+async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Convert a CRM lead to an OTC lead"""
+    db = get_db()
+
+    lead = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # Check if OTC lead already exists with this email
+    if lead.get("email"):
+        existing_otc = await db.otc_leads.find_one({
+            "contact_email": {"$regex": f"^{lead['email']}$", "$options": "i"},
+            "status": {"$nin": ["archived", "lost"]}
+        })
+        if existing_otc:
+            raise HTTPException(status_code=400, detail="Já existe um lead OTC com este email")
+
+    from models.otc import OTCLead, OTCLeadSource, OTCLeadStatus
+
+    otc_lead = OTCLead(
+        entity_name=lead.get("company_name") or lead.get("name", ""),
+        contact_name=lead.get("name", ""),
+        contact_email=lead.get("email", ""),
+        contact_phone=lead.get("phone", ""),
+        country=lead.get("country", ""),
+        source=OTCLeadSource.REFERRAL,
+        source_detail=f"Convertido do CRM Lead (ID: {lead_id})",
+        notes=lead.get("notes"),
+        status=OTCLeadStatus.NEW,
+        workflow_stage=1,
+        activity_log=[{
+            "action": "lead_created",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+            "details": f"Lead OTC criado a partir do CRM Lead: {lead.get('name', '')}"
+        }]
+    )
+
+    await db.otc_leads.insert_one(otc_lead.dict())
+
+    # Update CRM lead to mark conversion
+    await db.crm_leads.update_one(
+        {"_id": ObjectId(lead_id)},
+        {"$set": {
+            "updated_at": datetime.now(timezone.utc),
+            "tags": list(set((lead.get("tags") or []) + ["otc-convertido"])),
+            "notes": (lead.get("notes") or "") + f"\n[Convertido para Lead OTC em {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M')}]"
+        }}
+    )
+
+    return {"success": True, "message": "Lead convertido para OTC com sucesso", "otc_lead_id": otc_lead.id}
+
 # ==================== DEALS ====================
 
 @router.get("/deals", response_model=List[DealResponse])

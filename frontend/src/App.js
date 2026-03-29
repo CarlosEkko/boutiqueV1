@@ -75,6 +75,7 @@ import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
+import RegisterPage from "./pages/RegisterPage";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -118,7 +119,7 @@ function AppRoutes() {
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
-      <Route path="/register" element={<Navigate to="/auth" replace />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<AuthPage />} />
       {/* Redirect old /profile to new location */}
       <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
