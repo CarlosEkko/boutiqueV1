@@ -527,201 +527,255 @@ const OTCLeads = () => {
         </CardContent>
       </Card>
 
-      {/* Create Lead Dialog */}
+      {/* Create Lead Dialog - Redesigned like 360° Modal */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-gold-400 flex items-center gap-2">
-              <UserPlus size={20} />
+        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b border-zinc-800 pb-4">
+            <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
+              <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center">
+                <UserPlus size={18} className="text-gold-400" />
+              </div>
               Novo Lead OTC
             </DialogTitle>
+            <p className="text-gray-400 text-sm mt-1">
+              Preencha os dados do potencial cliente
+            </p>
           </DialogHeader>
           
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Nome da Entidade *</Label>
-              <Input
-                value={formData.entity_name}
-                onChange={(e) => setFormData({...formData, entity_name: e.target.value})}
-                onBlur={(e) => checkExistingContact('entity_name', e.target.value)}
-                placeholder="Empresa ou Nome"
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Nome do Contacto *</Label>
-              <Input
-                value={formData.contact_name}
-                onChange={(e) => setFormData({...formData, contact_name: e.target.value})}
-                onBlur={(e) => checkExistingContact('contact_name', e.target.value)}
-                placeholder="Nome completo"
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={formData.contact_email}
-                onChange={(e) => {
-                  setFormData({...formData, contact_email: e.target.value});
-                }}
-                onBlur={(e) => checkExistingContact('email', e.target.value)}
-                placeholder="email@empresa.com"
-                className={`bg-zinc-800 border-gold-500/30 ${checkingContact ? 'opacity-50' : ''}`}
-              />
-              {checkingContact && <p className="text-xs text-gray-400">Verificando...</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={formData.contact_phone}
-                onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
-                placeholder="+351 ..."
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>País *</Label>
-              <Input
-                value={formData.country}
-                onChange={(e) => setFormData({...formData, country: e.target.value})}
-                placeholder="Portugal"
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Origem</Label>
-              <Select value={formData.source} onValueChange={(v) => setFormData({...formData, source: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30">
-                  <SelectItem value="website" className="text-white hover:bg-zinc-700">Website</SelectItem>
-                  <SelectItem value="referral" className="text-white hover:bg-zinc-700">Referência</SelectItem>
-                  <SelectItem value="linkedin" className="text-white hover:bg-zinc-700">LinkedIn</SelectItem>
-                  <SelectItem value="event" className="text-white hover:bg-zinc-700">Evento</SelectItem>
-                  <SelectItem value="broker" className="text-white hover:bg-zinc-700">Broker</SelectItem>
-                  <SelectItem value="cold_outreach" className="text-white hover:bg-zinc-700">Cold Outreach</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Volume Estimado (USD)</Label>
-              <Input
-                type="number"
-                value={formData.estimated_volume_usd}
-                onChange={(e) => setFormData({...formData, estimated_volume_usd: e.target.value})}
-                placeholder="100000"
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Asset Pretendido</Label>
-              <Select value={formData.target_asset} onValueChange={(v) => setFormData({...formData, target_asset: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectItem value="BTC" className="text-white hover:bg-zinc-700">Bitcoin (BTC)</SelectItem>
-                  <SelectItem value="ETH" className="text-white hover:bg-zinc-700">Ethereum (ETH)</SelectItem>
-                  <SelectItem value="USDT" className="text-white hover:bg-zinc-700">Tether (USDT)</SelectItem>
-                  <SelectItem value="USDC" className="text-white hover:bg-zinc-700">USD Coin (USDC)</SelectItem>
-                  <SelectItem value="EUR" className="text-white hover:bg-zinc-700">Euro (EUR)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-6 py-4">
+            {/* Contact Information Card */}
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                  <User size={16} />
+                  Informação de Contacto
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Nome da Entidade *</Label>
+                    <Input
+                      value={formData.entity_name}
+                      onChange={(e) => setFormData({...formData, entity_name: e.target.value})}
+                      onBlur={(e) => checkExistingContact('entity_name', e.target.value)}
+                      placeholder="Empresa ou Nome"
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Nome do Contacto *</Label>
+                    <Input
+                      value={formData.contact_name}
+                      onChange={(e) => setFormData({...formData, contact_name: e.target.value})}
+                      onBlur={(e) => checkExistingContact('contact_name', e.target.value)}
+                      placeholder="Nome completo"
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Email *</Label>
+                    <Input
+                      type="email"
+                      value={formData.contact_email}
+                      onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
+                      onBlur={(e) => checkExistingContact('email', e.target.value)}
+                      placeholder="email@empresa.com"
+                      className={`bg-zinc-800 border-zinc-700 text-white ${checkingContact ? 'opacity-50' : ''}`}
+                    />
+                    {checkingContact && <p className="text-xs text-gray-400">Verificando...</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Telefone</Label>
+                    <Input
+                      value={formData.contact_phone}
+                      onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
+                      placeholder="+351 ..."
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">País *</Label>
+                    <Input
+                      value={formData.country}
+                      onChange={(e) => setFormData({...formData, country: e.target.value})}
+                      placeholder="Portugal"
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Origem</Label>
+                    <Select value={formData.source} onValueChange={(v) => setFormData({...formData, source: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="website" className="text-white hover:bg-zinc-700">Website</SelectItem>
+                        <SelectItem value="referral" className="text-white hover:bg-zinc-700">Referência</SelectItem>
+                        <SelectItem value="linkedin" className="text-white hover:bg-zinc-700">LinkedIn</SelectItem>
+                        <SelectItem value="event" className="text-white hover:bg-zinc-700">Evento</SelectItem>
+                        <SelectItem value="broker" className="text-white hover:bg-zinc-700">Broker</SelectItem>
+                        <SelectItem value="cold_outreach" className="text-white hover:bg-zinc-700">Cold Outreach</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             
-            {/* Novos campos */}
-            <div className="space-y-2">
-              <Label>Volume por Operação (USD)</Label>
-              <Input
-                type="number"
-                value={formData.volume_per_operation}
-                onChange={(e) => setFormData({...formData, volume_per_operation: e.target.value})}
-                placeholder="50000"
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Frequência de Operações</Label>
-              <Select value={formData.trading_frequency} onValueChange={(v) => setFormData({...formData, trading_frequency: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectItem value="one_shot" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
-                  <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diário</SelectItem>
-                  <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
-                  <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Timeframe para Execução</Label>
-              <Select value={formData.execution_timeframe} onValueChange={(v) => setFormData({...formData, execution_timeframe: v})}>
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectItem value="urgent" className="text-white hover:bg-zinc-700">Urgente</SelectItem>
-                  <SelectItem value="within_24h" className="text-white hover:bg-zinc-700">Dentro de 24h</SelectItem>
-                  <SelectItem value="within_48h" className="text-white hover:bg-zinc-700">Dentro de 48h</SelectItem>
-                  <SelectItem value="within_week" className="text-white hover:bg-zinc-700">Dentro de 1 Semana</SelectItem>
-                  <SelectItem value="flexible" className="text-white hover:bg-zinc-700">Flexível</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Métodos de Liquidação Preferidos</Label>
-              <Select 
-                value={formData.preferred_settlement_methods[0] || ''} 
-                onValueChange={(v) => setFormData({...formData, preferred_settlement_methods: v ? [v] : []})}
-              >
-                <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue placeholder="Selecionar método" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectItem value="sepa" className="text-white hover:bg-zinc-700">SEPA</SelectItem>
-                  <SelectItem value="swift" className="text-white hover:bg-zinc-700">SWIFT</SelectItem>
-                  <SelectItem value="pix" className="text-white hover:bg-zinc-700">PIX</SelectItem>
-                  <SelectItem value="faster_payments" className="text-white hover:bg-zinc-700">Faster Payments</SelectItem>
-                  <SelectItem value="usdt_onchain" className="text-white hover:bg-zinc-700">USDT On-Chain</SelectItem>
-                  <SelectItem value="usdc_onchain" className="text-white hover:bg-zinc-700">USDC On-Chain</SelectItem>
-                  <SelectItem value="crypto_onchain" className="text-white hover:bg-zinc-700">Crypto On-Chain</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Exchange Atual</Label>
-              <Input
-                value={formData.current_exchange}
-                onChange={(e) => setFormData({...formData, current_exchange: e.target.value})}
-                placeholder="Binance, Kraken, OTC Bank..."
-                className="bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label>Problema a Resolver / Necessidade</Label>
-              <Textarea
-                value={formData.problem_to_solve}
-                onChange={(e) => setFormData({...formData, problem_to_solve: e.target.value})}
-                placeholder="Descreva a necessidade do cliente, problemas com a exchange atual, etc..."
-                className="bg-zinc-800 border-gold-500/30"
-                rows={2}
-              />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label>Notas Adicionais</Label>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Outras notas sobre o lead..."
-                className="bg-zinc-800 border-gold-500/30"
-                rows={2}
-              />
-            </div>
-          </div>
+            {/* Trading Profile Card */}
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                  <TrendingUp size={16} />
+                  Perfil de Trading
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Volume Estimado Total (USD)</Label>
+                    <Input
+                      type="number"
+                      value={formData.estimated_volume_usd}
+                      onChange={(e) => setFormData({...formData, estimated_volume_usd: e.target.value})}
+                      placeholder="100000"
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Volume por Operação (USD)</Label>
+                    <Input
+                      type="number"
+                      value={formData.volume_per_operation}
+                      onChange={(e) => setFormData({...formData, volume_per_operation: e.target.value})}
+                      placeholder="50000"
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Asset Pretendido</Label>
+                    <Select value={formData.target_asset} onValueChange={(v) => setFormData({...formData, target_asset: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="BTC" className="text-white hover:bg-zinc-700">Bitcoin (BTC)</SelectItem>
+                        <SelectItem value="ETH" className="text-white hover:bg-zinc-700">Ethereum (ETH)</SelectItem>
+                        <SelectItem value="USDT" className="text-white hover:bg-zinc-700">Tether (USDT)</SelectItem>
+                        <SelectItem value="USDC" className="text-white hover:bg-zinc-700">USD Coin (USDC)</SelectItem>
+                        <SelectItem value="EUR" className="text-white hover:bg-zinc-700">Euro (EUR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Tipo de Transação</Label>
+                    <Select value={formData.transaction_type} onValueChange={(v) => setFormData({...formData, transaction_type: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="buy" className="text-white hover:bg-zinc-700">Compra (Buy)</SelectItem>
+                        <SelectItem value="sell" className="text-white hover:bg-zinc-700">Venda (Sell)</SelectItem>
+                        <SelectItem value="both" className="text-white hover:bg-zinc-700">Ambos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Frequência de Operações</Label>
+                    <Select value={formData.trading_frequency} onValueChange={(v) => setFormData({...formData, trading_frequency: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="one_shot" className="text-white hover:bg-zinc-700">One-shot (Única)</SelectItem>
+                        <SelectItem value="daily" className="text-white hover:bg-zinc-700">Diário</SelectItem>
+                        <SelectItem value="weekly" className="text-white hover:bg-zinc-700">Semanal</SelectItem>
+                        <SelectItem value="multiple_daily" className="text-white hover:bg-zinc-700">Múltiplas Diárias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Timeframe para Execução</Label>
+                    <Select value={formData.execution_timeframe} onValueChange={(v) => setFormData({...formData, execution_timeframe: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="urgent" className="text-white hover:bg-zinc-700">Urgente</SelectItem>
+                        <SelectItem value="within_24h" className="text-white hover:bg-zinc-700">Dentro de 24h</SelectItem>
+                        <SelectItem value="within_48h" className="text-white hover:bg-zinc-700">Dentro de 48h</SelectItem>
+                        <SelectItem value="within_week" className="text-white hover:bg-zinc-700">Dentro de 1 Semana</SelectItem>
+                        <SelectItem value="flexible" className="text-white hover:bg-zinc-700">Flexível</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Settlement & Notes Card */}
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-gold-400 text-sm flex items-center gap-2">
+                  <Building size={16} />
+                  Liquidação & Notas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Método de Liquidação Preferido</Label>
+                    <Select 
+                      value={formData.preferred_settlement_methods[0] || ''} 
+                      onValueChange={(v) => setFormData({...formData, preferred_settlement_methods: v ? [v] : []})}
+                    >
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectValue placeholder="Selecionar método" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                        <SelectItem value="sepa" className="text-white hover:bg-zinc-700">SEPA</SelectItem>
+                        <SelectItem value="swift" className="text-white hover:bg-zinc-700">SWIFT</SelectItem>
+                        <SelectItem value="pix" className="text-white hover:bg-zinc-700">PIX</SelectItem>
+                        <SelectItem value="faster_payments" className="text-white hover:bg-zinc-700">Faster Payments</SelectItem>
+                        <SelectItem value="usdt_onchain" className="text-white hover:bg-zinc-700">USDT On-Chain</SelectItem>
+                        <SelectItem value="usdc_onchain" className="text-white hover:bg-zinc-700">USDC On-Chain</SelectItem>
+                        <SelectItem value="crypto_onchain" className="text-white hover:bg-zinc-700">Crypto On-Chain</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-400">Exchange Atual</Label>
+                    <Input
+                      value={formData.current_exchange}
+                      onChange={(e) => setFormData({...formData, current_exchange: e.target.value})}
+                      placeholder="Binance, Kraken, OTC Bank..."
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-gray-400">Problema a Resolver / Necessidade</Label>
+                    <Textarea
+                      value={formData.problem_to_solve}
+                      onChange={(e) => setFormData({...formData, problem_to_solve: e.target.value})}
+                      placeholder="Descreva a necessidade do cliente, problemas com a exchange atual, etc..."
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-gray-400">Notas Adicionais</Label>
+                    <Textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      placeholder="Outras notas sobre o lead..."
+                      className="bg-zinc-800 border-zinc-700 text-white"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           
           {/* Existing Contact Warning - Improved Design */}
           {showExistingWarning && existingContact && (
@@ -853,18 +907,26 @@ const OTCLeads = () => {
             </div>
           )}
           
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => { setShowCreateDialog(false); resetForm(); }} className="border-zinc-600">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleCreateLead} 
-              className="bg-gold-500 hover:bg-gold-400 text-black"
-              data-testid="create-lead-btn"
-            >
-              {showExistingWarning ? 'Criar Lead Mesmo Assim' : 'Criar Lead'}
-            </Button>
+          <DialogFooter className="border-t border-zinc-800 pt-4 mt-4">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => { setShowCreateDialog(false); resetForm(); }} 
+                className="flex-1 border-zinc-600 text-gray-300 hover:bg-zinc-800"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleCreateLead} 
+                className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
+                data-testid="create-lead-btn"
+              >
+                <UserPlus size={16} className="mr-2" />
+                {showExistingWarning ? 'Criar Lead Mesmo Assim' : 'Criar Lead'}
+              </Button>
+            </div>
           </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
