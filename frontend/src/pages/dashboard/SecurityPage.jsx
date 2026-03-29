@@ -152,8 +152,15 @@ const SecurityPage = () => {
   // 2FA Functions
   const handleOpen2FADialog = async () => {
     setShow2FADialog(true);
-    setSetting2FA(true);
     setVerificationCode('');
+    
+    // Se o 2FA já está ativo, não precisa chamar setup novamente
+    if (securitySettings.two_factor_enabled) {
+      setSetting2FA(false);
+      return;
+    }
+    
+    setSetting2FA(true);
     
     try {
       const response = await axios.post(`${API_URL}/api/auth/2fa/setup`, {}, {
@@ -446,7 +453,7 @@ const SecurityPage = () => {
                   type={showCurrentPassword ? "text" : "password"}
                   value={passwordData.current_password}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, current_password: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 pr-10"
+                  className="bg-zinc-800 border-zinc-700 text-white pr-10"
                 />
                 <button
                   type="button"
@@ -464,7 +471,7 @@ const SecurityPage = () => {
                   type={showNewPassword ? "text" : "password"}
                   value={passwordData.new_password}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
-                  className="bg-zinc-800 border-zinc-700 pr-10"
+                  className="bg-zinc-800 border-zinc-700 text-white pr-10"
                 />
                 <button
                   type="button"
@@ -481,7 +488,7 @@ const SecurityPage = () => {
                 type="password" 
                 value={passwordData.confirm_password}
                 onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
-                className="bg-zinc-800 border-zinc-700"
+                className="bg-zinc-800 border-zinc-700 text-white"
               />
             </div>
           </div>
