@@ -95,6 +95,7 @@ const OTCLeads = () => {
   const [showSetupDialog, setShowSetupDialog] = useState(false);
   const [workflowEnums, setWorkflowEnums] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
   const [preQualData, setPreQualData] = useState({
     client_type: '',
     first_operation_value: '',
@@ -141,6 +142,7 @@ const OTCLeads = () => {
     fetchEnums();
     fetchWorkflowEnums();
     fetchLeads();
+    fetchTeamMembers();
   }, [token, statusFilter, sourceFilter]);
 
   const fetchEnums = async () => {
@@ -164,6 +166,20 @@ const OTCLeads = () => {
       console.error('Failed to fetch workflow enums:', err);
     }
   };
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const users = response.data.users || response.data || [];
+      const staff = users.filter(u => u.user_type === 'internal');
+      setTeamMembers(staff);
+    } catch (err) {
+      console.error('Failed to fetch team members:', err);
+    }
+  };
+
 
   // Verify if client exists (Stage 2)
   const handleVerifyClient = async (leadId) => {
@@ -2121,9 +2137,11 @@ const OTCLeads = () => {
                         <SelectValue placeholder="Selecionar gestor" />
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700">
-                        <SelectItem value="carlos" className="text-white hover:bg-zinc-700">Carlos Santos (Admin)</SelectItem>
-                        <SelectItem value="maria" className="text-white hover:bg-zinc-700">Maria Silva (Manager)</SelectItem>
-                        <SelectItem value="joao" className="text-white hover:bg-zinc-700">João Costa (Trader)</SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id} className="text-white hover:bg-zinc-700">
+                            {member.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
