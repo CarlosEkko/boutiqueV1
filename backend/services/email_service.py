@@ -42,6 +42,7 @@ class BrevoEmailService:
         subject: str,
         html_content: str,
         reply_to: Optional[str] = None,
+        attachments: list = None,
     ) -> Dict[str, Any]:
         """
         Send a transactional email through Brevo.
@@ -83,6 +84,9 @@ class BrevoEmailService:
         
         if reply_to:
             payload["replyTo"] = {"email": reply_to}
+        
+        if attachments:
+            payload["attachment"] = attachments
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:

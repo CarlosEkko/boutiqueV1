@@ -1,7 +1,7 @@
 """
 Team Hub Routes - Email, Calendar & Tasks for internal team
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -80,18 +80,40 @@ class TaskUpdate(BaseModel):
 # ==================== EMAIL ====================
 
 @router.post("/emails/send")
-async def send_team_email(data: EmailCompose, current_user: dict = Depends(get_current_user)):
-    """Compose and send an email via Brevo, store in team hub"""
+async def send_team_email(
+    to_email: str = Form(...),
+    subject: str = Form(...),
+    body_html: str = Form(...),
+    to_name: str = Form(""),
+    related_to: str = Form(None),
+    related_type: str = Form(None),
+    files: List[UploadFile] = File(default=[]),
+    current_user = Depends(get_current_user)
+):
+    """Compose and send an email via Brevo with optional attachments"""
     db = get_db()
     
     from services.email_service import email_service
     
+    # Process attachments
+    brevo_attachments = []
+    attachment_names = []
+    for f in files:
+        content = await f.read()
+        import base64
+        brevo_attachments.append({
+            "name": f.filename,
+            "content": base64.b64encode(content).decode("utf-8"),
+        })
+        attachment_names.append(f.filename)
+    
     result = await email_service.send_email(
-        to_email=data.to_email,
-        to_name=data.to_name,
-        subject=data.subject,
-        html_content=data.body_html,
+        to_email=to_email,
+        to_name=to_name,
+        subject=subject,
+        html_content=body_html,
         reply_to=current_user.email,
+        attachments=brevo_attachments if brevo_attachments else None,
     )
     
     email_record = {
@@ -99,15 +121,17 @@ async def send_team_email(data: EmailCompose, current_user: dict = Depends(get_c
         "from_email": current_user.email,
         "from_name": current_user.name,
         "from_user_id": current_user.id,
-        "to_email": data.to_email,
-        "to_name": data.to_name,
-        "subject": data.subject,
-        "body_html": data.body_html,
+        "to_email": to_email,
+        "to_name": to_name,
+        "subject": subject,
+        "body_html": body_html,
         "sent_at": datetime.now(timezone.utc).isoformat(),
         "status": "sent" if result.get("success") else "failed",
+        "folder": "sent",
         "brevo_message_id": result.get("message_id"),
-        "related_to": data.related_to,
-        "related_type": data.related_type,
+        "attachments": attachment_names,
+        "related_to": related_to,
+        "related_type": related_type,
         "error": result.get("error") if not result.get("success") else None,
     }
     
@@ -125,17 +149,19 @@ async def get_team_emails(
     skip: int = 0,
     limit: int = 50,
     search: str = "",
-    current_user: dict = Depends(get_current_user)
+    folder: str = "sent",
+    current_user = Depends(get_current_user)
 ):
-    """Get sent emails for the team hub"""
+    """Get emails filtered by folder"""
     db = get_db()
     
-    query = {}
+    query = {"folder": folder}
     if search:
         query["$or"] = [
             {"to_email": {"$regex": search, "$options": "i"}},
             {"to_name": {"$regex": search, "$options": "i"}},
             {"subject": {"$regex": search, "$options": "i"}},
+            {"from_email": {"$regex": search, "$options": "i"}},
         ]
     
     emails = await db.team_emails.find(query, {"_id": 0}).sort("sent_at", -1).skip(skip).limit(limit).to_list(limit)
@@ -145,13 +171,58 @@ async def get_team_emails(
 
 
 @router.get("/emails/{email_id}")
-async def get_email_detail(email_id: str, current_user: dict = Depends(get_current_user)):
+async def get_email_detail(email_id: str, current_user = Depends(get_current_user)):
     """Get a single email detail"""
     db = get_db()
     email = await db.team_emails.find_one({"id": email_id}, {"_id": 0})
     if not email:
         raise HTTPException(status_code=404, detail="Email não encontrado")
     return email
+
+
+class EmailMoveRequest(BaseModel):
+    folder: str  # sent, archive, trash, junk
+
+@router.put("/emails/{email_id}/move")
+async def move_email(email_id: str, data: EmailMoveRequest, current_user = Depends(get_current_user)):
+    """Move an email to a different folder"""
+    db = get_db()
+    valid_folders = ["sent", "archive", "trash", "junk"]
+    if data.folder not in valid_folders:
+        raise HTTPException(status_code=400, detail=f"Pasta inválida. Pastas válidas: {valid_folders}")
+    
+    result = await db.team_emails.update_one(
+        {"id": email_id},
+        {"$set": {"folder": data.folder, "moved_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Email não encontrado")
+    return {"success": True, "folder": data.folder}
+
+
+@router.delete("/emails/{email_id}")
+async def permanently_delete_email(email_id: str, current_user = Depends(get_current_user)):
+    """Permanently delete an email"""
+    db = get_db()
+    result = await db.team_emails.delete_one({"id": email_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Email não encontrado")
+    return {"success": True}
+
+
+@router.get("/emails/folders/counts")
+async def get_folder_counts(current_user = Depends(get_current_user)):
+    """Get email count per folder"""
+    db = get_db()
+    pipeline = [
+        {"$group": {"_id": "$folder", "count": {"$sum": 1}}}
+    ]
+    results = await db.team_emails.aggregate(pipeline).to_list(20)
+    counts = {r["_id"]: r["count"] for r in results if r["_id"]}
+    # Add drafts count
+    drafts_count = await db.team_drafts.count_documents({"from_user_id": current_user.id})
+    counts["drafts"] = drafts_count
+    return counts
 
 
 # ==================== CALENDAR ====================
