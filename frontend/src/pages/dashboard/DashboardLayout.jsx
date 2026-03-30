@@ -810,7 +810,7 @@ const DashboardLayout = () => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Top Bar with Notifications and Currency Selector */}
-        <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4 border-b border-zinc-800/50">
+        <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4">
           <NotificationBell />
           <LanguageSelector />
           <CurrencySelector />
