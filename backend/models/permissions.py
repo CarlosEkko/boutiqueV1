@@ -33,6 +33,7 @@ class Department(str, Enum):
     CRM = "crm"
     OTC_DESK = "otc_desk"
     SUPPORT = "support"
+    TEAM_HUB = "team_hub"
 
 
 # Role to Department access mapping
@@ -47,7 +48,8 @@ ROLE_PERMISSIONS = {
         Department.FINANCE, 
         Department.CRM,
         Department.OTC_DESK,
-        Department.SUPPORT
+        Department.SUPPORT,
+        Department.TEAM_HUB
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -58,7 +60,8 @@ ROLE_PERMISSIONS = {
         Department.MANAGEMENT, 
         Department.FINANCE, 
         Department.CRM, 
-        Department.SUPPORT
+        Department.SUPPORT,
+        Department.TEAM_HUB
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -67,14 +70,16 @@ ROLE_PERMISSIONS = {
         Department.ACCOUNT,
         Department.ADMIN,
         Department.CRM,
-        Department.SUPPORT
+        Department.SUPPORT,
+        Department.TEAM_HUB
     ],
     StaffRole.SALES_MANAGER: [
         Department.PORTFOLIO,
         Department.INVESTIMENTOS,
         Department.TRANSPARENCIA,
         Department.ACCOUNT,
-        Department.CRM
+        Department.CRM,
+        Department.TEAM_HUB
     ],
     StaffRole.SALES: [
         Department.PORTFOLIO,
@@ -263,6 +268,13 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/admin/tickets", "label": "Tickets de Suporte", "icon": "Ticket"},
             {"path": "/dashboard/admin/knowledge-base", "label": "Base de Conhecimento", "icon": "Book"},
+        ]
+    },
+    Department.TEAM_HUB: {
+        "label": "Team Hub",
+        "icon": "Mail",
+        "items": [
+            {"path": "/dashboard/team-hub", "label": "Team Hub", "icon": "Mail"},
         ]
     },
 }

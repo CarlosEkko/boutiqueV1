@@ -59,6 +59,7 @@ import CRMContacts from "./pages/dashboard/crm/CRMContacts";
 import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import CRMClients from "./pages/dashboard/crm/CRMClients";
 import CRMAdvancedDashboard from "./pages/dashboard/crm/CRMAdvancedDashboard";
+import TeamHub from "./pages/dashboard/team/TeamHub";
 import OTCDashboard from "./pages/dashboard/otc/OTCDashboard";
 import OTCLeads from "./pages/dashboard/otc/OTCLeads";
 import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
@@ -208,6 +209,9 @@ function AppRoutes() {
         
         {/* OTC Desk Routes */}
         <Route path="otc" element={<OTCDashboard />} />
+
+        {/* Team Hub */}
+        <Route path="team-hub" element={<TeamHub />} />
         <Route path="otc/leads" element={<OTCLeads />} />
         <Route path="otc/pipeline" element={<OTCPipeline />} />
         <Route path="otc/quotes" element={<OTCQuotes />} />
