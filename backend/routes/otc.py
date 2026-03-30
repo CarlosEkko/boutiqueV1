@@ -23,6 +23,7 @@ from models.otc import (
     FATF_HIGH_RISK_COUNTRIES
 )
 from utils.i18n import t, I18n
+from services.trustfull_service import score_lead as trustfull_score_lead
 
 router = APIRouter(prefix="/otc", tags=["OTC Desk"])
 
@@ -306,8 +307,54 @@ async def create_otc_lead(
     )
     
     await db.otc_leads.insert_one(lead.dict())
-    
+
+    # Trigger Trustfull risk scoring (async, non-blocking)
+    try:
+        phone = lead_data.phone if hasattr(lead_data, 'phone') else None
+        tf_result = await trustfull_score_lead(lead_data.contact_email, phone)
+        if tf_result.get("combined_score") is not None:
+            update_data = {"trustfull_data": tf_result}
+            # Add Trustfull red flags to lead
+            tf_flags = tf_result.get("red_flags", [])
+            if tf_flags:
+                existing_flags = lead.red_flags or []
+                existing_flags.extend(tf_flags)
+                update_data["red_flags"] = existing_flags
+            await db.otc_leads.update_one({"id": lead.id}, {"$set": update_data})
+            logger.info(f"Trustfull score for {lead_data.contact_email}: {tf_result.get('combined_score')} ({tf_result.get('risk_level')})")
+    except Exception as e:
+        logger.warning(f"Trustfull scoring failed for lead {lead.id}: {e}")
+
     return {"success": True, "lead": lead.dict()}
+
+
+
+@router.post("/leads/{lead_id}/trustfull-scan")
+async def trustfull_scan_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Manually trigger Trustfull risk scoring for a lead."""
+    db = get_db()
+    lead = await db.otc_leads.find_one({"id": lead_id})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+
+    email = lead.get("contact_email", "")
+    phone = lead.get("phone", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Lead sem email")
+
+    tf_result = await trustfull_score_lead(email, phone if phone else None)
+    update_data = {"trustfull_data": tf_result}
+    tf_flags = tf_result.get("red_flags", [])
+    if tf_flags:
+        existing_flags = lead.get("red_flags") or []
+        for f in tf_flags:
+            if f not in existing_flags:
+                existing_flags.append(f)
+        update_data["red_flags"] = existing_flags
+
+    await db.otc_leads.update_one({"id": lead_id}, {"$set": update_data})
+    return {"success": True, "trustfull_data": tf_result}
+
 
 
 # ==================== WORKFLOW ENDPOINTS ====================

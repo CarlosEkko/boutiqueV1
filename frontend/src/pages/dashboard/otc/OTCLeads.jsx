@@ -48,7 +48,8 @@ import {
   FileText,
   Settings,
   Send,
-  CreditCard
+  CreditCard,
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -695,6 +696,20 @@ const OTCLeads = () => {
                           <Building size={14} />
                           {lead.entity_name}
                         </span>
+                        {/* Trustfull Score */}
+                        {lead.trustfull_data?.combined_score != null && (() => {
+                          const s = lead.trustfull_data.combined_score;
+                          const cfg = s >= 700 ? { bg: 'bg-green-900/40', text: 'text-green-400', label: 'Confiável' }
+                            : s >= 500 ? { bg: 'bg-emerald-900/40', text: 'text-emerald-400', label: 'Alto' }
+                            : s >= 300 ? { bg: 'bg-yellow-900/40', text: 'text-yellow-400', label: 'Revisão' }
+                            : s >= 150 ? { bg: 'bg-orange-900/40', text: 'text-orange-400', label: 'Baixo' }
+                            : { bg: 'bg-red-900/40', text: 'text-red-400', label: 'Risco' };
+                          return (
+                            <Badge className={`${cfg.bg} ${cfg.text} text-[10px] ml-1`} data-testid={`trust-score-${lead.id}`}>
+                              TF {s} — {cfg.label}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-400">
                         <span className="flex items-center gap-1">
@@ -871,6 +886,28 @@ const OTCLeads = () => {
                           data-testid={`convert-lead-${lead.id}`}
                         >
                           <UserPlus size={18} />
+                        </Button>
+                      )}
+                      
+                      {/* Trustfull Scan Button */}
+                      {!lead.trustfull_data && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              toast.info('A analisar com Trustfull...');
+                              await axios.post(`${API_URL}/api/otc/leads/${lead.id}/trustfull-scan`, {}, { headers: { Authorization: `Bearer ${token}` }});
+                              toast.success('Trustfull scan completo');
+                              fetchLeads();
+                            } catch (err) { toast.error('Erro no scan Trustfull'); }
+                          }}
+                          title="Scan Trustfull"
+                          data-testid={`trustfull-scan-${lead.id}`}
+                        >
+                          <Shield size={18} />
                         </Button>
                       )}
                       
@@ -1374,6 +1411,94 @@ const OTCLeads = () => {
                 </span>
               </div>
               
+              {/* Trustfull Risk Intelligence */}
+              {selectedLead.trustfull_data && (
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                        <Shield size={16} className="text-blue-400" />
+                        Trustfull — Risk Intelligence
+                      </h4>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const res = await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/trustfull-scan`, {}, { headers: { Authorization: `Bearer ${token}` }});
+                            toast.success('Trustfull scan atualizado');
+                            const updated = {...selectedLead, trustfull_data: res.data.trustfull_data};
+                            setSelectedLead(updated);
+                            fetchLeads();
+                          } catch (err) { toast.error('Erro no scan Trustfull'); }
+                        }}
+                        className="text-xs text-gray-500 hover:text-blue-400 flex items-center gap-1"
+                        data-testid="rescan-trustfull"
+                      >
+                        <RefreshCw size={12} /> Re-scan
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                        <p className="text-gray-500 text-[10px] uppercase mb-1">Score Global</p>
+                        <p className={`text-2xl font-mono font-bold ${
+                          (selectedLead.trustfull_data.combined_score || 0) >= 700 ? 'text-green-400' :
+                          (selectedLead.trustfull_data.combined_score || 0) >= 500 ? 'text-emerald-400' :
+                          (selectedLead.trustfull_data.combined_score || 0) >= 300 ? 'text-yellow-400' :
+                          (selectedLead.trustfull_data.combined_score || 0) >= 150 ? 'text-orange-400' : 'text-red-400'
+                        }`}>{selectedLead.trustfull_data.combined_score ?? '—'}</p>
+                        <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.risk_level || ''}</p>
+                      </div>
+                      <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                        <p className="text-gray-500 text-[10px] uppercase mb-1">Email</p>
+                        <p className="text-xl font-mono text-white">{selectedLead.trustfull_data.email_risk?.score ?? '—'}</p>
+                        <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.email_risk?.score_cluster || ''}</p>
+                      </div>
+                      <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
+                        <p className="text-gray-500 text-[10px] uppercase mb-1">Telefone</p>
+                        <p className="text-xl font-mono text-white">{selectedLead.trustfull_data.phone_risk?.score ?? '—'}</p>
+                        <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.phone_risk?.score_cluster || ''}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                      {selectedLead.trustfull_data.email_risk?.status && (
+                        <div className="flex justify-between"><span className="text-gray-500">Email Status:</span><span className="text-white capitalize">{selectedLead.trustfull_data.email_risk.status}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.email_risk?.is_disposable != null && (
+                        <div className="flex justify-between"><span className="text-gray-500">Descartável:</span><span className={selectedLead.trustfull_data.email_risk.is_disposable ? 'text-red-400' : 'text-green-400'}>{selectedLead.trustfull_data.email_risk.is_disposable ? 'Sim' : 'Não'}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.email_risk?.has_linkedin != null && (
+                        <div className="flex justify-between"><span className="text-gray-500">LinkedIn:</span><span className={selectedLead.trustfull_data.email_risk.has_linkedin ? 'text-green-400' : 'text-gray-500'}>{selectedLead.trustfull_data.email_risk.has_linkedin ? 'Sim' : 'Não'}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.email_risk?.company_name && (
+                        <div className="flex justify-between"><span className="text-gray-500">Empresa:</span><span className="text-white">{selectedLead.trustfull_data.email_risk.company_name}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.email_risk?.data_breaches_count != null && (
+                        <div className="flex justify-between"><span className="text-gray-500">Data Breaches:</span><span className={selectedLead.trustfull_data.email_risk.data_breaches_count > 3 ? 'text-orange-400' : 'text-white'}>{selectedLead.trustfull_data.email_risk.data_breaches_count}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.phone_risk?.has_whatsapp != null && (
+                        <div className="flex justify-between"><span className="text-gray-500">WhatsApp:</span><span className={selectedLead.trustfull_data.phone_risk.has_whatsapp ? 'text-green-400' : 'text-gray-500'}>{selectedLead.trustfull_data.phone_risk.has_whatsapp ? 'Sim' : 'Não'}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.phone_risk?.number_type && (
+                        <div className="flex justify-between"><span className="text-gray-500">Tipo Telefone:</span><span className={selectedLead.trustfull_data.phone_risk.number_type === 'VOIP' ? 'text-orange-400' : 'text-white'}>{selectedLead.trustfull_data.phone_risk.number_type}</span></div>
+                      )}
+                      {selectedLead.trustfull_data.phone_risk?.current_network && (
+                        <div className="flex justify-between"><span className="text-gray-500">Operadora:</span><span className="text-white">{selectedLead.trustfull_data.phone_risk.current_network}</span></div>
+                      )}
+                    </div>
+                    {selectedLead.trustfull_data.red_flags?.length > 0 && (
+                      <div className="mt-3 p-2 bg-red-950/30 border border-red-900/30 rounded-lg">
+                        <p className="text-red-400 text-xs font-medium mb-1">Red Flags Trustfull:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedLead.trustfull_data.red_flags.map((flag, i) => (
+                            <Badge key={i} className="bg-red-900/40 text-red-400 text-[10px]">{flag}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Content Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Contact Info Card */}
