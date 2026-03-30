@@ -305,7 +305,7 @@ const EmailClient = () => {
   // ==================== NOT CONNECTED STATE ====================
   if (o365Status === null) {
     return (
-      <div className="flex h-[calc(100vh-280px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800">
+      <div className="flex h-[calc(100vh-380px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800">
         <div className="text-center text-gray-500">
           <RefreshCw size={32} className="mx-auto mb-3 animate-spin opacity-30" />
           <p>A verificar conexão...</p>
@@ -316,7 +316,7 @@ const EmailClient = () => {
 
   if (o365Status === false) {
     return (
-      <div className="flex h-[calc(100vh-280px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800" data-testid="o365-connect-prompt">
+      <div className="flex h-[calc(100vh-380px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800" data-testid="o365-connect-prompt">
         <div className="text-center max-w-md px-8">
           <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-500/10 flex items-center justify-center">
             <Mail size={28} className="text-blue-400" />
@@ -335,7 +335,7 @@ const EmailClient = () => {
 
   // ==================== CONNECTED - FULL EMAIL CLIENT ====================
   return (
-    <div className="flex h-[calc(100vh-280px)] bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden" data-testid="email-client">
+    <div className="flex h-[calc(100vh-380px)] bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden" data-testid="email-client">
 
       {/* ===== SIDEBAR ===== */}
       <div className="w-52 border-r border-zinc-800 flex flex-col bg-zinc-900/80 flex-shrink-0">
@@ -442,11 +442,11 @@ const EmailClient = () => {
       </div>
 
       {/* ===== CONTENT PANE ===== */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
 
         {showCompose ? (
           /* ---- COMPOSE ---- */
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <div className="p-3 border-b border-zinc-800 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-gray-400 text-sm w-14">Para:</span>
@@ -487,12 +487,12 @@ const EmailClient = () => {
             </div>
 
             {/* Editor */}
-            <div className="flex-1 overflow-y-auto">
-              <div ref={editorRef} contentEditable className="min-h-full p-4 text-white text-sm outline-none leading-relaxed" style={{ whiteSpace: 'pre-wrap' }} data-testid="compose-editor" suppressContentEditableWarning />
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div ref={editorRef} contentEditable className="p-4 text-white text-sm outline-none leading-relaxed" style={{ minHeight: '120px' }} data-testid="compose-editor" suppressContentEditableWarning />
             </div>
 
             {/* Actions */}
-            <div className="px-3 py-2 border-t border-zinc-800 flex items-center gap-2">
+            <div className="px-3 py-2 border-t border-zinc-800 flex items-center gap-2 flex-shrink-0">
               <Button onClick={handleSend} disabled={sending} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="send-email-btn">
                 <Send size={14} className="mr-2" />{sending ? 'A enviar...' : 'Enviar'}
               </Button>
@@ -503,7 +503,7 @@ const EmailClient = () => {
 
         ) : messageDetail ? (
           /* ---- READING PANE ---- */
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             {/* Actions toolbar */}
             <div className="px-4 py-2 border-b border-zinc-800 flex items-center gap-1">
               <Button onClick={handleReply} variant="ghost" size="sm" className="text-gray-400 hover:text-white text-xs h-8" data-testid="reply-btn">
