@@ -634,33 +634,32 @@ const DashboardLayout = () => {
   // Separate client menus from admin menus
   const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading'];
   
+  // Default menus for clients (only Portfolio and Perfil)
+  const defaultClientDepts = ['portfolio', 'account'];
+  
   // Filter client menus based on personalized settings
   let clientMenus = menuStructure.filter(m => clientMenuDepts.includes(m.department));
   
-  // If user has custom menu restrictions, apply them
-  if (allowedClientMenus !== null && Array.isArray(allowedClientMenus)) {
-    // Map 'account' to 'perfil' for consistency
-    const menuMapping = {
-      'portfolio': 'portfolio',
-      'investimentos': 'investimentos',
-      'transparencia': 'transparencia',
-      'perfil': 'account',
-      'otc_trading': 'otc_trading'
-    };
-    
-    // Reverse mapping for filtering
-    const deptToMenuKey = {
-      'portfolio': 'portfolio',
-      'investimentos': 'investimentos',
-      'transparencia': 'transparencia',
-      'account': 'perfil',
-      'otc_trading': 'otc_trading'
-    };
-    
-    clientMenus = clientMenus.filter(m => {
-      const menuKey = deptToMenuKey[m.department];
-      return allowedClientMenus.includes(menuKey) || allowedClientMenus.includes(m.department);
-    });
+  // For non-admin/non-internal users, apply menu restrictions
+  if (user?.user_type !== 'internal' && !user?.is_admin) {
+    if (allowedClientMenus !== null && Array.isArray(allowedClientMenus)) {
+      // Custom menu restrictions set by admin
+      const deptToMenuKey = {
+        'portfolio': 'portfolio',
+        'investimentos': 'investimentos',
+        'transparencia': 'transparencia',
+        'account': 'perfil',
+        'otc_trading': 'otc_trading'
+      };
+      
+      clientMenus = clientMenus.filter(m => {
+        const menuKey = deptToMenuKey[m.department];
+        return allowedClientMenus.includes(menuKey) || allowedClientMenus.includes(m.department);
+      });
+    } else {
+      // No custom config — show only default menus (Portfolio + Perfil)
+      clientMenus = clientMenus.filter(m => defaultClientDepts.includes(m.department));
+    }
   }
   
   const adminMenus = menuStructure.filter(m => !clientMenuDepts.includes(m.department));
