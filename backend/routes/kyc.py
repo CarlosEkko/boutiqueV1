@@ -36,17 +36,39 @@ def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Languag
 
 @router.get("/status")
 async def get_kyc_status(user_id: str = Depends(get_current_user_id)):
-    """Get current KYC/KYB status for user"""
+    """Get current KYC/KYB status for user — checks both legacy and Sumsub"""
     kyc = await db.kyc_verifications.find_one({"user_id": user_id}, {"_id": 0})
     kyb = await db.kyb_verifications.find_one({"user_id": user_id}, {"_id": 0})
+    
+    # Also check Sumsub status and user's kyc_status field
+    sumsub = await db.sumsub_applicants.find_one({"user_id": user_id}, {"_id": 0})
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "kyc_status": 1})
+    user_kyc_status = user_doc.get("kyc_status") if user_doc else None
+    
+    # Determine effective KYC status: prioritize Sumsub/user status over legacy
+    legacy_status = kyc.get("status") if kyc else "not_started"
+    sumsub_status = sumsub.get("status") if sumsub else None
+    
+    # Map Sumsub statuses to KYC statuses
+    if user_kyc_status in ("approved", "rejected", "pending"):
+        effective_kyc_status = user_kyc_status
+    elif sumsub_status == "approved":
+        effective_kyc_status = "approved"
+    elif sumsub_status == "rejected":
+        effective_kyc_status = "rejected"
+    elif sumsub_status in ("pending", "created", "init"):
+        effective_kyc_status = "in_progress"
+    else:
+        effective_kyc_status = legacy_status
     
     return {
         "kyc": kyc,
         "kyb": kyb,
-        "has_kyc": kyc is not None,
+        "has_kyc": kyc is not None or sumsub is not None,
         "has_kyb": kyb is not None,
-        "kyc_status": kyc.get("status") if kyc else "not_started",
-        "kyb_status": kyb.get("status") if kyb else "not_started"
+        "kyc_status": effective_kyc_status,
+        "kyb_status": kyb.get("status") if kyb else "not_started",
+        "sumsub_active": sumsub is not None
     }
 
 

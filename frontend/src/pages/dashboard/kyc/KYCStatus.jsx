@@ -44,12 +44,16 @@ const KYCStatus = () => {
   };
 
   const startVerification = async (type) => {
-    try {
-      await axios.post(`${API_URL}/api/kyc/start?verification_type=${type}`);
-      toast.success(`${type.toUpperCase()} ${t('kyc.status.inProgress')}`);
-      navigate(`/dashboard/kyc/${type}`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error');
+    if (type === 'kyc') {
+      navigate('/dashboard/kyc/sumsub');
+    } else {
+      try {
+        await axios.post(`${API_URL}/api/kyc/start?verification_type=${type}`);
+        toast.success(`${type.toUpperCase()} ${t('kyc.status.inProgress')}`);
+        navigate(`/dashboard/kyc/${type}`);
+      } catch (error) {
+        toast.error(error.response?.data?.detail || 'Error');
+      }
     }
   };
 
