@@ -154,9 +154,10 @@ function AppRoutes() {
         
         {/* KYC Routes */}
         <Route path="kyc" element={<KYCStatus />} />
-        <Route path="kyc/kyc" element={<KYCForm />} />
+        <Route path="kyc/kyc" element={<SumsubKYC />} />
         <Route path="kyc/kyb" element={<KYBForm />} />
         <Route path="kyc/sumsub" element={<SumsubKYC />} />
+        <Route path="kyc/individual" element={<SumsubKYC />} />
         
         {/* Exchange */}
         <Route path="exchange" element={<ExchangePage />} />
