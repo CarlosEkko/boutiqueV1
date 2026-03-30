@@ -25,6 +25,16 @@ class BrevoEmailService:
         self.sender_email = BREVO_SENDER_EMAIL
         self.sender_name = BREVO_SENDER_NAME
     
+    # Global email disclaimer - appended to all outgoing emails
+    EMAIL_DISCLAIMER = """
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #333333; font-family: Arial, sans-serif; font-size: 10px; color: #666666; line-height: 1.5;">
+<p style="margin: 0 0 8px 0; font-weight: bold; color: #888888;">AVISO LEGAL / DISCLAIMER</p>
+<p style="margin: 0 0 6px 0;">Esta mensagem e quaisquer ficheiros anexos são confidenciais e destinam-se exclusivamente ao(s) destinatário(s) indicado(s). Se recebeu esta mensagem por engano, por favor notifique imediatamente o remetente e elimine a mensagem do seu sistema. É proibida a divulgação, cópia ou distribuição desta mensagem sem autorização prévia.</p>
+<p style="margin: 0 0 6px 0;">As informações contidas nesta comunicação não constituem aconselhamento financeiro, fiscal ou jurídico. Qualquer referência a ativos digitais, criptomoedas ou instrumentos financeiros é meramente informativa e não deve ser interpretada como uma recomendação de investimento, compra ou venda. O valor dos ativos digitais pode flutuar significativamente e investir envolve risco de perda de capital.</p>
+<p style="margin: 0 0 6px 0;">A KBEX não se responsabiliza por perdas ou danos resultantes de decisões tomadas com base nas informações aqui contidas. Rentabilidades passadas não garantem resultados futuros. Consulte sempre um consultor financeiro independente antes de tomar decisões de investimento.</p>
+<p style="margin: 0; color: #D4AF37;">KBEX.io — Boutique Digital Assets Exchange</p>
+</div>"""
+
     async def send_email(
         self,
         to_email: str,
@@ -68,7 +78,7 @@ class BrevoEmailService:
                 }
             ],
             "subject": subject,
-            "htmlContent": html_content,
+            "htmlContent": html_content + self.EMAIL_DISCLAIMER,
         }
         
         if reply_to:
