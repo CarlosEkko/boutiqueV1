@@ -696,12 +696,12 @@ const CRMClients = () => {
                     clientDetail.wallets.map((wallet, idx) => (
                       <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-white font-medium">{wallet.asset}</span>
+                          <span className="text-white font-medium">{wallet.asset_id || wallet.asset_name || wallet.asset || '-'}</span>
                           <Badge className={wallet.asset_type === 'fiat' ? 'bg-blue-900/30 text-blue-400' : 'bg-gold-900/30 text-gold-400'}>
                             {wallet.asset_type === 'fiat' ? 'Fiat' : 'Crypto'}
                           </Badge>
                         </div>
-                        <p className="text-2xl font-mono text-white">{formatNumber(wallet.balance)} {wallet.asset}</p>
+                        <p className="text-2xl font-mono text-white">{formatNumber(wallet.balance)} {wallet.asset_id || wallet.asset || ''}</p>
                         {wallet.address && (
                           <p className="text-gray-500 text-xs font-mono truncate mt-2">{wallet.address}</p>
                         )}

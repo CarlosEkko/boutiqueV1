@@ -1007,8 +1007,11 @@ async def get_crm_client_detail(
     
     # Get all related data
     
-    # 1. Wallets
+    # 1. Wallets (from wallets collection first, fallback to embedded in user doc)
     wallets = await db.wallets.find({"user_id": client_id}, {"_id": 0}).to_list(100)
+    if not wallets:
+        # Try embedded wallets from user document
+        wallets = user.get("wallets", [])
     
     # 2. Transactions (last 50)
     transactions = await db.transactions.find(
@@ -1043,11 +1046,12 @@ async def get_crm_client_detail(
     # 7. Trading stats
     trading_stats = await get_client_trading_stats(db, client_id)
     
-    # 8. Account manager (referrer)
+    # 8. Account manager (referrer or assigned manager)
     account_manager = None
-    if user.get("invited_by"):
+    manager_id = user.get("assigned_to") or user.get("invited_by")
+    if manager_id:
         manager = await db.users.find_one(
-            {"id": user["invited_by"]},
+            {"id": manager_id},
             {"_id": 0, "id": 1, "name": 1, "email": 1, "internal_role": 1}
         )
         if manager:

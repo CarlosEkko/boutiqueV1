@@ -278,10 +278,12 @@ const AdminUsers = () => {
   };
 
   const getReferrerInfo = (details) => {
-    if (!details?.invited_by) return null;
-    // Find referrer in users list or return the ID
-    const referrer = users.find(u => u.id === details.invited_by);
-    return referrer || { id: details.invited_by, name: 'Account Manager', email: details.invited_by };
+    // Check assigned_to first, then invited_by
+    const managerId = details?.assigned_to || details?.invited_by;
+    if (!managerId) return null;
+    // Find in staff members first, then in users list
+    const manager = staffMembers.find(s => s.id === managerId) || users.find(u => u.id === managerId);
+    return manager || { id: managerId, name: managerId, email: '' };
   };
 
   const updateKYC = async (userId, status) => {
@@ -943,36 +945,32 @@ const AdminUsers = () => {
               {/* Account Manager Tab */}
               <TabsContent value="manager" className="mt-4">
                 <div className="space-y-4">
-                  {clientDetails.invited_by ? (
+                  {(clientDetails.assigned_to || clientDetails.invited_by) ? (
                     <div className="p-6 bg-zinc-800/50 rounded-lg">
                       <h4 className="text-lg text-gold-400 mb-4 flex items-center gap-2">
                         <Building size={18} />
-                        Account Manager / Referência
+                        Account Manager
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-gray-400 text-sm">ID do Referenciador</span>
-                          <p className="text-white font-mono text-sm mt-1">{clientDetails.invited_by}</p>
-                        </div>
-                        {(() => {
-                          const referrer = getReferrerInfo(clientDetails);
-                          if (referrer && referrer.name !== 'Account Manager') {
-                            return (
-                              <>
-                                <div>
-                                  <span className="text-gray-400 text-sm">Nome</span>
-                                  <p className="text-white mt-1">{referrer.name}</p>
-                                </div>
+                      {(() => {
+                        const referrer = getReferrerInfo(clientDetails);
+                        if (referrer) {
+                          return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-gray-400 text-sm">Nome</span>
+                                <p className="text-white mt-1">{referrer.name}</p>
+                              </div>
+                              {referrer.email && (
                                 <div>
                                   <span className="text-gray-400 text-sm">Email</span>
                                   <p className="text-white mt-1">{referrer.email}</p>
                                 </div>
-                              </>
-                            );
-                          }
-                          return null;
-                        })()}
-                      </div>
+                              )}
+                            </div>
+                          );
+                        }
+                        return <p className="text-gray-400">Manager não encontrado</p>;
+                      })()}
                     </div>
                   ) : (
                     <div className="p-12 text-center bg-zinc-800/30 rounded-lg">
@@ -1001,11 +999,11 @@ const AdminUsers = () => {
                             .map((wallet, idx) => (
                               <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg flex items-center justify-between">
                                 <div>
-                                  <p className="text-white font-medium">{wallet.asset}</p>
+                                  <p className="text-white font-medium">{wallet.asset_id || wallet.asset_name || wallet.asset || '-'}</p>
                                   <p className="text-gray-400 text-sm">Fiat</p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-white font-mono">{formatNumber(wallet.balance)} {wallet.asset}</p>
+                                  <p className="text-white font-mono">{formatNumber(wallet.balance)} {wallet.asset_id || wallet.asset}</p>
                                   {wallet.pending_balance > 0 && (
                                     <p className="text-gold-400 text-xs">Pendente: {formatNumber(wallet.pending_balance)}</p>
                                   )}
@@ -1030,8 +1028,8 @@ const AdminUsers = () => {
                             .map((wallet, idx) => (
                               <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
-                                  <p className="text-white font-medium">{wallet.asset}</p>
-                                  <p className="text-white font-mono">{formatNumber(wallet.balance)}</p>
+                                  <p className="text-white font-medium">{wallet.asset_id || wallet.asset_name || wallet.asset || '-'}</p>
+                                  <p className="text-white font-mono">{formatNumber(wallet.balance)} {wallet.asset_id || wallet.asset || ''}</p>
                                 </div>
                                 {wallet.address && (
                                   <div className="flex items-center gap-2">

@@ -1,82 +1,58 @@
 # KBEX.io — Product Requirements Document
 
 ## Overview
-KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals. Core features include an Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, and automated KYC via Sumsub.
-
-## Core Requirements
-- Fully translated platform (PT, EN, AR)
-- "Quiet luxury", trust, and exclusivity in UI/UX
-- Comprehensive OTC CRM with strict qualification and workflows
-- Invite/approval-only access model (no public registration on main site)
+KBEX.io is a premium Crypto Boutique Exchange for HNW/UHNW individuals.
 
 ## Tech Stack
-- **Frontend**: React, Tailwind CSS, Shadcn UI, GSAP animations
-- **Backend**: FastAPI, Pydantic, MongoDB (Motor)
-- **Deployment**: Docker, Docker-Compose on VPS (kbex.io)
-- **Integrations**: Brevo (emails), Sumsub (KYC), Fireblocks (wallets), Stripe (payments), CoinMarketCap/Binance (rates)
-
-## Access Model
-- Public visitors → "Solicitar Acesso" form → creates CRM Lead (POST /api/crm/leads/public)
-- Admin qualifies lead → can convert to OTC Lead (POST /api/crm/leads/{id}/convert-to-otc)
-- Approved leads receive direct link: https://kbex.io/register to create account
-- /auth page = Login only (no sign up toggle)
-- /register page = Full registration form (Name, Email, Password, Phone, Country)
+- Frontend: React, Tailwind CSS, Shadcn UI, GSAP
+- Backend: FastAPI, Pydantic, MongoDB (Motor)
+- Deploy: Docker on VPS (kbex.io) | Preview: boutique-exchange.preview.emergentagent.com
 
 ## Implemented Features
 
-### Landing Page & Auth (Updated 29/03/2026)
-- Public "Solicitar Acesso" form creates **CRM Lead** via POST /api/crm/leads/public
-- Duplicate email protection
-- Confirmation email sent via Brevo (template: "Pedido de Acesso Recebido")
-- /auth = Login only, with "Solicitar Acesso" link
-- /register = Standalone registration page for approved leads
-- GSAP animated hero section
+### Access & Auth
+- Public "Solicitar Acesso" → CRM Lead (POST /api/crm/leads/public) + Brevo confirmation email
+- /auth = Login only | /register = Registration for approved leads
+- Duplicate email protection | No public sign-up on Auth page
 
-### CRM General (Updated 29/03/2026)
-- Public lead creation endpoint (no auth)
-- Lead management with cards, filters, search
-- **Convert to OTC Lead** button on each lead card
-- Convert to Client functionality
-- Deals, Contacts, Tasks, Suppliers modules
+### CRM General
+- Public lead creation | Lead → OTC conversion button | Lead → Client conversion
+- Client 360° view: Manager, Wallets (asset name + balance + address), Trading stats
+- Brevo CRM contact sync on lead creation
+- Webhook tracking for email events (delivered/opened/clicked/bounced)
 
 ### OTC Desk (11-Step Workflow)
-1. Lead Creation → 2. Client Verification → 3. Pre-Qualification → 4. Operational Setup
-5. RFQ → 6. Quote → 7. Acceptance → 8. Execution → 9. Settlement → 10. Invoice → 11. Post-Sale
+- Lead → Verification → Pre-Qual → Setup → RFQ → Quote → Accept → Execute → Settle → Invoice → Post-Sale
+- Pipeline view | New Deal modal from existing contacts | Card-based lead layout
 
-### Email Integration
-- Brevo transactional emails
-- New template: "Pedido de Acesso Recebido" for public leads
-- Onboarding email for registered leads
+### Admin
+- User management with Manager assignment (using assigned_to field)
+- Wallet display with asset_id/asset_name for proper coin identification
+- Client menu control (default: Portfolio + Perfil only)
 
-### Dashboard & Admin
-- Multi-currency viewing, fiat deposits
-- KYC management via Sumsub
-- Staff management, permissions, referrals
+### Email (Brevo)
+- "Pedido de Acesso Recebido" template for public leads
+- "Complete o seu Registo" template for approved leads
+- "Atualização de Documentos" for KYC reminders
+- Webhook endpoint at /api/webhooks/brevo for tracking
+
+### Integrations
+- Brevo (emails + CRM sync + webhooks) | Sumsub (KYC) | Fireblocks (wallets - broken) | CoinMarketCap/Binance (rates)
 
 ## Key API Endpoints
-- `POST /api/crm/leads/public` — Public CRM lead creation (no auth)
-- `POST /api/crm/leads/{id}/convert-to-otc` — Convert CRM lead to OTC lead (auth)
-- `POST /api/crm/leads/{id}/convert` — Convert lead to client (auth)
-- `POST /api/otc/leads` — Internal OTC lead creation (auth)
-- `PUT /api/otc/leads/{id}/stage` — Advance OTC lead through workflow
-- `POST /api/auth/register` — Account registration
-- `POST /api/auth/login` — Account login
+- POST /api/crm/leads/public — Public lead creation
+- POST /api/crm/leads/{id}/convert-to-otc — CRM → OTC conversion
+- GET /api/crm/clients/{id} — Client 360° detail (manager + wallets)
+- POST /api/webhooks/brevo — Email event webhook
+- GET /api/webhooks/brevo/events/{email} — Email tracking query
 
-## Key DB Collections
-- `crm_leads`: {name, email, phone, source, status, tags, is_qualified, ...}
-- `otc_leads`: {workflow_stage, status, pre_qualification_data, red_flags, source, contact_*}
-- `users`: {email, password, user_type, kyc_status, is_admin}
+## VPS Deploy Path
+```bash
+cd /opt/boutiqueV1 && git pull && sudo docker-compose down && sudo docker-compose build --no-cache && sudo docker-compose up -d
+```
 
 ## Pending Issues
-- P1: Safari cursor bug (recurring 11+ times, CSS incompatibility)
-- P1: Incomplete frontend translations (translations.js)
-- P2: Fireblocks integration broken
+- P1: Safari cursor bug | P1: Incomplete translations | P2: Fireblocks broken
 
 ## Upcoming Tasks
-- P1: TradingView chart widgets on Trading/Markets pages
-- P2: Refactor 1s HTTP polling to WebSockets for crypto prices
-- P2: Whitelist functionality
-- P3: Product Pages (Launchpad and ICO)
-
-## Refactoring Needed
-- OTCLeads.jsx (2300+ lines) should be broken into smaller components
+- P1: TradingView widgets | P2: WebSockets for prices | P2: Whitelist | P3: Launchpad/ICO pages
