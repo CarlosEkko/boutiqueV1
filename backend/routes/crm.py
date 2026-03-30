@@ -86,6 +86,14 @@ async def create_public_lead(lead_data: PublicLeadRequest):
             email_sent = email_result.get("success", False)
             if not email_sent:
                 logger.warning(f"Email not sent to {lead_data.email}: {email_result.get('error', 'unknown')}")
+            
+            # Sync contact to Brevo CRM
+            await email_service.sync_contact_to_brevo(
+                email=lead_data.email,
+                name=lead_data.name,
+                phone=lead_data.phone,
+                source="Website - Solicitar Acesso",
+            )
     except Exception as e:
         logger.warning(f"Failed to send confirmation email: {e}")
 

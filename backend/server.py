@@ -59,6 +59,7 @@ from routes.company_bank_accounts import router as company_bank_accounts_router,
 from routes.client_menus import router as client_menus_router, set_db as set_client_menus_db
 from routes.notifications import router as notifications_router, set_db as set_notifications_db
 from routes.sumsub import router as sumsub_router, set_db as set_sumsub_db
+from routes.webhooks import router as webhooks_router, set_db as set_webhooks_db
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -77,6 +78,7 @@ set_company_bank_accounts_db(db)
 set_client_menus_db(db)
 set_notifications_db(db)
 set_sumsub_db(db)
+set_webhooks_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -97,6 +99,7 @@ api_router.include_router(company_bank_accounts_router)
 api_router.include_router(client_menus_router)
 api_router.include_router(notifications_router)
 api_router.include_router(sumsub_router)
+api_router.include_router(webhooks_router)
 
 
 # Define Models

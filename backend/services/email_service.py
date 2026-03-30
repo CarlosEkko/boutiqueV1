@@ -1,12 +1,12 @@
 """
 Brevo Email Service
-Handles transactional email sending for OTC onboarding workflow
+Handles transactional email sending, CRM contact sync, and webhook tracking
 """
 
 import os
 import logging
 import httpx
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,7 @@ BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "")
 BREVO_SENDER_EMAIL = os.environ.get("BREVO_SENDER_EMAIL", "noreply@kbex.io")
 BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME", "KBEX.io")
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_BASE_URL = "https://api.brevo.com/v3"
 
 
 class BrevoEmailService:
@@ -252,6 +253,97 @@ class BrevoEmailService:
         """
         
         return await self.send_email(to_email, to_name, subject, html_content)
+
+    # ==================== BREVO CRM CONTACTS ====================
+
+    async def _brevo_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+        """Make a request to the Brevo API (any endpoint)"""
+        if not self.api_key:
+            return {"success": False, "error": "BREVO_API_KEY not configured"}
+        
+        headers = {
+            "api-key": self.api_key,
+            "Content-Type": "application/json",
+            "accept": "application/json"
+        }
+        url = f"{BREVO_BASE_URL}{endpoint}"
+        
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.request(method, url, headers=headers, **kwargs)
+                if response.status_code in [200, 201, 204]:
+                    return response.json() if response.content else {"success": True}
+                else:
+                    logger.error(f"Brevo API {method} {endpoint}: {response.status_code} - {response.text}")
+                    return {"success": False, "error": response.text, "status_code": response.status_code}
+        except Exception as e:
+            logger.error(f"Brevo API error: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def sync_contact_to_brevo(
+        self,
+        email: str,
+        name: str,
+        phone: Optional[str] = None,
+        company: Optional[str] = None,
+        source: Optional[str] = None,
+        custom_attributes: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create or update a contact in Brevo CRM"""
+        attributes = {}
+        if name:
+            parts = name.split(" ", 1)
+            attributes["FIRSTNAME"] = parts[0]
+            if len(parts) > 1:
+                attributes["LASTNAME"] = parts[1]
+        if phone:
+            attributes["SMS"] = phone
+        if company:
+            attributes["COMPANY"] = company
+        if source:
+            attributes["SOURCE"] = source
+        if custom_attributes:
+            for k, v in custom_attributes.items():
+                attributes[k.upper()] = v
+
+        payload = {
+            "email": email,
+            "attributes": attributes,
+            "emailBlacklisted": False,
+            "updateEnabled": True
+        }
+
+        result = await self._brevo_request("POST", "/contacts", json=payload)
+        if result.get("id") or result.get("success"):
+            logger.info(f"Synced contact to Brevo: {email}")
+            return {"success": True, "brevo_id": result.get("id")}
+        return result
+
+    async def get_brevo_contact(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get contact info from Brevo"""
+        result = await self._brevo_request("GET", f"/contacts/{email}")
+        if "id" in result:
+            return result
+        return None
+
+    async def setup_webhooks(self, webhook_url: str) -> Dict[str, Any]:
+        """Setup Brevo webhooks for email event tracking"""
+        events = ["delivered", "opened", "click", "hardBounce", "softBounce", "blocked", "unsubscribed"]
+        
+        payload = {
+            "url": webhook_url,
+            "events": events,
+            "type": "transactional",
+            "description": "KBEX email tracking webhook"
+        }
+
+        result = await self._brevo_request("POST", "/webhooks", json=payload)
+        return result
+
+    async def get_webhooks(self) -> List[Dict[str, Any]]:
+        """List all configured webhooks"""
+        result = await self._brevo_request("GET", "/webhooks")
+        return result.get("webhooks", []) if isinstance(result, dict) else []
 
 
 # Global instance
