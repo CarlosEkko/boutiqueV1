@@ -12,18 +12,22 @@ import {
   Send, Inbox, FileEdit, Trash2, Search, Plus, Bold, Italic, Underline,
   Link, List, ListOrdered, AlignLeft, AlignCenter, AlignRight,
   RefreshCw, Archive, Paperclip, Reply, Forward, X, AlertOctagon,
-  Mail, Star, LogIn, Unplug, FolderOpen, ChevronDown, Eye, EyeOff,
+  Mail, LogIn, Unplug, FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const FOLDER_ICONS = {
-  'Inbox': Inbox, 'Sent Items': Send, 'Drafts': FileEdit,
-  'Deleted Items': Trash2, 'Junk Email': AlertOctagon, 'Archive': Archive,
-  'Caixa de Entrada': Inbox, 'Itens Enviados': Send, 'Rascunhos': FileEdit,
-  'Itens Eliminados': Trash2, 'E-mail de Lixo': AlertOctagon, 'Arquivo': Archive,
-};
+// Desired folder order + Portuguese labels
+const FOLDER_ORDER = [
+  { match: ['Inbox', 'Caixa de Entrada'], label: 'Inbox', icon: Inbox },
+  { match: ['Drafts', 'Rascunhos'], label: 'Rascunhos', icon: FileEdit },
+  { match: ['Sent Items', 'Itens Enviados'], label: 'Enviados', icon: Send },
+  { match: ['Junk Email', 'E-mail de Lixo', 'Lixo Eletrônico'], label: 'Junk', icon: AlertOctagon },
+  { match: ['Deleted Items', 'Itens Eliminados', 'Itens Excluídos'], label: 'Lixo', icon: Trash2 },
+  { match: ['Archive', 'Arquivo'], label: 'Arquivo', icon: Archive },
+  { match: ['Conversation History', 'Histórico de Conversas'], label: 'Conversações', icon: Mail },
+];
 
 const EmailClient = () => {
   const { token } = useAuth();
@@ -95,9 +99,27 @@ const EmailClient = () => {
     try {
       const res = await axios.get(`${API_URL}/api/o365/mail/folders`, { headers });
       const allFolders = res.data.folders || [];
-      setFolders(allFolders);
+
+      // Sort and label folders according to desired order
+      const sorted = [];
+      const used = new Set();
+      for (const def of FOLDER_ORDER) {
+        const found = allFolders.find(f => def.match.includes(f.name));
+        if (found) {
+          sorted.push({ ...found, display_label: def.label, display_icon: def.icon });
+          used.add(found.id);
+        }
+      }
+      // Add remaining folders not in our predefined list
+      allFolders.forEach(f => {
+        if (!used.has(f.id)) {
+          sorted.push({ ...f, display_label: f.name, display_icon: FolderOpen });
+        }
+      });
+
+      setFolders(sorted);
       // Auto-select Inbox
-      const inbox = allFolders.find(f => f.name === 'Inbox' || f.name === 'Caixa de Entrada');
+      const inbox = sorted.find(f => f.display_label === 'Inbox');
       if (inbox && !activeFolder) setActiveFolder(inbox);
     } catch (err) {
       console.error('Failed to fetch folders:', err);
@@ -280,8 +302,6 @@ const EmailClient = () => {
     return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
   };
 
-  const getFolderIcon = (name) => FOLDER_ICONS[name] || FolderOpen;
-
   // ==================== NOT CONNECTED STATE ====================
   if (o365Status === null) {
     return (
@@ -332,7 +352,7 @@ const EmailClient = () => {
 
         <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
           {folders.map(f => {
-            const Icon = getFolderIcon(f.name);
+            const Icon = f.display_icon || FolderOpen;
             return (
               <button
                 key={f.id}
@@ -340,10 +360,10 @@ const EmailClient = () => {
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                   activeFolder?.id === f.id ? 'bg-gold-500/15 text-gold-400' : 'text-gray-400 hover:text-white hover:bg-zinc-800'
                 }`}
-                data-testid={`folder-${f.name.toLowerCase().replace(/\s/g, '-')}`}
+                data-testid={`folder-${(f.display_label || f.name).toLowerCase().replace(/\s/g, '-')}`}
               >
                 <Icon size={15} />
-                <span className="flex-1 text-left truncate">{f.name}</span>
+                <span className="flex-1 text-left truncate">{f.display_label || f.name}</span>
                 {f.unread_count > 0 && (
                   <span className="text-[10px] bg-blue-600/30 text-blue-300 px-1.5 py-0.5 rounded-full font-medium">{f.unread_count}</span>
                 )}
@@ -378,7 +398,7 @@ const EmailClient = () => {
         </div>
 
         <div className="px-3 py-1.5 border-b border-zinc-800/50">
-          <span className="text-white text-sm font-medium">{activeFolder?.name || 'Email'}</span>
+          <span className="text-white text-sm font-medium">{activeFolder?.display_label || activeFolder?.name || 'Email'}</span>
           <span className="text-gray-500 text-xs ml-2">({messages.length})</span>
         </div>
 

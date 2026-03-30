@@ -100,12 +100,21 @@ async def graph_request(method: str, endpoint: str, access_token: str, **kwargs)
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.request(method, url, headers=headers, **kwargs)
-            if resp.status_code == 204:
+            if resp.status_code in (200, 201):
+                if resp.content:
+                    return resp.json()
+                return {"success": True}
+            if resp.status_code in (202, 204):
                 return {"success": True}
             if resp.status_code >= 400:
                 logger.error(f"Graph API {method} {endpoint}: {resp.status_code} - {resp.text}")
-                raise HTTPException(status_code=resp.status_code, detail=resp.json().get("error", {}).get("message", resp.text))
-            return resp.json()
+                error_msg = resp.text
+                try:
+                    error_msg = resp.json().get("error", {}).get("message", resp.text)
+                except Exception:
+                    pass
+                raise HTTPException(status_code=resp.status_code, detail=error_msg)
+            return {"success": True}
     except HTTPException:
         raise
     except Exception as e:
