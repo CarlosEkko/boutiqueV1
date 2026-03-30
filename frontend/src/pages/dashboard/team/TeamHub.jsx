@@ -24,7 +24,7 @@ import {
 } from '../../../components/ui/dialog';
 import {
   Mail, Calendar, CheckSquare, Plus, Clock, User, Trash2, Edit,
-  ChevronLeft, ChevronRight, ArrowUp, ArrowRight, ArrowDown, RefreshCw, LayoutDashboard,
+  ChevronLeft, ChevronRight, ArrowUp, ArrowRight, ArrowDown, RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -266,7 +266,6 @@ const TeamHub = () => {
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 
   const tabs = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, count: null },
     { key: 'email', label: 'Email', icon: Mail, count: stats.total_emails },
     { key: 'calendar', label: 'Calendário', icon: Calendar, count: stats.upcoming_events },
     { key: 'tasks', label: 'Tarefas', icon: CheckSquare, count: stats.pending_tasks },
@@ -306,99 +305,6 @@ const TeamHub = () => {
           <Badge className="bg-blue-900/30 text-blue-400 text-xs">Microsoft 365 Conectado</Badge>
         )}
       </div>
-
-      {/* ==================== DASHBOARD TAB ==================== */}
-      {activeTab === 'dashboard' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-zinc-900/50 border-gold-500/20 cursor-pointer hover:border-gold-500/40 transition-colors" onClick={() => setActiveTab('email')}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-400 text-sm">Emails Hoje</p>
-                  <Mail size={18} className="text-gold-400" />
-                </div>
-                <p className="text-3xl font-mono text-gold-400">{stats.emails_today || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900/50 border-gold-500/20 cursor-pointer hover:border-gold-500/40 transition-colors" onClick={() => setActiveTab('email')}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-400 text-sm">Total Emails</p>
-                  <Mail size={18} className="text-gray-500" />
-                </div>
-                <p className="text-3xl font-mono text-white">{stats.total_emails || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900/50 border-gold-500/20 cursor-pointer hover:border-gold-500/40 transition-colors" onClick={() => setActiveTab('tasks')}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-400 text-sm">Tarefas Pendentes</p>
-                  <CheckSquare size={18} className="text-orange-400" />
-                </div>
-                <p className="text-3xl font-mono text-orange-400">{stats.pending_tasks || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-zinc-900/50 border-gold-500/20 cursor-pointer hover:border-gold-500/40 transition-colors" onClick={() => setActiveTab('calendar')}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-400 text-sm">Eventos Futuros</p>
-                  <Calendar size={18} className="text-blue-400" />
-                </div>
-                <p className="text-3xl font-mono text-blue-400">{stats.upcoming_events || 0}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick access sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-zinc-900/50 border-gold-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-white flex items-center gap-2"><Calendar size={16} className="text-gold-400" />Próximos Eventos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {events.length === 0 ? (
-                  <p className="text-gray-500 text-sm py-3 text-center">Sem eventos</p>
-                ) : (
-                  <div className="space-y-2">
-                    {events.slice(0, 4).map(ev => (
-                      <div key={ev.id} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm truncate">{ev.title}</p>
-                          <p className="text-gray-500 text-xs">{formatDate(ev.start_date)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-zinc-900/50 border-gold-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-white flex items-center gap-2"><CheckSquare size={16} className="text-gold-400" />Tarefas Recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {tasks.length === 0 ? (
-                  <p className="text-gray-500 text-sm py-3 text-center">Sem tarefas</p>
-                ) : (
-                  <div className="space-y-2">
-                    {tasks.filter(t => t.status !== 'completed').slice(0, 4).map(t => (
-                      <div key={t.id} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${t.importance === 'high' ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm truncate">{t.title}</p>
-                          {t.due_date && <p className="text-gray-500 text-xs">{new Date(t.due_date).toLocaleDateString('pt-PT')}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
 
       {/* ==================== EMAIL TAB ==================== */}
       {activeTab === 'email' && <EmailClient />}

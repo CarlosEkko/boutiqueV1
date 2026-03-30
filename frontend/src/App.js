@@ -60,6 +60,7 @@ import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import CRMClients from "./pages/dashboard/crm/CRMClients";
 import CRMAdvancedDashboard from "./pages/dashboard/crm/CRMAdvancedDashboard";
 import TeamHub from "./pages/dashboard/team/TeamHub";
+import TeamHubDashboard from "./pages/dashboard/team/TeamHubDashboard";
 import O365Callback from "./pages/auth/O365Callback";
 import OTCDashboard from "./pages/dashboard/otc/OTCDashboard";
 import OTCLeads from "./pages/dashboard/otc/OTCLeads";
@@ -214,6 +215,7 @@ function AppRoutes() {
 
         {/* Team Hub */}
         <Route path="team-hub" element={<TeamHub />} />
+        <Route path="team-hub/dashboard" element={<TeamHubDashboard />} />
         <Route path="otc/leads" element={<OTCLeads />} />
         <Route path="otc/pipeline" element={<OTCPipeline />} />
         <Route path="otc/quotes" element={<OTCQuotes />} />

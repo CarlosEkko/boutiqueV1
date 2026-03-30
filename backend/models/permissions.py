@@ -274,6 +274,7 @@ DEPARTMENT_MENUS = {
         "label": "Team Hub",
         "icon": "Mail",
         "items": [
+            {"path": "/dashboard/team-hub/dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/team-hub", "label": "Team Hub", "icon": "Mail"},
         ]
     },

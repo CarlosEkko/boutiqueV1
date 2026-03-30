@@ -58,7 +58,8 @@ import {
   Kanban,
   FileText,
   Zap,
-  Building
+  Building,
+  Mail
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -71,7 +72,7 @@ const iconMap = {
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
   Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
-  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building
+  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail
 };
 
 // Department icon and color mapping
@@ -94,6 +95,7 @@ const departmentConfig = {
   crm: { icon: Users, color: 'text-pink-400', bgColor: 'bg-pink-500/20' },
   support: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   otc_desk: { icon: Briefcase, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
+  team_hub: { icon: Mail, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys

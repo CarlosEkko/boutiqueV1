@@ -1,60 +1,103 @@
 # KBEX.io — Product Requirements Document
 
-## Overview
-KBEX.io is a premium Crypto Boutique Exchange for HNW/UHNW individuals.
+## Visão Geral
+**KBEX.io** é uma Boutique Exchange de Crypto premium para indivíduos High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW). 
 
-## Tech Stack
-- Frontend: React, Tailwind CSS, Shadcn UI, GSAP, CRACO
-- Backend: FastAPI, Pydantic, MongoDB (Motor)
-- Deploy: Docker on VPS (kbex.io)
+## Stack Técnico
+- **Frontend**: React, Tailwind CSS, Shadcn UI
+- **Backend**: FastAPI, MongoDB (Motor), Pydantic
+- **Integrações**: Brevo (CRM/Emails automáticos), Sumsub (KYC), Microsoft 365 (Email/Calendar/Tasks), Stripe, Fireblocks
+- **Deploy**: Docker Compose em VPS
 
-## Implemented Features
+## Funcionalidades Core
+1. Exchange de Crypto (multi-moeda)
+2. OTC Desk com CRM completo (11 etapas de workflow)
+3. Carteiras Fiat/Crypto
+4. Onboarding com KYC automatizado (Sumsub)
+5. CRM Geral + OTC CRM
+6. Team Hub interno (Email O365, Calendário, Tarefas)
 
-### Team Hub (Email Client + Calendar + Tasks)
-- **Email Client (3-column layout)**:
-  - Sidebar: account info, compose button, folders (Enviados, Rascunhos), signature settings
-  - Email list: search, sender, subject, snippet, timestamp
-  - Reading pane: full email view with sender avatar, status badge
-  - Composer: To/Name/Subject fields, rich text editor with toolbar (Bold, Italic, Underline, Links, Lists, Alignment, Font Size, Text Color)
-  - Auto-appends email signature to sent emails
-  - Drafts: save, edit, delete
-- **Email Signature**: configurable per user, rich text editor, preview
-- **Calendar**: Monthly view, create/edit/delete events, color-coded, click-on-day creation
-- **Tasks**: Create/edit/delete, priority levels, status toggle, assign to team members, due dates, filter by status
-- **Stats dashboard**: emails today, total, pending tasks, upcoming events
+## Integrações Implementadas
 
-### Access & Auth
-- Public "Solicitar Acesso" -> CRM Lead + Brevo email
-- /auth = Login only | /register = Approved leads only
+### Microsoft 365 (Office 365) — IMPLEMENTADO
+- **OAuth2**: Authorization code flow com Azure AD
+- **Email**: Inbox completo via Microsoft Graph API (ler, responder, reencaminhar, mover, eliminar, enviar)
+- **Calendário**: Sincronizado com Outlook Calendar (CRUD eventos)
+- **Tarefas**: Sincronizado com Microsoft To Do (CRUD tarefas)
+- **Credenciais**: Azure AD App Registration (Tenant ID, Client ID, Client Secret em backend/.env)
+- **Pastas Email**: Inbox, Rascunhos, Enviados, Junk, Lixo, Arquivo, Conversações
+- **5 contas suportadas**: Cada utilizador KBEX conecta a sua conta O365
 
-### CRM General
-- Lead creation, OTC conversion, registration email via Brevo
-- Client 360 view, Brevo CRM sync, webhook tracking
+### Brevo — IMPLEMENTADO
+- Emails transacionais automáticos (onboarding, KYC, OTC)
+- CRM Sync
 
-### OTC Desk (11-Step Workflow)
-- Full pipeline, OTC client deletion, dynamic account manager dropdown
+### Sumsub — IMPLEMENTADO
+- KYC automatizado via WebSDK
 
-### KYC/KYB (Sumsub Only)
-- All KYC routes redirect to Sumsub WebSDK, manual removed
+## Estrutura do Team Hub
+- **Dashboard** (`/dashboard/team-hub/dashboard`): Visão geral com stats, próximos eventos, tarefas pendentes
+- **Team Hub** (`/dashboard/team-hub`): Email Client 3 colunas + Calendário + Tarefas (tabs)
 
-### Docker/VPS
-- docker-compose.yml with all env vars, .env.example documented
+## Arquitetura de Ficheiros
+```
+/app
+├── backend/
+│   ├── routes/
+│   │   ├── microsoft365.py          # OAuth2 + Graph API (Email/Calendar/Tasks)
+│   │   ├── team_hub.py              # Team Hub stats + legacy endpoints
+│   │   ├── otc.py                   # OTC CRM
+│   │   └── auth.py                  # Autenticação JWT
+│   ├── services/
+│   │   └── email_service.py         # Brevo transactional emails
+│   └── models/
+│       └── permissions.py           # Permissões + menus (TEAM_HUB dept)
+└── frontend/
+    ├── src/
+    │   ├── pages/
+    │   │   ├── auth/
+    │   │   │   └── O365Callback.jsx # OAuth callback handler
+    │   │   └── dashboard/
+    │   │       └── team/
+    │   │           ├── TeamHub.jsx        # Email/Calendar/Tasks (tabs)
+    │   │           ├── TeamHubDashboard.jsx # Dashboard page (stats)
+    │   │           └── EmailClient.jsx    # 3-column O365 email client
+    │   └── App.js                   # Routes
+```
 
-## Key API Endpoints
-- POST /api/team-hub/emails/send — Send email via Brevo
-- GET /api/team-hub/emails — List sent emails
-- POST/GET/DELETE /api/team-hub/drafts — Draft management
-- GET/PUT /api/team-hub/signature — Email signature CRUD
-- POST/GET/PUT/DELETE /api/team-hub/events — Calendar events
-- POST/GET/PUT/DELETE /api/team-hub/tasks — Task management
-- GET /api/team-hub/stats — Hub statistics
+## API Endpoints — Microsoft 365
+- `GET /api/o365/auth/url` — Generate OAuth URL
+- `POST /api/o365/auth/callback` — Exchange code for tokens
+- `GET /api/o365/auth/status` — Check connection status
+- `DELETE /api/o365/auth/disconnect` — Disconnect account
+- `GET /api/o365/mail/folders` — List mail folders
+- `GET /api/o365/mail/messages` — List messages
+- `GET /api/o365/mail/messages/{id}` — Message detail
+- `POST /api/o365/mail/send` — Send email
+- `POST /api/o365/mail/messages/{id}/reply` — Reply
+- `POST /api/o365/mail/messages/{id}/forward` — Forward
+- `POST /api/o365/mail/messages/{id}/move` — Move to folder
+- `DELETE /api/o365/mail/messages/{id}` — Delete
+- `GET /api/o365/calendar/events` — List events
+- `POST /api/o365/calendar/events` — Create event
+- `PATCH /api/o365/calendar/events/{id}` — Update event
+- `DELETE /api/o365/calendar/events/{id}` — Delete event
+- `GET /api/o365/tasks/lists` — List task lists
+- `GET /api/o365/tasks/lists/{id}/tasks` — List tasks
+- `POST /api/o365/tasks/lists/{id}/tasks` — Create task
+- `PATCH /api/o365/tasks/lists/{id}/tasks/{id}` — Update task
+- `DELETE /api/o365/tasks/lists/{id}/tasks/{id}` — Delete task
 
-## DB Collections
-- team_emails, team_drafts, email_signatures, team_events, team_tasks (NEW)
-- crm_leads, otc_leads, otc_clients, otc_deals, users, wallets
+## DB Collections (MongoDB)
+- `o365_tokens`: {user_id, access_token, refresh_token, expires_at, account_email, account_name}
+- `o365_states`: {user_id, state, created_at} (OAuth state validation)
 
-## Pending Issues
-- P1: Safari cursor bug | P1: Incomplete translations
+## Issues Pendentes
+- P1: Safari cursor bug (CSS)
+- P1: Traduções frontend incompletas
 
-## Upcoming Tasks
-- P1: TradingView widgets | P2: WebSockets | P2: Whitelist | P3: Launchpad/ICO
+## Backlog
+- P2: TradingView chart widgets
+- P2: WebSockets (substituir HTTP polling)
+- P2: Whitelist
+- P3: Launchpad/ICO pages
