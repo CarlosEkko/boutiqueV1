@@ -23,24 +23,8 @@ import {
   DialogFooter,
 } from '../../../components/ui/dialog';
 import {
-  Mail,
-  Calendar,
-  CheckSquare,
-  Send,
-  Plus,
-  Search,
-  Clock,
-  User,
-  Trash2,
-  Edit,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  ArrowUp,
-  ArrowRight,
-  ArrowDown,
-  Eye,
-  RefreshCw,
+  Mail, Calendar, CheckSquare, Plus, Clock, User, Trash2, Edit,
+  ChevronLeft, ChevronRight, ArrowUp, ArrowRight, ArrowDown, RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,21 +34,24 @@ const PRIORITY_CONFIG = {
   urgent: { label: 'Urgente', color: 'bg-red-900/40 text-red-400', icon: ArrowUp },
   high: { label: 'Alta', color: 'bg-orange-900/40 text-orange-400', icon: ArrowUp },
   medium: { label: 'Média', color: 'bg-yellow-900/40 text-yellow-400', icon: ArrowRight },
+  normal: { label: 'Normal', color: 'bg-yellow-900/40 text-yellow-400', icon: ArrowRight },
   low: { label: 'Baixa', color: 'bg-blue-900/40 text-blue-400', icon: ArrowDown },
 };
 
 const STATUS_CONFIG = {
   todo: { label: 'A Fazer', color: 'bg-gray-900/40 text-gray-400' },
+  notStarted: { label: 'A Fazer', color: 'bg-gray-900/40 text-gray-400' },
   in_progress: { label: 'Em Progresso', color: 'bg-blue-900/40 text-blue-400' },
+  inProgress: { label: 'Em Progresso', color: 'bg-blue-900/40 text-blue-400' },
   done: { label: 'Concluída', color: 'bg-green-900/40 text-green-400' },
+  completed: { label: 'Concluída', color: 'bg-green-900/40 text-green-400' },
 };
 
 const TeamHub = () => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('email');
   const [stats, setStats] = useState({});
-
-  // Email state - now handled by EmailClient component
+  const [o365Connected, setO365Connected] = useState(false);
 
   // Calendar state
   const [events, setEvents] = useState([]);
@@ -78,22 +65,28 @@ const TeamHub = () => {
   const [taskFilter, setTaskFilter] = useState('all');
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [taskData, setTaskData] = useState({ title: '', description: '', priority: 'medium', assigned_to: '', due_date: '', tags: [] });
-  
-  // Team members
-  const [teamMembers, setTeamMembers] = useState([]);
+  const [taskData, setTaskData] = useState({ title: '', description: '', priority: 'normal', due_date: '' });
+  const [taskLists, setTaskLists] = useState([]);
+  const [activeTaskList, setActiveTaskList] = useState(null);
+
+  const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     fetchStats();
-    fetchTeamMembers();
+    checkO365();
   }, [token]);
 
   useEffect(() => {
     if (activeTab === 'calendar') fetchEvents();
-    if (activeTab === 'tasks') fetchTasks();
-  }, [activeTab, token]);
+    if (activeTab === 'tasks') fetchTaskLists();
+  }, [activeTab, token, o365Connected]);
 
-  const headers = { Authorization: `Bearer ${token}` };
+  const checkO365 = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/o365/auth/status`, { headers });
+      setO365Connected(res.data.connected);
+    } catch { setO365Connected(false); }
+  };
 
   const fetchStats = async () => {
     try {
@@ -102,21 +95,25 @@ const TeamHub = () => {
     } catch (err) { console.error(err); }
   };
 
-  const fetchTeamMembers = async () => {
+  // ==================== CALENDAR (O365) ====================
+  const fetchEvents = async () => {
+    if (!o365Connected) return;
     try {
-      const res = await axios.get(`${API_URL}/api/admin/users`, { headers });
-      const users = res.data.users || res.data || [];
-      setTeamMembers(users.filter(u => u.user_type === 'internal'));
-    } catch (err) { console.error(err); }
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const start = new Date(year, month, 1).toISOString();
+      const end = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+      const res = await axios.get(`${API_URL}/api/o365/calendar/events?start=${start}&end=${end}`, { headers });
+      setEvents(res.data.events || []);
+    } catch (err) {
+      console.error('Failed to fetch O365 events:', err);
+      toast.error('Erro ao carregar calendário');
+    }
   };
 
-  // ==================== CALENDAR ====================
-  const fetchEvents = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/team-hub/events`, { headers });
-      setEvents(res.data.events || []);
-    } catch (err) { console.error(err); }
-  };
+  useEffect(() => {
+    if (activeTab === 'calendar' && o365Connected) fetchEvents();
+  }, [currentMonth]);
 
   const handleSaveEvent = async () => {
     if (!eventData.title || !eventData.start_date) {
@@ -125,79 +122,124 @@ const TeamHub = () => {
     }
     try {
       if (selectedEvent) {
-        await axios.put(`${API_URL}/api/team-hub/events/${selectedEvent.id}`, eventData, { headers });
-        toast.success('Evento atualizado');
-      } else {
-        await axios.post(`${API_URL}/api/team-hub/events`, {
-          ...eventData,
-          end_date: eventData.end_date || eventData.start_date,
+        await axios.patch(`${API_URL}/api/o365/calendar/events/${selectedEvent.id}`, {
+          subject: eventData.title,
+          start_time: new Date(eventData.start_date).toISOString(),
+          end_time: new Date(eventData.end_date || eventData.start_date).toISOString(),
+          location: eventData.location,
+          body: eventData.description,
         }, { headers });
-        toast.success('Evento criado');
+        toast.success('Evento atualizado no Outlook');
+      } else {
+        await axios.post(`${API_URL}/api/o365/calendar/events`, {
+          subject: eventData.title,
+          start_time: new Date(eventData.start_date).toISOString(),
+          end_time: new Date(eventData.end_date || eventData.start_date).toISOString(),
+          location: eventData.location,
+          body: eventData.description,
+          is_all_day: eventData.all_day,
+        }, { headers });
+        toast.success('Evento criado no Outlook');
       }
       setShowEventDialog(false);
       setSelectedEvent(null);
       setEventData({ title: '', description: '', start_date: '', end_date: '', location: '', color: '#D4AF37', all_day: false });
       fetchEvents();
-      fetchStats();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro');
+      toast.error(err.response?.data?.detail || 'Erro ao guardar evento');
     }
   };
 
   const handleDeleteEvent = async (id) => {
-    if (!window.confirm('Eliminar este evento?')) return;
+    if (!window.confirm('Eliminar este evento do Outlook?')) return;
     try {
-      await axios.delete(`${API_URL}/api/team-hub/events/${id}`, { headers });
+      await axios.delete(`${API_URL}/api/o365/calendar/events/${id}`, { headers });
       toast.success('Evento eliminado');
       fetchEvents();
     } catch (err) { toast.error('Erro ao eliminar'); }
   };
 
-  // ==================== TASKS ====================
-  const fetchTasks = async () => {
+  // ==================== TASKS (O365 To Do) ====================
+  const fetchTaskLists = async () => {
+    if (!o365Connected) return;
     try {
-      const params = taskFilter !== 'all' ? `?status=${taskFilter}` : '';
-      const res = await axios.get(`${API_URL}/api/team-hub/tasks${params}`, { headers });
-      setTasks(res.data.tasks || []);
-    } catch (err) { console.error(err); }
+      const res = await axios.get(`${API_URL}/api/o365/tasks/lists`, { headers });
+      const lists = res.data.lists || [];
+      setTaskLists(lists);
+      if (lists.length > 0 && !activeTaskList) {
+        const defaultList = lists.find(l => l.is_default) || lists[0];
+        setActiveTaskList(defaultList);
+        fetchTasks(defaultList.id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch task lists:', err);
+    }
   };
 
-  useEffect(() => { if (activeTab === 'tasks') fetchTasks(); }, [taskFilter]);
+  const fetchTasks = async (listId) => {
+    if (!listId) return;
+    try {
+      const statusParam = taskFilter !== 'all' ? `?status=${taskFilter}` : '';
+      const res = await axios.get(`${API_URL}/api/o365/tasks/lists/${listId}/tasks${statusParam}`, { headers });
+      setTasks(res.data.tasks || []);
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'tasks' && activeTaskList) fetchTasks(activeTaskList.id);
+  }, [taskFilter, activeTaskList]);
 
   const handleSaveTask = async () => {
     if (!taskData.title) { toast.error('Preencha o título'); return; }
+    const listId = activeTaskList?.id;
+    if (!listId) { toast.error('Selecione uma lista de tarefas'); return; }
     try {
       if (selectedTask) {
-        await axios.put(`${API_URL}/api/team-hub/tasks/${selectedTask.id}`, taskData, { headers });
-        toast.success('Tarefa atualizada');
+        await axios.patch(`${API_URL}/api/o365/tasks/lists/${listId}/tasks/${selectedTask.id}`, {
+          title: taskData.title,
+          body: taskData.description,
+          importance: taskData.priority,
+          due_date: taskData.due_date ? new Date(taskData.due_date).toISOString() : null,
+        }, { headers });
+        toast.success('Tarefa atualizada no To Do');
       } else {
-        await axios.post(`${API_URL}/api/team-hub/tasks`, taskData, { headers });
-        toast.success('Tarefa criada');
+        await axios.post(`${API_URL}/api/o365/tasks/lists/${listId}/tasks`, {
+          title: taskData.title,
+          body: taskData.description,
+          importance: taskData.priority,
+          due_date: taskData.due_date ? new Date(taskData.due_date).toISOString() : null,
+        }, { headers });
+        toast.success('Tarefa criada no To Do');
       }
       setShowTaskDialog(false);
       setSelectedTask(null);
-      setTaskData({ title: '', description: '', priority: 'medium', assigned_to: '', due_date: '', tags: [] });
-      fetchTasks();
-      fetchStats();
+      setTaskData({ title: '', description: '', priority: 'normal', due_date: '' });
+      fetchTasks(listId);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro');
     }
   };
 
   const handleToggleTaskStatus = async (task) => {
-    const nextStatus = task.status === 'todo' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'todo';
+    const listId = activeTaskList?.id;
+    if (!listId) return;
+    const next = task.status === 'completed' ? 'notStarted' : 'completed';
     try {
-      await axios.put(`${API_URL}/api/team-hub/tasks/${task.id}`, { status: nextStatus }, { headers });
-      fetchTasks();
+      await axios.patch(`${API_URL}/api/o365/tasks/lists/${listId}/tasks/${task.id}`, { status: next }, { headers });
+      fetchTasks(listId);
     } catch (err) { toast.error('Erro ao atualizar'); }
   };
 
   const handleDeleteTask = async (id) => {
-    if (!window.confirm('Eliminar esta tarefa?')) return;
+    if (!window.confirm('Eliminar esta tarefa do To Do?')) return;
+    const listId = activeTaskList?.id;
+    if (!listId) return;
     try {
-      await axios.delete(`${API_URL}/api/team-hub/tasks/${id}`, { headers });
+      await axios.delete(`${API_URL}/api/o365/tasks/lists/${listId}/tasks/${id}`, { headers });
       toast.success('Tarefa eliminada');
-      fetchTasks();
+      fetchTasks(listId);
     } catch (err) { toast.error('Erro ao eliminar'); }
   };
 
@@ -216,7 +258,7 @@ const TeamHub = () => {
   const getEventsForDay = (day) => {
     if (!day) return [];
     const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return events.filter(e => e.start_date?.startsWith(dateStr));
+    return events.filter(e => (e.start_date || '').startsWith(dateStr));
   };
 
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -240,6 +282,9 @@ const TeamHub = () => {
           </h1>
           <p className="text-gray-400 mt-1">Email, Calendário e Tarefas da equipa</p>
         </div>
+        {o365Connected && (
+          <Badge className="bg-blue-900/30 text-blue-400 text-xs">Microsoft 365 Conectado</Badge>
+        )}
       </div>
 
       {/* Stats */}
@@ -293,213 +338,270 @@ const TeamHub = () => {
       </div>
 
       {/* ==================== EMAIL TAB ==================== */}
-      {activeTab === 'email' && (
-        <EmailClient />
-      )}
+      {activeTab === 'email' && <EmailClient />}
 
       {/* ==================== CALENDAR TAB ==================== */}
       {activeTab === 'calendar' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
-                <ChevronLeft size={18} />
-              </Button>
-              <h2 className="text-xl text-white font-medium min-w-[200px] text-center">
-                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-              </h2>
-              <Button variant="ghost" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
-                <ChevronRight size={18} />
-              </Button>
-            </div>
-            <Button onClick={() => { setSelectedEvent(null); setEventData({ title: '', description: '', start_date: '', end_date: '', location: '', color: '#D4AF37', all_day: false }); setShowEventDialog(true); }} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="create-event-btn">
-              <Plus size={16} className="mr-2" /> Novo Evento
-            </Button>
-          </div>
-
-          <Card className="bg-zinc-900/50 border-gold-500/20">
-            <CardContent className="p-4">
-              {/* Day headers */}
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
-                  <div key={d} className="text-center text-gray-500 text-xs font-medium py-1">{d}</div>
-                ))}
-              </div>
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-1">
-                {getDaysInMonth(currentMonth).map((day, idx) => {
-                  const dayEvents = getEventsForDay(day);
-                  const isToday = day && new Date().getDate() === day && new Date().getMonth() === currentMonth.getMonth() && new Date().getFullYear() === currentMonth.getFullYear();
-                  return (
-                    <div
-                      key={idx}
-                      className={`min-h-[80px] p-1 rounded-lg border transition-colors ${
-                        day ? (isToday ? 'border-gold-500/50 bg-gold-500/5' : 'border-zinc-800 hover:border-zinc-600') : 'border-transparent'
-                      }`}
-                      onClick={() => {
-                        if (!day) return;
-                        const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T09:00`;
-                        setSelectedEvent(null);
-                        setEventData({ title: '', description: '', start_date: dateStr, end_date: dateStr.replace('09:00', '10:00'), location: '', color: '#D4AF37', all_day: false });
-                        setShowEventDialog(true);
-                      }}
-                    >
-                      {day && (
-                        <>
-                          <span className={`text-xs ${isToday ? 'text-gold-400 font-bold' : 'text-gray-400'}`}>{day}</span>
-                          <div className="space-y-0.5 mt-0.5">
-                            {dayEvents.slice(0, 2).map(ev => (
-                              <div
-                                key={ev.id}
-                                className="text-[10px] px-1 py-0.5 rounded truncate cursor-pointer"
-                                style={{ backgroundColor: ev.color + '30', color: ev.color }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEvent(ev);
-                                  setEventData({ title: ev.title, description: ev.description || '', start_date: ev.start_date, end_date: ev.end_date, location: ev.location || '', color: ev.color || '#D4AF37', all_day: ev.all_day });
-                                  setShowEventDialog(true);
-                                }}
-                              >
-                                {ev.title}
-                              </div>
-                            ))}
-                            {dayEvents.length > 2 && <span className="text-[10px] text-gray-500">+{dayEvents.length - 2}</span>}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+        !o365Connected ? (
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardContent className="py-16 text-center">
+              <Calendar size={40} className="mx-auto mb-4 text-blue-400 opacity-50" />
+              <p className="text-white text-lg mb-2">Calendário Outlook</p>
+              <p className="text-gray-400 text-sm mb-4">Conecte o Office 365 no separador Email para ver o calendário do Outlook.</p>
             </CardContent>
           </Card>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}>
+                  <ChevronLeft size={18} />
+                </Button>
+                <h2 className="text-xl text-white font-medium min-w-[200px] text-center">
+                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </h2>
+                <Button variant="ghost" onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}>
+                  <ChevronRight size={18} />
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={fetchEvents} variant="outline" size="sm" className="border-zinc-700 text-gray-400">
+                  <RefreshCw size={14} className="mr-2" /> Sincronizar
+                </Button>
+                <Button onClick={() => { setSelectedEvent(null); setEventData({ title: '', description: '', start_date: '', end_date: '', location: '', color: '#D4AF37', all_day: false }); setShowEventDialog(true); }} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="create-event-btn">
+                  <Plus size={16} className="mr-2" /> Novo Evento
+                </Button>
+              </div>
+            </div>
 
-          {/* Upcoming events list */}
-          <Card className="bg-zinc-900/50 border-gold-500/20">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-white flex items-center gap-2">
-                <Clock size={18} className="text-gold-400" /> Próximos Eventos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {events.filter(e => e.start_date >= new Date().toISOString()).length === 0 ? (
-                <p className="text-gray-500 text-sm py-4 text-center">Sem eventos futuros</p>
-              ) : (
-                <div className="space-y-2">
-                  {events.filter(e => e.start_date >= new Date().toISOString()).slice(0, 5).map(ev => (
-                    <div key={ev.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ev.color }} />
-                        <div>
-                          <p className="text-white text-sm font-medium">{ev.title}</p>
-                          <p className="text-gray-500 text-xs">{formatDate(ev.start_date)} {ev.location && `- ${ev.location}`}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white h-8 w-8 p-0" onClick={() => { setSelectedEvent(ev); setEventData({ title: ev.title, description: ev.description || '', start_date: ev.start_date, end_date: ev.end_date, location: ev.location || '', color: ev.color || '#D4AF37', all_day: ev.all_day }); setShowEventDialog(true); }}>
-                          <Edit size={14} />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300 h-8 w-8 p-0" onClick={() => handleDeleteEvent(ev.id)}>
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
-                    </div>
+            <Card className="bg-zinc-900/50 border-gold-500/20">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => (
+                    <div key={d} className="text-center text-gray-500 text-xs font-medium py-1">{d}</div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ==================== TASKS TAB ==================== */}
-      {activeTab === 'tasks' && (
-        <div className="space-y-4">
-          <div className="flex gap-3">
-            <Select value={taskFilter} onValueChange={setTaskFilter}>
-              <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-gold-500/30">
-                <SelectItem value="all" className="text-white hover:bg-zinc-700">Todas</SelectItem>
-                <SelectItem value="todo" className="text-white hover:bg-zinc-700">A Fazer</SelectItem>
-                <SelectItem value="in_progress" className="text-white hover:bg-zinc-700">Em Progresso</SelectItem>
-                <SelectItem value="done" className="text-white hover:bg-zinc-700">Concluídas</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex-1" />
-            <Button onClick={() => { setSelectedTask(null); setTaskData({ title: '', description: '', priority: 'medium', assigned_to: '', due_date: '', tags: [] }); setShowTaskDialog(true); }} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="create-task-btn">
-              <Plus size={16} className="mr-2" /> Nova Tarefa
-            </Button>
-          </div>
-
-          {tasks.length === 0 ? (
-            <Card className="bg-zinc-900/50 border-gold-500/20">
-              <CardContent className="py-12 text-center text-gray-500">
-                <CheckSquare size={40} className="mx-auto mb-3 opacity-30" />
-                <p>Nenhuma tarefa encontrada</p>
+                <div className="grid grid-cols-7 gap-1">
+                  {getDaysInMonth(currentMonth).map((day, idx) => {
+                    const dayEvents = getEventsForDay(day);
+                    const isToday = day && new Date().getDate() === day && new Date().getMonth() === currentMonth.getMonth() && new Date().getFullYear() === currentMonth.getFullYear();
+                    return (
+                      <div
+                        key={idx}
+                        className={`min-h-[80px] p-1 rounded-lg border transition-colors ${
+                          day ? (isToday ? 'border-gold-500/50 bg-gold-500/5' : 'border-zinc-800 hover:border-zinc-600') : 'border-transparent'
+                        }`}
+                        onClick={() => {
+                          if (!day) return;
+                          const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T09:00`;
+                          setSelectedEvent(null);
+                          setEventData({ title: '', description: '', start_date: dateStr, end_date: dateStr.replace('09:00', '10:00'), location: '', color: '#D4AF37', all_day: false });
+                          setShowEventDialog(true);
+                        }}
+                      >
+                        {day && (
+                          <>
+                            <span className={`text-xs ${isToday ? 'text-gold-400 font-bold' : 'text-gray-400'}`}>{day}</span>
+                            <div className="space-y-0.5 mt-0.5">
+                              {dayEvents.slice(0, 2).map(ev => (
+                                <div
+                                  key={ev.id}
+                                  className="text-[10px] px-1 py-0.5 rounded truncate cursor-pointer bg-blue-500/20 text-blue-300"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedEvent(ev);
+                                    setEventData({
+                                      title: ev.title, description: ev.body || '',
+                                      start_date: ev.start_date ? ev.start_date.slice(0, 16) : '',
+                                      end_date: ev.end_date ? ev.end_date.slice(0, 16) : '',
+                                      location: ev.location || '', color: '#D4AF37', all_day: ev.all_day,
+                                    });
+                                    setShowEventDialog(true);
+                                  }}
+                                >
+                                  {ev.title}
+                                </div>
+                              ))}
+                              {dayEvents.length > 2 && <span className="text-[10px] text-gray-500">+{dayEvents.length - 2}</span>}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-2">
-              {tasks.map(task => {
-                const prioConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
-                const statusConfig = STATUS_CONFIG[task.status] || STATUS_CONFIG.todo;
-                const PrioIcon = prioConfig.icon;
-                return (
-                  <Card key={task.id} className="bg-zinc-900/50 border-gold-500/10 hover:border-gold-500/30 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        {/* Checkbox */}
-                        <button
-                          onClick={() => handleToggleTaskStatus(task)}
-                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
-                            task.status === 'done' ? 'bg-green-600 border-green-600' : 'border-gray-600 hover:border-gold-400'
-                          }`}
-                          data-testid={`toggle-task-${task.id}`}
-                        >
-                          {task.status === 'done' && <CheckSquare size={14} className="text-white" />}
-                        </button>
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium ${task.status === 'done' ? 'text-gray-500 line-through' : 'text-white'}`}>
-                              {task.title}
-                            </p>
-                            <Badge className={prioConfig.color + ' text-xs'}>
-                              <PrioIcon size={10} className="mr-1" />{prioConfig.label}
-                            </Badge>
-                            <Badge className={statusConfig.color + ' text-xs'}>{statusConfig.label}</Badge>
-                          </div>
-                          {task.description && <p className="text-gray-500 text-xs mt-1 truncate">{task.description}</p>}
-                          <div className="flex items-center gap-3 mt-1">
-                            {task.assigned_to_name && (
-                              <span className="text-gray-500 text-xs flex items-center gap-1"><User size={10} />{task.assigned_to_name}</span>
-                            )}
-                            {task.due_date && (
-                              <span className="text-gray-500 text-xs flex items-center gap-1"><Clock size={10} />{new Date(task.due_date).toLocaleDateString('pt-PT')}</span>
-                            )}
+            {/* Upcoming events */}
+            <Card className="bg-zinc-900/50 border-gold-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <Clock size={18} className="text-gold-400" /> Eventos do Mês
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {events.length === 0 ? (
+                  <p className="text-gray-500 text-sm py-4 text-center">Sem eventos este mês</p>
+                ) : (
+                  <div className="space-y-2">
+                    {events.slice(0, 10).map(ev => (
+                      <div key={ev.id} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full bg-blue-500" />
+                          <div>
+                            <p className="text-white text-sm font-medium">{ev.title}</p>
+                            <p className="text-gray-500 text-xs">{formatDate(ev.start_date)} {ev.location && `- ${ev.location}`}</p>
                           </div>
                         </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-1 flex-shrink-0">
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white h-8 w-8 p-0" onClick={() => { setSelectedTask(task); setTaskData({ title: task.title, description: task.description || '', priority: task.priority, assigned_to: task.assigned_to || '', due_date: task.due_date || '', tags: task.tags || [] }); setShowTaskDialog(true); }}>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white h-8 w-8 p-0" onClick={() => {
+                            setSelectedEvent(ev);
+                            setEventData({
+                              title: ev.title, description: ev.body || '',
+                              start_date: ev.start_date ? ev.start_date.slice(0, 16) : '',
+                              end_date: ev.end_date ? ev.end_date.slice(0, 16) : '',
+                              location: ev.location || '', color: '#D4AF37', all_day: ev.all_day,
+                            });
+                            setShowEventDialog(true);
+                          }}>
                             <Edit size={14} />
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300 h-8 w-8 p-0" onClick={() => handleDeleteTask(task.id)}>
+                          <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300 h-8 w-8 p-0" onClick={() => handleDeleteEvent(ev.id)}>
                             <Trash2 size={14} />
                           </Button>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )
+      )}
+
+      {/* ==================== TASKS TAB ==================== */}
+      {activeTab === 'tasks' && (
+        !o365Connected ? (
+          <Card className="bg-zinc-900/50 border-zinc-800">
+            <CardContent className="py-16 text-center">
+              <CheckSquare size={40} className="mx-auto mb-4 text-blue-400 opacity-50" />
+              <p className="text-white text-lg mb-2">Tarefas Microsoft To Do</p>
+              <p className="text-gray-400 text-sm mb-4">Conecte o Office 365 no separador Email para ver as tarefas do Microsoft To Do.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex gap-3 flex-wrap">
+              {/* Task list selector */}
+              {taskLists.length > 1 && (
+                <Select value={activeTaskList?.id || ''} onValueChange={v => {
+                  const list = taskLists.find(l => l.id === v);
+                  setActiveTaskList(list);
+                }}>
+                  <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white">
+                    <SelectValue placeholder="Lista" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-gold-500/30">
+                    {taskLists.map(l => (
+                      <SelectItem key={l.id} value={l.id} className="text-white hover:bg-zinc-700">{l.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={taskFilter} onValueChange={setTaskFilter}>
+                <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-gold-500/30">
+                  <SelectItem value="all" className="text-white hover:bg-zinc-700">Todas</SelectItem>
+                  <SelectItem value="notStarted" className="text-white hover:bg-zinc-700">A Fazer</SelectItem>
+                  <SelectItem value="completed" className="text-white hover:bg-zinc-700">Concluídas</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex-1" />
+              <Button onClick={() => activeTaskList && fetchTasks(activeTaskList.id)} variant="outline" size="sm" className="border-zinc-700 text-gray-400">
+                <RefreshCw size={14} className="mr-2" /> Sincronizar
+              </Button>
+              <Button onClick={() => { setSelectedTask(null); setTaskData({ title: '', description: '', priority: 'normal', due_date: '' }); setShowTaskDialog(true); }} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="create-task-btn">
+                <Plus size={16} className="mr-2" /> Nova Tarefa
+              </Button>
             </div>
-          )}
-        </div>
+
+            {tasks.length === 0 ? (
+              <Card className="bg-zinc-900/50 border-gold-500/20">
+                <CardContent className="py-12 text-center text-gray-500">
+                  <CheckSquare size={40} className="mx-auto mb-3 opacity-30" />
+                  <p>Nenhuma tarefa encontrada</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {tasks.map(task => {
+                  const prioConfig = PRIORITY_CONFIG[task.importance] || PRIORITY_CONFIG.normal;
+                  const statusConfig = STATUS_CONFIG[task.status] || STATUS_CONFIG.notStarted;
+                  const PrioIcon = prioConfig.icon;
+                  return (
+                    <Card key={task.id} className="bg-zinc-900/50 border-gold-500/10 hover:border-gold-500/30 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <button
+                            onClick={() => handleToggleTaskStatus(task)}
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
+                              task.status === 'completed' ? 'bg-green-600 border-green-600' : 'border-gray-600 hover:border-gold-400'
+                            }`}
+                            data-testid={`toggle-task-${task.id}`}
+                          >
+                            {task.status === 'completed' && <CheckSquare size={14} className="text-white" />}
+                          </button>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`text-sm font-medium ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-white'}`}>
+                                {task.title}
+                              </p>
+                              <Badge className={prioConfig.color + ' text-xs'}>
+                                <PrioIcon size={10} className="mr-1" />{prioConfig.label}
+                              </Badge>
+                              <Badge className={statusConfig.color + ' text-xs'}>{statusConfig.label}</Badge>
+                            </div>
+                            {task.body && <p className="text-gray-500 text-xs mt-1 truncate">{task.body}</p>}
+                            <div className="flex items-center gap-3 mt-1">
+                              {task.due_date && (
+                                <span className="text-gray-500 text-xs flex items-center gap-1"><Clock size={10} />{new Date(task.due_date).toLocaleDateString('pt-PT')}</span>
+                              )}
+                              {task.categories?.length > 0 && task.categories.map(c => (
+                                <span key={c} className="text-[10px] bg-zinc-700 text-gray-400 px-1.5 py-0.5 rounded">{c}</span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white h-8 w-8 p-0" onClick={() => {
+                              setSelectedTask(task);
+                              setTaskData({
+                                title: task.title, description: task.body || '',
+                                priority: task.importance || 'normal',
+                                due_date: task.due_date ? task.due_date.split('T')[0] : '',
+                              });
+                              setShowTaskDialog(true);
+                            }}>
+                              <Edit size={14} />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300 h-8 w-8 p-0" onClick={() => handleDeleteTask(task.id)}>
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )
       )}
 
       {/* ==================== EVENT DIALOG ==================== */}
@@ -531,14 +633,6 @@ const TeamHub = () => {
               <Label className="text-gray-400">Descrição</Label>
               <Textarea value={eventData.description} onChange={e => setEventData({...eventData, description: e.target.value})} className="bg-zinc-800 border-zinc-700" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-gray-400">Cor</Label>
-              <div className="flex gap-2">
-                {['#D4AF37', '#22c55e', '#3b82f6', '#ef4444', '#a855f7', '#f97316'].map(c => (
-                  <button key={c} onClick={() => setEventData({...eventData, color: c})} className={`w-8 h-8 rounded-full border-2 ${eventData.color === c ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: c }} />
-                ))}
-              </div>
-            </div>
           </div>
           <DialogFooter className="flex gap-2">
             {selectedEvent && (
@@ -569,14 +663,13 @@ const TeamHub = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-400">Prioridade</Label>
+                <Label className="text-gray-400">Importância</Label>
                 <Select value={taskData.priority} onValueChange={v => setTaskData({...taskData, priority: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
                     <SelectItem value="low" className="text-white hover:bg-zinc-700">Baixa</SelectItem>
-                    <SelectItem value="medium" className="text-white hover:bg-zinc-700">Média</SelectItem>
+                    <SelectItem value="normal" className="text-white hover:bg-zinc-700">Normal</SelectItem>
                     <SelectItem value="high" className="text-white hover:bg-zinc-700">Alta</SelectItem>
-                    <SelectItem value="urgent" className="text-white hover:bg-zinc-700">Urgente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -584,17 +677,6 @@ const TeamHub = () => {
                 <Label className="text-gray-400">Data Limite</Label>
                 <Input type="date" value={taskData.due_date} onChange={e => setTaskData({...taskData, due_date: e.target.value})} className="bg-zinc-800 border-zinc-700" />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-400">Atribuir a</Label>
-              <Select value={taskData.assigned_to} onValueChange={v => setTaskData({...taskData, assigned_to: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar membro" /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {teamMembers.map(m => (
-                    <SelectItem key={m.id} value={m.id} className="text-white hover:bg-zinc-700">{m.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>
