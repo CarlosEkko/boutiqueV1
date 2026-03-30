@@ -192,17 +192,17 @@ const CRMLeads = () => {
     }
   };
 
-  const convertLead = async (id) => {
-    if (!window.confirm('Converter este lead em cliente?')) return;
+  const sendRegistrationEmail = async (id) => {
+    if (!window.confirm('Enviar email de registo para este lead?')) return;
     
     try {
-      await axios.post(`${API_URL}/api/crm/leads/${id}/convert`, {}, {
+      const res = await axios.post(`${API_URL}/api/crm/leads/${id}/send-registration`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Lead convertido em cliente!');
+      toast.success(res.data.message || 'Email de registo enviado com sucesso!');
       fetchLeads();
     } catch (err) {
-      toast.error('Erro ao converter lead');
+      toast.error(err.response?.data?.detail || 'Erro ao enviar email de registo');
     }
   };
 
@@ -410,12 +410,12 @@ const CRMLeads = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => convertLead(lead.id)}
+                            onClick={() => sendRegistrationEmail(lead.id)}
                             className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/30"
-                            title="Converter em Cliente"
-                            data-testid={`convert-to-client-${lead.id}`}
+                            title="Enviar Email de Registo"
+                            data-testid={`send-registration-${lead.id}`}
                           >
-                            <ArrowRight size={14} />
+                            <Mail size={14} />
                           </Button>
                         </>
                       )}

@@ -328,26 +328,63 @@ async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_use
     
     return {"message": "Lead deleted"}
 
-@router.post("/leads/{lead_id}/convert")
-async def convert_lead_to_client(lead_id: str, current_user: dict = Depends(get_current_user)):
-    """Convert a lead to a client"""
+@router.post("/leads/{lead_id}/send-registration")
+async def send_registration_email(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Send registration email to a lead so they can register as a client"""
     db = get_db()
     
     lead = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
     
-    # Mark lead as converted
+    lead_email = lead.get("email")
+    lead_name = lead.get("name", "")
+    
+    if not lead_email:
+        raise HTTPException(status_code=400, detail="Lead não tem email definido")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": {"$regex": f"^{lead_email}$", "$options": "i"}})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Este email já tem uma conta registada na plataforma")
+    
+    # Build registration link
+    import os
+    base_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+    registration_link = f"{base_url}/register?email={lead_email}"
+    
+    # Send onboarding email via Brevo
+    email_sent = False
+    try:
+        from services.email_service import email_service
+        if email_service:
+            email_result = await email_service.send_onboarding_email(
+                to_email=lead_email,
+                to_name=lead_name,
+                entity_name=lead.get("company_name") or lead_name,
+                registration_link=registration_link,
+            )
+            email_sent = email_result.get("success", False)
+            if not email_sent:
+                logger.warning(f"Registration email not sent to {lead_email}: {email_result.get('error', 'unknown')}")
+    except Exception as e:
+        logger.warning(f"Failed to send registration email: {e}")
+    
+    # Update lead status
     await db.crm_leads.update_one(
         {"_id": ObjectId(lead_id)},
         {"$set": {
-            "converted_to_client": True,
-            "converted_at": datetime.now(timezone.utc),
-            "status": LeadStatus.WON.value
+            "status": LeadStatus.QUALIFIED.value,
+            "registration_email_sent": True,
+            "registration_email_sent_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc)
         }}
     )
     
-    return {"message": "Lead converted to client", "lead_id": lead_id}
+    if not email_sent:
+        raise HTTPException(status_code=500, detail="Não foi possível enviar o email. Verifique a configuração do Brevo.")
+    
+    return {"success": True, "message": f"Email de registo enviado para {lead_email}", "email_sent": email_sent}
 
 
 @router.post("/leads/{lead_id}/convert-to-otc")
