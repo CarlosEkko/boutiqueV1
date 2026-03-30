@@ -29,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../components/ui/table';
-import { 
+import {
   Users,
   Search,
   Eye,
@@ -49,7 +49,8 @@ import {
   User,
   Globe,
   Copy,
-  MessageCircle
+  MessageCircle,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -161,6 +162,23 @@ const OTCClients = () => {
       setShowDetailDialog(false);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao remover acesso');
+    }
+  };
+
+  const handleDeleteClient = async (clientId, entityName) => {
+    if (!window.confirm(`Tem certeza que deseja eliminar o cliente "${entityName}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_URL}/api/otc/clients/${clientId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Cliente OTC eliminado com sucesso');
+      fetchClients();
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar cliente');
     }
   };
 
@@ -391,6 +409,16 @@ const OTCClients = () => {
                         >
                           <Shield size={16} />
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteClient(client.id, client.entity_name)}
+                          className="text-red-400 hover:text-red-300"
+                          title="Eliminar Cliente"
+                          data-testid={`delete-otc-client-${client.id}`}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -591,6 +619,19 @@ const OTCClients = () => {
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* Delete Client */}
+              <div className="pt-4 border-t border-zinc-700/50">
+                <Button
+                  onClick={() => handleDeleteClient(selectedClient.id, selectedClient.entity_name)}
+                  variant="outline"
+                  className="w-full border-red-600/50 text-red-400 hover:bg-red-900/20"
+                  data-testid="delete-client-detail-btn"
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Eliminar Cliente OTC
+                </Button>
               </div>
             </div>
           )}

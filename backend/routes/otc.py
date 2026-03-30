@@ -1137,6 +1137,32 @@ async def unlink_user_from_otc_client(
     return {"success": True, "message": "User unlinked from OTC client"}
 
 
+
+@router.delete("/clients/{client_id}")
+async def delete_otc_client(
+    client_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an OTC client"""
+    db = get_db()
+    
+    client = await db.otc_clients.find_one({"id": client_id})
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    # Check for active deals
+    active_deals = await db.otc_deals.count_documents({
+        "client_id": client_id,
+        "stage": {"$nin": ["completed", "cancelled", "post_sale"]}
+    })
+    if active_deals > 0:
+        raise HTTPException(status_code=400, detail=f"Não é possível eliminar: existem {active_deals} operações ativas")
+    
+    await db.otc_clients.delete_one({"id": client_id})
+    
+    return {"success": True, "message": "Cliente OTC eliminado com sucesso"}
+
+
 # ==================== OTC DEALS / PIPELINE ====================
 
 @router.get("/deals")
