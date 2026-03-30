@@ -146,13 +146,17 @@ const AuthPage = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-400">
               {t('auth.noAccount') || "Don't have an account?"}
-              <Link
-                to="/#contact"
-                className="ml-2 text-gold-400 hover:text-gold-300 transition-colors font-medium"
+              <a
+                href="/#contact"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/#contact';
+                }}
+                className="ml-2 text-gold-400 hover:text-gold-300 transition-colors font-medium cursor-pointer"
                 data-testid="request-access-link"
               >
                 {t('nav.requestAccess') || 'Solicitar Acesso'}
-              </Link>
+              </a>
             </p>
           </div>
         </CardContent>
