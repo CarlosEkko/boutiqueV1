@@ -60,6 +60,7 @@ import CRMTasks from "./pages/dashboard/crm/CRMTasks";
 import CRMClients from "./pages/dashboard/crm/CRMClients";
 import CRMAdvancedDashboard from "./pages/dashboard/crm/CRMAdvancedDashboard";
 import TeamHub from "./pages/dashboard/team/TeamHub";
+import O365Callback from "./pages/auth/O365Callback";
 import OTCDashboard from "./pages/dashboard/otc/OTCDashboard";
 import OTCLeads from "./pages/dashboard/otc/OTCLeads";
 import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
@@ -120,6 +121,7 @@ function AppRoutes() {
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/auth/o365/callback" element={<O365Callback />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<AuthPage />} />
       {/* Redirect old /profile to new location */}
