@@ -351,3 +351,84 @@ async def get_hub_stats(current_user: dict = Depends(get_current_user)):
         "pending_tasks": pending_tasks,
         "upcoming_events": upcoming_events,
     }
+
+
+
+# ==================== EMAIL SIGNATURE ====================
+
+class SignatureUpdate(BaseModel):
+    signature_html: str = ""
+    signature_name: str = ""
+
+@router.get("/signature")
+async def get_signature(current_user = Depends(get_current_user)):
+    """Get user's email signature"""
+    db = get_db()
+    sig = await db.email_signatures.find_one({"user_id": current_user.id}, {"_id": 0})
+    if not sig:
+        return {"signature_html": "", "signature_name": ""}
+    return sig
+
+@router.put("/signature")
+async def update_signature(data: SignatureUpdate, current_user = Depends(get_current_user)):
+    """Update user's email signature"""
+    db = get_db()
+    await db.email_signatures.update_one(
+        {"user_id": current_user.id},
+        {"$set": {
+            "user_id": current_user.id,
+            "signature_html": data.signature_html,
+            "signature_name": data.signature_name,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True
+    )
+    return {"success": True}
+
+
+# ==================== EMAIL DRAFTS ====================
+
+class DraftCreate(BaseModel):
+    to_email: str = ""
+    to_name: str = ""
+    subject: str = ""
+    body_html: str = ""
+    related_to: Optional[str] = None
+    related_type: Optional[str] = None
+
+@router.post("/drafts")
+async def save_draft(data: DraftCreate, current_user = Depends(get_current_user)):
+    """Save an email draft"""
+    db = get_db()
+    draft = {
+        "id": str(uuid.uuid4()),
+        "from_email": current_user.email,
+        "from_name": current_user.name,
+        "from_user_id": current_user.id,
+        "to_email": data.to_email,
+        "to_name": data.to_name,
+        "subject": data.subject,
+        "body_html": data.body_html,
+        "related_to": data.related_to,
+        "related_type": data.related_type,
+        "folder": "drafts",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.team_drafts.insert_one(draft)
+    draft.pop("_id", None)
+    return draft
+
+@router.get("/drafts")
+async def get_drafts(current_user = Depends(get_current_user)):
+    """Get user's email drafts"""
+    db = get_db()
+    drafts = await db.team_drafts.find({"from_user_id": current_user.id}, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    return {"drafts": drafts, "total": len(drafts)}
+
+@router.delete("/drafts/{draft_id}")
+async def delete_draft(draft_id: str, current_user = Depends(get_current_user)):
+    """Delete a draft"""
+    db = get_db()
+    await db.team_drafts.delete_one({"id": draft_id, "from_user_id": current_user.id})
+    return {"success": True}

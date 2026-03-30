@@ -6,66 +6,55 @@ KBEX.io is a premium Crypto Boutique Exchange for HNW/UHNW individuals.
 ## Tech Stack
 - Frontend: React, Tailwind CSS, Shadcn UI, GSAP, CRACO
 - Backend: FastAPI, Pydantic, MongoDB (Motor)
-- Deploy: Docker on VPS (kbex.io) | Preview: boutique-exchange.preview.emergentagent.com
+- Deploy: Docker on VPS (kbex.io)
 
 ## Implemented Features
 
+### Team Hub (Email Client + Calendar + Tasks)
+- **Email Client (3-column layout)**:
+  - Sidebar: account info, compose button, folders (Enviados, Rascunhos), signature settings
+  - Email list: search, sender, subject, snippet, timestamp
+  - Reading pane: full email view with sender avatar, status badge
+  - Composer: To/Name/Subject fields, rich text editor with toolbar (Bold, Italic, Underline, Links, Lists, Alignment, Font Size, Text Color)
+  - Auto-appends email signature to sent emails
+  - Drafts: save, edit, delete
+- **Email Signature**: configurable per user, rich text editor, preview
+- **Calendar**: Monthly view, create/edit/delete events, color-coded, click-on-day creation
+- **Tasks**: Create/edit/delete, priority levels, status toggle, assign to team members, due dates, filter by status
+- **Stats dashboard**: emails today, total, pending tasks, upcoming events
+
 ### Access & Auth
-- Public "Solicitar Acesso" -> CRM Lead + Brevo confirmation email
-- /auth = Login only | /register = Registration for approved leads
+- Public "Solicitar Acesso" -> CRM Lead + Brevo email
+- /auth = Login only | /register = Approved leads only
 
 ### CRM General
-- Public lead creation | Lead -> OTC conversion | Lead -> Registration email (Brevo)
-- Client 360 view | Brevo CRM sync | Webhook tracking
+- Lead creation, OTC conversion, registration email via Brevo
+- Client 360 view, Brevo CRM sync, webhook tracking
 
 ### OTC Desk (11-Step Workflow)
-- Full pipeline from Lead to Post-Sale
-- OTC Client deletion with active deal protection
-- Account Manager dropdown fetches real team members (user_type: internal)
+- Full pipeline, OTC client deletion, dynamic account manager dropdown
 
 ### KYC/KYB (Sumsub Only)
-- All KYC routes redirect to Sumsub WebSDK
-- Manual KYC fallback removed
-- /api/kyc/status checks both legacy and Sumsub status
-- Backend: applicant creation, access token, webhook processing
-
-### Team Hub (NEW)
-- **Email**: Compose & send emails via Brevo, searchable sent history, email detail view
-- **Calendar**: Monthly view, create/edit/delete events, color-coded, click-to-create on day
-- **Tasks**: Create/edit/delete tasks, priority levels (urgent/high/medium/low), status toggle (todo/in_progress/done), assign to team members, due dates, filter by status
-- **Stats**: Dashboard cards (emails today, total, pending tasks, upcoming events)
-- Available to all internal staff via sidebar menu
-
-### Admin
-- User management | Client menus | Permissions by department
-- Team Hub added as department with access for all staff roles
-
-### Email (Brevo)
-- Onboarding, registration, KYC templates
-- Team Hub email composition
-- Webhook endpoint for tracking
+- All KYC routes redirect to Sumsub WebSDK, manual removed
 
 ### Docker/VPS
-- docker-compose.yml passes all env vars (Sumsub, Brevo, Binance, Stripe, etc.)
-- .env.example with all required variables documented
+- docker-compose.yml with all env vars, .env.example documented
 
 ## Key API Endpoints
-- POST /api/team-hub/emails/send — Send team email via Brevo
+- POST /api/team-hub/emails/send — Send email via Brevo
 - GET /api/team-hub/emails — List sent emails
-- POST /api/team-hub/events — Create calendar event
-- GET /api/team-hub/events — List events
-- POST /api/team-hub/tasks — Create task
-- GET /api/team-hub/tasks — List tasks with filters
+- POST/GET/DELETE /api/team-hub/drafts — Draft management
+- GET/PUT /api/team-hub/signature — Email signature CRUD
+- POST/GET/PUT/DELETE /api/team-hub/events — Calendar events
+- POST/GET/PUT/DELETE /api/team-hub/tasks — Task management
 - GET /api/team-hub/stats — Hub statistics
-- DELETE /api/otc/clients/{id} — Delete OTC client
-- POST /api/crm/leads/{id}/send-registration — Send registration email
 
 ## DB Collections
-- team_emails, team_events, team_tasks (NEW)
+- team_emails, team_drafts, email_signatures, team_events, team_tasks (NEW)
 - crm_leads, otc_leads, otc_clients, otc_deals, users, wallets
 
 ## Pending Issues
-- P1: Safari cursor bug (recurring) | P1: Incomplete translations
+- P1: Safari cursor bug | P1: Incomplete translations
 
 ## Upcoming Tasks
 - P1: TradingView widgets | P2: WebSockets | P2: Whitelist | P3: Launchpad/ICO

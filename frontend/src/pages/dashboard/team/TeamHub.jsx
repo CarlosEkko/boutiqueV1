@@ -7,6 +7,7 @@ import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Textarea } from '../../../components/ui/textarea';
+import EmailClient from './EmailClient';
 import {
   Select,
   SelectContent,
@@ -63,13 +64,7 @@ const TeamHub = () => {
   const [activeTab, setActiveTab] = useState('email');
   const [stats, setStats] = useState({});
 
-  // Email state
-  const [emails, setEmails] = useState([]);
-  const [emailSearch, setEmailSearch] = useState('');
-  const [showComposeDialog, setShowComposeDialog] = useState(false);
-  const [showEmailDetail, setShowEmailDetail] = useState(null);
-  const [composeData, setComposeData] = useState({ to_email: '', to_name: '', subject: '', body_html: '' });
-  const [sending, setSending] = useState(false);
+  // Email state - now handled by EmailClient component
 
   // Calendar state
   const [events, setEvents] = useState([]);
@@ -94,7 +89,6 @@ const TeamHub = () => {
   }, [token]);
 
   useEffect(() => {
-    if (activeTab === 'email') fetchEmails();
     if (activeTab === 'calendar') fetchEvents();
     if (activeTab === 'tasks') fetchTasks();
   }, [activeTab, token]);
@@ -114,37 +108,6 @@ const TeamHub = () => {
       const users = res.data.users || res.data || [];
       setTeamMembers(users.filter(u => u.user_type === 'internal'));
     } catch (err) { console.error(err); }
-  };
-
-  // ==================== EMAIL ====================
-  const fetchEmails = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/team-hub/emails?search=${emailSearch}`, { headers });
-      setEmails(res.data.emails || []);
-    } catch (err) { console.error(err); }
-  };
-
-  const handleSendEmail = async () => {
-    if (!composeData.to_email || !composeData.subject) {
-      toast.error('Preencha email e assunto');
-      return;
-    }
-    setSending(true);
-    try {
-      await axios.post(`${API_URL}/api/team-hub/emails/send`, {
-        ...composeData,
-        body_html: composeData.body_html.replace(/\n/g, '<br/>'),
-      }, { headers });
-      toast.success('Email enviado com sucesso!');
-      setShowComposeDialog(false);
-      setComposeData({ to_email: '', to_name: '', subject: '', body_html: '' });
-      fetchEmails();
-      fetchStats();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao enviar email');
-    } finally {
-      setSending(false);
-    }
   };
 
   // ==================== CALENDAR ====================
@@ -331,62 +294,7 @@ const TeamHub = () => {
 
       {/* ==================== EMAIL TAB ==================== */}
       {activeTab === 'email' && (
-        <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-              <Input
-                placeholder="Pesquisar emails..."
-                value={emailSearch}
-                onChange={(e) => setEmailSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchEmails()}
-                className="pl-10 bg-zinc-800 border-gold-500/30"
-              />
-            </div>
-            <Button onClick={() => setShowComposeDialog(true)} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="compose-email-btn">
-              <Plus size={16} className="mr-2" /> Compor Email
-            </Button>
-          </div>
-
-          <Card className="bg-zinc-900/50 border-gold-500/20">
-            <CardContent className="p-0">
-              {emails.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Mail size={40} className="mx-auto mb-3 opacity-30" />
-                  <p>Nenhum email enviado</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-zinc-800">
-                  {emails.map(email => (
-                    <div
-                      key={email.id}
-                      onClick={() => setShowEmailDetail(email)}
-                      className="flex items-center gap-4 p-4 hover:bg-zinc-800/50 cursor-pointer transition-colors"
-                      data-testid={`email-row-${email.id}`}
-                    >
-                      <div className="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center flex-shrink-0">
-                        <Send size={16} className="text-gold-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-medium truncate">{email.to_name || email.to_email}</span>
-                          <span className="text-gray-500 text-xs">&lt;{email.to_email}&gt;</span>
-                        </div>
-                        <p className="text-gray-300 text-sm truncate">{email.subject}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <Badge className={email.status === 'sent' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}>
-                          {email.status === 'sent' ? 'Enviado' : 'Erro'}
-                        </Badge>
-                        <p className="text-gray-500 text-xs mt-1">{formatDate(email.sent_at)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <EmailClient />
       )}
 
       {/* ==================== CALENDAR TAB ==================== */}
@@ -593,67 +501,6 @@ const TeamHub = () => {
           )}
         </div>
       )}
-
-      {/* ==================== COMPOSE EMAIL DIALOG ==================== */}
-      <Dialog open={showComposeDialog} onOpenChange={setShowComposeDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-500/30 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Mail className="text-gold-400" /> Compor Email</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-gray-400">Para (Email) *</Label>
-                <Input value={composeData.to_email} onChange={e => setComposeData({...composeData, to_email: e.target.value})} placeholder="email@exemplo.com" className="bg-zinc-800 border-zinc-700" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-gray-400">Nome</Label>
-                <Input value={composeData.to_name} onChange={e => setComposeData({...composeData, to_name: e.target.value})} placeholder="Nome do destinatário" className="bg-zinc-800 border-zinc-700" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-400">Assunto *</Label>
-              <Input value={composeData.subject} onChange={e => setComposeData({...composeData, subject: e.target.value})} placeholder="Assunto do email" className="bg-zinc-800 border-zinc-700" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-400">Mensagem</Label>
-              <Textarea value={composeData.body_html} onChange={e => setComposeData({...composeData, body_html: e.target.value})} placeholder="Escreva a sua mensagem..." className="bg-zinc-800 border-zinc-700 min-h-[200px]" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowComposeDialog(false)} className="border-gray-600">Cancelar</Button>
-            <Button onClick={handleSendEmail} disabled={sending} className="bg-gold-500 hover:bg-gold-400 text-black">
-              <Send size={16} className="mr-2" />{sending ? 'A enviar...' : 'Enviar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ==================== EMAIL DETAIL DIALOG ==================== */}
-      <Dialog open={!!showEmailDetail} onOpenChange={() => setShowEmailDetail(null)}>
-        <DialogContent className="bg-zinc-900 border-gold-500/30 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg">{showEmailDetail?.subject}</DialogTitle>
-          </DialogHeader>
-          {showEmailDetail && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                <div>
-                  <p className="text-gray-400 text-xs">De: <span className="text-white">{showEmailDetail.from_name} ({showEmailDetail.from_email})</span></p>
-                  <p className="text-gray-400 text-xs">Para: <span className="text-white">{showEmailDetail.to_name} ({showEmailDetail.to_email})</span></p>
-                </div>
-                <div className="text-right">
-                  <Badge className={showEmailDetail.status === 'sent' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}>
-                    {showEmailDetail.status === 'sent' ? 'Enviado' : 'Erro'}
-                  </Badge>
-                  <p className="text-gray-500 text-xs mt-1">{formatDate(showEmailDetail.sent_at)}</p>
-                </div>
-              </div>
-              <div className="p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/50 min-h-[150px]" dangerouslySetInnerHTML={{ __html: showEmailDetail.body_html }} />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* ==================== EVENT DIALOG ==================== */}
       <Dialog open={showEventDialog} onOpenChange={setShowEventDialog}>
