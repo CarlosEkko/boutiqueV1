@@ -44,16 +44,32 @@ import {
   RefreshCw,
   Link,
   Unlink,
-  Settings
+  Settings,
+  Wallet,
+  User,
+  Globe,
+  Copy,
+  MessageCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const CRYPTO_COLORS = {
+  BTC: 'text-orange-400',
+  ETH: 'text-blue-400',
+  USDT: 'text-green-400',
+  USDC: 'text-blue-300',
+  SOL: 'text-purple-400',
+  XRP: 'text-gray-300',
+  BNB: 'text-yellow-400',
+};
+
 const OTCClients = () => {
   const { token } = useAuth();
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -89,12 +105,24 @@ const OTCClients = () => {
       const response = await axios.get(`${API_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Filter to only show clients (not admins/staff)
-      const clientUsers = (response.data.users || []).filter(u => u.role === 'client');
+      const allUsersData = response.data.users || response.data || [];
+      setAllUsers(allUsersData);
+      const clientUsers = allUsersData.filter(u => u.role === 'client' || u.user_type === 'client');
       setUsers(clientUsers);
     } catch (err) {
       console.error('Error fetching users:', err);
     }
+  };
+
+  const getManagerName = (managerId) => {
+    if (!managerId) return null;
+    const manager = allUsers.find(u => u.id === managerId);
+    return manager ? manager.name : managerId;
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copiado!');
   };
 
   const handleLinkUser = async () => {
@@ -274,23 +302,23 @@ const OTCClients = () => {
               <TableRow className="border-gold-500/20 hover:bg-transparent">
                 <TableHead className="text-gray-400">Entidade</TableHead>
                 <TableHead className="text-gray-400">Contacto</TableHead>
+                <TableHead className="text-gray-400">Manager</TableHead>
                 <TableHead className="text-gray-400">Limite Diário</TableHead>
                 <TableHead className="text-gray-400">Status</TableHead>
                 <TableHead className="text-gray-400">Acesso Portal</TableHead>
-                <TableHead className="text-gray-400">Data Criação</TableHead>
                 <TableHead className="text-gray-400 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-400">
                     A carregar...
                   </TableCell>
                 </TableRow>
               ) : filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-400">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-400">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -313,6 +341,13 @@ const OTCClients = () => {
                       <p className="text-gray-500 text-sm">{client.contact_email}</p>
                     </TableCell>
                     <TableCell>
+                      {client.account_manager_id ? (
+                        <span className="text-gold-400 text-sm">{getManagerName(client.account_manager_id)}</span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <p className="text-gold-400 font-mono">${formatNumber(client.daily_limit_usd || 0)}</p>
                     </TableCell>
                     <TableCell>
@@ -330,9 +365,6 @@ const OTCClients = () => {
                           Sem Acesso
                         </Badge>
                       )}
-                    </TableCell>
-                    <TableCell className="text-gray-400 text-sm">
-                      {formatDate(client.created_at)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -371,7 +403,7 @@ const OTCClients = () => {
 
       {/* Client Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-500/30 text-white max-w-2xl">
+        <DialogContent className="bg-zinc-900 border-gold-500/30 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Building className="text-gold-400" />
@@ -381,33 +413,140 @@ const OTCClients = () => {
           
           {selectedClient && (
             <div className="space-y-4 py-4">
+              {/* Contact & Location */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Contacto</p>
+                  <p className="text-gray-400 text-xs uppercase mb-1 flex items-center gap-1">
+                    <Mail size={12} /> Contacto
+                  </p>
                   <p className="text-white">{selectedClient.contact_name}</p>
                   <p className="text-gray-400 text-sm">{selectedClient.contact_email}</p>
                   {selectedClient.contact_phone && <p className="text-gray-400 text-sm">{selectedClient.contact_phone}</p>}
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
-                  <p className="text-gray-400 text-xs uppercase mb-1">Localização</p>
-                  <p className="text-white">{selectedClient.country}</p>
+                  <p className="text-gray-400 text-xs uppercase mb-1 flex items-center gap-1">
+                    <Globe size={12} /> Localização
+                  </p>
+                  <p className="text-white">{selectedClient.country || '-'}</p>
+                  <p className="text-gray-400 text-sm capitalize">{selectedClient.entity_type || 'individual'}</p>
                 </div>
+              </div>
+
+              {/* Account Manager */}
+              <div className="p-3 bg-zinc-800/50 rounded-lg border border-gold-500/10">
+                <p className="text-gray-400 text-xs uppercase mb-1 flex items-center gap-1">
+                  <User size={12} /> Account Manager
+                </p>
+                {selectedClient.account_manager_id ? (
+                  <p className="text-gold-400 font-medium" data-testid="client-manager">
+                    {getManagerName(selectedClient.account_manager_id)}
+                  </p>
+                ) : (
+                  <p className="text-gray-500 italic" data-testid="client-manager">Não atribuído</p>
+                )}
+              </div>
+
+              {/* Limits & Settlement */}
+              <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Limite Diário</p>
-                  <p className="text-gold-400 font-mono text-xl">${formatNumber(selectedClient.daily_limit_usd || 0)}</p>
+                  <p className="text-gold-400 font-mono text-xl" data-testid="client-daily-limit">
+                    ${formatNumber(selectedClient.daily_limit_usd || 0)}
+                  </p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Limite Mensal</p>
-                  <p className="text-gold-400 font-mono text-xl">${formatNumber(selectedClient.monthly_limit_usd || 0)}</p>
+                  <p className="text-gold-400 font-mono text-xl" data-testid="client-monthly-limit">
+                    ${formatNumber(selectedClient.monthly_limit_usd || 0)}
+                  </p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Método Liquidação</p>
-                  <p className="text-white uppercase">{selectedClient.default_settlement || '-'}</p>
+                  <p className="text-white uppercase">{selectedClient.default_settlement_method || selectedClient.default_settlement || '-'}</p>
                 </div>
                 <div className="p-3 bg-zinc-800/50 rounded-lg">
                   <p className="text-gray-400 text-xs uppercase mb-1">Status</p>
                   {getStatusBadge(selectedClient.status)}
                 </div>
+              </div>
+
+              {/* Communication */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-gray-400 text-xs uppercase mb-1 flex items-center gap-1">
+                    <MessageCircle size={12} /> Contacto Preferido
+                  </p>
+                  <p className="text-white capitalize">{selectedClient.preferred_contact || 'email'}</p>
+                </div>
+                {selectedClient.telegram_group && (
+                  <div className="p-3 bg-zinc-800/50 rounded-lg">
+                    <p className="text-gray-400 text-xs uppercase mb-1">Telegram</p>
+                    <p className="text-blue-400">{selectedClient.telegram_group}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Trading Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-gray-400 text-xs uppercase mb-1">Volume Total</p>
+                  <p className="text-white font-mono text-lg" data-testid="client-volume">
+                    ${formatNumber(selectedClient.total_volume_usd || 0)}
+                  </p>
+                </div>
+                <div className="p-3 bg-zinc-800/50 rounded-lg">
+                  <p className="text-gray-400 text-xs uppercase mb-1">Total Operações</p>
+                  <p className="text-white font-mono text-lg" data-testid="client-trades">
+                    {selectedClient.total_trades || 0}
+                  </p>
+                </div>
+              </div>
+
+              {/* Wallets */}
+              <div className="p-4 bg-zinc-800/50 rounded-lg border border-gold-500/20">
+                <p className="text-gold-400 font-medium mb-3 flex items-center gap-2">
+                  <Wallet size={18} />
+                  Carteiras ({selectedClient.wallet_addresses?.length || 0})
+                </p>
+                {selectedClient.wallet_addresses && selectedClient.wallet_addresses.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedClient.wallet_addresses.map((w, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900/60 rounded-lg border border-zinc-700/50" data-testid={`wallet-${idx}`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                            <span className={`font-bold text-sm ${CRYPTO_COLORS[w.asset?.toUpperCase()] || 'text-white'}`}>
+                              {w.asset?.toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">{w.asset?.toUpperCase() || 'N/A'}</span>
+                              {w.network && (
+                                <Badge className="bg-zinc-700 text-gray-300 text-xs">{w.network}</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-400 text-xs font-mono truncate max-w-[280px]">{w.address}</p>
+                              <button
+                                onClick={() => copyToClipboard(w.address)}
+                                className="text-gray-500 hover:text-gold-400 transition-colors flex-shrink-0"
+                              >
+                                <Copy size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        {w.balance !== undefined && w.balance !== null && (
+                          <p className="text-gold-400 font-mono text-sm flex-shrink-0 ml-4">
+                            {formatNumber(w.balance)} {w.asset?.toUpperCase()}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic text-sm">Nenhuma carteira configurada</p>
+                )}
               </div>
               
               {/* Portal Access Section */}
