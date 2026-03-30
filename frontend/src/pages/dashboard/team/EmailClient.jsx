@@ -305,7 +305,7 @@ const EmailClient = () => {
   // ==================== NOT CONNECTED STATE ====================
   if (o365Status === null) {
     return (
-      <div className="flex h-[calc(100vh-380px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800">
+      <div className="flex h-[calc(100vh-200px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800">
         <div className="text-center text-gray-500">
           <RefreshCw size={32} className="mx-auto mb-3 animate-spin opacity-30" />
           <p>A verificar conexão...</p>
@@ -316,7 +316,7 @@ const EmailClient = () => {
 
   if (o365Status === false) {
     return (
-      <div className="flex h-[calc(100vh-380px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800" data-testid="o365-connect-prompt">
+      <div className="flex h-[calc(100vh-200px)] items-center justify-center bg-zinc-950 rounded-xl border border-zinc-800" data-testid="o365-connect-prompt">
         <div className="text-center max-w-md px-8">
           <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-500/10 flex items-center justify-center">
             <Mail size={28} className="text-blue-400" />
@@ -335,7 +335,7 @@ const EmailClient = () => {
 
   // ==================== CONNECTED - FULL EMAIL CLIENT ====================
   return (
-    <div className="flex h-[calc(100vh-380px)] bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden" data-testid="email-client">
+    <div className="flex h-[calc(100vh-200px)] bg-zinc-950 rounded-xl border border-zinc-800 overflow-hidden" data-testid="email-client">
 
       {/* ===== SIDEBAR ===== */}
       <div className="w-52 border-r border-zinc-800 flex flex-col bg-zinc-900/80 flex-shrink-0">
