@@ -68,6 +68,7 @@ import OTCPipeline from "./pages/dashboard/otc/OTCPipeline";
 import OTCQuotes from "./pages/dashboard/otc/OTCQuotes";
 import OTCExecution from "./pages/dashboard/otc/OTCExecution";
 import OTCSettlement from "./pages/dashboard/otc/OTCSettlement";
+import OTCPrototypes from "./pages/prototypes/OTCPrototypes";
 import OTCInvoices from "./pages/dashboard/otc/OTCInvoices";
 import OTCClients from "./pages/dashboard/otc/OTCClients";
 import ClientOTCPortal from "./pages/dashboard/ClientOTCPortal";
@@ -134,6 +135,7 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/auth/o365/callback" element={<O365Callback />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/prototypes/otc" element={<OTCPrototypes />} />
       <Route path="/login" element={<AuthPage />} />
       {/* Redirect old /profile to new location */}
       <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
