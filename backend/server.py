@@ -68,6 +68,7 @@ from routes.websocket_prices import router as ws_prices_router
 from routes.finance import router as finance_router, set_db as set_finance_db
 from routes.omnibus import router as omnibus_router, set_db as set_omnibus_db
 from routes.admin_multisign import router as admin_multisign_router, set_db as set_admin_multisign_db
+from routes.otc_deals import router as otc_deals_router, set_db as set_otc_deals_db
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -94,6 +95,7 @@ set_multisign_db(db)
 set_finance_db(db)
 set_omnibus_db(db)
 set_admin_multisign_db(db)
+set_otc_deals_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -123,6 +125,7 @@ api_router.include_router(ws_prices_router)
 api_router.include_router(finance_router)
 api_router.include_router(omnibus_router)
 api_router.include_router(admin_multisign_router)
+api_router.include_router(otc_deals_router)
 
 
 # Define Models

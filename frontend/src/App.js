@@ -69,6 +69,9 @@ import OTCQuotes from "./pages/dashboard/otc/OTCQuotes";
 import OTCExecution from "./pages/dashboard/otc/OTCExecution";
 import OTCSettlement from "./pages/dashboard/otc/OTCSettlement";
 import OTCPrototypes from "./pages/prototypes/OTCPrototypes";
+import OTCDealsPage from "./pages/dashboard/crm/OTCDealsPage";
+import CommissionsPage from "./pages/dashboard/crm/CommissionsPage";
+import CompliancePage from "./pages/dashboard/crm/CompliancePage";
 import OTCInvoices from "./pages/dashboard/otc/OTCInvoices";
 import OTCClients from "./pages/dashboard/otc/OTCClients";
 import ClientOTCPortal from "./pages/dashboard/ClientOTCPortal";
@@ -223,6 +226,9 @@ function AppRoutes() {
         <Route path="crm/contacts" element={<CRMContacts />} />
         <Route path="crm/tasks" element={<CRMTasks />} />
         <Route path="crm/clients" element={<CRMClients />} />
+        <Route path="crm/otc-deals" element={<OTCDealsPage />} />
+        <Route path="crm/commissions" element={<CommissionsPage />} />
+        <Route path="crm/compliance/:dealId" element={<CompliancePage />} />
         
         {/* OTC Desk Routes */}
         <Route path="otc" element={<OTCDashboard />} />

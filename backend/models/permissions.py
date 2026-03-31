@@ -255,6 +255,8 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/crm/suppliers", "label": "Fornecedores", "icon": "Handshake"},
             {"path": "/dashboard/crm/leads", "label": "Leads", "icon": "UserPlus"},
             {"path": "/dashboard/crm/deals", "label": "Negociações", "icon": "Target"},
+            {"path": "/dashboard/crm/otc-deals", "label": "Negócios OTC", "icon": "ArrowLeftRight"},
+            {"path": "/dashboard/crm/commissions", "label": "Comissões", "icon": "Banknote"},
             {"path": "/dashboard/crm/contacts", "label": "Contactos", "icon": "Contact"},
             {"path": "/dashboard/crm/tasks", "label": "Tarefas", "icon": "CheckSquare"},
             {"path": "/dashboard/admin/pipeline", "label": "Pipeline de Vendas", "icon": "GitBranch"},

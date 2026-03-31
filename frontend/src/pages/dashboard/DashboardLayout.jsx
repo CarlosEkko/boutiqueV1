@@ -61,7 +61,8 @@ import {
   Building,
   Mail,
   ShieldCheck,
-  CheckCircle
+  CheckCircle,
+  ArrowLeftRight
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -74,7 +75,8 @@ const iconMap = {
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
   Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
-  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle
+  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle,
+  ArrowLeftRight
 };
 
 // Department icon and color mapping
