@@ -100,6 +100,15 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                 "submenus": portfolio_data.get("submenus", [])
             },
             {
+                "department": "vault",
+                "label": "Vault",
+                "icon": "ShieldCheck",
+                "items": [
+                    {"path": "/dashboard/vault", "label": "Multi-Sign", "icon": "ShieldCheck"},
+                    {"path": "/dashboard/vault/signatories", "label": "Signatários", "icon": "Users"},
+                ]
+            },
+            {
                 "department": "investimentos",
                 "label": investimentos_data["label"],
                 "icon": investimentos_data["icon"],

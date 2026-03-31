@@ -82,6 +82,10 @@ import RegisterPage from "./pages/RegisterPage";
 import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
 import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
 import ApprovalSettingsPage from "./pages/dashboard/approvals/ApprovalSettingsPage";
+import VaultDashboard from "./pages/dashboard/vault/VaultDashboard";
+import VaultTransactionDetail from "./pages/dashboard/vault/VaultTransactionDetail";
+import VaultSignatories from "./pages/dashboard/vault/VaultSignatories";
+import VaultCreateTransaction from "./pages/dashboard/vault/VaultCreateTransaction";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -231,10 +235,16 @@ function AppRoutes() {
         {/* Client OTC Portal */}
         <Route path="otc-trading" element={<ClientOTCPortal />} />
 
-        {/* Multi-Sign Approvals */}
+        {/* Multi-Sign Approvals (Internal) */}
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="approvals/settings" element={<ApprovalSettingsPage />} />
         <Route path="approvals/:id" element={<ApprovalDetailPage />} />
+
+        {/* Vault Multi-Sign (Client) */}
+        <Route path="vault" element={<VaultDashboard />} />
+        <Route path="vault/new" element={<VaultCreateTransaction />} />
+        <Route path="vault/signatories" element={<VaultSignatories />} />
+        <Route path="vault/:id" element={<VaultTransactionDetail />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

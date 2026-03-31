@@ -99,6 +99,7 @@ const departmentConfig = {
   otc_desk: { icon: Briefcase, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   team_hub: { icon: Mail, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   transaction_approval: { icon: ShieldCheck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
+  vault: { icon: ShieldCheck, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
