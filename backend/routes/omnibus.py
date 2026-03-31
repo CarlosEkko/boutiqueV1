@@ -105,7 +105,7 @@ async def get_tier_limits(admin: dict = Depends(get_internal_user)):
     """Get cofre limits per membership tier"""
     doc = await db.omnibus_tier_limits.find_one({}, {"_id": 0})
     if not doc:
-        return {"tier_limits": {"standard": 3, "premium": 10, "vip": 20, "black": 50}}
+        return {"tier_limits": {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}}
     return {"tier_limits": doc.get("tier_limits", {})}
 
 
@@ -135,7 +135,7 @@ async def _get_user_tier(user_id: str) -> str:
 
 async def _get_max_cofres(tier: str) -> int:
     doc = await db.omnibus_tier_limits.find_one({}, {"_id": 0})
-    defaults = {"standard": 3, "premium": 10, "vip": 20, "black": 50}
+    defaults = {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}
     limits = doc.get("tier_limits", defaults) if doc else defaults
     return limits.get(tier, limits.get("standard", 3))
 

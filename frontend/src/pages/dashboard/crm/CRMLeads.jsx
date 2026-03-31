@@ -73,6 +73,7 @@ const CRMLeads = () => {
     interested_cryptos: [],
     estimated_volume: '',
     preferred_currency: 'EUR',
+    membership_profile: 'standard',
     is_qualified: false,
     qualification_score: 0,
     assigned_to: '',
@@ -129,6 +130,7 @@ const CRMLeads = () => {
       interested_cryptos: [],
       estimated_volume: '',
       preferred_currency: 'EUR',
+      membership_profile: 'standard',
       is_qualified: false,
       qualification_score: 0,
       assigned_to: '',
@@ -422,6 +424,21 @@ const CRMLeads = () => {
                       </div>
                     )}
 
+                    {/* Profile Badge */}
+                    {lead.membership_profile && (
+                      <Badge className={`border text-[10px] ${
+                        {
+                          broker: 'bg-sky-500/15 text-sky-400 border-sky-700/30',
+                          standard: 'bg-zinc-500/15 text-zinc-300 border-zinc-600',
+                          premium: 'bg-amber-500/15 text-amber-400 border-amber-700/30',
+                          vip: 'bg-purple-500/15 text-purple-400 border-purple-700/30',
+                          institucional: 'bg-emerald-500/15 text-emerald-400 border-emerald-700/30',
+                        }[lead.membership_profile] || 'bg-zinc-500/15 text-zinc-300 border-zinc-600'
+                      }`}>
+                        {lead.membership_profile.charAt(0).toUpperCase() + lead.membership_profile.slice(1)}
+                      </Badge>
+                    )}
+
                     {/* Status */}
                     <Badge className={`border-0 ${getStatusColor(lead.status)}`}>
                       {getStatusLabel(lead.status)}
@@ -583,6 +600,21 @@ const CRMLeads = () => {
 
             {/* Lead Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Perfil</label>
+                <select
+                  value={form.membership_profile}
+                  onChange={(e) => setForm({ ...form, membership_profile: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                  data-testid="lead-profile-select"
+                >
+                  <option value="broker">Broker</option>
+                  <option value="standard">Standard</option>
+                  <option value="premium">Premium</option>
+                  <option value="vip">VIP</option>
+                  <option value="institucional">Institucional</option>
+                </select>
+              </div>
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Fonte</label>
                 <select

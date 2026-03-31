@@ -13,10 +13,11 @@ class KYCStatus(str, Enum):
 
 
 class MembershipLevel(str, Enum):
+    BROKER = "broker"
     STANDARD = "standard"
-    SILVER = "silver"
-    GOLD = "gold"
-    PLATINUM = "platinum"
+    PREMIUM = "premium"
+    VIP = "vip"
+    INSTITUCIONAL = "institucional"
 
 
 class InvestmentStatus(str, Enum):

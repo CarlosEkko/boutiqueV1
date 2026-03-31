@@ -162,9 +162,11 @@ const AdminAdmissionFees = () => {
 
   const getTierBadge = (tier) => {
     const colors = {
+      broker: 'bg-sky-500/20 text-sky-400',
       standard: 'bg-gray-500/20 text-gray-300',
-      premium: 'bg-gold-500/20 text-gold-400',
-      vip: 'bg-purple-500/20 text-purple-400'
+      premium: 'bg-amber-500/20 text-amber-400',
+      vip: 'bg-purple-500/20 text-purple-400',
+      institucional: 'bg-emerald-500/20 text-emerald-400'
     };
     return <Badge className={colors[tier] || colors.standard}>{tier?.toUpperCase() || 'STANDARD'}</Badge>;
   };

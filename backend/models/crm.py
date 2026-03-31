@@ -173,6 +173,9 @@ class LeadBase(BaseModel):
     estimated_volume: Optional[float] = None
     preferred_currency: str = "EUR"
     
+    # Client Profile (for onboarding)
+    membership_profile: str = "standard"  # broker, standard, premium, vip, institucional
+    
     # Qualification
     is_qualified: bool = False
     qualification_score: int = 0  # 0-100
@@ -199,6 +202,7 @@ class LeadUpdate(BaseModel):
     interested_cryptos: Optional[List[str]] = None
     estimated_volume: Optional[float] = None
     preferred_currency: Optional[str] = None
+    membership_profile: Optional[str] = None
     is_qualified: Optional[bool] = None
     qualification_score: Optional[int] = None
     assigned_to: Optional[str] = None
@@ -213,6 +217,7 @@ class LeadResponse(LeadBase):
     converted_to_client: bool = False
     converted_at: Optional[datetime] = None
     risk_intelligence_data: Optional[dict] = None
+    membership_profile: Optional[str] = "standard"
 
 # ==================== DEAL MODELS ====================
 

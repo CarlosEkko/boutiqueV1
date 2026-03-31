@@ -25,7 +25,8 @@ import {
   UserCircle,
   Briefcase,
   Save,
-  Loader2
+  Loader2,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,6 +39,7 @@ const menuIcons = {
   transparencia: Shield,
   perfil: UserCircle,
   otc_trading: Briefcase,
+  multi_sign: ShieldCheck,
 };
 
 // Menu colors mapping
@@ -47,6 +49,7 @@ const menuColors = {
   transparencia: 'bg-purple-900/30 text-purple-400 border-purple-800/30',
   perfil: 'bg-orange-900/30 text-orange-400 border-orange-800/30',
   otc_trading: 'bg-amber-900/30 text-amber-400 border-amber-800/30',
+  multi_sign: 'bg-cyan-900/30 text-cyan-400 border-cyan-800/30',
 };
 
 // Available menus for clients
@@ -56,6 +59,7 @@ const AVAILABLE_MENUS = [
   { value: 'transparencia', label: 'Transparência' },
   { value: 'perfil', label: 'Perfil' },
   { value: 'otc_trading', label: 'OTC Trading' },
+  { value: 'multi_sign', label: 'Multi-Sign' },
 ];
 
 const AdminClientMenus = () => {
@@ -148,9 +152,11 @@ const AdminClientMenus = () => {
 
   const getTierBadge = (tier) => {
     const tierConfig = {
+      broker: { label: 'Broker', className: 'bg-sky-900/30 text-sky-400 border-sky-800/30' },
       standard: { label: 'Standard', className: 'bg-zinc-800 text-zinc-300 border-zinc-700' },
-      premium: { label: 'Premium', className: 'bg-gold-900/30 text-gold-400 border-gold-800/30' },
+      premium: { label: 'Premium', className: 'bg-amber-900/30 text-amber-400 border-amber-800/30' },
       vip: { label: 'VIP', className: 'bg-purple-900/30 text-purple-400 border-purple-800/30' },
+      institucional: { label: 'Institucional', className: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/30' },
     };
     const config = tierConfig[tier] || tierConfig.standard;
     return <Badge className={`${config.className} border`}>{config.label}</Badge>;

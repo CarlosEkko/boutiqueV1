@@ -94,7 +94,7 @@ const AdminOpportunities = () => {
     risk_level: 'medium',
     currency: 'USDT',
     allowed_regions: ['europe', 'middle_east', 'brazil'],
-    allowed_tiers: ['standard', 'premium', 'vip']
+    allowed_tiers: ['broker', 'standard', 'premium', 'vip', 'institucional']
   });
 
   useEffect(() => {
@@ -209,7 +209,7 @@ const AdminOpportunities = () => {
       risk_level: 'medium',
       currency: 'USDT',
       allowed_regions: ['europe', 'middle_east', 'brazil'],
-      allowed_tiers: ['standard', 'premium', 'vip']
+      allowed_tiers: ['broker', 'standard', 'premium', 'vip', 'institucional']
     });
     setShowCreateForm(false);
   };

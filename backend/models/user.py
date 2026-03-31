@@ -14,9 +14,11 @@ class KYCStatus(str, Enum):
 
 class MembershipLevel(str, Enum):
     """Client membership levels"""
+    BROKER = "broker"
     STANDARD = "standard"
     PREMIUM = "premium"
     VIP = "vip"
+    INSTITUCIONAL = "institucional"
 
 
 class InternalRole(str, Enum):

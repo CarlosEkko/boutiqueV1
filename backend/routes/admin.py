@@ -802,9 +802,11 @@ async def get_regional_stats(manager: dict = Depends(get_manager_or_admin)):
         kyc_not_started = await db.users.count_documents({**client_filter, "kyc_status": "not_started"})
         
         # Membership tiers
+        broker = await db.users.count_documents({**client_filter, "membership_level": "broker"})
         standard = await db.users.count_documents({**client_filter, "membership_level": "standard"})
         premium = await db.users.count_documents({**client_filter, "membership_level": "premium"})
         elite = await db.users.count_documents({**client_filter, "membership_level": "vip"})
+        institucional = await db.users.count_documents({**client_filter, "membership_level": "institucional"})
         
         # Ticket stats
         open_tickets = await db.tickets.count_documents({**region_filter, "status": "open"})
@@ -843,9 +845,11 @@ async def get_regional_stats(manager: dict = Depends(get_manager_or_admin)):
                 "not_started": kyc_not_started
             },
             "tiers": {
+                "broker": broker,
                 "standard": standard,
                 "premium": premium,
-                "elite": elite
+                "vip": elite,
+                "institucional": institucional
             },
             "tickets": {
                 "open": open_tickets,

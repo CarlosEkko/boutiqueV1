@@ -38,31 +38,20 @@ const AdminSettings = () => {
     payout_currency: 'EUR'
   });
   
-  // Admission Fee State
+  // Admission Fee State - EUR as reference, 5 profiles
   const [admissionFee, setAdmissionFee] = useState({
-    // Standard
+    broker_eur: 0,
     standard_eur: 500,
-    standard_usd: 550,
-    standard_aed: 2000,
-    standard_brl: 2750,
-    // Premium
     premium_eur: 2500,
-    premium_usd: 2750,
-    premium_aed: 10000,
-    premium_brl: 13750,
-    // VIP
     vip_eur: 10000,
-    vip_usd: 11000,
-    vip_aed: 40000,
-    vip_brl: 55000,
-    // General
+    institucional_eur: 25000,
     is_active: true,
     grace_period_days: 7
   });
 
   // Tier Limits State
   const [tierLimits, setTierLimits] = useState({
-    standard: 3, premium: 10, vip: 20, black: 50
+    broker: 1, standard: 3, premium: 10, vip: 20, institucional: 50
   });
   const [savingTier, setSavingTier] = useState(false);
 
@@ -325,7 +314,7 @@ const AdminSettings = () => {
               Taxa de Admissão Anual
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Configurar taxa de entrada por tipo de cliente
+              Valor de referência em EUR por perfil de cliente. Outras moedas calculadas automaticamente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -344,77 +333,32 @@ const AdminSettings = () => {
               />
             </div>
 
-            {/* Standard Tier */}
-            <div className="p-3 bg-zinc-800/30 rounded-lg border border-zinc-700">
-              <div className="text-white font-medium mb-3 flex items-center gap-2">
-                <Badge className="bg-gray-500/20 text-gray-300">Standard</Badge>
+            {/* Tiers - EUR only */}
+            {[
+              { key: 'broker', label: 'Broker', color: 'bg-sky-500/20 text-sky-400', border: 'border-sky-700/30' },
+              { key: 'standard', label: 'Standard', color: 'bg-gray-500/20 text-gray-300', border: 'border-zinc-700' },
+              { key: 'premium', label: 'Premium', color: 'bg-amber-500/20 text-amber-400', border: 'border-amber-700/30' },
+              { key: 'vip', label: 'VIP', color: 'bg-purple-500/20 text-purple-400', border: 'border-purple-700/30' },
+              { key: 'institucional', label: 'Institucional', color: 'bg-emerald-500/20 text-emerald-400', border: 'border-emerald-700/30' },
+            ].map(tier => (
+              <div key={tier.key} className={`flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg border ${tier.border}`}>
+                <Badge className={`${tier.color} text-xs`}>{tier.label}</Badge>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={admissionFee[`${tier.key}_eur`]}
+                    onChange={(e) => setAdmissionFee({
+                      ...admissionFee,
+                      [`${tier.key}_eur`]: parseFloat(e.target.value) || 0
+                    })}
+                    min={0}
+                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm w-32"
+                    data-testid={`admission-fee-${tier.key}`}
+                  />
+                  <span className="text-zinc-500 text-sm font-medium">EUR</span>
+                </div>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {['eur', 'usd', 'aed', 'brl'].map(cur => (
-                  <div key={`standard_${cur}`} className="space-y-1">
-                    <Label className="text-gray-400 text-xs">{cur.toUpperCase()}</Label>
-                    <Input
-                      type="number"
-                      value={admissionFee[`standard_${cur}`]}
-                      onChange={(e) => setAdmissionFee({
-                        ...admissionFee,
-                        [`standard_${cur}`]: parseFloat(e.target.value) || 0
-                      })}
-                      min={0}
-                      className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Premium Tier */}
-            <div className="p-3 bg-gold-900/20 rounded-lg border border-gold-700/30">
-              <div className="text-white font-medium mb-3 flex items-center gap-2">
-                <Badge className="bg-gold-500/20 text-gold-400">Premium</Badge>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {['eur', 'usd', 'aed', 'brl'].map(cur => (
-                  <div key={`premium_${cur}`} className="space-y-1">
-                    <Label className="text-gray-400 text-xs">{cur.toUpperCase()}</Label>
-                    <Input
-                      type="number"
-                      value={admissionFee[`premium_${cur}`]}
-                      onChange={(e) => setAdmissionFee({
-                        ...admissionFee,
-                        [`premium_${cur}`]: parseFloat(e.target.value) || 0
-                      })}
-                      min={0}
-                      className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* VIP Tier */}
-            <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-700/30">
-              <div className="text-white font-medium mb-3 flex items-center gap-2">
-                <Badge className="bg-purple-500/20 text-purple-400">VIP</Badge>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {['eur', 'usd', 'aed', 'brl'].map(cur => (
-                  <div key={`vip_${cur}`} className="space-y-1">
-                    <Label className="text-gray-400 text-xs">{cur.toUpperCase()}</Label>
-                    <Input
-                      type="number"
-                      value={admissionFee[`vip_${cur}`]}
-                      onChange={(e) => setAdmissionFee({
-                        ...admissionFee,
-                        [`vip_${cur}`]: parseFloat(e.target.value) || 0
-                      })}
-                      min={0}
-                      className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
 
             {/* Grace Period */}
             <div className="space-y-2">

@@ -108,9 +108,11 @@ const AdminClients = () => {
 
   const getTierBadge = (tier) => {
     const config = {
+      broker: 'bg-sky-900/30 text-sky-400 border-sky-800/30',
       standard: 'bg-gray-900/30 text-gray-400 border-gray-800/30',
-      premium: 'bg-blue-900/30 text-blue-400 border-blue-800/30',
-      vip: 'bg-gold-900/30 text-gold-400 border-gold-800/30',
+      premium: 'bg-amber-900/30 text-amber-400 border-amber-800/30',
+      vip: 'bg-purple-900/30 text-purple-400 border-purple-800/30',
+      institucional: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/30',
     };
     return (
       <Badge className={`${config[tier] || config.standard} border`}>

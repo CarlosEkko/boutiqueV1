@@ -207,7 +207,14 @@ async def get_user_limits(tier: str) -> UserTradingLimits:
         default_limits = UserTradingLimits(tier=tier)
         
         # Adjust based on tier
-        if tier == "premium":
+        if tier == "broker":
+            default_limits.daily_buy_limit = 5000.0
+            default_limits.daily_sell_limit = 5000.0
+            default_limits.monthly_buy_limit = 50000.0
+            default_limits.monthly_sell_limit = 50000.0
+            default_limits.max_buy_amount = 10000.0
+            default_limits.max_sell_amount = 10000.0
+        elif tier == "premium":
             default_limits.daily_buy_limit = 20000.0
             default_limits.daily_sell_limit = 20000.0
             default_limits.monthly_buy_limit = 200000.0
@@ -221,6 +228,13 @@ async def get_user_limits(tier: str) -> UserTradingLimits:
             default_limits.monthly_sell_limit = 1000000.0
             default_limits.max_buy_amount = 250000.0
             default_limits.max_sell_amount = 250000.0
+        elif tier == "institucional":
+            default_limits.daily_buy_limit = 500000.0
+            default_limits.daily_sell_limit = 500000.0
+            default_limits.monthly_buy_limit = 5000000.0
+            default_limits.monthly_sell_limit = 5000000.0
+            default_limits.max_buy_amount = 1000000.0
+            default_limits.max_sell_amount = 1000000.0
         
         limits_dict = default_limits.model_dump()
         limits_dict["updated_at"] = limits_dict["updated_at"].isoformat()
