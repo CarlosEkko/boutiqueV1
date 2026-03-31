@@ -102,34 +102,41 @@ const VaultTransactionDetail = () => {
       </button>
 
       {/* Hero Header */}
-      <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800/60 p-10 overflow-hidden">
+      <div className="relative rounded-2xl bg-zinc-900 border border-zinc-800/60 p-6 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent" />
         <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
               tx.status === 'completed' ? 'bg-emerald-500/10 border border-emerald-500/20' :
               tx.status === 'rejected' ? 'bg-rose-500/10 border border-rose-500/20' :
               'bg-amber-500/10 border border-amber-500/20'
             }`}>
-              <Send size={36} className={tx.status === 'completed' ? 'text-emerald-400' : tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400'} />
+              <Send size={24} className={tx.status === 'completed' ? 'text-emerald-400' : tx.status === 'rejected' ? 'text-rose-400' : 'text-amber-400'} />
             </div>
             <div>
-              <div className="flex items-center gap-4">
-                <h1 className="text-3xl font-light text-zinc-50">Send {tx.asset}</h1>
-                <span className="text-zinc-600 text-base font-mono">{tx.order_number}</span>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-light text-zinc-50">Send {tx.asset}</h1>
+                <span className="text-zinc-600 text-sm font-mono">{tx.order_number}</span>
               </div>
-              <p className="text-zinc-400 text-base mt-1">
+              <p className="text-zinc-400 text-sm mt-0.5">
                 {tx.source_wallet} → {tx.destination_name}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Amount inline */}
+            <div className="text-right mr-4">
+              <p className="text-3xl font-mono font-extralight text-zinc-50 tracking-tighter">
+                -{new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(tx.amount)}
+              </p>
+              <p className="text-zinc-500 text-xs">{tx.asset} ({tx.network})</p>
+            </div>
             {tx.status === 'pending_signatures' && timeLeft && (
-              <Badge className="bg-zinc-800 text-zinc-400 border border-zinc-700 px-5 py-2.5 rounded-full text-sm">
-                <Clock size={16} className="mr-2" /> {timeLeft}
+              <Badge className="bg-zinc-800 text-zinc-400 border border-zinc-700 px-4 py-2 rounded-full text-sm">
+                <Clock size={14} className="mr-1.5" /> {timeLeft}
               </Badge>
             )}
-            <Badge className={`border px-5 py-2.5 rounded-full text-base ${
+            <Badge className={`border px-4 py-2 rounded-full text-sm ${
               tx.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
               tx.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
               tx.status === 'cancelled' ? 'bg-zinc-800 text-zinc-400 border-zinc-700' :
@@ -138,20 +145,11 @@ const VaultTransactionDetail = () => {
               {tx.status === 'completed' ? 'Executed' : tx.status === 'rejected' ? 'Rejected' : tx.status === 'cancelled' ? 'Cancelled' : 'Awaiting Signatures'}
             </Badge>
             {canCancel && (
-              <Button variant="outline" onClick={handleCancel} className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 rounded-full px-5 py-2.5" data-testid="vault-cancel-btn">
-                <Ban size={16} className="mr-2" /> Cancel
+              <Button variant="outline" onClick={handleCancel} className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 rounded-full px-4 py-2" data-testid="vault-cancel-btn">
+                <Ban size={14} className="mr-1.5" /> Cancel
               </Button>
             )}
           </div>
-        </div>
-
-        {/* Amount Display */}
-        <div className="mt-10 text-center">
-          <p className="text-zinc-500 text-sm uppercase tracking-[0.2em] mb-3">Montante</p>
-          <p className="text-6xl font-mono font-extralight text-zinc-50 tracking-tighter">
-            -{new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(tx.amount)}
-          </p>
-          <p className="text-zinc-400 text-base mt-2">{tx.asset} <span className="text-zinc-600">({tx.network})</span></p>
         </div>
       </div>
 

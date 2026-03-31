@@ -59,7 +59,7 @@ const VaultDashboard = () => {
   };
 
   return (
-    <div className="space-y-8" data-testid="vault-dashboard">
+    <div className="space-y-10" data-testid="vault-dashboard">
       {/* Hero Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 border border-zinc-800/80 p-8">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent" />
@@ -81,7 +81,7 @@ const VaultDashboard = () => {
 
       {/* Stats Grid */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4 mt-2">
           <StatCard icon={AlertTriangle} iconColor="text-amber-400" label="Pendentes" value={stats.pending_signatures} accent="amber" />
           <StatCard icon={CheckCircle} iconColor="text-emerald-400" label="Executadas" value={stats.completed} accent="emerald" />
           <StatCard icon={Users} iconColor="text-blue-400" label="Signatários" value={stats.signatories_count} accent="blue" extra={<span className="text-zinc-500 text-[10px]">Threshold: {stats.threshold}</span>} />
