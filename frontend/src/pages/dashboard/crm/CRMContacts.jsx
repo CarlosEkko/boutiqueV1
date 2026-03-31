@@ -32,10 +32,7 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const COUNTRIES = [
-  'Portugal', 'Espanha', 'França', 'Alemanha', 'Reino Unido', 'Itália', 
-  'Suíça', 'Dubai (UAE)', 'Brasil', 'EUA', 'Outro'
-];
+import { COUNTRIES } from '../../../utils/countries';
 
 const CONTACT_METHODS = [
   { value: 'email', label: 'Email' },
@@ -518,7 +515,7 @@ const CRMContacts = () => {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
                 >
                   <option value="">Selecionar...</option>
-                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div>

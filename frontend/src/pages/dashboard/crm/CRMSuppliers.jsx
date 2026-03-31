@@ -42,10 +42,7 @@ const CRYPTOCURRENCIES = [
   'BTC', 'ETH', 'USDT_TRC20', 'USDT_ERC20', 'USDC', 'BNB', 'XRP', 'ADA', 'SOL', 'DOGE'
 ];
 
-const COUNTRIES = [
-  'Portugal', 'Espanha', 'França', 'Alemanha', 'Reino Unido', 'Itália', 
-  'Suíça', 'Dubai (UAE)', 'Brasil', 'EUA', 'Outro'
-];
+import { COUNTRIES } from '../../../utils/countries';
 
 const REGIONS = ['Europe', 'Middle East', 'Brazil', 'North America', 'Asia', 'Other'];
 
@@ -556,7 +553,7 @@ const CRMSuppliers = () => {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
                 >
                   <option value="">Selecionar...</option>
-                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div>
@@ -759,17 +756,17 @@ const CRMSuppliers = () => {
             <div>
               <label className="text-sm text-gray-400 mb-2 block">Países de Entrega</label>
               <div className="flex flex-wrap gap-2 mb-3">
-                {COUNTRIES.map(country => (
+                {COUNTRIES.map(c => (
                   <Badge
-                    key={country}
+                    key={c.code}
                     className={`cursor-pointer transition-colors ${
-                      form.delivery_countries.includes(country)
+                      form.delivery_countries.includes(c.name)
                         ? 'bg-emerald-500 text-white'
                         : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'
                     }`}
-                    onClick={() => toggleDeliveryCountry(country)}
+                    onClick={() => toggleDeliveryCountry(c.name)}
                   >
-                    {country}
+                    {c.name}
                   </Badge>
                 ))}
               </div>

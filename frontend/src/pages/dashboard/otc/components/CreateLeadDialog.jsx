@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent } from '../../../../components/ui/card';
 import { UserPlus, ChevronRight, Mail, Building, TrendingUp, User, Link, Eye, CreditCard, DollarSign, CheckCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { COUNTRIES } from '../../../../utils/countries';
 
 export const CreateLeadDialog = ({
   open, onOpenChange, formData, setFormData, enums,
@@ -110,7 +111,14 @@ export const CreateLeadDialog = ({
                 <h3 className="text-white font-medium text-sm flex items-center gap-2"><Building size={16} className="text-gold-400" />Informação da Entidade</h3>
                 <div className="space-y-3">
                   <div><Label className="text-gray-400 text-sm">Entidade *</Label><Input value={formData.entity_name} onChange={e => setFormData({...formData, entity_name: e.target.value})} onBlur={e => checkExistingContact('entity_name', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Nome da empresa" /></div>
-                  <div><Label className="text-gray-400 text-sm">País *</Label><Input value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Portugal" /></div>
+                  <div><Label className="text-gray-400 text-sm">País *</Label>
+                    <Select value={formData.country} onValueChange={v => setFormData({...formData, country: v})}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar país" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                        {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div><Label className="text-gray-400 text-sm">Fonte</Label>
                     <Select value={formData.source} onValueChange={v => setFormData({...formData, source: v})}>
                       <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>

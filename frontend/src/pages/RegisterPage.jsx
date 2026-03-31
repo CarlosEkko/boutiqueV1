@@ -10,20 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Eye, EyeOff, User, Mail, Phone, Globe, Lock, ArrowLeft } from 'lucide-react';
 
-const COUNTRIES = [
-  { code: 'PT', name: 'Portugal' },
-  { code: 'BR', name: 'Brasil' },
-  { code: 'ES', name: 'España' },
-  { code: 'UK', name: 'United Kingdom' },
-  { code: 'US', name: 'United States' },
-  { code: 'DE', name: 'Deutschland' },
-  { code: 'FR', name: 'France' },
-  { code: 'IT', name: 'Italia' },
-  { code: 'CH', name: 'Schweiz / Suisse' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'SA', name: 'Saudi Arabia' },
-  { code: 'QA', name: 'Qatar' }
-];
+import { COUNTRIES } from '../utils/countries';
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
