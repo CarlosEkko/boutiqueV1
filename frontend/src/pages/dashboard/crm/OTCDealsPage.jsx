@@ -48,12 +48,14 @@ const OTCDealsPage = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [refPrices, setRefPrices] = useState({});
 
-  const token = sessionStorage.getItem('token');
-  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const getHeaders = () => {
+    const token = sessionStorage.getItem('kryptobox_token');
+    return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  };
 
   const fetchDeals = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/otc-deals/deals`, { headers });
+      const res = await fetch(`${API}/api/otc-deals/deals`, { headers: getHeaders() });
       if (res.ok) setDeals(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -61,7 +63,7 @@ const OTCDealsPage = () => {
 
   const fetchTeam = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/otc-deals/team-members`, { headers });
+      const res = await fetch(`${API}/api/otc-deals/team-members`, { headers: getHeaders() });
       if (res.ok) setTeamMembers(await res.json());
     } catch (e) { console.error(e); }
   }, []);
@@ -71,7 +73,7 @@ const OTCDealsPage = () => {
   const advanceStatus = async (dealId, newStatus) => {
     try {
       const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/status?status=${newStatus}`, {
-        method: 'PUT', headers
+        method: 'PUT', headers: getHeaders()
       });
       if (res.ok) {
         toast.success(`Status atualizado para ${STATUS_CONFIG[newStatus]?.label}`);
@@ -86,7 +88,7 @@ const OTCDealsPage = () => {
   const deleteDeal = async (dealId) => {
     if (!window.confirm('Eliminar este negócio?')) return;
     try {
-      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}`, { method: 'DELETE', headers });
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}`, { method: 'DELETE', headers: getHeaders() });
       if (res.ok) { toast.success('Negócio eliminado'); fetchDeals(); }
     } catch (e) { toast.error('Erro ao eliminar'); }
   };
@@ -225,8 +227,10 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   const [saving, setSaving] = useState(false);
   const [livePrice, setLivePrice] = useState(null);
 
-  const token = sessionStorage.getItem('token');
-  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const getHeaders = () => {
+    const token = sessionStorage.getItem('kryptobox_token');
+    return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  };
 
   useEffect(() => {
     if (deal) {
@@ -254,7 +258,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
     if (!open) return;
     const fetchPrice = async () => {
       try {
-        const res = await fetch(`${API}/api/otc-deals/reference-price/${form.asset}`, { headers });
+        const res = await fetch(`${API}/api/otc-deals/reference-price/${form.asset}`, { headers: getHeaders() });
         if (res.ok) {
           const data = await res.json();
           setLivePrice(data);
@@ -288,7 +292,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
     try {
       const url = deal ? `${API}/api/otc-deals/deals/${deal.id}` : `${API}/api/otc-deals/deals`;
       const method = deal ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
+      const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(form) });
       if (res.ok) {
         toast.success(deal ? 'Negócio atualizado' : 'Negócio criado');
         onSaved();

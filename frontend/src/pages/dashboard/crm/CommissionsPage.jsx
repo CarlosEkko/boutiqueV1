@@ -24,7 +24,7 @@ const CommissionsPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selected, setSelected] = useState(new Set());
 
-  const token = sessionStorage.getItem('token');
+  const token = sessionStorage.getItem('kryptobox_token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   const fetchData = useCallback(async () => {

@@ -25,7 +25,7 @@ const CompliancePage = () => {
   const [walletForm, setWalletForm] = useState({ address: '', blockchain: 'Bitcoin', wallet_type: 'cold', description: '' });
   const [kytForm, setKytForm] = useState({ risk_score: 0, flags: [], analyst_notes: '', status: 'pending' });
 
-  const token = sessionStorage.getItem('token');
+  const token = sessionStorage.getItem('kryptobox_token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   const fetchData = useCallback(async () => {
