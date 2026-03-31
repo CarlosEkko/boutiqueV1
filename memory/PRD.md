@@ -52,6 +52,14 @@
 - `otc_leads`: `trustfull_data: dict` (mesma estrutura, backward compat)
 - `o365_tokens`: {user_id, access_token, refresh_token, expires_at}
 
+## Agendamento de Reuniões (O365 Teams) — IMPLEMENTADO
+- **Endpoint**: `POST /api/o365/meetings/schedule` — cria evento no calendário O365 com link Teams automático
+- **Endpoint**: `GET /api/o365/meetings?lead_id=X&lead_type=Y` — lista reuniões por lead
+- **Endpoint**: `DELETE /api/o365/meetings/{id}` — cancela reunião
+- **Frontend**: Botão Video nos cards CRM e OTC Leads + botão no detalhe OTC
+- **Componente reutilizável**: `ScheduleMeetingDialog` (assunto auto, data, hora, duração 15-90min, notas)
+- **Requisito**: Conta O365 conectada no Team Hub
+
 ## Issues Pendentes
 - P2: Safari cursor bug (CSS, recorrente 14+)
 - P2: Traduções frontend incompletas
