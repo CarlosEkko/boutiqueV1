@@ -30,7 +30,7 @@ class PublicLeadRequest(BaseModel):
     """Public lead request - minimal fields for website form"""
     name: str
     email: str
-    phone: Optional[str] = None
+    phone: str
     message: Optional[str] = None
 
 

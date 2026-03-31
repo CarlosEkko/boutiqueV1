@@ -39,7 +39,7 @@ const ContactCTA = () => {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone || null,
+          phone: formData.phone,
           message: formData.message || null
         })
       });
@@ -142,13 +142,14 @@ const ContactCTA = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-gray-300">
-                          {t('contact.form.phone')}
+                          {t('contact.form.phone')} *
                         </Label>
                         <Input
                           id="phone"
                           name="phone"
                           value={formData.phone}
                           onChange={handleChange}
+                          required
                           className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white placeholder:text-gray-500 transition-colors duration-300"
                           placeholder="+351 123 456 789"
                           dir="ltr"
