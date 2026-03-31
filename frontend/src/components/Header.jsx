@@ -370,7 +370,7 @@ const Header = () => {
                 <a
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href)}
-                  className={`magnetic-link nav-link relative no-underline overflow-hidden cursor-pointer px-[10px] py-[5px] z-[2] inline-block uppercase tracking-[5px] text-[5vh] md:text-[7vh] leading-[1.3] transition-all duration-200 font-['Inter'] font-light ${
+                  className={`magnetic-link nav-link relative no-underline overflow-hidden cursor-pointer px-[10px] py-[2px] z-[2] inline-block uppercase tracking-[3px] md:tracking-[5px] text-[3vh] md:text-[7vh] leading-[1.4] transition-all duration-200 font-['Inter'] font-light ${
                     isActiveLink(link.href) 
                       ? 'text-white' 
                       : 'text-white/60 hover:text-white'
@@ -390,20 +390,20 @@ const Header = () => {
             ))}
           </ul>
 
-          {/* Mobile Language & CTA in Overlay */}
+          {/* Mobile Language, Login & CTA in Overlay */}
           <div 
-            className={`md:hidden mt-10 transition-all duration-300 ${
+            className={`md:hidden mt-6 transition-all duration-300 ${
               isNavOpen ? 'opacity-100' : 'opacity-0'
             }`}
             style={{ transitionDelay: isNavOpen ? '1.3s' : '0s' }}
           >
-            <div className={`flex items-center justify-center ${isRTL ? 'space-x-reverse' : ''} space-x-4 mb-6`}>
+            <div className={`flex items-center justify-center ${isRTL ? 'space-x-reverse' : ''} space-x-4 mb-5`}>
               <Globe size={18} className="text-gold-400" />
               {languages.map((lang, index) => (
                 <React.Fragment key={lang.code}>
                   <button
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`text-lg font-['Inter'] transition-colors duration-300 ${
+                    className={`text-base font-['Inter'] transition-colors duration-300 ${
                       language === lang.code
                         ? 'text-gold-400 font-medium'
                         : 'text-gray-400 hover:text-gray-300'
@@ -417,12 +417,36 @@ const Header = () => {
                 </React.Fragment>
               ))}
             </div>
-            <Button
-              onClick={(e) => handleNavClick(e, '/#contact')}
-              className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-gold-800/30 px-8 py-3 text-lg font-['Inter']"
-            >
-              {t('nav.requestAccess')}
-            </Button>
+            <div className="flex flex-col items-center gap-3">
+              {isAuthenticated ? (
+                <Button
+                  onClick={() => { setIsNavOpen(false); navigate('/dashboard'); }}
+                  variant="outline"
+                  className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30 hover:text-gold-300 font-['Inter'] px-8 py-3 text-base"
+                  data-testid="mobile-dashboard-btn"
+                >
+                  <User size={18} className="mr-2" />
+                  Dashboard
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => { setIsNavOpen(false); navigate('/auth'); }}
+                  variant="outline"
+                  className="border-gold-800/30 text-gold-400 hover:bg-gold-800/30 hover:text-gold-300 font-['Inter'] px-8 py-3 text-base"
+                  data-testid="mobile-login-btn"
+                >
+                  <LogIn size={18} className="mr-2" />
+                  {t('nav.login') || 'Entrar'}
+                </Button>
+              )}
+              <Button
+                onClick={(e) => handleNavClick(e, '/#contact')}
+                className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-lg shadow-gold-800/30 px-8 py-3 text-base font-['Inter']"
+                data-testid="mobile-cta-btn"
+              >
+                {t('nav.requestAccess')}
+              </Button>
+            </div>
           </div>
         </div>
       </nav>
