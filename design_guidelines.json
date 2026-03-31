@@ -1,0 +1,113 @@
+{
+  "project_name": "KBEX.io Multi-Sign Premium Dashboard",
+  "theme": "dark",
+  "archetype": "Archetype 5 (Jewel & Luxury) with Archetype 4 (Swiss & High-Contrast) data clarity",
+  "design_philosophy": "Quiet luxury for UHNW individuals. High trust, exclusive boutique feel. Deep blacks, crisp 1px borders, subtle gold/amber accents, and optical clarity glassmorphism.",
+  "colors": {
+    "background": "zinc-950 (#09090b)",
+    "surface": "zinc-900 (#18181b)",
+    "surface_glass": "zinc-900/60 with backdrop-blur-2xl",
+    "border": "zinc-800/80 (#27272a) and zinc-800/40 for delicate inner lines",
+    "primary_accent": "amber-500 (#f59e0b) / gold-400 (#facc15)",
+    "primary_accent_subtle": "amber-500/10 with amber-500/20 border",
+    "text_main": "zinc-50 (#fafafa)",
+    "text_muted": "zinc-400 (#a1a1aa)",
+    "status": {
+      "approved": "emerald-400 (#34d399)",
+      "rejected": "rose-500 (#f43f5e)",
+      "pending": "amber-400 (#fbbf24)",
+      "info": "blue-400 (#60a5fa)"
+    }
+  },
+  "typography": {
+    "headings": {
+      "family": "'Cabinet Grotesk', sans-serif",
+      "weight": "font-light to font-normal",
+      "tracking": "tracking-tight to tracking-tighter"
+    },
+    "body": {
+      "family": "'Manrope', sans-serif",
+      "weight": "font-normal",
+      "tracking": "tracking-normal"
+    },
+    "data_and_crypto": {
+      "family": "'JetBrains Mono', monospace",
+      "weight": "font-light",
+      "tracking": "tracking-tight"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl",
+      "h3": "text-xl sm:text-2xl",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base text-zinc-300",
+      "small": "text-sm text-zinc-400",
+      "micro_label": "text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500"
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Generous spacing. p-6 to p-8 for standard cards, p-12 for hero sections.",
+    "dashboard_grid": "Mode B: 'Control Room' Grid (grid-cols-1 md:grid-cols-3 lg:grid-cols-4) with gap-6. Use col-span-2 or 3 for main data, col-span-1 for summaries.",
+    "borders": "Expose the skeleton. Use border-collapse style layouts for technical tables. 1px solid borders on everything to ground the soft shadows.",
+    "radius": "rounded-xl for main cards, rounded-full for buttons/badges (premium feel)."
+  },
+  "surface_strategies": {
+    "headers": "Crystal Glass: bg-zinc-950/70 backdrop-blur-xl border-b border-white/5",
+    "cards": "Neumorphic/Tactile hybrid: bg-zinc-900 border border-zinc-800/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]",
+    "active_card": "Tracing Beam effect: Subtle moving border gradient or static amber-500/20 glow with blur-md"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-amber-500 text-zinc-950 hover:bg-amber-400 transition-colors rounded-full px-6 py-2 font-medium shadow-[0_0_15px_rgba(245,158,11,0.2)]",
+      "secondary": "bg-zinc-900 text-zinc-50 border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 transition-colors rounded-full px-6 py-2",
+      "ghost": "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/50 rounded-full transition-colors"
+    },
+    "badges": "rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700",
+    "tables": "Shadcn Table heavily customized. border-b border-zinc-800/50. Hover states on rows: hover:bg-zinc-800/30. font-mono for numbers.",
+    "avatars": "Circular, with 2px ring representing status (amber-500 for pending, emerald-500 for signed, border-zinc-800 for inactive)."
+  },
+  "motion_and_interaction": {
+    "hover": "Subtle lifts (-translate-y-0.5) and glow enhancements on cards.",
+    "approval_action": "Instead of a simple click, use a 'Slide to Sign' or 'Hold to Approve' interaction with a progress ring, mapped to a biometric or vault-unlock visual metaphor.",
+    "transitions": "transition-all duration-300 ease-out"
+  },
+  "image_urls": {
+    "texture_background": {
+      "url": "https://images.unsplash.com/photo-1770795945584-6d5046ffe47c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
+      "description": "Dark rough texture, use as a subtle overlay with opacity-10 or mix-blend-overlay on the main transaction detail background for depth."
+    },
+    "signer_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1624670319970-37aa780d4874?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
+        "name": "Alexander W."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1767175620484-1ed37931a0d1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
+        "name": "Michael T."
+      },
+      {
+        "url": "https://images.pexels.com/photos/17685845/pexels-photo-17685845.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "name": "James L."
+      },
+      {
+        "url": "https://images.pexels.com/photos/10657877/pexels-photo-10657877.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "name": "David C."
+      }
+    ]
+  },
+  "key_views_instructions": {
+    "1_multi_sign_dashboard": "Build a Control Room bento grid. Top metrics: Pending Actions, Total Secured Assets, Threshold Status. Below: A list of active multi-sig requests requiring user's signature, highlighted with a subtle amber tracing beam.",
+    "2_signatories_management": "A card-based list showing all authorized signers. Include a visual 'Threshold Configuration' slider (e.g., 3 of 5). Each signer card has an avatar, role (Admin, Signer, Viewer), and 'Last Active' timestamp.",
+    "3_transaction_approval_detail": "The 'Jewel' feature. A beautifully spaced modal/page. Massive typography for the crypto amount. Left side: Vertical step-timeline (Initiated -> Risk Cleared -> Signatures -> Executed). Right side: Signer avatars overlapping, showing who approved (emerald check) and who is pending. Bottom: A luxurious 'Hold to Sign' or sliding button.",
+    "4_create_transaction": "Minimalist, high-contrast form. Step 1: Destination. Step 2: Amount. Step 3: Select Required Signers. Use Shadcn forms but strip borders down to 1px zinc-800. Use monospaced font for wallet addresses.",
+    "5_activity_log": "A dense, technical audit table. Columns: Time, Action, User, Hash (mono), Status. Strict grid borders (border-collapse). No soft shadows here, pure utility."
+  },
+  "testing_and_accessibility": {
+    "data_testid": "ALL interactive elements MUST have data-testid. e.g., 'approve-tx-button', 'signer-avatar-1', 'm-of-n-slider'.",
+    "contrast": "Ensure amber-500 on zinc-900 passes 4.5:1. Text over images MUST have text-shadow or a gradient overlay underneath."
+  },
+  "dependencies_to_install": [
+    "lucide-react",
+    "@radix-ui/react-icons"
+  ]
+}
