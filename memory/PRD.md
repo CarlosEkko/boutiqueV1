@@ -7,52 +7,64 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, MongoDB (Motor)
 - Deploy: Docker, Docker-Compose (VPS do user)
+- CDN/WAF: Cloudflare (dominio verificado)
 
 ## Perfis de Cliente
-- **Broker** — Acesso básico, taxa admissão 0 EUR, limite 1 cofre
-- **Standard** — Taxa admissão 500 EUR, limite 3 cofres
-- **Premium** — Taxa admissão 2500 EUR, limite 10 cofres
-- **VIP** — Taxa admissão 10000 EUR, limite 20 cofres
-- **Institucional** — Taxa admissão 25000 EUR, limite 50 cofres
+- **Broker** — Acesso basico, taxa admissao 0 EUR, limite 1 cofre
+- **Standard** — Taxa admissao 500 EUR, limite 3 cofres
+- **Premium** — Taxa admissao 2500 EUR, limite 10 cofres
+- **VIP** — Taxa admissao 10000 EUR, limite 20 cofres
+- **Institucional** — Taxa admissao 25000 EUR, limite 50 cofres
 
 ## Funcionalidades Implementadas
 
 ### Core
 - Auth com JWT, sessionStorage, auto-logout 15 min
-- WebSocket para preços crypto em tempo real (Binance)
+- WebSocket para precos crypto em tempo real (Binance)
 - 4 idiomas: EN, PT, FR, AR
 
-### Onboarding/Registration (Corrigido 31/03/2026)
+### Onboarding/Registration
 - CRM Lead membership_profile mapeia para membership_level do utilizador ao registar
 - Country dropdown no RegisterPage
-- Taxa de admissão EUR com conversão dinâmica crypto (BTC, ETH, USDT, USDC) via Binance
+- Taxa de admissao EUR com conversao dinamica crypto (BTC, ETH, USDT, USDC) via Binance
 - Admin Settings grava 5 perfis EUR correctamente
 
-### Sistema OTC Deals & Comissões (NOVO - 31/03/2026)
-- **Negócios OTC**: CRUD completo com calculadora em tempo real
+### Sistema OTC Deals & Comissoes
+- **Negocios OTC**: CRUD completo com calculadora em tempo real
   - Tipo: Compra (Cliente) ou Venda (Fornecedor)
-  - Ativo, quantidade, preço referência (KBEX/Binance, editável)
-  - Condição: Premium (+%) ou Discount (-%)
-  - Gross/Net configurável por negócio
-  - Distribuição margem: Corretor % + Membro KBEX %
-  - Moeda de liquidação: EUR, USD, BTC, ETH, USDT, USDC
-- **Pipeline Status**: Draft → Qualification → Compliance → Negotiation → Approved → Executing → Settled → Closed
-- **Comissões**: Auto-geradas ao liquidar negócio
-  - Workflow: Pendente → Aprovado → Pago / Rejeitado
+  - Ativo, quantidade, preco referencia (KBEX/Binance, editavel)
+  - Condicao: Premium (+%) ou Discount (-%)
+  - Gross/Net configuravel por negocio
+  - Distribuicao margem: Corretor % + Membro KBEX %
+  - Moeda de liquidacao: EUR, USD, BTC, ETH, USDT, USDC
+- **Pipeline Status**: Draft -> Qualification -> Compliance -> Negotiation -> Approved -> Executing -> Settled -> Closed
+- **Comissoes**: Auto-geradas ao liquidar negocio
+  - Workflow: Pendente -> Aprovado -> Pago / Rejeitado
   - Bulk approve/pay
   - Dashboard KPIs + resumo por corretor
-- **Compliance Forense**: (por negócio)
-  - Carteiras de negociação (add/verify)
-  - Análise KYT manual (score, flags, notas)
-  - Teste de Satoshi (micro-transação)
-  - Proof of Ownership (Signed Typed Messages)
-  - Proof of Reserves (obrigatório antes execução)
-- **Permissões**: Menu CRM com "Negócios OTC" e "Comissões"
+
+### Compliance Forense (por negocio)
+- Carteiras de negociacao (add/verify)
+- Analise KYT manual (score, flags, notas) - ESCRITA no KYT Forensic, LEITURA no Compliance
+- Teste de Satoshi (micro-transacao)
+- Proof of Ownership (Signed Typed Messages)
+- Proof of Reserves (obrigatorio antes execucao)
+
+### Risk & Compliance (NOVO - 31/03/2026)
+- **Departamento separado** no menu lateral com icon FileSearch
+- **Risk Dashboard** (/dashboard/risk/dashboard): KPIs de negocios (Total, Conformes, Pendentes, Alto Risco) e carteiras (Total, Pendentes, Verificadas, Sinalizadas, Rejeitadas), Quick Actions, Analises Recentes
+- **KYT Forensic** (/dashboard/risk/kyt-forensic): Fila de verificacao de carteiras, modal de analise forense (score 0-100, flags, notas, status), pesquisa/filtro por status
+- **CompliancePage KYT Read-Only**: Seccao KYT mostra badge "Somente Leitura", gauge visual do score, status/flags/notas do analista, detalhe por carteira — sem campos editaveis
+- Acessivel a Admin e Global Manager via permissions
+
+### Cloudflare Proxy Middleware (NOVO - 31/03/2026)
+- Middleware HTTP extrai IP real do cliente via CF-Connecting-IP ou X-Forwarded-For
+- Disponivel em request.state.client_ip para logging e rate limiting futuro
 
 ### Sistema de Cofres (Multi-Sign)
-- Múltiplos cofres por cliente com nomes editáveis
+- Multiplos cofres por cliente com nomes editaveis
 - Tier limits por perfil, Omnibus vault para OTC
-- Menu Multi-Sign visível para clientes
+- Menu Multi-Sign visivel para clientes
 
 ### Dashboard Financeiro
 - KPIs: AUM, Receita, Volume, Pendentes
@@ -61,12 +73,12 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Leads com Perfil (5 tiers), Risk Intelligence
 - OTC CRM com 11-step workflow
 
-### Protótipos Visuais
-- Página /prototypes/otc com 5 ecrãs mockup (Deal, Compliance, Pipeline, Comissões, Wizard)
+### Prototipos Visuais
+- Pagina /prototypes/otc com 5 ecras mockup
 
 ## Issues Conhecidos
-- P1: Safari cursor bug (recorrente 17+)
-- P2: Traduções incompletas (AR, FR parciais)
+- P2: Safari cursor bug (recorrente 18+)
+- P2: Traducoes incompletas (AR, FR parciais)
 
 ## Backlog
 - P1: TradingView chart widgets
@@ -74,8 +86,8 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - P3: Launchpad e ICO pages
 - P3: App mobile
 
-## Integrações
-- Binance API (preços + conversão), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
+## Integracoes
+- Binance API (precos + conversao), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe, Cloudflare (DNS/WAF)
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123

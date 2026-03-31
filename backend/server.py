@@ -325,6 +325,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Cloudflare Trusted Proxy Middleware
+@app.middleware("http")
+async def cloudflare_proxy_middleware(request: Request, call_next):
+    """Extract real client IP from Cloudflare headers"""
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    xff = request.headers.get("X-Forwarded-For")
+    if cf_ip:
+        request.state.client_ip = cf_ip
+    elif xff:
+        request.state.client_ip = xff.split(",")[0].strip()
+    else:
+        request.state.client_ip = request.client.host if request.client else "unknown"
+    
+    response = await call_next(request)
+    return response
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
