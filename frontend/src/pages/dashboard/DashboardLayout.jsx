@@ -62,7 +62,8 @@ import {
   Mail,
   ShieldCheck,
   CheckCircle,
-  ArrowLeftRight
+  ArrowLeftRight,
+  FileSearch
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -76,7 +77,7 @@ const iconMap = {
   Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
   Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle,
-  ArrowLeftRight
+  ArrowLeftRight, FileSearch
 };
 
 // Department icon and color mapping
@@ -102,6 +103,7 @@ const departmentConfig = {
   team_hub: { icon: Mail, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
   transaction_approval: { icon: ShieldCheck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
   vault: { icon: ShieldCheck, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
+  risk_compliance: { icon: FileSearch, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -184,6 +186,9 @@ const labelTranslationMap = {
   // Misc
   'ROI': 'dashboard.nav.roi',
   'Investimentos': 'sidebar.investimentos',
+  'Risk & Compliance': 'sidebar.riskCompliance',
+  'Dashboard Risco': 'sidebar.dashboardRisco',
+  'KYT Forensic': 'sidebar.kytForensic',
 };
 
 const DashboardLayout = () => {

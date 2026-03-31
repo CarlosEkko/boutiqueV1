@@ -35,6 +35,7 @@ class Department(str, Enum):
     SUPPORT = "support"
     TEAM_HUB = "team_hub"
     TRANSACTION_APPROVAL = "transaction_approval"
+    RISK_COMPLIANCE = "risk_compliance"
 
 
 # Role to Department access mapping
@@ -51,7 +52,8 @@ ROLE_PERMISSIONS = {
         Department.OTC_DESK,
         Department.SUPPORT,
         Department.TEAM_HUB,
-        Department.TRANSACTION_APPROVAL
+        Department.TRANSACTION_APPROVAL,
+        Department.RISK_COMPLIANCE
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -64,7 +66,8 @@ ROLE_PERMISSIONS = {
         Department.CRM, 
         Department.SUPPORT,
         Department.TEAM_HUB,
-        Department.TRANSACTION_APPROVAL
+        Department.TRANSACTION_APPROVAL,
+        Department.RISK_COMPLIANCE
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -300,6 +303,14 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/vault/wallets", "label": "Cofre", "icon": "Vault"},
             {"path": "/dashboard/vault", "label": "Transações", "icon": "ArrowDownUp"},
             {"path": "/dashboard/vault/signatories", "label": "Signatários", "icon": "Users"},
+        ]
+    },
+    Department.RISK_COMPLIANCE: {
+        "label": "Risk & Compliance",
+        "icon": "FileSearch",
+        "items": [
+            {"path": "/dashboard/risk/dashboard", "label": "Dashboard Risco", "icon": "Shield"},
+            {"path": "/dashboard/risk/kyt-forensic", "label": "KYT Forensic", "icon": "FileSearch"},
         ]
     },
 }

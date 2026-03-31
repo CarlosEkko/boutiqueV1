@@ -23,7 +23,6 @@ const CompliancePage = () => {
   const [loading, setLoading] = useState(true);
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [walletForm, setWalletForm] = useState({ address: '', blockchain: 'Bitcoin', wallet_type: 'cold', description: '' });
-  const [kytForm, setKytForm] = useState({ risk_score: 0, flags: [], analyst_notes: '', status: 'pending' });
 
   const token = sessionStorage.getItem('kryptobox_token');
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -38,7 +37,6 @@ const CompliancePage = () => {
       if (compRes.ok) {
         const data = await compRes.json();
         setCompliance(data);
-        setKytForm(data.kyt || { risk_score: 0, flags: [], analyst_notes: '', status: 'pending' });
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -59,16 +57,6 @@ const CompliancePage = () => {
     try {
       await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/wallets/${walletId}/verify?status=${status}`, { method: 'PUT', headers });
       toast.success(status === 'verified' ? 'Carteira verificada' : 'Carteira rejeitada');
-      fetchData();
-    } catch (e) { toast.error('Erro'); }
-  };
-
-  const saveKYT = async () => {
-    try {
-      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/kyt`, {
-        method: 'PUT', headers, body: JSON.stringify(kytForm)
-      });
-      toast.success('Análise KYT atualizada');
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
@@ -220,49 +208,93 @@ const CompliancePage = () => {
           </CardContent>
         </Card>
 
-        {/* KYT */}
+        {/* KYT - Read Only (data from KYT Forensic Analyst) */}
         <Card className="bg-zinc-900 border-zinc-800" data-testid="compliance-kyt">
           <CardHeader className="pb-3">
             <CardTitle className="text-white flex items-center gap-2 text-base">
               <FileSearch className="text-purple-400" size={18} /> Análise KYT
+              <Badge className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] ml-auto">Somente Leitura</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={kytForm.risk_score > 60 ? '#22c55e' : kytForm.risk_score > 30 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={`${kytForm.risk_score}, 100`} />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className={`font-bold text-lg ${kytForm.risk_score > 60 ? 'text-emerald-400' : kytForm.risk_score > 30 ? 'text-yellow-400' : 'text-red-400'}`}>{kytForm.risk_score}</span>
+            {compliance?.kyt?.status && compliance.kyt.status !== 'pending' ? (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20">
+                    <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={(compliance?.kyt?.risk_score || 0) > 60 ? '#22c55e' : (compliance?.kyt?.risk_score || 0) > 30 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={`${compliance?.kyt?.risk_score || 0}, 100`} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className={`font-bold text-lg ${(compliance?.kyt?.risk_score || 0) > 60 ? 'text-emerald-400' : (compliance?.kyt?.risk_score || 0) > 30 ? 'text-yellow-400' : 'text-red-400'}`}>{compliance?.kyt?.risk_score || 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-500 text-xs uppercase">Status:</span>
+                      <Badge className={
+                        compliance?.kyt?.status === 'clean' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' :
+                        compliance?.kyt?.status === 'flagged' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30' :
+                        compliance?.kyt?.status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/30' :
+                        'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
+                      }>
+                        {compliance?.kyt?.status === 'clean' ? 'Limpo' : compliance?.kyt?.status === 'flagged' ? 'Sinalizado' : compliance?.kyt?.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                      </Badge>
+                    </div>
+                    {compliance?.kyt?.flags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {compliance.kyt.flags.map((f, i) => (
+                          <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px]">{f}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {compliance?.kyt?.analyst_notes && (
+                  <div className="bg-zinc-950 rounded-lg p-3 border border-zinc-800">
+                    <p className="text-zinc-500 text-xs uppercase mb-1">Notas do Analista Forense</p>
+                    <p className="text-zinc-300 text-sm whitespace-pre-wrap">{compliance.kyt.analyst_notes}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <FileSearch className="mx-auto text-zinc-600 mb-2" size={28} />
+                <p className="text-zinc-500 text-sm">Análise KYT pendente</p>
+                <p className="text-zinc-600 text-xs mt-1">O Analista Forense do departamento Risk & Compliance irá avaliar as carteiras deste negócio.</p>
               </div>
-              <div>
-                <Input type="number" value={kytForm.risk_score} onChange={e => setKytForm(f => ({ ...f, risk_score: parseInt(e.target.value) || 0 }))} className="bg-zinc-950 border-zinc-800 text-white w-20 mb-1" min={0} max={100} data-testid="kyt-score-input" />
-                <p className="text-zinc-500 text-xs">Score 0-100</p>
+            )}
+
+            {/* Per-wallet KYT details */}
+            {compliance?.wallets?.some(w => w.kyt_score > 0 || w.kyt_status) && (
+              <div className="space-y-2 pt-2 border-t border-zinc-800">
+                <p className="text-zinc-500 text-xs uppercase tracking-wider">Detalhe por Carteira</p>
+                {compliance.wallets.filter(w => w.kyt_score > 0 || w.kyt_status).map((w, i) => (
+                  <div key={w.id || i} className="flex items-center justify-between p-2 bg-zinc-950 rounded-lg border border-zinc-800">
+                    <div className="flex items-center gap-2">
+                      <code className="text-zinc-400 text-xs font-mono">{w.address?.substring(0, 10)}...{w.address?.slice(-6)}</code>
+                      <Badge className="bg-zinc-800 text-zinc-500 text-[10px]">{w.blockchain}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {w.kyt_score > 0 && (
+                        <span className={`text-sm font-bold ${w.kyt_score > 60 ? 'text-emerald-400' : w.kyt_score > 30 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {w.kyt_score}
+                        </span>
+                      )}
+                      {w.kyt_analyst && <span className="text-zinc-600 text-[10px]">{w.kyt_analyst}</span>}
+                      <Badge className={
+                        w.kyt_status === 'clean' || w.kyt_status === 'verified' ? 'bg-emerald-500/10 text-emerald-400 text-[10px]' :
+                        w.kyt_status === 'flagged' ? 'bg-orange-500/10 text-orange-400 text-[10px]' :
+                        w.kyt_status === 'rejected' ? 'bg-red-500/10 text-red-400 text-[10px]' :
+                        'bg-yellow-500/10 text-yellow-400 text-[10px]'
+                      }>
+                        {w.kyt_status === 'clean' || w.kyt_status === 'verified' ? 'Limpo' : w.kyt_status === 'flagged' ? 'Sinalizado' : w.kyt_status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-zinc-500 text-xs uppercase">Notas do Analista</Label>
-              <textarea value={kytForm.analyst_notes} onChange={e => setKytForm(f => ({ ...f, analyst_notes: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-white text-sm resize-none h-20 focus:border-yellow-500/50 focus:outline-none" placeholder="Adicionar notas..." data-testid="kyt-notes" />
-            </div>
-
-            <div className="flex gap-3">
-              <Select value={kytForm.status} onValueChange={v => setKytForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white flex-1" data-testid="kyt-status-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800">
-                  <SelectItem value="pending" className="text-yellow-400">Pendente</SelectItem>
-                  <SelectItem value="clean" className="text-emerald-400">Limpo</SelectItem>
-                  <SelectItem value="flagged" className="text-orange-400">Sinalizado</SelectItem>
-                  <SelectItem value="rejected" className="text-red-400">Rejeitado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={saveKYT} className="bg-yellow-500 text-black hover:bg-yellow-400" data-testid="kyt-save">Gravar</Button>
-            </div>
+            )}
           </CardContent>
         </Card>
 
