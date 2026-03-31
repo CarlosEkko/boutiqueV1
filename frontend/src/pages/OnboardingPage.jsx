@@ -372,12 +372,6 @@ const OnboardingPage = () => {
                     </div>
                   </div>
 
-                  <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                    <p className="text-blue-400 text-sm">
-                      <strong>Período de carência:</strong> {admissionStatus.grace_period_days} dias após o registo
-                    </p>
-                  </div>
-
                   <Button 
                     onClick={openPaymentGateway}
                     disabled={submitting}
