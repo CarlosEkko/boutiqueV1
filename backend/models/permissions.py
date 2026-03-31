@@ -137,11 +137,16 @@ DEPARTMENT_MENUS = {
         "icon": "LayoutDashboard",
         "submenus": [
             {
+                "id": "portfolio_dashboard",
+                "label": "Dashboard",
+                "icon": "LayoutDashboard",
+                "path": "/dashboard"
+            },
+            {
                 "id": "ativos",
                 "label": "Ativos",
                 "icon": "Wallet",
                 "items": [
-                    {"path": "/dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
                     {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
                     {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
                     {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
