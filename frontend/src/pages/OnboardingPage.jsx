@@ -140,7 +140,7 @@ const OnboardingPage = () => {
   };
 
   const getFilteredBankAccounts = () => {
-    return companyAccounts.filter(acc => acc.currency === selectedCurrency && acc.is_active);
+    return companyAccounts.filter(acc => acc.currency === 'EUR' && acc.is_active);
   };
 
   const confirmPayment = async () => {
@@ -249,8 +249,13 @@ const OnboardingPage = () => {
   };
 
   const getPaymentAmount = () => {
-    if (!admissionStatus?.amounts) return '0';
-    return admissionStatus.amounts[selectedCurrency]?.toLocaleString() || '0';
+    if (!admissionStatus?.eur_amount) return '0';
+    return admissionStatus.eur_amount.toLocaleString();
+  };
+
+  const getCryptoAmount = (crypto) => {
+    if (!admissionStatus?.crypto_amounts) return null;
+    return admissionStatus.crypto_amounts[crypto] || null;
   };
 
   const getReference = () => {
@@ -266,15 +271,19 @@ const OnboardingPage = () => {
   }
 
   const tierLabels = {
+    broker: 'Broker',
     standard: 'Standard',
     premium: 'Premium',
-    vip: 'VIP'
+    vip: 'VIP',
+    institucional: 'Institucional'
   };
 
   const tierColors = {
+    broker: 'bg-sky-500/20 text-sky-400',
     standard: 'bg-gray-500/20 text-gray-300',
     premium: 'bg-gold-500/20 text-gold-400',
-    vip: 'bg-purple-500/20 text-purple-400'
+    vip: 'bg-purple-500/20 text-purple-400',
+    institucional: 'bg-emerald-500/20 text-emerald-400'
   };
 
   return (
@@ -318,8 +327,8 @@ const OnboardingPage = () => {
             <CardContent className="space-y-6">
               {/* User Tier */}
               <div className="text-center">
-                <Badge className={tierColors[admissionStatus.client_tier || 'standard']}>
-                  {tierLabels[admissionStatus.client_tier || 'standard']}
+                <Badge className={tierColors[admissionStatus.membership_level || 'standard']}>
+                  {tierLabels[admissionStatus.membership_level || 'standard']}
                 </Badge>
               </div>
 
@@ -331,7 +340,7 @@ const OnboardingPage = () => {
                     <div>
                       <p className="text-amber-400 font-medium">Pagamento Pendente</p>
                       <p className="text-amber-300/80 text-sm">
-                        {admissionStatus.pending_payment.amount} {admissionStatus.pending_payment.currency}
+                        {admissionStatus.pending_payment.amount} EUR
                       </p>
                     </div>
                   </div>
@@ -352,24 +361,9 @@ const OnboardingPage = () => {
               ) : (
                 // Show payment options
                 <>
-                  <div className="bg-zinc-800/50 rounded-lg p-4">
-                    <p className="text-gray-400 text-sm mb-3">Selecione a moeda de pagamento</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {Object.entries(admissionStatus.amounts || {}).map(([currency, amount]) => (
-                        <button
-                          key={currency}
-                          onClick={() => setSelectedCurrency(currency)}
-                          className={`p-3 rounded-lg text-center transition-colors ${
-                            selectedCurrency === currency
-                              ? 'bg-gold-500/20 border border-gold-500 text-gold-400'
-                              : 'bg-zinc-800 border border-zinc-700 text-gray-300 hover:border-zinc-600'
-                          }`}
-                        >
-                          <p className="font-medium">{currency}</p>
-                          <p className="text-sm">{amount.toLocaleString()}</p>
-                        </button>
-                      ))}
-                    </div>
+                  <div className="bg-zinc-800/50 rounded-lg p-4 text-center">
+                    <p className="text-gray-400 text-sm mb-2">Valor da Taxa de Admissão</p>
+                    <p className="text-3xl font-bold text-gold-400">{getPaymentAmount()} EUR</p>
                   </div>
 
                   <Button 
@@ -561,7 +555,7 @@ const OnboardingPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <CreditCard className="text-gold-400" />
-              Pagamento - {getPaymentAmount()} {selectedCurrency}
+              Pagamento - {getPaymentAmount()} EUR
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Escolha o método de pagamento
@@ -668,10 +662,21 @@ const OnboardingPage = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Valor a enviar (aprox.)</p>
-                  <p className="text-white text-lg font-medium">
-                    {getPaymentAmount()} {selectedCurrency} em {selectedCrypto}
-                  </p>
+                  <p className="text-xs text-gray-500 mb-1">Valor a enviar</p>
+                  {getCryptoAmount(selectedCrypto) ? (
+                    <>
+                      <p className="text-white text-lg font-medium">
+                        {getCryptoAmount(selectedCrypto)} {selectedCrypto}
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        (equivalente a {getPaymentAmount()} EUR)
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-white text-lg font-medium">
+                      {getPaymentAmount()} EUR em {selectedCrypto}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -892,7 +897,7 @@ const OnboardingPage = () => {
                         <div className="pt-2 border-t border-zinc-700">
                           <p className="text-xs text-gray-500 mb-1">Montante</p>
                           <p className="text-white text-xl font-bold">
-                            {getPaymentAmount()} {selectedCurrency}
+                            {getPaymentAmount()} EUR
                           </p>
                         </div>
                       </div>
@@ -921,8 +926,8 @@ const OnboardingPage = () => {
                   <AlertTriangle className="mx-auto mb-3 text-amber-400" size={32} />
                   <p className="text-amber-400 font-medium">Sem Contas Disponíveis</p>
                   <p className="text-amber-300/80 text-sm mt-1">
-                    Não existem contas bancárias configuradas para {selectedCurrency}. 
-                    Por favor contacte o suporte ou escolha outra moeda.
+                    Não existem contas bancárias configuradas para EUR. 
+                    Por favor contacte o suporte ou escolha pagamento em criptomoeda.
                   </p>
                 </div>
               )}

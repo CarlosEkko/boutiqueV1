@@ -45,8 +45,7 @@ const AdminSettings = () => {
     premium_eur: 2500,
     vip_eur: 10000,
     institucional_eur: 25000,
-    is_active: true,
-    grace_period_days: 7
+    is_active: true
   });
 
   // Tier Limits State
@@ -359,23 +358,6 @@ const AdminSettings = () => {
                 </div>
               </div>
             ))}
-
-            {/* Grace Period */}
-            <div className="space-y-2">
-              <Label className="text-gray-300">Período de Carência (dias)</Label>
-              <Input
-                type="number"
-                value={admissionFee.grace_period_days}
-                onChange={(e) => setAdmissionFee({
-                  ...admissionFee,
-                  grace_period_days: parseInt(e.target.value) || 7
-                })}
-                min={0}
-                max={30}
-                className="bg-zinc-800 border-zinc-700 text-white"
-              />
-              <p className="text-xs text-gray-500">Dias após registo para efetuar pagamento</p>
-            </div>
 
             <Button 
               onClick={saveAdmissionFee}

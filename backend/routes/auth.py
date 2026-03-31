@@ -73,6 +73,26 @@ async def register(user_data: UserCreate, lang: str = Depends(get_lang)):
         )
         invited_by = invite.get("created_by")
     
+    # Check if there is a CRM lead with this email to inherit membership profile
+    lead_membership = MembershipLevel.STANDARD
+    try:
+        crm_lead = await db.crm_leads.find_one(
+            {"email": {"$regex": f"^{user_data.email}$", "$options": "i"}},
+            {"_id": 0, "membership_profile": 1}
+        )
+        if crm_lead and crm_lead.get("membership_profile"):
+            lead_profile = crm_lead["membership_profile"].lower()
+            profile_map = {
+                "broker": MembershipLevel.BROKER,
+                "standard": MembershipLevel.STANDARD,
+                "premium": MembershipLevel.PREMIUM,
+                "vip": MembershipLevel.VIP,
+                "institucional": MembershipLevel.INSTITUCIONAL,
+            }
+            lead_membership = profile_map.get(lead_profile, MembershipLevel.STANDARD)
+    except Exception:
+        pass
+    
     # Create user object
     user_in_db = UserInDB(
         email=user_data.email,
@@ -81,7 +101,8 @@ async def register(user_data: UserCreate, lang: str = Depends(get_lang)):
         country=user_data.country,
         hashed_password=get_password_hash(user_data.password),
         invite_code_used=user_data.invite_code,
-        invited_by=invited_by
+        invited_by=invited_by,
+        membership_level=lead_membership
     )
     
     # Convert to dict for MongoDB

@@ -38,25 +38,13 @@ class ReferralFeeConfig(BaseModel):
 
 
 class AdmissionFeeConfig(BaseModel):
-    """Configuration for annual admission fee by client tier"""
-    # Standard tier fees
+    """Configuration for annual admission fee by client profile (EUR reference only)"""
+    broker_eur: float = Field(default=0.0, ge=0, description="Broker annual fee in EUR")
     standard_eur: float = Field(default=500.0, ge=0, description="Standard annual fee in EUR")
-    standard_usd: float = Field(default=550.0, ge=0, description="Standard annual fee in USD")
-    standard_aed: float = Field(default=2000.0, ge=0, description="Standard annual fee in AED")
-    standard_brl: float = Field(default=2750.0, ge=0, description="Standard annual fee in BRL")
-    # Premium tier fees
     premium_eur: float = Field(default=2500.0, ge=0, description="Premium annual fee in EUR")
-    premium_usd: float = Field(default=2750.0, ge=0, description="Premium annual fee in USD")
-    premium_aed: float = Field(default=10000.0, ge=0, description="Premium annual fee in AED")
-    premium_brl: float = Field(default=13750.0, ge=0, description="Premium annual fee in BRL")
-    # VIP tier fees
     vip_eur: float = Field(default=10000.0, ge=0, description="VIP annual fee in EUR")
-    vip_usd: float = Field(default=11000.0, ge=0, description="VIP annual fee in USD")
-    vip_aed: float = Field(default=40000.0, ge=0, description="VIP annual fee in AED")
-    vip_brl: float = Field(default=55000.0, ge=0, description="VIP annual fee in BRL")
-    # General settings
+    institucional_eur: float = Field(default=25000.0, ge=0, description="Institucional annual fee in EUR")
     is_active: bool = Field(default=True, description="Whether admission fee is required")
-    grace_period_days: int = Field(default=7, description="Days to pay after registration")
 
 
 class CreateReferralRequest(BaseModel):
@@ -652,7 +640,7 @@ async def get_admission_fee_status(user_id: str):
             "message": "Taxa não aplicável a utilizadores internos"
         }
     
-    client_tier = user.get("client_tier", "standard")
+    membership_level = user.get("membership_level", "standard")
     
     # Check if user has paid
     payment = await db.admission_payments.find_one(
@@ -666,7 +654,7 @@ async def get_admission_fee_status(user_id: str):
             "paid": True,
             "payment": payment,
             "next_due": payment.get("next_due_date"),
-            "client_tier": client_tier
+            "membership_level": membership_level
         }
     
     # Check for pending payment
@@ -675,22 +663,54 @@ async def get_admission_fee_status(user_id: str):
         {"_id": 0}
     )
     
-    # Get amounts for user's tier
-    tier_prefix = client_tier.lower()
-    amounts = {
-        "EUR": admission_config.get(f"{tier_prefix}_eur", admission_config.get("standard_eur", 500)),
-        "USD": admission_config.get(f"{tier_prefix}_usd", admission_config.get("standard_usd", 550)),
-        "AED": admission_config.get(f"{tier_prefix}_aed", admission_config.get("standard_aed", 2000)),
-        "BRL": admission_config.get(f"{tier_prefix}_brl", admission_config.get("standard_brl", 2750))
-    }
+    # Get EUR amount for user's membership level
+    tier_prefix = membership_level.lower()
+    eur_amount = admission_config.get(f"{tier_prefix}_eur", admission_config.get("standard_eur", 500))
+    
+    # Fetch live crypto prices for conversion
+    crypto_amounts = {}
+    try:
+        import httpx
+        BINANCE_API_URL = "https://api.binance.com/api/v3"
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            for crypto_symbol in ["BTC", "ETH"]:
+                resp = await client.get(
+                    f"{BINANCE_API_URL}/ticker/price",
+                    params={"symbol": f"{crypto_symbol}USDT"}
+                )
+                if resp.status_code == 200:
+                    price_usd = float(resp.json().get("price", 0))
+                    if price_usd > 0:
+                        # Get EUR/USD rate
+                        eur_usd_resp = await client.get(
+                            f"{BINANCE_API_URL}/ticker/price",
+                            params={"symbol": "EURUSDT"}
+                        )
+                        eur_usd = float(eur_usd_resp.json().get("price", 1.08)) if eur_usd_resp.status_code == 200 else 1.08
+                        # Convert EUR amount to crypto: EUR -> USD -> Crypto
+                        usd_amount = eur_amount * eur_usd
+                        crypto_amounts[crypto_symbol] = round(usd_amount / price_usd, 8)
+            # USDT/USDC are 1:1 with USD
+            eur_usd_rate = 1.08
+            try:
+                eur_resp = await client.get(f"{BINANCE_API_URL}/ticker/price", params={"symbol": "EURUSDT"})
+                if eur_resp.status_code == 200:
+                    eur_usd_rate = float(eur_resp.json().get("price", 1.08))
+            except Exception:
+                pass
+            usdt_amount = round(eur_amount * eur_usd_rate, 2)
+            crypto_amounts["USDT"] = usdt_amount
+            crypto_amounts["USDC"] = usdt_amount
+    except Exception as e:
+        logger.warning(f"Failed to fetch crypto prices for admission fee: {e}")
     
     return {
         "required": True,
         "paid": False,
         "pending_payment": pending,
-        "client_tier": client_tier,
-        "amounts": amounts,
-        "grace_period_days": admission_config.get("grace_period_days", 7)
+        "membership_level": membership_level,
+        "eur_amount": eur_amount,
+        "crypto_amounts": crypto_amounts
     }
 
 
@@ -722,14 +742,13 @@ async def request_admission_fee_payment(
             "message": "Pagamento pendente já existe"
         }
     
-    # Get user tier
+    # Get user membership level
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    client_tier = user.get("client_tier", "standard") if user else "standard"
-    tier_prefix = client_tier.lower()
+    membership_level = user.get("membership_level", "standard") if user else "standard"
+    tier_prefix = membership_level.lower()
     
-    # Get amount for tier and currency
-    amount_key = f"{tier_prefix}_{currency.lower()}"
-    amount = admission_config.get(amount_key, admission_config.get(f"standard_{currency.lower()}", 500))
+    # Get EUR amount for tier
+    eur_amount = admission_config.get(f"{tier_prefix}_eur", admission_config.get("standard_eur", 500))
     
     # Create payment request
     payment = {
@@ -737,9 +756,9 @@ async def request_admission_fee_payment(
         "user_id": user_id,
         "user_email": user.get("email") if user else None,
         "user_name": user.get("name") if user else None,
-        "client_tier": client_tier,
-        "amount": amount,
-        "currency": currency,
+        "membership_level": membership_level,
+        "amount": eur_amount,
+        "currency": "EUR",
         "status": "pending",
         "type": "annual_admission",
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -750,9 +769,9 @@ async def request_admission_fee_payment(
     return {
         "success": True,
         "payment_id": payment["id"],
-        "amount": amount,
-        "currency": currency,
-        "client_tier": client_tier,
+        "amount": eur_amount,
+        "currency": "EUR",
+        "membership_level": membership_level,
         "message": "Solicitação de pagamento criada"
     }
 
