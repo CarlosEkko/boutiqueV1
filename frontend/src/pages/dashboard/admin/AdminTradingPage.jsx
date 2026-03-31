@@ -871,7 +871,7 @@ const AdminTradingPage = () => {
           <CardContent className="space-y-6">
             {/* Tier Selector */}
             <div className="flex gap-2">
-              {['standard', 'premium', 'vip'].map(tier => (
+              {['broker', 'standard', 'premium', 'vip', 'institucional'].map(tier => (
                 <button
                   key={tier}
                   className={`px-4 py-2 rounded-lg capitalize transition-colors ${
