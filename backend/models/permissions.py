@@ -294,7 +294,7 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/approvals", "label": "Aprovações", "icon": "CheckCircle"},
             {"path": "/dashboard/approvals/settings", "label": "Configurações", "icon": "Settings"},
-            {"path": "/dashboard/vault/wallets", "label": "Wallets", "icon": "Wallet"},
+            {"path": "/dashboard/vault/wallets", "label": "Cofre", "icon": "Vault"},
             {"path": "/dashboard/vault", "label": "Transações", "icon": "ArrowDownUp"},
             {"path": "/dashboard/vault/signatories", "label": "Signatários", "icon": "Users"},
         ]

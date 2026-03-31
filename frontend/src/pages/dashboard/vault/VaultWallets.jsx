@@ -53,6 +53,7 @@ const VaultWallets = () => {
   const [hideZero, setHideZero] = useState(false);
   const [showBalances, setShowBalances] = useState(true);
   const [transactions, setTransactions] = useState([]);
+  const [isOmnibus, setIsOmnibus] = useState(false);
 
   useEffect(() => {
     fetchWallets();
@@ -60,29 +61,41 @@ const VaultWallets = () => {
 
   const fetchWallets = async () => {
     try {
-      // Fetch vault info
+      // First check if user has Omnibus sub-account (OTC client)
+      const omnibusRes = await axios.get(`${API_URL}/api/omnibus/my-balance`, { headers }).catch(() => null);
+      
+      if (omnibusRes?.data?.has_omnibus) {
+        setIsOmnibus(true);
+        const omnibusBalances = (omnibusRes.data.balances || []).map(b => ({
+          symbol: b.asset,
+          name: CRYPTO_META[b.asset]?.name || b.asset,
+          network: CRYPTO_META[b.asset]?.network || '',
+          total: b.balance || 0,
+          available: b.available_balance || 0,
+          pending: b.pending_balance || 0,
+          usdValue: 0, // Will be enriched with prices
+        }));
+        setBalances(omnibusBalances);
+        const walletList = [
+          { id: 'overview', name: 'Overview', type: 'overview', qualified: true },
+          { id: 'omnibus', name: 'Cofre Omnibus', type: 'omnibus', qualified: true },
+        ];
+        setWallets(walletList);
+        setSelectedWallet(walletList[1]);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: individual Fireblocks vault (regular client)
       const vaultRes = await axios.get(`${API_URL}/api/crypto-wallets/my-vault`, { headers });
       
       if (vaultRes.data.has_vault) {
-        const assets = vaultRes.data.assets || [];
-        // Group wallets - Overview + individual asset wallets
         const walletList = [
-          { 
-            id: 'overview', 
-            name: 'Overview', 
-            type: 'overview',
-            qualified: true 
-          },
-          { 
-            id: 'main', 
-            name: 'Main Wallet', 
-            type: 'main',
-            qualified: true,
-            vault_id: vaultRes.data.vault_id
-          },
+          { id: 'overview', name: 'Overview', type: 'overview', qualified: true },
+          { id: 'main', name: 'Main Wallet', type: 'main', qualified: true, vault_id: vaultRes.data.vault_id },
         ];
         setWallets(walletList);
-        setSelectedWallet(walletList[1]); // Select Main Wallet by default
+        setSelectedWallet(walletList[1]);
         await fetchBalances();
       } else {
         setWallets([]);

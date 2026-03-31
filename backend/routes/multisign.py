@@ -234,6 +234,31 @@ async def create_vault_transaction(data: CreateVaultTransactionRequest, current_
     required = settings.get("required_signatures", 2) if settings else 2
     timeout = settings.get("transaction_timeout_hours", 48) if settings else 48
 
+    # Check if user has an Omnibus sub-account (OTC client)
+    omnibus_entry = await db.omnibus_ledger.find_one(
+        {"user_id": user_id, "asset": data.asset.upper()}, {"_id": 0}
+    )
+    omnibus_sub_account_id = None
+    omnibus_vault_id = None
+
+    if omnibus_entry:
+        # Validate balance against Omnibus ledger
+        available = omnibus_entry.get("available_balance", 0)
+        if data.amount > available:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Saldo Omnibus insuficiente. Disponível: {available} {data.asset}"
+            )
+        omnibus_sub_account_id = omnibus_entry.get("sub_account_id")
+        omnibus_vault_id = omnibus_entry.get("omnibus_vault_id")
+
+        # Reserve funds (reduce available, add to pending)
+        await db.omnibus_ledger.update_one(
+            {"user_id": user_id, "asset": data.asset.upper()},
+            {"$inc": {"available_balance": -data.amount, "pending_balance": data.amount},
+             "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+
     # Get signatories
     if data.selected_signer_ids:
         signatories = await db.vault_signatories.find(
@@ -247,6 +272,12 @@ async def create_vault_transaction(data: CreateVaultTransactionRequest, current_
         ).to_list(50)
 
     if len(signatories) < required:
+        # Release reserved funds if omnibus
+        if omnibus_sub_account_id:
+            await db.omnibus_ledger.update_one(
+                {"user_id": user_id, "asset": data.asset.upper()},
+                {"$inc": {"available_balance": data.amount, "pending_balance": -data.amount}}
+            )
         raise HTTPException(status_code=400, detail=f"Precisa de pelo menos {required} signatários. Selecionados: {len(signatories)}")
 
     now = datetime.now(timezone.utc)
@@ -280,6 +311,8 @@ async def create_vault_transaction(data: CreateVaultTransactionRequest, current_
         "signatures": signatures,
         "risk_check": {},
         "execution": {},
+        "omnibus_sub_account_id": omnibus_sub_account_id,
+        "omnibus_vault_id": omnibus_vault_id,
         "created_by": user_id,
         "created_by_name": user_name,
         "created_by_email": user_email,
@@ -292,7 +325,7 @@ async def create_vault_transaction(data: CreateVaultTransactionRequest, current_
     }
 
     await db.vault_transactions.insert_one(tx)
-    logger.info(f"Vault transaction {tx['id']} created by {user_email}: {data.amount} {data.asset}")
+    logger.info(f"Vault transaction {tx['id']} created by {user_email}: {data.amount} {data.asset} (omnibus={bool(omnibus_sub_account_id)})")
 
     return {"success": True, "transaction_id": tx["id"], "order_number": tx["order_number"]}
 
@@ -389,6 +422,29 @@ async def sign_transaction(tx_id: str, data: SignActionRequest, current_user=Dep
         log_entry2 = {"action": "completed", "by": "System", "email": "", "at": now, "details": f"Transaction executed. TxHash: {simulated_hash}"}
         update["activity_log"] = tx.get("activity_log", []) + [log_entry, log_entry2]
         logger.info(f"Vault tx {tx_id} fully signed ({signed_count}/{required}) and executed (simulated)")
+
+        # Finalize Omnibus ledger: move from pending to debited
+        omnibus_sub = tx.get("omnibus_sub_account_id")
+        if omnibus_sub:
+            asset = tx.get("asset", "").upper()
+            amount = tx.get("amount", 0)
+            await db.omnibus_ledger.update_one(
+                {"sub_account_id": omnibus_sub, "asset": asset},
+                {"$inc": {"balance": -amount, "pending_balance": -amount},
+                 "$set": {"updated_at": now}}
+            )
+            await db.omnibus_movements.insert_one({
+                "id": str(uuid.uuid4()),
+                "sub_account_id": omnibus_sub,
+                "type": "debit",
+                "asset": asset,
+                "amount": amount,
+                "reference": f"VTX:{tx.get('order_number', tx_id)}",
+                "notes": f"Multi-sign tx executed to {tx.get('destination_address', '')}",
+                "performed_by": "system",
+                "created_at": now,
+            })
+            logger.info(f"Omnibus ledger debited: {amount} {asset} from {omnibus_sub}")
     else:
         update["activity_log"] = tx.get("activity_log", []) + [log_entry]
 
@@ -421,6 +477,18 @@ async def reject_vault_transaction(tx_id: str, data: SignActionRequest, current_
 
     log_entry = {"action": "rejected", "by": user_name, "email": user_email, "at": now, "details": data.comment or "Rejected"}
 
+    # Release reserved Omnibus funds on rejection
+    omnibus_sub = tx.get("omnibus_sub_account_id")
+    if omnibus_sub:
+        asset = tx.get("asset", "").upper()
+        amount = tx.get("amount", 0)
+        await db.omnibus_ledger.update_one(
+            {"sub_account_id": omnibus_sub, "asset": asset},
+            {"$inc": {"available_balance": amount, "pending_balance": -amount},
+             "$set": {"updated_at": now}}
+        )
+        logger.info(f"Omnibus funds released: {amount} {asset} for rejected tx {tx_id}")
+
     await db.vault_transactions.update_one({"id": tx_id}, {"$set": {
         "signatures": signatures,
         "status": "rejected",
@@ -446,6 +514,18 @@ async def cancel_vault_transaction(tx_id: str, current_user=Depends(get_current_
     now = datetime.now(timezone.utc).isoformat()
     user_name = current_user.name if hasattr(current_user, 'name') else current_user.get("name", "")
     log_entry = {"action": "cancelled", "by": user_name, "email": "", "at": now, "details": "Transaction cancelled"}
+
+    # Release reserved Omnibus funds
+    omnibus_sub = tx.get("omnibus_sub_account_id")
+    if omnibus_sub and tx["status"] == "pending_signatures":
+        asset = tx.get("asset", "").upper()
+        amount = tx.get("amount", 0)
+        await db.omnibus_ledger.update_one(
+            {"sub_account_id": omnibus_sub, "asset": asset},
+            {"$inc": {"available_balance": amount, "pending_balance": -amount},
+             "$set": {"updated_at": now}}
+        )
+        logger.info(f"Omnibus funds released: {amount} {asset} for cancelled tx {tx_id}")
 
     await db.vault_transactions.update_one({"id": tx_id}, {"$set": {
         "status": "cancelled", "cancelled_at": now,
