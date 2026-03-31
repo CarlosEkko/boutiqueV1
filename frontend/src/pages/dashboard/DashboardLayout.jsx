@@ -59,7 +59,9 @@ import {
   FileText,
   Zap,
   Building,
-  Mail
+  Mail,
+  ShieldCheck,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -72,7 +74,7 @@ const iconMap = {
   ArrowUpToLine, ArrowDownToLine, Bitcoin, Send, HelpCircle, Book, Headphones,
   Settings, Settings2, Landmark, Lock, Sliders, Receipt, GitBranch, CreditCard,
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
-  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail
+  Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle
 };
 
 // Department icon and color mapping
@@ -96,6 +98,7 @@ const departmentConfig = {
   support: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   otc_desk: { icon: Briefcase, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   team_hub: { icon: Mail, color: 'text-blue-400', bgColor: 'bg-blue-500/20' },
+  transaction_approval: { icon: ShieldCheck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys

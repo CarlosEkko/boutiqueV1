@@ -79,6 +79,9 @@ import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import RegisterPage from "./pages/RegisterPage";
+import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
+import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
+import ApprovalSettingsPage from "./pages/dashboard/approvals/ApprovalSettingsPage";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -227,6 +230,11 @@ function AppRoutes() {
         
         {/* Client OTC Portal */}
         <Route path="otc-trading" element={<ClientOTCPortal />} />
+
+        {/* Multi-Sign Approvals */}
+        <Route path="approvals" element={<ApprovalsPage />} />
+        <Route path="approvals/settings" element={<ApprovalSettingsPage />} />
+        <Route path="approvals/:id" element={<ApprovalDetailPage />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

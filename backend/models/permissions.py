@@ -34,6 +34,7 @@ class Department(str, Enum):
     OTC_DESK = "otc_desk"
     SUPPORT = "support"
     TEAM_HUB = "team_hub"
+    TRANSACTION_APPROVAL = "transaction_approval"
 
 
 # Role to Department access mapping
@@ -49,7 +50,8 @@ ROLE_PERMISSIONS = {
         Department.CRM,
         Department.OTC_DESK,
         Department.SUPPORT,
-        Department.TEAM_HUB
+        Department.TEAM_HUB,
+        Department.TRANSACTION_APPROVAL
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -61,7 +63,8 @@ ROLE_PERMISSIONS = {
         Department.FINANCE, 
         Department.CRM, 
         Department.SUPPORT,
-        Department.TEAM_HUB
+        Department.TEAM_HUB,
+        Department.TRANSACTION_APPROVAL
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -71,7 +74,8 @@ ROLE_PERMISSIONS = {
         Department.ADMIN,
         Department.CRM,
         Department.SUPPORT,
-        Department.TEAM_HUB
+        Department.TEAM_HUB,
+        Department.TRANSACTION_APPROVAL
     ],
     StaffRole.SALES_MANAGER: [
         Department.PORTFOLIO,
@@ -276,6 +280,14 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/team-hub/dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/team-hub", "label": "Team Hub", "icon": "Mail"},
+        ]
+    },
+    Department.TRANSACTION_APPROVAL: {
+        "label": "Multi-Sign",
+        "icon": "ShieldCheck",
+        "items": [
+            {"path": "/dashboard/approvals", "label": "Aprovações", "icon": "CheckCircle"},
+            {"path": "/dashboard/approvals/settings", "label": "Configurações", "icon": "Settings"},
         ]
     },
 }

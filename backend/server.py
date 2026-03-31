@@ -62,6 +62,7 @@ from routes.sumsub import router as sumsub_router, set_db as set_sumsub_db
 from routes.webhooks import router as webhooks_router, set_db as set_webhooks_db
 from routes.team_hub import router as team_hub_router, set_db as set_team_hub_db
 from routes.microsoft365 import router as o365_router, set_db as set_o365_db
+from routes.approvals import router as approvals_router, set_db as set_approvals_db
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -83,6 +84,7 @@ set_sumsub_db(db)
 set_webhooks_db(db)
 set_team_hub_db(db)
 set_o365_db(db)
+set_approvals_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -106,6 +108,7 @@ api_router.include_router(sumsub_router)
 api_router.include_router(webhooks_router)
 api_router.include_router(team_hub_router)
 api_router.include_router(o365_router)
+api_router.include_router(approvals_router)
 
 
 # Define Models
