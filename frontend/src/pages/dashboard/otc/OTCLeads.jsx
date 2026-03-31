@@ -19,11 +19,14 @@ import {
   UserPlus, Search, Filter, Plus, Building, Mail, Globe, TrendingUp,
   User, FileText, Settings, DollarSign, CreditCard, CheckCircle, XCircle,
   ChevronRight, Trash2, Archive, UserCheck, RefreshCw, Shield, AlertTriangle, Eye,
-  Send, Link,
+  Send, Link, Video,
 } from 'lucide-react';
+import ScheduleMeetingDialog from '../components/ScheduleMeetingDialog';
 
 const OTCLeads = () => {
   const hook = useOTCLeads();
+  const [meetingLead, setMeetingLead] = React.useState(null);
+  const [showMeetingDialog, setShowMeetingDialog] = React.useState(false);
   const {
     leads, enums, loading, total, searchQuery, statusFilter, sourceFilter,
     selectedLead, formData, preQualData, setupData, teamMembers,
@@ -124,6 +127,7 @@ const OTCLeads = () => {
               onSetup={openSetup} onConvert={handleConvertToClient}
               onDetail={openDetail} onDelete={handleDeleteLead}
               onRiskScan={handleTrustfullScan}
+              onScheduleMeeting={(lead) => { setMeetingLead(lead); setShowMeetingDialog(true); }}
             />
           ))}
         </div>
@@ -153,7 +157,13 @@ const OTCLeads = () => {
           {selectedLead && (
             <div className="space-y-6 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3"><span className="text-gray-400 text-sm">Status:</span>{getStatusBadge(selectedLead.status)}</div>
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-400 text-sm">Status:</span>{getStatusBadge(selectedLead.status)}
+                  <Button size="sm" variant="outline" className="ml-auto border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
+                    onClick={() => { setMeetingLead(selectedLead); setShowMeetingDialog(true); }} data-testid="schedule-meeting-otc-detail">
+                    <Video size={14} className="mr-1" /> Agendar Reunião
+                  </Button>
+                </div>
                 <span className="text-gray-500 text-sm">Criado: {new Date(selectedLead.created_at).toLocaleDateString('pt-PT')}</span>
               </div>
 
@@ -374,6 +384,14 @@ const OTCLeads = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule Meeting Dialog */}
+      <ScheduleMeetingDialog
+        open={showMeetingDialog}
+        onClose={() => setShowMeetingDialog(false)}
+        lead={meetingLead}
+        leadType="otc"
+      />
     </div>
   );
 };

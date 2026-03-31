@@ -31,9 +31,11 @@ import {
   Building2,
   DollarSign,
   Shield,
-  Eye
+  Eye,
+  Video
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ScheduleMeetingDialog from '../components/ScheduleMeetingDialog';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -58,6 +60,8 @@ const CRMLeads = () => {
   const [filter, setFilter] = useState({ search: '', status: '', is_qualified: '' });
   const [detailLead, setDetailLead] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [meetingLead, setMeetingLead] = useState(null);
+  const [showMeetingDialog, setShowMeetingDialog] = useState(false);
   
   const [form, setForm] = useState({
     name: '',
@@ -450,6 +454,16 @@ const CRMLeads = () => {
                       >
                         <Eye size={14} />
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setMeetingLead(lead); setShowMeetingDialog(true); }}
+                        className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
+                        title="Agendar Reunião"
+                        data-testid={`schedule-meeting-crm-${lead.id}`}
+                      >
+                        <Video size={14} />
+                      </Button>
                       {lead.status !== 'won' && lead.status !== 'lost' && (
                         <>
                           <Button
@@ -817,6 +831,14 @@ const CRMLeads = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Schedule Meeting Dialog */}
+      <ScheduleMeetingDialog
+        open={showMeetingDialog}
+        onClose={() => setShowMeetingDialog(false)}
+        lead={meetingLead}
+        leadType="crm"
+      />
     </div>
   );
 };

@@ -671,3 +671,136 @@ async def delete_task(list_id: str, task_id: str, current_user=Depends(get_curre
 
     await graph_request("DELETE", f"/me/todo/lists/{list_id}/tasks/{task_id}", token["access_token"])
     return {"success": True}
+
+
+# ==================== MEETINGS (Teams) ====================
+
+class ScheduleMeetingRequest(BaseModel):
+    subject: str
+    start_time: str  # ISO format
+    duration_minutes: int = 30
+    time_zone: str = "Europe/Lisbon"
+    attendee_email: str
+    attendee_name: str = ""
+    notes: str = ""
+    lead_id: str
+    lead_type: str  # "crm" or "otc"
+
+
+@router.post("/meetings/schedule")
+async def schedule_meeting(data: ScheduleMeetingRequest, current_user=Depends(get_current_user)):
+    """Schedule a Teams meeting linked to a CRM/OTC lead."""
+    token = await get_o365_token(current_user.id)
+    if not token:
+        raise HTTPException(status_code=401, detail="Conta O365 não conectada. Conecte-se no Team Hub primeiro.")
+
+    db = get_db()
+
+    # Calculate end time
+    from datetime import datetime as dt
+    start = dt.fromisoformat(data.start_time.replace("Z", "+00:00"))
+    end = start + timedelta(minutes=data.duration_minutes)
+
+    body_html = f"""
+    <p><strong>Reunião KBEX</strong></p>
+    <p>Lead: {data.attendee_name} ({data.attendee_email})</p>
+    {f'<p>Notas: {data.notes}</p>' if data.notes else ''}
+    """
+
+    payload = {
+        "subject": data.subject,
+        "start": {"dateTime": data.start_time, "timeZone": data.time_zone},
+        "end": {"dateTime": end.isoformat(), "timeZone": data.time_zone},
+        "body": {"contentType": "HTML", "content": body_html},
+        "attendees": [
+            {
+                "emailAddress": {"address": data.attendee_email, "name": data.attendee_name},
+                "type": "required"
+            }
+        ],
+        "isOnlineMeeting": True,
+        "onlineMeetingProvider": "teamsForBusiness",
+    }
+
+    result = await graph_request("POST", "/me/events", token["access_token"], json=payload)
+
+    # Extract Teams link
+    teams_link = ""
+    online_meeting = result.get("onlineMeeting")
+    if online_meeting:
+        teams_link = online_meeting.get("joinUrl", "")
+
+    # Store meeting record in MongoDB
+    meeting_record = {
+        "id": str(uuid.uuid4()),
+        "event_id": result.get("id", ""),
+        "subject": data.subject,
+        "start_time": data.start_time,
+        "end_time": end.isoformat(),
+        "time_zone": data.time_zone,
+        "duration_minutes": data.duration_minutes,
+        "attendee_email": data.attendee_email,
+        "attendee_name": data.attendee_name,
+        "notes": data.notes,
+        "teams_link": teams_link,
+        "lead_id": data.lead_id,
+        "lead_type": data.lead_type,
+        "organizer_id": current_user.id,
+        "organizer_name": current_user.name if hasattr(current_user, 'name') else "",
+        "status": "scheduled",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.meetings.insert_one(meeting_record)
+
+    logger.info(f"Meeting scheduled: {data.subject} with {data.attendee_email} by {current_user.id}")
+
+    return {
+        "success": True,
+        "meeting_id": meeting_record["id"],
+        "event_id": result.get("id"),
+        "teams_link": teams_link,
+    }
+
+
+@router.get("/meetings")
+async def get_meetings(
+    lead_id: Optional[str] = None,
+    lead_type: Optional[str] = None,
+    current_user=Depends(get_current_user)
+):
+    """Get meetings, optionally filtered by lead."""
+    db = get_db()
+    query = {}
+    if lead_id:
+        query["lead_id"] = lead_id
+    if lead_type:
+        query["lead_type"] = lead_type
+
+    meetings = await db.meetings.find(query, {"_id": 0}).sort("start_time", -1).to_list(100)
+    return {"meetings": meetings}
+
+
+@router.delete("/meetings/{meeting_id}")
+async def cancel_meeting(meeting_id: str, current_user=Depends(get_current_user)):
+    """Cancel a scheduled meeting."""
+    db = get_db()
+    meeting = await db.meetings.find_one({"id": meeting_id}, {"_id": 0})
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Reunião não encontrada")
+
+    # Cancel in O365 Calendar
+    event_id = meeting.get("event_id")
+    if event_id:
+        try:
+            token = await get_o365_token(current_user.id)
+            if token:
+                await graph_request("DELETE", f"/me/events/{event_id}", token["access_token"])
+        except Exception as e:
+            logger.warning(f"Failed to cancel O365 event: {e}")
+
+    await db.meetings.update_one(
+        {"id": meeting_id},
+        {"$set": {"status": "cancelled", "cancelled_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    return {"success": True, "message": "Reunião cancelada"}

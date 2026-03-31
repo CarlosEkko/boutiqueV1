@@ -6,7 +6,7 @@ import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
 import {
   UserPlus, Mail, Globe, TrendingUp, Building, CheckCircle, XCircle,
-  Clock, Trash2, Archive, ChevronRight, UserCheck, FileText, Settings, Edit, Shield,
+  Clock, Trash2, Archive, ChevronRight, UserCheck, FileText, Settings, Edit, Shield, Video,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -60,7 +60,7 @@ const getRiskBadge = (lead) => {
   );
 };
 
-export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC, onSetup, onConvert, onDetail, onDelete, onRiskScan }) => {
+export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC, onSetup, onConvert, onDetail, onDelete, onRiskScan, onScheduleMeeting }) => {
   const statusConfig = getStatusIcon(lead.status);
   const StatusIcon = statusConfig.icon;
 
@@ -130,6 +130,8 @@ export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC
               <Button size="icon" variant="outline" className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
                 onClick={e => { e.stopPropagation(); onRiskScan(lead.id); }} title="Risk Scan" data-testid={`risk-scan-${lead.id}`}><Shield size={18} /></Button>
             )}
+            <Button size="icon" variant="outline" className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
+              onClick={e => { e.stopPropagation(); onScheduleMeeting(lead); }} title="Agendar Reunião" data-testid={`schedule-meeting-${lead.id}`}><Video size={18} /></Button>
             <Button size="icon" variant="outline" className="w-10 h-10 border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
               onClick={e => { e.stopPropagation(); onDetail(lead); }} title="Ver Detalhes" data-testid={`view-lead-${lead.id}`}><Edit size={18} /></Button>
             {lead.status !== 'active_client' && (
