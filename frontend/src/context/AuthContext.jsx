@@ -1,9 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AuthContext = createContext(null);
+
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+const SESSION_KEY = 'kryptobox_token';
+const SESSION_TIMESTAMP_KEY = 'kryptobox_session_ts';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -15,8 +19,77 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('kryptobox_token'));
+  const [token, setToken] = useState(() => {
+    // Check if session is still valid on load
+    const stored = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+    const ts = sessionStorage.getItem(SESSION_TIMESTAMP_KEY) || localStorage.getItem(SESSION_TIMESTAMP_KEY);
+    if (stored && ts) {
+      const elapsed = Date.now() - parseInt(ts, 10);
+      if (elapsed > INACTIVITY_TIMEOUT) {
+        // Session expired - clear everything
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_TIMESTAMP_KEY);
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+        return null;
+      }
+      return stored;
+    }
+    // Migrate old localStorage token to sessionStorage
+    if (stored) {
+      sessionStorage.setItem(SESSION_KEY, stored);
+      sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+      localStorage.removeItem(SESSION_KEY);
+      return stored;
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(true);
+  const inactivityTimer = useRef(null);
+  const lastActivity = useRef(Date.now());
+
+  // Logout function
+  const logout = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_TIMESTAMP_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+    setToken(null);
+    setUser(null);
+    delete axios.defaults.headers.common['Authorization'];
+  }, []);
+
+  // Reset inactivity timer on user activity
+  const resetInactivityTimer = useCallback(() => {
+    lastActivity.current = Date.now();
+    sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+    }
+    inactivityTimer.current = setTimeout(() => {
+      if (token) {
+        logout();
+        window.location.href = '/auth';
+      }
+    }, INACTIVITY_TIMEOUT);
+  }, [token, logout]);
+
+  // Set up activity listeners
+  useEffect(() => {
+    if (!token) return;
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    const handler = () => resetInactivityTimer();
+
+    events.forEach(e => window.addEventListener(e, handler, { passive: true }));
+    resetInactivityTimer(); // Start timer
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler));
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [token, resetInactivityTimer]);
 
   // Set axios default header when token changes
   useEffect(() => {
@@ -36,7 +109,6 @@ export const AuthProvider = ({ children }) => {
           setUser(response.data);
         } catch (error) {
           console.error('Failed to fetch user:', error);
-          // Token is invalid, clear it
           logout();
         }
       }
@@ -50,7 +122,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     const response = await axios.post(`${API_URL}/api/auth/register`, userData);
     const { access_token, user: userData_ } = response.data;
-    localStorage.setItem('kryptobox_token', access_token);
+    sessionStorage.setItem(SESSION_KEY, access_token);
+    sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+    localStorage.removeItem(SESSION_KEY);
     setToken(access_token);
     setUser(userData_);
     return userData_;
@@ -62,17 +136,12 @@ export const AuthProvider = ({ children }) => {
       password
     });
     const { access_token, user: userData } = response.data;
-    localStorage.setItem('kryptobox_token', access_token);
+    sessionStorage.setItem(SESSION_KEY, access_token);
+    sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
+    localStorage.removeItem(SESSION_KEY);
     setToken(access_token);
     setUser(userData);
     return userData;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('kryptobox_token');
-    setToken(null);
-    setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   const updateProfile = async (updateData) => {
@@ -94,12 +163,9 @@ export const AuthProvider = ({ children }) => {
     return null;
   };
 
-  // Check if user needs onboarding
   const needsOnboarding = () => {
     if (!user) return false;
-    // Internal users don't need onboarding
     if (user.user_type === 'internal') return false;
-    // Check if onboarding is complete
     return !user.is_onboarded;
   };
 
