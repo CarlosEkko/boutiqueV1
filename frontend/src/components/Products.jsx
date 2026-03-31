@@ -97,7 +97,7 @@ const Products = () => {
               glowColor="rgba(196, 168, 122, 0.5)"
             />
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-light text-white mb-4">
             <GlowText 
               text={t('products.title')} 
               stagger={0.06}
@@ -113,7 +113,7 @@ const Products = () => {
               />
             </span>
           </h2>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg">
             <GlowText 
               text={t('products.description')} 
               stagger={0.02}

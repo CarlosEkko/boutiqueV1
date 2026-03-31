@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { ArrowRight } from 'lucide-react';
 import { heroData } from '../mock';
 import { useLanguage } from '../i18n';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 
 // Utility to split text into spans for letter-by-letter animation
@@ -29,6 +30,16 @@ const HeroV2 = () => {
   const [showFinalFrame, setShowFinalFrame] = useState(false);
   const [showFinalContent, setShowFinalContent] = useState(false);
   const { t, isRTL, language } = useLanguage();
+  const navigate = useNavigate();
+
+  const scrollToContact = () => {
+    const el = document.getElementById('contact');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/#contact');
+    }
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -326,7 +337,7 @@ const HeroV2 = () => {
             </div>
 
             {/* Final title - TRANSLATED */}
-            <h1 className="text-5xl md:text-7xl font-extralight text-white leading-tight tracking-wide">
+            <h1 className="text-3xl sm:text-4xl md:text-7xl font-extralight text-white leading-tight tracking-wide">
               {t('hero.title')}
               <span className="block text-gold-400 mt-2">
                 {t('hero.subtitle')}
@@ -334,7 +345,7 @@ const HeroV2 = () => {
             </h1>
 
             {/* Description - TRANSLATED */}
-            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
               {t('hero.description')}
             </p>
 
@@ -342,6 +353,7 @@ const HeroV2 = () => {
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
               <Button
                 size="lg"
+                onClick={scrollToContact}
                 className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white border-none shadow-2xl shadow-gold-800/50 px-8 py-6 text-lg group transition-all duration-300 hover:scale-105"
                 data-testid="hero-cta-primary"
               >
