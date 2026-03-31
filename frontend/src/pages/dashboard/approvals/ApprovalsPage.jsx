@@ -96,7 +96,7 @@ const ApprovalsPage = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap mb-6">
         <div className="flex gap-1 bg-zinc-800/50 rounded-lg p-1">
           {filters.map(f => (
             <button

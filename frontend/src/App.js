@@ -86,6 +86,7 @@ import VaultDashboard from "./pages/dashboard/vault/VaultDashboard";
 import VaultTransactionDetail from "./pages/dashboard/vault/VaultTransactionDetail";
 import VaultSignatories from "./pages/dashboard/vault/VaultSignatories";
 import VaultCreateTransaction from "./pages/dashboard/vault/VaultCreateTransaction";
+import VaultWallets from "./pages/dashboard/vault/VaultWallets";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -242,6 +243,7 @@ function AppRoutes() {
 
         {/* Vault Multi-Sign (Client) */}
         <Route path="vault" element={<VaultDashboard />} />
+        <Route path="vault/wallets" element={<VaultWallets />} />
         <Route path="vault/new" element={<VaultCreateTransaction />} />
         <Route path="vault/signatories" element={<VaultSignatories />} />
         <Route path="vault/:id" element={<VaultTransactionDetail />} />
