@@ -96,7 +96,7 @@ const VaultTransactionDetail = () => {
     : '';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 px-4" data-testid="vault-detail-page">
+    <div className="max-w-7xl mx-auto space-y-5 px-4" data-testid="vault-detail-page">
       <button onClick={() => navigate('/dashboard/vault')} className="text-zinc-500 hover:text-zinc-200 flex items-center gap-2 text-sm transition-colors">
         <ArrowLeft size={18} /> Voltar ao Vault
       </button>
@@ -153,30 +153,29 @@ const VaultTransactionDetail = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-2 gap-5">
         {/* Left: Details + Actions */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Card className="bg-zinc-900 border-zinc-800/50">
-            <CardContent className="p-8 space-y-5">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">Detalhes da Transação</h3>
+            <CardContent className="p-5 space-y-1">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2">Detalhes da Transação</h3>
               <Row label="Token" value={`${tx.asset} (${tx.network})`} />
-              <Row label="Montante" value={<span className="text-red-400 font-mono text-lg">-{new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(tx.amount)}</span>} />
-              <div className="border-t border-zinc-800/40 my-2" />
+              <Row label="Montante" value={<span className="text-red-400 font-mono">-{new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(tx.amount)}</span>} />
               <Row label="Wallet Origem" value={tx.source_wallet} />
               <Row label="Destino" value={tx.destination_name} />
               <Row label="Endereço" value={
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm truncate max-w-[240px]">{tx.destination_address}</span>
-                  <button onClick={() => copyText(tx.destination_address)} className="text-zinc-600 hover:text-zinc-300"><Copy size={14} /></button>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-xs truncate max-w-[200px]">{tx.destination_address}</span>
+                  <button onClick={() => copyText(tx.destination_address)} className="text-zinc-600 hover:text-zinc-300"><Copy size={12} /></button>
                 </div>
               } />
-              <Row label="Order Number" value={<span className="font-mono text-sm">{tx.order_number}</span>} />
+              <Row label="Order Number" value={<span className="font-mono text-xs">{tx.order_number}</span>} />
               {tx.notes && <Row label="Notas" value={<span className="text-zinc-400 text-sm">{tx.notes}</span>} />}
               {tx.execution?.tx_hash && (
                 <Row label="TxHash" value={
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm text-emerald-400 truncate max-w-[240px]">{tx.execution.tx_hash}</span>
-                    <button onClick={() => copyText(tx.execution.tx_hash)} className="text-zinc-600 hover:text-zinc-300"><Copy size={14} /></button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-xs text-emerald-400 truncate max-w-[200px]">{tx.execution.tx_hash}</span>
+                    <button onClick={() => copyText(tx.execution.tx_hash)} className="text-zinc-600 hover:text-zinc-300"><Copy size={12} /></button>
                   </div>
                 } />
               )}
@@ -185,20 +184,20 @@ const VaultTransactionDetail = () => {
 
           {/* Sign / Reject */}
           {canSign && (
-            <Card className="bg-zinc-900 border-amber-500/20 shadow-[0_0_30px_rgba(245,158,11,0.05)]" data-testid="vault-sign-card">
-              <CardContent className="p-8 space-y-5">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-400 flex items-center gap-2">
-                  <Lock size={16} /> A sua assinatura
+            <Card className="bg-zinc-900 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.04)]" data-testid="vault-sign-card">
+              <CardContent className="p-5 space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 flex items-center gap-2">
+                  <Lock size={13} /> A sua assinatura
                 </h3>
                 <Input value={comment} onChange={e => setComment(e.target.value)} placeholder="Comentário (opcional)..."
-                  className="bg-zinc-800/50 border-zinc-700/50 text-white text-base rounded-xl py-3" data-testid="vault-sign-comment" />
+                  className="bg-zinc-800/50 border-zinc-700/50 text-white text-sm rounded-xl h-9" data-testid="vault-sign-comment" />
                 <Button onClick={handleSign} disabled={signing} data-testid="vault-sign-btn"
-                  className="w-full bg-amber-500 text-zinc-950 hover:bg-amber-400 rounded-full font-medium shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all hover:shadow-[0_0_30px_rgba(245,158,11,0.25)] py-3 text-base">
-                  <ShieldCheck size={20} className="mr-2" /> {signing ? 'A assinar...' : 'Assinar Transação'}
+                  className="w-full bg-amber-500 text-zinc-950 hover:bg-amber-400 rounded-full font-medium shadow-[0_0_15px_rgba(245,158,11,0.12)] h-9 text-sm">
+                  <ShieldCheck size={16} className="mr-1.5" /> {signing ? 'A assinar...' : 'Assinar Transação'}
                 </Button>
                 <Button onClick={handleReject} disabled={signing} variant="ghost" data-testid="vault-reject-btn"
-                  className="w-full text-zinc-500 hover:text-rose-400 rounded-full py-3">
-                  <XCircle size={18} className="mr-2" /> Rejeitar
+                  className="w-full text-zinc-500 hover:text-rose-400 rounded-full h-8 text-sm">
+                  <XCircle size={15} className="mr-1.5" /> Rejeitar
                 </Button>
               </CardContent>
             </Card>
@@ -207,13 +206,13 @@ const VaultTransactionDetail = () => {
           {/* Activity Log */}
           {tx.activity_log?.length > 0 && (
             <Card className="bg-zinc-900 border-zinc-800/50">
-              <CardContent className="p-8">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-5 flex items-center gap-2"><FileText size={16} /> Activity Log</h3>
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              <CardContent className="p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-3 flex items-center gap-2"><FileText size={13} /> Activity Log</h3>
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {tx.activity_log.map((log, i) => (
-                    <div key={i} className="flex items-start gap-3 text-sm py-2 border-b border-zinc-800/30 last:border-0">
+                    <div key={i} className="flex items-start gap-2 text-xs py-1 border-b border-zinc-800/30 last:border-0">
                       <span className="text-zinc-600 font-mono whitespace-nowrap">{new Date(log.at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                      <Badge className={`rounded-full text-xs px-2.5 ${
+                      <Badge className={`rounded-full text-[10px] px-2 py-0 ${
                         log.action === 'signed' ? 'bg-emerald-500/10 text-emerald-400' :
                         log.action === 'rejected' ? 'bg-rose-500/10 text-rose-400' :
                         log.action === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
@@ -232,8 +231,8 @@ const VaultTransactionDetail = () => {
         {/* Right: Process Timeline */}
         <div>
           <Card className="bg-zinc-900 border-zinc-800/50">
-            <CardContent className="p-8">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-10">Process</h3>
+            <CardContent className="p-5">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-5">Process</h3>
 
               <div className="space-y-0">
                 {steps.map((step, idx) => {
@@ -241,47 +240,47 @@ const VaultTransactionDetail = () => {
                   const isLast = idx === steps.length - 1;
 
                   return (
-                    <div key={step.key} className="flex gap-6" data-testid={`vault-step-${step.key}`}>
-                      <div className="flex flex-col items-center w-6">
-                        <div className={`w-5 h-5 rotate-45 rounded-[3px] border-2 flex-shrink-0 transition-all duration-500 ${st.diamond}`} />
-                        {!isLast && <div className={`w-0.5 flex-1 min-h-[60px] transition-all duration-500 ${st.line}`} />}
+                    <div key={step.key} className="flex gap-4" data-testid={`vault-step-${step.key}`}>
+                      <div className="flex flex-col items-center w-5">
+                        <div className={`w-4 h-4 rotate-45 rounded-[3px] border-2 flex-shrink-0 transition-all duration-500 ${st.diamond}`} />
+                        {!isLast && <div className={`w-0.5 flex-1 min-h-[40px] transition-all duration-500 ${st.line}`} />}
                       </div>
-                      <div className="pb-10 flex-1">
-                        <div className="flex items-center gap-3">
-                          <span className={`text-base font-medium transition-colors ${st.text}`}>{step.label}</span>
-                          {step.status === 'completed' && <CheckCircle size={18} className="text-emerald-400" />}
-                          {step.status === 'rejected' && <XCircle size={18} className="text-rose-400" />}
+                      <div className="pb-5 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-medium transition-colors ${st.text}`}>{step.label}</span>
+                          {step.status === 'completed' && <CheckCircle size={14} className="text-emerald-400" />}
+                          {step.status === 'rejected' && <XCircle size={14} className="text-rose-400" />}
                         </div>
 
                         {step.key === 'initiated' && step.details && (
-                          <div className="mt-4 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                              <User size={16} className="text-amber-400" />
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                              <User size={13} className="text-amber-400" />
                             </div>
-                            <div className="text-sm">
+                            <div className="text-xs">
                               <span className="text-zinc-300">{step.details.by}</span>
                               <span className="text-zinc-600 ml-2">{step.details.email}</span>
                             </div>
                             {step.timestamp && (
-                              <span className="text-zinc-600 text-xs ml-auto">{new Date(step.timestamp).toLocaleString('pt-PT')}</span>
+                              <span className="text-zinc-600 text-[10px] ml-auto">{new Date(step.timestamp).toLocaleString('pt-PT')}</span>
                             )}
                           </div>
                         )}
 
                         {step.key === 'signatures' && step.details && (
-                          <div className="mt-4 space-y-4">
-                            <p className="text-sm text-zinc-500">
-                              {step.details.required} aprovação(ões) necessária(s), {step.details.signed} utilizador(es) aprovaram
+                          <div className="mt-2 space-y-2">
+                            <p className="text-xs text-zinc-500">
+                              {step.details.required} aprovação(ões) necessária(s), {step.details.signed} aprovaram
                             </p>
-                            <div className="space-y-3">
+                            <div className="space-y-1.5">
                               {(step.details.signers || []).map((s, i) => (
-                                <div key={i} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                                <div key={i} className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
                                   s.status === 'signed' ? 'bg-emerald-500/5 border-emerald-500/15' :
                                   s.status === 'rejected' ? 'bg-rose-500/5 border-rose-500/15' :
                                   'bg-zinc-800/30 border-zinc-700/30'
                                 }`}>
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 ${
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 ${
                                       s.status === 'signed' ? 'bg-emerald-500 border-emerald-400 text-white' :
                                       s.status === 'rejected' ? 'bg-rose-500 border-rose-400 text-white' :
                                       'bg-zinc-800 border-amber-500/30 text-amber-400'
@@ -289,20 +288,17 @@ const VaultTransactionDetail = () => {
                                       {s.name?.charAt(0)?.toUpperCase()}
                                     </div>
                                     <div>
-                                      <p className="text-zinc-200 text-base">{s.name}</p>
-                                      <p className="text-zinc-600 text-xs">{s.email}</p>
+                                      <p className="text-zinc-200 text-sm">{s.name}</p>
+                                      <p className="text-zinc-600 text-[10px]">{s.email}</p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3">
-                                    {s.comment && <span className="text-zinc-600 text-xs max-w-[150px] truncate">"{s.comment}"</span>}
-                                    <Badge className={`rounded-full text-xs px-3 py-1 ${
-                                      s.status === 'signed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                      s.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                      'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                                    }`} data-testid={`vault-signer-${i}`}>
-                                      {s.status === 'signed' ? 'Approved' : s.status === 'rejected' ? 'Rejected' : 'Pending'}
-                                    </Badge>
-                                  </div>
+                                  <Badge className={`rounded-full text-[10px] px-2 ${
+                                    s.status === 'signed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                    s.status === 'rejected' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                                    'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                  }`} data-testid={`vault-signer-${i}`}>
+                                    {s.status === 'signed' ? 'Approved' : s.status === 'rejected' ? 'Rejected' : 'Pending'}
+                                  </Badge>
                                 </div>
                               ))}
                             </div>
@@ -310,22 +306,22 @@ const VaultTransactionDetail = () => {
                         )}
 
                         {step.key === 'risk_check' && step.status === 'completed' && (
-                          <p className="mt-3 text-sm text-emerald-400/70">{step.details?.details || 'All checks passed'}</p>
+                          <p className="mt-1.5 text-xs text-emerald-400/70">{step.details?.details || 'All checks passed'}</p>
                         )}
 
                         {step.key === 'execution' && step.details?.tx_hash && (
-                          <div className="mt-3 text-sm space-y-1.5">
+                          <div className="mt-1.5 text-xs space-y-1">
                             <p className="text-zinc-500">Confirmations: {step.details.confirmations}</p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               <span className="text-zinc-500">TxHash:</span>
-                              <span className="text-emerald-400 font-mono truncate max-w-[280px]">{step.details.tx_hash}</span>
-                              <button onClick={() => copyText(step.details.tx_hash)} className="text-zinc-600 hover:text-zinc-300"><Copy size={12} /></button>
+                              <span className="text-emerald-400 font-mono truncate max-w-[220px]">{step.details.tx_hash}</span>
+                              <button onClick={() => copyText(step.details.tx_hash)} className="text-zinc-600 hover:text-zinc-300"><Copy size={10} /></button>
                             </div>
                           </div>
                         )}
 
                         {step.key === 'completed' && step.status === 'completed' && step.timestamp && (
-                          <p className="mt-3 text-sm text-emerald-400/70">{new Date(step.timestamp).toLocaleString('pt-PT')}</p>
+                          <p className="mt-1.5 text-xs text-emerald-400/70">{new Date(step.timestamp).toLocaleString('pt-PT')}</p>
                         )}
                       </div>
                     </div>
@@ -341,9 +337,9 @@ const VaultTransactionDetail = () => {
 };
 
 const Row = ({ label, value }) => (
-  <div className="flex justify-between items-start py-2.5 border-b border-zinc-800/30 last:border-0">
-    <span className="text-zinc-500 text-base">{label}</span>
-    <span className="text-zinc-200 text-base text-right">{value}</span>
+  <div className="flex justify-between items-start py-1.5 border-b border-zinc-800/30 last:border-0">
+    <span className="text-zinc-500 text-sm">{label}</span>
+    <span className="text-zinc-200 text-sm text-right">{value}</span>
   </div>
 );
 
