@@ -234,6 +234,7 @@ DEPARTMENT_MENUS = {
         "label": "Financeiro",
         "icon": "Landmark",
         "items": [
+            {"path": "/dashboard/admin/finance", "label": "Dashboard Financeiro", "icon": "BarChart3"},
             {"path": "/dashboard/admin/orders", "label": "Ordens de Trading", "icon": "Receipt"},
             {"path": "/dashboard/admin/admission-fees", "label": "Taxas de Admissão", "icon": "CreditCard"},
             {"path": "/dashboard/admin/fiat-deposits", "label": "Depósitos Fiat", "icon": "ArrowUpToLine"},

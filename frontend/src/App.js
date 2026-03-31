@@ -78,6 +78,7 @@ import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
+import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import RegisterPage from "./pages/RegisterPage";
 import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
 import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
@@ -206,6 +207,7 @@ function AppRoutes() {
         <Route path="admin/client-menus" element={<AdminClientMenus />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
+        <Route path="admin/finance" element={<FinancialDashboard />} />
         
         {/* CRM Routes */}
         <Route path="crm" element={<CRMDashboard />} />
