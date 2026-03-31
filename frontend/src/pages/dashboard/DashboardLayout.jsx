@@ -638,7 +638,7 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading'];
+  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign'];
   
   // Default menus for clients (only Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];
@@ -655,7 +655,8 @@ const DashboardLayout = () => {
         'investimentos': 'investimentos',
         'transparencia': 'transparencia',
         'account': 'perfil',
-        'otc_trading': 'otc_trading'
+        'otc_trading': 'otc_trading',
+        'multi_sign': 'multi_sign'
       };
       
       clientMenus = clientMenus.filter(m => {

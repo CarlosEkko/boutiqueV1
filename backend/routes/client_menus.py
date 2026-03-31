@@ -25,6 +25,7 @@ AVAILABLE_MENUS = [
     {"value": "transparencia", "label": "Transparência"},
     {"value": "perfil", "label": "Perfil"},
     {"value": "otc_trading", "label": "OTC Trading"},
+    {"value": "multi_sign", "label": "Multi-Sign"},
 ]
 
 # Default menus (all menus)
