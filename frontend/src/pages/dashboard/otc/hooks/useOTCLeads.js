@@ -231,12 +231,12 @@ export const useOTCLeads = () => {
 
   const handleTrustfullScan = async (leadId) => {
     try {
-      toast.info('A analisar com Trustfull...');
-      const r = await axios.post(`${API_URL}/api/otc/leads/${leadId}/trustfull-scan`, {}, { headers });
-      toast.success('Trustfull scan completo');
+      toast.info('A analisar Risk Intelligence...');
+      const r = await axios.post(`${API_URL}/api/otc/leads/${leadId}/risk-scan`, {}, { headers });
+      toast.success('Risk Intelligence completo');
       fetchLeads();
-      return r.data.trustfull_data;
-    } catch (e) { toast.error('Erro no scan Trustfull'); return null; }
+      return r.data.risk_intelligence_data;
+    } catch (e) { toast.error('Erro no Risk Intelligence scan'); return null; }
   };
 
   const checkExistingContact = async (field, value) => {

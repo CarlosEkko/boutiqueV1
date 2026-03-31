@@ -329,9 +329,9 @@ async def create_otc_lead(
 
 
 
-@router.post("/leads/{lead_id}/trustfull-scan")
-async def trustfull_scan_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
-    """Manually trigger Trustfull risk scoring for a lead."""
+@router.post("/leads/{lead_id}/risk-scan")
+async def risk_scan_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Manually trigger Risk Intelligence scoring for a lead."""
     db = get_db()
     lead = await db.otc_leads.find_one({"id": lead_id})
     if not lead:
@@ -353,7 +353,7 @@ async def trustfull_scan_lead(lead_id: str, current_user: dict = Depends(get_cur
         update_data["red_flags"] = existing_flags
 
     await db.otc_leads.update_one({"id": lead_id}, {"$set": update_data})
-    return {"success": True, "trustfull_data": tf_result}
+    return {"success": True, "risk_intelligence_data": tf_result}
 
 
 

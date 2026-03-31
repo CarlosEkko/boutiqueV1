@@ -45,7 +45,7 @@ const getStatusBadge = (status) => {
   return <Badge className={colors[status] || 'bg-gray-900/30 text-gray-400'}>{labels[status] || status}</Badge>;
 };
 
-const getTrustfullBadge = (lead) => {
+const getRiskBadge = (lead) => {
   if (lead.trustfull_data?.combined_score == null) return null;
   const s = lead.trustfull_data.combined_score;
   const cfg = s >= 700 ? { bg: 'bg-green-900/40', text: 'text-green-400', label: 'Confiável' }
@@ -54,13 +54,13 @@ const getTrustfullBadge = (lead) => {
     : s >= 150 ? { bg: 'bg-orange-900/40', text: 'text-orange-400', label: 'Baixo' }
     : { bg: 'bg-red-900/40', text: 'text-red-400', label: 'Risco' };
   return (
-    <Badge className={`${cfg.bg} ${cfg.text} text-[10px] ml-1`} data-testid={`trust-score-${lead.id}`}>
-      TF {s} — {cfg.label}
+    <Badge className={`${cfg.bg} ${cfg.text} text-[10px] ml-1`} data-testid={`risk-score-${lead.id}`}>
+      RI {s} — {cfg.label}
     </Badge>
   );
 };
 
-export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC, onSetup, onConvert, onDetail, onDelete, onTrustfullScan }) => {
+export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC, onSetup, onConvert, onDetail, onDelete, onRiskScan }) => {
   const statusConfig = getStatusIcon(lead.status);
   const StatusIcon = statusConfig.icon;
 
@@ -81,7 +81,7 @@ export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC
               <h3 className="text-white font-medium text-lg">{lead.contact_name || 'Lead'}</h3>
               <span className="text-gray-500">·</span>
               <span className="flex items-center gap-1 text-gray-400 text-sm"><Building size={14} />{lead.entity_name}</span>
-              {getTrustfullBadge(lead)}
+              {getRiskBadge(lead)}
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span className="flex items-center gap-1"><Mail size={14} />{lead.contact_email}</span>
@@ -128,7 +128,7 @@ export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC
             )}
             {!lead.trustfull_data && (
               <Button size="icon" variant="outline" className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
-                onClick={e => { e.stopPropagation(); onTrustfullScan(lead.id); }} title="Scan Trustfull" data-testid={`trustfull-scan-${lead.id}`}><Shield size={18} /></Button>
+                onClick={e => { e.stopPropagation(); onRiskScan(lead.id); }} title="Risk Scan" data-testid={`risk-scan-${lead.id}`}><Shield size={18} /></Button>
             )}
             <Button size="icon" variant="outline" className="w-10 h-10 border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
               onClick={e => { e.stopPropagation(); onDetail(lead); }} title="Ver Detalhes" data-testid={`view-lead-${lead.id}`}><Edit size={18} /></Button>

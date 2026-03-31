@@ -212,6 +212,7 @@ class LeadResponse(LeadBase):
     created_by: Optional[str] = None
     converted_to_client: bool = False
     converted_at: Optional[datetime] = None
+    risk_intelligence_data: Optional[dict] = None
 
 # ==================== DEAL MODELS ====================
 

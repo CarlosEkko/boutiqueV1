@@ -20,6 +20,7 @@ from models.crm import (
     CRMDashboardStats, WalletInfo
 )
 from routes.auth import get_current_user
+from services.trustfull_service import score_lead as risk_intelligence_scan
 
 router = APIRouter(prefix="/crm", tags=["CRM"])
 
@@ -73,6 +74,19 @@ async def create_public_lead(lead_data: PublicLeadRequest):
     }
 
     await db.crm_leads.insert_one(doc)
+    lead_id = doc["_id"]
+
+    # Trigger Risk Intelligence scan (async, non-blocking)
+    try:
+        ri_result = await risk_intelligence_scan(lead_data.email, lead_data.phone)
+        if ri_result.get("combined_score") is not None:
+            await db.crm_leads.update_one(
+                {"_id": lead_id},
+                {"$set": {"risk_intelligence_data": ri_result}}
+            )
+            logger.info(f"Risk Intelligence score for {lead_data.email}: {ri_result.get('combined_score')} ({ri_result.get('risk_level')})")
+    except Exception as e:
+        logger.warning(f"Risk Intelligence scoring failed for {lead_data.email}: {e}")
 
     # Send confirmation email via Brevo
     email_sent = False
@@ -295,6 +309,21 @@ async def create_lead(lead: LeadCreate, current_user: dict = Depends(get_current
     
     result = await db.crm_leads.insert_one(doc)
     doc["_id"] = result.inserted_id
+
+    # Trigger Risk Intelligence scan (async, non-blocking)
+    try:
+        email = doc.get("email")
+        phone = doc.get("phone")
+        if email:
+            ri_result = await risk_intelligence_scan(email, phone)
+            if ri_result.get("combined_score") is not None:
+                await db.crm_leads.update_one(
+                    {"_id": result.inserted_id},
+                    {"$set": {"risk_intelligence_data": ri_result}}
+                )
+                logger.info(f"Risk Intelligence score for {email}: {ri_result.get('combined_score')}")
+    except Exception as e:
+        logger.warning(f"Risk Intelligence scoring failed: {e}")
     
     return serialize_doc(doc)
 
@@ -412,7 +441,7 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
         contact_name=lead.get("name", ""),
         contact_email=lead.get("email", ""),
         contact_phone=lead.get("phone", ""),
-        country=lead.get("country", ""),
+        country=lead.get("country") or "N/A",
         source=OTCLeadSource.REFERRAL,
         source_detail=f"Convertido do CRM Lead (ID: {lead_id})",
         notes=lead.get("notes"),
@@ -426,7 +455,14 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
         }]
     )
 
-    await db.otc_leads.insert_one(otc_lead.dict())
+    otc_doc = otc_lead.dict()
+
+    # Transfer Risk Intelligence data from CRM lead to OTC lead
+    ri_data = lead.get("risk_intelligence_data")
+    if ri_data:
+        otc_doc["trustfull_data"] = ri_data
+
+    await db.otc_leads.insert_one(otc_doc)
 
     # Update CRM lead to mark conversion
     await db.crm_leads.update_one(
@@ -439,6 +475,28 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
     )
 
     return {"success": True, "message": "Lead convertido para OTC com sucesso", "otc_lead_id": otc_lead.id}
+
+
+@router.post("/leads/{lead_id}/risk-scan")
+async def risk_scan_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    """Manually trigger Risk Intelligence scoring for a CRM lead."""
+    db = get_db()
+    lead = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+
+    email = lead.get("email", "")
+    phone = lead.get("phone", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Lead sem email para análise")
+
+    ri_result = await risk_intelligence_scan(email, phone if phone else None)
+    await db.crm_leads.update_one(
+        {"_id": ObjectId(lead_id)},
+        {"$set": {"risk_intelligence_data": ri_result, "updated_at": datetime.now(timezone.utc)}}
+    )
+
+    return {"success": True, "risk_intelligence_data": ri_result}
 
 # ==================== DEALS ====================
 

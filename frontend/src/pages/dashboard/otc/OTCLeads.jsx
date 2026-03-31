@@ -123,7 +123,7 @@ const OTCLeads = () => {
               onAdvanceKYC={handleAdvanceToKYC} onApproveKYC={handleApproveKYC}
               onSetup={openSetup} onConvert={handleConvertToClient}
               onDetail={openDetail} onDelete={handleDeleteLead}
-              onTrustfullScan={handleTrustfullScan}
+              onRiskScan={handleTrustfullScan}
             />
           ))}
         </div>
@@ -157,14 +157,14 @@ const OTCLeads = () => {
                 <span className="text-gray-500 text-sm">Criado: {new Date(selectedLead.created_at).toLocaleDateString('pt-PT')}</span>
               </div>
 
-              {/* Trustfull Risk Intelligence */}
+              {/* Risk Intelligence */}
               {selectedLead.trustfull_data && (
                 <Card className="bg-zinc-900/50 border-zinc-800">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium text-white flex items-center gap-2"><Shield size={16} className="text-blue-400" />Trustfull — Risk Intelligence</h4>
+                      <h4 className="text-sm font-medium text-white flex items-center gap-2"><Shield size={16} className="text-blue-400" />Risk Intelligence</h4>
                       <button onClick={async () => { const d = await handleTrustfullScan(selectedLead.id); if (d) setSelectedLead({...selectedLead, trustfull_data: d}); }}
-                        className="text-xs text-gray-500 hover:text-blue-400 flex items-center gap-1" data-testid="rescan-trustfull"><RefreshCw size={12} /> Re-scan</button>
+                        className="text-xs text-gray-500 hover:text-blue-400 flex items-center gap-1" data-testid="rescan-risk"><RefreshCw size={12} /> Re-scan</button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
@@ -195,7 +195,7 @@ const OTCLeads = () => {
                     </div>
                     {selectedLead.trustfull_data.red_flags?.length > 0 && (
                       <div className="mt-3 p-2 bg-red-950/30 border border-red-900/30 rounded-lg">
-                        <p className="text-red-400 text-xs font-medium mb-1">Red Flags Trustfull:</p>
+                        <p className="text-red-400 text-xs font-medium mb-1">Red Flags:</p>
                         <div className="flex flex-wrap gap-1">{selectedLead.trustfull_data.red_flags.map((f, i) => <Badge key={i} className="bg-red-900/40 text-red-400 text-[10px]">{f}</Badge>)}</div>
                       </div>
                     )}

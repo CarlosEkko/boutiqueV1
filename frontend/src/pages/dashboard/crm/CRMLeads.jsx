@@ -29,7 +29,9 @@ import {
   CheckCircle,
   ArrowRight,
   Building2,
-  DollarSign
+  DollarSign,
+  Shield,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -54,6 +56,8 @@ const CRMLeads = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
   const [filter, setFilter] = useState({ search: '', status: '', is_qualified: '' });
+  const [detailLead, setDetailLead] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   const [form, setForm] = useState({
     name: '',
@@ -220,6 +224,27 @@ const CRMLeads = () => {
     }
   };
 
+  const riskScan = async (id) => {
+    try {
+      toast.info('A analisar Risk Intelligence...');
+      const res = await axios.post(`${API_URL}/api/crm/leads/${id}/risk-scan`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Risk Intelligence completo');
+      fetchLeads();
+      if (detailLead?.id === id) {
+        setDetailLead(prev => ({ ...prev, risk_intelligence_data: res.data.risk_intelligence_data }));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro no Risk Intelligence');
+    }
+  };
+
+  const openDetail = (lead) => {
+    setDetailLead(lead);
+    setShowDetailModal(true);
+  };
+
   const toggleCrypto = (crypto) => {
     setForm(prev => ({
       ...prev,
@@ -343,6 +368,15 @@ const CRMLeads = () => {
                             <Building2 size={12} /> {lead.company_name}
                           </span>
                         )}
+                        {lead.risk_intelligence_data?.combined_score != null && (() => {
+                          const s = lead.risk_intelligence_data.combined_score;
+                          const cfg = s >= 700 ? { bg: 'bg-green-900/40', text: 'text-green-400', label: 'Confiável' }
+                            : s >= 500 ? { bg: 'bg-emerald-900/40', text: 'text-emerald-400', label: 'Alto' }
+                            : s >= 300 ? { bg: 'bg-yellow-900/40', text: 'text-yellow-400', label: 'Revisão' }
+                            : s >= 150 ? { bg: 'bg-orange-900/40', text: 'text-orange-400', label: 'Baixo' }
+                            : { bg: 'bg-red-900/40', text: 'text-red-400', label: 'Risco' };
+                          return <Badge className={`${cfg.bg} ${cfg.text} text-[10px]`} data-testid={`risk-score-crm-${lead.id}`}>RI {s} — {cfg.label}</Badge>;
+                        })()}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
                         {lead.email && (
@@ -394,6 +428,28 @@ const CRMLeads = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
+                      {!lead.risk_intelligence_data && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => riskScan(lead.id)}
+                          className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
+                          title="Risk Intelligence Scan"
+                          data-testid={`risk-scan-crm-${lead.id}`}
+                        >
+                          <Shield size={14} />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDetail(lead)}
+                        className="border-cyan-600/50 text-cyan-400 hover:bg-cyan-900/30"
+                        title="Ver Detalhes"
+                        data-testid={`detail-crm-${lead.id}`}
+                      >
+                        <Eye size={14} />
+                      </Button>
                       {lead.status !== 'won' && lead.status !== 'lost' && (
                         <>
                           <Button
@@ -646,6 +702,119 @@ const CRMLeads = () => {
               {editingLead ? 'Atualizar' : 'Criar'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lead Detail Modal with Risk Intelligence */}
+      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-light text-white flex items-center gap-2">
+              <UserPlus className="text-gold-400" size={20} />
+              {detailLead?.name || 'Lead'}
+              {detailLead?.company_name && <span className="text-gray-400 text-sm">— {detailLead.company_name}</span>}
+            </DialogTitle>
+          </DialogHeader>
+
+          {detailLead && (
+            <div className="space-y-4">
+              {/* Contact Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-zinc-800/50 border-zinc-700">
+                  <CardContent className="p-4">
+                    <h4 className="text-sm font-medium text-purple-400 flex items-center gap-2 mb-3"><UserPlus size={16} /> Informação de Contacto</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-gray-500">Nome:</span><span className="text-white">{detailLead.name}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Email:</span><span className="text-white">{detailLead.email || '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Telefone:</span><span className="text-white">{detailLead.phone || '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">País:</span><span className="text-white">{detailLead.country || '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Origem:</span><Badge className="bg-zinc-700 text-gray-300 text-xs">{detailLead.source || '-'}</Badge></div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-zinc-800/50 border-zinc-700">
+                  <CardContent className="p-4">
+                    <h4 className="text-sm font-medium text-purple-400 flex items-center gap-2 mb-3"><TrendingUp size={16} /> Interesse</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between"><span className="text-gray-500">Interesse:</span><span className="text-white">{detailLead.interest || '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Volume:</span><span className="text-gold-400 font-mono">{detailLead.estimated_volume ? `$${new Intl.NumberFormat('pt-PT').format(detailLead.estimated_volume)}` : '-'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Moeda:</span><span className="text-white">{detailLead.preferred_currency || 'EUR'}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">Status:</span><Badge className={`border-0 ${getStatusColor(detailLead.status)}`}>{getStatusLabel(detailLead.status)}</Badge></div>
+                      {detailLead.interested_cryptos?.length > 0 && (
+                        <div className="flex justify-between items-center"><span className="text-gray-500">Cryptos:</span><div className="flex gap-1">{detailLead.interested_cryptos.map(c => <Badge key={c} className="bg-zinc-700 text-gray-300 text-xs">{c}</Badge>)}</div></div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Risk Intelligence */}
+              <Card className="bg-zinc-800/50 border-zinc-700">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-white flex items-center gap-2"><Shield size={16} className="text-blue-400" />Risk Intelligence</h4>
+                    <button onClick={() => riskScan(detailLead.id)}
+                      className="text-xs text-gray-500 hover:text-blue-400 flex items-center gap-1" data-testid="rescan-risk-crm"><RefreshCw size={12} /> {detailLead.risk_intelligence_data ? 'Re-scan' : 'Scan'}</button>
+                  </div>
+                  {detailLead.risk_intelligence_data ? (
+                    <>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-zinc-900/50 rounded-lg">
+                          <p className="text-gray-500 text-[10px] uppercase mb-1">Score Global</p>
+                          <p className={`text-2xl font-mono font-bold ${(detailLead.risk_intelligence_data.combined_score||0) >= 700 ? 'text-green-400' : (detailLead.risk_intelligence_data.combined_score||0) >= 500 ? 'text-emerald-400' : (detailLead.risk_intelligence_data.combined_score||0) >= 300 ? 'text-yellow-400' : (detailLead.risk_intelligence_data.combined_score||0) >= 150 ? 'text-orange-400' : 'text-red-400'}`}>{detailLead.risk_intelligence_data.combined_score ?? '—'}</p>
+                          <p className="text-gray-500 text-[10px] capitalize">{detailLead.risk_intelligence_data.risk_level || ''}</p>
+                        </div>
+                        <div className="text-center p-3 bg-zinc-900/50 rounded-lg">
+                          <p className="text-gray-500 text-[10px] uppercase mb-1">Email</p>
+                          <p className="text-xl font-mono text-white">{detailLead.risk_intelligence_data.email_risk?.score ?? '—'}</p>
+                          <p className="text-gray-500 text-[10px] capitalize">{detailLead.risk_intelligence_data.email_risk?.score_cluster || ''}</p>
+                        </div>
+                        <div className="text-center p-3 bg-zinc-900/50 rounded-lg">
+                          <p className="text-gray-500 text-[10px] uppercase mb-1">Telefone</p>
+                          <p className="text-xl font-mono text-white">{detailLead.risk_intelligence_data.phone_risk?.score ?? '—'}</p>
+                          <p className="text-gray-500 text-[10px] capitalize">{detailLead.risk_intelligence_data.phone_risk?.score_cluster || ''}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                        {detailLead.risk_intelligence_data.email_risk?.status && <div className="flex justify-between"><span className="text-gray-500">Email Status:</span><span className="text-white capitalize">{detailLead.risk_intelligence_data.email_risk.status}</span></div>}
+                        {detailLead.risk_intelligence_data.email_risk?.is_disposable != null && <div className="flex justify-between"><span className="text-gray-500">Descartável:</span><span className={detailLead.risk_intelligence_data.email_risk.is_disposable ? 'text-red-400' : 'text-green-400'}>{detailLead.risk_intelligence_data.email_risk.is_disposable ? 'Sim' : 'Não'}</span></div>}
+                        {detailLead.risk_intelligence_data.email_risk?.has_linkedin != null && <div className="flex justify-between"><span className="text-gray-500">LinkedIn:</span><span className={detailLead.risk_intelligence_data.email_risk.has_linkedin ? 'text-green-400' : 'text-gray-500'}>{detailLead.risk_intelligence_data.email_risk.has_linkedin ? 'Sim' : 'Não'}</span></div>}
+                        {detailLead.risk_intelligence_data.email_risk?.company_name && <div className="flex justify-between"><span className="text-gray-500">Empresa:</span><span className="text-white">{detailLead.risk_intelligence_data.email_risk.company_name}</span></div>}
+                        {detailLead.risk_intelligence_data.email_risk?.data_breaches_count != null && <div className="flex justify-between"><span className="text-gray-500">Data Breaches:</span><span className={detailLead.risk_intelligence_data.email_risk.data_breaches_count > 3 ? 'text-orange-400' : 'text-white'}>{detailLead.risk_intelligence_data.email_risk.data_breaches_count}</span></div>}
+                        {detailLead.risk_intelligence_data.phone_risk?.has_whatsapp != null && <div className="flex justify-between"><span className="text-gray-500">WhatsApp:</span><span className={detailLead.risk_intelligence_data.phone_risk.has_whatsapp ? 'text-green-400' : 'text-gray-500'}>{detailLead.risk_intelligence_data.phone_risk.has_whatsapp ? 'Sim' : 'Não'}</span></div>}
+                        {detailLead.risk_intelligence_data.phone_risk?.number_type && <div className="flex justify-between"><span className="text-gray-500">Tipo Telefone:</span><span className={detailLead.risk_intelligence_data.phone_risk.number_type === 'VOIP' ? 'text-orange-400' : 'text-white'}>{detailLead.risk_intelligence_data.phone_risk.number_type}</span></div>}
+                        {detailLead.risk_intelligence_data.phone_risk?.current_network && <div className="flex justify-between"><span className="text-gray-500">Operadora:</span><span className="text-white">{detailLead.risk_intelligence_data.phone_risk.current_network}</span></div>}
+                      </div>
+                      {detailLead.risk_intelligence_data.red_flags?.length > 0 && (
+                        <div className="mt-3 p-2 bg-red-950/30 border border-red-900/30 rounded-lg">
+                          <p className="text-red-400 text-xs font-medium mb-1">Red Flags:</p>
+                          <div className="flex flex-wrap gap-1">{detailLead.risk_intelligence_data.red_flags.map((f, i) => <Badge key={i} className="bg-red-900/40 text-red-400 text-[10px]">{f}</Badge>)}</div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      <Shield size={32} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Sem análise de risco disponível</p>
+                      <Button size="sm" variant="outline" onClick={() => riskScan(detailLead.id)} className="mt-2 border-blue-600/50 text-blue-400">
+                        <Shield size={14} className="mr-1" /> Executar Scan
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Notes */}
+              {detailLead.notes && (
+                <Card className="bg-zinc-800/50 border-zinc-700">
+                  <CardContent className="p-4">
+                    <h4 className="text-sm font-medium text-purple-400 mb-2">Notas</h4>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{detailLead.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
