@@ -150,6 +150,36 @@ const CompliancePage = () => {
         </Badge>
       </div>
 
+      {/* Qualification Summary */}
+      <Card className="bg-zinc-900 border-zinc-800" data-testid="compliance-summary">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-6 flex-wrap">
+            {[
+              { label: 'Carteiras', status: compliance?.wallets?.length > 0 && compliance.wallets.every(w => w.status === 'verified') ? 'pass' : compliance?.wallets?.some(w => w.status === 'verified') ? 'partial' : 'pending' },
+              { label: 'KYT', status: compliance?.kyt?.status === 'clean' ? 'pass' : compliance?.kyt?.status === 'flagged' ? 'warn' : 'pending' },
+              { label: 'Teste Satoshi', status: compliance?.satoshi_test?.status === 'verified' ? 'pass' : compliance?.satoshi_test?.status === 'pending' ? 'partial' : 'pending' },
+              { label: 'Proof of Ownership', status: compliance?.proof_of_ownership?.status === 'verified' ? 'pass' : compliance?.proof_of_ownership?.status === 'pending' ? 'partial' : 'pending' },
+              { label: 'Proof of Reserves', status: compliance?.proof_of_reserves?.status === 'verified' ? 'pass' : compliance?.proof_of_reserves?.status === 'pending' ? 'partial' : 'pending' },
+            ].map((check, i) => (
+              <div key={i} className="flex items-center gap-2">
+                {check.status === 'pass' ? (
+                  <CheckCircle className="text-emerald-400" size={16} />
+                ) : check.status === 'partial' ? (
+                  <Clock className="text-yellow-400" size={16} />
+                ) : check.status === 'warn' ? (
+                  <Shield className="text-orange-400" size={16} />
+                ) : (
+                  <Clock className="text-zinc-600" size={16} />
+                )}
+                <span className={`text-sm ${check.status === 'pass' ? 'text-emerald-400' : check.status === 'partial' ? 'text-yellow-400' : 'text-zinc-500'}`}>
+                  {check.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Wallets */}
         <Card className="bg-zinc-900 border-zinc-800" data-testid="compliance-wallets">

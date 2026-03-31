@@ -316,6 +316,22 @@ async def update_deal_status(deal_id: str, status: str, user_id: str = Depends(g
     if status not in valid_transitions.get(current, []):
         raise HTTPException(status_code=400, detail=f"Transição inválida: {current} → {status}")
 
+    # Block compliance → negotiation without Proof of Reserves
+    if current == "compliance" and status == "negotiation":
+        compliance = await db.otc_compliance.find_one({"deal_id": deal_id}, {"_id": 0})
+        if compliance:
+            por = compliance.get("proof_of_reserves", {})
+            if por.get("status") != "verified":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Proof of Reserves obrigatório antes de avançar para Negociação. Aceda ao Compliance Forense para completar a verificação."
+                )
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Registo de compliance não encontrado. Aceda ao Compliance Forense primeiro."
+            )
+
     update_data = {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}
     if status == "settled":
         update_data["settled_at"] = datetime.now(timezone.utc).isoformat()

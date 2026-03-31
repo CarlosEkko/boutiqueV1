@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
 import {
   ArrowLeftRight, Calculator, Search, Eye, MoreVertical, TrendingUp,
-  Plus, ChevronRight, RefreshCw, Trash2, Edit, Filter
+  Plus, ChevronRight, RefreshCw, Trash2, Edit, Filter, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -47,6 +48,7 @@ const OTCDealsPage = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [teamMembers, setTeamMembers] = useState([]);
   const [refPrices, setRefPrices] = useState({});
+  const navigate = useNavigate();
 
   const getHeaders = () => {
     const token = sessionStorage.getItem('kryptobox_token');
@@ -185,6 +187,9 @@ const OTCDealsPage = () => {
                             <ChevronRight size={16} />
                           </Button>
                         )}
+                        <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-1" title="Compliance Forense" onClick={() => navigate(`/dashboard/crm/compliance/${deal.id}`)} data-testid={`compliance-${deal.id}`}>
+                          <Shield size={14} />
+                        </Button>
                         <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
                           <Edit size={14} />
                         </Button>
