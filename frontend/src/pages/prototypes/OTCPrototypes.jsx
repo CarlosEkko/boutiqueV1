@@ -51,11 +51,23 @@ const COMMISSION_STATUS = {
 };
 
 // ============ SCREEN 1: DEAL OTC ============
-const DealOTCScreen = () => {
+const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
   const [dealType, setDealType] = useState('buy');
   const [asset, setAsset] = useState('BTC');
   const [quantity, setQuantity] = useState(100);
-  const [refPrice, setRefPrice] = useState(58200);
+
+  const CURRENCY_RATES = { EUR: 1, USD: 1.08, AED: 3.97, BRL: 5.50 };
+  const CURRENCY_SYMBOLS = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
+  const basePriceEUR = 58200;
+  const rate = CURRENCY_RATES[headerCurrency] || 1;
+  const sym = CURRENCY_SYMBOLS[headerCurrency] || '€';
+
+  const [refPrice, setRefPrice] = useState(Math.round(basePriceEUR * rate));
+
+  // Update ref price when header currency changes
+  React.useEffect(() => {
+    setRefPrice(Math.round(basePriceEUR * (CURRENCY_RATES[headerCurrency] || 1)));
+  }, [headerCurrency]);
   const [condition, setCondition] = useState('premium');
   const [conditionPct, setConditionPct] = useState(2);
   const [grossPct, setGrossPct] = useState(4);
@@ -73,7 +85,7 @@ const DealOTCScreen = () => {
     return { adjustedPrice, totalValue, grossAmount, netAmount, kbexMargin, brokerComm, memberComm };
   }, [quantity, refPrice, condition, conditionPct, grossPct, netPct, brokerPct]);
 
-  const fmt = (v) => v.toLocaleString('pt-PT', { maximumFractionDigits: 2 });
+  const fmt = (v) => `${sym}${v.toLocaleString('pt-PT', { maximumFractionDigits: 2 })}`;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -126,11 +138,11 @@ const DealOTCScreen = () => {
 
             {/* Reference Price */}
             <div className="space-y-2">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência (EUR)</Label>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({headerCurrency})</Label>
               <div className="relative">
                 <Input type="number" value={refPrice} onChange={e => setRefPrice(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-36" data-testid="deal-ref-price-input" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
-                  <TrendingUp size={12} /> Binance: €{refPrice.toLocaleString()}
+                  <TrendingUp size={12} /> KBEX: {sym}{refPrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -247,33 +259,33 @@ const DealOTCScreen = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b border-zinc-800">
                   <span className="text-zinc-500 text-sm">Preço Ajustado</span>
-                  <span className="text-white font-medium">€{fmt(calc.adjustedPrice)}</span>
+                  <span className="text-white font-medium">{fmt(calc.adjustedPrice)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-zinc-800">
                   <span className="text-zinc-500 text-sm">Valor Total</span>
-                  <span className="text-white font-bold text-lg">€{fmt(calc.totalValue)}</span>
+                  <span className="text-white font-bold text-lg">{fmt(calc.totalValue)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-zinc-800">
                   <span className="text-zinc-500 text-sm">Gross ({grossPct}%)</span>
-                  <span className="text-yellow-400 font-medium">€{fmt(calc.grossAmount)}</span>
+                  <span className="text-yellow-400 font-medium">{fmt(calc.grossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-zinc-800">
                   <span className="text-zinc-500 text-sm">Net ({netPct}%)</span>
-                  <span className="text-zinc-300 font-medium">€{fmt(calc.netAmount)}</span>
+                  <span className="text-zinc-300 font-medium">{fmt(calc.netAmount)}</span>
                 </div>
               </div>
 
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 space-y-3">
                 <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem KBEX</p>
-                <p className="text-2xl font-bold text-white">€{fmt(calc.kbexMargin)}</p>
+                <p className="text-2xl font-bold text-white">{fmt(calc.kbexMargin)}</p>
                 <div className="space-y-2 pt-2 border-t border-yellow-500/20">
                   <div className="flex justify-between">
                     <span className="text-zinc-400 text-sm">Corretor ({brokerPct}%)</span>
-                    <span className="text-emerald-400 font-medium">€{fmt(calc.brokerComm)}</span>
+                    <span className="text-emerald-400 font-medium">{fmt(calc.brokerComm)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-400 text-sm">Membro KBEX ({100 - brokerPct}%)</span>
-                    <span className="text-emerald-400 font-medium">€{fmt(calc.memberComm)}</span>
+                    <span className="text-emerald-400 font-medium">{fmt(calc.memberComm)}</span>
                   </div>
                 </div>
               </div>
@@ -443,7 +455,7 @@ const ComplianceForenseScreen = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-white flex items-center gap-2 text-base">
               <Fingerprint className="text-yellow-500" size={18} />
-              Provas Fireblocks
+              Provas de Verificação
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -456,7 +468,7 @@ const ComplianceForenseScreen = () => {
                 </div>
                 <Badge className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs">Verificado</Badge>
               </div>
-              <p className="text-zinc-500 text-xs">Assinatura digital verificada via Fireblocks Signed Typed Message</p>
+              <p className="text-zinc-500 text-xs">Assinatura digital verificada via Signed Typed Message</p>
               <div className="flex items-center gap-2 text-xs">
                 <CheckCircle className="text-emerald-400" size={14} />
                 <span className="text-zinc-400">Carteira bc1q83z...cdxyf confirmada</span>
@@ -767,6 +779,7 @@ const TABS = [
 
 const OTCPrototypes = () => {
   const [activeTab, setActiveTab] = useState('deal');
+  const [headerCurrency, setHeaderCurrency] = useState('EUR');
 
   return (
     <div className="min-h-screen bg-black">
@@ -778,7 +791,19 @@ const OTCPrototypes = () => {
             <span className="text-zinc-600">|</span>
             <span className="text-zinc-400 text-sm">Protótipos OTC</span>
           </div>
-          <Badge className="bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">PROTÓTIPO — Não Funcional</Badge>
+          <div className="flex items-center gap-3">
+            <Select value={headerCurrency} onValueChange={setHeaderCurrency}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-700 text-white w-24 h-8 text-sm" data-testid="header-currency-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800">
+                {['EUR', 'USD', 'AED', 'BRL'].map(c => (
+                  <SelectItem key={c} value={c} className="text-white hover:bg-zinc-800">{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Badge className="bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">PROTÓTIPO</Badge>
+          </div>
         </div>
       </div>
 
@@ -805,7 +830,7 @@ const OTCPrototypes = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto p-6">
-        {activeTab === 'deal' && <DealOTCScreen />}
+        {activeTab === 'deal' && <DealOTCScreen headerCurrency={headerCurrency} />}
         {activeTab === 'compliance' && <ComplianceForenseScreen />}
         {activeTab === 'pipeline' && <PipelineOTCScreen />}
         {activeTab === 'commissions' && <CommissionDashboard />}
