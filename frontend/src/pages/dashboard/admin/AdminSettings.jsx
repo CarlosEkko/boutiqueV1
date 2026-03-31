@@ -32,6 +32,7 @@ const AdminSettings = () => {
     trading_fee_percent: 10,
     deposit_fee_percent: 5,
     withdrawal_fee_percent: 5,
+    admission_fee_percent: 0,
     min_payout_amount: 50,
     payout_currency: 'EUR'
   });
@@ -214,6 +215,28 @@ const AdminSettings = () => {
                 />
                 <span className="text-gray-500 text-sm w-24">da taxa</span>
               </div>
+            </div>
+
+            {/* Admission Fee Commission */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Taxa de Admissão (%)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={referralFees.admission_fee_percent}
+                  onChange={(e) => setReferralFees({
+                    ...referralFees,
+                    admission_fee_percent: parseFloat(e.target.value) || 0
+                  })}
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                  data-testid="admission-fee-percent-input"
+                />
+                <span className="text-gray-500 text-sm w-24">da taxa</span>
+              </div>
+              <p className="text-xs text-gray-500">% da taxa de admissão que vai para o referenciador quando o cliente paga</p>
             </div>
 
             {/* Min Payout */}

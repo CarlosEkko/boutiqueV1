@@ -32,6 +32,7 @@ class ReferralFeeConfig(BaseModel):
     trading_fee_percent: float = Field(default=10.0, ge=0, le=100, description="% of trading fee given to referrer")
     deposit_fee_percent: float = Field(default=5.0, ge=0, le=100, description="% of deposit fee given to referrer")
     withdrawal_fee_percent: float = Field(default=5.0, ge=0, le=100, description="% of withdrawal fee given to referrer")
+    admission_fee_percent: float = Field(default=0.0, ge=0, le=100, description="% of admission fee given to referrer")
     min_payout_amount: float = Field(default=50.0, ge=0, description="Minimum amount for commission payout")
     payout_currency: str = Field(default="EUR", description="Currency for commission payouts")
 
@@ -107,6 +108,8 @@ async def calculate_referrer_commission(transaction_type: str, fee_amount: float
         percent = referral_fees.get("deposit_fee_percent", 5.0)
     elif transaction_type == "withdrawal":
         percent = referral_fees.get("withdrawal_fee_percent", 5.0)
+    elif transaction_type == "admission":
+        percent = referral_fees.get("admission_fee_percent", 0.0)
     else:
         percent = 0
     
@@ -795,6 +798,33 @@ async def approve_admission_payment(
     )
     
     logger.info(f"Admission fee payment {payment_id} approved by {admin.get('email')}")
+    
+    # Calculate referrer commission if client was referred
+    try:
+        user_id = payment.get("user_id")
+        referral = await db.referrals.find_one({"client_id": user_id, "status": "active"})
+        if referral:
+            commission_data = await calculate_referrer_commission(
+                "admission", payment.get("amount", 0), payment.get("currency", "EUR")
+            )
+            if commission_data["commission_amount"] > 0:
+                commission_record = {
+                    "id": str(uuid.uuid4()),
+                    "referral_id": referral.get("id"),
+                    "referrer_id": referral.get("referrer_id"),
+                    "client_id": user_id,
+                    "transaction_type": "admission",
+                    "original_amount": payment.get("amount", 0),
+                    "commission_amount": commission_data["commission_amount"],
+                    "commission_percent": commission_data["commission_percent"],
+                    "currency": payment.get("currency", "EUR"),
+                    "status": "pending",
+                    "created_at": now.isoformat()
+                }
+                await db.referral_commissions.insert_one(commission_record)
+                logger.info(f"Admission commission {commission_data['commission_amount']} {payment.get('currency', 'EUR')} credited to referrer {referral.get('referrer_id')}")
+    except Exception as e:
+        logger.warning(f"Failed to calculate admission referrer commission: {e}")
     
     return {"success": True, "message": "Pagamento aprovado com sucesso"}
 
