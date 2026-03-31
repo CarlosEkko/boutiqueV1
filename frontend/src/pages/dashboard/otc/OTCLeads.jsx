@@ -286,24 +286,24 @@ const OTCLeads = () => {
             <div className="grid grid-cols-2 gap-4">
               <div><Label className="text-gray-400 text-sm">Tipo de Cliente</Label>
                 <Select value={preQualData.client_type} onValueChange={v => setPreQualData({...preQualData, client_type: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700"><SelectItem value="individual" className="text-white">Individual</SelectItem><SelectItem value="corporate" className="text-white">Corporativo</SelectItem><SelectItem value="institutional" className="text-white">Institucional</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="individual" className="text-white">Individual</SelectItem><SelectItem value="corporate" className="text-white">Corporativo</SelectItem><SelectItem value="institutional" className="text-white">Institucional</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label><Input value={preQualData.first_operation_value} onChange={e => setPreQualData({...preQualData, first_operation_value: e.target.value})} className="bg-zinc-800 border-zinc-700" type="number" /></div>
-              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label><Input value={preQualData.estimated_monthly_volume} onChange={e => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})} className="bg-zinc-800 border-zinc-700" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label><Input value={preQualData.first_operation_value} onChange={e => setPreQualData({...preQualData, first_operation_value: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label><Input value={preQualData.estimated_monthly_volume} onChange={e => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
               <div><Label className="text-gray-400 text-sm">Frequência</Label>
                 <Select value={preQualData.expected_frequency} onValueChange={v => setPreQualData({...preQualData, expected_frequency: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700"><SelectItem value="one_shot" className="text-white">Única</SelectItem><SelectItem value="weekly" className="text-white">Semanal</SelectItem><SelectItem value="daily" className="text-white">Diário</SelectItem><SelectItem value="multiple_daily" className="text-white">Múltiplas/Dia</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="one_shot" className="text-white">Única</SelectItem><SelectItem value="weekly" className="text-white">Semanal</SelectItem><SelectItem value="daily" className="text-white">Diário</SelectItem><SelectItem value="multiple_daily" className="text-white">Múltiplas/Dia</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">Objetivo da Operação</Label><Input value={preQualData.operation_objective} onChange={e => setPreQualData({...preQualData, operation_objective: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="Investimento, Hedge, Trading..." /></div>
-            <div><Label className="text-gray-400 text-sm">Origem dos Fundos</Label><Input value={preQualData.fund_source} onChange={e => setPreQualData({...preQualData, fund_source: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="Salário, Venda imóvel, etc." /></div>
-            <div><Label className="text-gray-400 text-sm">Jurisdição Bancária</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="Portugal, Suíça, etc." /></div>
-            <div><Label className="text-gray-400 text-sm">Notas Red Flags</Label><Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-800 border-zinc-700" rows={2} /></div>
-            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={preQualData.notes} onChange={e => setPreQualData({...preQualData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700" rows={2} /></div>
+            <div><Label className="text-gray-400 text-sm">Objetivo da Operação</Label><Input value={preQualData.operation_objective} onChange={e => setPreQualData({...preQualData, operation_objective: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Investimento, Hedge, Trading..." /></div>
+            <div><Label className="text-gray-400 text-sm">Origem dos Fundos</Label><Input value={preQualData.fund_source} onChange={e => setPreQualData({...preQualData, fund_source: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Salário, Venda imóvel, etc." /></div>
+            <div><Label className="text-gray-400 text-sm">Jurisdição Bancária</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Portugal, Suíça, etc." /></div>
+            <div><Label className="text-gray-400 text-sm">Notas Red Flags</Label><Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
+            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={preQualData.notes} onChange={e => setPreQualData({...preQualData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-zinc-600" onClick={() => setShowPreQualDialog(false)}>Cancelar</Button>
@@ -318,18 +318,18 @@ const OTCLeads = () => {
           <DialogHeader><DialogTitle className="text-gold-400 flex items-center gap-2"><Settings className="text-gold-400" />Setup Operacional — {selectedLead?.entity_name}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label><Input value={setupData.daily_limit} onChange={e => setSetupData({...setupData, daily_limit: e.target.value})} className="bg-zinc-800 border-zinc-700" type="number" /></div>
-              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label><Input value={setupData.monthly_limit} onChange={e => setSetupData({...setupData, monthly_limit: e.target.value})} className="bg-zinc-800 border-zinc-700" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label><Input value={setupData.daily_limit} onChange={e => setSetupData({...setupData, daily_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label><Input value={setupData.monthly_limit} onChange={e => setSetupData({...setupData, monthly_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
               <div><Label className="text-gray-400 text-sm">Método Liquidação</Label>
                 <Select value={setupData.settlement_method} onValueChange={v => setSetupData({...setupData, settlement_method: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700"><SelectItem value="bank_transfer" className="text-white">Transferência Bancária</SelectItem><SelectItem value="crypto" className="text-white">Crypto</SelectItem><SelectItem value="both" className="text-white">Ambos</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="bank_transfer" className="text-white">Transferência Bancária</SelectItem><SelectItem value="crypto" className="text-white">Crypto</SelectItem><SelectItem value="both" className="text-white">Ambos</SelectItem></SelectContent>
                 </Select>
               </div>
               <div><Label className="text-gray-400 text-sm">Account Manager</Label>
                 <Select value={setupData.account_manager_id} onValueChange={v => setSetupData({...setupData, account_manager_id: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                     {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white hover:bg-zinc-700">{m.first_name} {m.last_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -337,11 +337,11 @@ const OTCLeads = () => {
             </div>
             <div><Label className="text-gray-400 text-sm">Canal de Comunicação</Label>
               <Select value={setupData.communication_channel_type} onValueChange={v => setSetupData({...setupData, communication_channel_type: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700"><SelectItem value="email" className="text-white">Email</SelectItem><SelectItem value="whatsapp" className="text-white">WhatsApp</SelectItem><SelectItem value="telegram" className="text-white">Telegram</SelectItem><SelectItem value="phone" className="text-white">Telefone</SelectItem></SelectContent>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="email" className="text-white">Email</SelectItem><SelectItem value="whatsapp" className="text-white">WhatsApp</SelectItem><SelectItem value="telegram" className="text-white">Telegram</SelectItem><SelectItem value="phone" className="text-white">Telefone</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={setupData.notes} onChange={e => setSetupData({...setupData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700" rows={2} /></div>
+            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={setupData.notes} onChange={e => setSetupData({...setupData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-zinc-600" onClick={() => setShowSetupDialog(false)}>Cancelar</Button>
@@ -358,25 +358,25 @@ const OTCLeads = () => {
             <div className="grid grid-cols-2 gap-4">
               <div><Label className="text-gray-400 text-sm">Tipo</Label>
                 <Select value={newDealData.transaction_type} onValueChange={v => setNewDealData({...newDealData, transaction_type: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700"><SelectItem value="buy" className="text-white">Compra</SelectItem><SelectItem value="sell" className="text-white">Venda</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="buy" className="text-white">Compra</SelectItem><SelectItem value="sell" className="text-white">Venda</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label><Input type="number" value={newDealData.amount} onChange={e => setNewDealData({...newDealData, amount: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="100000" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label><Input type="number" value={newDealData.amount} onChange={e => setNewDealData({...newDealData, amount: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100000" /></div>
               <div><Label className="text-gray-400 text-sm">Base</Label>
                 <Select value={newDealData.base_asset} onValueChange={v => setNewDealData({...newDealData, base_asset: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">{['BTC', 'ETH', 'USDT', 'USDC', 'SOL'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">{['BTC', 'ETH', 'USDT', 'USDC', 'SOL'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div><Label className="text-gray-400 text-sm">Quote</Label>
                 <Select value={newDealData.quote_asset} onValueChange={v => setNewDealData({...newDealData, quote_asset: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">{['EUR', 'USD', 'GBP', 'CHF'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">{['EUR', 'USD', 'GBP', 'CHF'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={newDealData.notes} onChange={e => setNewDealData({...newDealData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700" rows={2} /></div>
+            <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={newDealData.notes} onChange={e => setNewDealData({...newDealData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" className="border-zinc-600" onClick={() => setShowNewDealModal(false)}>Cancelar</Button>

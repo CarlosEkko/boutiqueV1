@@ -109,12 +109,12 @@ export const CreateLeadDialog = ({
               <CardContent className="p-4 space-y-4">
                 <h3 className="text-white font-medium text-sm flex items-center gap-2"><Building size={16} className="text-gold-400" />Informação da Entidade</h3>
                 <div className="space-y-3">
-                  <div><Label className="text-gray-400 text-sm">Entidade *</Label><Input value={formData.entity_name} onChange={e => setFormData({...formData, entity_name: e.target.value})} onBlur={e => checkExistingContact('entity_name', e.target.value)} className="bg-zinc-800 border-zinc-700" placeholder="Nome da empresa" /></div>
-                  <div><Label className="text-gray-400 text-sm">País *</Label><Input value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="Portugal" /></div>
+                  <div><Label className="text-gray-400 text-sm">Entidade *</Label><Input value={formData.entity_name} onChange={e => setFormData({...formData, entity_name: e.target.value})} onBlur={e => checkExistingContact('entity_name', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Nome da empresa" /></div>
+                  <div><Label className="text-gray-400 text-sm">País *</Label><Input value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Portugal" /></div>
                   <div><Label className="text-gray-400 text-sm">Fonte</Label>
                     <Select value={formData.source} onValueChange={v => setFormData({...formData, source: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                         {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-white hover:bg-zinc-700 capitalize">{s.replace(/_/g, ' ')}</SelectItem>) || <SelectItem value="website" className="text-white">Website</SelectItem>}
                       </SelectContent>
                     </Select>
@@ -127,9 +127,9 @@ export const CreateLeadDialog = ({
               <CardContent className="p-4 space-y-4">
                 <h3 className="text-white font-medium text-sm flex items-center gap-2"><User size={16} className="text-gold-400" />Contacto Principal</h3>
                 <div className="space-y-3">
-                  <div><Label className="text-gray-400 text-sm">Nome *</Label><Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className="bg-zinc-800 border-zinc-700" placeholder="Nome completo" /></div>
-                  <div><Label className="text-gray-400 text-sm">Email *</Label><Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className="bg-zinc-800 border-zinc-700" placeholder="email@empresa.com" type="email" /></div>
-                  <div><Label className="text-gray-400 text-sm">Telefone</Label><Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="+351..." /></div>
+                  <div><Label className="text-gray-400 text-sm">Nome *</Label><Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Nome completo" /></div>
+                  <div><Label className="text-gray-400 text-sm">Email *</Label><Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" placeholder="email@empresa.com" type="email" /></div>
+                  <div><Label className="text-gray-400 text-sm">Telefone</Label><Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="+351..." /></div>
                 </div>
               </CardContent>
             </Card>
@@ -141,24 +141,24 @@ export const CreateLeadDialog = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div><Label className="text-gray-400 text-sm">Tipo</Label>
                   <Select value={formData.transaction_type} onValueChange={v => setFormData({...formData, transaction_type: v})}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       <SelectItem value="buy" className="text-white">Compra</SelectItem><SelectItem value="sell" className="text-white">Venda</SelectItem><SelectItem value="both" className="text-white">Ambos</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div><Label className="text-gray-400 text-sm">Ativo</Label>
                   <Select value={formData.target_asset} onValueChange={v => setFormData({...formData, target_asset: v})}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                       {['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'ADA', 'DOGE', 'Other'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label className="text-gray-400 text-sm">Volume Est. (USD)</Label><Input type="number" value={formData.estimated_volume_usd} onChange={e => setFormData({...formData, estimated_volume_usd: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="100,000" /></div>
-                <div><Label className="text-gray-400 text-sm">Volume/Operação</Label><Input type="number" value={formData.volume_per_operation} onChange={e => setFormData({...formData, volume_per_operation: e.target.value})} className="bg-zinc-800 border-zinc-700" placeholder="50,000" /></div>
+                <div><Label className="text-gray-400 text-sm">Volume Est. (USD)</Label><Input type="number" value={formData.estimated_volume_usd} onChange={e => setFormData({...formData, estimated_volume_usd: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100,000" /></div>
+                <div><Label className="text-gray-400 text-sm">Volume/Operação</Label><Input type="number" value={formData.volume_per_operation} onChange={e => setFormData({...formData, volume_per_operation: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="50,000" /></div>
               </div>
-              <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700" rows={2} placeholder="Informação adicional..." /></div>
+              <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} placeholder="Informação adicional..." /></div>
             </CardContent>
           </Card>
         </div>
