@@ -60,6 +60,14 @@
 - **Componente reutilizável**: `ScheduleMeetingDialog` (assunto auto, data, hora, duração 15-90min, notas)
 - **Requisito**: Conta O365 conectada no Team Hub
 
+## Multi-Sign Transaction Approvals — IMPLEMENTADO (Execução SIMULADA)
+- **Flow**: Request Submitted → Approval (N/M) → Risk & Compliance → Assinatura KBEX → Envio → Successful
+- **Backend**: `POST /api/approvals/transactions` (criar), `approve`, `reject`, `cancel`
+- **Configurações**: Quórum mínimo, timeout (horas), lista de aprovadores internos
+- **Frontend**: Sidebar "Multi-Sign" com 3 páginas (Lista, Detalhe com Process Timeline, Configurações)
+- **Simulação**: Ao atingir quórum, auto-avança Risk→Signature→Send→Completed com TxID fake
+- **Futuro**: Integrar Fireblocks API real no passo "Send"
+
 ## Issues Pendentes
 - P2: Safari cursor bug (CSS, recorrente 14+)
 - P2: Traduções frontend incompletas
