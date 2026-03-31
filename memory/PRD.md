@@ -8,77 +8,61 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Backend: FastAPI, MongoDB (Motor)
 - Deploy: Docker, Docker-Compose (VPS do user)
 
+## Perfis de Cliente
+- **Broker** — Acesso básico, taxa admissão 0€, limite 1 cofre
+- **Standard** — Taxa admissão 500€, limite 3 cofres
+- **Premium** — Taxa admissão 2500€, limite 10 cofres
+- **VIP** — Taxa admissão 10000€, limite 20 cofres
+- **Institucional** — Taxa admissão 25000€, limite 50 cofres
+
 ## Funcionalidades Implementadas
 
 ### Core
-- Multi-currency viewing, fiat deposits
 - Auth com JWT, sessionStorage, auto-logout 15 min
-- Landing page premium com "Solicitar Acesso"
 - WebSocket para preços crypto em tempo real (Binance)
+- 4 idiomas: EN, PT, FR, AR
 
-### Internacionalização
-- 4 idiomas: EN, PT, FR, AR — Frontend + Backend
-- RTL suportado para Árabe
+### Sistema de Cofres (Multi-Sign)
+- Múltiplos cofres por cliente com nomes editáveis
+- Tier limits configuráveis por perfil (admin)
+- Omnibus vault para clientes OTC
+- Transações com validação de saldo omnibus
+- Menu Multi-Sign visível para clientes
+- "Cofre de Origem" com dropdown na criação de transação
+
+### Dashboard Financeiro
+- KPIs: AUM, Receita, Volume, Pendentes
+- Gráficos e tabelas analíticas
+
+### CRM
+- Leads com campo "Perfil" (5 tiers)
+- Badges coloridos por perfil
+- Risk Intelligence scoring
 
 ### OTC CRM
-- 11-step OTC workflow (Creation > Setup > RFQ > Execution > Invoice > Post-Sale)
-- Multi-step wizard para criação de leads
-- Pre-qualification e Red Flags
+- 11-step workflow completo
 
-### General CRM
-- Risk Intelligence scoring
-- Conversão CRM Lead > OTC Lead
-- Schedule Teams meetings via O365
+### Menus de Clientes
+- 6 menus disponíveis: Portefólio, Investimentos, Transparência, Perfil, OTC Trading, Multi-Sign
+- Configuráveis por admin por cliente
 
-### Vault Multi-Sign (Cliente) — Sistema de Cofres
-- VaultDashboard, VaultTransactionDetail, VaultSignatories, VaultCreateTransaction
-- **Multi-Cofre**: Clientes podem criar múltiplos cofres com nomes personalizados
-- **Tier Limits**: Limites configuráveis por admin (standard=3, premium=10, vip=20, black=50)
-- **Editar Nome**: Rename inline com ícone de lápis
-- **Visão Geral**: Cards de cofres com status Activo/Vazio
-- Backend: multisign.py com threshold checks + omnibus ledger validation
-
-### Omnibus Vault (2026-03-31)
-- Estrutura Omnibus para clientes OTC / Multi-Sign
-- Vault único Fireblocks partilhado com sub-contas internas (ledger MongoDB)
-- Admin: configurar vault omnibus, provisionar cofres, credit/debit
-- Cliente: criar cofres (POST /api/omnibus/cofres), renomear (PUT /cofres/{id}/rename)
-- Limites por tier: GET/PUT /api/omnibus/tier-limits
-- Fundos reservados na criação de transação, libertados no cancelamento/rejeição
-- Menu Multi-Sign: "Wallets" → "Cofre", "Overview" → "Visão Geral", header "COFRES"
-- Collections: omnibus_config, omnibus_ledger, omnibus_movements, omnibus_tier_limits
-
-### Dashboard Financeiro (2026-03-31)
-- KPIs: AUM Total, Receita Total, Volume de Trading, Operações Pendentes
-- Gráficos: Evolução Receita (30d), Fiat vs Crypto, Distribuição por Ativo
-- Tabelas: Top Clientes por AUM, Transações Recentes
-- Backend: /api/finance/dashboard
+### Admin Settings
+- Taxa de admissão EUR por perfil (referência, conversão automática)
+- Limites de cofres por perfil
+- Taxas de referral configuráveis
+- Taxas e limites de trading por perfil
 
 ### Integrações
-- Binance API — preços em tempo real
-- Brevo (emails transacionais)
-- Microsoft Office 365 (Teams, Calendar)
-- Sumsub (KYC) — config pendente
-- Fireblocks (Wallets) — simulado (execução mock)
-- Stripe (Payments) — config pendente
+- Binance API, Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
 
 ## Issues Conhecidos
-- P1: Safari cursor bug (recorrente, 16+)
+- P1: Safari cursor bug (recorrente)
 
-## Backlog (Priorizado)
+## Backlog
 - P1: TradingView chart widgets
 - P2: Whitelist functionality
 - P3: Launchpad e ICO pages
-- P3: App mobile (PWA ou nativo)
+- P3: App mobile
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123
-
-## Ficheiros Chave
-- /app/backend/routes/omnibus.py (Multi-Cofre API: create, rename, tier limits)
-- /app/backend/routes/multisign.py (Multi-Sign + Omnibus integration)
-- /app/backend/routes/finance.py (Dashboard Financeiro API)
-- /app/backend/models/permissions.py (Menu "Cofre")
-- /app/frontend/src/pages/dashboard/vault/VaultWallets.jsx (Multi-Cofre UI)
-- /app/frontend/src/pages/dashboard/admin/FinancialDashboard.jsx
-- /app/design_guidelines.json (UI premium rules)
