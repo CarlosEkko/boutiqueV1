@@ -1,113 +1,132 @@
 {
-  "project_name": "KBEX.io Multi-Sign Premium Dashboard",
-  "theme": "dark",
-  "archetype": "Archetype 5 (Jewel & Luxury) with Archetype 4 (Swiss & High-Contrast) data clarity",
-  "design_philosophy": "Quiet luxury for UHNW individuals. High trust, exclusive boutique feel. Deep blacks, crisp 1px borders, subtle gold/amber accents, and optical clarity glassmorphism.",
-  "colors": {
-    "background": "zinc-950 (#09090b)",
-    "surface": "zinc-900 (#18181b)",
-    "surface_glass": "zinc-900/60 with backdrop-blur-2xl",
-    "border": "zinc-800/80 (#27272a) and zinc-800/40 for delicate inner lines",
-    "primary_accent": "amber-500 (#f59e0b) / gold-400 (#facc15)",
-    "primary_accent_subtle": "amber-500/10 with amber-500/20 border",
-    "text_main": "zinc-50 (#fafafa)",
-    "text_muted": "zinc-400 (#a1a1aa)",
-    "status": {
-      "approved": "emerald-400 (#34d399)",
-      "rejected": "rose-500 (#f43f5e)",
-      "pending": "amber-400 (#fbbf24)",
-      "info": "blue-400 (#60a5fa)"
-    }
+  "project_context": {
+    "domain": "Crypto Boutique Exchange (KBEX.io) CRM",
+    "theme": "DARK",
+    "archetype": "5 (Jewel & Luxury)",
+    "aesthetic": "Quiet luxury, trust, exclusivity, dark-themed (black bg, gold accents, zinc-900 cards), Tailwind CSS, Shadcn UI components.",
+    "language": "Portuguese"
   },
   "typography": {
     "headings": {
-      "family": "'Cabinet Grotesk', sans-serif",
-      "weight": "font-light to font-normal",
-      "tracking": "tracking-tight to tracking-tighter"
-    },
-    "body": {
-      "family": "'Manrope', sans-serif",
-      "weight": "font-normal",
-      "tracking": "tracking-normal"
-    },
-    "data_and_crypto": {
-      "family": "'JetBrains Mono', monospace",
-      "weight": "font-light",
+      "font": "Cabinet Grotesk or Satoshi",
+      "weight": "font-semibold to font-bold",
+      "color": "text-zinc-50",
       "tracking": "tracking-tight"
     },
-    "scale": {
-      "h1": "text-4xl sm:text-5xl lg:text-6xl",
-      "h2": "text-2xl sm:text-3xl lg:text-4xl",
-      "h3": "text-xl sm:text-2xl",
-      "h4": "text-lg sm:text-xl",
-      "body": "text-base text-zinc-300",
-      "small": "text-sm text-zinc-400",
-      "micro_label": "text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500"
+    "body": {
+      "font": "Inter",
+      "weight": "font-normal",
+      "color": "text-zinc-400"
     }
   },
-  "layout_and_spacing": {
-    "philosophy": "Generous spacing. p-6 to p-8 for standard cards, p-12 for hero sections.",
-    "dashboard_grid": "Mode B: 'Control Room' Grid (grid-cols-1 md:grid-cols-3 lg:grid-cols-4) with gap-6. Use col-span-2 or 3 for main data, col-span-1 for summaries.",
-    "borders": "Expose the skeleton. Use border-collapse style layouts for technical tables. 1px solid borders on everything to ground the soft shadows.",
-    "radius": "rounded-xl for main cards, rounded-full for buttons/badges (premium feel)."
+  "colors": {
+    "background": "bg-black",
+    "surface": "bg-zinc-900",
+    "surface_secondary": "bg-zinc-950",
+    "border": "border-zinc-800",
+    "primary": "text-yellow-500 bg-yellow-500 (Gold)",
+    "primary_hover": "hover:bg-yellow-400",
+    "secondary": "text-zinc-400",
+    "success": "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+    "danger": "text-red-400 bg-red-400/10 border-red-400/20",
+    "warning": "text-amber-400 bg-amber-400/10 border-amber-400/20"
   },
-  "surface_strategies": {
-    "headers": "Crystal Glass: bg-zinc-950/70 backdrop-blur-xl border-b border-white/5",
-    "cards": "Neumorphic/Tactile hybrid: bg-zinc-900 border border-zinc-800/50 shadow-[0_8px_32px_rgba(0,0,0,0.2)]",
-    "active_card": "Tracing Beam effect: Subtle moving border gradient or static amber-500/20 glow with blur-md"
+  "layout_and_spacing": {
+    "container": "p-6 to p-8",
+    "borders": "rounded-xl border border-zinc-800",
+    "shadows": "shadow-sm shadow-black/50"
   },
   "components": {
-    "buttons": {
-      "primary": "bg-amber-500 text-zinc-950 hover:bg-amber-400 transition-colors rounded-full px-6 py-2 font-medium shadow-[0_0_15px_rgba(245,158,11,0.2)]",
-      "secondary": "bg-zinc-900 text-zinc-50 border border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600 transition-colors rounded-full px-6 py-2",
-      "ghost": "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/50 rounded-full transition-colors"
-    },
-    "badges": "rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700",
-    "tables": "Shadcn Table heavily customized. border-b border-zinc-800/50. Hover states on rows: hover:bg-zinc-800/30. font-mono for numbers.",
-    "avatars": "Circular, with 2px ring representing status (amber-500 for pending, emerald-500 for signed, border-zinc-800 for inactive)."
+    "forms": "Shadcn Inputs, Selects. Dark backgrounds (bg-zinc-950), subtle borders (border-zinc-800), yellow-500 focus rings.",
+    "buttons": "Primary: bg-yellow-500 text-black font-semibold hover:bg-yellow-400. Secondary: bg-zinc-800 text-zinc-50 hover:bg-zinc-700. Ghost: text-zinc-400 hover:text-zinc-50.",
+    "badges": "Status badges must use rounded-full, with 10% opacity backgrounds and colored borders/text (e.g., bg-emerald-500/10 text-emerald-400 border border-emerald-500/20).",
+    "tables": "Shadcn Tables. Header: text-zinc-400 text-xs uppercase tracking-wider. Rows: hover:bg-zinc-800/50 transition-colors."
   },
-  "motion_and_interaction": {
-    "hover": "Subtle lifts (-translate-y-0.5) and glow enhancements on cards.",
-    "approval_action": "Instead of a simple click, use a 'Slide to Sign' or 'Hold to Approve' interaction with a progress ring, mapped to a biometric or vault-unlock visual metaphor.",
-    "transitions": "transition-all duration-300 ease-out"
-  },
-  "image_urls": {
-    "texture_background": {
-      "url": "https://images.unsplash.com/photo-1770795945584-6d5046ffe47c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
-      "description": "Dark rough texture, use as a subtle overlay with opacity-10 or mix-blend-overlay on the main transaction detail background for depth."
+  "screens": [
+    {
+      "name": "Screen 1: Deal OTC",
+      "id": "deal-otc-modal",
+      "description": "Creation/Edit Modal or Page with a real-time calculator. High-end financial entry form.",
+      "layout_blueprint": "grid grid-cols-1 lg:grid-cols-3 gap-6. Left column (col-span-2) for the Form. Right column (col-span-1) for the Sticky Real-time Calculator.",
+      "features": [
+        "Header: 'Criar Negociação OTC' with subtle gold accent.",
+        "Toggle: Buy (Cliente) / Sell (Fornecedor). Use segmented control style (Tabs).",
+        "Asset selector: Combobox (BTC, ETH, USDT) with crypto icons.",
+        "Quantity: Number input 'Quantidade'.",
+        "Reference Price: Auto-filled, editable, showing live price (e.g., 'Binance: $58,200' in green).",
+        "Condition: Toggle for 'Premium (+%)' or 'Desconto (-%)' + Input field.",
+        "Gross % and Net % inputs.",
+        "Commission Dropdowns: Corretor (Broker) and Membro KBEX.",
+        "Calculator Panel: A highlighted card (border-yellow-500/30 bg-zinc-900/80) showing Total Value, Gross/Net amounts, KBEX Margin, and Commission splits in real-time."
+      ]
     },
-    "signer_avatars": [
+    {
+      "name": "Screen 2: Compliance Forense",
+      "id": "compliance-forense-tab",
+      "description": "Forensic Qualification Tab inside a Lead/Contact detail. Deep dive into risk and verification.",
+      "layout_blueprint": "Bento-grid style layout. grid grid-cols-1 md:grid-cols-2 gap-6.",
+      "features": [
+        "Section 1: 'Carteiras de Negociação' (Trading Wallets). Table of submitted wallets, tags for Hot/Cold/Custodial, and blockchain type.",
+        "Section 2: 'Análise KYT' (Know Your Transaction). Risk score circle (e.g., 0-100), tags for flags (Darknet, Sanctions), textarea for Analyst Notes, status dropdown.",
+        "Section 3: 'Teste de Satoshi (A/B Test)'. Displays micro-amount generated, KBEX verification address, and a prominent 'Pending/Verified' status badge.",
+        "Section 4: 'Provas Fireblocks'. Two sub-sections for Proof of Ownership (Signed Typed Message) and Proof of Reserves. Use timeline or step indicators."
+      ]
+    },
+    {
+      "name": "Screen 3: Pipeline de Negócios OTC",
+      "id": "pipeline-otc",
+      "description": "Table/card view of all OTC deals.",
+      "layout_blueprint": "Full-width page layout. Top toolbar with search and filters, followed by a dense data table.",
+      "features": [
+        "Toolbar: Search by ID/Name, Select filters for Status, Asset, and Broker.",
+        "Columns: ID, Cliente/Fornecedor, Ativo, Qtd, Valor do Negócio, % Bruto, % Líquido, Margem KBEX, Corretor, Status, Data.",
+        "Status Badges: Rascunho (Gray), Qualificação (Blue), Compliance (Purple), Negociação (Yellow), Aprovado (Emerald), Executando (Orange), Liquidado (Cyan), Fechado (Zinc).",
+        "Row Actions: Dropdown menu (View, Edit, Advance Stage)."
+      ]
+    },
+    {
+      "name": "Screen 4: Dashboard de Comissões",
+      "id": "commission-dashboard",
+      "description": "Overview of all commissions generated and paid.",
+      "layout_blueprint": "Top: 4 KPI Cards (grid-cols-4). Middle: Split layout (1/3 Broker Summary list, 2/3 Detailed Table).",
+      "features": [
+        "KPI Cards: Total Gerado, Pendente de Aprovação, Aprovado (aguardando pag.), Pago. Use gold/yellow text for the primary metric.",
+        "Broker Summary Card: List of top earning brokers with their total earned and pending.",
+        "Commissions Table: Deal ID, Beneficiário, Papel, Valor, Moeda, Status, Ações (Aprovar, Pagar, Rejeitar).",
+        "Bulk actions: Checkboxes on rows to 'Aprovar Selecionados' or 'Marcar como Pago'."
+      ]
+    },
+    {
+      "name": "Screen 5: Qualification Wizard Summary",
+      "id": "wizard-summary",
+      "description": "A step in the existing lead qualification wizard showing forensic compliance status.",
+      "layout_blueprint": "Centered max-w-md card, visually distinct with dark background and gold border accents.",
+      "features": [
+        "Title: 'Resumo de Qualificação Forense'.",
+        "List items: Verificação de Carteira, Score KYT (Clean/Flagged), Teste de Satoshi, Prova de Posse, Prova de Reservas.",
+        "Use Lucide icons (CheckCircle2 in emerald, XCircle in red) for each row.",
+        "Footer: 'Status Geral' with a large badge (e.g., 'PRONTO PARA NEGOCIAR' in emerald or 'BLOQUEADO' in red) and a subtext for reasons."
+      ]
+    }
+  ],
+  "media": {
+    "backgrounds": [
       {
-        "url": "https://images.unsplash.com/photo-1624670319970-37aa780d4874?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
-        "name": "Alexander W."
-      },
-      {
-        "url": "https://images.unsplash.com/photo-1767175620484-1ed37931a0d1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBjb3Jwb3JhdGUlMjBwb3J0cmFpdCUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzA0Nnww&ixlib=rb-4.1.0&q=85",
-        "name": "Michael T."
-      },
-      {
-        "url": "https://images.pexels.com/photos/17685845/pexels-photo-17685845.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-        "name": "James L."
-      },
-      {
-        "url": "https://images.pexels.com/photos/10657877/pexels-photo-10657877.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-        "name": "David C."
+        "url": "https://images.pexels.com/photos/14921310/pexels-photo-14921310.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Abstract golden splash on dark background",
+        "category": "hero/login background"
       }
     ]
   },
-  "key_views_instructions": {
-    "1_multi_sign_dashboard": "Build a Control Room bento grid. Top metrics: Pending Actions, Total Secured Assets, Threshold Status. Below: A list of active multi-sig requests requiring user's signature, highlighted with a subtle amber tracing beam.",
-    "2_signatories_management": "A card-based list showing all authorized signers. Include a visual 'Threshold Configuration' slider (e.g., 3 of 5). Each signer card has an avatar, role (Admin, Signer, Viewer), and 'Last Active' timestamp.",
-    "3_transaction_approval_detail": "The 'Jewel' feature. A beautifully spaced modal/page. Massive typography for the crypto amount. Left side: Vertical step-timeline (Initiated -> Risk Cleared -> Signatures -> Executed). Right side: Signer avatars overlapping, showing who approved (emerald check) and who is pending. Bottom: A luxurious 'Hold to Sign' or sliding button.",
-    "4_create_transaction": "Minimalist, high-contrast form. Step 1: Destination. Step 2: Amount. Step 3: Select Required Signers. Use Shadcn forms but strip borders down to 1px zinc-800. Use monospaced font for wallet addresses.",
-    "5_activity_log": "A dense, technical audit table. Columns: Time, Action, User, Hash (mono), Status. Strict grid borders (border-collapse). No soft shadows here, pure utility."
-  },
-  "testing_and_accessibility": {
-    "data_testid": "ALL interactive elements MUST have data-testid. e.g., 'approve-tx-button', 'signer-avatar-1', 'm-of-n-slider'.",
-    "contrast": "Ensure amber-500 on zinc-900 passes 4.5:1. Text over images MUST have text-shadow or a gradient overlay underneath."
-  },
-  "dependencies_to_install": [
-    "lucide-react",
-    "@radix-ui/react-icons"
+  "instructions_to_main_agent": [
+    "You are designing the prototype UI for these 5 screens. Ensure the code is production-ready using React, Tailwind, and Shadcn UI.",
+    "The application is in PORTUGUESE. Ensure all text, labels, and dummy data are in Portuguese.",
+    "Theme is strictly DARK. Use 'bg-black' for the main app background, and 'bg-zinc-900' for cards/surfaces.",
+    "Accent color is Gold (use Tailwind's 'yellow-500' or 'amber-500' depending on contrast).",
+    "For the Deal OTC real-time calculator, use React state to dynamically calculate Gross, Net, and KBEX margin values based on the inputs to make the prototype interactive.",
+    "Include 'data-testid' on every button, input, tab, and row action.",
+    "Create a unified navigation sidebar or header to switch between the 5 prototype screens.",
+    "Use Phosphor icons or Lucide React for consistent, high-end iconography.",
+    "Avoid standard blue/indigo SaaS colors; stick to the Quiet Luxury palette (Black, Zinc, Gold, Emerald for success, Red for failure)."
   ]
 }
