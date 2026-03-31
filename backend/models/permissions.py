@@ -226,7 +226,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/client-menus", "label": "Menus de Clientes", "icon": "Menu"},
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
-            {"path": "/dashboard/approvals/settings", "label": "Configurações Multi-Sign", "icon": "ShieldCheck"},
+            {"path": "/dashboard/approvals/settings", "label": "Multi-Sign", "icon": "ShieldCheck"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
             {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]
