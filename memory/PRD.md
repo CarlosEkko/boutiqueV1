@@ -9,11 +9,11 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Deploy: Docker, Docker-Compose (VPS do user)
 
 ## Perfis de Cliente
-- **Broker** — Acesso básico, taxa admissão 0€, limite 1 cofre
-- **Standard** — Taxa admissão 500€, limite 3 cofres
-- **Premium** — Taxa admissão 2500€, limite 10 cofres
-- **VIP** — Taxa admissão 10000€, limite 20 cofres
-- **Institucional** — Taxa admissão 25000€, limite 50 cofres
+- **Broker** — Acesso básico, taxa admissão 0 EUR, limite 1 cofre
+- **Standard** — Taxa admissão 500 EUR, limite 3 cofres
+- **Premium** — Taxa admissão 2500 EUR, limite 10 cofres
+- **VIP** — Taxa admissão 10000 EUR, limite 20 cofres
+- **Institucional** — Taxa admissão 25000 EUR, limite 50 cofres
 
 ## Funcionalidades Implementadas
 
@@ -21,6 +21,13 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Auth com JWT, sessionStorage, auto-logout 15 min
 - WebSocket para preços crypto em tempo real (Binance)
 - 4 idiomas: EN, PT, FR, AR
+
+### Onboarding/Registration (CORRIGIDO - 31/03/2026)
+- CRM Lead membership_profile mapeia automaticamente para o membership_level do utilizador ao registar
+- Country dropdown no RegisterPage com lista global de países
+- Taxa de admissão em EUR por perfil com conversão dinâmica para crypto (BTC, ETH, USDT, USDC) via Binance API
+- Removido "Período de carência"
+- Admin Settings grava corretamente taxas de admissão (5 perfis EUR)
 
 ### Sistema de Cofres (Multi-Sign)
 - Múltiplos cofres por cliente com nomes editáveis
@@ -47,16 +54,17 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Configuráveis por admin por cliente
 
 ### Admin Settings
-- Taxa de admissão EUR por perfil (referência, conversão automática)
+- Taxa de admissão EUR por perfil (5 perfis, sem grace period)
 - Limites de cofres por perfil
 - Taxas de referral configuráveis
 - Taxas e limites de trading por perfil
 
 ### Integrações
-- Binance API, Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
+- Binance API (preços e conversão crypto), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
 
 ## Issues Conhecidos
-- P1: Safari cursor bug (recorrente)
+- P1: Safari cursor bug (recorrente, 17+ vezes)
+- P2: Traduções incompletas (AR, FR parciais)
 
 ## Backlog
 - P1: TradingView chart widgets
@@ -66,3 +74,4 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123
+- Test VIP User: testvip@test.com / senha123
