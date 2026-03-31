@@ -64,6 +64,7 @@ from routes.team_hub import router as team_hub_router, set_db as set_team_hub_db
 from routes.microsoft365 import router as o365_router, set_db as set_o365_db
 from routes.approvals import router as approvals_router, set_db as set_approvals_db
 from routes.multisign import router as multisign_router, set_db as set_multisign_db
+from routes.websocket_prices import router as ws_prices_router
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -112,6 +113,7 @@ api_router.include_router(team_hub_router)
 api_router.include_router(o365_router)
 api_router.include_router(approvals_router)
 api_router.include_router(multisign_router)
+api_router.include_router(ws_prices_router)
 
 
 # Define Models

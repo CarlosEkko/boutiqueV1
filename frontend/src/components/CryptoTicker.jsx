@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Fallback data in case CoinMarketCap API fails
+// Fallback data in case connection fails
 const fallbackCryptoData = [
   { symbol: 'BTC', name: 'Bitcoin', price: 64500, change_24h: -2.5 },
   { symbol: 'ETH', name: 'Ethereum', price: 1850, change_24h: -3.2 },
@@ -25,29 +25,37 @@ const fiatCurrencies = ['USD', 'EUR', 'AED', 'BRL'];
 const CryptoTicker = () => {
   const [cryptoData, setCryptoData] = useState(fallbackCryptoData);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isLive, setIsLive] = useState(false);
   const [selectedFiat, setSelectedFiat] = useState('USD');
   const [showFiatDropdown, setShowFiatDropdown] = useState(false);
   const [dataSource, setDataSource] = useState('');
+  const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 10;
+  const fallbackIntervalRef = useRef(null);
 
+  // Build WebSocket URL from API_URL
+  const getWsUrl = useCallback(() => {
+    if (!API_URL) return null;
+    const wsProtocol = API_URL.startsWith('https') ? 'wss' : 'ws';
+    const host = API_URL.replace(/^https?:\/\//, '');
+    return `${wsProtocol}://${host}/api/ws/prices`;
+  }, []);
+
+  // Fallback HTTP fetch
   const fetchCryptoPrices = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/api/crypto-prices`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      
       if (data.prices && data.prices.length > 0) {
         setCryptoData(data.prices);
         setIsLive(true);
-        setDataSource(data.source || 'coinmarketcap');
-        setError(null);
+        setDataSource('api');
       }
     } catch (err) {
-      console.warn('Failed to fetch crypto prices, using fallback data:', err.message);
-      setError(err.message);
+      console.warn('HTTP fallback failed:', err.message);
       setIsLive(false);
       setDataSource('offline');
     } finally {
@@ -55,12 +63,104 @@ const CryptoTicker = () => {
     }
   }, []);
 
-  // Initial fetch and periodic updates
-  useEffect(() => {
-    fetchCryptoPrices();
-    const interval = setInterval(fetchCryptoPrices, 60000);
-    return () => clearInterval(interval);
+  // Connect WebSocket
+  const connectWebSocket = useCallback(() => {
+    const wsUrl = getWsUrl();
+    if (!wsUrl) {
+      fetchCryptoPrices();
+      return;
+    }
+
+    // Clean up existing connection
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        reconnectAttempts.current = 0;
+        setDataSource('ws_live');
+        // Clear fallback polling if running
+        if (fallbackIntervalRef.current) {
+          clearInterval(fallbackIntervalRef.current);
+          fallbackIntervalRef.current = null;
+        }
+        // Send ping every 30s to keep alive
+        const pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send('ping');
+          }
+        }, 30000);
+        ws._pingInterval = pingInterval;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          if (event.data === 'pong') return;
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'prices' && msg.data) {
+            setCryptoData(msg.data);
+            setIsLive(true);
+            setDataSource(msg.source || 'ws_live');
+            setLoading(false);
+          }
+        } catch (e) {
+          console.warn('WS parse error:', e);
+        }
+      };
+
+      ws.onclose = (event) => {
+        if (ws._pingInterval) clearInterval(ws._pingInterval);
+        wsRef.current = null;
+
+        // Reconnect with exponential backoff
+        if (reconnectAttempts.current < maxReconnectAttempts) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+          reconnectAttempts.current++;
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
+        } else {
+          // Fallback to HTTP polling
+          setDataSource('api_fallback');
+          startFallbackPolling();
+        }
+      };
+
+      ws.onerror = () => {
+        // Will trigger onclose
+      };
+    } catch (err) {
+      console.warn('WebSocket creation failed:', err);
+      startFallbackPolling();
+    }
+  }, [getWsUrl, fetchCryptoPrices]);
+
+  const startFallbackPolling = useCallback(() => {
+    if (!fallbackIntervalRef.current) {
+      fetchCryptoPrices();
+      fallbackIntervalRef.current = setInterval(fetchCryptoPrices, 30000);
+    }
   }, [fetchCryptoPrices]);
+
+  useEffect(() => {
+    // Initial HTTP fetch for fast first paint, then connect WS
+    fetchCryptoPrices();
+    // Small delay then try WebSocket
+    const wsTimer = setTimeout(connectWebSocket, 1000);
+
+    return () => {
+      clearTimeout(wsTimer);
+      if (wsRef.current) {
+        if (wsRef.current._pingInterval) clearInterval(wsRef.current._pingInterval);
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (fallbackIntervalRef.current) clearInterval(fallbackIntervalRef.current);
+    };
+  }, [connectWebSocket, fetchCryptoPrices]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -81,7 +181,6 @@ const CryptoTicker = () => {
   const formatPrice = (price) => {
     const convertedPrice = convertPrice(price);
     const { symbol } = exchangeRates[selectedFiat];
-    
     if (convertedPrice >= 1000) {
       return `${symbol}${convertedPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     } else if (convertedPrice >= 1) {
@@ -93,6 +192,17 @@ const CryptoTicker = () => {
 
   const formatChange = (change) => {
     return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+  };
+
+  // Connection status indicator
+  const getStatusIndicator = () => {
+    if (dataSource.startsWith('ws') || dataSource === 'binance_live') {
+      return { color: 'bg-green-500', label: 'LIVE' };
+    }
+    if (dataSource === 'api' || dataSource === 'api_fallback' || dataSource === 'cache') {
+      return { color: 'bg-yellow-500', label: 'CMC' };
+    }
+    return { color: 'bg-red-500', label: 'OFF' };
   };
 
   if (loading) {
@@ -108,6 +218,8 @@ const CryptoTicker = () => {
       </div>
     );
   }
+
+  const status = getStatusIndicator();
 
   return (
     <div className="crypto-ticker-container overflow-hidden relative flex items-center">
@@ -149,11 +261,11 @@ const CryptoTicker = () => {
         )}
       </div>
 
-      {/* Live indicator with source */}
+      {/* Live indicator */}
       {isLive && (
-        <div className="flex items-center space-x-1 mr-4 flex-shrink-0" title={`Data from ${dataSource}`}>
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-[10px] text-green-400 uppercase tracking-wider">CMC</span>
+        <div className="flex items-center space-x-1 mr-4 flex-shrink-0" title={`Source: ${dataSource}`}>
+          <div className={`w-2 h-2 ${status.color} rounded-full animate-pulse`} />
+          <span className="text-[10px] text-green-400 uppercase tracking-wider">{status.label}</span>
         </div>
       )}
       
