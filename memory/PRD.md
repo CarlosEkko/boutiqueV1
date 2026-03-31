@@ -39,6 +39,14 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 ### Internal Multi-Sign (Staff)
 - Approval workflow para staff (approvals.py)
 
+### Dashboard Financeiro (NOVO - 2026-03-31)
+- KPIs: AUM Total, Receita Total, Volume de Trading (24h/7d/30d), Operações Pendentes
+- Gráficos: Evolução de Receita (30 dias), Fiat vs Crypto (pie), Distribuição por Ativo (bar)
+- Tabelas: Top Clientes por AUM, Transações Recentes
+- Backend: /api/finance/dashboard (aggregação MongoDB)
+- Frontend: /dashboard/admin/finance (FinancialDashboard.jsx)
+- Menu: Primeiro item no menu "Financeiro" na sidebar
+
 ### Referrals
 - admission_fee_percent nas Platform Settings
 
@@ -56,8 +64,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - 2026-02: "Excepcionais" cortava a meio no mobile (CORRIGIDO)
 
 ## Issues Conhecidos
-- P2: Safari cursor bug (recorrente, 15+)
-- P1: Clarificar remoção de registo público (user disse manter)
+- P1: Safari cursor bug (recorrente, 16+)
 
 ## Backlog (Priorizado)
 - P1: TradingView chart widgets
@@ -69,6 +76,8 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Admin: carlos@kbex.io / senha123
 
 ## Ficheiros Chave
+- /app/backend/routes/finance.py (Dashboard Financeiro API)
+- /app/frontend/src/pages/dashboard/admin/FinancialDashboard.jsx (Dashboard Financeiro UI)
 - /app/backend/routes/websocket_prices.py (WebSocket preços)
 - /app/frontend/src/components/CryptoTicker.jsx (WebSocket client)
 - /app/frontend/src/i18n/translations.js (EN, PT, FR, AR)
