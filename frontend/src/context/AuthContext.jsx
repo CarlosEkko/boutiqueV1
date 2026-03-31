@@ -130,11 +130,10 @@ export const AuthProvider = ({ children }) => {
     return userData_;
   };
 
-  const login = async (email, password) => {
-    const response = await axios.post(`${API_URL}/api/auth/login`, {
-      email,
-      password
-    });
+  const login = async (email, password, turnstile_token = null) => {
+    const payload = { email, password };
+    if (turnstile_token) payload.turnstile_token = turnstile_token;
+    const response = await axios.post(`${API_URL}/api/auth/login`, payload);
     const { access_token, user: userData } = response.data;
     sessionStorage.setItem(SESSION_KEY, access_token);
     sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());

@@ -1,7 +1,7 @@
 """
 CRM Routes for KBEX Exchange
 """
-from fastapi import APIRouter, HTTPException, Header, Depends, Query
+from fastapi import APIRouter, HTTPException, Header, Depends, Query, Request
 from typing import List, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
@@ -10,6 +10,8 @@ import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+
+from utils.turnstile import verify_turnstile
 
 from models.crm import (
     SupplierCreate, SupplierUpdate, SupplierResponse,
@@ -33,11 +35,18 @@ class PublicLeadRequest(BaseModel):
     email: str
     phone: str
     message: Optional[str] = None
+    turnstile_token: Optional[str] = None
 
 
 @router.post("/leads/public")
-async def create_public_lead(lead_data: PublicLeadRequest):
+async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
     """Create a CRM lead from the public website - no auth required"""
+    # Verify Turnstile
+    if lead_data.turnstile_token:
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
+        if not await verify_turnstile(lead_data.turnstile_token, client_ip):
+            raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
+
     db = get_db()
 
     # Check if a lead with this email already exists (not lost)

@@ -63,11 +63,13 @@ class UserCreate(UserBase):
     password: str
     invite_code: Optional[str] = None
     region: Optional[Region] = None
+    turnstile_token: Optional[str] = None
 
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    turnstile_token: Optional[str] = None
 
 
 class UserUpdate(BaseModel):

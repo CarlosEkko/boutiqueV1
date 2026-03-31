@@ -7,7 +7,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, MongoDB (Motor)
 - Deploy: Docker, Docker-Compose (VPS do user)
-- CDN/WAF: Cloudflare (dominio verificado)
+- CDN/WAF: Cloudflare (dominio verificado, Turnstile activo)
 
 ## Perfis de Cliente
 - **Broker** — Acesso basico, taxa admissao 0 EUR, limite 1 cofre
@@ -23,58 +23,53 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - WebSocket para precos crypto em tempo real (Binance)
 - 4 idiomas: EN, PT, FR, AR
 
+### Cloudflare Turnstile (NOVO - 01/04/2026)
+- Widget Turnstile integrado em 4 paginas publicas:
+  1. Login (AuthPage)
+  2. Registo (RegisterPage)
+  3. Solicitar Acesso / ContactCTA (Landing Page)
+  4. Suporte Publico (PublicSupportPage)
+- Backend verifica tokens via Cloudflare API em 4 endpoints:
+  - POST /api/auth/login
+  - POST /api/auth/register
+  - POST /api/crm/leads/public
+  - POST /api/kb/public-ticket
+- Modo: Managed (Cloudflare decide quando mostrar desafio)
+- Tema: Dark (alinhado com design da plataforma)
+- Componente reutilizavel: TurnstileWidget.jsx
+- Utilitario backend: utils/turnstile.py
+- Tokens invalidos/falsos sao bloqueados com erro 400
+
+### Cloudflare Proxy Middleware
+- Middleware HTTP extrai IP real do cliente via CF-Connecting-IP ou X-Forwarded-For
+- Disponivel em request.state.client_ip para logging e rate limiting
+
+### Risk & Compliance (31/03/2026)
+- Departamento separado no menu lateral com icon FileSearch
+- Risk Dashboard: KPIs de negocios e carteiras
+- KYT Forensic: Fila de verificacao de carteiras com modal analise forense
+- CompliancePage KYT Read-Only: Mostra dados do analista sem edicao
+
 ### Onboarding/Registration
-- CRM Lead membership_profile mapeia para membership_level do utilizador ao registar
-- Country dropdown no RegisterPage
-- Taxa de admissao EUR com conversao dinamica crypto (BTC, ETH, USDT, USDC) via Binance
-- Admin Settings grava 5 perfis EUR correctamente
+- CRM Lead membership_profile mapeia para membership_level do utilizador
+- Taxa de admissao EUR com conversao dinamica crypto
 
 ### Sistema OTC Deals & Comissoes
-- **Negocios OTC**: CRUD completo com calculadora em tempo real
-  - Tipo: Compra (Cliente) ou Venda (Fornecedor)
-  - Ativo, quantidade, preco referencia (KBEX/Binance, editavel)
-  - Condicao: Premium (+%) ou Discount (-%)
-  - Gross/Net configuravel por negocio
-  - Distribuicao margem: Corretor % + Membro KBEX %
-  - Moeda de liquidacao: EUR, USD, BTC, ETH, USDT, USDC
-- **Pipeline Status**: Draft -> Qualification -> Compliance -> Negotiation -> Approved -> Executing -> Settled -> Closed
-- **Comissoes**: Auto-geradas ao liquidar negocio
-  - Workflow: Pendente -> Aprovado -> Pago / Rejeitado
-  - Bulk approve/pay
-  - Dashboard KPIs + resumo por corretor
+- Negocios OTC: CRUD completo com calculadora em tempo real
+- Pipeline Status: Draft -> Qualification -> Compliance -> Negotiation -> Approved -> Executing -> Settled -> Closed
+- Comissoes: Auto-geradas ao liquidar negocio
 
 ### Compliance Forense (por negocio)
 - Carteiras de negociacao (add/verify)
 - Analise KYT manual (score, flags, notas) - ESCRITA no KYT Forensic, LEITURA no Compliance
-- Teste de Satoshi (micro-transacao)
-- Proof of Ownership (Signed Typed Messages)
-- Proof of Reserves (obrigatorio antes execucao)
-
-### Risk & Compliance (NOVO - 31/03/2026)
-- **Departamento separado** no menu lateral com icon FileSearch
-- **Risk Dashboard** (/dashboard/risk/dashboard): KPIs de negocios (Total, Conformes, Pendentes, Alto Risco) e carteiras (Total, Pendentes, Verificadas, Sinalizadas, Rejeitadas), Quick Actions, Analises Recentes
-- **KYT Forensic** (/dashboard/risk/kyt-forensic): Fila de verificacao de carteiras, modal de analise forense (score 0-100, flags, notas, status), pesquisa/filtro por status
-- **CompliancePage KYT Read-Only**: Seccao KYT mostra badge "Somente Leitura", gauge visual do score, status/flags/notas do analista, detalhe por carteira — sem campos editaveis
-- Acessivel a Admin e Global Manager via permissions
-
-### Cloudflare Proxy Middleware (NOVO - 31/03/2026)
-- Middleware HTTP extrai IP real do cliente via CF-Connecting-IP ou X-Forwarded-For
-- Disponivel em request.state.client_ip para logging e rate limiting futuro
+- Teste de Satoshi, Proof of Ownership, Proof of Reserves
 
 ### Sistema de Cofres (Multi-Sign)
 - Multiplos cofres por cliente com nomes editaveis
-- Tier limits por perfil, Omnibus vault para OTC
-- Menu Multi-Sign visivel para clientes
-
-### Dashboard Financeiro
-- KPIs: AUM, Receita, Volume, Pendentes
 
 ### CRM & OTC Desk
 - Leads com Perfil (5 tiers), Risk Intelligence
 - OTC CRM com 11-step workflow
-
-### Prototipos Visuais
-- Pagina /prototypes/otc com 5 ecras mockup
 
 ## Issues Conhecidos
 - P2: Safari cursor bug (recorrente 18+)
@@ -87,7 +82,13 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - P3: App mobile
 
 ## Integracoes
-- Binance API (precos + conversao), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe, Cloudflare (DNS/WAF)
+- Cloudflare (DNS/WAF/Turnstile)
+- Binance API (precos + conversao)
+- Brevo (System Emails)
+- Microsoft O365
+- Sumsub (KYC)
+- Fireblocks (Wallets - mock)
+- Stripe (Payments)
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123

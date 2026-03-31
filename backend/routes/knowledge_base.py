@@ -1,7 +1,7 @@
 """
 Knowledge Base Routes - Articles, Categories, and Support Tickets
 """
-from fastapi import APIRouter, HTTPException, Header, Depends, Query
+from fastapi import APIRouter, HTTPException, Header, Depends, Query, Request
 from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
@@ -15,6 +15,7 @@ from models.knowledge_base import (
 )
 from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
+from utils.turnstile import verify_turnstile
 from routes.admin import get_admin_user
 
 router = APIRouter(prefix="/kb", tags=["Knowledge Base"])
@@ -221,12 +222,19 @@ class PublicTicketCreate(BaseModel):
     category: str = "general"
     priority: str = "medium"
     attachments: List[str] = []
+    turnstile_token: Optional[str] = None
 
 
 @router.post("/public-ticket")
-async def create_public_ticket(ticket_data: PublicTicketCreate):
+async def create_public_ticket(ticket_data: PublicTicketCreate, request: Request):
     """Create a support ticket without authentication (public form)"""
     import re
+
+    # Verify Turnstile
+    if ticket_data.turnstile_token:
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
+        if not await verify_turnstile(ticket_data.turnstile_token, client_ip):
+            raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
     
     # Basic email validation
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'

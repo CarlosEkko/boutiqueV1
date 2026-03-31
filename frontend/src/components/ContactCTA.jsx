@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -7,6 +7,7 @@ import { Card, CardContent } from './ui/card';
 import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../i18n';
+import TurnstileWidget from './TurnstileWidget';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -20,6 +21,9 @@ const ContactCTA = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
 
   const handleChange = (e) => {
     setFormData({
@@ -40,7 +44,8 @@ const ContactCTA = () => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          message: formData.message || null
+          message: formData.message || null,
+          turnstile_token: turnstileToken || null
         })
       });
       
@@ -173,6 +178,9 @@ const ContactCTA = () => {
                           data-testid="contact-message-input"
                         />
                       </div>
+
+                      {/* Turnstile */}
+                      <TurnstileWidget onVerify={handleTurnstileVerify} className="flex justify-center" />
 
                       <Button
                         type="submit"

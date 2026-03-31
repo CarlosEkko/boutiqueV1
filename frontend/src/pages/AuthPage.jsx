@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../i18n';
@@ -8,10 +8,15 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
+import TurnstileWidget from '../components/TurnstileWidget';
 
 const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -31,7 +36,7 @@ const AuthPage = () => {
     setLoading(true);
 
     try {
-      const userData = await login(formData.email, formData.password);
+      const userData = await login(formData.email, formData.password, turnstileToken);
       toast.success(t('auth.loginSuccess') || 'Login successful!');
       
       if (userData?.user_type === 'client' && !userData?.is_onboarded) {
@@ -128,6 +133,9 @@ const AuthPage = () => {
                 </button>
               </div>
             </div>
+
+            {/* Turnstile */}
+            <TurnstileWidget onVerify={handleTurnstileVerify} className="flex justify-center mt-2" />
 
             {/* Submit button */}
             <Button

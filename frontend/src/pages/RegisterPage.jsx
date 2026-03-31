@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../i18n';
@@ -9,12 +9,17 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import { Eye, EyeOff, User, Mail, Phone, Globe, Lock, ArrowLeft } from 'lucide-react';
+import TurnstileWidget from '../components/TurnstileWidget';
 
 import { COUNTRIES } from '../utils/countries';
 
 const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,7 +42,7 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      const userData = await register(formData);
+      const userData = await register({ ...formData, turnstile_token: turnstileToken });
       toast.success(t('auth.registerSuccess') || 'Conta criada com sucesso!');
       
       if (userData?.user_type === 'client' && !userData?.is_onboarded) {
@@ -189,6 +194,9 @@ const RegisterPage = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Turnstile */}
+            <TurnstileWidget onVerify={handleTurnstileVerify} className="flex justify-center mt-2" />
 
             <Button
               type="submit"

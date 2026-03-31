@@ -4,6 +4,7 @@ from typing import Optional
 from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate, UserInDB, KYCStatus, MembershipLevel, UserType, Region
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
 from utils.i18n import t, I18n
+from utils.turnstile import verify_turnstile
 from pydantic import BaseModel
 import pyotp
 import qrcode
@@ -36,8 +37,14 @@ class TwoFAVerifyRequest(BaseModel):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, lang: str = Depends(get_lang)):
+async def register(user_data: UserCreate, request: Request, lang: str = Depends(get_lang)):
     """Register a new user."""
+    # Verify Turnstile
+    if user_data.turnstile_token:
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
+        if not await verify_turnstile(user_data.turnstile_token, client_ip):
+            raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
+
     # Check if email already exists
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing_user:
@@ -141,8 +148,14 @@ async def register(user_data: UserCreate, lang: str = Depends(get_lang)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, lang: str = Depends(get_lang)):
+async def login(credentials: UserLogin, request: Request, lang: str = Depends(get_lang)):
     """Login with email and password."""
+    # Verify Turnstile
+    if credentials.turnstile_token:
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
+        if not await verify_turnstile(credentials.turnstile_token, client_ip):
+            raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
+
     # Find user by email
     user_doc = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     

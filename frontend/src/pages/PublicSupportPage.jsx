@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
+import TurnstileWidget from '../components/TurnstileWidget';
 import { 
   Send,
   Upload,
@@ -46,6 +47,9 @@ const PublicSupportPage = () => {
   // File upload state
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -139,7 +143,8 @@ const PublicSupportPage = () => {
           description: form.description,
           category: form.category,
           priority: form.priority,
-          attachments: attachmentUrls
+          attachments: attachmentUrls,
+          turnstile_token: turnstileToken || null
         });
         
         setTicketNumber(response.data.ticket_number || 'PENDING');
@@ -387,6 +392,11 @@ const PublicSupportPage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Turnstile (only for unauthenticated users) */}
+                  {!isAuthenticated && (
+                    <TurnstileWidget onVerify={handleTurnstileVerify} className="flex justify-center" />
+                  )}
 
                   {/* Submit Button */}
                   <Button
