@@ -325,20 +325,75 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cloudflare Trusted Proxy Middleware
+# Cloudflare Trusted Proxy Middleware + Security Headers
+CLOUDFLARE_IP_RANGES = [
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22",
+    "141.101.64.0/18", "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20",
+    "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+    "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+    "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32",
+    "2405:8100::/32", "2a06:98c0::/29", "2c0f:f248::/32"
+]
+
+import ipaddress
+CF_NETWORKS = []
+for cidr in CLOUDFLARE_IP_RANGES:
+    try:
+        CF_NETWORKS.append(ipaddress.ip_network(cidr))
+    except ValueError:
+        pass
+
+
+def is_cloudflare_ip(ip_str: str) -> bool:
+    """Check if IP belongs to Cloudflare's network ranges"""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        return any(ip in net for net in CF_NETWORKS)
+    except ValueError:
+        return False
+
+
 @app.middleware("http")
-async def cloudflare_proxy_middleware(request: Request, call_next):
-    """Extract real client IP from Cloudflare headers"""
+async def security_middleware(request: Request, call_next):
+    """Cloudflare proxy trust + Security headers"""
+    # --- Extract real client IP ---
+    proxy_ip = request.client.host if request.client else "unknown"
     cf_ip = request.headers.get("CF-Connecting-IP")
     xff = request.headers.get("X-Forwarded-For")
-    if cf_ip:
+
+    if cf_ip and is_cloudflare_ip(proxy_ip):
         request.state.client_ip = cf_ip
     elif xff:
         request.state.client_ip = xff.split(",")[0].strip()
     else:
-        request.state.client_ip = request.client.host if request.client else "unknown"
-    
+        request.state.client_ip = proxy_ip
+
     response = await call_next(request)
+
+    # --- Security Headers ---
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(self)"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "connect-src 'self' https://api.binance.com wss://stream.binance.com https://challenges.cloudflare.com https://*.kbex.io; "
+        "frame-src https://challenges.cloudflare.com; "
+        "object-src 'none'; "
+        "base-uri 'self';"
+    )
+
+    # --- Cache Control for API responses ---
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response.headers["Pragma"] = "no-cache"
+
     return response
 
 # Configure logging
