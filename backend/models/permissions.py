@@ -226,6 +226,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/client-menus", "label": "Menus de Clientes", "icon": "Menu"},
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
+            {"path": "/dashboard/approvals/settings", "label": "Configurações Multi-Sign", "icon": "ShieldCheck"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
             {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]
@@ -293,7 +294,6 @@ DEPARTMENT_MENUS = {
         "icon": "ShieldCheck",
         "items": [
             {"path": "/dashboard/approvals", "label": "Aprovações", "icon": "CheckCircle"},
-            {"path": "/dashboard/approvals/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/vault/wallets", "label": "Cofre", "icon": "Vault"},
             {"path": "/dashboard/vault", "label": "Transações", "icon": "ArrowDownUp"},
             {"path": "/dashboard/vault/signatories", "label": "Signatários", "icon": "Users"},
