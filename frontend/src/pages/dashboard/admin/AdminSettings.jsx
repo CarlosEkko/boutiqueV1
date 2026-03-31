@@ -15,7 +15,8 @@ import {
   Save,
   RefreshCw,
   CheckCircle,
-  Info
+  Info,
+  Vault
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -59,8 +60,15 @@ const AdminSettings = () => {
     grace_period_days: 7
   });
 
+  // Tier Limits State
+  const [tierLimits, setTierLimits] = useState({
+    standard: 3, premium: 10, vip: 20, black: 50
+  });
+  const [savingTier, setSavingTier] = useState(false);
+
   useEffect(() => {
     fetchSettings();
+    fetchTierLimits();
   }, [token]);
 
   const fetchSettings = async () => {
@@ -79,6 +87,29 @@ const AdminSettings = () => {
       toast.error('Falha ao carregar configurações');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTierLimits = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/omnibus/tier-limits`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.tier_limits) setTierLimits(res.data.tier_limits);
+    } catch {}
+  };
+
+  const saveTierLimits = async () => {
+    setSavingTier(true);
+    try {
+      await axios.put(`${API_URL}/api/omnibus/tier-limits`, { tier_limits: tierLimits }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Limites de cofres atualizados');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao atualizar limites');
+    } finally {
+      setSavingTier(false);
     }
   };
 
@@ -417,6 +448,48 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Tier Limits - Cofres */}
+      <Card className="bg-zinc-900 border-zinc-800/50" data-testid="tier-limits-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Vault className="text-amber-400" size={20} />
+            <span className="text-white">Limites de Cofres por Tier</span>
+          </CardTitle>
+          <CardDescription className="text-zinc-500">
+            Número máximo de cofres que cada nível de cliente pode criar
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(tierLimits).map(([tier, limit]) => (
+              <div key={tier} className="space-y-2">
+                <Label className="text-zinc-400 text-sm capitalize">{tier}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="999"
+                  value={limit}
+                  onChange={e => setTierLimits(prev => ({ ...prev, [tier]: parseInt(e.target.value) || 1 }))}
+                  className="bg-zinc-800/50 border-zinc-700 text-white h-10"
+                  data-testid={`tier-limit-${tier}`}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={saveTierLimits}
+              disabled={savingTier}
+              className="bg-amber-500 text-zinc-950 hover:bg-amber-400"
+              data-testid="save-tier-limits-btn"
+            >
+              <Save size={16} className="mr-2" />
+              {savingTier ? 'A guardar...' : 'Guardar Limites'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Info Card */}
       <Card className="bg-blue-900/20 border-blue-500/30">

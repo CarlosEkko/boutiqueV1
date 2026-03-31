@@ -5,7 +5,10 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
-import { ShieldCheck, Send, ArrowLeft, ArrowRight, Check, Users, Coins, MapPin, UserCheck } from 'lucide-react';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '../../../components/ui/select';
+import { ShieldCheck, Send, ArrowLeft, ArrowRight, Check, Users, Coins, MapPin, UserCheck, Vault } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
@@ -36,9 +39,10 @@ const VaultCreateTransaction = () => {
   const [signatories, setSignatories] = useState([]);
   const [selectedSigners, setSelectedSigners] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [cofres, setCofres] = useState([]);
   const [form, setForm] = useState({
     asset: '', network: '', amount: '', destination_name: '',
-    destination_address: '', source_wallet: 'Main Wallet', notes: ''
+    destination_address: '', source_wallet: '', notes: ''
   });
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -47,6 +51,20 @@ const VaultCreateTransaction = () => {
       const sigs = (res.data.signatories || []).filter(s => s.role !== 'viewer');
       setSignatories(sigs);
       setSelectedSigners(sigs.map(s => s.id));
+    }).catch(() => {});
+
+    // Fetch user's cofres
+    axios.get(`${API_URL}/api/omnibus/my-cofres`, { headers }).then(res => {
+      if (res.data.has_cofres) {
+        const list = (res.data.cofres || []).map(c => ({
+          id: c._id,
+          name: c.cofre_name || 'Cofre',
+        }));
+        setCofres(list);
+        if (list.length > 0) {
+          setForm(f => ({ ...f, source_wallet: list[0].name }));
+        }
+      }
     }).catch(() => {});
   }, []);
 
@@ -208,9 +226,35 @@ const VaultCreateTransaction = () => {
                   placeholder="0x..." className="bg-zinc-800/50 border-zinc-700/50 text-white font-mono text-sm rounded-xl" data-testid="dest-address-input" />
               </div>
               <div className="space-y-2">
-                <Label className="text-zinc-400 text-sm">Wallet Origem</Label>
-                <Input value={form.source_wallet} onChange={e => setForm(f => ({ ...f, source_wallet: e.target.value }))}
-                  className="bg-zinc-800/50 border-zinc-700/50 text-white rounded-xl" data-testid="source-wallet-input" />
+                <Label className="text-zinc-400 text-sm">Cofre de Origem</Label>
+                {cofres.length > 0 ? (
+                  <Select
+                    value={form.source_wallet}
+                    onValueChange={v => setForm(f => ({ ...f, source_wallet: v }))}
+                  >
+                    <SelectTrigger className="bg-zinc-800/50 border-zinc-700/50 text-white rounded-xl" data-testid="source-cofre-select">
+                      <div className="flex items-center gap-2">
+                        <Vault size={14} className="text-amber-500" />
+                        <SelectValue placeholder="Selecionar cofre" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800">
+                      {cofres.map(c => (
+                        <SelectItem
+                          key={c.id}
+                          value={c.name}
+                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                          data-testid={`cofre-option-${c.id}`}
+                        >
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input value={form.source_wallet} onChange={e => setForm(f => ({ ...f, source_wallet: e.target.value }))}
+                    placeholder="Nome do cofre" className="bg-zinc-800/50 border-zinc-700/50 text-white rounded-xl" data-testid="source-wallet-input" />
+                )}
               </div>
             </div>
           )}
@@ -261,6 +305,7 @@ const VaultCreateTransaction = () => {
                 <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Resumo</h4>
                 <div className="flex justify-between"><span className="text-zinc-500">Ativo</span><span className="text-zinc-200 font-mono">{form.amount} {form.asset}</span></div>
                 <div className="flex justify-between"><span className="text-zinc-500">Rede</span><span className="text-zinc-200">{form.network}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-500">Cofre de Origem</span><span className="text-zinc-200">{form.source_wallet}</span></div>
                 <div className="flex justify-between"><span className="text-zinc-500">Destino</span><span className="text-zinc-200">{form.destination_name}</span></div>
                 <div className="flex justify-between"><span className="text-zinc-500">Aprovações</span><span className="text-amber-400">{selectedSigners.length} signatário(s)</span></div>
               </div>
