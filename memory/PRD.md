@@ -22,48 +22,50 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - WebSocket para preços crypto em tempo real (Binance)
 - 4 idiomas: EN, PT, FR, AR
 
-### Onboarding/Registration (CORRIGIDO - 31/03/2026)
-- CRM Lead membership_profile mapeia automaticamente para o membership_level do utilizador ao registar
-- Country dropdown no RegisterPage com lista global de países
-- Taxa de admissão em EUR por perfil com conversão dinâmica para crypto (BTC, ETH, USDT, USDC) via Binance API
-- Removido "Período de carência"
-- Admin Settings grava corretamente taxas de admissão (5 perfis EUR)
+### Onboarding/Registration (Corrigido 31/03/2026)
+- CRM Lead membership_profile mapeia para membership_level do utilizador ao registar
+- Country dropdown no RegisterPage
+- Taxa de admissão EUR com conversão dinâmica crypto (BTC, ETH, USDT, USDC) via Binance
+- Admin Settings grava 5 perfis EUR correctamente
+
+### Sistema OTC Deals & Comissões (NOVO - 31/03/2026)
+- **Negócios OTC**: CRUD completo com calculadora em tempo real
+  - Tipo: Compra (Cliente) ou Venda (Fornecedor)
+  - Ativo, quantidade, preço referência (KBEX/Binance, editável)
+  - Condição: Premium (+%) ou Discount (-%)
+  - Gross/Net configurável por negócio
+  - Distribuição margem: Corretor % + Membro KBEX %
+  - Moeda de liquidação: EUR, USD, BTC, ETH, USDT, USDC
+- **Pipeline Status**: Draft → Qualification → Compliance → Negotiation → Approved → Executing → Settled → Closed
+- **Comissões**: Auto-geradas ao liquidar negócio
+  - Workflow: Pendente → Aprovado → Pago / Rejeitado
+  - Bulk approve/pay
+  - Dashboard KPIs + resumo por corretor
+- **Compliance Forense**: (por negócio)
+  - Carteiras de negociação (add/verify)
+  - Análise KYT manual (score, flags, notas)
+  - Teste de Satoshi (micro-transação)
+  - Proof of Ownership (Signed Typed Messages)
+  - Proof of Reserves (obrigatório antes execução)
+- **Permissões**: Menu CRM com "Negócios OTC" e "Comissões"
 
 ### Sistema de Cofres (Multi-Sign)
 - Múltiplos cofres por cliente com nomes editáveis
-- Tier limits configuráveis por perfil (admin)
-- Omnibus vault para clientes OTC
-- Transações com validação de saldo omnibus
+- Tier limits por perfil, Omnibus vault para OTC
 - Menu Multi-Sign visível para clientes
-- "Cofre de Origem" com dropdown na criação de transação
 
 ### Dashboard Financeiro
 - KPIs: AUM, Receita, Volume, Pendentes
-- Gráficos e tabelas analíticas
 
-### CRM
-- Leads com campo "Perfil" (5 tiers)
-- Badges coloridos por perfil
-- Risk Intelligence scoring
+### CRM & OTC Desk
+- Leads com Perfil (5 tiers), Risk Intelligence
+- OTC CRM com 11-step workflow
 
-### OTC CRM
-- 11-step workflow completo
-
-### Menus de Clientes
-- 6 menus disponíveis: Portefólio, Investimentos, Transparência, Perfil, OTC Trading, Multi-Sign
-- Configuráveis por admin por cliente
-
-### Admin Settings
-- Taxa de admissão EUR por perfil (5 perfis, sem grace period)
-- Limites de cofres por perfil
-- Taxas de referral configuráveis
-- Taxas e limites de trading por perfil
-
-### Integrações
-- Binance API (preços e conversão crypto), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
+### Protótipos Visuais
+- Página /prototypes/otc com 5 ecrãs mockup (Deal, Compliance, Pipeline, Comissões, Wizard)
 
 ## Issues Conhecidos
-- P1: Safari cursor bug (recorrente, 17+ vezes)
+- P1: Safari cursor bug (recorrente 17+)
 - P2: Traduções incompletas (AR, FR parciais)
 
 ## Backlog
@@ -71,6 +73,9 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - P2: Whitelist functionality
 - P3: Launchpad e ICO pages
 - P3: App mobile
+
+## Integrações
+- Binance API (preços + conversão), Brevo, Microsoft O365, Sumsub, Fireblocks (mock), Stripe
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123
