@@ -5,6 +5,8 @@ import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { COUNTRIES } from '../../../utils/countries';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -285,14 +287,12 @@ const KYBForm = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="incorporation_country">{t('kyc.kybForm.companyInfo.incorporationCountry')} *</Label>
-                <Input
-                  id="incorporation_country"
-                  value={companyInfo.incorporation_country}
-                  onChange={(e) => setCompanyInfo({...companyInfo, incorporation_country: e.target.value})}
-                  placeholder="Portugal"
-                  className="bg-zinc-800 border-zinc-700"
-                  data-testid="input-incorporation-country"
-                />
+                <Select value={companyInfo.incorporation_country} onValueChange={(v) => setCompanyInfo({...companyInfo, incorporation_country: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="input-incorporation-country"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -335,13 +335,12 @@ const KYBForm = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="business_country">{t('kyc.kybForm.companyInfo.businessCountry')} *</Label>
-                <Input
-                  id="business_country"
-                  value={companyInfo.business_country}
-                  onChange={(e) => setCompanyInfo({...companyInfo, business_country: e.target.value})}
-                  placeholder="Portugal"
-                  className="bg-zinc-800 border-zinc-700"
-                />
+                <Select value={companyInfo.business_country} onValueChange={(v) => setCompanyInfo({...companyInfo, business_country: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

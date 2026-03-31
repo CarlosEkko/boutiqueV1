@@ -5,6 +5,8 @@ import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { COUNTRIES } from '../../../utils/countries';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -240,23 +242,21 @@ const KYCForm = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nationality">{t('kyc.form.personalInfo.nationality')} *</Label>
-                <Input
-                  id="nationality"
-                  value={personalInfo.nationality}
-                  onChange={(e) => setPersonalInfo({...personalInfo, nationality: e.target.value})}
-                  className="bg-zinc-800 border-zinc-700"
-                  data-testid="input-nationality"
-                />
+                <Select value={personalInfo.nationality} onValueChange={(v) => setPersonalInfo({...personalInfo, nationality: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="input-nationality"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country_of_residence">{t('kyc.form.personalInfo.countryResidence')} *</Label>
-                <Input
-                  id="country_of_residence"
-                  value={personalInfo.country_of_residence}
-                  onChange={(e) => setPersonalInfo({...personalInfo, country_of_residence: e.target.value})}
-                  className="bg-zinc-800 border-zinc-700"
-                  data-testid="input-country"
-                />
+                <Select value={personalInfo.country_of_residence} onValueChange={(v) => setPersonalInfo({...personalInfo, country_of_residence: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="input-country"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -351,13 +351,12 @@ const KYCForm = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="document_country">{t('kyc.form.idDocument.issuingCountry')} *</Label>
-                <Input
-                  id="document_country"
-                  value={idDocument.document_country}
-                  onChange={(e) => setIdDocument({...idDocument, document_country: e.target.value})}
-                  className="bg-zinc-800 border-zinc-700"
-                  data-testid="input-doc-country"
-                />
+                <Select value={idDocument.document_country} onValueChange={(v) => setIdDocument({...idDocument, document_country: v})}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="input-doc-country"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
+                    {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

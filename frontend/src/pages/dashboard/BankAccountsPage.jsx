@@ -23,17 +23,15 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const COUNTRIES = [
-  { code: 'PT', name: 'Portugal', currency: 'EUR' },
-  { code: 'BR', name: 'Brasil', currency: 'BRL' },
-  { code: 'ES', name: 'Espanha', currency: 'EUR' },
-  { code: 'UK', name: 'Reino Unido', currency: 'GBP' },
-  { code: 'US', name: 'Estados Unidos', currency: 'USD' },
-  { code: 'DE', name: 'Alemanha', currency: 'EUR' },
-  { code: 'FR', name: 'França', currency: 'EUR' },
-  { code: 'CH', name: 'Suíça', currency: 'CHF' },
-  { code: 'AE', name: 'Emirados Árabes', currency: 'AED' },
-];
+import { COUNTRIES } from '../../utils/countries';
+
+const COUNTRY_CURRENCIES = {
+  PT: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', BE: 'EUR', AT: 'EUR',
+  IE: 'EUR', FI: 'EUR', GR: 'EUR', LU: 'EUR', MT: 'EUR', CY: 'EUR', EE: 'EUR', LV: 'EUR',
+  LT: 'EUR', SK: 'EUR', SI: 'EUR', HR: 'EUR',
+  GB: 'GBP', US: 'USD', CH: 'CHF', AE: 'AED', BR: 'BRL', SA: 'SAR', QA: 'QAR',
+  JP: 'JPY', CN: 'CNY', IN: 'INR', AU: 'AUD', CA: 'CAD', SG: 'SGD', HK: 'HKD',
+};
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'BRL', 'AED', 'CHF'];
 
@@ -90,9 +88,9 @@ const BankAccountsPage = () => {
     
     // Auto-set currency based on country
     if (name === 'country') {
-      const country = COUNTRIES.find(c => c.code === value);
-      if (country) {
-        setFormData(prev => ({ ...prev, currency: country.currency }));
+      const currency = COUNTRY_CURRENCIES[value];
+      if (currency) {
+        setFormData(prev => ({ ...prev, currency }));
       }
     }
   };

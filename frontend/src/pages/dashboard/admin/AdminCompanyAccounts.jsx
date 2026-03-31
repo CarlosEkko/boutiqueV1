@@ -30,18 +30,16 @@ import {
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const COUNTRIES = [
-  { code: 'PT', name: 'Portugal', currency: 'EUR' },
-  { code: 'DE', name: 'Alemanha', currency: 'EUR' },
-  { code: 'FR', name: 'França', currency: 'EUR' },
-  { code: 'ES', name: 'Espanha', currency: 'EUR' },
-  { code: 'IT', name: 'Itália', currency: 'EUR' },
-  { code: 'UK', name: 'Reino Unido', currency: 'GBP' },
-  { code: 'US', name: 'Estados Unidos', currency: 'USD' },
-  { code: 'CH', name: 'Suíça', currency: 'CHF' },
-  { code: 'AE', name: 'Emirados Árabes', currency: 'AED' },
-  { code: 'BR', name: 'Brasil', currency: 'BRL' },
-];
+import { COUNTRIES } from '../../../utils/countries';
+
+// Country to currency mapping for auto-selection
+const COUNTRY_CURRENCIES = {
+  PT: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', BE: 'EUR', AT: 'EUR',
+  IE: 'EUR', FI: 'EUR', GR: 'EUR', LU: 'EUR', MT: 'EUR', CY: 'EUR', EE: 'EUR', LV: 'EUR',
+  LT: 'EUR', SK: 'EUR', SI: 'EUR', HR: 'EUR',
+  GB: 'GBP', US: 'USD', CH: 'CHF', AE: 'AED', BR: 'BRL', SA: 'SAR', QA: 'QAR',
+  JP: 'JPY', CN: 'CNY', IN: 'INR', AU: 'AUD', CA: 'CAD', SG: 'SGD', HK: 'HKD',
+};
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'BRL', 'CHF'];
 
@@ -139,9 +137,9 @@ const AdminCompanyAccounts = () => {
     
     // Auto-set currency based on country
     if (name === 'country') {
-      const country = COUNTRIES.find(c => c.code === value);
-      if (country) {
-        setFormData(prev => ({ ...prev, currency: country.currency }));
+      const currency = COUNTRY_CURRENCIES[value];
+      if (currency) {
+        setFormData(prev => ({ ...prev, currency }));
       }
     }
   };
@@ -227,8 +225,8 @@ const AdminCompanyAccounts = () => {
   };
 
   const getCountryName = (code) => {
-    const country = COUNTRIES.find(c => c.code === code);
-    return country?.name || code;
+    const c = COUNTRIES.find(c => c.code === code);
+    return c?.name || code;
   };
 
   if (loading) {
