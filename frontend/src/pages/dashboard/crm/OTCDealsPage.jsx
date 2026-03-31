@@ -179,7 +179,15 @@ const OTCDealsPage = () => {
                     <td className="px-4 py-3 text-zinc-400 text-sm">{deal.net_pct}%</td>
                     <td className="px-4 py-3 text-emerald-400 text-sm font-medium">{fmt(deal.kbex_margin, curr)}</td>
                     <td className="px-4 py-3 text-zinc-300 text-sm">{deal.broker_name || '-'}</td>
-                    <td className="px-4 py-3"><Badge className={`${sc.color} text-xs border`}>{sc.label}</Badge></td>
+                    <td className="px-4 py-3">
+                      <Badge 
+                        className={`${sc.color} text-xs border ${['compliance', 'qualification'].includes(deal.status) ? 'cursor-pointer hover:opacity-80' : ''}`}
+                        onClick={() => ['compliance', 'qualification'].includes(deal.status) ? navigate(`/dashboard/crm/compliance/${deal.id}`) : null}
+                        data-testid={`status-badge-${deal.id}`}
+                      >
+                        {sc.label}
+                      </Badge>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         {NEXT_STATUS[deal.status] && (
@@ -187,14 +195,14 @@ const OTCDealsPage = () => {
                             <ChevronRight size={16} />
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-1" title="Compliance Forense" onClick={() => navigate(`/dashboard/crm/compliance/${deal.id}`)} data-testid={`compliance-${deal.id}`}>
-                          <Shield size={14} />
+                        <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-1.5 hover:bg-purple-500/10 rounded" title="Compliance Forense" onClick={() => navigate(`/dashboard/crm/compliance/${deal.id}`)} data-testid={`compliance-${deal.id}`}>
+                          <Shield size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
+                        <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" title="Editar" onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
                           <Edit size={14} />
                         </Button>
                         {deal.status === 'draft' && (
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" title="Eliminar" onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
                             <Trash2 size={14} />
                           </Button>
                         )}
