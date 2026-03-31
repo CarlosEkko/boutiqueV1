@@ -12,7 +12,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ### Core
 - Multi-currency viewing, fiat deposits
-- Auth com JWT (login/register)
+- Auth com JWT, sessionStorage, auto-logout 15 min
 - Landing page premium com "Solicitar Acesso"
 - WebSocket para preços crypto em tempo real (Binance)
 
@@ -30,37 +30,32 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Conversão CRM Lead > OTC Lead
 - Schedule Teams meetings via O365
 
-### Vault Multi-Sign (Cliente)
+### Vault Multi-Sign (Cliente) — Sistema de Cofres
 - VaultDashboard, VaultTransactionDetail, VaultSignatories, VaultCreateTransaction
-- Backend: multisign.py com threshold checks
-- **Integração Omnibus**: transações validam e debitam do ledger omnibus
+- **Multi-Cofre**: Clientes podem criar múltiplos cofres com nomes personalizados
+- **Tier Limits**: Limites configuráveis por admin (standard=3, premium=10, vip=20, black=50)
+- **Editar Nome**: Rename inline com ícone de lápis
+- **Visão Geral**: Cards de cofres com status Activo/Vazio
+- Backend: multisign.py com threshold checks + omnibus ledger validation
 
-### Internal Multi-Sign (Staff)
-- Approval workflow para staff (approvals.py)
-
-### Omnibus Vault (NOVO - 2026-03-31)
+### Omnibus Vault (2026-03-31)
 - Estrutura Omnibus para clientes OTC / Multi-Sign
 - Vault único Fireblocks partilhado com sub-contas internas (ledger MongoDB)
-- Admin: configurar vault omnibus, provisionar sub-contas, credit/debit
-- Cliente: ver saldos da sub-conta omnibus no "Cofre"
-- Fundos reservados (pending) na criação de transação, libertados no cancelamento/rejeição
-- Débito final do ledger na execução da transação
-- Menu Multi-Sign: "Wallets" renomeado para "Cofre"
-- Backend: /api/omnibus/* (config, provision, credit, debit, my-balance, sub-accounts, movements)
-- Collections: omnibus_config, omnibus_ledger, omnibus_movements
+- Admin: configurar vault omnibus, provisionar cofres, credit/debit
+- Cliente: criar cofres (POST /api/omnibus/cofres), renomear (PUT /cofres/{id}/rename)
+- Limites por tier: GET/PUT /api/omnibus/tier-limits
+- Fundos reservados na criação de transação, libertados no cancelamento/rejeição
+- Menu Multi-Sign: "Wallets" → "Cofre", "Overview" → "Visão Geral", header "COFRES"
+- Collections: omnibus_config, omnibus_ledger, omnibus_movements, omnibus_tier_limits
 
 ### Dashboard Financeiro (2026-03-31)
 - KPIs: AUM Total, Receita Total, Volume de Trading, Operações Pendentes
 - Gráficos: Evolução Receita (30d), Fiat vs Crypto, Distribuição por Ativo
 - Tabelas: Top Clientes por AUM, Transações Recentes
 - Backend: /api/finance/dashboard
-- Frontend: /dashboard/admin/finance
-
-### Referrals
-- admission_fee_percent nas Platform Settings
 
 ### Integrações
-- Binance API (WebSockets) — preços em tempo real
+- Binance API — preços em tempo real
 - Brevo (emails transacionais)
 - Microsoft Office 365 (Teams, Calendar)
 - Sumsub (KYC) — config pendente
@@ -80,10 +75,10 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Admin: carlos@kbex.io / senha123
 
 ## Ficheiros Chave
-- /app/backend/routes/omnibus.py (Omnibus Vault API)
+- /app/backend/routes/omnibus.py (Multi-Cofre API: create, rename, tier limits)
 - /app/backend/routes/multisign.py (Multi-Sign + Omnibus integration)
 - /app/backend/routes/finance.py (Dashboard Financeiro API)
-- /app/backend/models/permissions.py (Menu com "Cofre")
-- /app/frontend/src/pages/dashboard/vault/VaultWallets.jsx (Cofre Omnibus UI)
-- /app/frontend/src/pages/dashboard/admin/FinancialDashboard.jsx (Dashboard Financeiro)
+- /app/backend/models/permissions.py (Menu "Cofre")
+- /app/frontend/src/pages/dashboard/vault/VaultWallets.jsx (Multi-Cofre UI)
+- /app/frontend/src/pages/dashboard/admin/FinancialDashboard.jsx
 - /app/design_guidelines.json (UI premium rules)
