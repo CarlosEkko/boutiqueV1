@@ -7,7 +7,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, MongoDB (Motor)
 - Deploy: Docker, Docker-Compose (VPS do user)
-- CDN/WAF: Cloudflare (dominio verificado, Turnstile activo)
+- CDN/WAF: Cloudflare (dominio verificado, Turnstile activo, WAF Custom Rules, Full Strict SSL)
 
 ## Perfis de Cliente
 - **Broker** — Acesso basico, taxa admissao 0 EUR, limite 1 cofre
@@ -23,32 +23,32 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - WebSocket para precos crypto em tempo real (Binance)
 - 4 idiomas: EN, PT, FR, AR
 
-### Cloudflare Turnstile (NOVO - 01/04/2026)
-- Widget Turnstile integrado em 4 paginas publicas:
-  1. Login (AuthPage)
-  2. Registo (RegisterPage)
-  3. Solicitar Acesso / ContactCTA (Landing Page)
-  4. Suporte Publico (PublicSupportPage)
-- Backend verifica tokens via Cloudflare API em 4 endpoints:
-  - POST /api/auth/login
-  - POST /api/auth/register
-  - POST /api/crm/leads/public
-  - POST /api/kb/public-ticket
-- Modo: Managed (Cloudflare decide quando mostrar desafio)
-- Tema: Dark (alinhado com design da plataforma)
-- Componente reutilizavel: TurnstileWidget.jsx
-- Utilitario backend: utils/turnstile.py
-- Tokens invalidos/falsos sao bloqueados com erro 400
+### Segurança Cloudflare (01/04/2026)
+**Turnstile:**
+- Widget integrado em 4 paginas: Login, Registo, Solicitar Acesso, Suporte Publico
+- Backend verifica tokens em 4 endpoints
+- Modo Managed, tema Dark
 
-### Cloudflare Proxy Middleware
-- Middleware HTTP extrai IP real do cliente via CF-Connecting-IP ou X-Forwarded-For
-- Disponivel em request.state.client_ip para logging e rate limiting
+**Backend Security:**
+- Security Headers: HSTS (preload), CSP, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection
+- Cloudflare IP validation (trusted proxy ranges)
+- Rate Limiting: login 10/min, register 5/min, public leads 5/min, public tickets 5/min
+- API Cache-Control: no-store, no-cache, private
+
+**Cloudflare Dashboard:**
+- SSL/TLS: Full (Strict), Always Use HTTPS, TLS 1.3
+- WAF: 5 Custom Rules (Bad User Agents, Sensitive Paths, API Content-Type, Auth Challenge, High Risk Countries)
+- Bot Fight Mode: ON
+- Speed: Speed Brain, HTTP/2, HTTP/3 QUIC, HTTP/2 to Origin, 0-RTT, Early Hints, Cloudflare Fonts
+- Caching: Standard, Browser Cache TTL 4h, Always Online
+- Page Rules: API Bypass, Static Cache Everything, Force HTTPS
+- DNSSEC: Enabled
 
 ### Risk & Compliance (31/03/2026)
-- Departamento separado no menu lateral com icon FileSearch
+- Departamento separado no menu lateral
 - Risk Dashboard: KPIs de negocios e carteiras
 - KYT Forensic: Fila de verificacao de carteiras com modal analise forense
-- CompliancePage KYT Read-Only: Mostra dados do analista sem edicao
+- CompliancePage KYT Read-Only
 
 ### Onboarding/Registration
 - CRM Lead membership_profile mapeia para membership_level do utilizador
@@ -61,7 +61,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ### Compliance Forense (por negocio)
 - Carteiras de negociacao (add/verify)
-- Analise KYT manual (score, flags, notas) - ESCRITA no KYT Forensic, LEITURA no Compliance
+- Analise KYT manual - ESCRITA no KYT Forensic, LEITURA no Compliance
 - Teste de Satoshi, Proof of Ownership, Proof of Reserves
 
 ### Sistema de Cofres (Multi-Sign)
@@ -82,7 +82,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - P3: App mobile
 
 ## Integracoes
-- Cloudflare (DNS/WAF/Turnstile)
+- Cloudflare (DNS/WAF/Turnstile/CDN)
 - Binance API (precos + conversao)
 - Brevo (System Emails)
 - Microsoft O365
