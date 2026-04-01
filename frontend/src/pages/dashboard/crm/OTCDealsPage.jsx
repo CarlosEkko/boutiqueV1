@@ -6,6 +6,7 @@ import { Label } from '../../../components/ui/label';
 import { Badge } from '../../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
+import { FormattedNumberInput } from '../../../components/FormattedNumberInput';
 import {
   ArrowLeftRight, Calculator, Search, Eye, MoreVertical, TrendingUp,
   Plus, ChevronRight, RefreshCw, Trash2, Edit, Filter, Shield
@@ -298,7 +299,11 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   }, [form]);
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
-  const fmtVal = v => `${sym}${v.toLocaleString('pt-PT', { maximumFractionDigits: 2 })}`;
+  const fmtVal = v => {
+    const parts = v.toFixed(2).split('.');
+    const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${sym}${intPart}.${parts[1]}`;
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -371,7 +376,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Quantidade</Label>
-                <Input type="number" step="any" value={form.quantity} onChange={e => updateField('quantity', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-quantity" />
+                <FormattedNumberInput value={form.quantity} onChange={v => updateField('quantity', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white" placeholder="100 000" data-testid="modal-quantity" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Moeda Ref.</Label>
@@ -388,10 +393,10 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             <div className="space-y-1.5">
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({form.reference_currency})</Label>
               <div className="relative">
-                <Input type="number" step="any" value={form.reference_price} onChange={e => updateField('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="modal-ref-price" />
+                <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="120 345.50" data-testid="modal-ref-price" />
                 {livePrice && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
-                    <TrendingUp size={12} /> KBEX: {sym}{(livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toLocaleString()}
+                    <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
                   </span>
                 )}
               </div>
@@ -447,7 +452,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Membro KBEX</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor KBEX</Label>
                 <Select value={form.member_id || '_none'} onValueChange={v => {
                   if (v === '_none') { updateField('member_id', ''); updateField('member_name', ''); return; }
                   const m = teamMembers.find(t => t.id === v);
@@ -521,7 +526,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-400">Membro ({100 - form.broker_share_pct}%)</span>
+                      <span className="text-zinc-400">Corretor KBEX ({100 - form.broker_share_pct}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
                     </div>
                   </div>

@@ -73,7 +73,7 @@ const TransparencyPage = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-light text-white">Transparency</h1>
-        <p className="text-gray-400 mt-1">Proof of reserves and audit reports</p>
+        <p className="text-gray-400 mt-1">Prova de reservas e relatórios de auditoria</p>
       </div>
 
       {/* Trust Banner */}
@@ -104,7 +104,7 @@ const TransparencyPage = () => {
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          Proof of Reserves
+          Prova de Reservas
         </button>
         <button
           onClick={() => setActiveTab('reports')}

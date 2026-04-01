@@ -145,6 +145,9 @@ class CommissionUpdate(BaseModel):
 BINANCE_API_URL = "https://api.binance.com/api/v3"
 
 async def get_binance_price(symbol: str) -> float:
+    # Stablecoins have a fixed price of ~1 USD
+    if symbol.upper() in ("USDT", "USDC", "DAI", "BUSD", "TUSD"):
+        return 1.0
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(f"{BINANCE_API_URL}/ticker/price", params={"symbol": f"{symbol}USDT"})

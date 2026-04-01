@@ -134,7 +134,7 @@ const CompliancePage = () => {
   const verifyOwnershipProof = async () => {
     try {
       await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/ownership/verify?status=verified`, { method: 'PUT', headers });
-      toast.success('Proof of Ownership verificado');
+      toast.success('Prova de Propriedade verificada');
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
@@ -168,7 +168,7 @@ const CompliancePage = () => {
   const verifyReservesProof = async () => {
     try {
       await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/reserves/verify?status=verified`, { method: 'PUT', headers });
-      toast.success('Proof of Reserves verificado');
+      toast.success('Prova de Reservas verificada');
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
@@ -218,8 +218,8 @@ const CompliancePage = () => {
               { label: 'Carteiras', status: compliance?.wallets?.length > 0 && compliance.wallets.every(w => w.status === 'verified') ? 'pass' : compliance?.wallets?.some(w => w.status === 'verified') ? 'partial' : 'pending' },
               { label: 'KYT', status: compliance?.kyt?.status === 'clean' ? 'pass' : compliance?.kyt?.status === 'flagged' ? 'warn' : 'pending' },
               { label: 'Teste Satoshi', status: compliance?.satoshi_test?.status === 'verified' ? 'pass' : compliance?.satoshi_test?.status === 'pending' ? 'partial' : 'pending' },
-              { label: 'Proof of Ownership', status: compliance?.proof_of_ownership?.status === 'verified' ? 'pass' : ['pending_review', 'awaiting_signature', 'pending'].includes(compliance?.proof_of_ownership?.status) ? 'partial' : 'pending' },
-              { label: 'Proof of Reserves', status: compliance?.proof_of_reserves?.status === 'verified' ? 'pass' : ['pending', 'insufficient'].includes(compliance?.proof_of_reserves?.status) ? 'partial' : 'pending' },
+              { label: 'Prova de Propriedade', status: compliance?.proof_of_ownership?.status === 'verified' ? 'pass' : ['pending_review', 'awaiting_signature', 'pending'].includes(compliance?.proof_of_ownership?.status) ? 'partial' : 'pending' },
+              { label: 'Prova de Reservas', status: compliance?.proof_of_reserves?.status === 'verified' ? 'pass' : ['pending', 'insufficient'].includes(compliance?.proof_of_reserves?.status) ? 'partial' : 'pending' },
             ].map((check, i) => (
               <div key={i} className="flex items-center gap-2">
                 {check.status === 'pass' ? (
@@ -440,12 +440,12 @@ const CompliancePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Proof of Ownership — Message Signing */}
+            {/* Prova de Propriedade — Message Signing */}
             <div className="p-4 bg-zinc-950 rounded-lg border border-zinc-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="text-blue-400" size={16} />
-                  <span className="text-white font-medium text-sm">Proof of Ownership</span>
+                  <span className="text-white font-medium text-sm">Prova de Propriedade</span>
                 </div>
                 {statusIcon(compliance?.proof_of_ownership?.status === 'awaiting_signature' || compliance?.proof_of_ownership?.status === 'pending_review' ? 'pending' : compliance?.proof_of_ownership?.status)}
               </div>
@@ -507,12 +507,12 @@ const CompliancePage = () => {
               )}
             </div>
 
-            {/* Proof of Reserves — On-Chain */}
+            {/* Prova de Reservas — On-Chain */}
             <div className="p-4 bg-zinc-950 rounded-lg border border-yellow-500/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Lock className="text-yellow-500" size={16} />
-                  <span className="text-white font-medium text-sm">Proof of Reserves</span>
+                  <span className="text-white font-medium text-sm">Prova de Reservas</span>
                   <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">On-Chain</Badge>
                 </div>
                 {statusIcon(compliance?.proof_of_reserves?.status)}
