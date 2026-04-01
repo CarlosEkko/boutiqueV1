@@ -12,54 +12,35 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ## Funcionalidades Implementadas
 
+### Fireblocks — Auto-Whitelist, Fees & Gas Station (01/04/2026)
+- **Auto-Whitelist na Aprovação**: Admin aprova withdrawal → sistema cria External Wallet Fireblocks automaticamente → reutiliza se já existir → fallback ONE_TIME_ADDRESS
+- **Fee Estimation**: `POST /api/crypto-wallets/estimate-fee` — fees LOW/MEDIUM/HIGH + KBEX platform fee
+- **Network Fees**: `GET /api/crypto-wallets/network-fees/{asset}` — consulta rápida
+- **Gas Station Monitor**: Integrado no Dashboard Financeiro com health badges, saldos, avisos
+- **Alertas Brevo**: Email automático quando Gas Station está crítico/baixo, cooldown 6h anti-spam
+- **Admin External Wallets**: Listar, criar, eliminar External Wallets Fireblocks
+- **Admin Manual Whitelist**: `POST /api/crypto-wallets/admin/whitelist-address`
+
 ### OTC Leads CRM (01/04/2026)
 - Telefone obrigatório, Fonte (8 opções), Tipo "Ambos", Prevenção duplicados
-- Modal edição completo (notas, liquidação, tier potencial, volumes)
-- Formatação milhares (1 000 000) com FormattedNumberInput component
-
-### Fireblocks — Auto-Whitelist & Fees (01/04/2026)
-- **Auto-Whitelist na Aprovação**: Quando admin aprova um withdrawal, o sistema cria automaticamente um External Wallet na Fireblocks com o endereço destino. Reutiliza se já existir.
-- **Fallback**: Se a criação do External Wallet falhar, recorre a ONE_TIME_ADDRESS
-- **Transações via External Wallet**: Usa `EXTERNAL_WALLET` como destination type (aprovado pelo TAP)
-- **Transferências Internas**: Método separado para mover fundos entre vaults KBEX
-- **Fee Estimation**: Endpoint `POST /api/crypto-wallets/estimate-fee` retorna fees LOW/MEDIUM/HIGH + KBEX platform fee
-- **Network Fees**: Endpoint `GET /api/crypto-wallets/network-fees/{asset}` para consulta rápida
-- **Gas Station Monitor**: Endpoint `GET /api/crypto-wallets/admin/gas-station` mostra health, saldos, e alertas
-- **Admin External Wallets**: Listar, criar manualmente, e eliminar External Wallets
+- Modal edição (notas, liquidação, tier potencial, volumes), FormattedNumberInput
 
 ### Fireblocks — Compliance (Anterior)
 - Satoshi Test, Proof of Ownership, On-Chain Proof of Reserves
-- KYC Gate para criação de vaults/carteiras
-- Crypto Withdrawals (Payout) com aprovação admin
+- KYC Gate para vaults, Crypto Withdrawals com aprovação admin
 
 ### Emails (Brevo)
-- Boas-vindas equipa, Onboarding leads, CRM
+- Boas-vindas equipa, Onboarding leads, CRM, Gas Station alerts
 
-### O365 Integration
-- Config dinâmica, Azure AD OAuth para produção
+### O365, Security, Trading, OTC, CRM, Multi-Sign, Risk & Compliance
+- Todos completos e operacionais
 
-### Security
-- Cloudflare Turnstile, Rate Limiting, Security Headers, Admin Dashboard
-
-## API Endpoints Novos
-
-### Fee Estimation
-- `POST /api/crypto-wallets/estimate-fee` — Estimativa de fees (LOW/MEDIUM/HIGH + KBEX)
-- `GET /api/crypto-wallets/network-fees/{asset}` — Fee actual de rede por ativo
-
-### Gas Station
-- `GET /api/crypto-wallets/admin/gas-station` — Health, saldos, alertas da Gas Station
-
-### External Wallets (Admin)
-- `GET /api/crypto-wallets/admin/external-wallets` — Listar todas as External Wallets
-- `POST /api/crypto-wallets/admin/whitelist-address` — Whitelist manual de endereço
-- `DELETE /api/crypto-wallets/admin/external-wallets/{id}` — Remover External Wallet
-
-## Organização Fireblocks
-- 72 vaults totais
-- 11 vaults KBEX sistema (incluindo GAS STATION)
-- 15 External Wallets existentes
-- Gas Station: ETH crítico (< 0.01 ETH), BNB zero
+## Gas Station Status
+- Health: CRITICAL
+- ETH: 6.66e-06 (min: 0.02) — CRÍTICO
+- BNB_BSC: 0 (min: 0.02) — CRÍTICO
+- TRX: 1e-06 (min: 10) — CRÍTICO
+- MATIC_POLYGON: 0 (min: 1.0) — CRÍTICO
 
 ## Issues Conhecidos
 - P2: Safari cursor bug (recorrente)
@@ -67,7 +48,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 ## Backlog
 - P1: TradingView chart widgets
 - P2: WebSockets para preços crypto
-- P2: Whitelist UI completa no frontend
+- P2: Frontend Whitelist management UI
 - P3: Launchpad e ICO pages
 - P3: App mobile
 
