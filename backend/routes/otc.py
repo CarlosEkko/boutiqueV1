@@ -16,7 +16,7 @@ from models.otc import (
     OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, SettlementMethod,
     OTCClient, OTCDeal, OTCDealStage, OTCQuote, QuoteStatus,
     OTCExecution, ExecutionStatus, OTCSettlement, SettlementStatus,
-    OTCInvoice, InvoiceStatus, ExecutionTimeframe,
+    OTCInvoice, InvoiceStatus, ExecutionTimeframe, PotentialTier,
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
     FundingType, TradingFrequency, PreQualificationRequest, OperationalSetupRequest,
     ClientType, OperationObjective, FundSource, SettlementChannel, RedFlagType,
@@ -1626,15 +1626,18 @@ async def get_otc_dashboard(
 @router.get("/stats/enums")
 async def get_otc_enums():
     """Get all OTC enums for frontend dropdowns"""
+    sources = [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCLeadSource]
     return {
-        "lead_sources": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCLeadSource],
+        "lead_sources": sources,
+        "sources": [e.value for e in OTCLeadSource],  # Flat list for frontend dropdowns
         "lead_statuses": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCLeadStatus],
         "transaction_types": [{"value": e.value, "label": e.value.title()} for e in TransactionType],
         "settlement_methods": [{"value": e.value, "label": e.value.replace("_", " ").upper()} for e in SettlementMethod],
         "trading_frequencies": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in TradingFrequency],
         "deal_stages": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in OTCDealStage],
         "funding_types": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in FundingType],
-        "execution_timeframes": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in ExecutionTimeframe]
+        "execution_timeframes": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in ExecutionTimeframe],
+        "potential_tiers": [{"value": e.value, "label": e.value.replace("_", " ").title()} for e in PotentialTier],
     }
 
 

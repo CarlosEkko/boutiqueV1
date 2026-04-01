@@ -3,6 +3,7 @@ import { useOTCLeads } from './hooks/useOTCLeads';
 import { LeadCard } from './components/LeadCard';
 import { CreateLeadDialog } from './components/CreateLeadDialog';
 import { formatNumber } from '../../../utils/formatters';
+import { FormattedNumberInput } from '../../../components/FormattedNumberInput';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -19,7 +20,7 @@ import {
   UserPlus, Search, Filter, Plus, Building, Mail, Globe, TrendingUp,
   User, FileText, Settings, DollarSign, CreditCard, CheckCircle, XCircle,
   ChevronRight, Trash2, Archive, UserCheck, RefreshCw, Shield, AlertTriangle, Eye,
-  Send, Link, Video,
+  Send, Link, Video, Save, Edit,
 } from 'lucide-react';
 import ScheduleMeetingDialog from '../components/ScheduleMeetingDialog';
 
@@ -27,6 +28,8 @@ const OTCLeads = () => {
   const hook = useOTCLeads();
   const [meetingLead, setMeetingLead] = React.useState(null);
   const [showMeetingDialog, setShowMeetingDialog] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editData, setEditData] = React.useState({});
   const {
     leads, enums, loading, total, searchQuery, statusFilter, sourceFilter,
     selectedLead, formData, preQualData, setupData, teamMembers,
@@ -46,6 +49,7 @@ const OTCLeads = () => {
     checkExistingContact, createDeal, resetForm,
     openPreQual, openSetup, openNewDeal, open360View, openDetail,
   } = hook;
+  const { isSubmitting, handleUpdateLead } = hook;
 
   const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -142,16 +146,34 @@ const OTCLeads = () => {
         handleCreateLead={handleCreateLead} handleCreateClientDirect={handleCreateClientDirect}
         setShowExistingWarning={setShowExistingWarning} setExistingContact={setExistingContact}
         resetForm={resetForm} openNewDeal={openNewDeal} openDetail={openDetail} open360View={open360View}
+        isSubmitting={isSubmitting}
       />
 
       {/* Lead Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+      <Dialog open={showDetailDialog} onOpenChange={(v) => { setShowDetailDialog(v); if (!v) setIsEditing(false); }}>
         <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b border-zinc-800 pb-4">
-            <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
-              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center"><Building size={18} className="text-purple-400" /></div>
-              Lead OTC - {selectedLead?.entity_name}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
+                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center"><Building size={18} className="text-purple-400" /></div>
+                Lead OTC - {selectedLead?.entity_name}
+              </DialogTitle>
+              {selectedLead && !isEditing && (
+                <Button size="sm" variant="outline" className="border-gold-500/30 text-gold-400 hover:bg-gold-900/20" data-testid="edit-lead-btn"
+                  onClick={() => { setIsEditing(true); setEditData({ notes: selectedLead.notes || '', preferred_settlement_methods: selectedLead.preferred_settlement_methods || [], potential_tier: selectedLead.potential_tier || '', estimated_volume_usd: selectedLead.estimated_volume_usd || '', volume_per_operation: selectedLead.volume_per_operation || '' }); }}>
+                  <Edit size={14} className="mr-1" /> Editar
+                </Button>
+              )}
+              {isEditing && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="border-zinc-600 text-zinc-400" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                  <Button size="sm" className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="save-lead-btn"
+                    onClick={async () => { await handleUpdateLead(selectedLead.id, editData); setIsEditing(false); }}>
+                    <Save size={14} className="mr-1" /> Guardar
+                  </Button>
+                </div>
+              )}
+            </div>
             {selectedLead && <p className="text-gray-400 text-sm mt-1">{selectedLead.contact_name} - {selectedLead.contact_email}</p>}
           </DialogHeader>
           {selectedLead && (
@@ -159,6 +181,7 @@ const OTCLeads = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-gray-400 text-sm">Status:</span>{getStatusBadge(selectedLead.status)}
+                  {selectedLead.potential_tier && <Badge className="bg-gold-900/30 text-gold-400 capitalize">{selectedLead.potential_tier}</Badge>}
                   <Button size="sm" variant="outline" className="ml-auto border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
                     onClick={() => { setMeetingLead(selectedLead); setShowMeetingDialog(true); }} data-testid="schedule-meeting-otc-detail">
                     <Video size={14} className="mr-1" /> Agendar Reunião
@@ -227,8 +250,33 @@ const OTCLeads = () => {
                 <Card className="bg-zinc-900/50 border-zinc-800">
                   <CardHeader className="pb-2"><CardTitle className="text-purple-400 text-sm flex items-center gap-2"><TrendingUp size={16} />Perfil de Trading</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex justify-between"><span className="text-gray-400">Volume Total:</span><span className="text-gold-400 font-mono font-medium">${formatNumber(selectedLead.estimated_volume_usd || 0)}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-400">Por Operação:</span><span className="text-white font-mono">${formatNumber(selectedLead.volume_per_operation || 0)}</span></div>
+                    {isEditing ? (
+                      <>
+                        <div><Label className="text-gray-400 text-sm">Volume Total (USD)</Label>
+                          <FormattedNumberInput value={editData.estimated_volume_usd} onChange={v => setEditData({...editData, estimated_volume_usd: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="1 000 000" data-testid="edit-volume" />
+                        </div>
+                        <div><Label className="text-gray-400 text-sm">Por Operação (USD)</Label>
+                          <FormattedNumberInput value={editData.volume_per_operation} onChange={v => setEditData({...editData, volume_per_operation: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="500 000" data-testid="edit-vol-per-op" />
+                        </div>
+                        <div><Label className="text-gray-400 text-sm">Tier Potencial</Label>
+                          <Select value={editData.potential_tier} onValueChange={v => setEditData({...editData, potential_tier: v})}>
+                            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="edit-tier"><SelectValue placeholder="Selecionar tier" /></SelectTrigger>
+                            <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                              <SelectItem value="standard" className="text-white">Standard</SelectItem>
+                              <SelectItem value="premium" className="text-white">Premium</SelectItem>
+                              <SelectItem value="vip" className="text-white">VIP</SelectItem>
+                              <SelectItem value="institutional" className="text-white">Institucional</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between"><span className="text-gray-400">Volume Total:</span><span className="text-gold-400 font-mono font-medium">${formatNumber(selectedLead.estimated_volume_usd || 0)}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-400">Por Operação:</span><span className="text-white font-mono">${formatNumber(selectedLead.volume_per_operation || 0)}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-400">Tier:</span><span className="text-gold-400 capitalize">{selectedLead.potential_tier || '-'}</span></div>
+                      </>
+                    )}
                     <div className="flex justify-between"><span className="text-gray-400">Asset:</span><span className="text-white">{selectedLead.target_asset || '-'}</span></div>
                     <div className="flex justify-between items-center"><span className="text-gray-400">Tipo:</span><Badge className="bg-blue-900/30 text-blue-400 uppercase">{selectedLead.transaction_type || '-'}</Badge></div>
                   </CardContent>
@@ -236,16 +284,34 @@ const OTCLeads = () => {
                 <Card className="bg-zinc-900/50 border-zinc-800">
                   <CardHeader className="pb-2"><CardTitle className="text-purple-400 text-sm flex items-center gap-2"><Building size={16} />Liquidação</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
-                    <div><span className="text-gray-400 text-sm">Métodos:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">{selectedLead.preferred_settlement_methods?.length > 0 ? selectedLead.preferred_settlement_methods.map((m, i) => <Badge key={i} className="bg-gold-500/20 text-gold-400 uppercase text-xs">{m}</Badge>) : <span className="text-gray-500">N/A</span>}</div>
-                    </div>
+                    {isEditing ? (
+                      <div><Label className="text-gray-400 text-sm">Métodos de Liquidação</Label>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {['sepa', 'swift', 'pix', 'usdt_onchain', 'usdc_onchain', 'crypto_onchain'].map(m => (
+                            <Badge key={m} className={`cursor-pointer uppercase text-xs ${(editData.preferred_settlement_methods || []).includes(m) ? 'bg-gold-500/30 text-gold-400 border border-gold-500/50' : 'bg-zinc-800 text-gray-400 border border-zinc-700 hover:border-gold-500/30'}`}
+                              onClick={() => {
+                                const current = editData.preferred_settlement_methods || [];
+                                setEditData({...editData, preferred_settlement_methods: current.includes(m) ? current.filter(x => x !== m) : [...current, m]});
+                              }}>{m.replace(/_/g, ' ')}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div><span className="text-gray-400 text-sm">Métodos:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">{selectedLead.preferred_settlement_methods?.length > 0 ? selectedLead.preferred_settlement_methods.map((m, i) => <Badge key={i} className="bg-gold-500/20 text-gold-400 uppercase text-xs">{m}</Badge>) : <span className="text-gray-500">N/A</span>}</div>
+                      </div>
+                    )}
                     <div className="flex justify-between"><span className="text-gray-400">Exchange:</span><span className="text-white">{selectedLead.current_exchange || '-'}</span></div>
                   </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/50 border-zinc-800">
                   <CardHeader className="pb-2"><CardTitle className="text-purple-400 text-sm flex items-center gap-2"><FileText size={16} />Notas</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
-                    {selectedLead.notes ? <p className="text-white text-sm whitespace-pre-wrap bg-zinc-800/50 p-2 rounded">{selectedLead.notes}</p> : <p className="text-gray-500 text-center py-4">Sem notas</p>}
+                    {isEditing ? (
+                      <Textarea value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={4} placeholder="Adicionar notas..." data-testid="edit-notes" />
+                    ) : (
+                      selectedLead.notes ? <p className="text-white text-sm whitespace-pre-wrap bg-zinc-800/50 p-2 rounded">{selectedLead.notes}</p> : <p className="text-gray-500 text-center py-4">Sem notas</p>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -290,8 +356,10 @@ const OTCLeads = () => {
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="individual" className="text-white">Individual</SelectItem><SelectItem value="corporate" className="text-white">Corporativo</SelectItem><SelectItem value="institutional" className="text-white">Institucional</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label><Input value={preQualData.first_operation_value} onChange={e => setPreQualData({...preQualData, first_operation_value: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
-              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label><Input value={preQualData.estimated_monthly_volume} onChange={e => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label>
+                <FormattedNumberInput value={preQualData.first_operation_value} onChange={v => setPreQualData({...preQualData, first_operation_value: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100 000" data-testid="prequal-first-op" /></div>
+              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label>
+                <FormattedNumberInput value={preQualData.estimated_monthly_volume} onChange={v => setPreQualData({...preQualData, estimated_monthly_volume: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="1 000 000" data-testid="prequal-monthly-vol" /></div>
               <div><Label className="text-gray-400 text-sm">Frequência</Label>
                 <Select value={preQualData.expected_frequency} onValueChange={v => setPreQualData({...preQualData, expected_frequency: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
@@ -318,8 +386,10 @@ const OTCLeads = () => {
           <DialogHeader><DialogTitle className="text-gold-400 flex items-center gap-2"><Settings className="text-gold-400" />Setup Operacional — {selectedLead?.entity_name}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label><Input value={setupData.daily_limit} onChange={e => setSetupData({...setupData, daily_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
-              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label><Input value={setupData.monthly_limit} onChange={e => setSetupData({...setupData, monthly_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label>
+                <FormattedNumberInput value={setupData.daily_limit} onChange={v => setSetupData({...setupData, daily_limit: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100 000" data-testid="setup-daily-limit" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label>
+                <FormattedNumberInput value={setupData.monthly_limit} onChange={v => setSetupData({...setupData, monthly_limit: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="1 000 000" data-testid="setup-monthly-limit" /></div>
               <div><Label className="text-gray-400 text-sm">Método Liquidação</Label>
                 <Select value={setupData.settlement_method} onValueChange={v => setSetupData({...setupData, settlement_method: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
@@ -362,7 +432,8 @@ const OTCLeads = () => {
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="buy" className="text-white">Compra</SelectItem><SelectItem value="sell" className="text-white">Venda</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label><Input type="number" step="any" value={newDealData.amount} onChange={e => setNewDealData({...newDealData, amount: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100000" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label>
+                <FormattedNumberInput value={newDealData.amount} onChange={v => setNewDealData({...newDealData, amount: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100 000" data-testid="deal-amount" /></div>
               <div><Label className="text-gray-400 text-sm">Base</Label>
                 <Select value={newDealData.base_asset} onValueChange={v => setNewDealData({...newDealData, base_asset: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>

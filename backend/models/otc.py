@@ -41,6 +41,7 @@ class TransactionType(str, Enum):
     BUY = "buy"
     SELL = "sell"
     SWAP = "swap"
+    BOTH = "both"
 
 
 class SettlementMethod(str, Enum):
@@ -135,6 +136,14 @@ FATF_HIGH_RISK_COUNTRIES = [
 ]
 
 
+class PotentialTier(str, Enum):
+    """Potential client tier classification"""
+    STANDARD = "standard"
+    PREMIUM = "premium"
+    VIP = "vip"
+    INSTITUTIONAL = "institutional"
+
+
 class ExecutionTimeframe(str, Enum):
     URGENT = "urgent"
     WITHIN_24H = "within_24h"
@@ -217,6 +226,7 @@ class OTCLead(BaseModel):
     source_detail: Optional[str] = None  # e.g., broker name, event name
     status: OTCLeadStatus = OTCLeadStatus.NEW
     workflow_stage: int = 1  # 1-11 representing the workflow stages
+    potential_tier: Optional[str] = None  # standard, premium, vip, institutional
     
     # === PRE-QUALIFICATION FIELDS ===
     
@@ -554,12 +564,13 @@ class CreateOTCLeadRequest(BaseModel):
     entity_name: str
     contact_name: str
     contact_email: str
-    contact_phone: Optional[str] = None
+    contact_phone: str  # Required field
     country: str
     jurisdiction: Optional[str] = None
     bank_jurisdiction: Optional[str] = None
     source: OTCLeadSource = OTCLeadSource.WEBSITE
     source_detail: Optional[str] = None
+    potential_tier: Optional[str] = None
     
     # Pre-qualification fields
     client_type: Optional[ClientType] = None
@@ -623,6 +634,7 @@ class UpdateOTCLeadRequest(BaseModel):
     bank_jurisdiction: Optional[str] = None
     status: Optional[OTCLeadStatus] = None
     workflow_stage: Optional[int] = None
+    potential_tier: Optional[str] = None
     
     # Pre-qualification fields
     client_type: Optional[ClientType] = None

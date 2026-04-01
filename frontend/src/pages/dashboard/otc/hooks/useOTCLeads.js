@@ -10,7 +10,7 @@ const INITIAL_FORM = {
   country: '', source: 'website', estimated_volume_usd: '', target_asset: 'BTC',
   transaction_type: 'buy', trading_frequency: 'one_shot', volume_per_operation: '',
   execution_timeframe: 'flexible', preferred_settlement_methods: [],
-  current_exchange: '', problem_to_solve: '', notes: '',
+  current_exchange: '', problem_to_solve: '', notes: '', potential_tier: '',
 };
 
 const INITIAL_PREQUAL = {
@@ -60,6 +60,7 @@ export const useOTCLeads = () => {
   const [showExistingWarning, setShowExistingWarning] = useState(false);
   const [selected360User, setSelected360User] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -132,7 +133,12 @@ export const useOTCLeads = () => {
   const handleSubmitPreQual = async () => {
     if (!selectedLead) return;
     try {
-      const r = await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/pre-qualification`, preQualData, { headers });
+      const payload = {
+        ...preQualData,
+        first_operation_value: parseFloat(String(preQualData.first_operation_value).replace(/\s/g, '')) || 0,
+        estimated_monthly_volume: parseFloat(String(preQualData.estimated_monthly_volume).replace(/\s/g, '')) || 0,
+      };
+      const r = await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/pre-qualification`, payload, { headers });
       toast.success('Pré-qualificação submetida!');
       if (r.data.red_flags_detected?.length > 0) toast.warning(`Red flags: ${r.data.red_flags_detected.join(', ')}`);
       setShowPreQualDialog(false);
@@ -143,7 +149,12 @@ export const useOTCLeads = () => {
   const handleSubmitSetup = async () => {
     if (!selectedLead) return;
     try {
-      await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/operational-setup`, setupData, { headers });
+      const payload = {
+        ...setupData,
+        daily_limit: parseFloat(String(setupData.daily_limit).replace(/\s/g, '')) || 0,
+        monthly_limit: parseFloat(String(setupData.monthly_limit).replace(/\s/g, '')) || 0,
+      };
+      await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/operational-setup`, payload, { headers });
       toast.success('Setup operacional completo!');
       setShowSetupDialog(false);
       fetchLeads();
@@ -214,11 +225,14 @@ export const useOTCLeads = () => {
   };
 
   const handleCreateLead = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const payload = {
         ...formData,
-        estimated_volume_usd: parseFloat(formData.estimated_volume_usd) || 0,
-        volume_per_operation: formData.volume_per_operation ? parseFloat(formData.volume_per_operation) : null,
+        estimated_volume_usd: parseFloat(String(formData.estimated_volume_usd).replace(/\s/g, '')) || 0,
+        volume_per_operation: formData.volume_per_operation ? parseFloat(String(formData.volume_per_operation).replace(/\s/g, '')) : null,
+        potential_tier: formData.potential_tier || null,
       };
       await axios.post(`${API_URL}/api/otc/leads`, payload, { headers });
       toast.success('Lead criado com sucesso');
@@ -226,7 +240,14 @@ export const useOTCLeads = () => {
       setShowExistingWarning(false);
       resetForm();
       fetchLeads();
-    } catch (e) { toast.error('Erro ao criar lead'); }
+    } catch (e) {
+      const detail = e.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        toast.error(detail.map(d => d.msg || d.message || String(d)).join(', '));
+      } else {
+        toast.error(typeof detail === 'string' ? detail : 'Erro ao criar lead');
+      }
+    } finally { setIsSubmitting(false); }
   };
 
   const handleTrustfullScan = async (leadId) => {
@@ -283,7 +304,7 @@ export const useOTCLeads = () => {
       await axios.post(`${API_URL}/api/otc/deals`, {
         client_id: newDealClient.id, transaction_type: newDealData.transaction_type,
         base_asset: newDealData.base_asset, quote_asset: newDealData.quote_asset,
-        amount: parseFloat(newDealData.amount),
+        amount: parseFloat(String(newDealData.amount).replace(/\s/g, '')),
         settlement_method: newDealData.settlement_method || null,
         notes: newDealData.notes || null,
       }, { headers });
@@ -298,6 +319,27 @@ export const useOTCLeads = () => {
     setFormData(INITIAL_FORM);
     setExistingContact(null);
     setShowExistingWarning(false);
+  };
+
+  const handleUpdateLead = async (leadId, updateData) => {
+    try {
+      // Clean numeric values
+      const payload = { ...updateData };
+      if (payload.estimated_volume_usd !== undefined) {
+        payload.estimated_volume_usd = parseFloat(String(payload.estimated_volume_usd).replace(/\s/g, '')) || 0;
+      }
+      if (payload.volume_per_operation !== undefined) {
+        payload.volume_per_operation = payload.volume_per_operation ? parseFloat(String(payload.volume_per_operation).replace(/\s/g, '')) : null;
+      }
+      const r = await axios.put(`${API_URL}/api/otc/leads/${leadId}`, payload, { headers });
+      toast.success('Lead atualizado com sucesso');
+      fetchLeads();
+      if (r.data.lead) setSelectedLead(r.data.lead);
+      return r.data;
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Erro ao atualizar lead');
+      return null;
+    }
   };
 
   const openPreQual = (lead) => {
@@ -346,7 +388,7 @@ export const useOTCLeads = () => {
     leads, enums, loading, total, searchQuery, statusFilter, sourceFilter,
     teamMembers, workflowEnums, selectedLead, formData, preQualData, setupData,
     newDealClient, newDealData, existingContact, checkingContact, showExistingWarning,
-    selected360User, verificationResult, token,
+    selected360User, verificationResult, token, isSubmitting,
     // Dialogs
     showCreateDialog, showDetailDialog, showPreQualDialog, showSetupDialog,
     showNewDealModal, show360Modal,
@@ -360,7 +402,7 @@ export const useOTCLeads = () => {
     fetchLeads, handleVerifyClient, handleSendOnboardingEmail, handleSubmitPreQual,
     handleSubmitSetup, handleAddRedFlag, handleAdvanceToKYC, handleApproveKYC,
     handlePreQualify, handleConvertToClient, handleDeleteLead, handleArchiveLead,
-    handleCreateLead, handleTrustfullScan, handleCreateClientDirect,
+    handleCreateLead, handleTrustfullScan, handleCreateClientDirect, handleUpdateLead,
     checkExistingContact, createDeal, resetForm,
     openPreQual, openSetup, openNewDeal, open360View, openDetail,
   };
