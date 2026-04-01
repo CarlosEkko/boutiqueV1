@@ -173,6 +173,15 @@ async def provision_client(data: ProvisionClientRequest, admin: dict = Depends(g
     if not user_id and not otc_client_id:
         raise HTTPException(status_code=400, detail="Forneça user_id ou otc_client_id")
 
+    # KYC/KYB verification — wallets require approved verification
+    if user_id:
+        user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "kyc_status": 1})
+        if user_doc and user_doc.get("kyc_status") not in ("approved",):
+            raise HTTPException(
+                status_code=403,
+                detail="KYC/KYB não aprovado. O cliente deve completar a verificação de identidade antes de criar carteiras."
+            )
+
     now = datetime.now(timezone.utc).isoformat()
     sub_account_id = str(uuid.uuid4())
     entries = []
@@ -220,8 +229,18 @@ async def provision_client(data: ProvisionClientRequest, admin: dict = Depends(g
 
 @router.post("/cofres")
 async def create_cofre(data: CreateCofreRequest, current_user=Depends(get_current_user)):
-    """Client creates a new cofre (subject to tier limits)"""
+    """Client creates a new cofre (subject to tier limits and KYC approval)"""
     user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
+
+    # KYC/KYB verification required
+    kyc_status = current_user.kyc_status if hasattr(current_user, 'kyc_status') else current_user.get("kyc_status")
+    if kyc_status != "approved":
+        user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "kyc_status": 1})
+        if not user_doc or user_doc.get("kyc_status") != "approved":
+            raise HTTPException(
+                status_code=403,
+                detail="Verificação KYC/KYB necessária. Complete a verificação de identidade antes de criar carteiras."
+            )
 
     config = await db.omnibus_config.find_one({}, {"_id": 0})
     if not config:
