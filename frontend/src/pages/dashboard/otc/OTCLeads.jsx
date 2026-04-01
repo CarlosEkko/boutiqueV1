@@ -290,8 +290,8 @@ const OTCLeads = () => {
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="individual" className="text-white">Individual</SelectItem><SelectItem value="corporate" className="text-white">Corporativo</SelectItem><SelectItem value="institutional" className="text-white">Institucional</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label><Input value={preQualData.first_operation_value} onChange={e => setPreQualData({...preQualData, first_operation_value: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
-              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label><Input value={preQualData.estimated_monthly_volume} onChange={e => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor 1ª Operação (USD)</Label><Input value={preQualData.first_operation_value} onChange={e => setPreQualData({...preQualData, first_operation_value: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
+              <div><Label className="text-gray-400 text-sm">Volume Mensal Est. (USD)</Label><Input value={preQualData.estimated_monthly_volume} onChange={e => setPreQualData({...preQualData, estimated_monthly_volume: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
               <div><Label className="text-gray-400 text-sm">Frequência</Label>
                 <Select value={preQualData.expected_frequency} onValueChange={v => setPreQualData({...preQualData, expected_frequency: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
@@ -318,8 +318,8 @@ const OTCLeads = () => {
           <DialogHeader><DialogTitle className="text-gold-400 flex items-center gap-2"><Settings className="text-gold-400" />Setup Operacional — {selectedLead?.entity_name}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label><Input value={setupData.daily_limit} onChange={e => setSetupData({...setupData, daily_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
-              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label><Input value={setupData.monthly_limit} onChange={e => setSetupData({...setupData, monthly_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Diário (USD)</Label><Input value={setupData.daily_limit} onChange={e => setSetupData({...setupData, daily_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
+              <div><Label className="text-gray-400 text-sm">Limite Mensal (USD)</Label><Input value={setupData.monthly_limit} onChange={e => setSetupData({...setupData, monthly_limit: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" type="number" step="any" /></div>
               <div><Label className="text-gray-400 text-sm">Método Liquidação</Label>
                 <Select value={setupData.settlement_method} onValueChange={v => setSetupData({...setupData, settlement_method: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
@@ -362,7 +362,7 @@ const OTCLeads = () => {
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="buy" className="text-white">Compra</SelectItem><SelectItem value="sell" className="text-white">Venda</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label><Input type="number" value={newDealData.amount} onChange={e => setNewDealData({...newDealData, amount: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100000" /></div>
+              <div><Label className="text-gray-400 text-sm">Valor (USD)</Label><Input type="number" step="any" value={newDealData.amount} onChange={e => setNewDealData({...newDealData, amount: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100000" /></div>
               <div><Label className="text-gray-400 text-sm">Base</Label>
                 <Select value={newDealData.base_asset} onValueChange={v => setNewDealData({...newDealData, base_asset: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>

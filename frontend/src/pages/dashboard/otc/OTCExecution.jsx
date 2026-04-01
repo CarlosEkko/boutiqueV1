@@ -623,7 +623,7 @@ const OTCExecution = () => {
                         <div className="space-y-2">
                           <Label>Valor Recebido ({executionData.funds_expected_asset})</Label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.01"
                             value={fundsAmount}
                             onChange={(e) => setFundsAmount(e.target.value)}
@@ -663,7 +663,7 @@ const OTCExecution = () => {
                         <div className="space-y-2">
                           <Label>Preço de Execução ({selectedDeal.quote_asset})</Label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.01"
                             value={executedPrice}
                             onChange={(e) => setExecutedPrice(e.target.value)}

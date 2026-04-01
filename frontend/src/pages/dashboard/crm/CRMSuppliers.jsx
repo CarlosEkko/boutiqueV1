@@ -605,7 +605,7 @@ const CRMSuppliers = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Desconto Bruto (%)</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   step="0.1"
                   value={form.gross_discount}
                   onChange={(e) => setForm({ ...form, gross_discount: e.target.value })}
@@ -615,7 +615,7 @@ const CRMSuppliers = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Desconto Líquido (%)</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   step="0.1"
                   value={form.net_discount}
                   onChange={(e) => setForm({ ...form, net_discount: e.target.value })}
@@ -629,7 +629,7 @@ const CRMSuppliers = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Volume Mínimo</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={form.min_volume}
                   onChange={(e) => setForm({ ...form, min_volume: e.target.value })}
                   placeholder="10000"
@@ -639,7 +639,7 @@ const CRMSuppliers = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Volume Máximo</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={form.max_volume}
                   onChange={(e) => setForm({ ...form, max_volume: e.target.value })}
                   placeholder="1000000"
@@ -774,7 +774,7 @@ const CRMSuppliers = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Tempo de Entrega (horas)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     value={form.delivery_time_hours}
                     onChange={(e) => setForm({ ...form, delivery_time_hours: e.target.value })}
                     placeholder="24"

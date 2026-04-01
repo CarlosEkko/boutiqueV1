@@ -640,7 +640,7 @@ const ClientOTCPortal = () => {
               <div className="space-y-2">
                 <Label>Quantidade</Label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   step="0.00000001"
                   value={rfqForm.amount}
                   onChange={(e) => setRfqForm({...rfqForm, amount: e.target.value})}

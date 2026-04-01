@@ -688,6 +688,7 @@ const CRMLeads = () => {
                 <label className="text-sm text-gray-400 mb-1 block">Volume Estimado</label>
                 <Input
                   type="number"
+                  step="any"
                   value={form.estimated_volume}
                   onChange={(e) => setForm({ ...form, estimated_volume: e.target.value })}
                   placeholder="100000"

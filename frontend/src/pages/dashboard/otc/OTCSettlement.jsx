@@ -611,7 +611,7 @@ const OTCSettlement = () => {
                       <div className="space-y-2">
                         <Label>Valor Fiat</Label>
                         <Input
-                          type="number"
+                          type="number" step="any"
                           step="0.01"
                           value={fiatAmount}
                           onChange={(e) => setFiatAmount(e.target.value)}
@@ -641,7 +641,7 @@ const OTCSettlement = () => {
                       <div className="space-y-2">
                         <Label>Quantidade Crypto</Label>
                         <Input
-                          type="number"
+                          type="number" step="any"
                           step="0.00000001"
                           value={cryptoAmount}
                           onChange={(e) => setCryptoAmount(e.target.value)}
@@ -731,7 +731,7 @@ const OTCSettlement = () => {
                         <div className="space-y-2">
                           <Label>Valor Recebido</Label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             value={fiatAmount}
                             onChange={(e) => setFiatAmount(e.target.value)}
                             placeholder={String(settlementData.fiat_amount)}
@@ -770,7 +770,7 @@ const OTCSettlement = () => {
                           <div className="space-y-2">
                             <Label>Quantidade</Label>
                             <Input
-                              type="number"
+                              type="number" step="any"
                               value={cryptoAmount}
                               onChange={(e) => setCryptoAmount(e.target.value)}
                               placeholder={String(settlementData.crypto_amount)}

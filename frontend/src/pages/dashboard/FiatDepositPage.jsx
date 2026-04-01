@@ -346,7 +346,7 @@ const FiatDepositPage = () => {
                         {selectedCurrency.symbol}
                       </span>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"

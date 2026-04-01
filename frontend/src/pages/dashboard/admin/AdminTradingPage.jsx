@@ -548,7 +548,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.buy_fee_percent}
                             onChange={(e) => updateCryptoFeeField('buy_fee_percent', e.target.value)}
@@ -559,7 +559,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.buy_spread_percent}
                             onChange={(e) => updateCryptoFeeField('buy_spread_percent', e.target.value)}
@@ -569,7 +569,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.5"
                             value={selectedCrypto.min_buy_fee}
                             onChange={(e) => updateCryptoFeeField('min_buy_fee', e.target.value)}
@@ -586,7 +586,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.sell_fee_percent}
                             onChange={(e) => updateCryptoFeeField('sell_fee_percent', e.target.value)}
@@ -597,7 +597,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.sell_spread_percent}
                             onChange={(e) => updateCryptoFeeField('sell_spread_percent', e.target.value)}
@@ -607,7 +607,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.5"
                             value={selectedCrypto.min_sell_fee}
                             onChange={(e) => updateCryptoFeeField('min_sell_fee', e.target.value)}
@@ -624,7 +624,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.swap_fee_percent}
                             onChange={(e) => updateCryptoFeeField('swap_fee_percent', e.target.value)}
@@ -635,7 +635,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.1"
                             value={selectedCrypto.swap_spread_percent}
                             onChange={(e) => updateCryptoFeeField('swap_spread_percent', e.target.value)}
@@ -645,7 +645,7 @@ const AdminTradingPage = () => {
                         <div>
                           <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima (USD)</label>
                           <Input
-                            type="number"
+                            type="number" step="any"
                             step="0.5"
                             value={selectedCrypto.min_swap_fee}
                             onChange={(e) => updateCryptoFeeField('min_swap_fee', e.target.value)}
@@ -733,7 +733,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.buy_fee_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'buy_fee_percent', e.target.value)}
@@ -744,7 +744,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.buy_spread_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'buy_spread_percent', e.target.value)}
@@ -755,7 +755,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.5"
                     value={allFees[selectedFeeCurrency]?.min_buy_fee || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_buy_fee', e.target.value)}
@@ -773,7 +773,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.sell_fee_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'sell_fee_percent', e.target.value)}
@@ -784,7 +784,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.sell_spread_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'sell_spread_percent', e.target.value)}
@@ -794,7 +794,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.5"
                     value={allFees[selectedFeeCurrency]?.min_sell_fee || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_sell_fee', e.target.value)}
@@ -811,7 +811,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.swap_fee_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'swap_fee_percent', e.target.value)}
@@ -822,7 +822,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Spread (%)</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={allFees[selectedFeeCurrency]?.swap_spread_percent || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'swap_spread_percent', e.target.value)}
@@ -832,7 +832,7 @@ const AdminTradingPage = () => {
                 <div>
                   <label className="text-sm text-gray-400 mb-1 block">Taxa Mínima ({selectedFeeCurrency})</label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.5"
                     value={allFees[selectedFeeCurrency]?.min_swap_fee || 0}
                     onChange={(e) => updateFeeField(selectedFeeCurrency, 'min_swap_fee', e.target.value)}
@@ -896,7 +896,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Compra</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].daily_buy_limit}
                         onChange={(e) => updateLimitField('daily_buy_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -906,7 +906,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Venda</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].daily_sell_limit}
                         onChange={(e) => updateLimitField('daily_sell_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -915,7 +915,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Conversão</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].daily_swap_limit}
                         onChange={(e) => updateLimitField('daily_swap_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -931,7 +931,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Compra</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].monthly_buy_limit}
                         onChange={(e) => updateLimitField('monthly_buy_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -940,7 +940,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Venda</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].monthly_sell_limit}
                         onChange={(e) => updateLimitField('monthly_sell_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -949,7 +949,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Conversão</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].monthly_swap_limit}
                         onChange={(e) => updateLimitField('monthly_swap_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -965,7 +965,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Mín. Compra</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].min_buy_amount}
                         onChange={(e) => updateLimitField('min_buy_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -974,7 +974,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Máx. Compra</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].max_buy_amount}
                         onChange={(e) => updateLimitField('max_buy_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -983,7 +983,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Mín. Venda</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].min_sell_amount}
                         onChange={(e) => updateLimitField('min_sell_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -992,7 +992,7 @@ const AdminTradingPage = () => {
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Máx. Venda</label>
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={limits[selectedTier].max_sell_amount}
                         onChange={(e) => updateLimitField('max_sell_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"

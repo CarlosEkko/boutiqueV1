@@ -495,7 +495,7 @@ const InvestmentsPage = () => {
                 <Label className="text-gray-300">Valor a Investir</Label>
                 <div className="relative mt-1">
                   <Input
-                    type="number"
+                    type="number" step="any"
                     value={investAmount}
                     onChange={(e) => setInvestAmount(e.target.value)}
                     placeholder={`Mín: ${formatNumber(selectedOpp.min_investment, 0)}`}

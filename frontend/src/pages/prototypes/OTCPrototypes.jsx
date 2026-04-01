@@ -132,7 +132,7 @@ const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
               {/* Quantity */}
               <div className="space-y-2">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Quantidade</Label>
-                <Input type="number" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white" data-testid="deal-quantity-input" />
+                <Input type="number" step="any" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white" data-testid="deal-quantity-input" />
               </div>
             </div>
 
@@ -140,7 +140,7 @@ const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
             <div className="space-y-2">
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({headerCurrency})</Label>
               <div className="relative">
-                <Input type="number" value={refPrice} onChange={e => setRefPrice(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-36" data-testid="deal-ref-price-input" />
+                <Input type="number" step="any" value={refPrice} onChange={e => setRefPrice(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-36" data-testid="deal-ref-price-input" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
                   <TrendingUp size={12} /> KBEX: {sym}{refPrice.toLocaleString()}
                 </span>
@@ -160,7 +160,7 @@ const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
                   </button>
                 </div>
                 <div className="relative flex-1">
-                  <Input type="number" value={conditionPct} onChange={e => setConditionPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-condition-pct-input" />
+                  <Input type="number" step="any" value={conditionPct} onChange={e => setConditionPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-condition-pct-input" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
@@ -171,14 +171,14 @@ const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
               <div className="space-y-2">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Gross (%)</Label>
                 <div className="relative">
-                  <Input type="number" value={grossPct} onChange={e => setGrossPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-gross-input" />
+                  <Input type="number" step="any" value={grossPct} onChange={e => setGrossPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-gross-input" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Net (%)</Label>
                 <div className="relative">
-                  <Input type="number" value={netPct} onChange={e => setNetPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-net-input" />
+                  <Input type="number" step="any" value={netPct} onChange={e => setNetPct(parseFloat(e.target.value) || 0)} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="0.1" data-testid="deal-net-input" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
@@ -219,7 +219,7 @@ const DealOTCScreen = ({ headerCurrency = 'EUR' }) => {
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Distribuição da Margem — Corretor (%)</Label>
               <div className="flex items-center gap-4">
                 <div className="relative flex-1">
-                  <Input type="number" value={brokerPct} onChange={e => setBrokerPct(Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="5" data-testid="deal-broker-pct-input" />
+                  <Input type="number" step="any" value={brokerPct} onChange={e => setBrokerPct(Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-950 border-zinc-800 text-white pr-8" step="5" data-testid="deal-broker-pct-input" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
                 <span className="text-zinc-600">|</span>

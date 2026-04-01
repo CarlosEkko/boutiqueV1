@@ -692,7 +692,7 @@ const ExchangePage = () => {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
                         <Input
-                          type="number"
+                          type="number" step="any"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           placeholder="0.00"
@@ -703,7 +703,7 @@ const ExchangePage = () => {
                     ) : (
                       <div className="relative">
                         <Input
-                          type="number"
+                          type="number" step="any"
                           value={cryptoAmount}
                           onChange={(e) => setCryptoAmount(e.target.value)}
                           placeholder="0.00"
@@ -822,7 +822,7 @@ const ExchangePage = () => {
                     <label className="text-sm text-gray-400 mb-2 block">Quantidade</label>
                     <div className="relative">
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={sellAmount}
                         onChange={(e) => setSellAmount(e.target.value)}
                         placeholder="0.00"
@@ -896,7 +896,7 @@ const ExchangePage = () => {
                     <label className="text-sm text-gray-400 mb-2 block">Quantidade</label>
                     <div className="relative">
                       <Input
-                        type="number"
+                        type="number" step="any"
                         value={fromAmount}
                         onChange={(e) => setFromAmount(e.target.value)}
                         placeholder="0.00"

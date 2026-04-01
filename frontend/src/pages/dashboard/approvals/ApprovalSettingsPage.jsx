@@ -108,7 +108,7 @@ const ApprovalSettingsPage = () => {
             <div className="space-y-2">
               <Label className="text-gray-300 flex items-center gap-1"><ShieldCheck size={14} /> Aprovações Necessárias</Label>
               <Input
-                type="number"
+                type="number" step="any"
                 min={1}
                 max={10}
                 value={settings.required_approvals}
@@ -121,7 +121,7 @@ const ApprovalSettingsPage = () => {
             <div className="space-y-2">
               <Label className="text-gray-300 flex items-center gap-1"><Clock size={14} /> Timeout (horas)</Label>
               <Input
-                type="number"
+                type="number" step="any"
                 min={1}
                 max={168}
                 value={settings.approval_timeout_hours}

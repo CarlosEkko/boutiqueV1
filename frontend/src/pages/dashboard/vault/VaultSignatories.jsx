@@ -104,13 +104,13 @@ const VaultSignatories = () => {
           <div className="grid grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label className="text-zinc-400 text-sm">Assinaturas Necessárias</Label>
-              <Input type="number" min={1} max={10} value={settings.required_signatures}
+              <Input type="number" step="any" min={1} max={10} value={settings.required_signatures}
                 onChange={e => setSettings(s => ({ ...s, required_signatures: parseInt(e.target.value) || 2 }))}
                 className="bg-zinc-800/50 border-zinc-700/50 text-white rounded-xl" data-testid="threshold-input" />
             </div>
             <div className="space-y-2">
               <Label className="text-zinc-400 text-sm">Timeout (horas)</Label>
-              <Input type="number" min={1} max={168} value={settings.transaction_timeout_hours}
+              <Input type="number" step="any" min={1} max={168} value={settings.transaction_timeout_hours}
                 onChange={e => setSettings(s => ({ ...s, transaction_timeout_hours: parseInt(e.target.value) || 48 }))}
                 className="bg-zinc-800/50 border-zinc-700/50 text-white rounded-xl" data-testid="timeout-input" />
             </div>

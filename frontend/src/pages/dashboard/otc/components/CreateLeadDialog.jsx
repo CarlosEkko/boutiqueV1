@@ -163,8 +163,8 @@ export const CreateLeadDialog = ({
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label className="text-gray-400 text-sm">Volume Est. (USD)</Label><Input type="number" value={formData.estimated_volume_usd} onChange={e => setFormData({...formData, estimated_volume_usd: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100,000" /></div>
-                <div><Label className="text-gray-400 text-sm">Volume/Operação</Label><Input type="number" value={formData.volume_per_operation} onChange={e => setFormData({...formData, volume_per_operation: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="50,000" /></div>
+                <div><Label className="text-gray-400 text-sm">Volume Est. (USD)</Label><Input type="number" step="any" value={formData.estimated_volume_usd} onChange={e => setFormData({...formData, estimated_volume_usd: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100,000" /></div>
+                <div><Label className="text-gray-400 text-sm">Volume/Operação</Label><Input type="number" step="any" value={formData.volume_per_operation} onChange={e => setFormData({...formData, volume_per_operation: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="50,000" /></div>
               </div>
               <div><Label className="text-gray-400 text-sm">Notas</Label><Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} placeholder="Informação adicional..." /></div>
             </CardContent>

@@ -371,7 +371,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Quantidade</Label>
-                <Input type="number" value={form.quantity} onChange={e => updateField('quantity', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-quantity" />
+                <Input type="number" step="any" value={form.quantity} onChange={e => updateField('quantity', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-quantity" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Moeda Ref.</Label>
@@ -388,7 +388,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             <div className="space-y-1.5">
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({form.reference_currency})</Label>
               <div className="relative">
-                <Input type="number" value={form.reference_price} onChange={e => updateField('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="modal-ref-price" />
+                <Input type="number" step="any" value={form.reference_price} onChange={e => updateField('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="modal-ref-price" />
                 {livePrice && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
                     <TrendingUp size={12} /> KBEX: {sym}{(livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toLocaleString()}
@@ -406,7 +406,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                   <button onClick={() => updateField('condition', 'discount')} className={`px-4 py-2 text-sm font-medium ${form.condition === 'discount' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500'}`}>Desconto (-)</button>
                 </div>
                 <div className="relative flex-1">
-                  <Input type="number" value={form.condition_pct} onChange={e => updateField('condition_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-condition-pct" />
+                  <Input type="number" step="any" value={form.condition_pct} onChange={e => updateField('condition_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-condition-pct" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
@@ -417,14 +417,14 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Gross (%)</Label>
                 <div className="relative">
-                  <Input type="number" value={form.gross_pct} onChange={e => updateField('gross_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-gross" />
+                  <Input type="number" step="any" value={form.gross_pct} onChange={e => updateField('gross_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-gross" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Net (%)</Label>
                 <div className="relative">
-                  <Input type="number" value={form.net_pct} onChange={e => updateField('net_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-net" />
+                  <Input type="number" step="any" value={form.net_pct} onChange={e => updateField('net_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-net" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
@@ -468,7 +468,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">Margem Corretor (%)</Label>
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <Input type="number" value={form.broker_share_pct} onChange={e => updateField('broker_share_pct', Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="5" data-testid="modal-broker-share" />
+                    <Input type="number" step="any" value={form.broker_share_pct} onChange={e => updateField('broker_share_pct', Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="5" data-testid="modal-broker-share" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                   </div>
                   <span className="text-zinc-500 text-xs whitespace-nowrap">KBEX: {100 - form.broker_share_pct}%</span>

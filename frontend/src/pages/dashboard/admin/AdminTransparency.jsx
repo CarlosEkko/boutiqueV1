@@ -235,7 +235,7 @@ const AdminTransparency = () => {
                   <div>
                     <Label className="text-gray-300">Balance</Label>
                     <Input
-                      type="number"
+                      type="number" step="any"
                       step="0.00000001"
                       value={walletForm.balance}
                       onChange={(e) => setWalletForm({...walletForm, balance: e.target.value})}

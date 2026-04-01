@@ -466,7 +466,7 @@ const CRMDeals = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Valor</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   placeholder="100000"
@@ -489,7 +489,7 @@ const CRMDeals = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Probabilidade (%)</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   min="0"
                   max="100"
                   value={form.probability}
@@ -517,7 +517,7 @@ const CRMDeals = () => {
               <div>
                 <label className="text-sm text-gray-400 mb-1 block">Quantidade Crypto</label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   step="0.00000001"
                   value={form.crypto_amount}
                   onChange={(e) => setForm({ ...form, crypto_amount: e.target.value })}

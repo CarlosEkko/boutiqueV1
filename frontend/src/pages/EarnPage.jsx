@@ -270,7 +270,7 @@ const EarnPage = () => {
                 <div>
                   <label className="text-gray-400 text-sm mb-2 block">{t('earn.amount', 'Quantidade')}</label>
                   <Input 
-                    type="number" 
+                    type="number" step="any" 
                     placeholder="1.0" 
                     className="bg-zinc-800 border-zinc-700 text-white"
                   />

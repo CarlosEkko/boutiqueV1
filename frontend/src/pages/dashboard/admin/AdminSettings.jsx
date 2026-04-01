@@ -180,7 +180,7 @@ const AdminSettings = () => {
               <Label className="text-gray-300">Taxa de Trading (%)</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={referralFees.trading_fee_percent}
                   onChange={(e) => setReferralFees({
                     ...referralFees,
@@ -201,7 +201,7 @@ const AdminSettings = () => {
               <Label className="text-gray-300">Taxa de Depósito (%)</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={referralFees.deposit_fee_percent}
                   onChange={(e) => setReferralFees({
                     ...referralFees,
@@ -221,7 +221,7 @@ const AdminSettings = () => {
               <Label className="text-gray-300">Taxa de Levantamento (%)</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={referralFees.withdrawal_fee_percent}
                   onChange={(e) => setReferralFees({
                     ...referralFees,
@@ -241,7 +241,7 @@ const AdminSettings = () => {
               <Label className="text-gray-300">Taxa de Admissão (%)</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={referralFees.admission_fee_percent}
                   onChange={(e) => setReferralFees({
                     ...referralFees,
@@ -263,7 +263,7 @@ const AdminSettings = () => {
               <Label className="text-gray-300">Pagamento Mínimo</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={referralFees.min_payout_amount}
                   onChange={(e) => setReferralFees({
                     ...referralFees,
@@ -344,7 +344,7 @@ const AdminSettings = () => {
                 <Badge className={`${tier.color} text-xs`}>{tier.label}</Badge>
                 <div className="flex items-center gap-2">
                   <Input
-                    type="number"
+                    type="number" step="any"
                     value={admissionFee[`${tier.key}_eur`]}
                     onChange={(e) => setAdmissionFee({
                       ...admissionFee,
@@ -392,7 +392,7 @@ const AdminSettings = () => {
               <div key={tier} className="space-y-2">
                 <Label className="text-zinc-400 text-sm capitalize">{tier}</Label>
                 <Input
-                  type="number"
+                  type="number" step="any"
                   min="1"
                   max="999"
                   value={limit}

@@ -505,7 +505,7 @@ const AdminOpportunities = () => {
                     <Label className="text-gray-300">Taxa Fixa (%)</Label>
                     <Input
                       name="fixed_rate"
-                      type="number"
+                      type="number" step="any"
                       step="0.01"
                       value={formData.fixed_rate}
                       onChange={handleChange}
@@ -518,7 +518,7 @@ const AdminOpportunities = () => {
                     <Label className="text-gray-300">Taxa Variável (%)</Label>
                     <Input
                       name="variable_rate"
-                      type="number"
+                      type="number" step="any"
                       step="0.01"
                       value={formData.variable_rate}
                       onChange={handleChange}
@@ -542,7 +542,7 @@ const AdminOpportunities = () => {
                   <Label className="text-gray-300">Duração (dias)</Label>
                   <Input
                     name="duration_days"
-                    type="number"
+                    type="number" step="any"
                     value={formData.duration_days}
                     onChange={handleChange}
                     placeholder="ex: 90"
@@ -554,7 +554,7 @@ const AdminOpportunities = () => {
                   <Label className="text-gray-300">Investimento Mín.</Label>
                   <Input
                     name="min_investment"
-                    type="number"
+                    type="number" step="any"
                     value={formData.min_investment}
                     onChange={handleChange}
                     placeholder="ex: 1000"
@@ -566,7 +566,7 @@ const AdminOpportunities = () => {
                   <Label className="text-gray-300">Investimento Máx.</Label>
                   <Input
                     name="max_investment"
-                    type="number"
+                    type="number" step="any"
                     value={formData.max_investment}
                     onChange={handleChange}
                     placeholder="ex: 100000"
@@ -578,7 +578,7 @@ const AdminOpportunities = () => {
                   <Label className="text-gray-300">Pool Total</Label>
                   <Input
                     name="total_pool"
-                    type="number"
+                    type="number" step="any"
                     value={formData.total_pool}
                     onChange={handleChange}
                     placeholder="ex: 1000000"

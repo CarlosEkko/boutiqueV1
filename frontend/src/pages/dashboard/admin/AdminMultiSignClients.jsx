@@ -419,13 +419,13 @@ const AdminMultiSignClients = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-zinc-400 text-sm">Assinaturas Requeridas</Label>
-                <Input type="number" min={1} max={10} value={activateForm.required_signatures}
+                <Input type="number" step="any" min={1} max={10} value={activateForm.required_signatures}
                   onChange={e => setActivateForm(f => ({ ...f, required_signatures: parseInt(e.target.value) || 2 }))}
                   className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="required-sigs-input" />
               </div>
               <div>
                 <Label className="text-zinc-400 text-sm">Timeout (horas)</Label>
-                <Input type="number" min={1} max={168} value={activateForm.transaction_timeout_hours}
+                <Input type="number" step="any" min={1} max={168} value={activateForm.transaction_timeout_hours}
                   onChange={e => setActivateForm(f => ({ ...f, transaction_timeout_hours: parseInt(e.target.value) || 48 }))}
                   className="bg-zinc-800 border-zinc-700 text-white mt-1" data-testid="timeout-input" />
               </div>

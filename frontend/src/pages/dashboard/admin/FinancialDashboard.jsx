@@ -206,7 +206,7 @@ const FinancialDashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={asset_distribution} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#a1a1aa', fontSize: 10 }} tickFormatter={(v) => fmt(v)} />
+                  <XAxis type="number" step="any" tick={{ fill: '#a1a1aa', fontSize: 10 }} tickFormatter={(v) => fmt(v)} />
                   <YAxis dataKey="asset" type="category" tick={{ fill: '#fafafa', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }} width={50} />
                   <RechartsTooltip
                     contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, color: '#fafafa', fontSize: 12 }}

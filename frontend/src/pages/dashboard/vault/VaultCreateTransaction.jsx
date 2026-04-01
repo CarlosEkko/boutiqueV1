@@ -185,7 +185,7 @@ const VaultCreateTransaction = () => {
               <div className="space-y-2">
                 <Label className="text-zinc-400 text-sm">Montante</Label>
                 <div className="relative">
-                  <Input type="number" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                  <Input type="number" step="any" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                     placeholder="0.00" className="bg-zinc-800/50 border-zinc-700/50 text-white text-xl font-mono font-light rounded-xl pr-20 h-14"
                     data-testid="amount-input" />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm font-medium">{form.asset || '...'}</span>

@@ -675,7 +675,7 @@ const OTCQuotes = () => {
                   <div className="space-y-2">
                     <Label>Preço Manual ({selectedDeal.quote_asset})</Label>
                     <Input
-                      type="number"
+                      type="number" step="any"
                       step="0.01"
                       value={quoteForm.manual_price}
                       onChange={(e) => setQuoteForm({...quoteForm, manual_price: e.target.value})}
@@ -688,7 +688,7 @@ const OTCQuotes = () => {
                 <div className="space-y-2">
                   <Label>Spread (%)</Label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.1"
                     value={quoteForm.spread_percent}
                     onChange={(e) => setQuoteForm({...quoteForm, spread_percent: parseFloat(e.target.value) || 0})}
@@ -702,7 +702,7 @@ const OTCQuotes = () => {
                 <div className="space-y-2">
                   <Label>Taxas Adicionais ({selectedDeal.quote_asset})</Label>
                   <Input
-                    type="number"
+                    type="number" step="any"
                     step="0.01"
                     value={quoteForm.fees}
                     onChange={(e) => setQuoteForm({...quoteForm, fees: parseFloat(e.target.value) || 0})}

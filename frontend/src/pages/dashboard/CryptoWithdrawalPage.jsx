@@ -363,7 +363,7 @@ const CryptoWithdrawalPage = () => {
               <Label className="text-gray-300">Quantidade</Label>
               <div className="flex gap-2 mt-1">
                 <Input
-                  type="number"
+                  type="number" step="any"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00000000"
