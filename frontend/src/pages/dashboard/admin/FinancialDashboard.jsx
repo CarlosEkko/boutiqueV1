@@ -15,7 +15,7 @@ import {
 import {
   Landmark, TrendingUp, ArrowUpToLine, ArrowDownToLine,
   RefreshCw, Loader2, Clock, DollarSign, PieChart as PieChartIcon,
-  Users, Activity, BarChart3,
+  Users, Activity, BarChart3, Fuel, AlertTriangle, CheckCircle, Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,6 +36,7 @@ const FinancialDashboard = () => {
   const { token } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sendingAlert, setSendingAlert] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,11 +63,27 @@ const FinancialDashboard = () => {
     );
   }
 
-  const { aum, revenue, volume, pending, revenue_trend, asset_distribution, fiat_vs_crypto, top_clients, recent_orders, recent_deposits } = data;
+  const { aum, revenue, volume, pending, revenue_trend, asset_distribution, fiat_vs_crypto, top_clients, recent_orders, recent_deposits, gas_station } = data;
 
   const statusColor = (s) => {
     const map = { completed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', paid: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', approved: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30', pending_proof: 'bg-amber-500/20 text-amber-400 border-amber-500/30', submitted: 'bg-blue-500/20 text-blue-400 border-blue-500/30', processing: 'bg-blue-500/20 text-blue-400 border-blue-500/30', awaiting_payment: 'bg-amber-500/20 text-amber-400 border-amber-500/30', cancelled: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', rejected: 'bg-rose-500/20 text-rose-400 border-rose-500/30' };
     return map[s] || 'bg-zinc-700/40 text-zinc-300 border-zinc-600';
+  };
+
+  const sendGasAlert = async () => {
+    setSendingAlert(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/finance/gas-station/check-alerts`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.alert_sent) {
+        toast.success(`Alerta enviado para ${res.data.email_sent_to}`);
+      } else {
+        toast.info(res.data.message || 'Sem alerta necessário');
+      }
+    } catch (err) {
+      toast.error('Erro ao enviar alerta');
+    } finally { setSendingAlert(false); }
   };
 
   const pieData = [
@@ -124,12 +141,76 @@ const FinancialDashboard = () => {
         <KPICard
           testId="kpi-pending"
           label="Operações Pendentes"
-          value={pending.deposits + pending.withdrawals + pending.orders}
-          sub={`Dep: ${pending.deposits} · Lev: ${pending.withdrawals} · Ord: ${pending.orders}`}
+          value={pending.deposits + pending.withdrawals + pending.orders + (pending.crypto_withdrawals || 0)}
+          sub={`Dep: ${pending.deposits} · Lev: ${pending.withdrawals} · Ord: ${pending.orders} · Crypto: ${pending.crypto_withdrawals || 0}`}
           icon={Clock}
           accent="rose"
         />
       </div>
+
+      {/* Gas Station Monitoring */}
+      {gas_station && (
+        <Card className={`bg-zinc-900 border ${gas_station.health === 'critical' ? 'border-red-500/50 shadow-red-900/20 shadow-lg' : gas_station.health === 'warning' ? 'border-amber-500/40' : 'border-emerald-500/30'}`} data-testid="gas-station-panel">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                <Fuel className={`w-4 h-4 ${gas_station.health === 'critical' ? 'text-red-500' : gas_station.health === 'warning' ? 'text-amber-500' : 'text-emerald-500'}`} />
+                Gas Station Fireblocks
+                <Badge className={`ml-2 text-[10px] uppercase font-bold ${gas_station.health === 'critical' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : gas_station.health === 'warning' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                  {gas_station.health === 'critical' ? 'Crítico' : gas_station.health === 'warning' ? 'Baixo' : 'Saudável'}
+                </Badge>
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {gas_station.health !== 'healthy' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={sendGasAlert}
+                    disabled={sendingAlert}
+                    className={`text-xs rounded-full ${gas_station.health === 'critical' ? 'border-red-500/40 text-red-400 hover:bg-red-900/20' : 'border-amber-500/40 text-amber-400 hover:bg-amber-900/20'}`}
+                    data-testid="send-gas-alert-btn"
+                  >
+                    {sendingAlert ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                    Enviar Alerta
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(gas_station.assets || []).map((a) => (
+                <div key={a.asset_id} className={`rounded-lg p-4 border ${a.status === 'critical' ? 'bg-red-950/30 border-red-500/30' : a.status === 'warning' ? 'bg-amber-950/20 border-amber-500/20' : 'bg-zinc-800/50 border-zinc-700/50'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-zinc-400 font-mono tracking-wider">{a.asset_id.replace('_', ' ')}</span>
+                    {a.status === 'critical' ? <AlertTriangle className="w-4 h-4 text-red-500" /> :
+                     a.status === 'warning' ? <AlertTriangle className="w-4 h-4 text-amber-500" /> :
+                     <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                  </div>
+                  <p className={`text-lg font-mono font-light ${a.status === 'critical' ? 'text-red-400' : a.status === 'warning' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                    {a.available < 0.001 ? a.available.toExponential(2) : a.available.toFixed(6)}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 mt-1">Disponível</p>
+                </div>
+              ))}
+            </div>
+            {gas_station.warnings?.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+                <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider mb-2">Avisos</p>
+                {gas_station.warnings.map((w, i) => (
+                  <p key={i} className={`text-xs ${w.includes('CRÍTICO') ? 'text-red-400' : 'text-amber-400'} mb-1 font-mono`}>
+                    {w}
+                  </p>
+                ))}
+                <p className="text-[10px] text-zinc-600 mt-2">
+                  Ação: Transfira ETH/BNB para o vault "GAS STATION" na Fireblocks Console.
+                  ERC20/BEP20 usam gas automaticamente deste vault.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
