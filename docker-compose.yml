@@ -50,6 +50,7 @@ services:
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME:-KBEX}
       - STRIPE_API_KEY=${STRIPE_API_KEY:-}
       - FRONTEND_URL=${FRONTEND_URL:-https://kbex.io}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
     volumes:
       - backend_uploads:/app/uploads
       - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
