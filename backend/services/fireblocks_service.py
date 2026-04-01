@@ -5,7 +5,11 @@ Handles wallet creation, balance queries, and transactions via Fireblocks API
 import os
 import logging
 from typing import Optional, Dict, List, Any
-from fireblocks_sdk import FireblocksSDK, TransferPeerPath, DestinationTransferPeerPath, PagedVaultAccountsRequestFilters, VAULT_ACCOUNT, ONE_TIME_ADDRESS, TRANSACTION_STATUS_COMPLETED
+from fireblocks_sdk import (
+    FireblocksSDK, TransferPeerPath, DestinationTransferPeerPath,
+    PagedVaultAccountsRequestFilters, VAULT_ACCOUNT, ONE_TIME_ADDRESS,
+    EXTERNAL_WALLET, TRANSACTION_STATUS_COMPLETED
+)
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -47,12 +51,13 @@ class FireblocksService:
             logger.error(f"Failed to initialize Fireblocks client: {e}")
             raise
     
+    # ==================== VAULT OPERATIONS ====================
+    
     @classmethod
     async def get_vault_accounts(cls) -> List[Dict[str, Any]]:
         """Get all vault accounts"""
         try:
             client = cls.get_client()
-            # Use the paginated method with empty filter
             filters = PagedVaultAccountsRequestFilters()
             result = client.get_vault_accounts_with_page_info(filters)
             accounts = result.get('accounts', []) if isinstance(result, dict) else result
@@ -118,6 +123,75 @@ class FireblocksService:
             logger.error(f"Failed to get supported assets: {e}")
             raise
     
+    # ==================== EXTERNAL WALLET (WHITELIST) ====================
+    
+    @classmethod
+    async def create_external_wallet(cls, name: str, customer_ref_id: str = None) -> Dict[str, Any]:
+        """Create an External Wallet container in Fireblocks (whitelist group)"""
+        try:
+            client = cls.get_client()
+            wallet = client.create_external_wallet(name=name, customer_ref_id=customer_ref_id)
+            logger.info(f"Created external wallet: {wallet.get('id')} - {name}")
+            return wallet
+        except Exception as e:
+            logger.error(f"Failed to create external wallet '{name}': {e}")
+            raise
+    
+    @classmethod
+    async def add_asset_to_external_wallet(
+        cls, wallet_id: str, asset_id: str, address: str, tag: str = None
+    ) -> Dict[str, Any]:
+        """Add an asset address to an External Wallet (whitelist the address)"""
+        try:
+            client = cls.get_client()
+            result = client.create_external_wallet_asset(
+                wallet_id=wallet_id,
+                asset_id=asset_id,
+                address=address,
+                tag=tag
+            )
+            logger.info(f"Whitelisted {asset_id} address {address[:12]}... in external wallet {wallet_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to add asset to external wallet {wallet_id}: {e}")
+            raise
+    
+    @classmethod
+    async def get_external_wallets(cls) -> List[Dict[str, Any]]:
+        """Get all External Wallets"""
+        try:
+            client = cls.get_client()
+            wallets = client.get_external_wallets()
+            return wallets if isinstance(wallets, list) else []
+        except Exception as e:
+            logger.error(f"Failed to get external wallets: {e}")
+            raise
+    
+    @classmethod
+    async def get_external_wallet(cls, wallet_id: str) -> Dict[str, Any]:
+        """Get a specific External Wallet"""
+        try:
+            client = cls.get_client()
+            wallet = client.get_external_wallet(wallet_id)
+            return wallet
+        except Exception as e:
+            logger.error(f"Failed to get external wallet {wallet_id}: {e}")
+            raise
+    
+    @classmethod
+    async def delete_external_wallet(cls, wallet_id: str) -> Dict[str, Any]:
+        """Delete an External Wallet"""
+        try:
+            client = cls.get_client()
+            result = client.delete_external_wallet(wallet_id)
+            logger.info(f"Deleted external wallet: {wallet_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Failed to delete external wallet {wallet_id}: {e}")
+            raise
+    
+    # ==================== TRANSACTIONS ====================
+    
     @classmethod
     async def create_transaction(
         cls,
@@ -125,9 +199,10 @@ class FireblocksService:
         destination_address: str,
         asset_id: str,
         amount: str,
-        note: str = ""
+        note: str = "",
+        fee_level: str = "MEDIUM"
     ) -> Dict[str, Any]:
-        """Create a withdrawal transaction"""
+        """Create a withdrawal transaction to a one-time address"""
         try:
             client = cls.get_client()
             
@@ -136,14 +211,135 @@ class FireblocksService:
                 amount=amount,
                 source=TransferPeerPath(VAULT_ACCOUNT, source_vault_id),
                 destination=DestinationTransferPeerPath(ONE_TIME_ADDRESS, None, {"address": destination_address}),
+                fee_level=fee_level,
                 note=note
             )
             
-            logger.info(f"Created transaction: {tx.get('id')}")
+            logger.info(f"Created transaction (one-time): {tx.get('id')}")
             return tx
         except Exception as e:
             logger.error(f"Failed to create transaction: {e}")
             raise
+    
+    @classmethod
+    async def create_transaction_to_external_wallet(
+        cls,
+        source_vault_id: str,
+        external_wallet_id: str,
+        asset_id: str,
+        amount: str,
+        note: str = "",
+        fee_level: str = "MEDIUM"
+    ) -> Dict[str, Any]:
+        """Create a withdrawal transaction to a whitelisted External Wallet"""
+        try:
+            client = cls.get_client()
+            
+            tx = client.create_transaction(
+                asset_id=asset_id,
+                amount=amount,
+                source=TransferPeerPath(VAULT_ACCOUNT, source_vault_id),
+                destination=DestinationTransferPeerPath(EXTERNAL_WALLET, external_wallet_id),
+                fee_level=fee_level,
+                note=note
+            )
+            
+            logger.info(f"Created transaction to external wallet {external_wallet_id}: {tx.get('id')}")
+            return tx
+        except Exception as e:
+            logger.error(f"Failed to create transaction to external wallet: {e}")
+            raise
+    
+    @classmethod
+    async def create_internal_transfer(
+        cls,
+        source_vault_id: str,
+        destination_vault_id: str,
+        asset_id: str,
+        amount: str,
+        note: str = ""
+    ) -> Dict[str, Any]:
+        """Create an internal transfer between KBEX vaults (no whitelist needed)"""
+        try:
+            client = cls.get_client()
+            
+            tx = client.create_transaction(
+                asset_id=asset_id,
+                amount=amount,
+                source=TransferPeerPath(VAULT_ACCOUNT, source_vault_id),
+                destination=DestinationTransferPeerPath(VAULT_ACCOUNT, destination_vault_id),
+                note=note
+            )
+            
+            logger.info(f"Created internal transfer {source_vault_id} -> {destination_vault_id}: {tx.get('id')}")
+            return tx
+        except Exception as e:
+            logger.error(f"Failed to create internal transfer: {e}")
+            raise
+    
+    # ==================== FEE ESTIMATION ====================
+    
+    @classmethod
+    async def estimate_transaction_fee(
+        cls,
+        asset_id: str,
+        amount: str,
+        source_vault_id: str,
+        destination_address: str = None
+    ) -> Dict[str, Any]:
+        """Estimate network fees for a transaction at LOW/MEDIUM/HIGH levels"""
+        try:
+            client = cls.get_client()
+            
+            source = TransferPeerPath(VAULT_ACCOUNT, source_vault_id)
+            
+            # Fireblocks requires a destination for estimation
+            # Use a placeholder address if none provided
+            if destination_address:
+                destination = DestinationTransferPeerPath(
+                    ONE_TIME_ADDRESS, None, {"address": destination_address}
+                )
+            else:
+                destination = None
+            
+            estimation = client.estimate_fee_for_transaction(
+                asset_id=asset_id,
+                amount=amount,
+                source=source,
+                destination=destination,
+            )
+            
+            logger.info(f"Fee estimation for {amount} {asset_id}: {estimation}")
+            return estimation
+        except Exception as e:
+            logger.error(f"Failed to estimate fee for {asset_id}: {e}")
+            raise
+    
+    @classmethod
+    async def get_fee_for_asset(cls, asset_id: str) -> Dict[str, Any]:
+        """Get current network fee for an asset"""
+        try:
+            client = cls.get_client()
+            fee = client.get_fee_for_asset(asset_id)
+            return fee
+        except Exception as e:
+            logger.error(f"Failed to get fee for {asset_id}: {e}")
+            raise
+    
+    # ==================== GAS STATION ====================
+    
+    @classmethod
+    async def get_gas_station_info(cls, asset_id: str = None) -> Dict[str, Any]:
+        """Get Gas Station configuration and balances"""
+        try:
+            client = cls.get_client()
+            info = client.get_gas_station_info(asset_id=asset_id)
+            return info
+        except Exception as e:
+            logger.error(f"Failed to get gas station info: {e}")
+            raise
+    
+    # ==================== EXISTING METHODS ====================
     
     @classmethod
     async def get_transaction(cls, tx_id: str) -> Dict[str, Any]:
@@ -167,27 +363,18 @@ class FireblocksService:
             logger.error(f"Failed to get deposit addresses: {e}")
             raise
 
-
     @classmethod
     async def get_transactions(cls, vault_id: str = None, limit: int = 50) -> List[Dict[str, Any]]:
         """Get transactions for a vault account"""
         try:
             client = cls.get_client()
             
-            # Build filter params
-            params = {}
-            if vault_id:
-                params["source_type"] = "VAULT_ACCOUNT"
-                params["source_id"] = vault_id
-            
-            # Get transactions - this returns a list
             transactions = client.get_transactions(
                 limit=limit,
                 order_by="createdAt",
                 sort="DESC"
             )
             
-            # Filter for our vault if needed
             if vault_id and isinstance(transactions, list):
                 filtered = []
                 for tx in transactions:
@@ -220,22 +407,11 @@ class FireblocksService:
         asset_ids: List[str] = None,
         hidden: bool = False
     ) -> Dict[str, Any]:
-        """
-        Create a vault account and initialize it with multiple asset wallets.
-        
-        Args:
-            name: Name for the vault (e.g., "Cofre Tx anual")
-            asset_ids: List of asset IDs to create (e.g., ["BTC", "ETH", "USDT_ERC20", "USDC"])
-            hidden: Whether to hide vault from UI
-            
-        Returns:
-            Dict with vault info and created assets
-        """
+        """Create a vault account and initialize it with multiple asset wallets."""
         if asset_ids is None:
             asset_ids = ["BTC", "ETH", "USDT_ERC20", "USDC"]
         
         try:
-            # Create the vault
             vault = await cls.create_vault_account(name=name, hidden=hidden)
             vault_id = vault.get('id')
             
@@ -244,13 +420,10 @@ class FireblocksService:
             
             logger.info(f"Created vault '{name}' with ID: {vault_id}")
             
-            # Create assets and get addresses
             created_assets = []
             for asset_id in asset_ids:
                 try:
-                    asset = await cls.create_vault_asset(vault_id=vault_id, asset_id=asset_id)
-                    
-                    # Get the deposit address
+                    asset = await cls.create_vault_asset(vault_id=vault_id, asset_id=asset_id)  # noqa: F841
                     address_info = await cls.get_deposit_address(vault_id=vault_id, asset_id=asset_id)
                     
                     created_assets.append({

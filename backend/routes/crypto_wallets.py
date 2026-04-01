@@ -194,6 +194,12 @@ class WhitelistUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
 
 
+class FeeEstimateRequest(BaseModel):
+    asset: str = Field(..., description="Asset symbol")
+    amount: float = Field(..., gt=0)
+    destination_address: Optional[str] = None
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 def get_fireblocks_asset_id(symbol: str) -> str:
@@ -575,7 +581,7 @@ async def admin_approve_withdrawal(
     request: WithdrawalApprovalRequest,
     admin: dict = Depends(get_admin_user)
 ):
-    """Approve or reject a crypto withdrawal"""
+    """Approve or reject a crypto withdrawal — auto-whitelists address in Fireblocks"""
     withdrawal = await db.crypto_withdrawals.find_one({"id": withdrawal_id})
     
     if not withdrawal:
@@ -617,14 +623,88 @@ async def admin_approve_withdrawal(
             }
         )
         
-        # Execute transaction on Fireblocks
-        tx = await FireblocksService.create_transaction(
-            source_vault_id=withdrawal.get("vault_id"),
-            destination_address=withdrawal.get("destination_address"),
-            asset_id=withdrawal.get("fireblocks_asset_id"),
-            amount=str(withdrawal.get("net_amount")),
-            note=f"KBEX Withdrawal {withdrawal_id}"
-        )
+        dest_address = withdrawal.get("destination_address")
+        asset_symbol = withdrawal.get("asset")
+        fireblocks_asset_id = withdrawal.get("fireblocks_asset_id")
+        user_id = withdrawal.get("user_id")
+        user_email = withdrawal.get("user_email", "unknown")
+        
+        # --- AUTO-WHITELIST FLOW ---
+        # Check if this address is already whitelisted with an External Wallet ID
+        existing_whitelist = await db.crypto_whitelist.find_one({
+            "address": dest_address,
+            "asset": asset_symbol,
+            "fireblocks_external_wallet_id": {"$exists": True, "$ne": None}
+        })
+        
+        external_wallet_id = None
+        
+        if existing_whitelist:
+            external_wallet_id = existing_whitelist.get("fireblocks_external_wallet_id")
+            logger.info(f"Reusing whitelisted external wallet {external_wallet_id} for {dest_address[:12]}...")
+        else:
+            # Create External Wallet in Fireblocks for this address
+            try:
+                wallet_name = f"KBEX-WD-{user_email[:20]}-{asset_symbol}-{dest_address[:8]}"
+                ext_wallet = await FireblocksService.create_external_wallet(
+                    name=wallet_name,
+                    customer_ref_id=f"kbex-{user_id}-{withdrawal_id}"
+                )
+                external_wallet_id = ext_wallet.get("id")
+                
+                # Add the asset address to the External Wallet
+                tag = None  # For assets like XRP that need a tag/memo
+                await FireblocksService.add_asset_to_external_wallet(
+                    wallet_id=external_wallet_id,
+                    asset_id=fireblocks_asset_id,
+                    address=dest_address,
+                    tag=tag
+                )
+                
+                logger.info(f"Auto-whitelisted: External Wallet {external_wallet_id} for {dest_address[:12]}...")
+                
+                # Save to our whitelist DB for reuse
+                whitelist_record = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user_id,
+                    "asset": asset_symbol,
+                    "fireblocks_asset_id": fireblocks_asset_id,
+                    "address": dest_address,
+                    "label": f"Auto-WL {asset_symbol} - {dest_address[:8]}...",
+                    "network": withdrawal.get("network"),
+                    "fireblocks_external_wallet_id": external_wallet_id,
+                    "is_active": True,
+                    "whitelisted_by": admin.get("email"),
+                    "created_at": now,
+                    "updated_at": now
+                }
+                await db.crypto_whitelist.insert_one(whitelist_record)
+                
+            except Exception as wl_error:
+                logger.warning(f"External Wallet creation failed, falling back to one-time address: {wl_error}")
+                external_wallet_id = None
+        
+        # --- EXECUTE TRANSACTION ---
+        if external_wallet_id:
+            # Use whitelisted External Wallet destination
+            tx = await FireblocksService.create_transaction_to_external_wallet(
+                source_vault_id=withdrawal.get("vault_id"),
+                external_wallet_id=external_wallet_id,
+                asset_id=fireblocks_asset_id,
+                amount=str(withdrawal.get("net_amount")),
+                note=f"KBEX Withdrawal {withdrawal_id}",
+                fee_level="MEDIUM"
+            )
+        else:
+            # Fallback to one-time address
+            tx = await FireblocksService.create_transaction(
+                source_vault_id=withdrawal.get("vault_id"),
+                destination_address=dest_address,
+                asset_id=fireblocks_asset_id,
+                amount=str(withdrawal.get("net_amount")),
+                note=f"KBEX Withdrawal {withdrawal_id}",
+                fee_level="MEDIUM"
+            )
         
         # Update with transaction ID
         await db.crypto_withdrawals.update_one(
@@ -633,6 +713,7 @@ async def admin_approve_withdrawal(
                 "$set": {
                     "status": "completed",
                     "fireblocks_tx_id": tx.get("id"),
+                    "fireblocks_external_wallet_id": external_wallet_id,
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }
             }
@@ -643,7 +724,9 @@ async def admin_approve_withdrawal(
         return {
             "success": True,
             "message": "Withdrawal approved and executed",
-            "fireblocks_tx_id": tx.get("id")
+            "fireblocks_tx_id": tx.get("id"),
+            "whitelisted": external_wallet_id is not None,
+            "external_wallet_id": external_wallet_id
         }
         
     except Exception as e:
@@ -1422,3 +1505,307 @@ async def get_deposit_address_by_network(
     except Exception as e:
         logger.error(f"Failed to create {asset_upper} wallet on {network_upper}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create wallet: {str(e)}")
+
+
+# ==================== FEE ESTIMATION ENDPOINTS ====================
+
+@router.post("/estimate-fee")
+async def estimate_withdrawal_fee(
+    request: FeeEstimateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Estimate network fees for a withdrawal at LOW/MEDIUM/HIGH levels"""
+    vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
+    
+    if not vault:
+        raise HTTPException(status_code=404, detail="Crypto wallet not found")
+    
+    fireblocks_asset_id = get_fireblocks_asset_id(request.asset)
+    vault_id = vault.get("fireblocks_vault_id")
+    
+    try:
+        # Try full estimation if we have a destination
+        estimation = None
+        if request.destination_address:
+            try:
+                estimation = await FireblocksService.estimate_transaction_fee(
+                    asset_id=fireblocks_asset_id,
+                    amount=str(request.amount),
+                    source_vault_id=vault_id,
+                    destination_address=request.destination_address
+                )
+            except Exception as est_err:
+                logger.warning(f"Full fee estimation failed: {est_err}")
+        
+        # Fallback: get asset-level fee info
+        fee_info = None
+        try:
+            fee_info = await FireblocksService.get_fee_for_asset(fireblocks_asset_id)
+        except Exception:
+            pass
+        
+        # Parse fee levels from estimation
+        fee_levels = {}
+        if estimation and isinstance(estimation, dict):
+            for level in ["low", "medium", "high"]:
+                level_data = estimation.get(level, {})
+                if isinstance(level_data, dict):
+                    fee_levels[level] = {
+                        "network_fee": level_data.get("networkFee") or level_data.get("feePerByte"),
+                        "gas_price": level_data.get("gasPrice"),
+                        "gas_limit": level_data.get("gasLimit"),
+                        "base_fee": level_data.get("baseFee"),
+                        "priority_fee": level_data.get("priorityFee"),
+                    }
+        
+        # Get KBEX platform fee
+        from routes.trading import get_crypto_fees
+        platform_fees = await get_crypto_fees(request.asset)
+        kbex_fee_percent = platform_fees.withdrawal_fee_percent
+        kbex_fee_amount = request.amount * (kbex_fee_percent / 100)
+        
+        return {
+            "asset": request.asset.upper(),
+            "amount": request.amount,
+            "fee_levels": fee_levels,
+            "fee_info": fee_info,
+            "kbex_fee": {
+                "percent": kbex_fee_percent,
+                "amount": kbex_fee_amount
+            },
+            "recommended_level": "MEDIUM",
+            "raw_estimation": estimation
+        }
+        
+    except Exception as e:
+        logger.error(f"Fee estimation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Fee estimation failed: {str(e)}")
+
+
+@router.get("/network-fees/{asset}")
+async def get_network_fee_info(asset: str):
+    """Get current network fee for an asset"""
+    fireblocks_asset_id = get_fireblocks_asset_id(asset)
+    
+    try:
+        fee_info = await FireblocksService.get_fee_for_asset(fireblocks_asset_id)
+        
+        return {
+            "asset": asset.upper(),
+            "fireblocks_asset_id": fireblocks_asset_id,
+            "fee_info": fee_info
+        }
+    except Exception as e:
+        logger.error(f"Failed to get network fee for {asset}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get fee: {str(e)}")
+
+
+# ==================== GAS STATION MONITORING ====================
+
+@router.get("/admin/gas-station")
+async def admin_get_gas_station(
+    admin: dict = Depends(get_admin_user)
+):
+    """Get Gas Station info and balances — monitor gas funding for EVM tokens"""
+    try:
+        # Get Gas Station config from Fireblocks
+        gas_info = await FireblocksService.get_gas_station_info()
+        
+        # Get ETH gas station info specifically
+        eth_gas_info = None
+        try:
+            eth_gas_info = await FireblocksService.get_gas_station_info(asset_id="ETH")
+        except Exception:
+            pass
+        
+        # Find the GAS STATION vault in our Fireblocks account
+        # The user has a vault named "GAS STATION"
+        gas_vault_balance = None
+        try:
+            accounts = await FireblocksService.get_vault_accounts()
+            for acc in accounts:
+                name = (acc.get("name") or "").upper()
+                if "GAS STATION" in name or "GAS_STATION" in name or "GASSTATION" in name:
+                    gas_vault_balance = {
+                        "vault_id": acc.get("id"),
+                        "vault_name": acc.get("name"),
+                        "assets": []
+                    }
+                    for asset in acc.get("assets", []):
+                        total = float(asset.get("total", 0))
+                        if total > 0 or asset.get("id") in ["ETH", "BNB_BSC", "MATIC_POLYGON"]:
+                            gas_vault_balance["assets"].append({
+                                "asset_id": asset.get("id"),
+                                "total": total,
+                                "available": float(asset.get("available", 0)),
+                                "pending": float(asset.get("pending", 0)),
+                            })
+                    break
+        except Exception as e:
+            logger.error(f"Failed to fetch gas station vault: {e}")
+        
+        # Determine health status
+        health = "healthy"
+        warnings = []
+        if gas_vault_balance:
+            for asset in gas_vault_balance["assets"]:
+                if asset["asset_id"] == "ETH" and asset["available"] < 0.05:
+                    health = "critical" if asset["available"] < 0.01 else "low"
+                    warnings.append(f"ETH balance low: {asset['available']} ETH — ERC20 transfers may fail")
+                if asset["asset_id"] == "BNB_BSC" and asset["available"] < 0.05:
+                    health = "low" if health == "healthy" else health
+                    warnings.append(f"BNB balance low: {asset['available']} BNB — BEP20 transfers may fail")
+        
+        return {
+            "gas_station_config": gas_info,
+            "eth_gas_info": eth_gas_info,
+            "gas_vault": gas_vault_balance,
+            "health": health,
+            "warnings": warnings,
+            "tips": {
+                "evm_chains": "Gas Station auto-funds gas (ETH/BNB) to user vaults when they send ERC20/BEP20 tokens. Keep the GAS STATION vault funded.",
+                "btc": "BTC network fees are deducted directly from the transaction amount.",
+                "fee_levels": "LOW = slower/cheaper, MEDIUM = balanced, HIGH = faster/expensive. Default: MEDIUM."
+            }
+        }
+    except Exception as e:
+        logger.error(f"Gas station info failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get gas station info: {str(e)}")
+
+
+# ==================== ADMIN EXTERNAL WALLETS ====================
+
+@router.get("/admin/external-wallets")
+async def admin_list_external_wallets(
+    admin: dict = Depends(get_admin_user)
+):
+    """List all External Wallets (whitelisted destinations) in Fireblocks"""
+    try:
+        wallets = await FireblocksService.get_external_wallets()
+        
+        # Also get our DB whitelist for richer data
+        db_whitelist = await db.crypto_whitelist.find(
+            {"fireblocks_external_wallet_id": {"$exists": True}},
+            {"_id": 0}
+        ).to_list(500)
+        
+        # Map DB records by external wallet ID
+        db_map = {}
+        for entry in db_whitelist:
+            fw_id = entry.get("fireblocks_external_wallet_id")
+            if fw_id:
+                db_map[fw_id] = entry
+        
+        # Enrich wallets with DB data
+        enriched = []
+        for w in wallets:
+            wallet_id = w.get("id")
+            db_entry = db_map.get(wallet_id, {})
+            enriched.append({
+                "fireblocks_wallet_id": wallet_id,
+                "name": w.get("name"),
+                "assets": w.get("assets", []),
+                "customer_ref_id": w.get("customerRefId"),
+                # DB data
+                "user_id": db_entry.get("user_id"),
+                "label": db_entry.get("label"),
+                "whitelisted_by": db_entry.get("whitelisted_by"),
+                "created_at": db_entry.get("created_at"),
+                "is_active": db_entry.get("is_active", True),
+            })
+        
+        return {"external_wallets": enriched, "count": len(enriched)}
+    except Exception as e:
+        logger.error(f"Failed to list external wallets: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/admin/external-wallets/{wallet_id}")
+async def admin_delete_external_wallet(
+    wallet_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete an External Wallet from Fireblocks and deactivate in DB"""
+    try:
+        # Delete from Fireblocks
+        await FireblocksService.delete_external_wallet(wallet_id)
+        
+        # Deactivate in DB
+        await db.crypto_whitelist.update_many(
+            {"fireblocks_external_wallet_id": wallet_id},
+            {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"success": True, "message": f"External wallet {wallet_id} removed"}
+    except Exception as e:
+        logger.error(f"Failed to delete external wallet {wallet_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/whitelist-address")
+async def admin_whitelist_address(
+    request: WhitelistAddressRequest,
+    admin: dict = Depends(get_admin_user)
+):
+    """Admin: Manually whitelist an address by creating an External Wallet in Fireblocks"""
+    fireblocks_asset_id = get_fireblocks_asset_id(request.asset)
+    
+    # Check if already whitelisted
+    existing = await db.crypto_whitelist.find_one({
+        "address": request.address,
+        "asset": request.asset.upper(),
+        "fireblocks_external_wallet_id": {"$exists": True, "$ne": None}
+    })
+    
+    if existing:
+        return {
+            "success": False,
+            "message": "Address already whitelisted",
+            "external_wallet_id": existing.get("fireblocks_external_wallet_id")
+        }
+    
+    try:
+        # Create External Wallet in Fireblocks
+        ext_wallet = await FireblocksService.create_external_wallet(
+            name=f"KBEX-{request.label}-{request.asset}",
+            customer_ref_id=f"kbex-admin-{request.label}"
+        )
+        external_wallet_id = ext_wallet.get("id")
+        
+        # Add asset address
+        tag = None
+        await FireblocksService.add_asset_to_external_wallet(
+            wallet_id=external_wallet_id,
+            asset_id=fireblocks_asset_id,
+            address=request.address,
+            tag=tag
+        )
+        
+        # Save to DB
+        now = datetime.now(timezone.utc).isoformat()
+        whitelist_record = {
+            "id": str(uuid.uuid4()),
+            "user_id": None,
+            "asset": request.asset.upper(),
+            "fireblocks_asset_id": fireblocks_asset_id,
+            "address": request.address,
+            "label": request.label,
+            "network": request.network,
+            "fireblocks_external_wallet_id": external_wallet_id,
+            "is_active": True,
+            "whitelisted_by": admin.get("email"),
+            "created_at": now,
+            "updated_at": now
+        }
+        await db.crypto_whitelist.insert_one(whitelist_record)
+        
+        return {
+            "success": True,
+            "message": "Address whitelisted in Fireblocks",
+            "external_wallet_id": external_wallet_id,
+            "whitelist_id": whitelist_record["id"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to whitelist address: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to whitelist: {str(e)}")
