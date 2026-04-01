@@ -129,6 +129,14 @@ class ProofRequest(BaseModel):
     amount: Optional[float] = None
     asset: Optional[str] = None
 
+class OwnershipSignatureSubmit(BaseModel):
+    signature: str
+
+class ProofOfReservesCheck(BaseModel):
+    wallet_address: str
+    required_amount: float
+    asset: str = "BTC"
+
 class CommissionUpdate(BaseModel):
     status: str
 
@@ -444,12 +452,48 @@ async def update_kyt(deal_id: str, kyt: KYTAnalysisUpdate, user_id: str = Depend
 
 @router.post("/deals/{deal_id}/compliance/satoshi-test")
 async def start_satoshi_test(deal_id: str, test: SatoshiTestCreate, user_id: str = Depends(get_current_user_id)):
-    """Start a Satoshi/AB test"""
+    """Start a Satoshi/AB test using Fireblocks KBEX SAToshis vault"""
     db = get_db()
     import random
+
     test_amount = round(random.uniform(0.00001, 0.00009), 8)
-    # Generate a verification address (mock for now)
-    verification_address = f"bc1q{uuid.uuid4().hex[:32]}"
+    verification_address = None
+    fireblocks_vault_id = None
+    address_source = "mock"
+
+    # Try to generate a real Fireblocks address
+    try:
+        from services.fireblocks_service import FireblocksService
+        # Get or create the "KBEX SAToshis" vault config
+        satoshi_config = await db.satoshi_vault_config.find_one({}, {"_id": 0})
+
+        if not satoshi_config:
+            # Create the vault in Fireblocks
+            vault = await FireblocksService.create_vault_account(name="KBEX SAToshis", hidden=False)
+            fireblocks_vault_id = vault.get("id")
+            # Create BTC asset in the vault
+            await FireblocksService.create_vault_asset(vault_id=fireblocks_vault_id, asset_id="BTC")
+            # Save config
+            await db.satoshi_vault_config.insert_one({
+                "fireblocks_vault_id": fireblocks_vault_id,
+                "vault_name": "KBEX SAToshis",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            logger.info(f"Created KBEX SAToshis vault: {fireblocks_vault_id}")
+        else:
+            fireblocks_vault_id = satoshi_config["fireblocks_vault_id"]
+
+        # Generate a new deposit address for this test
+        client = FireblocksService.get_client()
+        new_addr = client.generate_new_address(vault_account_id=fireblocks_vault_id, asset_id="BTC")
+        verification_address = new_addr.get("address", "")
+        address_source = "fireblocks"
+        logger.info(f"Generated Satoshi test address: {verification_address} in vault {fireblocks_vault_id}")
+
+    except Exception as e:
+        logger.warning(f"Fireblocks unavailable for Satoshi test, using mock: {e}")
+        verification_address = f"bc1q{uuid.uuid4().hex[:32]}"
+        address_source = "mock"
 
     test_doc = {
         "status": "pending",
@@ -457,6 +501,8 @@ async def start_satoshi_test(deal_id: str, test: SatoshiTestCreate, user_id: str
         "verification_address": verification_address,
         "test_type": test.test_type,
         "source_address": test.source_address,
+        "fireblocks_vault_id": fireblocks_vault_id,
+        "address_source": address_source,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "verified_at": None,
     }
@@ -474,13 +520,141 @@ async def start_satoshi_test(deal_id: str, test: SatoshiTestCreate, user_id: str
 
 @router.put("/deals/{deal_id}/compliance/satoshi-test/verify")
 async def verify_satoshi_test(deal_id: str, status: str = "verified", user_id: str = Depends(get_current_user_id)):
-    """Verify Satoshi test result"""
+    """Verify Satoshi test — optionally checks on-chain if Fireblocks address was used"""
+    db = get_db()
+
+    compliance = await db.otc_compliance.find_one({"deal_id": deal_id}, {"_id": 0})
+    sat = compliance.get("satoshi_test", {}) if compliance else {}
+    on_chain_result = None
+
+    # If real Fireblocks address, try on-chain verification
+    if sat.get("address_source") == "fireblocks" and sat.get("verification_address") and sat.get("test_amount"):
+        try:
+            from services.blockchain_service import check_btc_transaction_received
+            on_chain_result = await check_btc_transaction_received(
+                sat["verification_address"], sat["test_amount"]
+            )
+        except Exception as e:
+            logger.warning(f"On-chain check failed: {e}")
+
+    update_fields = {
+        "satoshi_test.status": status,
+        "satoshi_test.verified_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if on_chain_result:
+        update_fields["satoshi_test.on_chain_result"] = on_chain_result
+
+    await db.otc_compliance.update_one({"deal_id": deal_id}, {"$set": update_fields})
+    await recalculate_compliance_status(deal_id)
+    return {"success": True, "on_chain_result": on_chain_result}
+
+
+@router.get("/deals/{deal_id}/compliance/satoshi-test/check-onchain")
+async def check_satoshi_onchain(deal_id: str, user_id: str = Depends(get_current_user_id)):
+    """Check on-chain if the Satoshi test amount was received"""
+    db = get_db()
+    compliance = await db.otc_compliance.find_one({"deal_id": deal_id}, {"_id": 0})
+    if not compliance:
+        raise HTTPException(status_code=404, detail="Compliance não encontrado")
+
+    sat = compliance.get("satoshi_test", {})
+    if not sat.get("verification_address") or not sat.get("test_amount"):
+        raise HTTPException(status_code=400, detail="Teste de Satoshi não iniciado")
+
+    from services.blockchain_service import check_btc_transaction_received
+    result = await check_btc_transaction_received(sat["verification_address"], sat["test_amount"])
+
+    if result.get("received"):
+        await db.otc_compliance.update_one(
+            {"deal_id": deal_id},
+            {"$set": {
+                "satoshi_test.on_chain_result": result,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }}
+        )
+
+    return {"success": True, "result": result}
+
+
+# ==================== PROOF OF OWNERSHIP ====================
+
+@router.post("/deals/{deal_id}/compliance/proof/ownership/request")
+async def request_ownership_proof(deal_id: str, user_id: str = Depends(get_current_user_id)):
+    """Generate a challenge message for Proof of Ownership"""
+    db = get_db()
+    deal = await db.otc_deals.find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Deal não encontrado")
+
+    compliance = await db.otc_compliance.find_one({"deal_id": deal_id})
+    if not compliance:
+        await get_compliance(deal_id, user_id)
+        compliance = await db.otc_compliance.find_one({"deal_id": deal_id})
+
+    # Get the first verified/pending wallet address
+    wallets = compliance.get("wallets", [])
+    wallet_address = wallets[0]["address"] if wallets else "N/A"
+
+    nonce = uuid.uuid4().hex[:12]
+    from services.blockchain_service import generate_ownership_message
+    challenge_message = generate_ownership_message(
+        deal_number=deal.get("deal_number", deal_id),
+        wallet_address=wallet_address,
+        nonce=nonce,
+    )
+
+    proof_doc = {
+        "status": "awaiting_signature",
+        "wallet_address": wallet_address,
+        "challenge_message": challenge_message,
+        "nonce": nonce,
+        "signature": None,
+        "requested_at": datetime.now(timezone.utc).isoformat(),
+        "verified_at": None,
+    }
+
+    await db.otc_compliance.update_one(
+        {"deal_id": deal_id},
+        {"$set": {"proof_of_ownership": proof_doc, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "proof_of_ownership": proof_doc}
+
+
+@router.post("/deals/{deal_id}/compliance/proof/ownership/submit-signature")
+async def submit_ownership_signature(deal_id: str, data: OwnershipSignatureSubmit, user_id: str = Depends(get_current_user_id)):
+    """Submit the signed message for Proof of Ownership"""
+    db = get_db()
+    compliance = await db.otc_compliance.find_one({"deal_id": deal_id}, {"_id": 0})
+    if not compliance:
+        raise HTTPException(status_code=404, detail="Compliance não encontrado")
+
+    poo = compliance.get("proof_of_ownership", {})
+    if poo.get("status") != "awaiting_signature":
+        raise HTTPException(status_code=400, detail="Nenhuma solicitação de assinatura pendente")
+
+    await db.otc_compliance.update_one(
+        {"deal_id": deal_id},
+        {"$set": {
+            "proof_of_ownership.signature": data.signature,
+            "proof_of_ownership.status": "pending_review",
+            "proof_of_ownership.submitted_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }}
+    )
+    return {"success": True, "message": "Assinatura submetida para revisão"}
+
+
+@router.put("/deals/{deal_id}/compliance/proof/ownership/verify")
+async def verify_ownership_proof(deal_id: str, status: str = "verified", user_id: str = Depends(get_current_user_id)):
+    """Admin verifies the ownership proof"""
     db = get_db()
     await db.otc_compliance.update_one(
         {"deal_id": deal_id},
         {"$set": {
-            "satoshi_test.status": status,
-            "satoshi_test.verified_at": datetime.now(timezone.utc).isoformat(),
+            "proof_of_ownership.status": status,
+            "proof_of_ownership.verified_at": datetime.now(timezone.utc).isoformat(),
+            "proof_of_ownership.verified_by": user_id,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }}
     )
@@ -488,15 +662,80 @@ async def verify_satoshi_test(deal_id: str, status: str = "verified", user_id: s
     return {"success": True}
 
 
+# ==================== PROOF OF RESERVES (On-Chain) ====================
+
+@router.post("/deals/{deal_id}/compliance/proof/reserves/check")
+async def check_reserves_onchain(deal_id: str, data: ProofOfReservesCheck, user_id: str = Depends(get_current_user_id)):
+    """Check on-chain balance of client's wallet for Proof of Reserves"""
+    db = get_db()
+
+    from services.blockchain_service import get_btc_address_balance
+    balance_data = await get_btc_address_balance(data.wallet_address)
+
+    if balance_data.get("error"):
+        error_msg = balance_data['error']
+        if "400" in str(error_msg):
+            raise HTTPException(status_code=400, detail="Endereço Bitcoin inválido. Verifique o formato do endereço.")
+        raise HTTPException(status_code=502, detail=f"Erro na verificação on-chain: {error_msg}")
+
+    balance_btc = balance_data.get("confirmed_btc", 0.0)
+    sufficient = balance_btc >= data.required_amount
+
+    proof_doc = {
+        "status": "verified" if sufficient else "insufficient",
+        "wallet_address": data.wallet_address,
+        "required_amount": data.required_amount,
+        "asset": data.asset,
+        "on_chain_balance": balance_btc,
+        "on_chain_confirmed_sat": balance_data.get("confirmed_sat", 0),
+        "utxo_count": balance_data.get("utxo_count", 0),
+        "sufficient": sufficient,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "verified_at": datetime.now(timezone.utc).isoformat() if sufficient else None,
+    }
+
+    await db.otc_compliance.update_one(
+        {"deal_id": deal_id},
+        {"$set": {"proof_of_reserves": proof_doc, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    if sufficient:
+        await recalculate_compliance_status(deal_id)
+
+    return {"success": True, "proof_of_reserves": proof_doc}
+
+
+@router.put("/deals/{deal_id}/compliance/proof/reserves/verify")
+async def verify_reserves_proof(deal_id: str, status: str = "verified", user_id: str = Depends(get_current_user_id)):
+    """Admin manually verifies reserves proof"""
+    db = get_db()
+    await db.otc_compliance.update_one(
+        {"deal_id": deal_id},
+        {"$set": {
+            "proof_of_reserves.status": status,
+            "proof_of_reserves.verified_at": datetime.now(timezone.utc).isoformat(),
+            "proof_of_reserves.verified_by": user_id,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }}
+    )
+    await recalculate_compliance_status(deal_id)
+    return {"success": True}
+
+
+# ==================== LEGACY PROOF ENDPOINTS (backwards compat) ====================
+
 @router.post("/deals/{deal_id}/compliance/proof")
 async def request_proof(deal_id: str, proof: ProofRequest, user_id: str = Depends(get_current_user_id)):
-    """Request Proof of Ownership or Proof of Reserves"""
+    """Request Proof of Ownership or Proof of Reserves (legacy)"""
     db = get_db()
+    if proof.proof_type == "ownership":
+        return await request_ownership_proof(deal_id, user_id)
+
     compliance = await db.otc_compliance.find_one({"deal_id": deal_id})
     if not compliance:
         await get_compliance(deal_id, user_id)
 
-    field = "proof_of_ownership" if proof.proof_type == "ownership" else "proof_of_reserves"
+    field = "proof_of_reserves"
     proof_doc = {
         "status": "pending",
         "wallet_address": proof.wallet_address,
@@ -515,19 +754,10 @@ async def request_proof(deal_id: str, proof: ProofRequest, user_id: str = Depend
 
 @router.put("/deals/{deal_id}/compliance/proof/{proof_type}/verify")
 async def verify_proof(deal_id: str, proof_type: str, status: str = "verified", user_id: str = Depends(get_current_user_id)):
-    """Verify proof of ownership or reserves"""
-    db = get_db()
-    field = "proof_of_ownership" if proof_type == "ownership" else "proof_of_reserves"
-    await db.otc_compliance.update_one(
-        {"deal_id": deal_id},
-        {"$set": {
-            f"{field}.status": status,
-            f"{field}.verified_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }}
-    )
-    await recalculate_compliance_status(deal_id)
-    return {"success": True}
+    """Verify proof of ownership or reserves (legacy)"""
+    if proof_type == "ownership":
+        return await verify_ownership_proof(deal_id, status, user_id)
+    return await verify_reserves_proof(deal_id, status, user_id)
 
 
 async def recalculate_compliance_status(deal_id: str):

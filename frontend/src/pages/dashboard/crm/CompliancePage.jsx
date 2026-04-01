@@ -61,42 +61,114 @@ const CompliancePage = () => {
     } catch (e) { toast.error('Erro'); }
   };
 
+  const [checkingOnChain, setCheckingOnChain] = useState(false);
+  const [signatureInput, setSignatureInput] = useState('');
+  const [reserveWalletInput, setReserveWalletInput] = useState('');
+
   const startSatoshiTest = async () => {
     try {
       const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/satoshi-test`, {
         method: 'POST', headers, body: JSON.stringify({ test_type: 'generated' })
       });
-      if (res.ok) { toast.success('Teste de Satoshi iniciado'); fetchData(); }
-    } catch (e) { toast.error('Erro'); }
+      if (res.ok) {
+        const data = await res.json();
+        const src = data?.satoshi_test?.address_source;
+        toast.success(src === 'fireblocks' ? 'Teste iniciado — Endereço Fireblocks gerado' : 'Teste iniciado');
+        fetchData();
+      }
+    } catch (e) { toast.error('Erro ao iniciar teste'); }
   };
 
   const verifySatoshi = async () => {
     try {
-      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/satoshi-test/verify?status=verified`, { method: 'PUT', headers });
-      toast.success('Teste de Satoshi verificado');
-      fetchData();
-    } catch (e) { toast.error('Erro'); }
-  };
-
-  const requestProof = async (proofType) => {
-    try {
-      const body = { proof_type: proofType };
-      if (proofType === 'reserves' && deal) {
-        body.amount = deal.quantity;
-        body.asset = deal.asset;
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/satoshi-test/verify?status=verified`, { method: 'PUT', headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.on_chain_result?.received) {
+          toast.success(`Verificado on-chain! TX: ${data.on_chain_result.txid?.slice(0,12)}...`);
+        } else {
+          toast.success('Teste de Satoshi verificado manualmente');
+        }
+        fetchData();
       }
-      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof`, {
-        method: 'POST', headers, body: JSON.stringify(body)
+    } catch (e) { toast.error('Erro'); }
+  };
+
+  const checkSatoshiOnChain = async () => {
+    setCheckingOnChain(true);
+    try {
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/satoshi-test/check-onchain`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.result?.received) {
+          toast.success(`Transacção encontrada! TX: ${data.result.txid?.slice(0,16)}...`);
+        } else {
+          toast.info('Transacção ainda não detectada on-chain');
+        }
+        fetchData();
+      }
+    } catch (e) { toast.error('Erro na verificação on-chain'); }
+    finally { setCheckingOnChain(false); }
+  };
+
+  // Proof of Ownership
+  const requestOwnershipProof = async () => {
+    try {
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/ownership/request`, {
+        method: 'POST', headers,
       });
-      toast.success('Verificação solicitada');
+      if (res.ok) { toast.success('Mensagem de desafio gerada'); fetchData(); }
+    } catch (e) { toast.error('Erro'); }
+  };
+
+  const submitOwnershipSignature = async () => {
+    if (!signatureInput.trim()) { toast.error('Cole a assinatura'); return; }
+    try {
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/ownership/submit-signature`, {
+        method: 'POST', headers, body: JSON.stringify({ signature: signatureInput.trim() })
+      });
+      if (res.ok) { toast.success('Assinatura submetida'); setSignatureInput(''); fetchData(); }
+    } catch (e) { toast.error('Erro'); }
+  };
+
+  const verifyOwnershipProof = async () => {
+    try {
+      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/ownership/verify?status=verified`, { method: 'PUT', headers });
+      toast.success('Proof of Ownership verificado');
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
 
-  const verifyProof = async (proofType) => {
+  // Proof of Reserves
+  const checkReservesOnChain = async () => {
+    const walletAddr = reserveWalletInput.trim() || compliance?.wallets?.[0]?.address;
+    if (!walletAddr) { toast.error('Insira o endereço da carteira'); return; }
+    setCheckingOnChain(true);
     try {
-      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/${proofType}/verify?status=verified`, { method: 'PUT', headers });
-      toast.success('Prova verificada');
+      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/reserves/check`, {
+        method: 'POST', headers, body: JSON.stringify({
+          wallet_address: walletAddr,
+          required_amount: deal?.quantity || 0,
+          asset: deal?.asset || 'BTC',
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.proof_of_reserves?.sufficient) {
+          toast.success(`Reservas verificadas! Saldo: ${data.proof_of_reserves.on_chain_balance} BTC`);
+        } else {
+          toast.warning(`Saldo insuficiente: ${data.proof_of_reserves?.on_chain_balance || 0} BTC (necessário: ${deal?.quantity} BTC)`);
+        }
+        fetchData();
+      }
+    } catch (e) { toast.error('Erro na verificação on-chain'); }
+    finally { setCheckingOnChain(false); }
+  };
+
+  const verifyReservesProof = async () => {
+    try {
+      await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/reserves/verify?status=verified`, { method: 'PUT', headers });
+      toast.success('Proof of Reserves verificado');
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
@@ -146,8 +218,8 @@ const CompliancePage = () => {
               { label: 'Carteiras', status: compliance?.wallets?.length > 0 && compliance.wallets.every(w => w.status === 'verified') ? 'pass' : compliance?.wallets?.some(w => w.status === 'verified') ? 'partial' : 'pending' },
               { label: 'KYT', status: compliance?.kyt?.status === 'clean' ? 'pass' : compliance?.kyt?.status === 'flagged' ? 'warn' : 'pending' },
               { label: 'Teste Satoshi', status: compliance?.satoshi_test?.status === 'verified' ? 'pass' : compliance?.satoshi_test?.status === 'pending' ? 'partial' : 'pending' },
-              { label: 'Proof of Ownership', status: compliance?.proof_of_ownership?.status === 'verified' ? 'pass' : compliance?.proof_of_ownership?.status === 'pending' ? 'partial' : 'pending' },
-              { label: 'Proof of Reserves', status: compliance?.proof_of_reserves?.status === 'verified' ? 'pass' : compliance?.proof_of_reserves?.status === 'pending' ? 'partial' : 'pending' },
+              { label: 'Proof of Ownership', status: compliance?.proof_of_ownership?.status === 'verified' ? 'pass' : ['pending_review', 'awaiting_signature', 'pending'].includes(compliance?.proof_of_ownership?.status) ? 'partial' : 'pending' },
+              { label: 'Proof of Reserves', status: compliance?.proof_of_reserves?.status === 'verified' ? 'pass' : ['pending', 'insufficient'].includes(compliance?.proof_of_reserves?.status) ? 'partial' : 'pending' },
             ].map((check, i) => (
               <div key={i} className="flex items-center gap-2">
                 {check.status === 'pass' ? (
@@ -303,6 +375,9 @@ const CompliancePage = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-white flex items-center gap-2 text-base">
               <Target className="text-cyan-400" size={18} /> Teste de Satoshi (AB Test)
+              {compliance?.satoshi_test?.address_source === 'fireblocks' && (
+                <Badge className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[10px] ml-auto">Fireblocks</Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -318,7 +393,7 @@ const CompliancePage = () => {
                     <p className="text-orange-400 font-mono font-bold text-lg">{compliance?.satoshi_test?.test_amount} BTC</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500 text-xs mb-1">Endereço KBEX</p>
+                    <p className="text-zinc-500 text-xs mb-1">Endereço KBEX {compliance?.satoshi_test?.address_source === 'fireblocks' ? '(Fireblocks)' : ''}</p>
                     <div className="flex items-center gap-2">
                       <code className="text-yellow-400 text-xs font-mono bg-zinc-900 px-2 py-1 rounded flex-1 truncate">{compliance?.satoshi_test?.verification_address}</code>
                       <button onClick={() => copyToClipboard(compliance?.satoshi_test?.verification_address)} className="p-1.5 bg-zinc-800 rounded hover:bg-zinc-700">
@@ -326,11 +401,24 @@ const CompliancePage = () => {
                       </button>
                     </div>
                   </div>
+                  {compliance?.satoshi_test?.on_chain_result?.received && (
+                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs">
+                      <p className="text-emerald-400">TX encontrada on-chain</p>
+                      <p className="text-zinc-400 font-mono mt-1">{compliance?.satoshi_test?.on_chain_result?.txid?.slice(0,32)}...</p>
+                    </div>
+                  )}
                 </div>
                 {compliance?.satoshi_test?.status === 'pending' ? (
-                  <Button onClick={verifySatoshi} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" data-testid="verify-satoshi">
-                    <CheckCircle size={14} className="mr-2" /> Marcar como Verificado
-                  </Button>
+                  <div className="space-y-2">
+                    {compliance?.satoshi_test?.address_source === 'fireblocks' && (
+                      <Button onClick={checkSatoshiOnChain} disabled={checkingOnChain} className="w-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30" variant="outline" data-testid="check-satoshi-onchain">
+                        <FileSearch size={14} className="mr-2" /> {checkingOnChain ? 'A verificar...' : 'Verificar On-Chain'}
+                      </Button>
+                    )}
+                    <Button onClick={verifySatoshi} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" data-testid="verify-satoshi">
+                      <CheckCircle size={14} className="mr-2" /> Marcar como Verificado
+                    </Button>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -352,52 +440,143 @@ const CompliancePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Proof of Ownership */}
+            {/* Proof of Ownership — Message Signing */}
             <div className="p-4 bg-zinc-950 rounded-lg border border-zinc-800 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="text-blue-400" size={16} />
                   <span className="text-white font-medium text-sm">Proof of Ownership</span>
                 </div>
-                {statusIcon(compliance?.proof_of_ownership?.status)}
+                {statusIcon(compliance?.proof_of_ownership?.status === 'awaiting_signature' || compliance?.proof_of_ownership?.status === 'pending_review' ? 'pending' : compliance?.proof_of_ownership?.status)}
               </div>
-              {compliance?.proof_of_ownership?.status === 'not_started' && (
-                <Button onClick={() => requestProof('ownership')} className="w-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30" size="sm" data-testid="request-ownership">
-                  <Send size={14} className="mr-2" /> Solicitar
+
+              {/* Not started — Request challenge */}
+              {(!compliance?.proof_of_ownership?.status || compliance?.proof_of_ownership?.status === 'not_started') && (
+                <Button onClick={requestOwnershipProof} className="w-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/30" size="sm" data-testid="request-ownership">
+                  <Send size={14} className="mr-2" /> Gerar Mensagem de Desafio
                 </Button>
               )}
-              {compliance?.proof_of_ownership?.status === 'pending' && (
-                <Button onClick={() => verifyProof('ownership')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" size="sm" data-testid="verify-ownership">
-                  <CheckCircle size={14} className="mr-2" /> Verificar
-                </Button>
+
+              {/* Awaiting Signature — Show challenge + signature input */}
+              {compliance?.proof_of_ownership?.status === 'awaiting_signature' && (
+                <div className="space-y-3">
+                  <div className="bg-zinc-900 p-3 rounded border border-blue-500/20">
+                    <p className="text-zinc-500 text-xs mb-1">Mensagem a Assinar:</p>
+                    <pre className="text-blue-300 text-xs font-mono whitespace-pre-wrap break-all">{compliance?.proof_of_ownership?.challenge_message}</pre>
+                    <button onClick={() => copyToClipboard(compliance?.proof_of_ownership?.challenge_message)} className="mt-2 flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
+                      <Copy size={12} /> Copiar mensagem
+                    </button>
+                  </div>
+                  <p className="text-zinc-500 text-xs">O cliente deve assinar esta mensagem com a chave privada da carteira e devolver a assinatura.</p>
+                  <div>
+                    <Label className="text-zinc-400 text-xs uppercase">Assinatura do Cliente</Label>
+                    <Input
+                      value={signatureInput}
+                      onChange={e => setSignatureInput(e.target.value)}
+                      className="bg-zinc-900 border-zinc-700 text-white font-mono text-xs mt-1"
+                      placeholder="Cole a assinatura aqui (base64 ou hex)..."
+                      data-testid="ownership-signature-input"
+                    />
+                  </div>
+                  <Button onClick={submitOwnershipSignature} className="w-full bg-blue-600 hover:bg-blue-500 text-white" size="sm" data-testid="submit-ownership-signature">
+                    <Send size={14} className="mr-2" /> Submeter Assinatura
+                  </Button>
+                </div>
+              )}
+
+              {/* Pending Review — Admin can verify */}
+              {compliance?.proof_of_ownership?.status === 'pending_review' && (
+                <div className="space-y-3">
+                  <div className="bg-zinc-900 p-3 rounded border border-yellow-500/20">
+                    <p className="text-zinc-500 text-xs mb-1">Assinatura Submetida:</p>
+                    <code className="text-yellow-400 text-xs font-mono break-all">{compliance?.proof_of_ownership?.signature?.slice(0, 80)}...</code>
+                    <p className="text-zinc-500 text-xs mt-2">Carteira: <span className="text-zinc-300 font-mono">{compliance?.proof_of_ownership?.wallet_address}</span></p>
+                  </div>
+                  <Button onClick={verifyOwnershipProof} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" size="sm" data-testid="verify-ownership">
+                    <CheckCircle size={14} className="mr-2" /> Aprovar Assinatura
+                  </Button>
+                </div>
+              )}
+
+              {/* Verified */}
+              {compliance?.proof_of_ownership?.status === 'verified' && (
+                <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded">
+                  <CheckCircle className="text-emerald-400" size={16} />
+                  <span className="text-emerald-400 text-sm">Propriedade Verificada</span>
+                </div>
               )}
             </div>
 
-            {/* Proof of Reserves */}
+            {/* Proof of Reserves — On-Chain */}
             <div className="p-4 bg-zinc-950 rounded-lg border border-yellow-500/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Lock className="text-yellow-500" size={16} />
                   <span className="text-white font-medium text-sm">Proof of Reserves</span>
+                  <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">On-Chain</Badge>
                 </div>
                 {statusIcon(compliance?.proof_of_reserves?.status)}
               </div>
-              <p className="text-zinc-500 text-xs">Obrigatório antes da execução</p>
+              <p className="text-zinc-500 text-xs">Obrigatório antes da execução — Verificação on-chain via Blockstream</p>
+
               {deal && (
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">Reservas Necessárias</span>
                   <span className="text-white font-medium">{deal.quantity} {deal.asset}</span>
                 </div>
               )}
-              {compliance?.proof_of_reserves?.status === 'not_started' && (
-                <Button onClick={() => requestProof('reserves')} className="w-full bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30" size="sm" data-testid="request-reserves">
-                  <Send size={14} className="mr-2" /> Solicitar Verificação
-                </Button>
+
+              {/* Show on-chain result if available */}
+              {compliance?.proof_of_reserves?.on_chain_balance != null && (
+                <div className={`p-3 rounded border text-sm ${compliance?.proof_of_reserves?.sufficient ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Saldo On-Chain</span>
+                    <span className={compliance?.proof_of_reserves?.sufficient ? 'text-emerald-400 font-mono font-bold' : 'text-red-400 font-mono font-bold'}>
+                      {compliance?.proof_of_reserves?.on_chain_balance} BTC
+                    </span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-zinc-500 text-xs">UTXOs</span>
+                    <span className="text-zinc-400 text-xs">{compliance?.proof_of_reserves?.utxo_count}</span>
+                  </div>
+                  {compliance?.proof_of_reserves?.wallet_address && (
+                    <p className="text-zinc-500 text-xs mt-1 font-mono truncate">{compliance?.proof_of_reserves?.wallet_address}</p>
+                  )}
+                </div>
               )}
+
+              {/* Not started or insufficient — show verification form */}
+              {(!compliance?.proof_of_reserves?.status || compliance?.proof_of_reserves?.status === 'not_started' || compliance?.proof_of_reserves?.status === 'insufficient') && (
+                <div className="space-y-2">
+                  <div>
+                    <Label className="text-zinc-400 text-xs uppercase">Endereço da Carteira do Cliente</Label>
+                    <Input
+                      value={reserveWalletInput}
+                      onChange={e => setReserveWalletInput(e.target.value)}
+                      className="bg-zinc-900 border-zinc-700 text-white font-mono text-xs mt-1"
+                      placeholder={compliance?.wallets?.[0]?.address || 'bc1q...'}
+                      data-testid="reserves-wallet-input"
+                    />
+                  </div>
+                  <Button onClick={checkReservesOnChain} disabled={checkingOnChain} className="w-full bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30" size="sm" data-testid="check-reserves-onchain">
+                    <FileSearch size={14} className="mr-2" /> {checkingOnChain ? 'A verificar...' : 'Verificar Saldo On-Chain'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Pending manual verification */}
               {compliance?.proof_of_reserves?.status === 'pending' && (
-                <Button onClick={() => verifyProof('reserves')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" size="sm" data-testid="verify-reserves">
+                <Button onClick={verifyReservesProof} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" size="sm" data-testid="verify-reserves">
                   <CheckCircle size={14} className="mr-2" /> Verificar
                 </Button>
+              )}
+
+              {/* Verified */}
+              {compliance?.proof_of_reserves?.status === 'verified' && (
+                <div className="flex items-center gap-2 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded">
+                  <CheckCircle className="text-emerald-400" size={16} />
+                  <span className="text-emerald-400 text-sm">Reservas Verificadas</span>
+                </div>
               )}
             </div>
           </CardContent>
