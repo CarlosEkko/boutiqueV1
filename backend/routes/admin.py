@@ -10,7 +10,11 @@ from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from passlib.context import CryptContext
 import uuid
+import os
 import secrets
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -128,6 +132,22 @@ async def create_internal_user(
     }
     
     await db.users.insert_one(new_user)
+
+    # Send welcome email with role and region info
+    try:
+        from services.email_service import email_service
+        frontend_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+        await email_service.send_team_member_welcome(
+            to_email=user_data.email,
+            to_name=user_data.name,
+            internal_role=user_data.internal_role,
+            region=user_data.region,
+            temp_password=user_data.password,
+            frontend_url=frontend_url,
+        )
+        logger.info(f"Welcome email sent to new team member: {user_data.email}")
+    except Exception as e:
+        logger.warning(f"Failed to send welcome email to {user_data.email}: {e}")
     
     return {
         "success": True,

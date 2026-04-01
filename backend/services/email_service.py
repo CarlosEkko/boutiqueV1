@@ -360,5 +360,95 @@ class BrevoEmailService:
         return result.get("webhooks", []) if isinstance(result, dict) else []
 
 
+    async def send_team_member_welcome(
+        self,
+        to_email: str,
+        to_name: str,
+        internal_role: str,
+        region: str,
+        temp_password: str,
+        frontend_url: str = "https://kbex.io",
+    ) -> Dict[str, Any]:
+        """Send welcome email to a new internal team member with role and region info."""
+
+        role_labels = {
+            "admin": "Administrador",
+            "global_manager": "Gestor Global",
+            "manager": "Gestor",
+            "sales_manager": "Gestor de Vendas",
+            "sales": "Vendas",
+            "finance_general": "Finanças (Geral)",
+            "finance_local": "Finanças (Local)",
+            "finance": "Finanças",
+            "support_manager": "Gestor de Suporte",
+            "support_agent": "Agente de Suporte",
+            "local_manager": "Gestor Local",
+            "support": "Suporte",
+        }
+
+        region_labels = {
+            "europe": "Europa",
+            "mena": "Médio Oriente & Norte de África",
+            "latam": "América Latina",
+            "global": "Global",
+        }
+
+        role_display = role_labels.get(internal_role, internal_role)
+        region_display = region_labels.get(region, region)
+
+        subject = f"KBEX.io — Bem-vindo à Equipa | {role_display}"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="pt">
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #e4e4e7; background-color: #0a0a0a; margin: 0; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #18181b; border-radius: 12px; padding: 40px; border: 1px solid #d4af3720;">
+                <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #d4af37; padding-bottom: 20px;">
+                    <h1 style="color: #D4AF37; font-size: 28px; margin: 0;">KBEX.io</h1>
+                    <p style="color: #a1a1aa; font-size: 12px; margin: 5px 0 0;">Boutique Digital Assets Exchange</p>
+                </div>
+
+                <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 10px;">Bem-vindo à Equipa, {to_name}</h2>
+                <p style="color: #a1a1aa; font-size: 14px;">A sua conta interna foi criada com sucesso na plataforma KBEX.</p>
+
+                <div style="background: #09090b; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Função</td>
+                            <td style="padding: 10px 0; color: #D4AF37; font-weight: bold; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{role_display}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Região</td>
+                            <td style="padding: 10px 0; color: #ffffff; font-weight: 500; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{region_display}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Email</td>
+                            <td style="padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{to_email}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px;">Password Temporária</td>
+                            <td style="padding: 10px 0; color: #ef4444; font-family: monospace; font-size: 15px; text-align: right;">{temp_password}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <p style="color: #fbbf24; font-size: 12px; background: #78350f20; border: 1px solid #78350f40; border-radius: 6px; padding: 12px; margin: 20px 0;">
+                    Por razões de segurança, altere a sua password no primeiro acesso.
+                </p>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{frontend_url}/login" style="display: inline-block; background: linear-gradient(135deg, #D4AF37, #B8860B); color: #000; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; font-size: 14px;">Aceder à Plataforma</a>
+                </div>
+
+                <p style="color: #71717a; font-size: 12px; text-align: center;">Se tiver dúvidas, contacte o administrador da plataforma.</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        return await self.send_email(to_email, to_name, subject, html_content)
+
+
 # Global instance
 email_service = BrevoEmailService()
