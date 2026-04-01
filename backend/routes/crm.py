@@ -65,6 +65,9 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
             "message": "O seu pedido já foi recebido. A nossa equipa entrará em contacto brevemente."
         }
 
+    # Check if email already registered as user — still create lead for CRM tracking
+    existing_user = await db.users.find_one({"email": {"$regex": f"^{lead_data.email}$", "$options": "i"}})
+
     now = datetime.now(timezone.utc)
     doc = {
         "name": lead_data.name,
@@ -78,12 +81,13 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
         "qualification_score": 0,
         "interested_cryptos": [],
         "preferred_currency": "EUR",
-        "tags": ["website", "solicitar-acesso"],
+        "tags": ["website", "solicitar-acesso"] + (["existing-user"] if existing_user else []),
         "created_at": now,
         "updated_at": now,
         "created_by": "public_website",
         "converted_to_client": False,
         "converted_at": None,
+        "user_already_registered": bool(existing_user),
     }
 
     await db.crm_leads.insert_one(doc)
@@ -387,12 +391,51 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
     
     # Check if user already exists
     existing_user = await db.users.find_one({"email": {"$regex": f"^{lead_email}$", "$options": "i"}})
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Este email já tem uma conta registada na plataforma")
     
     # Build registration link
     import os
     base_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+    
+    email_sent = False
+    
+    if existing_user:
+        # User already exists — send onboarding/welcome email instead of blocking
+        try:
+            from services.email_service import email_service
+            if email_service:
+                registration_link = f"{base_url}/login"
+                email_result = await email_service.send_onboarding_email(
+                    to_email=lead_email,
+                    to_name=lead_name,
+                    entity_name=lead.get("company_name") or lead_name,
+                    registration_link=registration_link,
+                )
+                email_sent = email_result.get("success", False)
+        except Exception as e:
+            logger.warning(f"Failed to send onboarding email to existing user: {e}")
+        
+        # Update lead status
+        await db.crm_leads.update_one(
+            {"_id": ObjectId(lead_id)},
+            {"$set": {
+                "status": LeadStatus.QUALIFIED.value,
+                "registration_email_sent": True,
+                "registration_email_sent_at": datetime.now(timezone.utc).isoformat(),
+                "notes_history": lead.get("notes_history", []) + [{
+                    "note": f"Utilizador já registado. Email de onboarding reenviado.",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }],
+                "updated_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        return {
+            "success": True,
+            "message": f"Utilizador já registado. Email de onboarding enviado para {lead_email}",
+            "email_sent": email_sent,
+            "already_registered": True,
+        }
+    
     registration_link = f"{base_url}/register?email={lead_email}"
     
     # Send onboarding email via Brevo

@@ -132,6 +132,30 @@ async def get_pending_notifications(user: dict = Depends(get_internal_user)):
             "link": "/dashboard/otc/leads"
         })
     
+    # 10. New CRM Leads (awaiting action)
+    new_leads = await db.crm_leads.count_documents({"status": {"$in": ["new", "contacted"]}})
+    if new_leads > 0:
+        notifications.append({
+            "type": "crm_lead",
+            "title": "Leads CRM Pendentes",
+            "count": new_leads,
+            "icon": "UserPlus",
+            "color": "cyan",
+            "link": "/dashboard/crm"
+        })
+
+    # 11. New OTC Leads (awaiting action)
+    new_otc_leads = await db.otc_leads.count_documents({"status": {"$in": ["new", "contacted", "pre_qualified"]}})
+    if new_otc_leads > 0:
+        notifications.append({
+            "type": "otc_lead",
+            "title": "Leads OTC Pendentes",
+            "count": new_otc_leads,
+            "icon": "Briefcase",
+            "color": "orange",
+            "link": "/dashboard/otc/leads"
+        })
+    
     # Calculate total
     total_count = sum(n["count"] for n in notifications)
     
@@ -155,5 +179,7 @@ async def get_notifications_summary(user: dict = Depends(get_internal_user)):
     total += await db.bank_accounts.count_documents({"status": "pending"})
     total += await db.tickets.count_documents({"status": {"$in": ["open", "in_progress"]}})
     total += await db.otc_deals.count_documents({"status": "awaiting_quote"})
+    total += await db.crm_leads.count_documents({"status": {"$in": ["new", "contacted"]}})
+    total += await db.otc_leads.count_documents({"status": {"$in": ["new", "contacted", "pre_qualified"]}})
     
     return {"total": total}
