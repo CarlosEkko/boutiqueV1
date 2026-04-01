@@ -27,17 +27,27 @@ def get_db():
 
 from routes.auth import get_current_user
 
-# Azure AD config
-TENANT_ID = os.environ.get("AZURE_TENANT_ID", "")
-CLIENT_ID = os.environ.get("AZURE_CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("AZURE_CLIENT_SECRET", "")
-REDIRECT_URI = os.environ.get("AZURE_REDIRECT_URI", "")
+# Azure AD config — read at request time to support Docker env injection
+def get_azure_config():
+    return {
+        "tenant_id": os.environ.get("AZURE_TENANT_ID", ""),
+        "client_id": os.environ.get("AZURE_CLIENT_ID", ""),
+        "client_secret": os.environ.get("AZURE_CLIENT_SECRET", ""),
+        "redirect_uri": os.environ.get("AZURE_REDIRECT_URI", ""),
+    }
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
-AUTH_URL = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/authorize"
-TOKEN_URL = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
 
 SCOPES = "offline_access openid profile email Mail.ReadWrite Mail.Send Calendars.ReadWrite Tasks.ReadWrite User.Read"
+
+
+def get_auth_url_base():
+    cfg = get_azure_config()
+    return f"https://login.microsoftonline.com/{cfg['tenant_id']}/oauth2/v2.0/authorize"
+
+def get_token_url():
+    cfg = get_azure_config()
+    return f"https://login.microsoftonline.com/{cfg['tenant_id']}/oauth2/v2.0/token"
 
 
 # ==================== HELPERS ====================
@@ -61,16 +71,17 @@ async def get_o365_token(user_id: str) -> Optional[dict]:
 
 async def refresh_o365_token(user_id: str, refresh_token: str) -> Optional[dict]:
     """Refresh an expired O365 access token."""
+    cfg = get_azure_config()
     data = {
         "grant_type": "refresh_token",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        "client_id": cfg["client_id"],
+        "client_secret": cfg["client_secret"],
         "refresh_token": refresh_token,
         "scope": SCOPES,
     }
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(TOKEN_URL, data=data)
+            resp = await client.post(get_token_url(), data=data)
             if resp.status_code != 200:
                 logger.error(f"O365 token refresh failed: {resp.text}")
                 return None
@@ -125,8 +136,12 @@ async def graph_request(method: str, endpoint: str, access_token: str, **kwargs)
 # ==================== OAUTH2 ====================
 
 @router.get("/auth/url")
-async def get_auth_url(current_user=Depends(get_current_user)):
+async def get_o365_auth_url(current_user=Depends(get_current_user)):
     """Generate Microsoft OAuth2 authorization URL."""
+    cfg = get_azure_config()
+    if not cfg["client_id"] or not cfg["tenant_id"]:
+        raise HTTPException(status_code=500, detail="Azure AD não configurado. Defina AZURE_TENANT_ID e AZURE_CLIENT_ID.")
+
     state = str(uuid.uuid4())
     db = get_db()
     await db.o365_states.update_one(
@@ -136,15 +151,15 @@ async def get_auth_url(current_user=Depends(get_current_user)):
     )
 
     params = {
-        "client_id": CLIENT_ID,
+        "client_id": cfg["client_id"],
         "response_type": "code",
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": cfg["redirect_uri"],
         "scope": SCOPES,
         "state": state,
         "response_mode": "query",
         "prompt": "consent",
     }
-    url = f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
+    url = f"{get_auth_url_base()}?{urllib.parse.urlencode(params)}"
     return {"auth_url": url}
 
 
@@ -157,6 +172,7 @@ class OAuthCallbackRequest(BaseModel):
 async def oauth_callback(data: OAuthCallbackRequest, current_user=Depends(get_current_user)):
     """Exchange authorization code for tokens and store them."""
     db = get_db()
+    cfg = get_azure_config()
 
     state_doc = await db.o365_states.find_one({"user_id": current_user.id, "state": data.state})
     if not state_doc:
@@ -164,15 +180,15 @@ async def oauth_callback(data: OAuthCallbackRequest, current_user=Depends(get_cu
 
     token_data_req = {
         "grant_type": "authorization_code",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-        "redirect_uri": REDIRECT_URI,
+        "client_id": cfg["client_id"],
+        "client_secret": cfg["client_secret"],
+        "redirect_uri": cfg["redirect_uri"],
         "code": data.code,
         "scope": SCOPES,
     }
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(TOKEN_URL, data=token_data_req)
+        resp = await client.post(get_token_url(), data=token_data_req)
         if resp.status_code != 200:
             logger.error(f"O365 token exchange failed: {resp.text}")
             raise HTTPException(status_code=400, detail=f"Falha na autenticação: {resp.json().get('error_description', resp.text)}")

@@ -51,6 +51,10 @@ services:
       - STRIPE_API_KEY=${STRIPE_API_KEY:-}
       - FRONTEND_URL=${FRONTEND_URL:-https://kbex.io}
       - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-}
+      - AZURE_REDIRECT_URI=${AZURE_REDIRECT_URI:-}
     volumes:
       - backend_uploads:/app/uploads
       - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
