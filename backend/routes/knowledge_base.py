@@ -16,6 +16,7 @@ from models.knowledge_base import (
 from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from utils.turnstile import verify_turnstile
+from utils.rate_limit import check_rate_limit
 from routes.admin import get_admin_user
 
 router = APIRouter(prefix="/kb", tags=["Knowledge Base"])
@@ -229,6 +230,9 @@ class PublicTicketCreate(BaseModel):
 async def create_public_ticket(ticket_data: PublicTicketCreate, request: Request):
     """Create a support ticket without authentication (public form)"""
     import re
+
+    # Rate limit: 5 requests per minute per IP
+    check_rate_limit(request, max_requests=5, window_seconds=60)
 
     # Verify Turnstile
     if ticket_data.turnstile_token:

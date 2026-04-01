@@ -12,6 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from utils.turnstile import verify_turnstile
+from utils.rate_limit import check_rate_limit
 
 from models.crm import (
     SupplierCreate, SupplierUpdate, SupplierResponse,
@@ -41,6 +42,9 @@ class PublicLeadRequest(BaseModel):
 @router.post("/leads/public")
 async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
     """Create a CRM lead from the public website - no auth required"""
+    # Rate limit: 5 requests per minute per IP
+    check_rate_limit(request, max_requests=5, window_seconds=60)
+
     # Verify Turnstile
     if lead_data.turnstile_token:
         client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)

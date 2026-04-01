@@ -5,6 +5,7 @@ from models.user import UserCreate, UserLogin, UserResponse, TokenResponse, User
 from utils.auth import get_password_hash, verify_password, create_access_token, get_current_user_id
 from utils.i18n import t, I18n
 from utils.turnstile import verify_turnstile
+from utils.rate_limit import check_rate_limit
 from pydantic import BaseModel
 import pyotp
 import qrcode
@@ -39,6 +40,9 @@ class TwoFAVerifyRequest(BaseModel):
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, request: Request, lang: str = Depends(get_lang)):
     """Register a new user."""
+    # Rate limit: 5 requests per minute per IP
+    check_rate_limit(request, max_requests=5, window_seconds=60)
+
     # Verify Turnstile
     if user_data.turnstile_token:
         client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
@@ -150,6 +154,9 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin, request: Request, lang: str = Depends(get_lang)):
     """Login with email and password."""
+    # Rate limit: 10 requests per minute per IP
+    check_rate_limit(request, max_requests=10, window_seconds=60)
+
     # Verify Turnstile
     if credentials.turnstile_token:
         client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
