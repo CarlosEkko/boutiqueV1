@@ -414,11 +414,10 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
         except Exception as e:
             logger.warning(f"Failed to send onboarding email to existing user: {e}")
         
-        # Update lead status
+        # Update lead — send email but keep current status
         await db.crm_leads.update_one(
             {"_id": ObjectId(lead_id)},
             {"$set": {
-                "status": LeadStatus.QUALIFIED.value,
                 "registration_email_sent": True,
                 "registration_email_sent_at": datetime.now(timezone.utc).isoformat(),
                 "notes_history": lead.get("notes_history", []) + [{
