@@ -192,6 +192,11 @@ class CryptoFees(BaseModel):
     min_sell_fee: float = 5.0
     min_swap_fee: float = 3.0
     
+    # Withdrawal fees
+    withdrawal_fee_percent: float = 0.1  # 0.1% withdrawal fee
+    network_fee: float = 0.0001  # Network fee in asset units (e.g. BTC)
+    min_withdrawal: float = 0.001  # Minimum withdrawal amount
+    
     # Status
     is_active: bool = True
     
@@ -210,6 +215,9 @@ class CryptoFeesUpdate(BaseModel):
     min_buy_fee: Optional[float] = None
     min_sell_fee: Optional[float] = None
     min_swap_fee: Optional[float] = None
+    withdrawal_fee_percent: Optional[float] = None
+    network_fee: Optional[float] = None
+    min_withdrawal: Optional[float] = None
     is_active: Optional[bool] = None
 
 

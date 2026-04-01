@@ -6,42 +6,53 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 ## Stack
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, MongoDB (Motor)
-- Deploy: Docker, Docker-Compose (VPS do user)
-- CDN/WAF: Cloudflare (dominio verificado, Turnstile, WAF, Full Strict SSL)
+- Deploy: Docker, Docker-Compose (VPS OVH)
+- CDN/WAF: Cloudflare (Turnstile, WAF, Full Strict SSL)
+- Custody: Fireblocks SDK 2.17.0
 
 ## Funcionalidades Implementadas
 
-### Compliance Forense OTC (Actualizado 01/04/2026)
-- **Teste de Satoshi (AB Test)**: Endereços reais gerados via Fireblocks SDK no vault "KBEX SAToshis" (ID: 71). Cada teste gera um novo endereço BTC. Verificação on-chain via Blockstream API.
-- **Proof of Ownership**: Sistema challenge-response com assinatura criptográfica. Gera mensagem única → Cliente assina → Admin verifica.
-- **Proof of Reserves**: Verificação on-chain automática via Blockstream API. Consulta UTXOs e saldo confirmado do endereço do cliente. Compara com montante necessário do deal.
+### Fireblocks Integration (Actualizado 01/04/2026)
+- **Satoshi Test**: Vault "KBEX SAToshis" (ID: 71) com endereços BTC reais. Verificação on-chain via Blockstream.
+- **Proof of Ownership**: Challenge-response com assinatura criptográfica.
+- **Proof of Reserves**: Verificação on-chain automática via Blockstream API (UTXOs).
+- **Crypto Withdrawals (Payout)**: Fluxo completo — Cliente pede → Admin aprova → Fireblocks executa transação real via `create_transaction()` com `DestinationTransferPeerPath`.
+- **KYC Gate**: Carteiras/cofres só podem ser criados após aprovação KYC/KYB.
 
-### Traduções (Actualizado 01/04/2026)
-- 4 idiomas completos: EN, PT, AR, FR
-- Todas as secções traduzidas incluindo securityDashboard, riskCompliance
+### Notificações Admin (Actualizado 01/04/2026)
+- Leads CRM Pendentes (new, contacted)
+- Leads OTC Pendentes (new, contacted, pre_qualified)
+- Depósitos, Levantamentos, KYC, Tickets, Cotações OTC
 
-### Security Dashboard
-- Dashboard interno Admin com KPIs em tempo real (24h/7d/30d)
-- Gráfico actividade, Top IPs Suspeitos, Tabela de eventos, IP Blacklist
-- Backend: 7 endpoints REST, logging automático de eventos
+### Emails Brevo (Actualizado 01/04/2026)
+- Email de boas-vindas a novos membros da equipa (com função e região)
+- Onboarding de leads — permite reenviar mesmo que user já exista (sem alterar status da lead)
 
-### Segurança Cloudflare
-- Turnstile em 4 páginas, Security Headers, Rate Limiting, Cloudflare IP validation
-- WAF: 5 Custom Rules, Bot Fight Mode, SSL Full Strict, DNSSEC, Page Rules
+### O365 Integration
+- Config dinâmica (não estática no import-time)
+- Variáveis Azure no docker-compose.yml
 
-### Risk & Compliance
-- Departamento separado, Risk Dashboard, KYT Forensic, CompliancePage Read-Only
+### Security
+- Cloudflare Turnstile, Rate Limiting, Security Headers
+- Admin Security Dashboard
 
-### OTC Deals & Comissões, CRM, Cofres Multi-Sign
+### Trading, OTC, CRM, Cofres Multi-Sign, Risk & Compliance
 - Todos completos e operacionais
 
+## Organização Fireblocks
+- 72 vaults totais
+- 11 vaults KBEX sistema (Omnibus, SAToshis, VAULT KBEX, GAS STATION, etc.)
+- ~15 vaults clientes KBEX nomeados
+- ~47 vaults legacy Kryptobox (33 vazios, 14 com dust)
+
 ## Issues Conhecidos
-- P2: Safari cursor bug (recorrente 19+)
+- P2: Safari cursor bug (recorrente)
 
 ## Backlog
 - P1: TradingView chart widgets
-- P2: WebSockets para preços crypto (substituir polling 1s)
+- P2: WebSockets para preços crypto
 - P2: Whitelist functionality
+- P2: Organizar/ocultar vaults legacy Fireblocks
 - P3: Launchpad e ICO pages
 - P3: App mobile
 

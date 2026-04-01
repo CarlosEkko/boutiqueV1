@@ -5,7 +5,7 @@ Handles wallet creation, balance queries, and transactions via Fireblocks API
 import os
 import logging
 from typing import Optional, Dict, List, Any
-from fireblocks_sdk import FireblocksSDK, TransferPeerPath, PagedVaultAccountsRequestFilters, VAULT_ACCOUNT, TRANSACTION_STATUS_COMPLETED
+from fireblocks_sdk import FireblocksSDK, TransferPeerPath, DestinationTransferPeerPath, PagedVaultAccountsRequestFilters, VAULT_ACCOUNT, ONE_TIME_ADDRESS, TRANSACTION_STATUS_COMPLETED
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -135,9 +135,7 @@ class FireblocksService:
                 asset_id=asset_id,
                 amount=amount,
                 source=TransferPeerPath(VAULT_ACCOUNT, source_vault_id),
-                destination=TransferPeerPath("ONE_TIME_ADDRESS", one_time_address={
-                    "address": destination_address
-                }),
+                destination=DestinationTransferPeerPath(ONE_TIME_ADDRESS, None, {"address": destination_address}),
                 note=note
             )
             
