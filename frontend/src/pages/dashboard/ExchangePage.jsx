@@ -20,8 +20,10 @@ import {
   RefreshCw,
   Copy,
   ArrowRight,
-  ChevronDown
+  ChevronDown,
+  Info
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -773,7 +775,24 @@ const ExchangePage = () => {
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">{t('dashboard.fiatWithdrawal.fee')}</span>
+                        <span className="text-gray-400 flex items-center gap-1">
+                          Taxa KBEX
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
+                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-zinc-300 text-xs leading-relaxed">
+                                  Além da taxa exibida, um spread pode estar incluído no preço. 
+                                  Qualquer spread é calculado antes de a transação ser submetida 
+                                  e pode diferir para transações semelhantes.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
                         <span className="text-gray-300">{formatCurrency(buyPreview.fee)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -843,7 +862,24 @@ const ExchangePage = () => {
                         <span className="text-white">{formatCurrency(sellPreview.grossAmount)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa</span>
+                        <span className="text-gray-400 flex items-center gap-1">
+                          Taxa KBEX
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
+                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-zinc-300 text-xs leading-relaxed">
+                                  Além da taxa exibida, um spread pode estar incluído no preço. 
+                                  Qualquer spread é calculado antes de a transação ser submetida 
+                                  e pode diferir para transações semelhantes.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
                         <span className="text-gray-300">-{formatCurrency(sellPreview.fee)}</span>
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
@@ -944,7 +980,24 @@ const ExchangePage = () => {
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa</span>
+                        <span className="text-gray-400 flex items-center gap-1">
+                          Taxa KBEX
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
+                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-zinc-300 text-xs leading-relaxed">
+                                  Além da taxa exibida, um spread pode estar incluído no preço. 
+                                  Qualquer spread é calculado antes de a transação ser submetida 
+                                  e pode diferir para transações semelhantes.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
                         <span className="text-gray-300">{formatCurrency(swapPreview.fee)}</span>
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">

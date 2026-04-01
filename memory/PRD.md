@@ -12,35 +12,37 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ## Funcionalidades Implementadas
 
+### Exchange — Taxa KBEX & Tooltip (01/04/2026)
+- "Fee" substituído por "Taxa KBEX" com ícone (i) e tooltip explicativo sobre spread
+- Tooltip aplicado a Buy, Sell e Swap previews
+- Texto: "Além da taxa exibida, um spread pode estar incluído no preço..."
+
+### OTC Deals — Corretor KBEX & USDT Fix (01/04/2026)
+- "Membro KBEX" substituído por "Corretor KBEX" em labels e calculadora
+- USDT/USDC reference price fix: stablecoins retornam $1.00
+- Quantidade e preço formatados com FormattedNumberInput (100 000)
+- Calculadora mostra valores com separadores de espaço (€600 182.28)
+
+### Compliance — Traduções & Hover (01/04/2026)
+- Tabs traduzidos: "Prova de Propriedade", "Prova de Reservas"
+- Carteiras de Negociação com hover animation (shadow dourado, border gold)
+- Análise forense inline: KYT status badge (Limpo/Sinalizado/Pendente) e Score
+
 ### Fireblocks — Auto-Whitelist, Fees & Gas Station (01/04/2026)
-- **Auto-Whitelist na Aprovação**: Admin aprova withdrawal → sistema cria External Wallet Fireblocks automaticamente → reutiliza se já existir → fallback ONE_TIME_ADDRESS
-- **Fee Estimation**: `POST /api/crypto-wallets/estimate-fee` — fees LOW/MEDIUM/HIGH + KBEX platform fee
-- **Network Fees**: `GET /api/crypto-wallets/network-fees/{asset}` — consulta rápida
-- **Gas Station Monitor**: Integrado no Dashboard Financeiro com health badges, saldos, avisos
-- **Alertas Brevo**: Email automático quando Gas Station está crítico/baixo, cooldown 6h anti-spam
-- **Admin External Wallets**: Listar, criar, eliminar External Wallets Fireblocks
-- **Admin Manual Whitelist**: `POST /api/crypto-wallets/admin/whitelist-address`
+- Auto-Whitelist na aprovação de withdrawals
+- Fee Estimation endpoints (LOW/MEDIUM/HIGH + KBEX fee)
+- Gas Station Monitor no Dashboard Financeiro com alertas Brevo
 
 ### OTC Leads CRM (01/04/2026)
-- Telefone obrigatório, Fonte (8 opções), Tipo "Ambos", Prevenção duplicados
-- Modal edição (notas, liquidação, tier potencial, volumes), FormattedNumberInput
+- 7 bugs corrigidos: telefone obrigatório, fonte, "ambos", duplicados, edição, tier, milhares
 
-### Fireblocks — Compliance (Anterior)
-- Satoshi Test, Proof of Ownership, On-Chain Proof of Reserves
-- KYC Gate para vaults, Crypto Withdrawals com aprovação admin
-
-### Emails (Brevo)
-- Boas-vindas equipa, Onboarding leads, CRM, Gas Station alerts
-
-### O365, Security, Trading, OTC, CRM, Multi-Sign, Risk & Compliance
-- Todos completos e operacionais
+### Anteriores
+- Fireblocks Compliance (Satoshi Test, PoO, PoR)
+- Microsoft 365 OAuth, Brevo emails, KYC Gate
+- Trading, CRM, Multi-Sign, Risk & Compliance — Completos
 
 ## Gas Station Status
-- Health: CRITICAL
-- ETH: 6.66e-06 (min: 0.02) — CRÍTICO
-- BNB_BSC: 0 (min: 0.02) — CRÍTICO
-- TRX: 1e-06 (min: 10) — CRÍTICO
-- MATIC_POLYGON: 0 (min: 1.0) — CRÍTICO
+- Health: CRITICAL (ETH e BNB quase zero)
 
 ## Issues Conhecidos
 - P2: Safari cursor bug (recorrente)
@@ -49,8 +51,7 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - P1: TradingView chart widgets
 - P2: WebSockets para preços crypto
 - P2: Frontend Whitelist management UI
-- P3: Launchpad e ICO pages
-- P3: App mobile
+- P3: Launchpad/ICO, App mobile
 
 ## Credenciais
 - Admin: carlos@kbex.io / senha123

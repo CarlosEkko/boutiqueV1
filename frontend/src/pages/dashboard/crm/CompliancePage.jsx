@@ -250,9 +250,9 @@ const CompliancePage = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {compliance?.wallets?.map(w => (
-              <div key={w.id} className="flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+              <div key={w.id} className="group flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800 transition-all duration-200 hover:border-gold-500/40 hover:shadow-lg hover:shadow-gold-500/5 hover:bg-zinc-900/80 cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
                     <Bitcoin className="text-orange-400" size={16} />
                   </div>
                   <div>
@@ -260,6 +260,17 @@ const CompliancePage = () => {
                     <div className="flex gap-2 mt-1">
                       <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">{w.blockchain}</Badge>
                       <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">{w.wallet_type}</Badge>
+                      {/* KYT forensic analysis inline */}
+                      {w.kyt_status && (
+                        <Badge className={`text-[10px] ${w.kyt_status === 'clean' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : w.kyt_status === 'flagged' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/20' : 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20'}`}>
+                          {w.kyt_status === 'clean' ? 'Limpo' : w.kyt_status === 'flagged' ? 'Sinalizado' : 'Pendente'}
+                        </Badge>
+                      )}
+                      {w.kyt_score > 0 && (
+                        <Badge className={`text-[10px] font-mono ${w.kyt_score > 60 ? 'bg-emerald-500/15 text-emerald-400' : w.kyt_score > 30 ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'}`}>
+                          Score: {w.kyt_score}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
