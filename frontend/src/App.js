@@ -38,7 +38,8 @@ import {
   AdminSettings,
   AdminReferrals,
   AdminAdmissionFees,
-  AdminClientMenus
+  AdminClientMenus,
+  SecurityDashboardPage
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -199,6 +200,7 @@ function AppRoutes() {
         <Route path="admin/opportunities" element={<AdminOpportunities />} />
         <Route path="admin/transparency" element={<AdminTransparency />} />
         <Route path="admin/invites" element={<AdminInvites />} />
+        <Route path="admin/security" element={<SecurityDashboardPage />} />
         <Route path="admin/kyc" element={<AdminKYC />} />
         <Route path="admin/trading" element={<AdminTradingPage />} />
         <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />

@@ -5,11 +5,11 @@ import time
 from collections import defaultdict
 from fastapi import HTTPException, Request
 import threading
+import asyncio
 
 _lock = threading.Lock()
 _requests: dict = defaultdict(list)
 
-# Cleanup old entries every 5 minutes
 _last_cleanup = time.time()
 CLEANUP_INTERVAL = 300
 
@@ -41,10 +41,22 @@ def check_rate_limit(request: Request, max_requests: int = 10, window_seconds: i
 
     with _lock:
         _cleanup()
-        # Remove expired timestamps
         _requests[key] = [t for t in _requests[key] if now - t < window_seconds]
 
         if len(_requests[key]) >= max_requests:
+            # Log rate limit event asynchronously
+            try:
+                from utils.security_logger import log_security_event
+                asyncio.ensure_future(log_security_event(
+                    event_type="rate_limit",
+                    client_ip=client_ip,
+                    endpoint=path,
+                    details={"limit": max_requests, "window": window_seconds},
+                    severity="high"
+                ))
+            except Exception:
+                pass
+
             raise HTTPException(
                 status_code=429,
                 detail=f"Demasiadas tentativas. Tente novamente em {window_seconds} segundos."

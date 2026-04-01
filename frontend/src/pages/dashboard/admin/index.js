@@ -19,3 +19,4 @@ export { default as AdminSettings } from './AdminSettings';
 export { default as AdminReferrals } from './AdminReferrals';
 export { default as AdminAdmissionFees } from './AdminAdmissionFees';
 export { default as AdminClientMenus } from './AdminClientMenus';
+export { default as SecurityDashboardPage } from './SecurityDashboardPage';

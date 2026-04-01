@@ -219,6 +219,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/opportunities", "label": "Oportunidades", "icon": "TrendingUp"},
             {"path": "/dashboard/admin/transparency", "label": "Transparência", "icon": "Shield"},
             {"path": "/dashboard/admin/invites", "label": "Códigos Convite", "icon": "Gift"},
+            {"path": "/dashboard/admin/security", "label": "Security Dashboard", "icon": "ShieldAlert"},
         ]
     },
     Department.MANAGEMENT: {

@@ -70,6 +70,8 @@ from routes.omnibus import router as omnibus_router, set_db as set_omnibus_db
 from routes.admin_multisign import router as admin_multisign_router, set_db as set_admin_multisign_db
 from routes.otc_deals import router as otc_deals_router, set_db as set_otc_deals_db
 from routes.risk_compliance import router as risk_compliance_router, set_db as set_risk_compliance_db
+from routes.security import router as security_router, set_db as set_security_db
+from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
 set_dashboard_db(db)
@@ -98,6 +100,8 @@ set_omnibus_db(db)
 set_admin_multisign_db(db)
 set_otc_deals_db(db)
 set_risk_compliance_db(db)
+set_security_db(db)
+set_security_logger_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -129,6 +133,7 @@ api_router.include_router(omnibus_router)
 api_router.include_router(admin_multisign_router)
 api_router.include_router(otc_deals_router)
 api_router.include_router(risk_compliance_router)
+api_router.include_router(security_router)
 
 
 # Define Models
@@ -355,7 +360,7 @@ def is_cloudflare_ip(ip_str: str) -> bool:
 
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
-    """Cloudflare proxy trust + Security headers"""
+    """Cloudflare proxy trust + Security headers + IP Blacklist"""
     # --- Extract real client IP ---
     proxy_ip = request.client.host if request.client else "unknown"
     cf_ip = request.headers.get("CF-Connecting-IP")
@@ -367,6 +372,25 @@ async def security_middleware(request: Request, call_next):
         request.state.client_ip = xff.split(",")[0].strip()
     else:
         request.state.client_ip = proxy_ip
+
+    # --- IP Blacklist Check (skip WebSocket and static) ---
+    if not request.url.path.startswith("/uploads") and "ws" not in request.url.path:
+        try:
+            if await is_ip_blacklisted(request.state.client_ip):
+                import asyncio
+                asyncio.ensure_future(log_security_event(
+                    event_type="blacklist_blocked",
+                    client_ip=request.state.client_ip,
+                    endpoint=request.url.path,
+                    severity="high"
+                ))
+                from starlette.responses import JSONResponse
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Acesso bloqueado."}
+                )
+        except Exception:
+            pass
 
     response = await call_next(request)
 

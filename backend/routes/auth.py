@@ -6,6 +6,7 @@ from utils.auth import get_password_hash, verify_password, create_access_token, 
 from utils.i18n import t, I18n
 from utils.turnstile import verify_turnstile
 from utils.rate_limit import check_rate_limit
+from utils.security_logger import log_security_event
 from pydantic import BaseModel
 import pyotp
 import qrcode
@@ -161,12 +162,15 @@ async def login(credentials: UserLogin, request: Request, lang: str = Depends(ge
     if credentials.turnstile_token:
         client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else None)
         if not await verify_turnstile(credentials.turnstile_token, client_ip):
+            await log_security_event("turnstile_rejected", client_ip, "/api/auth/login", email=credentials.email, severity="high")
             raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
 
     # Find user by email
     user_doc = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     
     if not user_doc:
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else "unknown")
+        await log_security_event("failed_login", client_ip, "/api/auth/login", details={"reason": "user_not_found"}, email=credentials.email, severity="medium")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=t("auth.invalid_credentials", lang)
@@ -174,6 +178,8 @@ async def login(credentials: UserLogin, request: Request, lang: str = Depends(ge
     
     # Verify password
     if not verify_password(credentials.password, user_doc["hashed_password"]):
+        client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else "unknown")
+        await log_security_event("failed_login", client_ip, "/api/auth/login", details={"reason": "wrong_password"}, email=credentials.email, severity="medium")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=t("auth.invalid_credentials", lang)
