@@ -56,9 +56,9 @@ export const FormattedNumberInput = ({ value, onChange, className, placeholder, 
     setDisplayValue(formatDisplay(raw));
   }, [displayValue]);
 
-  // On focus, keep formatted
-  const handleFocus = useCallback(() => {
-    // nothing special needed
+  // On focus, select all for easy overwrite
+  const handleFocus = useCallback((e) => {
+    e.target.select();
   }, []);
 
   // Sync if value prop changes externally
