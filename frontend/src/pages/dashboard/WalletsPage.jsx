@@ -379,7 +379,7 @@ const WalletsPage = () => {
             )}
             {!isFiatWallet && (wallet.balance || 0) === 0 && cryptoPrice > 0 && (
               <p className="text-sm text-gray-400">
-                Preço: {formatCurrency(cryptoPrice)}
+                {t('dashboard.wallets.price')}: {formatCurrency(cryptoPrice)}
               </p>
             )}
             {isFiatWallet && wallet.asset_id !== currency && (
@@ -419,7 +419,7 @@ const WalletsPage = () => {
           {isFiatWallet && (
             <div className="bg-emerald-900/20 rounded-lg p-3">
               <p className="text-xs text-emerald-400">
-                Depósito via transferência bancária
+                {t('dashboard.wallets.depositViaBank')}
               </p>
             </div>
           )}
@@ -427,11 +427,11 @@ const WalletsPage = () => {
           {/* Available/Pending */}
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-400">Disponível</p>
+              <p className="text-gray-400">{t('dashboard.wallets.available')}</p>
               <p className="text-white">{isFiatWallet && fiatSymbols[wallet.asset_id]}{formatBalance(wallet.available_balance, wallet.asset_id)}</p>
             </div>
             <div>
-              <p className="text-gray-400">Pendente</p>
+              <p className="text-gray-400">{t('dashboard.wallets.pending')}</p>
               <p className={isFiatWallet ? 'text-emerald-400' : 'text-gold-400'}>
                 {isFiatWallet && fiatSymbols[wallet.asset_id]}{formatBalance(wallet.pending_balance, wallet.asset_id)}
               </p>
@@ -728,7 +728,7 @@ const WalletsPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-400 mb-1">Saldo</p>
+                <p className="text-sm text-gray-400 mb-1">{t('dashboard.wallets.balance', 'Saldo')}</p>
                 <p className="text-3xl font-light text-white">
                   {isFiat(selectedWallet.asset_id) && fiatSymbols[selectedWallet.asset_id]}
                   {formatBalance(selectedWallet.balance, selectedWallet.asset_id)} 
@@ -778,7 +778,7 @@ const WalletsPage = () => {
 
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-400">
-                      Endereço de Depósito
+                      {t('dashboard.wallets.depositAddress')}
                       {selectedNetwork && ` (${selectedNetwork.network})`}
                     </p>
                     {selectedWallet.address && (
@@ -787,7 +787,7 @@ const WalletsPage = () => {
                         className="flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300"
                       >
                         <QrCode size={14} />
-                        {showQRCode ? 'Ocultar QR' : 'Mostrar QR'}
+                        {showQRCode ? t('dashboard.wallets.hideQR', 'Ocultar QR') : t('dashboard.wallets.showQR', 'Mostrar QR')}
                       </button>
                     )}
                   </div>
@@ -862,14 +862,14 @@ const WalletsPage = () => {
                       onClick={() => window.location.href = '/dashboard/fiat-deposit'}
                       data-testid="deposit-btn"
                     >
-                      Depositar
+                      {t('dashboard.wallets.deposit', 'Depositar')}
                     </Button>
                     <Button 
                       className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white"
                       onClick={() => window.location.href = '/dashboard/fiat-withdraw'}
                       data-testid="withdraw-btn"
                     >
-                      Sacar
+                      {t('dashboard.wallets.withdraw', 'Sacar')}
                     </Button>
                   </div>
                 ) : (
@@ -882,7 +882,7 @@ const WalletsPage = () => {
                         data-testid="deposit-crypto-btn"
                       >
                         <ArrowDownLeft size={18} className="mr-2" />
-                        Depositar
+                        {t('dashboard.wallets.deposit', 'Depositar')}
                       </Button>
                       <Button 
                         className="bg-amber-600 hover:bg-amber-500 h-12"
@@ -890,7 +890,7 @@ const WalletsPage = () => {
                         data-testid="withdraw-crypto-btn"
                       >
                         <ArrowUpRight size={18} className="mr-2" />
-                        Levantar
+                        {t('dashboard.wallets.withdraw', 'Levantar')}
                       </Button>
                     </div>
                     
@@ -903,7 +903,7 @@ const WalletsPage = () => {
                         data-testid="buy-crypto-btn"
                       >
                         <TrendingUp size={18} className="mr-2" />
-                        Comprar
+                        {t('dashboard.wallets.buy', 'Comprar')}
                       </Button>
                       <Button 
                         variant="outline"
@@ -912,7 +912,7 @@ const WalletsPage = () => {
                         data-testid="sell-crypto-btn"
                       >
                         <TrendingDown size={18} className="mr-2" />
-                        Vender
+                        {t('dashboard.wallets.sell', 'Vender')}
                       </Button>
                     </div>
                   </div>

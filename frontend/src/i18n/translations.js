@@ -324,7 +324,9 @@ const translations = {
         refresh: 'Refresh',
         add: 'Add',
         price: 'Price',
-        depositAddress: 'Deposit Address'
+        depositAddress: 'Deposit Address',
+        showQR: 'Show QR',
+        hideQR: 'Hide QR',
       },
       // Exchange
       exchange: {
@@ -1453,7 +1455,9 @@ const translations = {
         refresh: 'Atualizar',
         add: 'Adicionar',
         price: 'Preço',
-        depositAddress: 'Endereço de Depósito'
+        depositAddress: 'Endereço de Depósito',
+        showQR: 'Mostrar QR',
+        hideQR: 'Ocultar QR',
       },
       // Exchange
       exchange: {
@@ -2577,7 +2581,9 @@ const translations = {
         refresh: 'تحديث',
         add: 'إضافة',
         price: 'السعر',
-        depositAddress: 'عنوان الإيداع'
+        depositAddress: 'عنوان الإيداع',
+        showQR: 'إظهار QR',
+        hideQR: 'إخفاء QR',
       },
       exchange: {
         title: 'التداول',
@@ -3677,7 +3683,9 @@ const translations = {
         refresh: 'Actualiser',
         add: 'Ajouter',
         price: 'Prix',
-        depositAddress: 'Adresse de Dépôt'
+        depositAddress: 'Adresse de Dépôt',
+        showQR: 'Afficher QR',
+        hideQR: 'Masquer QR',
       },
       exchange: {
         title: 'Exchange',
