@@ -191,6 +191,7 @@ const labelTranslationMap = {
   'Risk & Compliance': 'sidebar.riskCompliance',
   'Dashboard Risco': 'sidebar.dashboardRisco',
   'KYT Forensic': 'sidebar.kytForensic',
+  'Security Dashboard': 'sidebar.securityDashboard',
 };
 
 const DashboardLayout = () => {
