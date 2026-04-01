@@ -392,7 +392,7 @@ const WalletsPage = () => {
           {/* Address (only for crypto) */}
           {!isFiatWallet && wallet.address && (
             <div className="bg-zinc-800/50 rounded-lg p-3">
-              <p className="text-xs text-gray-400 mb-1">Deposit Address</p>
+              <p className="text-xs text-gray-400 mb-1">{t('dashboard.wallets.depositAddress')}</p>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-white font-mono truncate max-w-[180px]">
                   {wallet.address}

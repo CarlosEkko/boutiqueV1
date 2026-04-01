@@ -4,7 +4,10 @@ import translations from './translations';
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('PT');
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('kbex_language');
+    return saved && translations[saved] ? saved : 'PT';
+  });
   
   const t = useCallback((key, fallback = null) => {
     const keys = key.split('.');
@@ -14,11 +17,9 @@ export const LanguageProvider = ({ children }) => {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        // Return fallback if provided, otherwise return the key
         if (fallback !== null) {
           return fallback;
         }
-        console.warn(`Translation key not found: ${key}`);
         return key;
       }
     }
@@ -29,7 +30,7 @@ export const LanguageProvider = ({ children }) => {
   const changeLanguage = useCallback((lang) => {
     if (translations[lang]) {
       setLanguage(lang);
-      // Update document direction for RTL languages
+      localStorage.setItem('kbex_language', lang);
       document.documentElement.dir = lang === 'AR' ? 'rtl' : 'ltr';
       document.documentElement.lang = lang.toLowerCase();
     }
