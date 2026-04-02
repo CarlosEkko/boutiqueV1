@@ -64,6 +64,21 @@ class BrevoEmailService:
             "onboard_regards": "Com os melhores cumprimentos,",
             "onboard_team": "Equipa KBEX.io",
             "regions": "Europa | Médio Oriente | Brasil",
+            # Team
+            "team_subject": "Bem-vindo à Equipa",
+            "team_welcome": "Bem-vindo à Equipa,",
+            "team_account_created": "A sua conta interna foi criada com sucesso na plataforma KBEX.",
+            "team_role": "Função",
+            "team_region": "Região",
+            "team_email": "Email",
+            "team_temp_password": "Password Temporária",
+            "team_security_warning": "Por razões de segurança, altere a sua password no primeiro acesso.",
+            "team_access_button": "Aceder à Plataforma",
+            "team_questions": "Se tiver dúvidas, contacte o administrador da plataforma.",
+            # KYC
+            "kyc_subject": "Atualização de Documentos Necessária",
+            "kyc_intro": "Para continuarmos a processar as suas operações OTC, necessitamos que atualize os seguintes documentos:",
+            "kyc_action": "Por favor, aceda à sua área de cliente e submeta os documentos atualizados o mais brevemente possível.",
         },
         "en": {
             "access_subject": "KBEX.io - Access Request Received",
@@ -93,6 +108,21 @@ class BrevoEmailService:
             "onboard_regards": "Best regards,",
             "onboard_team": "KBEX.io Team",
             "regions": "Europe | Middle East | Brazil",
+            # Team
+            "team_subject": "Welcome to the Team",
+            "team_welcome": "Welcome to the Team,",
+            "team_account_created": "Your internal account has been successfully created on the KBEX platform.",
+            "team_role": "Role",
+            "team_region": "Region",
+            "team_email": "Email",
+            "team_temp_password": "Temporary Password",
+            "team_security_warning": "For security reasons, please change your password on first login.",
+            "team_access_button": "Access the Platform",
+            "team_questions": "If you have any questions, contact the platform administrator.",
+            # KYC
+            "kyc_subject": "Document Update Required",
+            "kyc_intro": "To continue processing your OTC operations, we need you to update the following documents:",
+            "kyc_action": "Please access your client area and submit the updated documents as soon as possible.",
         },
         "fr": {
             "access_subject": "KBEX.io - Demande d'Accès Reçue",
@@ -122,6 +152,21 @@ class BrevoEmailService:
             "onboard_regards": "Cordialement,",
             "onboard_team": "L'équipe KBEX.io",
             "regions": "Europe | Moyen-Orient | Brésil",
+            # Team
+            "team_subject": "Bienvenue dans l'Équipe",
+            "team_welcome": "Bienvenue dans l'Équipe,",
+            "team_account_created": "Votre compte interne a été créé avec succès sur la plateforme KBEX.",
+            "team_role": "Fonction",
+            "team_region": "Région",
+            "team_email": "Email",
+            "team_temp_password": "Mot de passe temporaire",
+            "team_security_warning": "Pour des raisons de sécurité, veuillez changer votre mot de passe lors de votre première connexion.",
+            "team_access_button": "Accéder à la Plateforme",
+            "team_questions": "Si vous avez des questions, contactez l'administrateur de la plateforme.",
+            # KYC
+            "kyc_subject": "Mise à Jour de Documents Requise",
+            "kyc_intro": "Pour continuer à traiter vos opérations OTC, nous avons besoin que vous mettiez à jour les documents suivants :",
+            "kyc_action": "Veuillez accéder à votre espace client et soumettre les documents mis à jour dès que possible.",
         },
         "ar": {
             "access_subject": "KBEX.io - تم استلام طلب الوصول",
@@ -151,7 +196,30 @@ class BrevoEmailService:
             "onboard_regards": "مع أطيب التحيات،",
             "onboard_team": "فريق KBEX.io",
             "regions": "أوروبا | الشرق الأوسط | البرازيل",
+            # Team
+            "team_subject": "مرحباً بك في الفريق",
+            "team_welcome": "مرحباً بك في الفريق،",
+            "team_account_created": "تم إنشاء حسابك الداخلي بنجاح على منصة KBEX.",
+            "team_role": "الوظيفة",
+            "team_region": "المنطقة",
+            "team_email": "البريد الإلكتروني",
+            "team_temp_password": "كلمة المرور المؤقتة",
+            "team_security_warning": "لأسباب أمنية، يرجى تغيير كلمة المرور عند أول تسجيل دخول.",
+            "team_access_button": "الوصول إلى المنصة",
+            "team_questions": "إذا كان لديك أي أسئلة، تواصل مع مسؤول المنصة.",
+            # KYC
+            "kyc_subject": "مطلوب تحديث المستندات",
+            "kyc_intro": "لمتابعة معالجة عملياتك OTC، نحتاج منك تحديث المستندات التالية:",
+            "kyc_action": "يرجى الوصول إلى منطقة العميل الخاصة بك وتقديم المستندات المحدثة في أقرب وقت ممكن.",
         },
+    }
+
+    # Region to language mapping (for team members)
+    REGION_LANG = {
+        "europe": "pt",
+        "mena": "ar",
+        "latam": "pt",
+        "global": "en",
     }
 
     def _get_lang(self, country: str) -> str:
@@ -159,6 +227,10 @@ class BrevoEmailService:
         if not country:
             return "pt"
         return self.COUNTRY_LANG.get(country.upper(), "en")
+
+    def _get_lang_from_region(self, region: str) -> str:
+        """Get language code from team region."""
+        return self.REGION_LANG.get(region, "en")
 
     def _t(self, country: str, key: str) -> str:
         """Get translated string for country."""
@@ -385,37 +457,42 @@ class BrevoEmailService:
         to_email: str,
         to_name: str,
         expired_documents: list,
+        country: str = "",
     ) -> Dict[str, Any]:
         """Send KYC update reminder when documents are expired."""
         
-        subject = "KBEX.io - Atualização de Documentos Necessária"
+        t = lambda key: self._t(country, key)
+        lang = self._get_lang(country)
+        direction = 'dir="rtl"' if lang == "ar" else ''
+        
+        subject = f"KBEX.io - {t('kyc_subject')}"
         
         docs_list = "".join([f"<li style='margin-bottom: 8px; color: #fbbf24;'>{doc}</li>" for doc in expired_documents])
         
         html_content = f"""
         <!DOCTYPE html>
-        <html lang="pt">
+        <html lang="{lang}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #0a0a0a; margin: 0; padding: 20px;">
+        <body {direction} style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #0a0a0a; margin: 0; padding: 20px;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #18181b; border-radius: 12px; padding: 40px; border: 1px solid #d4af3720;">
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #d4af37; padding-bottom: 20px;">
                     <h1 style="color: #d4af37; margin: 0; font-size: 28px; font-weight: 300;">KBEX.io</h1>
                 </div>
                 
-                <p style="color: #ffffff;">Caro(a) {to_name},</p>
+                <p style="color: #ffffff;">{t("access_greeting")} {to_name},</p>
                 
-                <p style="color: #d4d4d8;">Para continuarmos a processar as suas operações OTC, necessitamos que atualize os seguintes documentos:</p>
+                <p style="color: #d4d4d8;">{t("kyc_intro")}</p>
                 
                 <ul style="padding-left: 20px;">
                     {docs_list}
                 </ul>
                 
-                <p style="color: #d4d4d8;">Por favor, aceda à sua área de cliente e submeta os documentos atualizados o mais brevemente possível.</p>
+                <p style="color: #d4d4d8;">{t("kyc_action")}</p>
                 
-                <p style="color: #ffffff; margin-top: 30px;">Com os melhores cumprimentos,<br><span style="color: #d4af37;">Equipa KBEX.io</span></p>
+                <p style="color: #ffffff; margin-top: 30px;">{t("access_regards")}<br><span style="color: #d4af37;">{t("access_team")}</span></p>
             </div>
         </body>
         </html>
@@ -526,77 +603,73 @@ class BrevoEmailService:
     ) -> Dict[str, Any]:
         """Send welcome email to a new internal team member with role and region info."""
 
+        lang = self._get_lang_from_region(region)
+        t = lambda key: self.EMAIL_STRINGS.get(lang, self.EMAIL_STRINGS["en"]).get(key, self.EMAIL_STRINGS["en"].get(key, ""))
+        direction = 'dir="rtl"' if lang == "ar" else ''
+
         role_labels = {
-            "admin": "Administrador",
-            "global_manager": "Gestor Global",
-            "manager": "Gestor",
-            "sales_manager": "Gestor de Vendas",
-            "sales": "Vendas",
-            "finance_general": "Finanças (Geral)",
-            "finance_local": "Finanças (Local)",
-            "finance": "Finanças",
-            "support_manager": "Gestor de Suporte",
-            "support_agent": "Agente de Suporte",
-            "local_manager": "Gestor Local",
-            "support": "Suporte",
+            "pt": {"admin": "Administrador", "global_manager": "Gestor Global", "manager": "Gestor", "sales_manager": "Gestor de Vendas", "sales": "Vendas", "finance_general": "Finanças (Geral)", "finance_local": "Finanças (Local)", "finance": "Finanças", "support_manager": "Gestor de Suporte", "support_agent": "Agente de Suporte", "local_manager": "Gestor Local", "support": "Suporte"},
+            "en": {"admin": "Administrator", "global_manager": "Global Manager", "manager": "Manager", "sales_manager": "Sales Manager", "sales": "Sales", "finance_general": "Finance (General)", "finance_local": "Finance (Local)", "finance": "Finance", "support_manager": "Support Manager", "support_agent": "Support Agent", "local_manager": "Local Manager", "support": "Support"},
+            "fr": {"admin": "Administrateur", "global_manager": "Directeur Global", "manager": "Gestionnaire", "sales_manager": "Directeur des Ventes", "sales": "Ventes", "finance_general": "Finance (Général)", "finance_local": "Finance (Local)", "finance": "Finance", "support_manager": "Directeur du Support", "support_agent": "Agent de Support", "local_manager": "Gestionnaire Local", "support": "Support"},
+            "ar": {"admin": "مسؤول", "global_manager": "مدير عالمي", "manager": "مدير", "sales_manager": "مدير المبيعات", "sales": "مبيعات", "finance_general": "مالية (عام)", "finance_local": "مالية (محلي)", "finance": "مالية", "support_manager": "مدير الدعم", "support_agent": "وكيل دعم", "local_manager": "مدير محلي", "support": "دعم"},
         }
 
         region_labels = {
-            "europe": "Europa",
-            "mena": "Médio Oriente & Norte de África",
-            "latam": "América Latina",
-            "global": "Global",
+            "pt": {"europe": "Europa", "mena": "Médio Oriente & Norte de África", "latam": "América Latina", "global": "Global"},
+            "en": {"europe": "Europe", "mena": "Middle East & North Africa", "latam": "Latin America", "global": "Global"},
+            "fr": {"europe": "Europe", "mena": "Moyen-Orient & Afrique du Nord", "latam": "Amérique Latine", "global": "Global"},
+            "ar": {"europe": "أوروبا", "mena": "الشرق الأوسط وشمال أفريقيا", "latam": "أمريكا اللاتينية", "global": "عالمي"},
         }
 
-        role_display = role_labels.get(internal_role, internal_role)
-        region_display = region_labels.get(region, region)
+        role_display = role_labels.get(lang, role_labels["en"]).get(internal_role, internal_role)
+        region_display = region_labels.get(lang, region_labels["en"]).get(region, region)
 
-        subject = f"KBEX.io — Bem-vindo à Equipa | {role_display}"
+        subject = f"KBEX.io — {t('team_subject')} | {role_display}"
 
         html_content = f"""
         <!DOCTYPE html>
-        <html lang="pt">
+        <html lang="{lang}">
         <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #e4e4e7; background-color: #0a0a0a; margin: 0; padding: 20px;">
+        <body {direction} style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #e4e4e7; background-color: #0a0a0a; margin: 0; padding: 20px;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #18181b; border-radius: 12px; padding: 40px; border: 1px solid #d4af3720;">
                 <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #d4af37; padding-bottom: 20px;">
                     <h1 style="color: #D4AF37; font-size: 28px; margin: 0;">KBEX.io</h1>
                     <p style="color: #a1a1aa; font-size: 12px; margin: 5px 0 0;">Boutique Digital Assets Exchange</p>
                 </div>
 
-                <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 10px;">Bem-vindo à Equipa, {to_name}</h2>
-                <p style="color: #a1a1aa; font-size: 14px;">A sua conta interna foi criada com sucesso na plataforma KBEX.</p>
+                <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 10px;">{t("team_welcome")} {to_name}</h2>
+                <p style="color: #a1a1aa; font-size: 14px;">{t("team_account_created")}</p>
 
                 <div style="background: #09090b; border: 1px solid #27272a; border-radius: 8px; padding: 20px; margin: 25px 0;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Função</td>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">{t("team_role")}</td>
                             <td style="padding: 10px 0; color: #D4AF37; font-weight: bold; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{role_display}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Região</td>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">{t("team_region")}</td>
                             <td style="padding: 10px 0; color: #ffffff; font-weight: 500; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{region_display}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">Email</td>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px; border-bottom: 1px solid #27272a;">{t("team_email")}</td>
                             <td style="padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid #27272a;">{to_email}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; color: #71717a; font-size: 13px;">Password Temporária</td>
+                            <td style="padding: 10px 0; color: #71717a; font-size: 13px;">{t("team_temp_password")}</td>
                             <td style="padding: 10px 0; color: #ef4444; font-family: monospace; font-size: 15px; text-align: right;">{temp_password}</td>
                         </tr>
                     </table>
                 </div>
 
                 <p style="color: #fbbf24; font-size: 12px; background: #78350f20; border: 1px solid #78350f40; border-radius: 6px; padding: 12px; margin: 20px 0;">
-                    Por razões de segurança, altere a sua password no primeiro acesso.
+                    {t("team_security_warning")}
                 </p>
 
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{frontend_url}/login" style="display: inline-block; background: linear-gradient(135deg, #D4AF37, #B8860B); color: #000; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; font-size: 14px;">Aceder à Plataforma</a>
+                    <a href="{frontend_url}/login" style="display: inline-block; background: linear-gradient(135deg, #D4AF37, #B8860B); color: #000; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: bold; font-size: 14px;">{t("team_access_button")}</a>
                 </div>
 
-                <p style="color: #71717a; font-size: 12px; text-align: center;">Se tiver dúvidas, contacte o administrador da plataforma.</p>
+                <p style="color: #71717a; font-size: 12px; text-align: center;">{t("team_questions")}</p>
             </div>
         </body>
         </html>
