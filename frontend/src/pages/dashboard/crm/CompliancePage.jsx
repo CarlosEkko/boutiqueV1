@@ -12,12 +12,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const CompliancePage = () => {
   const { dealId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [deal, setDeal] = useState(null);
   const [compliance, setCompliance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -350,8 +352,8 @@ const CompliancePage = () => {
                 {/* Per-wallet KYT display */}
                 {(selectedWallet.kyt_score > 0 || selectedWallet.kyt_status) ? (
                   <>
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-20 h-20">
+                    <div className="flex items-center gap-6">
+                      <div className="relative w-20 h-20 shrink-0">
                         <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
                           <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
                           <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={riskScoreColor(selectedWallet.kyt_score || 0).stroke} strokeWidth="3" strokeDasharray={`${Math.min((selectedWallet.kyt_score || 0) / 10, 1) * 100}, 100`} />
@@ -360,9 +362,9 @@ const CompliancePage = () => {
                           <span className={`font-bold text-lg ${riskScoreColor(selectedWallet.kyt_score || 0).text}`}>{selectedWallet.kyt_score || 0}</span>
                         </div>
                       </div>
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-zinc-500 text-xs uppercase">Status:</span>
+                          <span className="text-zinc-500 text-xs uppercase tracking-wider">Status:</span>
                           <Badge className={
                             selectedWallet.kyt_status === 'clean' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' :
                             selectedWallet.kyt_status === 'flagged' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30' :
@@ -373,29 +375,28 @@ const CompliancePage = () => {
                           </Badge>
                         </div>
                         {selectedWallet.kyt_flags?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1.5">
                             {selectedWallet.kyt_flags.map((f, i) => (
                               <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px]">{f}</Badge>
                             ))}
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                        <div className="flex items-center gap-2 text-xs text-zinc-500 pt-1">
                           <Wallet size={12} />
                           <span>{selectedWallet.blockchain} · {selectedWallet.wallet_type}</span>
                         </div>
                       </div>
                     </div>
                     {selectedWallet.kyt_analyst_notes && (
-                      <div className="bg-zinc-950 rounded-lg p-3 border border-zinc-800">
-                        <p className="text-zinc-500 text-xs uppercase mb-1">Notas do Analista Forense</p>
-                        <p className="text-zinc-300 text-sm whitespace-pre-wrap">{selectedWallet.kyt_analyst_notes}</p>
+                      <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800 mt-4">
+                        <p className="text-zinc-500 text-xs uppercase tracking-wider mb-2">Notas do Analista Forense</p>
+                        <p className="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">{selectedWallet.kyt_analyst_notes}</p>
                       </div>
                     )}
-                    {/* Also show deal-level analyst notes if present */}
                     {compliance?.kyt?.analyst_notes && (
-                      <div className="bg-zinc-950 rounded-lg p-3 border border-zinc-800">
-                        <p className="text-zinc-500 text-xs uppercase mb-1">Notas do Analista Forense</p>
-                        <p className="text-zinc-300 text-sm whitespace-pre-wrap">{compliance.kyt.analyst_notes}</p>
+                      <div className="bg-zinc-950 rounded-lg p-4 border border-zinc-800 mt-3">
+                        <p className="text-zinc-500 text-xs uppercase tracking-wider mb-2">Notas do Analista Forense</p>
+                        <p className="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">{compliance.kyt.analyst_notes}</p>
                       </div>
                     )}
                   </>

@@ -361,7 +361,14 @@ const translations = {
         orderSuccess: 'Order placed successfully!',
         insufficientBalance: 'Insufficient balance',
         minAmount: 'Minimum amount',
-        maxAmount: 'Maximum amount'
+        maxAmount: 'Maximum amount',
+        feeLabel: 'KBEX Fee',
+        feeTooltipTitle: 'Fee',
+        feeTooltipText: 'In addition to the displayed fee, a spread may be included in the price. Any spread is calculated before the transaction is submitted and may differ for similar transactions.',
+        grossAmount: 'Gross Amount',
+        youReceive: 'You receive',
+        sellProcessedNote: 'Sales are processed via bank transfer after approval.',
+        quantity: 'Quantity'
       },
       // Transactions
       transactions: {
@@ -1493,7 +1500,14 @@ const translations = {
         orderSuccess: 'Ordem realizada com sucesso!',
         insufficientBalance: 'Saldo insuficiente',
         minAmount: 'Valor mínimo',
-        maxAmount: 'Valor máximo'
+        maxAmount: 'Valor máximo',
+        feeLabel: 'Taxa KBEX',
+        feeTooltipTitle: 'Taxa',
+        feeTooltipText: 'Além da taxa exibida, um spread pode estar incluído no preço. Qualquer spread é calculado antes de a transação ser submetida e pode diferir para transações semelhantes.',
+        grossAmount: 'Valor Bruto',
+        youReceive: 'Você recebe',
+        sellProcessedNote: 'Vendas são processadas via transferência bancária após aprovação.',
+        quantity: 'Quantidade'
       },
       // Transactions
       transactions: {
@@ -2619,7 +2633,14 @@ const translations = {
         orderSuccess: 'تم تقديم الطلب بنجاح!',
         insufficientBalance: 'رصيد غير كافٍ',
         minAmount: 'الحد الأدنى',
-        maxAmount: 'الحد الأقصى'
+        maxAmount: 'الحد الأقصى',
+        feeLabel: 'رسوم KBEX',
+        feeTooltipTitle: 'الرسوم',
+        feeTooltipText: 'بالإضافة إلى الرسوم المعروضة، قد يتم تضمين فارق سعر في السعر. يتم حساب أي فارق قبل تقديم المعاملة وقد يختلف للمعاملات المماثلة.',
+        grossAmount: 'المبلغ الإجمالي',
+        youReceive: 'تتلقى',
+        sellProcessedNote: 'تتم معالجة المبيعات عبر التحويل البنكي بعد الموافقة.',
+        quantity: 'الكمية'
       },
       transactions: {
         subtitle: 'عرض جميع معاملاتك',
@@ -3722,7 +3743,14 @@ const translations = {
         orderSuccess: 'Ordre exécuté avec succès !',
         insufficientBalance: 'Solde insuffisant',
         minAmount: 'Montant minimum',
-        maxAmount: 'Montant maximum'
+        maxAmount: 'Montant maximum',
+        feeLabel: 'Frais KBEX',
+        feeTooltipTitle: 'Frais',
+        feeTooltipText: 'En plus des frais affichés, un spread peut être inclus dans le prix. Tout spread est calculé avant la soumission de la transaction et peut varier pour des transactions similaires.',
+        grossAmount: 'Montant Brut',
+        youReceive: 'Vous recevez',
+        sellProcessedNote: 'Les ventes sont traitées par virement bancaire après approbation.',
+        quantity: 'Quantité'
       },
       transactions: {
         title: 'Historique des Transactions',

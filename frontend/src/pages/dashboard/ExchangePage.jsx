@@ -7,6 +7,7 @@ import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { FormattedNumberInput } from '../../components/FormattedNumberInput';
 import { 
   ArrowDownUp, 
   CreditCard, 
@@ -692,11 +693,10 @@ const ExchangePage = () => {
                     
                     {inputMode === 'fiat' ? (
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">{currentCurrency.symbol}</span>
-                        <Input
-                          type="number" step="any"
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">{currentCurrency.symbol}</span>
+                        <FormattedNumberInput
                           value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
+                          onChange={(v) => setAmount(v)}
                           placeholder="0.00"
                           className="bg-zinc-800 border-zinc-700 text-white pl-10"
                           data-testid="buy-amount-input"
@@ -776,18 +776,16 @@ const ExchangePage = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400 flex items-center gap-1">
-                          Taxa KBEX
+                          {t('dashboard.exchange.feeLabel') || 'Taxa KBEX'}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
-                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-gold-400 font-semibold text-xs mb-1">{t('dashboard.exchange.feeTooltipTitle') || 'Taxa'}</p>
                                 <p className="text-zinc-300 text-xs leading-relaxed">
-                                  Além da taxa exibida, um spread pode estar incluído no preço. 
-                                  Qualquer spread é calculado antes de a transação ser submetida 
-                                  e pode diferir para transações semelhantes.
+                                  {t('dashboard.exchange.feeTooltipText') || 'Além da taxa exibida, um spread pode estar incluído no preço. Qualquer spread é calculado antes de a transação ser submetida e pode diferir para transações semelhantes.'}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -838,7 +836,7 @@ const ExchangePage = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Quantidade</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.quantity') || 'Quantidade'}</label>
                     <div className="relative">
                       <Input
                         type="number" step="any"
@@ -858,23 +856,21 @@ const ExchangePage = () => {
                   {sellPreview && sellAmount && (
                     <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Valor Bruto</span>
+                        <span className="text-gray-400">{t('dashboard.exchange.grossAmount') || 'Valor Bruto'}</span>
                         <span className="text-white">{formatCurrency(sellPreview.grossAmount)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400 flex items-center gap-1">
-                          Taxa KBEX
+                          {t('dashboard.exchange.feeLabel') || 'Taxa KBEX'}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
-                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-gold-400 font-semibold text-xs mb-1">{t('dashboard.exchange.feeTooltipTitle') || 'Taxa'}</p>
                                 <p className="text-zinc-300 text-xs leading-relaxed">
-                                  Além da taxa exibida, um spread pode estar incluído no preço. 
-                                  Qualquer spread é calculado antes de a transação ser submetida 
-                                  e pode diferir para transações semelhantes.
+                                  {t('dashboard.exchange.feeTooltipText') || 'Além da taxa exibida, um spread pode estar incluído no preço. Qualquer spread é calculado antes de a transação ser submetida e pode diferir para transações semelhantes.'}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -884,7 +880,7 @@ const ExchangePage = () => {
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Você recebe</span>
+                          <span className="text-gray-400">{t('dashboard.exchange.youReceive') || 'Você recebe'}</span>
                           <span className="text-gold-400 font-semibold">{formatCurrency(sellPreview.netAmount)}</span>
                         </div>
                       </div>
@@ -894,7 +890,7 @@ const ExchangePage = () => {
                   <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                     <p className="text-blue-400 text-sm flex items-center gap-2">
                       <AlertCircle size={16} />
-                      Vendas são processadas via transferência bancária após aprovação.
+                      {t('dashboard.exchange.sellProcessedNote') || 'Vendas são processadas via transferência bancária após aprovação.'}
                     </p>
                   </div>
 
@@ -929,7 +925,7 @@ const ExchangePage = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Quantidade</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.quantity') || 'Quantidade'}</label>
                     <div className="relative">
                       <Input
                         type="number" step="any"

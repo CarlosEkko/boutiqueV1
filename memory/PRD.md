@@ -18,6 +18,16 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Auto-seleciona primeira carteira ao carregar
 - Score KYT com gráfico circular e badges de status por carteira
 
+### Exchange — Tooltip Traduzido + Amount Formatado (02/04/2026)
+- Tooltip "Taxa KBEX" agora traduzido em EN, PT, AR, FR via t()
+- Labels "Valor Bruto", "Você recebe", "Quantidade" traduzidas
+- Input de amount fiat usa FormattedNumberInput (100 000 com espaços)
+
+### Compliance — Espaçamento KYT Melhorado (02/04/2026)
+- Gap aumentado entre gráfico circular e painéis de status
+- Notas do analista com padding/margins maiores
+- Labels uppercase com tracking-wider
+
 ### Score de Risco KYT — Escala 0-10 (02/04/2026)
 - Escala alterada de 0-100 para 0-10 (10 = risco máximo)
 - Cores: ≤3 verde (baixo), 4-6 amarelo (médio), ≥7 vermelho (alto)
