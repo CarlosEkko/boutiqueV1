@@ -364,7 +364,7 @@ const AdminPermissions = () => {
 
       {/* Edit Permissions Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-lg">
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="text-gold-400" size={20} />
@@ -372,7 +372,7 @@ const AdminPermissions = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="flex-1 overflow-y-auto py-4 pr-1">
             <p className="text-sm text-gray-400 mb-4">
               Selecione os departamentos que este utilizador pode acessar.
               Estas permissões sobrepõem as permissões padrão do cargo.
@@ -415,7 +415,7 @@ const AdminPermissions = () => {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t border-zinc-800 pt-4">
             <Button
               variant="outline"
               onClick={() => setShowEditModal(false)}
