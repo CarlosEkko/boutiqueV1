@@ -39,8 +39,10 @@ const SumsubKYC = () => {
 
   const checkInitialStatus = async () => {
     try {
+      console.log('[KYC] Checking status...');
       const response = await axios.get(`${API_URL}/api/sumsub/status`);
       const data = response.data;
+      console.log('[KYC] Status response:', data.status, 'has_applicant:', data.has_applicant);
       
       if (data.status === 'approved') {
         setVerificationStatus({ review_answer: 'GREEN' });
@@ -52,17 +54,39 @@ const SumsubKYC = () => {
         });
         setStep('complete');
       } else if (data.has_applicant) {
-        setApplicantId(data.applicant_id);
-        // Generate token and show SDK
-        await initializeSDK();
+        const aid = data.applicant_id;
+        setApplicantId(aid);
+        await generateTokenAndShowSDK(aid);
       } else {
         setStep('init');
       }
     } catch (err) {
-      console.error('Error checking status:', err);
+      console.error('[KYC] Status check failed:', err?.response?.data || err.message);
       setStep('init');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generateTokenAndShowSDK = async (aid) => {
+    try {
+      console.log('[KYC] Generating access token for applicant:', aid);
+      const tokenResponse = await axios.post(
+        `${API_URL}/api/sumsub/access-token?ttl_seconds=1800`
+      );
+      const tkn = tokenResponse.data?.token;
+      console.log('[KYC] Token received:', tkn ? 'yes' : 'no');
+      if (tkn) {
+        setAccessToken(tkn);
+        setStep('verification');
+      } else {
+        throw new Error('Token vazio recebido do servidor');
+      }
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.message || 'Erro desconhecido';
+      console.error('[KYC] Token generation failed:', detail);
+      setError(`Erro ao gerar token: ${detail}`);
+      setStep('error');
     }
   };
 
@@ -71,32 +95,29 @@ const SumsubKYC = () => {
     setError(null);
     
     try {
-      // Create applicant if not exists
-      if (!applicantId) {
-        console.log('[KYC] Creating applicant...', { email: user?.email, country: user?.country });
-        const applicantResponse = await axios.post(`${API_URL}/api/sumsub/applicants`, {
-          email: user?.email || 'user@example.com',
-          first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
-          last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
-          country: user?.country || ''
-        });
-        
-        console.log('[KYC] Applicant created:', applicantResponse.data);
-        setApplicantId(applicantResponse.data.applicant_id);
+      // Create applicant
+      console.log('[KYC] Creating applicant...', { email: user?.email, country: user?.country });
+      const applicantResponse = await axios.post(`${API_URL}/api/sumsub/applicants`, {
+        email: user?.email || 'user@example.com',
+        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
+        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
+        country: user?.country || ''
+      });
+      
+      const aid = applicantResponse.data?.applicant_id;
+      console.log('[KYC] Applicant result:', { aid, already_exists: applicantResponse.data?.already_exists });
+      
+      if (!aid) {
+        throw new Error('applicant_id não recebido');
       }
       
-      // Generate access token
-      console.log('[KYC] Generating access token...');
-      const tokenResponse = await axios.post(
-        `${API_URL}/api/sumsub/access-token?ttl_seconds=1800`
-      );
+      setApplicantId(aid);
       
-      console.log('[KYC] Token generated successfully');
-      setAccessToken(tokenResponse.data.token);
-      setStep('verification');
+      // Generate access token
+      await generateTokenAndShowSDK(aid);
     } catch (err) {
       const errorDetail = err.response?.data?.detail || err.message || 'Erro desconhecido';
-      console.error('[KYC] Error initializing SDK:', errorDetail, err);
+      console.error('[KYC] Init failed:', errorDetail, err);
       setError(`Erro ao inicializar verificação: ${errorDetail}`);
       setStep('error');
     } finally {
