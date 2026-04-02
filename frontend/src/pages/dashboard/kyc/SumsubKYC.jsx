@@ -33,6 +33,7 @@ const SumsubKYC = () => {
 
   // Check initial status on mount
   useEffect(() => {
+    console.log('[KYC-v2] Component mounted, API:', API_URL);
     checkInitialStatus();
   }, []);
 
@@ -72,26 +73,31 @@ const SumsubKYC = () => {
     try {
       // Create applicant if not exists
       if (!applicantId) {
+        console.log('[KYC] Creating applicant...', { email: user?.email, country: user?.country });
         const applicantResponse = await axios.post(`${API_URL}/api/sumsub/applicants`, {
           email: user?.email || 'user@example.com',
-          first_name: user?.first_name,
-          last_name: user?.last_name,
-          country: user?.country
+          first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
+          last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
+          country: user?.country || ''
         });
         
+        console.log('[KYC] Applicant created:', applicantResponse.data);
         setApplicantId(applicantResponse.data.applicant_id);
       }
       
       // Generate access token
+      console.log('[KYC] Generating access token...');
       const tokenResponse = await axios.post(
         `${API_URL}/api/sumsub/access-token?ttl_seconds=1800`
       );
       
+      console.log('[KYC] Token generated successfully');
       setAccessToken(tokenResponse.data.token);
       setStep('verification');
     } catch (err) {
-      console.error('Error initializing SDK:', err);
-      setError(err.response?.data?.detail || 'Erro ao inicializar verificação');
+      const errorDetail = err.response?.data?.detail || err.message || 'Erro desconhecido';
+      console.error('[KYC] Error initializing SDK:', errorDetail, err);
+      setError(`Erro ao inicializar verificação: ${errorDetail}`);
       setStep('error');
     } finally {
       setLoading(false);
@@ -365,8 +371,11 @@ const SumsubKYC = () => {
               <AlertTriangle className="text-red-400" size={48} />
             </div>
             <h2 className="text-xl text-white mb-2">Erro na Verificação</h2>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-400 mb-4">
               {error || 'Ocorreu um erro ao iniciar a verificação.'}
+            </p>
+            <p className="text-zinc-600 text-xs font-mono mb-6 max-w-md mx-auto break-all">
+              API: {API_URL}/api/sumsub | User: {user?.email || 'N/A'}
             </p>
             <Button
               onClick={() => {
