@@ -157,8 +157,12 @@ async def get_o365_auth_url(current_user=Depends(get_current_user)):
         "scope": SCOPES,
         "state": state,
         "response_mode": "query",
-        "prompt": "consent",
+        "prompt": "select_account",
+        "login_hint": current_user.email if hasattr(current_user, 'email') else "",
+        "domain_hint": "kryptobox.onmicrosoft.com",
     }
+    # Remove empty params
+    params = {k: v for k, v in params.items() if v}
     url = f"{get_auth_url_base()}?{urllib.parse.urlencode(params)}"
     return {"auth_url": url}
 
