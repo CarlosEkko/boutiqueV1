@@ -332,7 +332,11 @@ export const useOTCLeads = () => {
         payload.volume_per_operation = payload.volume_per_operation ? parseFloat(String(payload.volume_per_operation).replace(/\s/g, '')) : null;
       }
       const r = await axios.put(`${API_URL}/api/otc/leads/${leadId}`, payload, { headers });
-      toast.success('Lead atualizado com sucesso');
+      if (r.data.otc_client_created) {
+        toast.success('Cliente OTC criado automaticamente!');
+      } else {
+        toast.success('Lead atualizado com sucesso');
+      }
       fetchLeads();
       if (r.data.lead) setSelectedLead(r.data.lead);
       return r.data;

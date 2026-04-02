@@ -777,8 +777,47 @@ async def update_otc_lead(
         {"$set": update_dict}
     )
     
+    # If status changed to active_client, auto-create OTC Client
+    otc_client_created = False
+    if update_dict.get("status") == "active_client":
+        existing_client = await db.otc_clients.find_one({
+            "$or": [
+                {"contact_email": {"$regex": f"^{lead.get('contact_email', '')}$", "$options": "i"}},
+                {"entity_name": {"$regex": f"^{lead.get('entity_name', '')}$", "$options": "i"}}
+            ]
+        })
+        if not existing_client:
+            now = datetime.now(timezone.utc)
+            otc_client = {
+                "id": str(uuid.uuid4()),
+                "entity_name": lead.get("entity_name", ""),
+                "contact_name": lead.get("contact_name", ""),
+                "contact_email": lead.get("contact_email", ""),
+                "contact_phone": lead.get("contact_phone", ""),
+                "country": lead.get("country", ""),
+                "client_type": lead.get("pre_qualification_data", {}).get("client_type", "individual"),
+                "source": lead.get("source", ""),
+                "assigned_to": lead.get("assigned_to", ""),
+                "kyc_status": "pending",
+                "is_active": True,
+                "daily_limit_usd": lead.get("daily_limit_set", 100000),
+                "monthly_limit_usd": lead.get("monthly_limit_set", 1000000),
+                "preferred_currency": lead.get("preferred_currency", "EUR"),
+                "preferred_cryptos": lead.get("interested_cryptos", []),
+                "notes": lead.get("notes", ""),
+                "lead_id": lead_id,
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+                "created_by": current_user.id if hasattr(current_user, 'id') else str(current_user),
+            }
+            await db.otc_clients.insert_one(otc_client)
+            otc_client_created = True
+            logger.info(f"OTC Client auto-created from lead {lead_id}: {otc_client['entity_name']}")
+        else:
+            logger.info(f"OTC Client already exists for lead {lead_id}, skipping creation")
+    
     updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
-    return {"success": True, "lead": updated_lead}
+    return {"success": True, "lead": updated_lead, "otc_client_created": otc_client_created}
 
 
 @router.delete("/leads/{lead_id}")
