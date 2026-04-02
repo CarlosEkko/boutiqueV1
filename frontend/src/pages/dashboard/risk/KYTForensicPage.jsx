@@ -230,7 +230,7 @@ const KYTForensicPage = () => {
             <div className="space-y-2">
               <Label className="text-zinc-400 text-xs uppercase tracking-wider">Score de Risco (0-10)</Label>
               <div className="flex items-center gap-4">
-                <Input type="number" value={analysisForm.kyt_score} onChange={e => setAnalysisForm(f => ({ ...f, kyt_score: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)) }))} className="bg-zinc-900 border-zinc-800 text-white w-24" min={0} max={10} data-testid="kyt-modal-score" />
+                <Input type="number" value={analysisForm.kyt_score} onChange={e => { const v = parseInt(e.target.value); if (e.target.value === '') { setAnalysisForm(f => ({ ...f, kyt_score: 0 })); return; } if (!isNaN(v) && v >= 0 && v <= 10) setAnalysisForm(f => ({ ...f, kyt_score: v })); }} onBlur={e => { const v = Math.min(10, Math.max(0, parseInt(e.target.value) || 0)); setAnalysisForm(f => ({ ...f, kyt_score: v })); }} className="bg-zinc-900 border-zinc-800 text-white w-24" min={0} max={10} step={1} data-testid="kyt-modal-score" />
                 <div className="flex-1 bg-zinc-900 rounded-full h-3 overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${analysisForm.kyt_score <= 3 ? 'bg-emerald-500' : analysisForm.kyt_score <= 6 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(analysisForm.kyt_score / 10) * 100}%` }} />
                 </div>

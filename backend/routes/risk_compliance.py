@@ -91,6 +91,8 @@ async def analyze_wallet(
     user_id: str = Depends(get_current_user_id)
 ):
     """Analyze a wallet - set KYT score, flags, notes and status"""
+    # Clamp score to 0-10
+    kyt_score = max(0, min(10, kyt_score))
     db = get_db()
 
     # Get analyst name
