@@ -321,6 +321,9 @@ async def get_leads(
     is_qualified: Optional[bool] = None,
     assigned_to: Optional[str] = None,
     source: Optional[str] = None,
+    membership_profile: Optional[str] = None,
+    country: Optional[str] = None,
+    crypto: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
@@ -338,6 +341,12 @@ async def get_leads(
         query["assigned_to"] = assigned_to
     if source:
         query["source"] = source
+    if membership_profile:
+        query["membership_profile"] = membership_profile
+    if country:
+        query["country"] = {"$regex": f"^{country}$", "$options": "i"}
+    if crypto:
+        query["interested_cryptos"] = crypto
     if search:
         query["$or"] = [
             {"name": {"$regex": search, "$options": "i"}},

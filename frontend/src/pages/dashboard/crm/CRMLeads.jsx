@@ -32,7 +32,8 @@ import {
   DollarSign,
   Shield,
   Eye,
-  Video
+  Video,
+  UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ScheduleMeetingDialog from '../components/ScheduleMeetingDialog';
@@ -54,11 +55,12 @@ const CRMLeads = () => {
   const [statuses, setStatuses] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
-  const [filter, setFilter] = useState({ search: '', status: '', is_qualified: '' });
+  const [filter, setFilter] = useState({ search: '', status: '', is_qualified: '', membership_profile: '', country: '', crypto: '' });
   const [detailLead, setDetailLead] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [meetingLead, setMeetingLead] = useState(null);
   const [showMeetingDialog, setShowMeetingDialog] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
   
   const [form, setForm] = useState({
     name: '',
@@ -84,6 +86,7 @@ const CRMLeads = () => {
   useEffect(() => {
     fetchLeads();
     fetchStatuses();
+    fetchTeamMembers();
   }, [filter]);
 
   const fetchLeads = async () => {
@@ -92,6 +95,9 @@ const CRMLeads = () => {
       if (filter.search) params.append('search', filter.search);
       if (filter.status) params.append('status', filter.status);
       if (filter.is_qualified !== '') params.append('is_qualified', filter.is_qualified);
+      if (filter.membership_profile) params.append('membership_profile', filter.membership_profile);
+      if (filter.country) params.append('country', filter.country);
+      if (filter.crypto) params.append('crypto', filter.crypto);
       
       const response = await axios.get(`${API_URL}/api/crm/leads?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -113,6 +119,29 @@ const CRMLeads = () => {
       setStatuses(response.data);
     } catch (err) {
       console.error('Error fetching statuses:', err);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/admin/internal-users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTeamMembers(response.data || []);
+    } catch (err) {
+      console.error('Error fetching team:', err);
+    }
+  };
+
+  const assignLead = async (leadId, memberId) => {
+    try {
+      await axios.put(`${API_URL}/api/crm/leads/${leadId}`, { assigned_to: memberId || null }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Lead atribuído com sucesso');
+      fetchLeads();
+    } catch (err) {
+      toast.error('Erro ao atribuir lead');
     }
   };
 
@@ -322,10 +351,46 @@ const CRMLeads = () => {
           value={filter.is_qualified}
           onChange={(e) => setFilter({ ...filter, is_qualified: e.target.value })}
           className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
+          data-testid="filter-qualification"
         >
           <option value="">Qualificação</option>
           <option value="true">Qualificados</option>
           <option value="false">Não Qualificados</option>
+        </select>
+        <select
+          value={filter.membership_profile}
+          onChange={(e) => setFilter({ ...filter, membership_profile: e.target.value })}
+          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
+          data-testid="filter-profile"
+        >
+          <option value="">Perfil</option>
+          <option value="broker">Broker</option>
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+          <option value="vip">VIP</option>
+          <option value="institucional">Institucional</option>
+        </select>
+        <select
+          value={filter.crypto}
+          onChange={(e) => setFilter({ ...filter, crypto: e.target.value })}
+          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
+          data-testid="filter-crypto"
+        >
+          <option value="">Moedas</option>
+          {CRYPTOCURRENCIES.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          value={filter.country}
+          onChange={(e) => setFilter({ ...filter, country: e.target.value })}
+          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
+          data-testid="filter-country"
+        >
+          <option value="">Região / País</option>
+          {COUNTRIES.map(c => (
+            <option key={c.code} value={c.code}>{c.name}</option>
+          ))}
         </select>
         <Button variant="outline" onClick={fetchLeads} className="border-zinc-700">
           <RefreshCw size={16} />
@@ -443,6 +508,22 @@ const CRMLeads = () => {
                     <Badge className={`border-0 ${getStatusColor(lead.status)}`}>
                       {getStatusLabel(lead.status)}
                     </Badge>
+
+                    {/* Assign to Team Member */}
+                    <select
+                      value={lead.assigned_to || ''}
+                      onChange={(e) => assignLead(lead.id, e.target.value)}
+                      className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-xs text-white max-w-[140px] truncate"
+                      data-testid={`assign-lead-${lead.id}`}
+                      title={lead.assigned_to ? `Atribuído a: ${teamMembers.find(m => m.id === lead.assigned_to)?.name || lead.assigned_to}` : 'Sem atribuição'}
+                    >
+                      <option value="">Atribuir a...</option>
+                      {teamMembers.filter(m => m.is_active !== false).map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}{m.region ? ` (${m.region})` : ''}
+                        </option>
+                      ))}
+                    </select>
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">

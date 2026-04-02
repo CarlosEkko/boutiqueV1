@@ -18,6 +18,12 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Auto-seleciona primeira carteira ao carregar
 - Score KYT com gráfico circular e badges de status por carteira
 
+### CRM Leads — Filtros + Atribuição por Região (02/04/2026)
+- 3 novos filtros: Perfil (membership_profile), Moedas (crypto), Região/País (country)
+- Backend GET /api/crm/leads aceita membership_profile, country, crypto como query params
+- Dropdown "Atribuir a" em cada lead card com lista de team members (nome + região)
+- Atribuição instantânea via PUT /api/crm/leads/{id} com assigned_to
+
 ### Exchange — Tooltip Traduzido + Amount Formatado (02/04/2026)
 - Tooltip "Taxa KBEX" agora traduzido em EN, PT, AR, FR via t()
 - Labels "Valor Bruto", "Você recebe", "Quantidade" traduzidas
