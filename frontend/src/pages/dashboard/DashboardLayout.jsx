@@ -260,7 +260,8 @@ const DashboardLayout = () => {
       }
       
       if (ticketsRes.status === 'fulfilled') {
-        const pending = ticketsRes.value.data?.filter(t => t.status === 'open' || t.status === 'pending')?.length || 0;
+        const ticketsData = Array.isArray(ticketsRes.value.data) ? ticketsRes.value.data : ticketsRes.value.data?.tickets;
+        const pending = Array.isArray(ticketsData) ? ticketsData.filter(t => t.status === 'open' || t.status === 'pending')?.length || 0 : 0;
         if (pending > 0) counts['/dashboard/admin/tickets'] = pending;
       }
 

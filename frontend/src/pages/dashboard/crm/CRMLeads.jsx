@@ -490,7 +490,7 @@ const CRMLeads = () => {
                         ))}
                       </div>
                     )}
-                    {lead.membership_profile && (
+                    {lead.membership_profile ? (
                       <Badge className={`border text-[10px] ${
                         {
                           broker: 'bg-sky-500/15 text-sky-400 border-sky-700/30',
@@ -502,7 +502,7 @@ const CRMLeads = () => {
                       }`}>
                         {lead.membership_profile.charAt(0).toUpperCase() + lead.membership_profile.slice(1)}
                       </Badge>
-                    )}
+                    ) : null}
                     <Badge className={`border-0 ${getStatusColor(lead.status)}`}>
                       {getStatusLabel(lead.status)}
                     </Badge>

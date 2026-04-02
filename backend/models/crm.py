@@ -209,15 +209,35 @@ class LeadUpdate(BaseModel):
     notes: Optional[str] = None
     tags: Optional[List[str]] = None
 
-class LeadResponse(LeadBase):
+class LeadResponse(BaseModel):
+    """Response model with flexible validation for leads"""
+    model_config = {"extra": "ignore"}
+    
     id: str
-    created_at: datetime
-    updated_at: datetime
+    name: str
+    company_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    country: Optional[str] = None
+    region: Optional[str] = None
+    source: Optional[str] = None
+    status: Optional[str] = "new"
+    interest: Optional[str] = None
+    interested_cryptos: List[str] = []
+    estimated_volume: Optional[float] = None
+    preferred_currency: str = "EUR"
+    membership_profile: Optional[str] = "standard"
+    is_qualified: bool = False
+    qualification_score: int = 0
+    assigned_to: Optional[str] = None
+    notes: Optional[str] = None
+    tags: List[str] = []
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     created_by: Optional[str] = None
     converted_to_client: bool = False
     converted_at: Optional[datetime] = None
     risk_intelligence_data: Optional[dict] = None
-    membership_profile: Optional[str] = "standard"
 
 # ==================== DEAL MODELS ====================
 
