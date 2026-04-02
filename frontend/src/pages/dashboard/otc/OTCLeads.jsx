@@ -400,7 +400,7 @@ const OTCLeads = () => {
                 <Select value={setupData.account_manager_id} onValueChange={v => setSetupData({...setupData, account_manager_id: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white hover:bg-zinc-700">{m.first_name} {m.last_name}</SelectItem>)}
+                    {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white hover:bg-zinc-700">{m.name}{m.region ? ` (${m.region})` : ''}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

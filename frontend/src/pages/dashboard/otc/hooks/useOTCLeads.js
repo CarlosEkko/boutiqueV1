@@ -89,9 +89,9 @@ export const useOTCLeads = () => {
 
   const fetchTeamMembers = async () => {
     try {
-      const r = await axios.get(`${API_URL}/api/admin/users`, { headers });
-      const users = r.data.users || r.data || [];
-      setTeamMembers(users.filter(u => u.user_type === 'internal'));
+      const r = await axios.get(`${API_URL}/api/admin/internal-users`, { headers });
+      const users = r.data || [];
+      setTeamMembers(users);
     } catch (e) { console.error('Failed to fetch team members:', e); }
   };
 
