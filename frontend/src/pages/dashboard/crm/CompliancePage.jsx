@@ -375,16 +375,21 @@ const CompliancePage = () => {
                             {selectedWallet.kyt_status === 'clean' ? 'Limpo' : selectedWallet.kyt_status === 'flagged' ? 'Sinalizado' : selectedWallet.kyt_status === 'rejected' ? 'Rejeitado' : 'Pendente'}
                           </Badge>
                         </div>
-                        {selectedWallet.kyt_flags?.length > 0 && (
-                          <div>
-                            <span className="text-zinc-500 text-xs uppercase tracking-wider block mb-2">Tags:</span>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedWallet.kyt_flags.map((f, i) => (
-                                <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] px-2.5 py-1">{f}</Badge>
-                              ))}
+                        {(() => {
+                          const realFlags = (selectedWallet.kyt_flags || []).filter(f => 
+                            f && !['Clean wallet', 'clean', 'Limpo', 'clean_wallet'].includes(f)
+                          );
+                          return realFlags.length > 0 ? (
+                            <div>
+                              <span className="text-zinc-500 text-xs uppercase tracking-wider block mb-2">Tags:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {realFlags.map((f, i) => (
+                                  <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] px-2.5 py-1">{f}</Badge>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          ) : null;
+                        })()}
                         <div className="flex items-center gap-2 text-sm text-zinc-500">
                           <Wallet size={14} />
                           <span>{selectedWallet.blockchain} · {selectedWallet.wallet_type}</span>
