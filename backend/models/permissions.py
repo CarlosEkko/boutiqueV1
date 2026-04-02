@@ -215,7 +215,6 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/regional", "label": "Métricas Regionais", "icon": "Globe"},
             {"path": "/dashboard/admin/staff", "label": "Gestão de Equipa", "icon": "UserCog"},
             {"path": "/dashboard/admin/users", "label": "Clientes", "icon": "Users"},
-            {"path": "/dashboard/admin/kyc", "label": "KYC/KYB", "icon": "UserCheck"},
             {"path": "/dashboard/admin/opportunities", "label": "Oportunidades", "icon": "TrendingUp"},
             {"path": "/dashboard/admin/transparency", "label": "Transparência", "icon": "Shield"},
             {"path": "/dashboard/admin/invites", "label": "Códigos Convite", "icon": "Gift"},
@@ -312,6 +311,7 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/risk/dashboard", "label": "Dashboard Risco", "icon": "Shield"},
             {"path": "/dashboard/risk/kyt-forensic", "label": "KYT Forensic", "icon": "FileSearch"},
+            {"path": "/dashboard/admin/kyc", "label": "KYC/KYB", "icon": "UserCheck"},
         ]
     },
 }
