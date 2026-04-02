@@ -35,6 +35,7 @@ class PublicLeadRequest(BaseModel):
     name: str
     email: str
     phone: str
+    country: Optional[str] = None
     message: Optional[str] = None
     turnstile_token: Optional[str] = None
 
@@ -69,10 +70,12 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
     existing_user = await db.users.find_one({"email": {"$regex": f"^{lead_data.email}$", "$options": "i"}})
 
     now = datetime.now(timezone.utc)
+    country_code = (lead_data.country or "").upper()
     doc = {
         "name": lead_data.name,
         "email": lead_data.email,
         "phone": lead_data.phone,
+        "country": country_code,
         "source": "Website",
         "status": LeadStatus.NEW.value,
         "interest": "Solicitar Acesso",
@@ -95,25 +98,30 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
 
     # Also create an OTC Lead for the OTC pipeline
     otc_lead_id = None
+    is_high_risk = False
     try:
-        from models.otc import OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, FATF_HIGH_RISK_COUNTRIES
+        from models.otc import OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, FATF_HIGH_RISK_COUNTRIES, RedFlagType
+        is_high_risk = country_code in FATF_HIGH_RISK_COUNTRIES
+        red_flags = [RedFlagType.HIGH_RISK_COUNTRY.value] if is_high_risk else []
         otc_lead = OTCLead(
             entity_name=lead_data.name,
             contact_name=lead_data.name,
             contact_email=lead_data.email,
             contact_phone=lead_data.phone,
-            country="PT",
+            country=country_code or "N/A",
             source=OTCLeadSource.WEBSITE,
             source_detail="Solicitar Acesso - Landing Page",
             status=OTCLeadStatus.NEW,
             workflow_stage=1,
+            is_high_risk_country=is_high_risk,
+            red_flags=red_flags if red_flags else None,
             transaction_type=TransactionType.BUY,
             notes=lead_data.message or "",
             activity_log=[{
                 "action": "lead_created",
                 "timestamp": now.isoformat(),
                 "user_id": "public_website",
-                "details": "Lead criado via formulário público 'Solicitar Acesso'"
+                "details": f"Lead criado via formulário público 'Solicitar Acesso'{' — PAÍS DE ALTO RISCO' if is_high_risk else ''}"
             }]
         )
         # Check for existing OTC lead with same email
@@ -176,6 +184,7 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
         "already_exists": False,
         "email_sent": email_sent,
         "otc_lead_created": otc_lead_id is not None,
+        "is_high_risk_country": is_high_risk,
         "message": "Pedido de acesso recebido com sucesso. A nossa equipa entrará em contacto brevemente."
     }
 

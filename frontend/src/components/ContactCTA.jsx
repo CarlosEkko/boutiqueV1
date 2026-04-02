@@ -4,10 +4,12 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Card, CardContent } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../i18n';
 import TurnstileWidget from './TurnstileWidget';
+import { COUNTRIES } from '../utils/countries';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -17,6 +19,7 @@ const ContactCTA = () => {
     name: '',
     email: '',
     phone: '',
+    country: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
@@ -44,6 +47,7 @@ const ContactCTA = () => {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
+          country: formData.country || null,
           message: formData.message || null,
           turnstile_token: turnstileToken || null
         })
@@ -56,7 +60,7 @@ const ContactCTA = () => {
         toast.success(data.message);
         setTimeout(() => {
           setSubmitted(false);
-          setFormData({ name: '', email: '', phone: '', message: '' });
+          setFormData({ name: '', email: '', phone: '', country: '', message: '' });
         }, 5000);
       } else {
         toast.error(data.detail || 'Erro ao enviar pedido');
@@ -160,6 +164,27 @@ const ContactCTA = () => {
                           dir="ltr"
                           data-testid="contact-phone-input"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="country" className="text-gray-300">
+                          {t('contact.form.country') || 'País'} *
+                        </Label>
+                        <Select value={formData.country} onValueChange={(v) => setFormData(prev => ({ ...prev, country: v }))}>
+                          <SelectTrigger
+                            className="bg-zinc-900/50 border-gold-800/30 focus:border-gold-500 text-white transition-colors duration-300"
+                            data-testid="contact-country-select"
+                          >
+                            <SelectValue placeholder={t('auth.selectCountry') || 'Selecione o país'} />
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-900 border-gold-800/30 max-h-60">
+                            {COUNTRIES.map(c => (
+                              <SelectItem key={c.code} value={c.code} className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30">
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">
