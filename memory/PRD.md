@@ -12,7 +12,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Full dashboard with portfolio, trading, assets views
 - OTC CRM with 11-step workflow, lead cards, wizard modals
 - General CRM with leads, deals, contacts, suppliers, tasks
-- Fireblocks Staking (functional) and Tokenization (backend fix applied)
+- Fireblocks Staking (functional) and Tokenization (VERIFIED - 76 collections loading)
 - Multi-language Brevo email service (PT, EN, AR, FR)
 - Azure AD / Microsoft 365 OAuth integration
 - Regional & Team filtering across CRM and OTC routes
@@ -22,22 +22,19 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Multi-Sign vault functionality
 - Client onboarding flow with invite codes
 
-## Bug Fixes (April 2, 2026)
-- Fixed TransparencyPage.jsx crash: `wallet.parseFloat(balance)` → `parseFloat(wallet.balance || 0)`
-- Made LeadResponse model more resilient: status as string, optional dates, extra="ignore"
-- Fixed CRMLeads.jsx membership_profile null safety
-- Fixed DashboardLayout.jsx ticketsRes.value.data.filter error
-- Redesigned Upload Proof modal with gold theme, proper labels, drag-drop area
-- Improved country selector in ContactCTA with better spacing and readability
-- Visão 360: Only shows wallets with balance > 0, shows "Ainda não tem saldo" message
-- Added "Broker" tier option to OTC Lead creation and edit
-- Changed "Brazil" → "LATAM" in CRM Leads and Suppliers region filters
-- Re-seeded admin account with correct UserInDB model structure
+## Recent Fixes (April 2, 2026)
+- Tokenization frontend VERIFIED: 76 collections rendering correctly from Fireblocks API
+- TransparencyPage.jsx crash fixed
+- LeadResponse model made resilient (extra="ignore", flexible status)
+- CRMLeads.jsx membership_profile null safety
+- DashboardLayout.jsx tickets filter error fixed
+- Upload Proof modal redesigned with gold theme
+- Country selector improved in ContactCTA
+- Visão 360: Only shows wallets with balance > 0
+- Added "Broker" tier option to OTC Lead
+- Changed "Brazil" → "LATAM" in CRM region filters
 
 ## Prioritized Backlog
-### P0
-- Verify Tokenization frontend fix (`/dashboard/tokenization`)
-
 ### P1
 - TradingView chart widgets on Trading/Markets pages
 - Complete frontend translations (PT, EN, AR, FR)
@@ -56,6 +53,5 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Test Client: joao.mirror999@test.com / senha123
 
 ## Project Health
-- Fixed: TransparencyPage, CRM Leads resilience, Notification tickets filter, Upload Proof UX, Country selector, Visão 360 wallets, OTC Tier Broker, Region LATAM
-- Pending Test: Tokenization frontend
+- All features functional
 - Mocked: WebSockets (using 1s HTTP polling)
