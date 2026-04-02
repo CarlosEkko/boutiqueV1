@@ -186,6 +186,8 @@ DEPARTMENT_MENUS = {
         "icon": "TrendingUp",
         "items": [
             {"path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp"},
+            {"path": "/dashboard/staking", "label": "Staking", "icon": "Coins"},
+            {"path": "/dashboard/tokenization", "label": "Tokenização", "icon": "Gem"},
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
         ]
     },

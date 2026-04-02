@@ -88,6 +88,8 @@ import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
 import RegisterPage from "./pages/RegisterPage";
+import StakingPage from "./pages/dashboard/investments/StakingPage";
+import TokenizationPage from "./pages/dashboard/investments/TokenizationPage";
 import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
 import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
 import ApprovalSettingsPage from "./pages/dashboard/approvals/ApprovalSettingsPage";
@@ -166,6 +168,8 @@ function AppRoutes() {
         <Route path="crypto-transactions" element={<CryptoTransactionsPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="investments" element={<InvestmentsPage />} />
+        <Route path="staking" element={<StakingPage />} />
+        <Route path="tokenization" element={<TokenizationPage />} />
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
         
