@@ -271,3 +271,78 @@ async def get_tokenization_history(
     cursor = db.tokenization_history.find({}, {"_id": 0}).sort("created_at", -1).limit(limit)
     history = await cursor.to_list(limit)
     return {"success": True, "history": history}
+
+
+class SetPriceRequest(BaseModel):
+    collection_id: str = Field(...)
+    symbol: str = Field(...)
+    price_usd: float = Field(..., gt=0)
+
+class TransferTokenRequest2(BaseModel):
+    asset_id: str = Field(...)
+    source_vault_id: str = Field(...)
+    destination_address: str = Field(...)
+    amount: str = Field(...)
+    note: Optional[str] = ""
+
+
+@router.get("/prices")
+async def get_token_prices(current_user=Depends(get_current_user)):
+    """Get all token prices"""
+    db = get_db()
+    cursor = db.token_prices.find({}, {"_id": 0})
+    prices_list = await cursor.to_list(500)
+    prices = {p["collection_id"]: {"price_usd": p["price_usd"], "updated_at": p.get("updated_at")} for p in prices_list}
+    return {"success": True, "prices": prices}
+
+
+@router.post("/prices")
+async def set_token_price(request: SetPriceRequest, current_user=Depends(get_current_user)):
+    """Set or update token price"""
+    db = get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    await db.token_prices.update_one(
+        {"collection_id": request.collection_id},
+        {"$set": {
+            "collection_id": request.collection_id,
+            "symbol": request.symbol,
+            "price_usd": request.price_usd,
+            "updated_at": now,
+            "updated_by": current_user.id if hasattr(current_user, 'id') else None,
+        }},
+        upsert=True
+    )
+    return {"success": True, "message": f"Preço de {request.symbol} atualizado para ${request.price_usd}"}
+
+
+@router.post("/tokens/transfer")
+async def transfer_token(request: TransferTokenRequest2, current_user=Depends(get_current_user)):
+    """Transfer tokens between vaults"""
+    db = get_db()
+    try:
+        client = FireblocksService.get_client()
+        result = client.create_transaction(
+            asset_id=request.asset_id,
+            source={"type": "VAULT_ACCOUNT", "id": request.source_vault_id},
+            destination={"type": "ONE_TIME_ADDRESS", "address": request.destination_address},
+            amount=request.amount,
+            note=request.note or "Token transfer via KBEX",
+        )
+        
+        await db.tokenization_history.insert_one({
+            "id": str(uuid.uuid4()),
+            "action": "transfer",
+            "asset_id": request.asset_id,
+            "source_vault": request.source_vault_id,
+            "destination": request.destination_address,
+            "amount": request.amount,
+            "result": str(result) if result else None,
+            "user_id": current_user.id if hasattr(current_user, 'id') else None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        
+        return {"success": True, "result": result, "message": "Transferência submetida"}
+    except Exception as e:
+        logger.error(f"Transfer failed: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+

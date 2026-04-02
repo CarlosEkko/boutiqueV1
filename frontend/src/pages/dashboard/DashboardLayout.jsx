@@ -64,7 +64,11 @@ import {
   CheckCircle,
   ArrowLeftRight,
   FileSearch,
-  ShieldAlert
+  ShieldAlert,
+  Gem,
+  FilePlus2,
+  Flame,
+  Coins
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -79,7 +83,7 @@ const iconMap = {
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
   Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle,
   ArrowLeftRight, FileSearch,
-  ShieldAlert
+  ShieldAlert, Gem, FilePlus2, Flame, Coins
 };
 
 // Department icon and color mapping
@@ -106,6 +110,7 @@ const departmentConfig = {
   transaction_approval: { icon: ShieldCheck, color: 'text-indigo-400', bgColor: 'bg-indigo-500/20' },
   vault: { icon: ShieldCheck, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   risk_compliance: { icon: FileSearch, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  tokenization: { icon: Gem, color: 'text-[#D4AF37]', bgColor: 'bg-[#D4AF37]/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -197,6 +202,14 @@ const labelTranslationMap = {
   'Dashboard Risco': 'sidebar.dashboardRisco',
   'KYT Forensic': 'sidebar.kytForensic',
   'Security Dashboard': 'sidebar.securityDashboard',
+  // Tokenization
+  'Tokenização': 'sidebar.tokenizacao',
+  'Tokens': 'sidebar.tokens',
+  'Emitir Token': 'sidebar.emitirToken',
+  'Mint & Burn': 'sidebar.mintBurn',
+  'Definir Preço': 'sidebar.definirPreco',
+  // Staking
+  'Staking': 'sidebar.staking',
 };
 
 const DashboardLayout = () => {
@@ -694,7 +707,7 @@ const DashboardLayout = () => {
     <div className="min-h-screen bg-black flex">
       {/* Sidebar - Desktop */}
       <aside 
-        className={`hidden md:flex flex-col bg-zinc-950 border-r border-gold-800/20 transition-all duration-300 ${
+        className={`hidden md:flex flex-col bg-zinc-950 border-r border-gold-800/20 transition-all duration-300 h-screen sticky top-0 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >

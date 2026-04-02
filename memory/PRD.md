@@ -1,7 +1,7 @@
 # KBEX.io - Product Requirements Document
 
 ## Original Problem Statement
-Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, Multi-sig Vaults, KYC (Sumsub), Fireblocks integration.
+Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, Multi-sig Vaults, KYC (Sumsub), Fireblocks integration for Wallets, Staking, Tokenization.
 
 ## Tech Stack
 - Frontend: React, Tailwind CSS, Shadcn UI, Context API
@@ -12,7 +12,13 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Full dashboard with portfolio, trading, assets views
 - OTC CRM with 11-step workflow, lead cards, wizard modals
 - General CRM with leads, deals, contacts, suppliers, tasks
-- Fireblocks Staking (functional) and Tokenization (VERIFIED - 76 collections loading)
+- Fireblocks Staking (functional, white-labeled)
+- Fireblocks Tokenization — Full module with 5 pages:
+  - TokensListPage: 76 tokens, mint/burn/expand vaults
+  - IssueTokenPage: Issue new or link existing
+  - MintBurnPage: Mint/Burn with history
+  - TokenPricingPage: Set USD prices per token
+  - TokenManagementPage: Contracts, wallets, transfers, unlink
 - Multi-language Brevo email service (PT, EN, AR, FR)
 - Azure AD / Microsoft 365 OAuth integration
 - Regional & Team filtering across CRM and OTC routes
@@ -22,17 +28,15 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Multi-Sign vault functionality
 - Client onboarding flow with invite codes
 
-## Recent Fixes (April 2, 2026)
-- Tokenization frontend VERIFIED: 76 collections rendering correctly from Fireblocks API
-- TransparencyPage.jsx crash fixed
-- LeadResponse model made resilient (extra="ignore", flexible status)
-- CRMLeads.jsx membership_profile null safety
-- DashboardLayout.jsx tickets filter error fixed
-- Upload Proof modal redesigned with gold theme
-- Country selector improved in ContactCTA
-- Visão 360: Only shows wallets with balance > 0
-- Added "Broker" tier option to OTC Lead
-- Changed "Brazil" → "LATAM" in CRM region filters
+## Recent Changes (April 2, 2026)
+- Created TOKENIZATION department in permissions.py with 5 menu items
+- Built 5 new frontend pages for tokenization
+- Added 3 new backend endpoints (prices GET/POST, transfer POST)
+- White-labeled Staking (removed Fireblocks provider names)
+- Made sidebar sticky with h-screen for proper scrolling
+- Added Gem, FilePlus2, Flame, Coins icons to DashboardLayout
+- Fixed TransparencyPage crash, CRM Leads resilience, notification filter
+- Improved upload proof modal, country selector, Visão 360, OTC tier/region
 
 ## Prioritized Backlog
 ### P1

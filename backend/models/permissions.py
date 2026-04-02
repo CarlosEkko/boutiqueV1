@@ -36,6 +36,7 @@ class Department(str, Enum):
     TEAM_HUB = "team_hub"
     TRANSACTION_APPROVAL = "transaction_approval"
     RISK_COMPLIANCE = "risk_compliance"
+    TOKENIZATION = "tokenization"
 
 
 # Role to Department access mapping
@@ -53,7 +54,8 @@ ROLE_PERMISSIONS = {
         Department.SUPPORT,
         Department.TEAM_HUB,
         Department.TRANSACTION_APPROVAL,
-        Department.RISK_COMPLIANCE
+        Department.RISK_COMPLIANCE,
+        Department.TOKENIZATION
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -67,7 +69,8 @@ ROLE_PERMISSIONS = {
         Department.SUPPORT,
         Department.TEAM_HUB,
         Department.TRANSACTION_APPROVAL,
-        Department.RISK_COMPLIANCE
+        Department.RISK_COMPLIANCE,
+        Department.TOKENIZATION
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -187,7 +190,6 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp"},
             {"path": "/dashboard/staking", "label": "Staking", "icon": "Coins"},
-            {"path": "/dashboard/tokenization", "label": "Tokenização", "icon": "Gem"},
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
         ]
     },
@@ -314,6 +316,17 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/risk/dashboard", "label": "Dashboard Risco", "icon": "Shield"},
             {"path": "/dashboard/risk/kyt-forensic", "label": "KYT Forensic", "icon": "FileSearch"},
             {"path": "/dashboard/admin/kyc", "label": "KYC/KYB", "icon": "UserCheck"},
+        ]
+    },
+    Department.TOKENIZATION: {
+        "label": "Tokenização",
+        "icon": "Gem",
+        "items": [
+            {"path": "/dashboard/tokenization", "label": "Tokens", "icon": "Gem"},
+            {"path": "/dashboard/tokenization/issue", "label": "Emitir Token", "icon": "FilePlus2"},
+            {"path": "/dashboard/tokenization/mint-burn", "label": "Mint & Burn", "icon": "Flame"},
+            {"path": "/dashboard/tokenization/pricing", "label": "Definir Preço", "icon": "DollarSign"},
+            {"path": "/dashboard/tokenization/management", "label": "Gestão", "icon": "Settings2"},
         ]
     },
 }

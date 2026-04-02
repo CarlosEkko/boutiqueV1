@@ -202,7 +202,7 @@ const StakingPage = () => {
                   </div>
                   <div>
                     <p className="text-white font-medium">{pos.chainDescriptor || pos.chain || 'N/A'}</p>
-                    <p className="text-xs text-zinc-500">Vault: {pos.vaultAccountId || 'N/A'} | Provider: {pos.providerId || 'N/A'}</p>
+                    <p className="text-xs text-zinc-500">Vault: {pos.vaultAccountId || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
@@ -233,7 +233,7 @@ const StakingPage = () => {
             <Card key={i} className="bg-zinc-900/60 border-zinc-800">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-white font-medium">{prov.providerName || prov.name || prov.id || 'Validador'}</p>
+                  <p className="text-white font-medium">{prov.chainDescriptor ? `Validador ${prov.chainDescriptor}` : `Validador ${i + 1}`}</p>
                   <span className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded">{prov.chainDescriptor || ''}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400">
@@ -287,7 +287,7 @@ const StakingPage = () => {
                   }`} />
                   <div>
                     <p className="text-sm text-white font-medium capitalize">{h.action?.replace('_', ' ')}</p>
-                    <p className="text-xs text-zinc-500">{h.provider_id} | {h.amount || ''}</p>
+                    <p className="text-xs text-zinc-500">{h.amount || ''}</p>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-500">{h.created_at ? new Date(h.created_at).toLocaleString('pt-PT') : ''}</p>
@@ -310,7 +310,7 @@ const StakingPage = () => {
                 className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" data-testid="stake-vault-input" />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Validador / Provider</label>
+              <label className="text-xs text-zinc-400 mb-1 block">Validador</label>
               <Select value={stakeForm.provider_id} onValueChange={v => setStakeForm(p => ({...p, provider_id: v}))}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="stake-provider-select">
                   <SelectValue placeholder="Selecionar validador" />
@@ -318,7 +318,7 @@ const StakingPage = () => {
                 <SelectContent className="bg-zinc-800 border-zinc-700">
                   {providers.map((p, i) => (
                     <SelectItem key={i} value={p.id || p.providerId || `prov-${i}`}>
-                      {p.providerName || p.name || p.id} ({p.chainDescriptor || ''})
+                      {p.chainDescriptor ? `Validador ${p.chainDescriptor}` : `Validador ${i + 1}`} ({p.chainDescriptor || ''})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -352,13 +352,13 @@ const StakingPage = () => {
                 className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Validador / Provider</label>
+              <label className="text-xs text-zinc-400 mb-1 block">Validador</label>
               <Select value={stakeForm.provider_id} onValueChange={v => setStakeForm(p => ({...p, provider_id: v}))}>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar validador" /></SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
                   {providers.map((p, i) => (
                     <SelectItem key={i} value={p.id || p.providerId || `prov-${i}`}>
-                      {p.providerName || p.name || p.id} ({p.chainDescriptor || ''})
+                      {p.chainDescriptor ? `Validador ${p.chainDescriptor}` : `Validador ${i + 1}`} ({p.chainDescriptor || ''})
                     </SelectItem>
                   ))}
                 </SelectContent>

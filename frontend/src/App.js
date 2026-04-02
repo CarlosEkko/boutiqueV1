@@ -90,6 +90,11 @@ import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients
 import RegisterPage from "./pages/RegisterPage";
 import StakingPage from "./pages/dashboard/investments/StakingPage";
 import TokenizationPage from "./pages/dashboard/investments/TokenizationPage";
+import TokensListPage from "./pages/dashboard/tokenization/TokensListPage";
+import IssueTokenPage from "./pages/dashboard/tokenization/IssueTokenPage";
+import MintBurnPage from "./pages/dashboard/tokenization/MintBurnPage";
+import TokenPricingPage from "./pages/dashboard/tokenization/TokenPricingPage";
+import TokenManagementPage from "./pages/dashboard/tokenization/TokenManagementPage";
 import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
 import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
 import ApprovalSettingsPage from "./pages/dashboard/approvals/ApprovalSettingsPage";
@@ -169,7 +174,11 @@ function AppRoutes() {
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="staking" element={<StakingPage />} />
-        <Route path="tokenization" element={<TokenizationPage />} />
+        <Route path="tokenization" element={<TokensListPage />} />
+        <Route path="tokenization/issue" element={<IssueTokenPage />} />
+        <Route path="tokenization/mint-burn" element={<MintBurnPage />} />
+        <Route path="tokenization/pricing" element={<TokenPricingPage />} />
+        <Route path="tokenization/management" element={<TokenManagementPage />} />
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
         
