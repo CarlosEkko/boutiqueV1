@@ -327,75 +327,79 @@ const CRMLeads = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Pesquisar leads..."
-            value={filter.search}
-            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            className="pl-9 bg-zinc-800 border-zinc-700 text-white"
-          />
-        </div>
-        <select
-          value={filter.status}
-          onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
-        >
-          <option value="">Todos Status</option>
-          {statuses.map(s => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-        <select
-          value={filter.is_qualified}
-          onChange={(e) => setFilter({ ...filter, is_qualified: e.target.value })}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
-          data-testid="filter-qualification"
-        >
-          <option value="">Qualificação</option>
-          <option value="true">Qualificados</option>
-          <option value="false">Não Qualificados</option>
-        </select>
-        <select
-          value={filter.membership_profile}
-          onChange={(e) => setFilter({ ...filter, membership_profile: e.target.value })}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
-          data-testid="filter-profile"
-        >
-          <option value="">Perfil</option>
-          <option value="broker">Broker</option>
-          <option value="standard">Standard</option>
-          <option value="premium">Premium</option>
-          <option value="vip">VIP</option>
-          <option value="institucional">Institucional</option>
-        </select>
-        <select
-          value={filter.crypto}
-          onChange={(e) => setFilter({ ...filter, crypto: e.target.value })}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
-          data-testid="filter-crypto"
-        >
-          <option value="">Moedas</option>
-          {CRYPTOCURRENCIES.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <select
-          value={filter.country}
-          onChange={(e) => setFilter({ ...filter, country: e.target.value })}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
-          data-testid="filter-country"
-        >
-          <option value="">Região / País</option>
-          {COUNTRIES.map(c => (
-            <option key={c.code} value={c.code}>{c.name}</option>
-          ))}
-        </select>
-        <Button variant="outline" onClick={fetchLeads} className="border-zinc-700">
-          <RefreshCw size={16} />
-        </Button>
-      </div>
+      <Card className="bg-zinc-900/30 border-zinc-800/50">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Pesquisar leads..."
+                value={filter.search}
+                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                className="pl-9 bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+            <select
+              value={filter.status}
+              onChange={(e) => setFilter({ ...filter, status: e.target.value })}
+              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+            >
+              <option value="">Todos Status</option>
+              {statuses.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <select
+              value={filter.is_qualified}
+              onChange={(e) => setFilter({ ...filter, is_qualified: e.target.value })}
+              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              data-testid="filter-qualification"
+            >
+              <option value="">Qualificação</option>
+              <option value="true">Qualificados</option>
+              <option value="false">Não Qualificados</option>
+            </select>
+            <select
+              value={filter.membership_profile}
+              onChange={(e) => setFilter({ ...filter, membership_profile: e.target.value })}
+              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              data-testid="filter-profile"
+            >
+              <option value="">Perfil</option>
+              <option value="broker">Broker</option>
+              <option value="standard">Standard</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+              <option value="institucional">Institucional</option>
+            </select>
+            <select
+              value={filter.crypto}
+              onChange={(e) => setFilter({ ...filter, crypto: e.target.value })}
+              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              data-testid="filter-crypto"
+            >
+              <option value="">Moedas</option>
+              {CRYPTOCURRENCIES.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={filter.country}
+              onChange={(e) => setFilter({ ...filter, country: e.target.value })}
+              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white"
+              data-testid="filter-country"
+            >
+              <option value="">País</option>
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
+            </select>
+            <Button variant="outline" onClick={fetchLeads} className="border-zinc-700 h-10">
+              <RefreshCw size={16} />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Leads List */}
       {loading ? (
@@ -413,26 +417,27 @@ const CRMLeads = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {leads.map(lead => (
-            <Card key={lead.id} className="bg-zinc-900/50 border-zinc-800">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            <Card key={lead.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+              <CardContent className="p-5">
+                {/* Row 1: Lead Info + Badges */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                       lead.is_qualified ? 'bg-emerald-500/20' : 'bg-blue-500/20'
                     }`}>
                       {lead.is_qualified ? (
-                        <CheckCircle size={24} className="text-emerald-400" />
+                        <CheckCircle size={20} className="text-emerald-400" />
                       ) : (
-                        <UserPlus size={24} className="text-blue-400" />
+                        <UserPlus size={20} className="text-blue-400" />
                       )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-white font-medium">{lead.name}</span>
                         {lead.company_name && (
-                          <span className="text-gray-400 text-sm flex items-center gap-1">
+                          <span className="text-gray-500 text-sm flex items-center gap-1">
                             <Building2 size={12} /> {lead.company_name}
                           </span>
                         )}
@@ -446,19 +451,19 @@ const CRMLeads = () => {
                           return <Badge className={`${cfg.bg} ${cfg.text} text-[10px]`} data-testid={`risk-score-crm-${lead.id}`}>RI {s} — {cfg.label}</Badge>;
                         })()}
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-400 mt-1">
+                      <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
                         {lead.email && (
-                          <span className="flex items-center gap-1">
-                            <Mail size={12} /> {lead.email}
+                          <span className="flex items-center gap-1 truncate">
+                            <Mail size={12} className="shrink-0" /> <span className="truncate">{lead.email}</span>
                           </span>
                         )}
                         {lead.country && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 shrink-0">
                             <MapPin size={12} /> {lead.country}
                           </span>
                         )}
                         {lead.source && (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 shrink-0">
                             <Globe size={12} /> {lead.source}
                           </span>
                         )}
@@ -466,30 +471,25 @@ const CRMLeads = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    {/* Estimated Volume */}
+                  {/* Right badges */}
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     {lead.estimated_volume && (
                       <div className="text-right hidden md:block">
-                        <div className="text-xs text-gray-400">Volume Estimado</div>
-                        <div className="text-gold-400 font-medium flex items-center gap-1">
-                          <DollarSign size={14} />
+                        <div className="text-gold-400 text-sm font-medium flex items-center gap-1">
+                          <DollarSign size={13} />
                           {new Intl.NumberFormat('pt-PT').format(lead.estimated_volume)}
                         </div>
                       </div>
                     )}
-
-                    {/* Cryptos */}
                     {lead.interested_cryptos?.length > 0 && (
                       <div className="hidden md:flex items-center gap-1">
-                        {lead.interested_cryptos.slice(0, 2).map(crypto => (
-                          <Badge key={crypto} className="bg-zinc-800 text-gray-300 border-0 text-xs">
+                        {lead.interested_cryptos.slice(0, 3).map(crypto => (
+                          <Badge key={crypto} className="bg-zinc-800 text-gray-300 border-0 text-[10px]">
                             {crypto}
                           </Badge>
                         ))}
                       </div>
                     )}
-
-                    {/* Profile Badge */}
                     {lead.membership_profile && (
                       <Badge className={`border text-[10px] ${
                         {
@@ -503,19 +503,24 @@ const CRMLeads = () => {
                         {lead.membership_profile.charAt(0).toUpperCase() + lead.membership_profile.slice(1)}
                       </Badge>
                     )}
-
-                    {/* Status */}
                     <Badge className={`border-0 ${getStatusColor(lead.status)}`}>
                       {getStatusLabel(lead.status)}
                     </Badge>
+                  </div>
+                </div>
 
-                    {/* Assign to Team Member */}
+                {/* Divider */}
+                <div className="border-t border-zinc-800/60 my-3" />
+
+                {/* Row 2: Assignment + Actions */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserCheck size={14} className="text-zinc-500" />
                     <select
                       value={lead.assigned_to || ''}
                       onChange={(e) => assignLead(lead.id, e.target.value)}
-                      className="bg-zinc-800 border border-zinc-700 rounded-md px-2 py-1 text-xs text-white max-w-[140px] truncate"
+                      className="bg-zinc-800/60 border border-zinc-700/50 rounded-md px-2 py-1 text-xs text-zinc-300 max-w-[180px]"
                       data-testid={`assign-lead-${lead.id}`}
-                      title={lead.assigned_to ? `Atribuído a: ${teamMembers.find(m => m.id === lead.assigned_to)?.name || lead.assigned_to}` : 'Sem atribuição'}
                     >
                       <option value="">Atribuir a...</option>
                       {teamMembers.filter(m => m.is_active !== false).map(m => (
@@ -524,83 +529,36 @@ const CRMLeads = () => {
                         </option>
                       ))}
                     </select>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      {!lead.risk_intelligence_data && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => riskScan(lead.id)}
-                          className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
-                          title="Risk Intelligence Scan"
-                          data-testid={`risk-scan-crm-${lead.id}`}
-                        >
-                          <Shield size={14} />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {!lead.risk_intelligence_data && (
+                      <Button variant="outline" size="sm" onClick={() => riskScan(lead.id)} className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30 h-8 w-8 p-0" title="Risk Intelligence Scan" data-testid={`risk-scan-crm-${lead.id}`}>
+                        <Shield size={14} />
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => openDetail(lead)} className="border-cyan-600/50 text-cyan-400 hover:bg-cyan-900/30 h-8 w-8 p-0" title="Ver Detalhes" data-testid={`detail-crm-${lead.id}`}>
+                      <Eye size={14} />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { setMeetingLead(lead); setShowMeetingDialog(true); }} className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30 h-8 w-8 p-0" title="Agendar Reunião" data-testid={`schedule-meeting-crm-${lead.id}`}>
+                      <Video size={14} />
+                    </Button>
+                    {lead.status !== 'won' && lead.status !== 'lost' && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => convertToOTC(lead.id)} className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30 h-8 px-2" title="Converter em Lead OTC" data-testid={`convert-to-otc-${lead.id}`}>
+                          <TrendingUp size={14} className="mr-1" />
+                          <span className="text-xs">OTC</span>
                         </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDetail(lead)}
-                        className="border-cyan-600/50 text-cyan-400 hover:bg-cyan-900/30"
-                        title="Ver Detalhes"
-                        data-testid={`detail-crm-${lead.id}`}
-                      >
-                        <Eye size={14} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setMeetingLead(lead); setShowMeetingDialog(true); }}
-                        className="border-blue-600/50 text-blue-400 hover:bg-blue-900/30"
-                        title="Agendar Reunião"
-                        data-testid={`schedule-meeting-crm-${lead.id}`}
-                      >
-                        <Video size={14} />
-                      </Button>
-                      {lead.status !== 'won' && lead.status !== 'lost' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => convertToOTC(lead.id)}
-                            className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
-                            title="Converter em Lead OTC"
-                            data-testid={`convert-to-otc-${lead.id}`}
-                          >
-                            <TrendingUp size={14} className="mr-1" />
-                            <span className="hidden lg:inline text-xs">OTC</span>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => sendRegistrationEmail(lead.id)}
-                            className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/30"
-                            title="Enviar Email de Registo"
-                            data-testid={`send-registration-${lead.id}`}
-                          >
-                            <Mail size={14} />
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditModal(lead)}
-                        className="border-gold-600/50 text-gold-400"
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteLead(lead.id)}
-                        className="border-red-600/50 text-red-400"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
+                        <Button variant="outline" size="sm" onClick={() => sendRegistrationEmail(lead.id)} className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/30 h-8 w-8 p-0" title="Enviar Email de Registo" data-testid={`send-registration-${lead.id}`}>
+                          <Mail size={14} />
+                        </Button>
+                      </>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => openEditModal(lead)} className="border-gold-600/50 text-gold-400 h-8 w-8 p-0" title="Editar">
+                      <Edit size={14} />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => deleteLead(lead.id)} className="border-red-600/50 text-red-400 h-8 w-8 p-0" title="Eliminar">
+                      <Trash2 size={14} />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
