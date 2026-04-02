@@ -20,6 +20,9 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ### Solicitar Acesso — OTC Lead Generation (02/04/2026)
 - Formulário "Solicitar Acesso" na landing page agora cria OTC Lead + CRM Lead
+- Campo "País" adicionado ao formulário com select de 190+ países
+- Deteção automática FATF de países de alto risco (red_flag no OTC Lead)
+- Traduções em PT, EN, AR, FR para o campo "País"
 - Endpoint POST /api/crm/leads/public gera leads em ambas coleções
 - Proteção contra duplicados por email
 - Risk Intelligence scan automático via Trustfull
