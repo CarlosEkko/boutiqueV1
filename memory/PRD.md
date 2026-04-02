@@ -18,6 +18,19 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Auto-seleciona primeira carteira ao carregar
 - Score KYT com gráfico circular e badges de status por carteira
 
+### Score de Risco KYT — Escala 0-10 (02/04/2026)
+- Escala alterada de 0-100 para 0-10 (10 = risco máximo)
+- Cores: ≤3 verde (baixo), 4-6 amarelo (médio), ≥7 vermelho (alto)
+- Input limitado a 0-10 com clamping
+- Gráfico circular SVG atualizado com fill proporcional (cap a 100%)
+- Aplicado a CompliancePage.jsx e KYTForensicPage.jsx
+
+### Status Carteiras — Ícones Corrigidos (02/04/2026)
+- Carteiras sem análise KYT mostram ⏳ âmbar (em vez de ✓ verde)
+- Lógica `walletStatusIcon` combina status da carteira + status KYT
+- Verified + Clean → ✓ verde | Verified + sem KYT → ⏳ âmbar
+- Pending → ⏳ âmbar | Failed → ✗ vermelho | Flagged → 🛡️ laranja
+
 ### Solicitar Acesso — OTC Lead Generation (02/04/2026)
 - Formulário "Solicitar Acesso" na landing page agora cria OTC Lead + CRM Lead
 - Campo "País" adicionado ao formulário com select de 190+ países
