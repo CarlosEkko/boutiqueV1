@@ -12,6 +12,13 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ## Funcionalidades Implementadas
 
+### KYT Forensic — Tabs por Status (02/04/2026)
+- KYTForensicPage reescrita com tabs: Pendente, Limpo, Sinalizado, Rejeitado
+- Backend retorna kyt_status na queue e filtra via query param ?status=
+- Modal de Análise com Select de resultado (pending/clean/flagged/rejected)
+- Contagens por tab dinâmicas
+- Validado: tabs, modal, backend API funcionam corretamente
+
 ### Compliance Forense — Vista Wallet-Centric (02/04/2026)
 - CompliancePage reescrita para vista centrada na carteira
 - Clicar numa carteira atualiza painéis KYT, Satoshi, PoO, PoR
@@ -36,16 +43,16 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ### Score de Risco KYT — Escala 0-10 (02/04/2026)
 - Escala alterada de 0-100 para 0-10 (10 = risco máximo)
-- Cores: ≤3 verde (baixo), 4-6 amarelo (médio), ≥7 vermelho (alto)
+- Cores: <=3 verde (baixo), 4-6 amarelo (médio), >=7 vermelho (alto)
 - Input limitado a 0-10 com clamping
 - Gráfico circular SVG atualizado com fill proporcional (cap a 100%)
 - Aplicado a CompliancePage.jsx e KYTForensicPage.jsx
 
 ### Status Carteiras — Ícones Corrigidos (02/04/2026)
-- Carteiras sem análise KYT mostram ⏳ âmbar (em vez de ✓ verde)
-- Lógica `walletStatusIcon` combina status da carteira + status KYT
-- Verified + Clean → ✓ verde | Verified + sem KYT → ⏳ âmbar
-- Pending → ⏳ âmbar | Failed → ✗ vermelho | Flagged → 🛡️ laranja
+- Carteiras sem análise KYT mostram âmbar (em vez de verde)
+- Lógica walletStatusIcon combina status da carteira + status KYT
+- Verified + Clean -> verde | Verified + sem KYT -> âmbar
+- Pending -> âmbar | Failed -> vermelho | Flagged -> laranja
 
 ### Solicitar Acesso — OTC Lead Generation (02/04/2026)
 - Formulário "Solicitar Acesso" na landing page agora cria OTC Lead + CRM Lead
@@ -63,29 +70,20 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 - Link "Solicitar Acesso" na AuthPage aponta para /#contact
 - Acesso à plataforma apenas por convite/aprovação
 
-### Exchange — Taxa KBEX & Tooltip (01/04/2026)
-- "Fee" substituído por "Taxa KBEX" com ícone (i) e tooltip explicativo
-- Tooltip aplicado a Buy, Sell e Swap previews
-
-### OTC Deals — Corretor KBEX & USDT Fix (01/04/2026)
-- USDT/USDC reference price fix: stablecoins retornam $1.00
-- FormattedNumberInput com separadores de espaço
-
-### Fireblocks — Auto-Whitelist, Fees & Gas Station (01/04/2026)
-- Auto-Whitelist na aprovação de withdrawals
-- Fee Estimation endpoints (LOW/MEDIUM/HIGH + KBEX fee)
-- Gas Station Monitor com alertas Brevo
-
-### OTC Leads CRM (01/04/2026)
-- 7 bugs corrigidos: telefone obrigatório, fonte, duplicados, edição, tier
+### Sidebar Reestruturada (02/04/2026)
+- "Negócios OTC" e "Comissões" movidos para OTC Desk
+- "KYC/KYB" movido de Admin para Risk & Compliance
+- Todas as entradas traduzidas em PT, EN, AR, FR
 
 ### Anteriores
 - Fireblocks Compliance (Satoshi Test, PoO, PoR)
 - Microsoft 365 OAuth, Brevo emails, KYC Gate
 - Trading, CRM, Multi-Sign, Risk & Compliance
+- OTC Pipeline 11 fases, Brevo onboarding emails
 
 ## Issues Conhecidos
 - P2: Safari cursor bug (recorrente)
+- Scores KYT antigos (100, 75, 70, 90) na BD precisam migração para escala 0-10
 
 ## Backlog
 - P1: TradingView chart widgets
