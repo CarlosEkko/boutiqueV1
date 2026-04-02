@@ -15,11 +15,19 @@ import { useNavigate } from 'react-router-dom';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-const WALLET_STATUS = {
+const KYT_TABS = [
+  { key: 'all', label: 'Todos', color: 'text-zinc-400', active: 'bg-zinc-700 text-white' },
+  { key: 'pending', label: 'Pendente', color: 'text-yellow-400', active: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' },
+  { key: 'clean', label: 'Limpo', color: 'text-emerald-400', active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' },
+  { key: 'flagged', label: 'Sinalizado', color: 'text-orange-400', active: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
+  { key: 'rejected', label: 'Rejeitado', color: 'text-red-400', active: 'bg-red-500/20 text-red-400 border border-red-500/40' },
+];
+
+const KYT_STATUS_MAP = {
   pending: { label: 'Pendente', color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30', icon: Clock },
-  verified: { label: 'Verificado', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: CheckCircle },
+  clean: { label: 'Limpo', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30', icon: CheckCircle },
   flagged: { label: 'Sinalizado', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30', icon: AlertTriangle },
-  failed: { label: 'Rejeitado', color: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle },
+  rejected: { label: 'Rejeitado', color: 'bg-red-500/15 text-red-400 border-red-500/30', icon: XCircle },
 };
 
 const KYTForensicPage = () => {
@@ -85,6 +93,8 @@ const KYTForensicPage = () => {
   };
 
   const filtered = queue.filter(w => {
+    const kytSt = w.kyt_status || 'pending';
+    if (filterStatus !== 'all' && kytSt !== filterStatus) return false;
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       return w.address?.toLowerCase().includes(s) || w.client_name?.toLowerCase().includes(s) || w.deal_number?.toLowerCase().includes(s);
@@ -92,7 +102,11 @@ const KYTForensicPage = () => {
     return true;
   });
 
-  const pendingCount = queue.filter(w => w.status === 'pending').length;
+  const pendingCount = queue.filter(w => (w.kyt_status || 'pending') === 'pending').length;
+  const tabCounts = KYT_TABS.reduce((acc, tab) => {
+    acc[tab.key] = tab.key === 'all' ? queue.length : queue.filter(w => (w.kyt_status || 'pending') === tab.key).length;
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
@@ -112,26 +126,31 @@ const KYTForensicPage = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-          <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Pesquisar endereço, cliente, negócio..." className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="kyt-search" />
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2 items-center">
+          {KYT_TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setFilterStatus(tab.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filterStatus === tab.key ? tab.active : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+              }`}
+              data-testid={`kyt-tab-${tab.key}`}
+            >
+              {tab.label}
+              <span className="ml-1.5 text-xs opacity-70">({tabCounts[tab.key] || 0})</span>
+            </button>
+          ))}
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white w-36" data-testid="kyt-filter">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
-            <SelectItem value="all" className="text-white">Todos</SelectItem>
-            <SelectItem value="pending" className="text-yellow-400">Pendentes</SelectItem>
-            <SelectItem value="verified" className="text-emerald-400">Verificados</SelectItem>
-            <SelectItem value="flagged" className="text-orange-400">Sinalizados</SelectItem>
-            <SelectItem value="failed" className="text-red-400">Rejeitados</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="ghost" onClick={fetchQueue} className="text-zinc-400 hover:text-white" data-testid="kyt-refresh">
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </Button>
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+            <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Pesquisar endereço, cliente, negócio..." className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="kyt-search" />
+          </div>
+          <Button variant="ghost" onClick={fetchQueue} className="text-zinc-400 hover:text-white" data-testid="kyt-refresh">
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          </Button>
+        </div>
       </div>
 
       {/* Queue */}
@@ -141,7 +160,7 @@ const KYTForensicPage = () => {
         ) : filtered.length === 0 ? (
           <Card className="bg-zinc-900 border-zinc-800"><CardContent className="p-8 text-center text-zinc-500">Sem carteiras na fila</CardContent></Card>
         ) : filtered.map((wallet, i) => {
-          const ws = WALLET_STATUS[wallet.status] || WALLET_STATUS.pending;
+          const ws = KYT_STATUS_MAP[wallet.kyt_status] || KYT_STATUS_MAP.pending;
           const StatusIcon = ws.icon;
           return (
             <Card key={wallet.wallet_id || i} className={`bg-zinc-900 border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer ${wallet.status === 'pending' ? 'border-l-2 border-l-yellow-500' : ''}`} onClick={() => openAnalysis(wallet)} data-testid={`kyt-wallet-${wallet.wallet_id}`}>

@@ -49,8 +49,8 @@ async def get_kyt_queue(
             continue
 
         for wallet in record.get("wallets", []):
-            wallet_status = wallet.get("status", "pending")
-            if status and wallet_status != status:
+            kyt_status = wallet.get("kyt_status", "pending")
+            if status and kyt_status != status:
                 continue
 
             queue.append({
@@ -58,7 +58,8 @@ async def get_kyt_queue(
                 "address": wallet.get("address"),
                 "blockchain": wallet.get("blockchain"),
                 "wallet_type": wallet.get("wallet_type"),
-                "status": wallet_status,
+                "status": wallet.get("status", "pending"),
+                "kyt_status": kyt_status,
                 "description": wallet.get("description"),
                 "added_at": wallet.get("added_at"),
                 "verified_at": wallet.get("verified_at"),
