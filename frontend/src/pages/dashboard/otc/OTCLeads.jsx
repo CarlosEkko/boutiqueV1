@@ -262,6 +262,7 @@ const OTCLeads = () => {
                           <Select value={editData.potential_tier} onValueChange={v => setEditData({...editData, potential_tier: v})}>
                             <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="edit-tier"><SelectValue placeholder="Selecionar tier" /></SelectTrigger>
                             <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                              <SelectItem value="broker" className="text-white">Broker</SelectItem>
                               <SelectItem value="standard" className="text-white">Standard</SelectItem>
                               <SelectItem value="premium" className="text-white">Premium</SelectItem>
                               <SelectItem value="vip" className="text-white">VIP</SelectItem>

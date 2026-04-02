@@ -42,7 +42,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 import { COUNTRIES } from '../../../utils/countries';
 
-const REGIONS = ['Europe', 'Middle East', 'Brazil', 'North America', 'Asia', 'Other'];
+const REGIONS = ['Europe', 'Middle East', 'LATAM', 'North America', 'Asia', 'Other'];
 
 const SOURCES = ['Website', 'Referência', 'LinkedIn', 'Evento', 'Cold Call', 'Parceiro', 'Outro'];
 

@@ -177,10 +177,13 @@ const ContactCTA = () => {
                           >
                             <SelectValue placeholder={t('auth.selectCountry') || 'Selecione o país'} />
                           </SelectTrigger>
-                          <SelectContent className="bg-zinc-900 border-gold-800/30 max-h-60">
+                          <SelectContent className="bg-zinc-900 border-gold-800/30 max-h-60 overflow-y-auto">
                             {COUNTRIES.map(c => (
-                              <SelectItem key={c.code} value={c.code} className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30">
-                                {c.name}
+                              <SelectItem key={c.code} value={c.code} className="text-white hover:bg-gold-800/30 focus:bg-gold-800/30 text-sm py-2.5 cursor-pointer">
+                                <span className="flex items-center gap-2">
+                                  <span className="text-gray-400 text-xs w-8">{c.code}</span>
+                                  <span>{c.name}</span>
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>

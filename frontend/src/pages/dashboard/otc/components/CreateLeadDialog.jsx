@@ -18,6 +18,7 @@ const SOURCE_LABELS = {
 };
 
 const TIER_OPTIONS = [
+  { value: 'broker', label: 'Broker' },
   { value: 'standard', label: 'Standard' },
   { value: 'premium', label: 'Premium' },
   { value: 'vip', label: 'VIP' },

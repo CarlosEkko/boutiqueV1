@@ -614,55 +614,72 @@ const FiatDepositPage = () => {
           onClick={() => setSelectedDeposit(null)}
         >
           <Card 
-            className="bg-zinc-900 border-emerald-800/30 max-w-md w-full"
+            className="bg-zinc-900 border-gold-800/30 max-w-md w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <CardHeader>
-              <CardTitle className="text-white">{t('dashboard.fiatDeposit.uploadProof')}</CardTitle>
+            <CardHeader className="border-b border-zinc-800 pb-4">
+              <CardTitle className="text-white text-lg">{t('dashboard.fiatDeposit.uploadProof') || 'Enviar Comprovante'}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm text-gray-400">
-                <p>{t('dashboard.fiatDeposit.deposit') || 'Deposit'}: <span className="text-white">{selectedDeposit.currency} {selectedDeposit.amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span></p>
-                <p>{t('dashboard.fiatDeposit.reference')}: <span className="text-emerald-400 font-mono">{selectedDeposit.reference_code}</span></p>
+            <CardContent className="space-y-5 pt-4">
+              <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">{t('dashboard.fiatDeposit.amount') || 'Valor'}:</span>
+                  <span className="text-white font-mono text-lg">{selectedDeposit.currency} {selectedDeposit.amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">{t('dashboard.fiatDeposit.reference') || 'Referência'}:</span>
+                  <span className="text-gold-400 font-mono font-medium">{selectedDeposit.reference_code}</span>
+                </div>
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.fiatDeposit.transferProof')}</label>
+                <label className="text-sm text-gray-300 mb-2 block font-medium">{t('dashboard.fiatDeposit.transferProof') || 'Comprovante de Transferência'}</label>
+                <label htmlFor="proof-file" className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gold-800/40 rounded-lg cursor-pointer bg-zinc-800/30 hover:bg-zinc-800/50 hover:border-gold-600/50 transition-all">
+                  <Upload size={24} className="text-gold-400 mb-2" />
+                  <span className="text-sm text-gray-400">Clique para selecionar ficheiro</span>
+                  <span className="text-xs text-gray-500 mt-1">{t('dashboard.fiatDeposit.acceptedFormats') || 'PDF, JPEG, PNG (máx. 10MB)'}</span>
+                </label>
                 <Input
                   type="file"
                   id="proof-file"
                   accept=".pdf,.jpg,.jpeg,.png"
-                  className="bg-zinc-800 border-zinc-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-500 file:text-white file:cursor-pointer"
+                  className="hidden"
                   data-testid="proof-file-input"
+                  onChange={(e) => {
+                    const fileName = e.target.files?.[0]?.name;
+                    if (fileName) {
+                      const label = e.target.previousElementSibling;
+                      if (label) {
+                        label.querySelector('span').textContent = fileName;
+                      }
+                    }
+                  }}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {t('dashboard.fiatDeposit.acceptedFormats')}
-                </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
                   className="flex-1 border-zinc-700"
                   onClick={() => setSelectedDeposit(null)}
                 >
-                  {t('common.cancel') || 'Cancel'}
+                  {t('common.cancel') || 'Cancelar'}
                 </Button>
                 <Button
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-gold-500 hover:bg-gold-400 text-black"
                   onClick={() => {
                     const fileInput = document.getElementById('proof-file');
                     const file = fileInput?.files?.[0];
                     if (file) {
                       submitProof(selectedDeposit.id, file);
                     } else {
-                      toast.error(t('dashboard.fiatDeposit.selectFile') || 'Select a file');
+                      toast.error(t('dashboard.fiatDeposit.selectFile') || 'Selecione um ficheiro');
                     }
                   }}
                   data-testid="submit-proof-btn"
                 >
                   <Upload size={16} className="mr-2" />
-                  {t('dashboard.fiatDeposit.submit')}
+                  {t('dashboard.fiatDeposit.submit') || 'Enviar'}
                 </Button>
               </div>
             </CardContent>

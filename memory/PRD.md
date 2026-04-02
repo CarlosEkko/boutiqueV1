@@ -26,7 +26,12 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Fixed TransparencyPage.jsx crash: `wallet.parseFloat(balance)` → `parseFloat(wallet.balance || 0)`
 - Made LeadResponse model more resilient: status as string, optional dates, extra="ignore"
 - Fixed CRMLeads.jsx membership_profile null safety
-- Fixed DashboardLayout.jsx ticketsRes.value.data.filter error (tickets API returns object not array)
+- Fixed DashboardLayout.jsx ticketsRes.value.data.filter error
+- Redesigned Upload Proof modal with gold theme, proper labels, drag-drop area
+- Improved country selector in ContactCTA with better spacing and readability
+- Visão 360: Only shows wallets with balance > 0, shows "Ainda não tem saldo" message
+- Added "Broker" tier option to OTC Lead creation and edit
+- Changed "Brazil" → "LATAM" in CRM Leads and Suppliers region filters
 - Re-seeded admin account with correct UserInDB model structure
 
 ## Prioritized Backlog
@@ -51,6 +56,6 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Test Client: joao.mirror999@test.com / senha123
 
 ## Project Health
-- Fixed: TransparencyPage, CRM Leads resilience, Notification tickets filter
+- Fixed: TransparencyPage, CRM Leads resilience, Notification tickets filter, Upload Proof UX, Country selector, Visão 360 wallets, OTC Tier Broker, Region LATAM
 - Pending Test: Tokenization frontend
 - Mocked: WebSockets (using 1s HTTP polling)

@@ -44,7 +44,7 @@ const CRYPTOCURRENCIES = [
 
 import { COUNTRIES } from '../../../utils/countries';
 
-const REGIONS = ['Europe', 'Middle East', 'Brazil', 'North America', 'Asia', 'Other'];
+const REGIONS = ['Europe', 'Middle East', 'LATAM', 'North America', 'Asia', 'Other'];
 
 const CRMSuppliers = () => {
   const { token } = useAuth();
