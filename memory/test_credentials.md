@@ -1,12 +1,11 @@
-# Test Credentials — KBEX.io
+# Test Credentials
 
-## Admin
-- Email: carlos@kbex.io
+## Admin Account
+- Email: carlos@kryptobox.io
 - Password: senha123
+- Role: admin
+- Region: global
 
-## Test VIP Client
-- Email: testvip@test.com
+## Test Client (OTC Generated)
+- Email: joao.mirror999@test.com
 - Password: senha123
-
-## API URL
-- Preview: https://boutique-exchange.preview.emergentagent.com

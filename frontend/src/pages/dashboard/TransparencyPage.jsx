@@ -161,7 +161,7 @@ const TransparencyPage = () => {
                             <Badge className="bg-zinc-700 text-gray-300">{wallet.label}</Badge>
                           </div>
                           <p className="text-sm text-gray-400">
-                            Balance: <span className="text-white">{wallet.parseFloat(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</span>
+                            Balance: <span className="text-white">{parseFloat(wallet.balance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</span>
                           </p>
                         </div>
                       </div>
