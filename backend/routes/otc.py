@@ -509,6 +509,7 @@ async def send_onboarding_email(
             to_name=contact_name,
             entity_name=entity_name,
             registration_link=registration_link,
+            country=lead.get("country", ""),
         )
     
     # Update lead

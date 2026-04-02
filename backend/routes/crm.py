@@ -164,6 +164,7 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
             email_result = await email_service.send_access_request_confirmation(
                 to_email=lead_data.email,
                 to_name=lead_data.name,
+                country=country_code,
             )
             email_sent = email_result.get("success", False)
             if not email_sent:
@@ -471,6 +472,7 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
                     to_name=lead_name,
                     entity_name=lead.get("company_name") or lead_name,
                     registration_link=registration_link,
+                    country=lead.get("country", ""),
                 )
                 email_sent = email_result.get("success", False)
         except Exception as e:
@@ -509,6 +511,7 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
                 to_name=lead_name,
                 entity_name=lead.get("company_name") or lead_name,
                 registration_link=registration_link,
+                country=lead.get("country", ""),
             )
             email_sent = email_result.get("success", False)
             if not email_sent:
