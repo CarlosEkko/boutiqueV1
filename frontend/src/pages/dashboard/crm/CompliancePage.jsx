@@ -353,36 +353,40 @@ const CompliancePage = () => {
                 {(selectedWallet.kyt_score > 0 || selectedWallet.kyt_status) ? (
                   <>
                     <div className="flex items-center gap-6">
-                      <div className="relative w-20 h-20 shrink-0">
-                        <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
-                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={riskScoreColor(selectedWallet.kyt_score || 0).stroke} strokeWidth="3" strokeDasharray={`${Math.min((selectedWallet.kyt_score || 0) / 10, 1) * 100}, 100`} />
+                      <div className="relative w-28 h-28 shrink-0">
+                        <svg className="w-28 h-28 -rotate-90" viewBox="0 0 36 36">
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="2.5" />
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={riskScoreColor(selectedWallet.kyt_score || 0).stroke} strokeWidth="2.5" strokeDasharray={`${Math.min((selectedWallet.kyt_score || 0) / 10, 1) * 100}, 100`} strokeLinecap="round" />
                         </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className={`font-bold text-lg ${riskScoreColor(selectedWallet.kyt_score || 0).text}`}>{selectedWallet.kyt_score || 0}</span>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className={`font-bold text-2xl ${riskScoreColor(selectedWallet.kyt_score || 0).text}`}>{selectedWallet.kyt_score || 0}</span>
+                          <span className="text-zinc-600 text-[10px] uppercase tracking-wider">/10</span>
                         </div>
                       </div>
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-zinc-500 text-xs uppercase tracking-wider">Status:</span>
-                          <Badge className={
+                      <div className="flex-1 space-y-5">
+                        <div className="flex items-center gap-3">
+                          <span className="text-zinc-500 text-xs uppercase tracking-wider min-w-[50px]">Status:</span>
+                          <Badge className={`px-3 py-1 ${
                             selectedWallet.kyt_status === 'clean' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' :
                             selectedWallet.kyt_status === 'flagged' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30' :
                             selectedWallet.kyt_status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/30' :
                             'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
-                          }>
+                          }`}>
                             {selectedWallet.kyt_status === 'clean' ? 'Limpo' : selectedWallet.kyt_status === 'flagged' ? 'Sinalizado' : selectedWallet.kyt_status === 'rejected' ? 'Rejeitado' : 'Pendente'}
                           </Badge>
                         </div>
                         {selectedWallet.kyt_flags?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {selectedWallet.kyt_flags.map((f, i) => (
-                              <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px]">{f}</Badge>
-                            ))}
+                          <div>
+                            <span className="text-zinc-500 text-xs uppercase tracking-wider block mb-2">Tags:</span>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedWallet.kyt_flags.map((f, i) => (
+                                <Badge key={i} className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] px-2.5 py-1">{f}</Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-zinc-500 pt-1">
-                          <Wallet size={12} />
+                        <div className="flex items-center gap-2 text-sm text-zinc-500">
+                          <Wallet size={14} />
                           <span>{selectedWallet.blockchain} · {selectedWallet.wallet_type}</span>
                         </div>
                       </div>
