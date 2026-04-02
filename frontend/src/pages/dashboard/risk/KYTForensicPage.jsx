@@ -16,11 +16,11 @@ import { useNavigate } from 'react-router-dom';
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const KYT_TABS = [
-  { key: 'all', label: 'Todos', color: 'text-zinc-400', active: 'bg-zinc-700 text-white' },
   { key: 'pending', label: 'Pendente', color: 'text-yellow-400', active: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' },
   { key: 'clean', label: 'Limpo', color: 'text-emerald-400', active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' },
   { key: 'flagged', label: 'Sinalizado', color: 'text-orange-400', active: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
   { key: 'rejected', label: 'Rejeitado', color: 'text-red-400', active: 'bg-red-500/20 text-red-400 border border-red-500/40' },
+  { key: 'all', label: 'Todos', color: 'text-zinc-400', active: 'bg-zinc-700 text-white' },
 ];
 
 const KYT_STATUS_MAP = {
