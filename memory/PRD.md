@@ -12,43 +12,52 @@ Premium Crypto Boutique Exchange para clientes HNW/UHNW.
 
 ## Funcionalidades Implementadas
 
+### Compliance Forense — Vista Wallet-Centric (02/04/2026)
+- CompliancePage reescrita para vista centrada na carteira
+- Clicar numa carteira atualiza painéis KYT, Satoshi, PoO, PoR
+- Auto-seleciona primeira carteira ao carregar
+- Score KYT com gráfico circular e badges de status por carteira
+
+### Solicitar Acesso — OTC Lead Generation (02/04/2026)
+- Formulário "Solicitar Acesso" na landing page agora cria OTC Lead + CRM Lead
+- Endpoint POST /api/crm/leads/public gera leads em ambas coleções
+- Proteção contra duplicados por email
+- Risk Intelligence scan automático via Trustfull
+- Email de confirmação via Brevo
+
+### Registo Público Desativado (02/04/2026)
+- /register redireciona para /#contact (formulário público)
+- AuthPage mostra apenas Login — sem toggle de registo
+- Link "Solicitar Acesso" na AuthPage aponta para /#contact
+- Acesso à plataforma apenas por convite/aprovação
+
 ### Exchange — Taxa KBEX & Tooltip (01/04/2026)
-- "Fee" substituído por "Taxa KBEX" com ícone (i) e tooltip explicativo sobre spread
+- "Fee" substituído por "Taxa KBEX" com ícone (i) e tooltip explicativo
 - Tooltip aplicado a Buy, Sell e Swap previews
-- Texto: "Além da taxa exibida, um spread pode estar incluído no preço..."
 
 ### OTC Deals — Corretor KBEX & USDT Fix (01/04/2026)
-- "Membro KBEX" substituído por "Corretor KBEX" em labels e calculadora
 - USDT/USDC reference price fix: stablecoins retornam $1.00
-- Quantidade e preço formatados com FormattedNumberInput (100 000)
-- Calculadora mostra valores com separadores de espaço (€600 182.28)
-
-### Compliance — Traduções & Hover (01/04/2026)
-- Tabs traduzidos: "Prova de Propriedade", "Prova de Reservas"
-- Carteiras de Negociação com hover animation (shadow dourado, border gold)
-- Análise forense inline: KYT status badge (Limpo/Sinalizado/Pendente) e Score
+- FormattedNumberInput com separadores de espaço
 
 ### Fireblocks — Auto-Whitelist, Fees & Gas Station (01/04/2026)
 - Auto-Whitelist na aprovação de withdrawals
 - Fee Estimation endpoints (LOW/MEDIUM/HIGH + KBEX fee)
-- Gas Station Monitor no Dashboard Financeiro com alertas Brevo
+- Gas Station Monitor com alertas Brevo
 
 ### OTC Leads CRM (01/04/2026)
-- 7 bugs corrigidos: telefone obrigatório, fonte, "ambos", duplicados, edição, tier, milhares
+- 7 bugs corrigidos: telefone obrigatório, fonte, duplicados, edição, tier
 
 ### Anteriores
 - Fireblocks Compliance (Satoshi Test, PoO, PoR)
 - Microsoft 365 OAuth, Brevo emails, KYC Gate
-- Trading, CRM, Multi-Sign, Risk & Compliance — Completos
-
-## Gas Station Status
-- Health: CRITICAL (ETH e BNB quase zero)
+- Trading, CRM, Multi-Sign, Risk & Compliance
 
 ## Issues Conhecidos
 - P2: Safari cursor bug (recorrente)
 
 ## Backlog
 - P1: TradingView chart widgets
+- P1: Traduções Frontend incompletas
 - P2: WebSockets para preços crypto
 - P2: Frontend Whitelist management UI
 - P3: Launchpad/ICO, App mobile

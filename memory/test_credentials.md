@@ -1,8 +1,12 @@
-# KBEX.io Test Credentials
+# Test Credentials — KBEX.io
 
 ## Admin
 - Email: carlos@kbex.io
 - Password: senha123
 
-## Test Users
-- VIP User: testvip@test.com / senha123 (membership_level: vip)
+## Test VIP Client
+- Email: testvip@test.com
+- Password: senha123
+
+## API URL
+- Preview: https://boutique-exchange.preview.emergentagent.com
