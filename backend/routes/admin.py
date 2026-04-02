@@ -272,12 +272,14 @@ async def list_users(
     
     # If user specifies a region filter and has access
     if region:
-        if internal_role in ["admin", "manager"] or user_region == "global" or user_region == region:
+        if internal_role in ["admin", "global_manager"] or user_region == "global":
+            query["region"] = region
+        elif user_region == region:
             query["region"] = region
         else:
             raise HTTPException(status_code=403, detail="Access denied to this region")
-    elif internal_role in ["local_manager", "support"] and user_region != "global":
-        # Local managers and support only see their region
+    elif internal_role not in ["admin", "global_manager"] and user_region != "global":
+        # Non-admin/global roles only see their region
         query["region"] = user_region
     
     users = await db.users.find(

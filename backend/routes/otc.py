@@ -42,6 +42,7 @@ def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Languag
 
 from routes.auth import get_current_user
 from routes.crm import get_team_filter, apply_team_filter
+from utils.auth import get_password_hash
 from pydantic import BaseModel
 
 # Model for client RFQ request
@@ -783,12 +784,18 @@ async def update_otc_lead(
         {"$set": update_dict}
     )
     
-    # If status changed to active_client, auto-create OTC Client
+    # If status changed to active_client, auto-create OTC Client + Platform User
     otc_client_created = False
+    platform_user_created = False
     if update_dict.get("status") == "active_client":
+        contact_email = lead.get("contact_email", "")
+        contact_name = lead.get("contact_name", "")
+        country = lead.get("country", "")
+        
+        # --- 1. Create OTC Client ---
         existing_client = await db.otc_clients.find_one({
             "$or": [
-                {"contact_email": {"$regex": f"^{lead.get('contact_email', '')}$", "$options": "i"}},
+                {"contact_email": {"$regex": f"^{contact_email}$", "$options": "i"}},
                 {"entity_name": {"$regex": f"^{lead.get('entity_name', '')}$", "$options": "i"}}
             ]
         })
@@ -797,10 +804,10 @@ async def update_otc_lead(
             otc_client = {
                 "id": str(uuid.uuid4()),
                 "entity_name": lead.get("entity_name", ""),
-                "contact_name": lead.get("contact_name", ""),
-                "contact_email": lead.get("contact_email", ""),
+                "contact_name": contact_name,
+                "contact_email": contact_email,
                 "contact_phone": lead.get("contact_phone", ""),
-                "country": lead.get("country", ""),
+                "country": country,
                 "client_type": lead.get("pre_qualification_data", {}).get("client_type", "individual"),
                 "source": lead.get("source", ""),
                 "assigned_to": lead.get("assigned_to", ""),
@@ -821,9 +828,87 @@ async def update_otc_lead(
             logger.info(f"OTC Client auto-created from lead {lead_id}: {otc_client['entity_name']}")
         else:
             logger.info(f"OTC Client already exists for lead {lead_id}, skipping creation")
+        
+        # --- 2. Create Platform User (Admin Clients) ---
+        existing_user = await db.users.find_one(
+            {"email": {"$regex": f"^{contact_email}$", "$options": "i"}},
+            {"_id": 0}
+        )
+        if not existing_user and contact_email:
+            # Map country to region
+            COUNTRY_REGION = {
+                "PT": "europe", "ES": "europe", "FR": "europe", "DE": "europe", "IT": "europe",
+                "NL": "europe", "BE": "europe", "CH": "europe", "AT": "europe", "GB": "europe",
+                "IE": "europe", "LU": "europe", "SE": "europe", "DK": "europe", "NO": "europe",
+                "FI": "europe", "PL": "europe", "CZ": "europe", "GR": "europe", "RO": "europe",
+                "BG": "europe", "HR": "europe", "SK": "europe", "SI": "europe", "HU": "europe",
+                "LT": "europe", "LV": "europe", "EE": "europe", "CY": "europe", "MT": "europe",
+                "SA": "mena", "AE": "mena", "QA": "mena", "KW": "mena", "BH": "mena",
+                "OM": "mena", "JO": "mena", "LB": "mena", "IQ": "mena", "EG": "mena",
+                "MA": "mena", "DZ": "mena", "TN": "mena", "LY": "mena", "SD": "mena",
+                "PS": "mena", "SY": "mena", "YE": "mena", "TR": "mena", "IL": "mena",
+                "BR": "latam", "MX": "latam", "AR": "latam", "CO": "latam", "CL": "latam",
+                "PE": "latam", "EC": "latam", "VE": "latam", "UY": "latam", "PY": "latam",
+                "BO": "latam", "CR": "latam", "PA": "latam", "DO": "latam", "GT": "latam",
+                "AO": "latam", "MZ": "latam", "CV": "latam",
+            }
+            user_region = COUNTRY_REGION.get(country.upper(), "europe") if country else "europe"
+            
+            # Generate temp password
+            import secrets
+            temp_password = secrets.token_urlsafe(12)
+            
+            now = datetime.now(timezone.utc)
+            platform_user = {
+                "id": str(uuid.uuid4()),
+                "email": contact_email,
+                "name": contact_name,
+                "phone": lead.get("contact_phone", ""),
+                "country": country,
+                "hashed_password": get_password_hash(temp_password),
+                "user_type": "client",
+                "region": user_region,
+                "is_active": True,
+                "is_admin": False,
+                "is_onboarded": False,
+                "membership_level": lead.get("pre_qualification_data", {}).get("membership_profile", "standard"),
+                "assigned_to": lead.get("assigned_to", ""),
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat(),
+                "source": "otc_lead",
+                "otc_lead_id": lead_id,
+            }
+            await db.users.insert_one(platform_user)
+            platform_user_created = True
+            logger.info(f"Platform user auto-created from OTC lead {lead_id}: {contact_email}")
+            
+            # Send onboarding email with registration link
+            try:
+                from services.email_service import email_service
+                if email_service:
+                    base_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+                    registration_link = f"{base_url}/register?email={contact_email}"
+                    await email_service.send_onboarding_email(
+                        to_email=contact_email,
+                        to_name=contact_name,
+                        entity_name=lead.get("entity_name", contact_name),
+                        registration_link=registration_link,
+                        country=country,
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to send onboarding email: {e}")
+        else:
+            if existing_user:
+                # Update existing user with assigned_to if missing
+                if not existing_user.get("assigned_to") and lead.get("assigned_to"):
+                    await db.users.update_one(
+                        {"email": {"$regex": f"^{contact_email}$", "$options": "i"}},
+                        {"$set": {"assigned_to": lead.get("assigned_to"), "updated_at": datetime.now(timezone.utc).isoformat()}}
+                    )
+                logger.info(f"Platform user already exists for {contact_email}")
     
     updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
-    return {"success": True, "lead": updated_lead, "otc_client_created": otc_client_created}
+    return {"success": True, "lead": updated_lead, "otc_client_created": otc_client_created, "platform_user_created": platform_user_created}
 
 
 @router.delete("/leads/{lead_id}")
