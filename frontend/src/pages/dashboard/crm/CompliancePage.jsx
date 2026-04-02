@@ -188,9 +188,31 @@ const CompliancePage = () => {
     toast.success('Copiado');
   };
 
+  // Risk score colors: 0-10 scale, 10 = highest risk
+  const riskScoreColor = (score) => {
+    if (score <= 3) return { stroke: '#22c55e', text: 'text-emerald-400', bg: 'bg-emerald-500/15 text-emerald-400' };
+    if (score <= 6) return { stroke: '#eab308', text: 'text-yellow-400', bg: 'bg-yellow-500/15 text-yellow-400' };
+    return { stroke: '#ef4444', text: 'text-red-400', bg: 'bg-red-500/15 text-red-400' };
+  };
+
+  // Wallet status icon: considers both wallet verification AND KYT analysis
+  const walletStatusIcon = (wallet) => {
+    if (wallet.status === 'failed') return <XCircle className="text-red-400" size={18} />;
+    if (wallet.status === 'pending') return <Clock className="text-amber-400" size={18} />;
+    // Wallet is "verified" (address approved) — check if KYT was done
+    if (wallet.status === 'verified') {
+      if (wallet.kyt_status === 'clean') return <CheckCircle className="text-emerald-400" size={18} />;
+      if (wallet.kyt_status === 'flagged') return <Shield className="text-orange-400" size={18} />;
+      if (wallet.kyt_status === 'rejected') return <XCircle className="text-red-400" size={18} />;
+      // Address verified but no KYT analysis done yet
+      return <Clock className="text-amber-400" size={18} />;
+    }
+    return <Clock className="text-zinc-500" size={18} />;
+  };
+
   const statusIcon = (status) => {
     if (status === 'verified') return <CheckCircle className="text-emerald-400" size={18} />;
-    if (status === 'pending') return <Clock className="text-yellow-400" size={18} />;
+    if (status === 'pending') return <Clock className="text-amber-400" size={18} />;
     if (status === 'failed') return <XCircle className="text-red-400" size={18} />;
     return <Clock className="text-zinc-500" size={18} />;
   };
@@ -286,7 +308,7 @@ const CompliancePage = () => {
                           </Badge>
                         )}
                         {w.kyt_score > 0 && (
-                          <Badge className={`text-[10px] font-mono ${w.kyt_score > 60 ? 'bg-emerald-500/15 text-emerald-400' : w.kyt_score > 30 ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'}`}>
+                          <Badge className={`text-[10px] font-mono ${riskScoreColor(w.kyt_score).bg}`}>
                             Score: {w.kyt_score}
                           </Badge>
                         )}
@@ -300,7 +322,7 @@ const CompliancePage = () => {
                         <Button size="sm" variant="ghost" className="h-6 text-red-400 text-[10px] px-2" onClick={(e) => { e.stopPropagation(); verifyWallet(w.id, 'failed'); }}>Rejeitar</Button>
                       </>
                     )}
-                    {statusIcon(w.status)}
+                    {walletStatusIcon(w)}
                   </div>
                 </div>
               );
@@ -332,10 +354,10 @@ const CompliancePage = () => {
                       <div className="relative w-20 h-20">
                         <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
                           <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#27272a" strokeWidth="3" />
-                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={(selectedWallet.kyt_score || 0) > 60 ? '#22c55e' : (selectedWallet.kyt_score || 0) > 30 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={`${selectedWallet.kyt_score || 0}, 100`} />
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={riskScoreColor(selectedWallet.kyt_score || 0).stroke} strokeWidth="3" strokeDasharray={`${Math.min((selectedWallet.kyt_score || 0) / 10, 1) * 100}, 100`} />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className={`font-bold text-lg ${(selectedWallet.kyt_score || 0) > 60 ? 'text-emerald-400' : (selectedWallet.kyt_score || 0) > 30 ? 'text-yellow-400' : 'text-red-400'}`}>{selectedWallet.kyt_score || 0}</span>
+                          <span className={`font-bold text-lg ${riskScoreColor(selectedWallet.kyt_score || 0).text}`}>{selectedWallet.kyt_score || 0}</span>
                         </div>
                       </div>
                       <div className="flex-1 space-y-2">
