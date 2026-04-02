@@ -268,16 +268,16 @@ DEPARTMENT_MENUS = {
         "label": "OTC Desk",
         "icon": "Briefcase",
         "items": [
-            {"path": "/dashboard/otc", "label": "Dashboard OTC", "icon": "LayoutDashboard"},
-            {"path": "/dashboard/otc/leads", "label": "Leads OTC", "icon": "UserPlus"},
+            {"path": "/dashboard/otc", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/otc/pipeline", "label": "Pipeline", "icon": "Kanban"},
-            {"path": "/dashboard/crm/otc-deals", "label": "Negócios OTC", "icon": "ArrowLeftRight"},
-            {"path": "/dashboard/crm/commissions", "label": "Comissões", "icon": "Banknote"},
-            {"path": "/dashboard/otc/quotes", "label": "Cotações", "icon": "FileText"},
+            {"path": "/dashboard/otc/clients", "label": "Clientes", "icon": "Building"},
+            {"path": "/dashboard/otc/leads", "label": "Leads", "icon": "UserPlus"},
+            {"path": "/dashboard/otc/quotes", "label": "RFQ", "icon": "FileText"},
+            {"path": "/dashboard/crm/otc-deals", "label": "Negócios", "icon": "ArrowLeftRight"},
             {"path": "/dashboard/otc/execution", "label": "Execução", "icon": "Zap"},
             {"path": "/dashboard/otc/settlement", "label": "Liquidação", "icon": "Wallet"},
             {"path": "/dashboard/otc/invoices", "label": "Faturas", "icon": "Receipt"},
-            {"path": "/dashboard/otc/clients", "label": "Clientes OTC", "icon": "Building"},
+            {"path": "/dashboard/crm/commissions", "label": "Comissões", "icon": "Banknote"},
         ]
     },
     Department.SUPPORT: {
