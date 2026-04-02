@@ -378,10 +378,13 @@ const DashboardLayout = () => {
 
   // Toggle main menu - only closes when clicking the parent
   const toggleMenu = (department) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [department]: !prev[department]
-    }));
+    setExpandedMenus(prev => {
+      const isCurrentlyOpen = prev[department];
+      // Close all menus, only open the clicked one if it was closed
+      return isCurrentlyOpen ? {} : { [department]: true };
+    });
+    // Reset submenus when switching departments
+    setExpandedSubmenus({});
   };
 
   // Toggle submenu
