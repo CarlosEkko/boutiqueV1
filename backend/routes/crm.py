@@ -212,6 +212,58 @@ def get_db():
     from server import db
     return db
 
+
+async def get_team_filter(current_user) -> dict:
+    """
+    Return a MongoDB query filter based on user role.
+    - admin / global_manager: no filter (sees everything)
+    - sales_manager / local_manager: sees own + team members in same region
+    - sales / support / others: sees only own records
+    """
+    role = getattr(current_user, 'internal_role', None)
+    is_admin = getattr(current_user, 'is_admin', False)
+    user_id = get_user_id(current_user)
+    region = getattr(current_user, 'region', None)
+    if hasattr(region, 'value'):
+        region = region.value
+
+    # Admin and global managers see everything
+    if is_admin or role in ('admin', 'global_manager'):
+        return {}
+
+    # Sales manager / local manager: own + team in same region
+    if role in ('sales_manager', 'local_manager', 'manager'):
+        db = get_db()
+        team_members = await db.users.find(
+            {"user_type": "internal", "region": region, "is_active": True},
+            {"id": 1}
+        ).to_list(100)
+        team_ids = [m.get("id") for m in team_members if m.get("id")]
+        if user_id and user_id not in team_ids:
+            team_ids.append(user_id)
+        return {"$or": [
+            {"created_by": {"$in": team_ids}},
+            {"assigned_to": {"$in": team_ids}},
+        ]}
+
+    # Individual contributor: only own records
+    return {"$or": [
+        {"created_by": user_id},
+        {"assigned_to": user_id},
+    ]}
+
+
+def apply_team_filter(query: dict, team_filter: dict) -> dict:
+    """Safely merge team_filter with existing query, handling $or conflicts."""
+    if not team_filter:
+        return query
+    if not query:
+        return team_filter
+    # Use $and to combine both conditions safely
+    conditions = [team_filter]
+    conditions.append(query)
+    return {"$and": conditions}
+
 # ==================== SUPPLIERS ====================
 
 @router.get("/suppliers", response_model=List[SupplierResponse])
@@ -246,6 +298,10 @@ async def get_suppliers(
             {"company_name": {"$regex": search, "$options": "i"}},
             {"email": {"$regex": search, "$options": "i"}}
         ]
+    
+    # Apply team-based visibility filter
+    team_filter = await get_team_filter(current_user)
+    query = apply_team_filter(query, team_filter)
     
     cursor = db.crm_suppliers.find(query, {"_id": 1, "name": 1, "company_name": 1, "email": 1, "phone": 1, "country": 1, "region": 1, "registered_on_kryptobox": 1, "kryptobox_user_id": 1, "cryptocurrencies": 1, "category": 1, "gross_discount": 1, "net_discount": 1, "min_volume": 1, "max_volume": 1, "preferred_currency": 1, "handshake_wallet": 1, "transaction_wallet": 1, "additional_wallets": 1, "delivery_map": 1, "delivery_countries": 1, "delivery_time_hours": 1, "is_active": 1, "is_verified": 1, "verification_date": 1, "notes": 1, "tags": 1, "created_at": 1, "updated_at": 1, "created_by": 1, "total_transactions": 1, "total_volume": 1}).sort("created_at", -1).skip(skip).limit(limit)
     
@@ -354,6 +410,10 @@ async def get_leads(
             {"company_name": {"$regex": search, "$options": "i"}},
             {"email": {"$regex": search, "$options": "i"}}
         ]
+    
+    # Apply team-based visibility filter
+    team_filter = await get_team_filter(current_user)
+    query = apply_team_filter(query, team_filter)
     
     cursor = db.crm_leads.find(query).sort("created_at", -1).skip(skip).limit(limit)
     
@@ -649,6 +709,10 @@ async def get_deals(
             {"description": {"$regex": search, "$options": "i"}}
         ]
     
+    # Apply team-based visibility filter
+    team_filter = await get_team_filter(current_user)
+    query = apply_team_filter(query, team_filter)
+    
     cursor = db.crm_deals.find(query).sort("created_at", -1).skip(skip).limit(limit)
     
     deals = []
@@ -761,6 +825,10 @@ async def get_contacts(
             {"company_name": {"$regex": search, "$options": "i"}}
         ]
     
+    # Apply team-based visibility filter
+    team_filter = await get_team_filter(current_user)
+    query = apply_team_filter(query, team_filter)
+    
     cursor = db.crm_contacts.find(query).sort("created_at", -1).skip(skip).limit(limit)
     
     contacts = []
@@ -867,6 +935,10 @@ async def get_tasks(
         query["due_date"] = {"$lt": datetime.now(timezone.utc)}
         query["status"] = {"$nin": [TaskStatus.COMPLETED.value, TaskStatus.CANCELLED.value]}
     
+    # Apply team-based visibility filter
+    team_filter = await get_team_filter(current_user)
+    query = apply_team_filter(query, team_filter)
+    
     cursor = db.crm_tasks.find(query).sort([("due_date", 1), ("priority", -1)]).skip(skip).limit(limit)
     
     tasks = []
@@ -960,60 +1032,68 @@ async def get_crm_dashboard(current_user: dict = Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
+    # Get team filter for role-based visibility
+    team_filter = await get_team_filter(current_user)
+    base_q = team_filter if team_filter else {}
+    
     stats = CRMDashboardStats()
     
     # Suppliers
-    stats.total_suppliers = await db.crm_suppliers.count_documents({})
-    stats.active_suppliers = await db.crm_suppliers.count_documents({"is_active": True})
-    stats.verified_suppliers = await db.crm_suppliers.count_documents({"is_verified": True})
+    stats.total_suppliers = await db.crm_suppliers.count_documents(base_q)
+    stats.active_suppliers = await db.crm_suppliers.count_documents(apply_team_filter({"is_active": True}, team_filter))
+    stats.verified_suppliers = await db.crm_suppliers.count_documents(apply_team_filter({"is_verified": True}, team_filter))
     
     # Leads
-    stats.total_leads = await db.crm_leads.count_documents({})
-    stats.new_leads = await db.crm_leads.count_documents({"status": LeadStatus.NEW.value})
-    stats.qualified_leads = await db.crm_leads.count_documents({"is_qualified": True})
-    stats.leads_this_month = await db.crm_leads.count_documents({"created_at": {"$gte": start_of_month}})
+    stats.total_leads = await db.crm_leads.count_documents(base_q)
+    stats.new_leads = await db.crm_leads.count_documents(apply_team_filter({"status": LeadStatus.NEW.value}, team_filter))
+    stats.qualified_leads = await db.crm_leads.count_documents(apply_team_filter({"is_qualified": True}, team_filter))
+    stats.leads_this_month = await db.crm_leads.count_documents(apply_team_filter({"created_at": {"$gte": start_of_month}}, team_filter))
     
     # Deals
-    stats.total_deals = await db.crm_deals.count_documents({})
-    stats.open_deals = await db.crm_deals.count_documents({
+    stats.total_deals = await db.crm_deals.count_documents(base_q)
+    stats.open_deals = await db.crm_deals.count_documents(apply_team_filter({
         "stage": {"$nin": [DealStage.CLOSED_WON.value, DealStage.CLOSED_LOST.value]}
-    })
-    stats.won_deals = await db.crm_deals.count_documents({"stage": DealStage.CLOSED_WON.value})
-    stats.lost_deals = await db.crm_deals.count_documents({"stage": DealStage.CLOSED_LOST.value})
-    stats.deals_this_month = await db.crm_deals.count_documents({"created_at": {"$gte": start_of_month}})
+    }, team_filter))
+    stats.won_deals = await db.crm_deals.count_documents(apply_team_filter({"stage": DealStage.CLOSED_WON.value}, team_filter))
+    stats.lost_deals = await db.crm_deals.count_documents(apply_team_filter({"stage": DealStage.CLOSED_LOST.value}, team_filter))
+    stats.deals_this_month = await db.crm_deals.count_documents(apply_team_filter({"created_at": {"$gte": start_of_month}}, team_filter))
     
     # Deal values
+    pipeline_match = apply_team_filter({"stage": {"$nin": [DealStage.CLOSED_WON.value, DealStage.CLOSED_LOST.value]}}, team_filter)
     pipeline_cursor = db.crm_deals.aggregate([
-        {"$match": {"stage": {"$nin": [DealStage.CLOSED_WON.value, DealStage.CLOSED_LOST.value]}}},
+        {"$match": pipeline_match},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ])
     async for doc in pipeline_cursor:
         stats.pipeline_value = doc.get("total", 0)
     
+    won_match = apply_team_filter({"stage": DealStage.CLOSED_WON.value}, team_filter)
     won_cursor = db.crm_deals.aggregate([
-        {"$match": {"stage": DealStage.CLOSED_WON.value}},
+        {"$match": won_match},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ])
     async for doc in won_cursor:
         stats.won_deal_value = doc.get("total", 0)
     
+    total_match = base_q if base_q else {}
     total_cursor = db.crm_deals.aggregate([
+        {"$match": total_match},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ])
     async for doc in total_cursor:
         stats.total_deal_value = doc.get("total", 0)
     
     # Contacts
-    stats.total_contacts = await db.crm_contacts.count_documents({})
+    stats.total_contacts = await db.crm_contacts.count_documents(base_q)
     
     # Tasks
-    stats.pending_tasks = await db.crm_tasks.count_documents({
+    stats.pending_tasks = await db.crm_tasks.count_documents(apply_team_filter({
         "status": {"$in": [TaskStatus.PENDING.value, TaskStatus.IN_PROGRESS.value]}
-    })
-    stats.overdue_tasks = await db.crm_tasks.count_documents({
+    }, team_filter))
+    stats.overdue_tasks = await db.crm_tasks.count_documents(apply_team_filter({
         "due_date": {"$lt": now},
         "status": {"$nin": [TaskStatus.COMPLETED.value, TaskStatus.CANCELLED.value]}
-    })
+    }, team_filter))
     
     return stats
 
