@@ -171,10 +171,27 @@ class OAuthCallbackRequest(BaseModel):
 @router.post("/auth/callback")
 async def oauth_callback(data: OAuthCallbackRequest, current_user=Depends(get_current_user)):
     """Exchange authorization code for tokens and store them."""
+    return await _exchange_token(data.code, data.state, current_user)
+
+
+@router.get("/auth/callback/redirect")
+async def oauth_callback_redirect(code: str = Query(""), state: str = Query(""), error: str = Query("")):
+    """Handle GET/POST redirect from Microsoft - redirects to frontend callback page."""
+    from fastapi.responses import RedirectResponse
+    cfg = get_azure_config()
+    frontend_url = cfg["redirect_uri"].replace("/api/o365/auth/callback/redirect", "")
+    # Redirect to frontend O365Callback page with params
+    if error:
+        return RedirectResponse(url=f"{frontend_url}/auth/o365/callback?error={error}")
+    return RedirectResponse(url=f"{frontend_url}/auth/o365/callback?code={code}&state={state}")
+
+
+async def _exchange_token(code: str, state: str, current_user):
+    """Internal: Exchange authorization code for tokens."""
     db = get_db()
     cfg = get_azure_config()
 
-    state_doc = await db.o365_states.find_one({"user_id": current_user.id, "state": data.state})
+    state_doc = await db.o365_states.find_one({"user_id": current_user.id, "state": state})
     if not state_doc:
         raise HTTPException(status_code=400, detail="Estado OAuth inválido")
 
@@ -183,7 +200,7 @@ async def oauth_callback(data: OAuthCallbackRequest, current_user=Depends(get_cu
         "client_id": cfg["client_id"],
         "client_secret": cfg["client_secret"],
         "redirect_uri": cfg["redirect_uri"],
-        "code": data.code,
+        "code": code,
         "scope": SCOPES,
     }
 
