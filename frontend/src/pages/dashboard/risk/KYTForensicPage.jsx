@@ -33,7 +33,7 @@ const KYT_STATUS_MAP = {
 const KYTForensicPage = () => {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [analysisForm, setAnalysisForm] = useState({ kyt_score: 0, kyt_flags: '', kyt_notes: '', kyt_status: 'pending' });
