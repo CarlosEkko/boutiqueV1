@@ -87,7 +87,11 @@ import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
-import RegisterPage from "./pages/RegisterPage";
+// RegisterRedirect: Public registration disabled — redirects to landing page contact form
+const RegisterRedirect = () => {
+  window.location.replace('/#contact');
+  return null;
+};
 import ApprovalsPage from "./pages/dashboard/approvals/ApprovalsPage";
 import ApprovalDetailPage from "./pages/dashboard/approvals/ApprovalDetailPage";
 import ApprovalSettingsPage from "./pages/dashboard/approvals/ApprovalSettingsPage";
@@ -140,7 +144,7 @@ function AppRoutes() {
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/auth/o365/callback" element={<O365Callback />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/register" element={<RegisterRedirect />} />
       <Route path="/prototypes/otc" element={<OTCPrototypes />} />
       <Route path="/login" element={<AuthPage />} />
       {/* Redirect old /profile to new location */}
