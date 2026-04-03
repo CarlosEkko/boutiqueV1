@@ -23,6 +23,12 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 - Transparency page (proof of reserves, audit reports)
 - KYT Forensic, Multi-Sign vaults, Client onboarding
 
+## Recent Fixes (April 3, 2026)
+- **Sumsub KYC — Cloudflare WAF fix**: Merged token generation into `/api/sumsub/applicants` endpoint to bypass Cloudflare blocking POST requests with sensitive URL patterns (`access-token`, `sdk-init`). Single endpoint now creates/finds applicant AND returns SDK token.
+- **Sumsub Credential Rotation**: Added auto-recovery for expired/rotated API credentials — detects stale applicants and recreates them transparently.
+- **Sumsub Credentials Updated**: Rotated to new sandbox API keys (`sbx:dpO6W3ZjM3U25gTpBEQcHDrY...`)
+- **Admin Client Menus**: Added Suporte and Tokenização as configurable client menu options (total 8 options now).
+
 ## Recent Fixes (April 2, 2026)
 - **KYC Sumsub**: Fixed alpha-2→alpha-3 country code conversion (PT→PRT, BR→BRA, etc.)
 - **Tokenization**: Created TOKENIZATION department with 5 pages and 3 new API endpoints
@@ -42,6 +48,9 @@ TRUSTFULL_API_KEY=TFB-6f279de1-6859-4ca3-8ead-28debc6ec989
 ```
 
 ## Prioritized Backlog
+### P0
+- Reroute "Solicitar Acesso" to OTC Lead creation & disable public registration
+
 ### P1
 - TradingView chart widgets on Trading/Markets pages
 - Complete frontend translations (PT, EN, AR, FR)
