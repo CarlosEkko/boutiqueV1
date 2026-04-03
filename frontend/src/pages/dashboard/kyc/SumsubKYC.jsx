@@ -72,7 +72,7 @@ const SumsubKYC = () => {
     try {
       console.log('[KYC] Generating access token for applicant:', aid);
       const tokenResponse = await axios.post(
-        `${API_URL}/api/sumsub/access-token?ttl_seconds=1800`
+        `${API_URL}/api/sumsub/sdk-init?ttl_seconds=1800`
       );
       const tkn = tokenResponse.data?.token;
       console.log('[KYC] Token received:', tkn ? 'yes' : 'no');
@@ -128,7 +128,7 @@ const SumsubKYC = () => {
   const handleTokenExpiration = useCallback(async () => {
     try {
       const response = await axios.post(
-        `${API_URL}/api/sumsub/access-token?ttl_seconds=1800`
+        `${API_URL}/api/sumsub/sdk-init?ttl_seconds=1800`
       );
       return response.data.token;
     } catch (err) {

@@ -286,7 +286,7 @@ async def create_applicant(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/access-token")
+@router.post("/sdk-init")
 async def generate_access_token(
     ttl_seconds: int = 900,
     user_id: str = Depends(get_current_user_id)
