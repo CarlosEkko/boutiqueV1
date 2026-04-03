@@ -35,8 +35,8 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, O
 
 ## VPS Environment Variables Required
 ```
-SUMSUB_APP_TOKEN=sbx:IgxwwF3CFzKVa7w1i5PAIfkV.yiLzvHUATEjKTVYoVnNkJUHgOmYDXOgu
-SUMSUB_SECRET_KEY=MeFj8o3LS0vO4zz5aEeZXtiolQ0ke9gB
+SUMSUB_APP_TOKEN=sbx:dpO6W3ZjM3U25gTpBEQcHDrY.darrPSKvDyPR9ZRsjTgM5PFPephCgApn
+SUMSUB_SECRET_KEY=Pkcg1kugWrtBWEmqdbzbXHZuU3lddVbZ
 SUMSUB_LEVEL_NAME=basic-kyc-level
 TRUSTFULL_API_KEY=TFB-6f279de1-6859-4ca3-8ead-28debc6ec989
 ```
