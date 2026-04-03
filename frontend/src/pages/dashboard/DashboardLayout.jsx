@@ -349,11 +349,14 @@ const DashboardLayout = () => {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Auto-expand menu that contains current path (but NOT submenus - they should be clicked)
+  // Auto-expand menu that contains current path — but NOT on initial dashboard landing
   useEffect(() => {
     if (menuStructure.length === 0) return;
     
     const currentPath = location.pathname;
+    
+    // Don't auto-expand on the default dashboard page — keep all menus collapsed
+    if (currentPath === '/dashboard' || currentPath === '/dashboard/') return;
     
     // Find which menu contains the current path - only expand the parent menu
     for (const menu of menuStructure) {
