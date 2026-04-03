@@ -140,6 +140,30 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                 ]
             })
         
+        # Add Suporte menu for clients
+        client_menus.append({
+            "department": "suporte",
+            "label": "Suporte",
+            "icon": "Headphones",
+            "items": [
+                {"path": "/dashboard/support", "label": "Suporte", "icon": "HelpCircle"},
+            ]
+        })
+        
+        # Add Tokenização menu for clients
+        tokenization_data = DEPARTMENT_MENUS[Department.TOKENIZATION]
+        client_menus.append({
+            "department": "tokenizacao",
+            "label": "Tokenização",
+            "icon": "Gem",
+            "items": [
+                {"path": "/dashboard/tokenization", "label": "Tokens", "icon": "Gem"},
+                {"path": "/dashboard/tokenization/issue", "label": "Emitir Token", "icon": "FilePlus2"},
+                {"path": "/dashboard/tokenization/mint-burn", "label": "Mint & Burn", "icon": "Flame"},
+                {"path": "/dashboard/tokenization/pricing", "label": "Definir Preço", "icon": "DollarSign"},
+            ]
+        })
+        
         return {"menus": client_menus}
     
     # Get custom permissions if any

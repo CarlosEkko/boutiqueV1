@@ -27,6 +27,8 @@ import {
   Save,
   Loader2,
   ShieldCheck,
+  Headphones,
+  Gem,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,6 +42,8 @@ const menuIcons = {
   perfil: UserCircle,
   otc_trading: Briefcase,
   multi_sign: ShieldCheck,
+  suporte: Headphones,
+  tokenizacao: Gem,
 };
 
 // Menu colors mapping
@@ -50,6 +54,8 @@ const menuColors = {
   perfil: 'bg-orange-900/30 text-orange-400 border-orange-800/30',
   otc_trading: 'bg-amber-900/30 text-amber-400 border-amber-800/30',
   multi_sign: 'bg-cyan-900/30 text-cyan-400 border-cyan-800/30',
+  suporte: 'bg-gold-900/30 text-gold-400 border-gold-800/30',
+  tokenizacao: 'bg-yellow-900/30 text-yellow-400 border-yellow-800/30',
 };
 
 // Available menus for clients
@@ -60,6 +66,8 @@ const AVAILABLE_MENUS = [
   { value: 'perfil', label: 'Perfil' },
   { value: 'otc_trading', label: 'OTC Trading' },
   { value: 'multi_sign', label: 'Multi-Sign' },
+  { value: 'suporte', label: 'Suporte' },
+  { value: 'tokenizacao', label: 'Tokenização' },
 ];
 
 const AdminClientMenus = () => {

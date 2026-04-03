@@ -94,6 +94,8 @@ const departmentConfig = {
   transparencia: { icon: Shield, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
   account: { icon: UserCircle, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   otc_trading: { icon: Briefcase, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  suporte: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  tokenizacao: { icon: Gem, color: 'text-[#D4AF37]', bgColor: 'bg-[#D4AF37]/20' },
   // Submenu colors
   ativos: { icon: Wallet, color: 'text-blue-300', bgColor: 'bg-blue-500/10' },
   operacoes_crypto: { icon: Bitcoin, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
@@ -670,7 +672,7 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign'];
+  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao'];
   
   // Default menus for clients (only Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];
@@ -688,7 +690,9 @@ const DashboardLayout = () => {
         'transparencia': 'transparencia',
         'account': 'perfil',
         'otc_trading': 'otc_trading',
-        'multi_sign': 'multi_sign'
+        'multi_sign': 'multi_sign',
+        'suporte': 'suporte',
+        'tokenizacao': 'tokenizacao'
       };
       
       clientMenus = clientMenus.filter(m => {
