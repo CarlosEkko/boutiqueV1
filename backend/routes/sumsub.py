@@ -172,16 +172,27 @@ async def create_applicant(
     """
     Create a new applicant in Sumsub.
     Links the Sumsub applicant to our internal user.
+    If an old applicant exists but credentials changed, resets and recreates.
     """
     try:
-        # Check if user already has a Sumsub applicant
+        # Check if user already has a Sumsub applicant in our DB
         existing = await db.sumsub_applicants.find_one({"user_id": user_id})
         if existing and existing.get("applicant_id"):
-            return {
-                "applicant_id": existing["applicant_id"],
-                "external_user_id": user_id,
-                "already_exists": True
-            }
+            # Verify the old applicant is still accessible with current credentials
+            verify_resp = make_sumsub_request(
+                "GET",
+                f"/resources/applicants/{existing['applicant_id']}"
+            )
+            if verify_resp.status_code == 200:
+                return {
+                    "applicant_id": existing["applicant_id"],
+                    "external_user_id": user_id,
+                    "already_exists": True
+                }
+            else:
+                # Old applicant not accessible (credentials rotated) — clear it
+                logger.warning(f"Old applicant {existing['applicant_id']} not accessible (status {verify_resp.status_code}). Recreating...")
+                await db.sumsub_applicants.delete_one({"user_id": user_id})
         
         # Create applicant in Sumsub
         body = {
@@ -207,6 +218,31 @@ async def create_applicant(
             body=body,
             params={"levelName": SUMSUB_LEVEL_NAME}
         )
+        
+        # Handle 409 - applicant already exists in Sumsub with this externalUserId
+        if response.status_code == 409:
+            import re
+            match = re.search(r"already exists:\s*(\w+)", response.text)
+            if match:
+                applicant_id = match.group(1)
+                logger.info(f"Applicant already exists in Sumsub: {applicant_id}. Updating local record.")
+                await db.sumsub_applicants.update_one(
+                    {"user_id": user_id},
+                    {"$set": {
+                        "user_id": user_id,
+                        "applicant_id": applicant_id,
+                        "email": data.email,
+                        "level_name": SUMSUB_LEVEL_NAME,
+                        "status": "init",
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }},
+                    upsert=True
+                )
+                return {
+                    "applicant_id": applicant_id,
+                    "external_user_id": user_id,
+                    "already_exists": True
+                }
         
         if response.status_code not in [200, 201]:
             logger.error(f"Sumsub API error: {response.text}")
@@ -258,18 +294,81 @@ async def generate_access_token(
     """
     Generate an access token for WebSDK initialization.
     The token is valid for the specified TTL duration.
+    If the token request fails (e.g. 403 after credential rotation),
+    it resets the old applicant and creates a new one automatically.
     """
     try:
-        # Get user email from database
-        user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1})
+        # Get user info from database
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1, "name": 1, "country": 1})
         user_email = user.get("email", "") if user else ""
         
-        # Use the SDK endpoint with query params
+        # Try generating the token
         path = f"/resources/accessTokens?userId={user_id}&ttlInSecs={ttl_seconds}&levelName={SUMSUB_LEVEL_NAME}"
-        
         response = make_sumsub_request("POST", path)
         
-        if response.status_code != 200:
+        # If 403/401, the old applicant was created with different credentials
+        # Reset and recreate the applicant with current credentials
+        if response.status_code in [401, 403]:
+            logger.warning(f"Token generation returned {response.status_code} for user {user_id}. Resetting applicant...")
+            
+            # Remove old applicant record from our DB
+            await db.sumsub_applicants.delete_one({"user_id": user_id})
+            
+            # Create a new applicant with current credentials
+            user_name = user.get("name", "") if user else ""
+            first_name = user_name.split(" ")[0] if user_name else ""
+            last_name = " ".join(user_name.split(" ")[1:]) if user_name and " " in user_name else ""
+            country = user.get("country", "") if user else ""
+            
+            body = {
+                "externalUserId": user_id,
+                "email": user_email,
+            }
+            if first_name or last_name:
+                body["fixedInfo"] = {}
+                if first_name:
+                    body["fixedInfo"]["firstName"] = first_name
+                if last_name:
+                    body["fixedInfo"]["lastName"] = last_name
+                if country:
+                    body["fixedInfo"]["country"] = to_alpha3(country)
+            
+            create_resp = make_sumsub_request(
+                "POST", "/resources/applicants",
+                body=body,
+                params={"levelName": SUMSUB_LEVEL_NAME}
+            )
+            
+            if create_resp.status_code not in [200, 201]:
+                logger.error(f"Failed to recreate applicant: {create_resp.text}")
+                raise HTTPException(status_code=create_resp.status_code, detail=f"Failed to recreate applicant: {create_resp.text}")
+            
+            result = create_resp.json()
+            applicant_id = result.get("id")
+            
+            # Store new mapping
+            await db.sumsub_applicants.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "user_id": user_id,
+                    "applicant_id": applicant_id,
+                    "email": user_email,
+                    "level_name": SUMSUB_LEVEL_NAME,
+                    "status": "init",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }},
+                upsert=True
+            )
+            logger.info(f"Recreated Sumsub applicant {applicant_id} for user {user_id}")
+            
+            # Now retry the token generation
+            response = make_sumsub_request("POST", path)
+            if response.status_code != 200:
+                logger.error(f"Token generation still failed after reset: {response.text}")
+                raise HTTPException(status_code=response.status_code, detail=f"Failed to generate access token after reset: {response.text}")
+        
+        elif response.status_code != 200:
             logger.error(f"Token generation error: {response.text}")
             raise HTTPException(
                 status_code=response.status_code,
