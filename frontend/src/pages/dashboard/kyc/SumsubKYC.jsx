@@ -56,7 +56,8 @@ const SumsubKYC = () => {
       } else if (data.has_applicant) {
         const aid = data.applicant_id;
         setApplicantId(aid);
-        await generateTokenAndShowSDK(aid);
+        // Get token via /applicants endpoint (single call, Cloudflare-safe)
+        await fetchTokenViaApplicants();
       } else {
         setStep('init');
       }
@@ -68,23 +69,32 @@ const SumsubKYC = () => {
     }
   };
 
-  const generateTokenAndShowSDK = async (aid) => {
+  // Unified function: creates/finds applicant AND gets SDK token in one call
+  const fetchTokenViaApplicants = async () => {
     try {
-      console.log('[KYC] Generating access token for applicant:', aid);
-      const tokenResponse = await axios.post(
-        `${API_URL}/api/sumsub/sdk-init?ttl_seconds=1800`
-      );
-      const tkn = tokenResponse.data?.token;
-      console.log('[KYC] Token received:', tkn ? 'yes' : 'no');
+      console.log('[KYC] Fetching token via /applicants...');
+      const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
+        email: user?.email || 'user@example.com',
+        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
+        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
+        country: user?.country || ''
+      });
+      
+      const aid = response.data?.applicant_id;
+      const tkn = response.data?.sdk_token;
+      console.log('[KYC] Result:', { aid, hasToken: !!tkn });
+      
+      if (aid) setApplicantId(aid);
+      
       if (tkn) {
         setAccessToken(tkn);
         setStep('verification');
       } else {
-        throw new Error('Token vazio recebido do servidor');
+        throw new Error('Token não recebido do servidor');
       }
     } catch (err) {
       const detail = err.response?.data?.detail || err.message || 'Erro desconhecido';
-      console.error('[KYC] Token generation failed:', detail);
+      console.error('[KYC] Token fetch failed:', detail);
       setError(`Erro ao gerar token: ${detail}`);
       setStep('error');
     }
@@ -93,28 +103,8 @@ const SumsubKYC = () => {
   const initializeSDK = async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Create applicant
-      console.log('[KYC] Creating applicant...', { email: user?.email, country: user?.country });
-      const applicantResponse = await axios.post(`${API_URL}/api/sumsub/applicants`, {
-        email: user?.email || 'user@example.com',
-        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
-        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
-        country: user?.country || ''
-      });
-      
-      const aid = applicantResponse.data?.applicant_id;
-      console.log('[KYC] Applicant result:', { aid, already_exists: applicantResponse.data?.already_exists });
-      
-      if (!aid) {
-        throw new Error('applicant_id não recebido');
-      }
-      
-      setApplicantId(aid);
-      
-      // Generate access token
-      await generateTokenAndShowSDK(aid);
+      await fetchTokenViaApplicants();
     } catch (err) {
       const errorDetail = err.response?.data?.detail || err.message || 'Erro desconhecido';
       console.error('[KYC] Init failed:', errorDetail, err);
@@ -127,15 +117,19 @@ const SumsubKYC = () => {
 
   const handleTokenExpiration = useCallback(async () => {
     try {
-      const response = await axios.post(
-        `${API_URL}/api/sumsub/sdk-init?ttl_seconds=1800`
-      );
-      return response.data.token;
+      // Refresh token via the same /applicants endpoint
+      const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
+        email: user?.email || 'user@example.com',
+        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
+        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
+        country: user?.country || ''
+      });
+      return response.data.sdk_token;
     } catch (err) {
       console.error('Error refreshing token:', err);
       throw err;
     }
-  }, []);
+  }, [user]);
 
   const handleMessage = useCallback((type, payload) => {
     console.log('Sumsub WebSDK message:', type, payload);

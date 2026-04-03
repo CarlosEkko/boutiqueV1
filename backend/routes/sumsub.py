@@ -170,11 +170,13 @@ async def create_applicant(
     user_id: str = Depends(get_current_user_id)
 ):
     """
-    Create a new applicant in Sumsub.
-    Links the Sumsub applicant to our internal user.
-    If an old applicant exists but credentials changed, resets and recreates.
+    Create (or find) a Sumsub applicant AND generate an access token.
+    Returns both applicant_id and token in a single response.
+    This avoids needing a separate token endpoint (blocked by Cloudflare WAF).
     """
     try:
+        applicant_id = None
+        
         # Check if user already has a Sumsub applicant in our DB
         existing = await db.sumsub_applicants.find_one({"user_id": user_id})
         if existing and existing.get("applicant_id"):
@@ -184,48 +186,57 @@ async def create_applicant(
                 f"/resources/applicants/{existing['applicant_id']}"
             )
             if verify_resp.status_code == 200:
-                return {
-                    "applicant_id": existing["applicant_id"],
-                    "external_user_id": user_id,
-                    "already_exists": True
-                }
+                applicant_id = existing["applicant_id"]
             else:
                 # Old applicant not accessible (credentials rotated) — clear it
                 logger.warning(f"Old applicant {existing['applicant_id']} not accessible (status {verify_resp.status_code}). Recreating...")
                 await db.sumsub_applicants.delete_one({"user_id": user_id})
         
-        # Create applicant in Sumsub
-        body = {
-            "externalUserId": user_id,
-            "email": data.email,
-        }
-        
-        if data.phone:
-            body["phone"] = data.phone
-        
-        if data.first_name or data.last_name:
-            body["fixedInfo"] = {}
-            if data.first_name:
-                body["fixedInfo"]["firstName"] = data.first_name
-            if data.last_name:
-                body["fixedInfo"]["lastName"] = data.last_name
-            if data.country:
-                body["fixedInfo"]["country"] = to_alpha3(data.country)
-        
-        response = make_sumsub_request(
-            "POST",
-            "/resources/applicants",
-            body=body,
-            params={"levelName": SUMSUB_LEVEL_NAME}
-        )
-        
-        # Handle 409 - applicant already exists in Sumsub with this externalUserId
-        if response.status_code == 409:
-            import re
-            match = re.search(r"already exists:\s*(\w+)", response.text)
-            if match:
-                applicant_id = match.group(1)
-                logger.info(f"Applicant already exists in Sumsub: {applicant_id}. Updating local record.")
+        # Create applicant if needed
+        if not applicant_id:
+            body = {
+                "externalUserId": user_id,
+                "email": data.email,
+            }
+            
+            if data.phone:
+                body["phone"] = data.phone
+            
+            if data.first_name or data.last_name:
+                body["fixedInfo"] = {}
+                if data.first_name:
+                    body["fixedInfo"]["firstName"] = data.first_name
+                if data.last_name:
+                    body["fixedInfo"]["lastName"] = data.last_name
+                if data.country:
+                    body["fixedInfo"]["country"] = to_alpha3(data.country)
+            
+            response = make_sumsub_request(
+                "POST",
+                "/resources/applicants",
+                body=body,
+                params={"levelName": SUMSUB_LEVEL_NAME}
+            )
+            
+            # Handle 409 - applicant already exists in Sumsub
+            if response.status_code == 409:
+                import re
+                match = re.search(r"already exists:\s*(\w+)", response.text)
+                if match:
+                    applicant_id = match.group(1)
+                    logger.info(f"Applicant already exists in Sumsub: {applicant_id}.")
+            elif response.status_code in [200, 201]:
+                result = response.json()
+                applicant_id = result.get("id")
+            else:
+                logger.error(f"Sumsub API error: {response.text}")
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to create applicant: {response.text}"
+                )
+            
+            if applicant_id:
+                # Store mapping in our database
                 await db.sumsub_applicants.update_one(
                     {"user_id": user_id},
                     {"$set": {
@@ -234,49 +245,30 @@ async def create_applicant(
                         "email": data.email,
                         "level_name": SUMSUB_LEVEL_NAME,
                         "status": "init",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }},
                     upsert=True
                 )
-                return {
-                    "applicant_id": applicant_id,
-                    "external_user_id": user_id,
-                    "already_exists": True
-                }
         
-        if response.status_code not in [200, 201]:
-            logger.error(f"Sumsub API error: {response.text}")
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Failed to create applicant: {response.text}"
-            )
+        if not applicant_id:
+            raise HTTPException(status_code=500, detail="Failed to obtain applicant ID")
         
-        result = response.json()
-        applicant_id = result.get("id")
+        # Generate access token in the same call
+        token_path = f"/resources/accessTokens?userId={user_id}&ttlInSecs=1800&levelName={SUMSUB_LEVEL_NAME}"
+        token_response = make_sumsub_request("POST", token_path)
         
-        # Store mapping in our database
-        await db.sumsub_applicants.update_one(
-            {"user_id": user_id},
-            {
-                "$set": {
-                    "user_id": user_id,
-                    "applicant_id": applicant_id,
-                    "email": data.email,
-                    "level_name": SUMSUB_LEVEL_NAME,
-                    "status": "init",
-                    "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                }
-            },
-            upsert=True
-        )
-        
-        logger.info(f"Created Sumsub applicant {applicant_id} for user {user_id}")
+        sdk_token = None
+        if token_response.status_code == 200:
+            sdk_token = token_response.json().get("token")
+            logger.info(f"Generated SDK token for user {user_id}")
+        else:
+            logger.error(f"Token generation failed: {token_response.status_code} - {token_response.text}")
         
         return {
             "applicant_id": applicant_id,
             "external_user_id": user_id,
-            "already_exists": False
+            "sdk_token": sdk_token
         }
     
     except HTTPException:
