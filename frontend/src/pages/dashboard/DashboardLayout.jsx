@@ -349,51 +349,7 @@ const DashboardLayout = () => {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Auto-expand menu that contains current path — but NOT on initial dashboard landing
-  useEffect(() => {
-    if (menuStructure.length === 0) return;
-    
-    const currentPath = location.pathname;
-    
-    // Don't auto-expand on the default dashboard page — keep all menus collapsed
-    if (currentPath === '/dashboard' || currentPath === '/dashboard/') return;
-    
-    // Find which menu contains the current path - only expand the parent menu
-    for (const menu of menuStructure) {
-      // Check if menu has submenus (hierarchical structure like Portfolio)
-      if (menu.submenus) {
-        for (const submenu of menu.submenus) {
-          // Check if submenu has a direct path (like Transacoes)
-          if (submenu.path && (currentPath === submenu.path || currentPath.startsWith(submenu.path + '/'))) {
-            setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
-            return;
-          }
-          // Check if any item in the submenu matches - only expand parent menu, not submenu
-          if (submenu.items) {
-            const matchingItem = submenu.items.find(item => 
-              currentPath === item.path || currentPath.startsWith(item.path + '/')
-            );
-            if (matchingItem) {
-              setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
-              // Don't auto-expand submenus - user must click to expand
-              return;
-            }
-          }
-        }
-      }
-      
-      // Check flat items (for non-hierarchical menus like Investimentos)
-      if (menu.items) {
-        const matchingItem = menu.items.find(item => 
-          currentPath === item.path || currentPath.startsWith(item.path + '/')
-        );
-        if (matchingItem) {
-          setExpandedMenus(prev => ({ ...prev, [menu.department]: true }));
-          return;
-        }
-      }
-    }
-  }, [location.pathname, menuStructure]);
+  // Menus only expand/collapse on user click — no auto-expand
 
   // Toggle main menu - only closes when clicking the parent
   const toggleMenu = (department) => {
