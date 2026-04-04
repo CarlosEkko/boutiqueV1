@@ -73,6 +73,9 @@ async def get_otc_leads(
     
     if status and status != "all":
         query["status"] = status
+    else:
+        # By default, hide active_client leads (they appear in OTC Clients)
+        query["status"] = {"$ne": "active_client"}
     if source and source != "all":
         query["source"] = source
     if assigned_to:
@@ -99,6 +102,66 @@ async def get_otc_leads(
         "skip": skip,
         "limit": limit
     }
+
+
+
+@router.get("/entities")
+async def get_existing_entities(
+    search: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get existing entities (companies and contacts) for autocomplete in lead creation."""
+    db = get_db()
+    
+    entities = []
+    seen = set()
+    
+    search_filter = {}
+    if search:
+        search_filter = {"entity_name": {"$regex": search, "$options": "i"}}
+    
+    # Fetch from OTC Clients
+    clients = await db.otc_clients.find(
+        search_filter, {"_id": 0, "entity_name": 1, "contact_name": 1, "contact_email": 1, "contact_phone": 1, "country": 1}
+    ).sort("entity_name", 1).limit(50).to_list(50)
+    
+    for c in clients:
+        key = (c.get("entity_name", "").lower(), c.get("contact_email", "").lower())
+        if key not in seen and c.get("entity_name"):
+            seen.add(key)
+            entities.append({
+                "entity_name": c.get("entity_name", ""),
+                "contact_name": c.get("contact_name", ""),
+                "contact_email": c.get("contact_email", ""),
+                "contact_phone": c.get("contact_phone", ""),
+                "country": c.get("country", ""),
+                "type": "client"
+            })
+    
+    # Fetch from OTC Leads (exclude archived/lost)
+    lead_filter = {"status": {"$nin": ["archived", "lost"]}}
+    if search:
+        lead_filter["entity_name"] = {"$regex": search, "$options": "i"}
+    
+    leads = await db.otc_leads.find(
+        lead_filter, {"_id": 0, "entity_name": 1, "contact_name": 1, "contact_email": 1, "contact_phone": 1, "country": 1}
+    ).sort("entity_name", 1).limit(50).to_list(50)
+    
+    for l in leads:
+        key = (l.get("entity_name", "").lower(), l.get("contact_email", "").lower())
+        if key not in seen and l.get("entity_name"):
+            seen.add(key)
+            entities.append({
+                "entity_name": l.get("entity_name", ""),
+                "contact_name": l.get("contact_name", ""),
+                "contact_email": l.get("contact_email", ""),
+                "contact_phone": l.get("contact_phone", ""),
+                "country": l.get("country", ""),
+                "type": "lead"
+            })
+    
+    return {"entities": entities}
+
 
 
 @router.get("/check-existing")

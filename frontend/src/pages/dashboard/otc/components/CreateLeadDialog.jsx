@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/ui/dialog';
 import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
@@ -8,7 +8,7 @@ import { Textarea } from '../../../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { Card, CardContent } from '../../../../components/ui/card';
 import { FormattedNumberInput } from '../../../../components/FormattedNumberInput';
-import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2 } from 'lucide-react';
+import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2, Search } from 'lucide-react';
 import { COUNTRIES } from '../../../../utils/countries';
 
 const SOURCE_LABELS = {
@@ -31,9 +31,47 @@ export const CreateLeadDialog = ({
   checkExistingContact, handleCreateLead, handleCreateClientDirect,
   setShowExistingWarning, setExistingContact, resetForm,
   openNewDeal, openDetail, open360View, isSubmitting,
+  existingEntities = [], fetchEntities,
 }) => {
   const sourceOptions = enums?.sources || ['website', 'referral', 'linkedin', 'event', 'broker', 'cold_outreach', 'existing_client', 'other'];
   const isFormValid = formData.entity_name && formData.contact_name && formData.contact_email && formData.contact_phone;
+  
+  const [entityDropdownOpen, setEntityDropdownOpen] = useState(false);
+  const [entitySearch, setEntitySearch] = useState('');
+  const entityRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (entityRef.current && !entityRef.current.contains(e.target)) setEntityDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleEntitySearchChange = (val) => {
+    setEntitySearch(val);
+    setFormData({ ...formData, entity_name: val });
+    setEntityDropdownOpen(true);
+  };
+
+  const handleSelectEntity = (entity) => {
+    setFormData({
+      ...formData,
+      entity_name: entity.entity_name,
+      contact_name: entity.contact_name || formData.contact_name,
+      contact_email: entity.contact_email || formData.contact_email,
+      contact_phone: entity.contact_phone || formData.contact_phone,
+      country: entity.country || formData.country,
+    });
+    setEntitySearch(entity.entity_name);
+    setEntityDropdownOpen(false);
+    if (entity.contact_email) checkExistingContact('email', entity.contact_email);
+  };
+
+  const filteredEntities = existingEntities.filter(e =>
+    !entitySearch || e.entity_name.toLowerCase().includes(entitySearch.toLowerCase())
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,7 +165,61 @@ export const CreateLeadDialog = ({
               <CardContent className="p-4 space-y-4">
                 <h3 className="text-white font-medium text-sm flex items-center gap-2"><Building size={16} className="text-gold-400" />Informação da Entidade</h3>
                 <div className="space-y-3">
-                  <div><Label className="text-gray-400 text-sm">Entidade *</Label><Input value={formData.entity_name} onChange={e => setFormData({...formData, entity_name: e.target.value})} onBlur={e => checkExistingContact('entity_name', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Nome da empresa" data-testid="lead-entity-name" /></div>
+                  <div className="relative" ref={entityRef}>
+                    <Label className="text-gray-400 text-sm">Entidade *</Label>
+                    <div className="relative">
+                      <Input
+                        value={entitySearch || formData.entity_name}
+                        onChange={e => handleEntitySearchChange(e.target.value)}
+                        onFocus={() => setEntityDropdownOpen(true)}
+                        className="bg-zinc-800 border-zinc-700 text-white pr-10"
+                        placeholder="Pesquisar ou criar nova entidade..."
+                        data-testid="lead-entity-name"
+                        autoComplete="off"
+                      />
+                      <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    </div>
+                    {entityDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        {filteredEntities.length > 0 && filteredEntities.map((entity, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-zinc-800 flex items-center gap-3 border-b border-zinc-800/50 last:border-0"
+                            onClick={() => handleSelectEntity(entity)}
+                            data-testid={`entity-option-${idx}`}
+                          >
+                            <div className={`w-7 h-7 rounded-md flex items-center justify-center ${entity.type === 'client' ? 'bg-green-500/20' : 'bg-blue-500/20'}`}>
+                              <Building size={14} className={entity.type === 'client' ? 'text-green-400' : 'text-blue-400'} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-sm font-medium truncate">{entity.entity_name}</p>
+                              <p className="text-zinc-500 text-xs truncate">{entity.contact_name} · {entity.contact_email}</p>
+                            </div>
+                            <Badge className={`text-[10px] ${entity.type === 'client' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                              {entity.type === 'client' ? 'Cliente' : 'Lead'}
+                            </Badge>
+                          </button>
+                        ))}
+                        {entitySearch && (
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left hover:bg-zinc-800 flex items-center gap-3 text-gold-400"
+                            onClick={() => { setFormData({ ...formData, entity_name: entitySearch }); setEntityDropdownOpen(false); }}
+                            data-testid="entity-create-new"
+                          >
+                            <div className="w-7 h-7 rounded-md bg-gold-500/20 flex items-center justify-center">
+                              <Plus size={14} className="text-gold-400" />
+                            </div>
+                            <span className="text-sm font-medium">Criar nova: "{entitySearch}"</span>
+                          </button>
+                        )}
+                        {!entitySearch && filteredEntities.length === 0 && (
+                          <div className="px-3 py-3 text-zinc-500 text-sm text-center">Comece a escrever para pesquisar...</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div><Label className="text-gray-400 text-sm">País *</Label>
                     <Select value={formData.country} onValueChange={v => setFormData({...formData, country: v})}>
                       <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-country"><SelectValue placeholder="Selecionar país" /></SelectTrigger>

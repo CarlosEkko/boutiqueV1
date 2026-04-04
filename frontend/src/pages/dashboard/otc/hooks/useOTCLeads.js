@@ -61,6 +61,7 @@ export const useOTCLeads = () => {
   const [selected360User, setSelected360User] = useState(null);
   const [verificationResult, setVerificationResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingEntities, setExistingEntities] = useState([]);
 
   // Form data
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -74,6 +75,7 @@ export const useOTCLeads = () => {
     fetchWorkflowEnums();
     fetchLeads();
     fetchTeamMembers();
+    fetchEntities();
   }, [token, statusFilter, sourceFilter]);
 
   // ==================== FETCH ====================
@@ -93,6 +95,15 @@ export const useOTCLeads = () => {
       const users = r.data || [];
       setTeamMembers(users);
     } catch (e) { console.error('Failed to fetch team members:', e); }
+  };
+
+  const fetchEntities = async (search = '') => {
+    try {
+      let url = `${API_URL}/api/otc/entities`;
+      if (search) url += `?search=${encodeURIComponent(search)}`;
+      const r = await axios.get(url, { headers });
+      setExistingEntities(r.data.entities || []);
+    } catch (e) { console.error('Failed to fetch entities:', e); }
   };
 
   const fetchLeads = async () => {
@@ -392,7 +403,7 @@ export const useOTCLeads = () => {
     leads, enums, loading, total, searchQuery, statusFilter, sourceFilter,
     teamMembers, workflowEnums, selectedLead, formData, preQualData, setupData,
     newDealClient, newDealData, existingContact, checkingContact, showExistingWarning,
-    selected360User, verificationResult, token, isSubmitting,
+    selected360User, verificationResult, token, isSubmitting, existingEntities,
     // Dialogs
     showCreateDialog, showDetailDialog, showPreQualDialog, showSetupDialog,
     showNewDealModal, show360Modal,
@@ -407,7 +418,7 @@ export const useOTCLeads = () => {
     handleSubmitSetup, handleAddRedFlag, handleAdvanceToKYC, handleApproveKYC,
     handlePreQualify, handleConvertToClient, handleDeleteLead, handleArchiveLead,
     handleCreateLead, handleTrustfullScan, handleCreateClientDirect, handleUpdateLead,
-    checkExistingContact, createDeal, resetForm,
+    checkExistingContact, createDeal, resetForm, fetchEntities,
     openPreQual, openSetup, openNewDeal, open360View, openDetail,
   };
 };

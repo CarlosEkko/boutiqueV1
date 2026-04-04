@@ -34,7 +34,7 @@ const OTCLeads = () => {
     leads, enums, loading, total, searchQuery, statusFilter, sourceFilter,
     selectedLead, formData, preQualData, setupData, teamMembers,
     newDealClient, newDealData, existingContact, checkingContact, showExistingWarning,
-    selected360User, workflowEnums, token,
+    selected360User, workflowEnums, token, existingEntities,
     showCreateDialog, showDetailDialog, showPreQualDialog, showSetupDialog,
     showNewDealModal, show360Modal,
     setSearchQuery, setStatusFilter, setSourceFilter, setSelectedLead,
@@ -46,7 +46,7 @@ const OTCLeads = () => {
     handleSubmitSetup, handleAddRedFlag, handleAdvanceToKYC, handleApproveKYC,
     handlePreQualify, handleConvertToClient, handleDeleteLead, handleArchiveLead,
     handleCreateLead, handleTrustfullScan, handleCreateClientDirect,
-    checkExistingContact, createDeal, resetForm,
+    checkExistingContact, createDeal, resetForm, fetchEntities,
     openPreQual, openSetup, openNewDeal, open360View, openDetail,
   } = hook;
   const { isSubmitting, handleUpdateLead } = hook;
@@ -147,6 +147,7 @@ const OTCLeads = () => {
         setShowExistingWarning={setShowExistingWarning} setExistingContact={setExistingContact}
         resetForm={resetForm} openNewDeal={openNewDeal} openDetail={openDetail} open360View={open360View}
         isSubmitting={isSubmitting}
+        existingEntities={existingEntities} fetchEntities={fetchEntities}
       />
 
       {/* Lead Detail Dialog */}
