@@ -526,7 +526,7 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
         try:
             from services.email_service import email_service
             if email_service:
-                registration_link = f"{base_url}/login"
+                registration_link = f"{base_url}/register?email={lead_email}"
                 email_result = await email_service.send_onboarding_email(
                     to_email=lead_email,
                     to_name=lead_name,

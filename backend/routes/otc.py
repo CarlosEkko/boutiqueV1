@@ -567,8 +567,10 @@ async def send_onboarding_email(
     contact_name = lead.get("contact_name")
     entity_name = lead.get("entity_name")
     
-    # Generate registration link (placeholder - should be dynamic)
-    registration_link = f"https://kbex.io/register?ref=otc&lead={lead_id}"
+    # Generate registration link
+    import os
+    base_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+    registration_link = f"{base_url}/register?ref=otc&lead={lead_id}"
     
     email_result = {"success": False, "simulated": True}
     
