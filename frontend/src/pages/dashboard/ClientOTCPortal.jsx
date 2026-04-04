@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { formatNumber, getErrorMessage } from '../../utils/formatters';
+import { formatNumber, getErrorMessage, formatDate} from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -157,18 +157,6 @@ const ClientOTCPortal = () => {
       toast.error(getErrorMessage(err, 'Erro ao rejeitar cotação'));
     }
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getDealStageBadge = (stage) => {
     const styles = {
       rfq: 'bg-blue-900/30 text-blue-400',

@@ -4,6 +4,31 @@
  */
 
 /**
+ * Format a date string to dd/mm/yyyy
+ * @param {string|Date} dateStr - Date string or Date object
+ * @param {boolean} includeTime - Whether to include time (HH:mm)
+ * @returns {string} Formatted date string
+ */
+export const formatDate = (dateStr, includeTime = false) => {
+  if (!dateStr) return '-';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    if (includeTime) {
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+    return `${day}/${month}/${year}`;
+  } catch {
+    return '-';
+  }
+};
+
+/**
  * Format a number with thousand separators (space) and decimal places
  * @param {number|string} value - The number to format
  * @param {number} decimals - Number of decimal places (default: 2)
@@ -131,6 +156,7 @@ export const getErrorMessage = (err, defaultMsg = 'Erro na operação') => {
 };
 
 export default {
+  formatDate,
   formatNumber,
   formatCurrency,
   formatCrypto,

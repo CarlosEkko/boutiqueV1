@@ -21,6 +21,7 @@ import {
   Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -122,13 +123,6 @@ const CryptoTransactionsPage = () => {
     navigator.clipboard.writeText(text);
     toast.success('Copiado!');
   };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR');
-  };
-
   const truncateHash = (hash) => {
     if (!hash) return '-';
     return `${hash.slice(0, 10)}...${hash.slice(-8)}`;

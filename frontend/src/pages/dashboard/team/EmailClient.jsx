@@ -15,6 +15,7 @@ import {
   Mail, LogIn, Unplug, FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -293,15 +294,6 @@ const EmailClient = () => {
     setComposeSubject('');
     setComposeCc('');
   };
-
-  const formatDate = (d) => {
-    if (!d) return '';
-    const date = new Date(d);
-    const now = new Date();
-    if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-    return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
-  };
-
   // ==================== NOT CONNECTED STATE ====================
   if (o365Status === null) {
     return (

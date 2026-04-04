@@ -13,6 +13,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -50,16 +51,6 @@ const TransparencyPage = () => {
     navigator.clipboard.writeText(address);
     toast.success('Address copied to clipboard');
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">

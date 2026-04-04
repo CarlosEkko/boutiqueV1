@@ -35,6 +35,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -215,18 +216,6 @@ const TicketsDashboard = () => {
     };
     return <Badge className={colorClasses[config.color]}>{config.label}</Badge>;
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-PT', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const regionFlags = {
     europe: '🇪🇺',
     mena: '🌍',

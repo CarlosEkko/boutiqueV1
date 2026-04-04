@@ -27,6 +27,7 @@ import {
   ChevronLeft, ChevronRight, ArrowUp, ArrowRight, ArrowDown, RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -262,9 +263,6 @@ const TeamHub = () => {
   };
 
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-
   const tabs = [
     { key: 'email', label: 'Email', icon: Mail, count: stats.total_emails },
     { key: 'calendar', label: 'Calendário', icon: Calendar, count: stats.upcoming_events },

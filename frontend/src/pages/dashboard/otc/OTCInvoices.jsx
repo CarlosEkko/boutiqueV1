@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
-import { formatNumber } from '../../../utils/formatters';
+import { formatNumber, formatDate} from '../../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -154,16 +154,6 @@ const OTCInvoices = () => {
       toast.error('Erro ao carregar detalhes da fatura');
     }
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
   const getStatusBadge = (status) => {
     const styles = {
       draft: 'bg-gray-900/30 text-gray-400',

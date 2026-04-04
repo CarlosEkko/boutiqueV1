@@ -35,7 +35,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatNumber } from '../../utils/formatters';
+import { formatNumber, formatDate} from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -167,16 +167,6 @@ const InvestmentsPage = () => {
       default: return 'bg-gray-500/20 text-gray-400';
     }
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
   // Calculate portfolio stats
   const totalInvested = myInvestments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
   const totalExpectedReturn = myInvestments.reduce((sum, inv) => sum + (inv.expected_return || 0), 0);

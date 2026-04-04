@@ -17,6 +17,7 @@ import {
   Copy
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -102,17 +103,6 @@ const AdminCryptoWithdrawals = () => {
       </Badge>
     );
   };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getExplorerUrl = (asset, txHash) => {
     const explorers = {
       BTC: `https://blockstream.info/tx/${txHash}`,

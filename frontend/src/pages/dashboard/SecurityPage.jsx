@@ -21,6 +21,7 @@ import {
   AlertTriangle, Power, CheckCircle, XCircle, Clock,
   RefreshCw, Eye, EyeOff, History
 } from 'lucide-react';
+import { formatDate } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -212,19 +213,6 @@ const SecurityPage = () => {
       toast.error(error.response?.data?.detail || 'Falha ao desativar 2FA');
     }
   };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-PT', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const formatRelativeTime = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
-import { formatNumber } from '../../../utils/formatters';
+import { formatNumber, formatDate} from '../../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -146,16 +146,6 @@ const CRMClients = () => {
     setPage(0);
     fetchClients();
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
   const getRegionBadge = (region) => {
     const config = {
       europe: { label: 'Europa', color: 'bg-blue-900/30 text-blue-400' },

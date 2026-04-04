@@ -8,6 +8,7 @@ import {
   Mail, Calendar, CheckSquare, Clock, LayoutDashboard,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -68,9 +69,6 @@ const TeamHubDashboard = () => {
       }
     } catch (err) { console.error(err); }
   };
-
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
-
   return (
     <div className="space-y-6" data-testid="team-hub-dashboard">
       <div className="flex items-center justify-between">

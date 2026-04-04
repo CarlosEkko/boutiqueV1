@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
-import { formatNumber } from '../../../utils/formatters';
+import { formatNumber, formatDate} from '../../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -212,17 +212,6 @@ const OTCSettlement = () => {
       toast.error(err.response?.data?.detail || 'Erro ao completar');
     }
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getStatusBadge = (status) => {
     const styles = {
       pending: 'bg-yellow-900/30 text-yellow-400',

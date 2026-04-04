@@ -18,6 +18,7 @@ import {
   ArrowRightLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -112,17 +113,6 @@ const AdminOrders = () => {
       </Badge>
     );
   };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const filteredOrders = orders.filter(o => {
     const matchesStatus = !statusFilter || o.status === statusFilter;
     const matchesType = !typeFilter || o.order_type === typeFilter;

@@ -39,6 +39,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -126,18 +127,6 @@ const AdminAdmissionFees = () => {
       setRejecting(false);
     }
   };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const formatAmount = (amount, currency) => {
     const symbols = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
     const value = parseFloat(amount || 0);

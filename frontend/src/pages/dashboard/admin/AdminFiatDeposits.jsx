@@ -17,6 +17,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -124,17 +125,6 @@ const AdminFiatDeposits = () => {
     const symbol = getCurrencySymbol(currency);
     return `${symbol} ${parseFloat(amount).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`;
   };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleString('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const filteredDeposits = deposits.filter(d => {
     const matchesStatus = !statusFilter || d.status === statusFilter;
     const matchesCurrency = !currencyFilter || d.currency === currencyFilter;
