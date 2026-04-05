@@ -36,11 +36,13 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OTCPipeline = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [pipeline, setPipeline] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -62,12 +64,12 @@ const OTCPipeline = () => {
 
   const stages = [
     { key: 'rfq', label: 'RFQ', color: 'border-blue-500', bgColor: 'bg-blue-500/10', textColor: 'text-blue-400', icon: '📋' },
-    { key: 'quote', label: 'Cotação', color: 'border-purple-500', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400', icon: '💰' },
-    { key: 'acceptance', label: 'Aceitação', color: 'border-gold-500', bgColor: 'bg-gold-500/10', textColor: 'text-gold-400', icon: '✅' },
-    { key: 'execution', label: 'Execução', color: 'border-orange-500', bgColor: 'bg-orange-500/10', textColor: 'text-orange-400', icon: '⚡' },
-    { key: 'settlement', label: 'Liquidação', color: 'border-emerald-500', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400', icon: '🏦' },
-    { key: 'invoice', label: 'Invoice', color: 'border-teal-500', bgColor: 'bg-teal-500/10', textColor: 'text-teal-400', icon: '📄' },
-    { key: 'post_sale', label: 'Pós-Venda', color: 'border-green-500', bgColor: 'bg-green-500/10', textColor: 'text-green-400', icon: '🤝' },
+    { key: 'quote', label: t('otc.pipeline.stages.quote'), color: 'border-purple-500', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400', icon: '💰' },
+    { key: 'acceptance', label: t('otc.pipeline.stages.acceptance'), color: 'border-gold-500', bgColor: 'bg-gold-500/10', textColor: 'text-gold-400', icon: '✅' },
+    { key: 'execution', label: t('otc.pipeline.stages.execution'), color: 'border-orange-500', bgColor: 'bg-orange-500/10', textColor: 'text-orange-400', icon: '⚡' },
+    { key: 'settlement', label: t('otc.pipeline.stages.settlement'), color: 'border-emerald-500', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400', icon: '🏦' },
+    { key: 'invoice', label: t('otc.pipeline.stages.invoice'), color: 'border-teal-500', bgColor: 'bg-teal-500/10', textColor: 'text-teal-400', icon: '📄' },
+    { key: 'post_sale', label: t('otc.pipeline.stages.post_sale'), color: 'border-green-500', bgColor: 'bg-green-500/10', textColor: 'text-green-400', icon: '🤝' },
   ];
 
   useEffect(() => {
@@ -94,7 +96,7 @@ const OTCPipeline = () => {
       setPipeline(response.data);
     } catch (err) {
       console.error('Failed to fetch pipeline:', err);
-      toast.error('Erro ao carregar pipeline');
+      toast.error(t('otc.pipeline.errorLoadingPipeline'));
     } finally {
       setLoading(false);
     }
@@ -123,11 +125,11 @@ const OTCPipeline = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Deal movido para ' + newStage);
+      toast.success(t('otc.pipeline.dealMovedTo') + ' ' + newStage);
       fetchPipeline();
       setShowDealDialog(false);
     } catch (err) {
-      toast.error('Erro ao mover deal');
+      toast.error(t('otc.pipeline.errorMovingDeal'));
     }
   };
 
@@ -220,7 +222,7 @@ const OTCPipeline = () => {
         <div>
           <h1 className="text-3xl font-light text-white flex items-center gap-3">
             <Kanban className="text-gold-400" />
-            Pipeline OTC
+            {t('otc.pipeline.title')}
           </h1>
           <p className="text-gray-400 mt-1">Visualizacao Kanban das operacoes OTC</p>
         </div>
@@ -639,7 +641,7 @@ const OTCPipeline = () => {
                     className="bg-zinc-800 border-gold-500/30"
                   />
                   <p className="text-xs text-gray-500">
-                    {selectedDeal.transaction_type === 'buy' ? 'Adicionado ao preco' : 'Subtraido do preco'}
+                    {selectedDeal.transaction_type === 'buy' ? t('otc.pipeline.addedToPrice') : t('otc.pipeline.subtractedFromPrice')}
                   </p>
                 </div>
                 

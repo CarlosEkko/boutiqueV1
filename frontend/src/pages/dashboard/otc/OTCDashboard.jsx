@@ -20,12 +20,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OTCDashboard = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +44,7 @@ const OTCDashboard = () => {
       setData(response.data);
     } catch (err) {
       console.error('Failed to fetch OTC dashboard:', err);
-      toast.error('Erro ao carregar dashboard OTC');
+      toast.error(t('otc.pipeline.errorLoadingPipeline'));
     } finally {
       setLoading(false);
     }
@@ -51,17 +53,17 @@ const OTCDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Carregando dashboard OTC...</div>
+        <div className="text-gold-400">{t('otc.dashboard.loading')}</div>
       </div>
     );
   }
 
   const pipelineStages = [
     { key: 'rfq', label: 'RFQ', color: 'bg-blue-500' },
-    { key: 'quote', label: 'Quote', color: 'bg-purple-500' },
-    { key: 'acceptance', label: 'Aceitação', color: 'bg-gold-500' },
-    { key: 'execution', label: 'Execução', color: 'bg-orange-500' },
-    { key: 'settlement', label: 'Liquidação', color: 'bg-green-500' },
+    { key: 'quote', label: t('otc.pipeline.stages.quote'), color: 'bg-purple-500' },
+    { key: 'acceptance', label: t('otc.pipeline.stages.acceptance'), color: 'bg-gold-500' },
+    { key: 'execution', label: t('otc.pipeline.stages.execution'), color: 'bg-orange-500' },
+    { key: 'settlement', label: t('otc.pipeline.stages.settlement'), color: 'bg-green-500' },
   ];
 
   return (
@@ -71,9 +73,9 @@ const OTCDashboard = () => {
         <div>
           <h1 className="text-3xl font-light text-white flex items-center gap-3">
             <Briefcase className="text-gold-400" />
-            OTC Desk
+            {t('otc.dashboard.title')}
           </h1>
-          <p className="text-gray-400 mt-1">Gestão de operações Over-The-Counter</p>
+          <p className="text-gray-400 mt-1">{t('otc.dashboard.subtitle')}</p>
         </div>
         <Button
           onClick={fetchDashboard}
@@ -81,7 +83,7 @@ const OTCDashboard = () => {
           className="border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
         >
           <RefreshCw size={16} className="mr-2" />
-          Atualizar
+          {t('otc.dashboard.refresh')}
         </Button>
       </div>
 
@@ -91,7 +93,7 @@ const OTCDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
               <DollarSign size={14} />
-              <span className="text-xs uppercase">Volume 24h</span>
+              <span className="text-xs uppercase">{t('otc.dashboard.volume24h')}</span>
             </div>
             <p className="text-2xl font-light text-gold-400">
               ${formatNumber(data?.volume?.['24h'] || 0)}
@@ -103,7 +105,7 @@ const OTCDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
               <TrendingUp size={14} />
-              <span className="text-xs uppercase">Volume 7d</span>
+              <span className="text-xs uppercase">{t('otc.dashboard.volume7d')}</span>
             </div>
             <p className="text-2xl font-light text-white">
               ${formatNumber(data?.volume?.['7d'] || 0)}
@@ -115,7 +117,7 @@ const OTCDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-gray-400 mb-1">
               <BarChart3 size={14} />
-              <span className="text-xs uppercase">Volume 30d</span>
+              <span className="text-xs uppercase">{t('otc.dashboard.volume30d')}</span>
             </div>
             <p className="text-2xl font-light text-white">
               ${formatNumber(data?.volume?.['30d'] || 0)}
@@ -127,7 +129,7 @@ const OTCDashboard = () => {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-green-400 mb-1">
               <DollarSign size={14} />
-              <span className="text-xs uppercase">Receita Total</span>
+              <span className="text-xs uppercase">{t('otc.dashboard.totalRevenue')}</span>
             </div>
             <p className="text-2xl font-light text-green-400">
               ${formatNumber(data?.revenue?.total || 0)}
@@ -151,30 +153,30 @@ const OTCDashboard = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                 <p className="text-3xl font-light text-white">{data?.leads?.total || 0}</p>
-                <p className="text-xs text-gray-400">Total</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.total')}</p>
               </div>
               <div className="text-center p-3 bg-blue-900/20 rounded-lg">
                 <p className="text-3xl font-light text-blue-400">{data?.leads?.new || 0}</p>
-                <p className="text-xs text-gray-400">Novos</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.new')}</p>
               </div>
               <div className="text-center p-3 bg-gold-900/20 rounded-lg">
                 <p className="text-3xl font-light text-gold-400">{data?.leads?.qualified || 0}</p>
-                <p className="text-xs text-gray-400">Qualificados</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.qualified')}</p>
               </div>
               <div className="text-center p-3 bg-green-900/20 rounded-lg">
                 <p className="text-3xl font-light text-green-400">{data?.leads?.converted || 0}</p>
-                <p className="text-xs text-gray-400">Convertidos</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.converted')}</p>
               </div>
             </div>
             <div className="p-3 bg-zinc-800/50 rounded-lg text-center">
-              <span className="text-gray-400">Taxa de Conversão: </span>
+              <span className="text-gray-400">{t('otc.dashboard.conversionRate')}: </span>
               <span className="text-gold-400 font-bold">{data?.leads?.conversion_rate || 0}%</span>
             </div>
             <Button 
               onClick={() => navigate('/dashboard/otc/leads')}
               className="w-full bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
             >
-              Ver Leads
+              {t('otc.dashboard.viewLeads')}
               <ArrowRight size={16} className="ml-2" />
             </Button>
           </CardContent>
@@ -192,18 +194,18 @@ const OTCDashboard = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                 <p className="text-3xl font-light text-white">{data?.clients?.total || 0}</p>
-                <p className="text-xs text-gray-400">Total</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.total')}</p>
               </div>
               <div className="text-center p-3 bg-green-900/20 rounded-lg">
                 <p className="text-3xl font-light text-green-400">{data?.clients?.active || 0}</p>
-                <p className="text-xs text-gray-400">Ativos</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.active')}</p>
               </div>
             </div>
             <Button 
               onClick={() => navigate('/dashboard/otc/clients')}
               className="w-full bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
             >
-              Ver Clientes
+              {t('otc.dashboard.viewClients')}
               <ArrowRight size={16} className="ml-2" />
             </Button>
           </CardContent>
@@ -221,22 +223,22 @@ const OTCDashboard = () => {
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
                 <p className="text-2xl font-light text-white">{data?.deals?.total || 0}</p>
-                <p className="text-xs text-gray-400">Total</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.total')}</p>
               </div>
               <div className="text-center p-3 bg-blue-900/20 rounded-lg">
                 <p className="text-2xl font-light text-blue-400">{data?.deals?.active || 0}</p>
-                <p className="text-xs text-gray-400">Ativos</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.active')}</p>
               </div>
               <div className="text-center p-3 bg-green-900/20 rounded-lg">
                 <p className="text-2xl font-light text-green-400">{data?.deals?.completed || 0}</p>
-                <p className="text-xs text-gray-400">Completos</p>
+                <p className="text-xs text-gray-400">{t('otc.dashboard.completed')}</p>
               </div>
             </div>
             <Button 
               onClick={() => navigate('/dashboard/otc/pipeline')}
               className="w-full bg-gold-500/20 text-gold-400 hover:bg-gold-500/30"
             >
-              Ver Pipeline
+              {t('otc.dashboard.viewPipeline')}
               <ArrowRight size={16} className="ml-2" />
             </Button>
           </CardContent>
@@ -248,7 +250,7 @@ const OTCDashboard = () => {
         <CardHeader>
           <CardTitle className="text-lg text-gold-400 flex items-center gap-2">
             <Target size={18} />
-            Pipeline OTC
+            {t('otc.pipeline.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>

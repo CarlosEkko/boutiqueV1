@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../i18n';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -17,12 +17,14 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [searchParams] = useSearchParams();
+  const inviteEmail = searchParams.get('email');
 
   const handleTurnstileVerify = useCallback((token) => setTurnstileToken(token), []);
 
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    email: inviteEmail || '',
     password: '',
     phone: '',
     country: ''
@@ -31,6 +33,13 @@ const RegisterPage = () => {
   const { register } = useAuth();
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
+
+  // Gate: only allow access with an invite email parameter
+  useEffect(() => {
+    if (!inviteEmail) {
+      window.location.href = '/#contact';
+    }
+  }, [inviteEmail]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

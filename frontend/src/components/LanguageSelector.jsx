@@ -9,6 +9,7 @@ const LanguageSelector = () => {
     { code: 'EN', label: 'EN' },
     { code: 'PT', label: 'PT' },
     { code: 'FR', label: 'FR' },
+    { code: 'ES', label: 'ES' },
     { code: 'AR', label: 'AR' }
   ];
 

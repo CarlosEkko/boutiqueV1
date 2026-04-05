@@ -31,6 +31,7 @@ const Header = () => {
     { code: 'EN', name: 'English' },
     { code: 'PT', name: 'Português' },
     { code: 'FR', name: 'Français' },
+    { code: 'ES', name: 'Español' },
     { code: 'AR', name: 'العربية' }
   ];
 
