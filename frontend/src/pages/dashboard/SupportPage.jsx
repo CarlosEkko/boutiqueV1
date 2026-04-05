@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { getErrorMessage } from '../../utils/formatters';
+import { getErrorMessage, formatDate} from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -340,13 +340,7 @@ const SupportPage = () => {
                         <div className="text-white font-medium truncate">{ticket.subject}</div>
                         <div className="text-sm text-gray-400 mt-1 flex items-center gap-2">
                           <Clock size={12} />
-                          {new Date(ticket.created_at).toLocaleDateString('pt-PT', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {formatDate(ticket.created_at)}
                           {ticket.messages && ticket.messages.length > 1 && (
                             <>
                               <span>•</span>
@@ -385,7 +379,7 @@ const SupportPage = () => {
                             </div>
                             <div className={`flex-1 ${msg.sender_type === 'admin' ? 'text-right' : ''}`}>
                               <div className="text-xs text-gray-400 mb-1">
-                                {msg.sender_name} • {new Date(msg.created_at).toLocaleString('pt-PT')}
+                                {msg.sender_name} • {formatDate(msg.created_at, true)}
                               </div>
                               <div className={`inline-block p-3 rounded-lg ${
                                 msg.sender_type === 'admin' 

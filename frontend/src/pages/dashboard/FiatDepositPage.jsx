@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
-import { getErrorMessage } from '../../utils/formatters';
+import { getErrorMessage, formatDate} from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -538,7 +538,7 @@ const FiatDepositPage = () => {
                             {status.label}
                           </span>
                           <p className="text-xs text-gray-500 mt-1">
-                            {new Date(deposit.created_at).toLocaleDateString()}
+                            {formatDate(deposit.created_at)}
                           </p>
                         </div>
                       </div>

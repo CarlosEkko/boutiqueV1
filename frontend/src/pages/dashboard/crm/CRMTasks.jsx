@@ -32,6 +32,7 @@ import {
   Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -633,7 +634,7 @@ const TaskCard = ({ task, onEdit, onDelete, onComplete, getPriorityColor, getTas
         {task.due_date && (
           <div className={`flex items-center gap-1 text-xs mb-2 ${task.is_overdue ? 'text-red-400' : 'text-gray-400'}`}>
             {task.is_overdue ? <AlertCircle size={12} /> : <Calendar size={12} />}
-            {new Date(task.due_date).toLocaleDateString('pt-PT')}
+            {formatDate(task.due_date)}
             {task.is_overdue && <span className="ml-1">(Atrasada)</span>}
           </div>
         )}

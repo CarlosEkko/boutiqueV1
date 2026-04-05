@@ -25,6 +25,7 @@ import {
   Info
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
+import { formatDate } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -571,7 +572,7 @@ const ExchangePage = () => {
                         </span>
                       </div>
                       <span className="text-xs text-gray-500">
-                        {new Date(order.created_at).toLocaleString()}
+                        {formatDate(order.created_at, true)}
                       </span>
                     </div>
                     <div className="text-right">

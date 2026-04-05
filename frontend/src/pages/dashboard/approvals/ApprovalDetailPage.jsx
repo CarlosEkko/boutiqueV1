@@ -11,6 +11,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -264,7 +265,7 @@ const ApprovalDetailPage = () => {
                               <span className="text-gray-600">{step.details.sender_email}</span>
                             </div>
                             {step.details.timestamp && (
-                              <p className="mt-1 text-gray-600">{new Date(step.details.timestamp).toLocaleString('pt-PT')}</p>
+                              <p className="mt-1 text-gray-600">{formatDate(step.details.timestamp, true)}</p>
                             )}
                           </div>
                         )}
@@ -325,7 +326,7 @@ const ApprovalDetailPage = () => {
                         )}
 
                         {step.key === 'successful' && step.status === 'completed' && step.details?.timestamp && (
-                          <p className="mt-2 text-xs text-green-400/70">{new Date(step.details.timestamp).toLocaleString('pt-PT')}</p>
+                          <p className="mt-2 text-xs text-green-400/70">{formatDate(step.details.timestamp, true)}</p>
                         )}
                       </div>
                     </div>

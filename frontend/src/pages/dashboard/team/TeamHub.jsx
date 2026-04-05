@@ -536,7 +536,7 @@ const TeamHub = () => {
                             {task.body && <p className="text-gray-500 text-xs mt-1 truncate">{task.body}</p>}
                             <div className="flex items-center gap-3 mt-1">
                               {task.due_date && (
-                                <span className="text-gray-500 text-xs flex items-center gap-1"><Clock size={10} />{new Date(task.due_date).toLocaleDateString('pt-PT')}</span>
+                                <span className="text-gray-500 text-xs flex items-center gap-1"><Clock size={10} />{formatDate(task.due_date)}</span>
                               )}
                               {task.categories?.length > 0 && task.categories.map(c => (
                                 <span key={c} className="text-[10px] bg-zinc-700 text-gray-400 px-1.5 py-0.5 rounded">{c}</span>

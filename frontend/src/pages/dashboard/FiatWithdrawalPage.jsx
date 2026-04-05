@@ -21,6 +21,7 @@ import {
   History
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -506,7 +507,7 @@ const FiatWithdrawalPage = () => {
                           <div className="flex items-center gap-4">
                             {getStatusBadge(withdrawal.status)}
                             <span className="text-gray-500 text-sm">
-                              {new Date(withdrawal.created_at).toLocaleDateString('pt-PT')}
+                              {formatDate(withdrawal.created_at)}
                             </span>
                             {expandedWithdrawal === withdrawal.id ? (
                               <ChevronUp size={18} className="text-gray-400" />
@@ -534,7 +535,7 @@ const FiatWithdrawalPage = () => {
                             </div>
                             <div>
                               <p className="text-gray-400">{t('dashboard.fiatWithdrawal.date')}</p>
-                              <p className="text-white">{new Date(withdrawal.created_at).toLocaleString('pt-PT')}</p>
+                              <p className="text-white">{formatDate(withdrawal.created_at, true)}</p>
                             </div>
                           </div>
 

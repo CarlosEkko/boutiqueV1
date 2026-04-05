@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
 import { Gem, Plus, Flame, Send, Link2, Unlink, Loader2, AlertCircle, RefreshCw, FileCode2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -263,7 +264,7 @@ const TokenizationPage = () => {
                     <p className="text-xs text-zinc-500">{h.collection_name || h.asset_id || ''} {h.amount ? `| ${h.amount}` : ''} {h.blockchain ? `| ${h.blockchain}` : ''}</p>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500">{h.created_at ? new Date(h.created_at).toLocaleString('pt-PT') : ''}</p>
+                <p className="text-xs text-zinc-500">{h.created_at ? formatDate(h.created_at, true) : ''}</p>
               </CardContent>
             </Card>
           ))}

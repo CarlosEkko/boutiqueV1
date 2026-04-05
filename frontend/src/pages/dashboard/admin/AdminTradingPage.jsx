@@ -27,6 +27,7 @@ import {
   Trash2,
   Edit
 } from 'lucide-react';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -1129,7 +1130,7 @@ const AdminTradingPage = () => {
                           </div>
                           <div>
                             <span className="text-gray-400 block">Data</span>
-                            <span className="text-white">{new Date(order.created_at).toLocaleString()}</span>
+                            <span className="text-white">{formatDate(order.created_at, true)}</span>
                           </div>
                         </div>
 
@@ -1270,7 +1271,7 @@ const AdminTradingPage = () => {
                           </div>
                           <div>
                             <span className="text-gray-400 block">Data</span>
-                            <span className="text-white">{new Date(transfer.created_at).toLocaleString()}</span>
+                            <span className="text-white">{formatDate(transfer.created_at, true)}</span>
                           </div>
                           {transfer.proof_document_url && (
                             <div className="col-span-full">
@@ -1422,7 +1423,7 @@ const AdminTradingPage = () => {
                           </div>
                           <div>
                             <p className="text-gray-400">Data do Pedido</p>
-                            <p className="text-white">{new Date(withdrawal.created_at).toLocaleString('pt-PT')}</p>
+                            <p className="text-white">{formatDate(withdrawal.created_at, true)}</p>
                           </div>
                         </div>
                         
@@ -1611,7 +1612,7 @@ const AdminTradingPage = () => {
                           </div>
                           <div>
                             <span className="text-gray-400">Data:</span>
-                            <span className="text-white ml-2">{new Date(w.created_at).toLocaleDateString('pt-PT')}</span>
+                            <span className="text-white ml-2">{formatDate(w.created_at)}</span>
                           </div>
                         </div>
 

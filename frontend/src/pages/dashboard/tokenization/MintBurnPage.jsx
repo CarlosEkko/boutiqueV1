@@ -6,6 +6,7 @@ import { Input } from '../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Flame, Plus, Loader2, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -163,7 +164,7 @@ const MintBurnPage = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-white font-mono text-sm">{h.amount || '—'}</p>
-                    <p className="text-zinc-500 text-xs">{h.created_at ? new Date(h.created_at).toLocaleDateString('pt-PT') : ''}</p>
+                    <p className="text-zinc-500 text-xs">{h.created_at ? formatDate(h.created_at) : ''}</p>
                   </div>
                 </div>
               ))}

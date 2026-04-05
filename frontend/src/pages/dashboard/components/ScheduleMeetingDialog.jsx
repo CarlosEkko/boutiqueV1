@@ -8,6 +8,7 @@ import { Calendar, Clock, Video, Trash2, User, Mail, FileText, ExternalLink } fr
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -224,7 +225,7 @@ const ScheduleMeetingDialog = ({ open, onClose, lead, leadType }) => {
                   <div>
                     <p className="text-white text-sm">{m.subject}</p>
                     <p className="text-gray-500 text-xs">
-                      {new Date(m.start_time).toLocaleDateString('pt-PT')} {new Date(m.start_time).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} — {m.duration_minutes}min
+                      {formatDate(m.start_time)} {new Date(m.start_time).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} — {m.duration_minutes}min
                     </p>
                   </div>
                 </div>

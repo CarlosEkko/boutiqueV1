@@ -10,6 +10,7 @@ import {
   Ban, Clock, Eye, Search, ChevronLeft, ChevronRight,
   Trash2, Plus, Activity, Lock, Globe, X
 } from 'lucide-react';
+import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -315,7 +316,7 @@ const SecurityDashboardPage = () => {
                   {ev.details?.reason && <span className="text-zinc-600 text-[10px] truncate max-w-24">{ev.details.reason}</span>}
                   <Badge className={`${sevColor} border text-[10px] shrink-0`}>{ev.severity}</Badge>
                   <span className="text-zinc-600 text-[10px] w-28 shrink-0 text-right">
-                    {ev.timestamp ? new Date(ev.timestamp).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                    {ev.timestamp ? formatDate(ev.timestamp, true) : ''}
                   </span>
                 </div>
               );
@@ -364,7 +365,7 @@ const SecurityDashboardPage = () => {
                     <div className="text-right">
                       <p className="text-zinc-500 text-[10px]">por {entry.created_by}</p>
                       <p className="text-zinc-600 text-[10px]">
-                        {entry.expires_at ? `Expira: ${new Date(entry.expires_at).toLocaleString('pt-PT')}` : 'Permanente'}
+                        {entry.expires_at ? `Expira: ${formatDate(entry.expires_at, true)}` : 'Permanente'}
                       </p>
                     </div>
                     <Button size="sm" variant="ghost" className="text-zinc-500 hover:text-red-400 h-7" onClick={() => removeFromBlacklist(entry.ip)} data-testid={`remove-blacklist-${i}`}>

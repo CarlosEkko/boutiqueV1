@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Calendar
 } from 'lucide-react';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -360,7 +361,7 @@ const CRMDashboard = () => {
                             task.is_overdue ? 'text-red-400' : 'text-gray-400'
                           }`}>
                             <Calendar size={10} />
-                            {new Date(task.due_date).toLocaleDateString('pt-PT')}
+                            {formatDate(task.due_date)}
                           </p>
                         )}
                       </div>

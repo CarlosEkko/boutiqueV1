@@ -30,6 +30,7 @@ import {
   Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -357,7 +358,7 @@ const CRMDeals = () => {
                           {deal.expected_close_date && (
                             <div className="flex items-center gap-1">
                               <Calendar size={10} />
-                              {new Date(deal.expected_close_date).toLocaleDateString('pt-PT')}
+                              {formatDate(deal.expected_close_date)}
                             </div>
                           )}
                         </div>

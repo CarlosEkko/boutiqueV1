@@ -6,6 +6,7 @@ import { Input } from '../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { DollarSign, Loader2, AlertCircle, Save, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -126,7 +127,7 @@ const TokenPricingPage = () => {
                 </div>
                 <div className="col-span-2 text-right">
                   <span className="text-zinc-500 text-xs">
-                    {lastUpdated ? new Date(lastUpdated).toLocaleDateString('pt-PT') : '—'}
+                    {lastUpdated ? formatDate(lastUpdated) : '—'}
                   </span>
                 </div>
                 <div className="col-span-2 text-right">

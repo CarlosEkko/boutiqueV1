@@ -11,6 +11,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -211,7 +212,7 @@ const VaultTransactionDetail = () => {
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {tx.activity_log.map((log, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs py-1 border-b border-zinc-800/30 last:border-0">
-                      <span className="text-zinc-600 font-mono whitespace-nowrap">{new Date(log.at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-zinc-600 font-mono whitespace-nowrap">{formatDate(log.at, true)}</span>
                       <Badge className={`rounded-full text-[10px] px-2 py-0 ${
                         log.action === 'signed' ? 'bg-emerald-500/10 text-emerald-400' :
                         log.action === 'rejected' ? 'bg-rose-500/10 text-rose-400' :
@@ -262,7 +263,7 @@ const VaultTransactionDetail = () => {
                               <span className="text-zinc-600 ml-2">{step.details.email}</span>
                             </div>
                             {step.timestamp && (
-                              <span className="text-zinc-600 text-[10px] ml-auto">{new Date(step.timestamp).toLocaleString('pt-PT')}</span>
+                              <span className="text-zinc-600 text-[10px] ml-auto">{formatDate(step.timestamp, true)}</span>
                             )}
                           </div>
                         )}
@@ -321,7 +322,7 @@ const VaultTransactionDetail = () => {
                         )}
 
                         {step.key === 'completed' && step.status === 'completed' && step.timestamp && (
-                          <p className="mt-1.5 text-xs text-emerald-400/70">{new Date(step.timestamp).toLocaleString('pt-PT')}</p>
+                          <p className="mt-1.5 text-xs text-emerald-400/70">{formatDate(step.timestamp, true)}</p>
                         )}
                       </div>
                     </div>

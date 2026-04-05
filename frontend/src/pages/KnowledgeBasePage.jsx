@@ -33,6 +33,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import ReactMarkdown from 'react-markdown';
+import { formatDate } from '../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -679,7 +680,7 @@ const KnowledgeBasePage = () => {
                           </p>
                           {article.created_at && (
                             <p className="text-xs text-gray-500">
-                              {new Date(article.created_at).toLocaleDateString('pt-PT')}
+                              {formatDate(article.created_at)}
                             </p>
                           )}
                         </div>

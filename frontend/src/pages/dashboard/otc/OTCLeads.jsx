@@ -2,7 +2,7 @@ import React from 'react';
 import { useOTCLeads } from './hooks/useOTCLeads';
 import { LeadCard } from './components/LeadCard';
 import { CreateLeadDialog } from './components/CreateLeadDialog';
-import { formatNumber } from '../../../utils/formatters';
+import { formatNumber, formatDate} from '../../../utils/formatters';
 import { FormattedNumberInput } from '../../../components/FormattedNumberInput';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -188,7 +188,7 @@ const OTCLeads = () => {
                     <Video size={14} className="mr-1" /> Agendar Reunião
                   </Button>
                 </div>
-                <span className="text-gray-500 text-sm">Criado: {new Date(selectedLead.created_at).toLocaleDateString('pt-PT')}</span>
+                <span className="text-gray-500 text-sm">Criado: {formatDate(selectedLead.created_at)}</span>
               </div>
 
               {/* Risk Intelligence */}

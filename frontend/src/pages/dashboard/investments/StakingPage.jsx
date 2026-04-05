@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
 import { Coins, TrendingUp, ArrowUpCircle, ArrowDownCircle, Gift, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -290,7 +291,7 @@ const StakingPage = () => {
                     <p className="text-xs text-zinc-500">{h.amount || ''}</p>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500">{h.created_at ? new Date(h.created_at).toLocaleString('pt-PT') : ''}</p>
+                <p className="text-xs text-zinc-500">{h.created_at ? formatDate(h.created_at, true) : ''}</p>
               </CardContent>
             </Card>
           ))}

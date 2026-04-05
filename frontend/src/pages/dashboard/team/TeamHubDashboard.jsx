@@ -176,7 +176,7 @@ const TeamHubDashboard = () => {
                       <p className="text-white text-sm truncate">{t.title}</p>
                       {t.due_date && (
                         <p className="text-gray-500 text-xs flex items-center gap-1">
-                          <Clock size={10} />{new Date(t.due_date).toLocaleDateString('pt-PT')}
+                          <Clock size={10} />{formatDate(t.due_date)}
                         </p>
                       )}
                     </div>

@@ -34,6 +34,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 // Lazy load the rich text editor
 const RichTextEditor = lazy(() => import('../../../components/RichTextEditor'));
@@ -656,7 +657,7 @@ const AdminKnowledgeBase = () => {
                           {article.view_count}
                         </span>
                         <span>•</span>
-                        <span>{new Date(article.updated_at).toLocaleDateString('pt-PT')}</span>
+                        <span>{formatDate(article.updated_at)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">

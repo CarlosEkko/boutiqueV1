@@ -21,6 +21,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -381,7 +382,7 @@ const AdminReferrals = () => {
                         )}
                       </td>
                       <td className="py-3 px-4 text-gray-400 text-sm">
-                        {new Date(ref.created_at).toLocaleDateString('pt-PT')}
+                        {formatDate(ref.created_at)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {ref.status === 'active' && (
