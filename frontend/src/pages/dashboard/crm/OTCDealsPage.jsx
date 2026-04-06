@@ -13,19 +13,20 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-const STATUS_CONFIG = {
-  draft: { label: 'Rascunho', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-600' },
-  qualification: { label: 'Qualificação', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  compliance: { label: 'Compliance', color: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
-  negotiation: { label: 'Negociação', color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
-  approved: { label: 'Aprovado', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-  executing: { label: 'Executando', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
-  settled: { label: 'Liquidado', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
-  closed: { label: 'Fechado', color: 'bg-zinc-500/15 text-zinc-300 border-zinc-600' },
-  cancelled: { label: 'Cancelado', color: 'bg-red-500/15 text-red-400 border-red-500/30' },
+const STATUS_COLORS = {
+  draft: 'bg-zinc-500/15 text-zinc-400 border-zinc-600',
+  qualification: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  compliance: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  negotiation: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  approved: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  executing: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  settled: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  closed: 'bg-zinc-500/15 text-zinc-300 border-zinc-600',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
 };
 
 const NEXT_STATUS = {
@@ -50,6 +51,7 @@ const OTCDealsPage = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [refPrices, setRefPrices] = useState({});
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const getHeaders = () => {
     const token = sessionStorage.getItem('kryptobox_token');
@@ -79,21 +81,21 @@ const OTCDealsPage = () => {
         method: 'PUT', headers: getHeaders()
       });
       if (res.ok) {
-        toast.success(`Status atualizado para ${STATUS_CONFIG[newStatus]?.label}`);
+        toast.success(`${t('otc.deals.statusUpdated')} ${t(`otc.deals.statusLabels.${newStatus}`) || newStatus}`);
         fetchDeals();
       } else {
         const err = await res.json();
-        toast.error(err.detail || 'Erro ao atualizar status');
+        toast.error(err.detail || t('otc.deals.errorUpdateStatus'));
       }
-    } catch (e) { toast.error('Erro de conexão'); }
+    } catch (e) { toast.error(t('otc.deals.connectionError')); }
   };
 
   const deleteDeal = async (dealId) => {
-    if (!window.confirm('Eliminar este negócio?')) return;
+    if (!window.confirm(t('otc.deals.confirmDelete'))) return;
     try {
       const res = await fetch(`${API}/api/otc-deals/deals/${dealId}`, { method: 'DELETE', headers: getHeaders() });
-      if (res.ok) { toast.success('Negócio eliminado'); fetchDeals(); }
-    } catch (e) { toast.error('Erro ao eliminar'); }
+      if (res.ok) { toast.success(t('otc.deals.dealDeleted')); fetchDeals(); }
+    } catch (e) { toast.error(t('otc.deals.errorDelete')); }
   };
 
   const filteredDeals = useMemo(() => {
@@ -116,10 +118,10 @@ const OTCDealsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-white flex items-center gap-2" data-testid="otc-deals-title">
           <ArrowLeftRight className="text-yellow-500" size={24} />
-          Negócios OTC
+          {t('otc.deals.title')}
         </h1>
         <Button onClick={() => { setEditingDeal(null); setShowModal(true); }} className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold" data-testid="new-deal-btn">
-          <Plus size={16} className="mr-2" /> Novo Negócio
+          <Plus size={16} className="mr-2" /> {t('otc.deals.newDeal')}
         </Button>
       </div>
 
@@ -127,16 +129,16 @@ const OTCDealsPage = () => {
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-          <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Pesquisar por ID, cliente..." className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="deals-search" />
+          <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder={t('otc.deals.searchPlaceholder')} className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="deals-search" />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white w-40" data-testid="deals-status-filter">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('otc.status')} />
           </SelectTrigger>
           <SelectContent className="bg-zinc-900 border-zinc-800">
-            <SelectItem value="all" className="text-white">Todos</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-              <SelectItem key={k} value={k} className="text-white">{v.label}</SelectItem>
+            <SelectItem value="all" className="text-white">{t('otc.deals.all')}</SelectItem>
+            {Object.keys(STATUS_COLORS).map(k => (
+              <SelectItem key={k} value={k} className="text-white">{t(`otc.deals.statusLabels.${k}`) || k}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -151,18 +153,18 @@ const OTCDealsPage = () => {
           <table className="w-full" data-testid="deals-table">
             <thead>
               <tr className="border-b border-zinc-800">
-                {['ID', 'Cliente/Fornecedor', 'Tipo', 'Ativo', 'Qtd', 'Valor', 'Gross', 'Net', 'Margem', 'Corretor', 'Status', 'Ações'].map(h => (
+                {[t('otc.deals.headers.id'), t('otc.deals.headers.client'), t('otc.deals.headers.type'), t('otc.deals.headers.asset'), t('otc.deals.headers.qty'), t('otc.deals.headers.value'), t('otc.deals.headers.gross'), t('otc.deals.headers.net'), t('otc.deals.headers.margin'), t('otc.deals.headers.broker'), t('otc.deals.headers.status'), t('otc.deals.headers.actions')].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-zinc-500 text-xs uppercase tracking-wider font-medium">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="text-center py-8 text-zinc-500">A carregar...</td></tr>
+                <tr><td colSpan={12} className="text-center py-8 text-zinc-500">{t('otc.deals.loading')}</td></tr>
               ) : filteredDeals.length === 0 ? (
-                <tr><td colSpan={12} className="text-center py-8 text-zinc-500">Sem negócios</td></tr>
+                <tr><td colSpan={12} className="text-center py-8 text-zinc-500">{t('otc.deals.noDeals')}</td></tr>
               ) : filteredDeals.map(deal => {
-                const sc = STATUS_CONFIG[deal.status] || STATUS_CONFIG.draft;
+                const sc = STATUS_COLORS[deal.status] || STATUS_COLORS.draft;
                 const curr = deal.reference_currency || 'EUR';
                 return (
                   <tr key={deal.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors" data-testid={`deal-row-${deal.id}`}>
@@ -170,7 +172,7 @@ const OTCDealsPage = () => {
                     <td className="px-4 py-3 text-white text-sm">{deal.client_name || '-'}</td>
                     <td className="px-4 py-3">
                       <Badge className={deal.deal_type === 'buy' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-red-500/15 text-red-400 border-red-500/30'}>
-                        {deal.deal_type === 'buy' ? 'Compra' : 'Venda'}
+                        {deal.deal_type === 'buy' ? t('otc.deals.buy') : t('otc.deals.sell')}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-white text-sm font-medium">{deal.asset}</td>
@@ -182,28 +184,28 @@ const OTCDealsPage = () => {
                     <td className="px-4 py-3 text-zinc-300 text-sm">{deal.broker_name || '-'}</td>
                     <td className="px-4 py-3">
                       <Badge 
-                        className={`${sc.color} text-xs border ${['compliance', 'qualification'].includes(deal.status) ? 'cursor-pointer hover:opacity-80' : ''}`}
+                        className={`${sc} text-xs border ${['compliance', 'qualification'].includes(deal.status) ? 'cursor-pointer hover:opacity-80' : ''}`}
                         onClick={() => ['compliance', 'qualification'].includes(deal.status) ? navigate(`/dashboard/crm/compliance/${deal.id}`) : null}
                         data-testid={`status-badge-${deal.id}`}
                       >
-                        {sc.label}
+                        {t(`otc.deals.statusLabels.${deal.status}`) || deal.status}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         {NEXT_STATUS[deal.status] && (
-                          <Button variant="ghost" size="sm" className="text-yellow-500 hover:text-yellow-400 p-1" title={`Avançar para ${STATUS_CONFIG[NEXT_STATUS[deal.status]]?.label}`} onClick={() => advanceStatus(deal.id, NEXT_STATUS[deal.status])} data-testid={`advance-${deal.id}`}>
+                          <Button variant="ghost" size="sm" className="text-yellow-500 hover:text-yellow-400 p-1" title={`${t('otc.deals.advanceTo')} ${t(`otc.deals.statusLabels.${NEXT_STATUS[deal.status]}`) || ''}`} onClick={() => advanceStatus(deal.id, NEXT_STATUS[deal.status])} data-testid={`advance-${deal.id}`}>
                             <ChevronRight size={16} />
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-1.5 hover:bg-purple-500/10 rounded" title="Compliance Forense" onClick={() => navigate(`/dashboard/crm/compliance/${deal.id}`)} data-testid={`compliance-${deal.id}`}>
+                        <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 p-1.5 hover:bg-purple-500/10 rounded" title={t('otc.deals.forensicCompliance')} onClick={() => navigate(`/dashboard/crm/compliance/${deal.id}`)} data-testid={`compliance-${deal.id}`}>
                           <Shield size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" title="Editar" onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
+                        <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" title={t('otc.deals.edit')} onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
                           <Edit size={14} />
                         </Button>
                         {deal.status === 'draft' && (
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" title="Eliminar" onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" title={t('otc.deals.delete')} onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
                             <Trash2 size={14} />
                           </Button>
                         )}
@@ -231,6 +233,7 @@ const OTCDealsPage = () => {
 
 // ============ DEAL MODAL ============
 const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     deal_type: 'buy', asset: 'BTC', quantity: 100, reference_price: 58200,
     reference_currency: 'EUR', condition: 'premium', condition_pct: 2,
@@ -312,13 +315,13 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
       const method = deal ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(form) });
       if (res.ok) {
-        toast.success(deal ? 'Negócio atualizado' : 'Negócio criado');
+        toast.success(deal ? t('otc.deals.modal.dealUpdated') : t('otc.deals.modal.dealCreated'));
         onSaved();
       } else {
         const err = await res.json();
-        toast.error(err.detail || 'Erro ao gravar');
+        toast.error(err.detail || t('otc.deals.modal.errorSaving'));
       }
-    } catch (e) { toast.error('Erro de conexão'); }
+    } catch (e) { toast.error(t('otc.deals.connectionError')); }
     finally { setSaving(false); }
   };
 
@@ -330,9 +333,9 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <ArrowLeftRight className="text-yellow-500" size={20} />
-            {deal ? 'Editar Negociação OTC' : 'Criar Negociação OTC'}
+            {deal ? t('otc.deals.modal.editTitle') : t('otc.deals.modal.createTitle')}
           </DialogTitle>
-          <DialogDescription className="text-zinc-500">Definir condições do negócio e distribuição de comissões</DialogDescription>
+          <DialogDescription className="text-zinc-500">{t('otc.deals.modal.subtitle')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
@@ -340,13 +343,13 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
           <div className="lg:col-span-2 space-y-4">
             {/* Deal Type */}
             <div className="space-y-2">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tipo de Negócio</Label>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.dealType')}</Label>
               <div className="flex rounded-lg overflow-hidden border border-zinc-800" data-testid="modal-deal-type">
                 <button onClick={() => updateField('deal_type', 'buy')} className={`flex-1 py-2.5 text-sm font-medium transition-colors ${form.deal_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'}`}>
-                  Compra (Cliente)
+                  {t('otc.deals.buyClient')}
                 </button>
                 <button onClick={() => updateField('deal_type', 'sell')} className={`flex-1 py-2.5 text-sm font-medium transition-colors ${form.deal_type === 'sell' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'}`}>
-                  Venda (Fornecedor)
+                  {t('otc.deals.sellSupplier')}
                 </button>
               </div>
             </div>
@@ -354,11 +357,11 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             {/* Client */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Nome do Cliente</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.clientName')}</Label>
                 <Input value={form.client_name} onChange={e => updateField('client_name', e.target.value)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-client-name" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Email</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.email')}</Label>
                 <Input value={form.client_email} onChange={e => updateField('client_email', e.target.value)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-client-email" />
               </div>
             </div>
@@ -366,7 +369,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             {/* Asset, Qty, Currency */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Ativo</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.asset')}</Label>
                 <Select value={form.asset} onValueChange={v => updateField('asset', v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-asset"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -375,11 +378,11 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Quantidade</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.quantity')}</Label>
                 <FormattedNumberInput value={form.quantity} onChange={v => updateField('quantity', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white" placeholder="100 000" data-testid="modal-quantity" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Moeda Ref.</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refCurrency')}</Label>
                 <Select value={form.reference_currency} onValueChange={v => updateField('reference_currency', v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-currency"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -391,7 +394,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
 
             {/* Reference Price */}
             <div className="space-y-1.5">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({form.reference_currency})</Label>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')} ({form.reference_currency})</Label>
               <div className="relative">
                 <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="120 345.50" data-testid="modal-ref-price" />
                 {livePrice && (
@@ -404,11 +407,11 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
 
             {/* Condition */}
             <div className="space-y-1.5">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Condição</Label>
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.condition')}</Label>
               <div className="flex gap-3">
                 <div className="flex rounded-lg overflow-hidden border border-zinc-800 flex-shrink-0">
-                  <button onClick={() => updateField('condition', 'premium')} className={`px-4 py-2 text-sm font-medium ${form.condition === 'premium' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-950 text-zinc-500'}`}>Premium (+)</button>
-                  <button onClick={() => updateField('condition', 'discount')} className={`px-4 py-2 text-sm font-medium ${form.condition === 'discount' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500'}`}>Desconto (-)</button>
+                  <button onClick={() => updateField('condition', 'premium')} className={`px-4 py-2 text-sm font-medium ${form.condition === 'premium' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-950 text-zinc-500'}`}>{t('otc.deals.modal.premium')}</button>
+                  <button onClick={() => updateField('condition', 'discount')} className={`px-4 py-2 text-sm font-medium ${form.condition === 'discount' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500'}`}>{t('otc.deals.modal.discount')}</button>
                 </div>
                 <div className="relative flex-1">
                   <Input type="number" step="any" value={form.condition_pct} onChange={e => updateField('condition_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-condition-pct" />
@@ -420,14 +423,14 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             {/* Gross/Net */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Gross (%)</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.gross')}</Label>
                 <div className="relative">
                   <Input type="number" step="any" value={form.gross_pct} onChange={e => updateField('gross_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-gross" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Net (%)</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.net')}</Label>
                 <div className="relative">
                   <Input type="number" step="any" value={form.net_pct} onChange={e => updateField('net_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="modal-net" />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
@@ -438,29 +441,29 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             {/* Broker & Member */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.broker')}</Label>
                 <Select value={form.broker_id || '_none'} onValueChange={v => {
                   if (v === '_none') { updateField('broker_id', ''); updateField('broker_name', ''); return; }
                   const m = teamMembers.find(t => t.id === v);
                   updateField('broker_id', v); updateField('broker_name', m?.name || ''); updateField('broker_type', 'internal');
                 }}>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-broker"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-broker"><SelectValue placeholder={t('otc.deals.modal.select')} /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
-                    <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
+                    <SelectItem value="_none" className="text-zinc-500">{t('otc.deals.modal.none')}</SelectItem>
                     {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor KBEX</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.kbexBroker')}</Label>
                 <Select value={form.member_id || '_none'} onValueChange={v => {
                   if (v === '_none') { updateField('member_id', ''); updateField('member_name', ''); return; }
                   const m = teamMembers.find(t => t.id === v);
                   updateField('member_id', v); updateField('member_name', m?.name || '');
                 }}>
-                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-member"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-member"><SelectValue placeholder={t('otc.deals.modal.select')} /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
-                    <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
+                    <SelectItem value="_none" className="text-zinc-500">{t('otc.deals.modal.none')}</SelectItem>
                     {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -470,7 +473,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             {/* Broker share & Commission currency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Margem Corretor (%)</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.brokerMargin')}</Label>
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1">
                     <Input type="number" step="any" value={form.broker_share_pct} onChange={e => updateField('broker_share_pct', Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="5" data-testid="modal-broker-share" />
@@ -480,7 +483,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-zinc-400 text-xs uppercase tracking-wider">Moeda Comissão</Label>
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.commCurrency')}</Label>
                 <Select value={form.commission_currency} onValueChange={v => updateField('commission_currency', v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-comm-currency"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
@@ -495,45 +498,45 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
           <div className="lg:col-span-1">
             <Card className="bg-zinc-900 border-yellow-500/30 shadow-lg shadow-yellow-500/5 sticky top-4" data-testid="modal-calculator">
               <CardHeader className="pb-2">
-                <CardTitle className="text-yellow-500 flex items-center gap-2 text-base"><Calculator size={16} />Calculadora</CardTitle>
+                <CardTitle className="text-yellow-500 flex items-center gap-2 text-base"><Calculator size={16} />{t('otc.deals.modal.calculator')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Preço Ajustado</span>
+                    <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')}</span>
                     <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Valor Total</span>
+                    <span className="text-zinc-500">{t('otc.deals.modal.totalValue')}</span>
                     <span className="text-white font-bold">{fmtVal(calc.total)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Gross ({form.gross_pct}%)</span>
+                    <span className="text-zinc-500">{t('otc.deals.modal.gross')} ({form.gross_pct}%)</span>
                     <span className="text-yellow-400 font-medium">{fmtVal(calc.gross)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Net ({form.net_pct}%)</span>
+                    <span className="text-zinc-500">{t('otc.deals.modal.net')} ({form.net_pct}%)</span>
                     <span className="text-zinc-300">{fmtVal(calc.net)}</span>
                   </div>
                 </div>
 
                 <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 space-y-2">
-                  <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem KBEX</p>
+                  <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">{t('otc.deals.modal.kbexMargin')}</p>
                   <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
                   <div className="space-y-1.5 pt-2 border-t border-yellow-500/20 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-zinc-400">Corretor ({form.broker_share_pct}%)</span>
+                      <span className="text-zinc-400">{t('otc.deals.modal.broker')} ({form.broker_share_pct}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-400">Corretor KBEX ({100 - form.broker_share_pct}%)</span>
+                      <span className="text-zinc-400">{t('otc.deals.modal.kbexBroker')} ({100 - form.broker_share_pct}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
                     </div>
                   </div>
                 </div>
 
                 <Button onClick={handleSave} disabled={saving} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-5" data-testid="modal-save-btn">
-                  {saving ? 'A gravar...' : deal ? 'Atualizar' : 'Criar Negociação'}
+                  {saving ? t('otc.deals.modal.saving') : deal ? t('otc.deals.modal.update') : t('otc.deals.modal.create')}
                 </Button>
               </CardContent>
             </Card>
