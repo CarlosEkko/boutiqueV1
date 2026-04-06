@@ -1395,3 +1395,69 @@ async def reject_document(
         raise HTTPException(status_code=404, detail="Document not found")
     
     return {"success": True, "message": "Document rejected"}
+
+
+
+@router.post("/fix-membership-levels")
+async def fix_membership_levels(admin: dict = Depends(get_admin_user)):
+    """Fix membership_level for users created from OTC leads with wrong tier.
+    Syncs user.membership_level from their OTC lead's potential_tier."""
+    fixed = []
+    
+    # Find all users sourced from OTC leads
+    cursor = db.users.find(
+        {"source": "otc_lead", "otc_lead_id": {"$exists": True}},
+        {"_id": 0, "id": 1, "email": 1, "membership_level": 1, "otc_lead_id": 1}
+    )
+    async for user in cursor:
+        lead = await db.otc_leads.find_one(
+            {"id": user.get("otc_lead_id")},
+            {"_id": 0, "potential_tier": 1}
+        )
+        if lead and lead.get("potential_tier"):
+            correct_tier = lead["potential_tier"].lower()
+            current_tier = (user.get("membership_level") or "standard").lower()
+            if correct_tier != current_tier:
+                await db.users.update_one(
+                    {"id": user["id"]},
+                    {"$set": {"membership_level": correct_tier, "updated_at": datetime.now(timezone.utc).isoformat()}}
+                )
+                fixed.append({
+                    "email": user.get("email"),
+                    "old_tier": current_tier,
+                    "new_tier": correct_tier
+                })
+    
+    # Also check users registered via email link (check otc_leads by email)
+    cursor2 = db.users.find(
+        {"source": {"$ne": "otc_lead"}, "user_type": "client"},
+        {"_id": 0, "id": 1, "email": 1, "membership_level": 1}
+    )
+    async for user in cursor2:
+        email = user.get("email", "")
+        if not email:
+            continue
+        otc_lead = await db.otc_leads.find_one(
+            {"contact_email": {"$regex": f"^{email}$", "$options": "i"}},
+            {"_id": 0, "potential_tier": 1}
+        )
+        if otc_lead and otc_lead.get("potential_tier"):
+            correct_tier = otc_lead["potential_tier"].lower()
+            current_tier = (user.get("membership_level") or "standard").lower()
+            if correct_tier != current_tier:
+                await db.users.update_one(
+                    {"id": user["id"]},
+                    {"$set": {"membership_level": correct_tier, "updated_at": datetime.now(timezone.utc).isoformat()}}
+                )
+                fixed.append({
+                    "email": email,
+                    "old_tier": current_tier,
+                    "new_tier": correct_tier
+                })
+    
+    return {
+        "success": True,
+        "fixed_count": len(fixed),
+        "fixed_users": fixed,
+        "message": f"{len(fixed)} utilizador(es) corrigido(s)"
+    }

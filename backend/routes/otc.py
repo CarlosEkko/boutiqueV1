@@ -936,7 +936,7 @@ async def update_otc_lead(
                 "is_active": True,
                 "is_admin": False,
                 "is_onboarded": False,
-                "membership_level": lead.get("pre_qualification_data", {}).get("membership_profile", "standard"),
+                "membership_level": lead.get("potential_tier", "standard"),
                 "assigned_to": lead.get("assigned_to", ""),
                 "created_at": now.isoformat(),
                 "updated_at": now.isoformat(),

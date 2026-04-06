@@ -85,23 +85,34 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
         )
         invited_by = invite.get("created_by")
     
-    # Check if there is a CRM lead with this email to inherit membership profile
+    # Check if there is a CRM lead or OTC lead with this email to inherit membership profile
     lead_membership = MembershipLevel.STANDARD
+    profile_map = {
+        "broker": MembershipLevel.BROKER,
+        "standard": MembershipLevel.STANDARD,
+        "premium": MembershipLevel.PREMIUM,
+        "vip": MembershipLevel.VIP,
+        "institucional": MembershipLevel.INSTITUCIONAL,
+    }
     try:
+        # First check CRM leads
         crm_lead = await db.crm_leads.find_one(
             {"email": {"$regex": f"^{user_data.email}$", "$options": "i"}},
             {"_id": 0, "membership_profile": 1}
         )
         if crm_lead and crm_lead.get("membership_profile"):
             lead_profile = crm_lead["membership_profile"].lower()
-            profile_map = {
-                "broker": MembershipLevel.BROKER,
-                "standard": MembershipLevel.STANDARD,
-                "premium": MembershipLevel.PREMIUM,
-                "vip": MembershipLevel.VIP,
-                "institucional": MembershipLevel.INSTITUCIONAL,
-            }
             lead_membership = profile_map.get(lead_profile, MembershipLevel.STANDARD)
+        
+        # Also check OTC leads (potential_tier field)
+        if lead_membership == MembershipLevel.STANDARD:
+            otc_lead = await db.otc_leads.find_one(
+                {"contact_email": {"$regex": f"^{user_data.email}$", "$options": "i"}},
+                {"_id": 0, "potential_tier": 1}
+            )
+            if otc_lead and otc_lead.get("potential_tier"):
+                lead_tier = otc_lead["potential_tier"].lower()
+                lead_membership = profile_map.get(lead_tier, MembershipLevel.STANDARD)
     except Exception:
         pass
     
