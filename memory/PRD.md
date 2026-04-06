@@ -1,69 +1,50 @@
 # KBEX.io - Product Requirements Document
 
-## Original Problem Statement
-Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features: Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, Multi-sig Vaults, KYC (Sumsub), Fireblocks integration for Wallets, Staking, Tokenization.
+## Overview
+Premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals. Core features include Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, Multi-signature Vaults, automated KYC via Sumsub, and Fireblocks integration.
 
 ## Tech Stack
-- Frontend: React, Tailwind CSS, Shadcn UI, Context API
-- Backend: FastAPI, MongoDB (Motor)
-- External: Azure AD OAuth (O365), Brevo (Emails), Fireblocks SDK (v2.17.0), Sumsub (KYC), Trustfull (Risk Intelligence)
+- Frontend: React, Tailwind CSS, Shadcn UI, React Context
+- Backend: FastAPI, MongoDB (Motor), Pydantic
+- Integrations: Sumsub WebSDK, Trustfull, Brevo, Fireblocks
+- Infrastructure: Docker on VPS, Cloudflare WAF
 
-## What's Been Implemented
-- Full dashboard with portfolio, trading, assets views
-- OTC CRM with 11-step workflow, lead cards, wizard modals
-- General CRM with leads, deals, contacts, suppliers, tasks
-- Fireblocks Staking (functional, white-labeled)
-- Fireblocks Tokenization — Full module with 5 pages (Tokens, Issue, Mint/Burn, Pricing, Management)
-- KYC via Sumsub WebSDK (alpha-2→alpha-3 country code fix applied)
-- Risk Intelligence via Trustfull API
-- Multi-language Brevo email service (PT, EN, AR, FR)
-- Azure AD / Microsoft 365 OAuth integration
-- Regional & Team filtering across CRM and OTC routes
-- Admin permissions with RBAC
-- Transparency page (proof of reserves, audit reports)
-- KYT Forensic, Multi-Sign vaults, Client onboarding
+## Core Requirements
+- Fully translated platform (PT, EN, AR, FR, ES)
+- "Quiet luxury", trust, and exclusivity in UI/UX
+- Comprehensive OTC CRM with strict qualification workflows
+- Invite-only registration (no public sign-up)
 
-## Recent Fixes (April 3, 2026)
-- **Sumsub KYC — Cloudflare WAF fix**: Merged token generation into `/api/sumsub/applicants` endpoint to bypass Cloudflare blocking POST requests with sensitive URL patterns (`access-token`, `sdk-init`). Single endpoint now creates/finds applicant AND returns SDK token.
-- **Sumsub Credential Rotation**: Added auto-recovery for expired/rotated API credentials — detects stale applicants and recreates them transparently.
-- **Sumsub Credentials Updated**: Rotated to new sandbox API keys (`sbx:dpO6W3ZjM3U25gTpBEQcHDrY...`)
-- **Admin Client Menus**: Added Suporte and Tokenização as configurable client menu options (total 8 options now).
+## What's Implemented
+- Multi-currency viewing with real-time crypto prices (1s HTTP polling)
+- Fiat deposits and wallet management
+- Complete OTC CRM: Leads, Clients, Pipeline (11-stage workflow)
+- Multi-step lead creation wizard (Verification → Pre-Qualification → Setup)
+- Brevo email integration for onboarding
+- Sumsub KYC integration (with Cloudflare WAF bypass)
+- Trustfull risk intelligence scanning
+- Role-based access control with dynamic admin menus
+- Global date/number formatting (dd/mm/yyyy, space separators)
+- 5-language support (EN, PT, AR, FR, ES) with full OTC translations
+- Invite-only registration gate (/register requires ?email= parameter)
+- "Solicitar Acesso" creates both CRM + OTC leads simultaneously
 
-## Recent Fixes (April 2, 2026)
-- **KYC Sumsub**: Fixed alpha-2→alpha-3 country code conversion (PT→PRT, BR→BRA, etc.)
-- **Tokenization**: Created TOKENIZATION department with 5 pages and 3 new API endpoints
-- **Staking**: White-labeled (removed Fireblocks provider names)
-- **TransparencyPage**: Fixed JS crash
-- **CRM Leads**: Made LeadResponse resilient, fixed membership_profile null safety
-- **DashboardLayout**: Fixed tickets filter, made sidebar sticky with scroll
-- **Upload Proof**: Redesigned modal, improved country selector, Visão 360 wallet filter
-- **OTC**: Added Broker tier, changed Brazil→LATAM
+## Key API Endpoints
+- POST /api/crm/leads/public (Public lead creation - creates CRM + OTC leads)
+- POST /api/otc/leads (Authenticated OTC lead creation)
+- PUT /api/otc/leads/{id}/stage (Advance lead through workflow)
+- GET /api/otc/check-existing (Entity combobox search)
+- POST /api/sumsub/applicants (KYC - merged token generation)
 
-## VPS Environment Variables Required
-```
-SUMSUB_APP_TOKEN=sbx:dpO6W3ZjM3U25gTpBEQcHDrY.darrPSKvDyPR9ZRsjTgM5PFPephCgApn
-SUMSUB_SECRET_KEY=Pkcg1kugWrtBWEmqdbzbXHZuU3lddVbZ
-SUMSUB_LEVEL_NAME=basic-kyc-level
-TRUSTFULL_API_KEY=TFB-6f279de1-6859-4ca3-8ead-28debc6ec989
-```
-
-## Prioritized Backlog
-### P0
-- Reroute "Solicitar Acesso" to OTC Lead creation & disable public registration
-
-### P1
-- TradingView chart widgets on Trading/Markets pages
-- Complete frontend translations (PT, EN, AR, FR)
-
-### P2
-- Safari cursor bug (recurring 21+ times)
-- Refactor HTTP polling to WebSockets
-- Whitelist functionality
-
-### P3
-- Product Pages (Launchpad and ICO)
-- Refactor OTCLeads.jsx (2300+ lines)
+## Database Collections
+- users, crm_leads, otc_leads, permissions, otc_deals
 
 ## Credentials
 - Admin: carlos@kryptobox.io / senha123
 - Test Client: joao.mirror999@test.com / senha123
+
+## Cloudflare WAF Warning
+Production domain is fronted by Cloudflare. POST requests with "access-token" or "sdk-init" in URL are blocked (403). Do NOT create routes with these keywords.
+
+## Deployment
+User deploys manually: git pull → sudo docker-compose up --build -d
