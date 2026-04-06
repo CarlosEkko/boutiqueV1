@@ -1,7 +1,12 @@
 # Test Credentials
 
-## Admin Account
+## Admin Account (Preview)
 - Email: carlos@kryptobox.io
+- Password: senha123
+- Role: Admin (global access)
+
+## Admin Account (VPS/Production)
+- Email: carlos@kbex.io
 - Password: senha123
 - Role: Admin (global access)
 
