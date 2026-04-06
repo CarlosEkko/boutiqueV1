@@ -215,14 +215,14 @@ def get_db():
 
 async def get_team_filter(current_user) -> dict:
     """
-    Return a MongoDB query filter based on user role.
+    Return a MongoDB query filter based on user role and CLIENT REGION.
+    Hierarchy (by client/lead country → region):
     - admin / global_manager: no filter (sees everything)
-    - sales_manager / local_manager: sees own + team members in same region
-    - sales / support / others: sees only own records
+    - manager / sales_manager / local_manager: sees all records where client is in their region
+    - sales / support / others: sees all records where client is in their region
     """
     role = getattr(current_user, 'internal_role', None)
     is_admin = getattr(current_user, 'is_admin', False)
-    user_id = get_user_id(current_user)
     region = getattr(current_user, 'region', None)
     if hasattr(region, 'value'):
         region = region.value
@@ -231,26 +231,54 @@ async def get_team_filter(current_user) -> dict:
     if is_admin or role in ('admin', 'global_manager'):
         return {}
 
-    # Sales manager / local manager: own + team in same region
-    if role in ('sales_manager', 'local_manager', 'manager'):
-        db = get_db()
-        team_members = await db.users.find(
-            {"user_type": "internal", "region": region, "is_active": True},
-            {"id": 1}
-        ).to_list(100)
-        team_ids = [m.get("id") for m in team_members if m.get("id")]
-        if user_id and user_id not in team_ids:
-            team_ids.append(user_id)
-        return {"$or": [
-            {"created_by": {"$in": team_ids}},
-            {"assigned_to": {"$in": team_ids}},
-        ]}
+    # All other roles: filter by client/lead region (based on country field)
+    if region and region != 'global':
+        from models.user import COUNTRY_TO_REGION
+        # Get all country codes that belong to this region
+        region_countries = [
+            code for code, reg in COUNTRY_TO_REGION.items()
+            if (reg.value if hasattr(reg, 'value') else reg) == region
+        ]
+        if region_countries:
+            return {"country": {"$in": region_countries}}
 
-    # Individual contributor: only own records
-    return {"$or": [
-        {"created_by": user_id},
-        {"assigned_to": user_id},
-    ]}
+    # Fallback: no filter (shouldn't happen but safe default)
+    return {}
+
+
+async def get_team_filter_for_deals(current_user) -> dict:
+    """
+    Return a MongoDB query filter for deals/quotes/executions (records without 'country').
+    Looks up client_ids in the user's region and filters by those.
+    """
+    role = getattr(current_user, 'internal_role', None)
+    is_admin = getattr(current_user, 'is_admin', False)
+    region = getattr(current_user, 'region', None)
+    if hasattr(region, 'value'):
+        region = region.value
+
+    if is_admin or role in ('admin', 'global_manager'):
+        return {}
+
+    if region and region != 'global':
+        from models.user import COUNTRY_TO_REGION
+        region_countries = [
+            code for code, reg in COUNTRY_TO_REGION.items()
+            if (reg.value if hasattr(reg, 'value') else reg) == region
+        ]
+        if region_countries:
+            db = get_db()
+            # Get client IDs in this region
+            region_clients = await db.otc_clients.find(
+                {"country": {"$in": region_countries}},
+                {"id": 1}
+            ).to_list(5000)
+            client_ids = [c["id"] for c in region_clients if c.get("id")]
+            if client_ids:
+                return {"client_id": {"$in": client_ids}}
+            return {"client_id": "__none__"}  # No clients in region → no results
+
+    return {}
 
 
 def apply_team_filter(query: dict, team_filter: dict) -> dict:

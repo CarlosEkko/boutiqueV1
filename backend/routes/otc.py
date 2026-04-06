@@ -8,6 +8,7 @@ from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import uuid
 import logging
+import os
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Languag
     return I18n.get_language_from_header(accept_language)
 
 from routes.auth import get_current_user
-from routes.crm import get_team_filter, apply_team_filter
+from routes.crm import get_team_filter, apply_team_filter, get_team_filter_for_deals
 from utils.auth import get_password_hash
 from pydantic import BaseModel
 
@@ -1432,8 +1433,8 @@ async def get_otc_deals(
     if assigned_to:
         query["assigned_operator_id"] = assigned_to
     
-    # Apply team-based visibility filter
-    team_filter = await get_team_filter(current_user)
+    # Apply team-based visibility filter (deals don't have 'country', filter by client_id)
+    team_filter = await get_team_filter_for_deals(current_user)
     query = apply_team_filter(query, team_filter)
     
     cursor = db.otc_deals.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
@@ -1456,8 +1457,8 @@ async def get_otc_pipeline(
     """Get deals grouped by pipeline stage for Kanban view"""
     db = get_db()
     
-    # Apply team-based visibility filter
-    team_filter = await get_team_filter(current_user)
+    # Apply team-based visibility filter (deals use client_id, not country)
+    team_filter = await get_team_filter_for_deals(current_user)
     
     pipeline = {}
     
@@ -1759,29 +1760,31 @@ async def get_otc_dashboard(
     week_ago = (now - timedelta(days=7)).isoformat()
     month_ago = (now - timedelta(days=30)).isoformat()
     
-    # Apply team-based visibility filter
+    # Apply team-based visibility filters (different for leads/clients vs deals)
     team_filter = await get_team_filter(current_user)
+    deals_filter = await get_team_filter_for_deals(current_user)
     base_q = team_filter if team_filter else {}
+    deals_base_q = deals_filter if deals_filter else {}
     
-    # Lead stats
+    # Lead stats (filtered by country)
     total_leads = await db.otc_leads.count_documents(base_q)
     new_leads = await db.otc_leads.count_documents(apply_team_filter({"status": OTCLeadStatus.NEW.value}, team_filter))
     qualified_leads = await db.otc_leads.count_documents(apply_team_filter({"status": OTCLeadStatus.PRE_QUALIFIED.value}, team_filter))
     converted_leads = await db.otc_leads.count_documents(apply_team_filter({"status": OTCLeadStatus.ACTIVE_CLIENT.value}, team_filter))
     
-    # Client stats
+    # Client stats (filtered by country)
     total_clients = await db.otc_clients.count_documents(base_q)
     active_clients = await db.otc_clients.count_documents(apply_team_filter({"is_active": True}, team_filter))
     
-    # Deal stats
-    total_deals = await db.otc_deals.count_documents(base_q)
-    completed_deals = await db.otc_deals.count_documents(apply_team_filter({"stage": OTCDealStage.COMPLETED.value}, team_filter))
+    # Deal stats (filtered by client_id)
+    total_deals = await db.otc_deals.count_documents(deals_base_q)
+    completed_deals = await db.otc_deals.count_documents(apply_team_filter({"stage": OTCDealStage.COMPLETED.value}, deals_filter))
     active_deals = await db.otc_deals.count_documents(apply_team_filter({
         "stage": {"$nin": [OTCDealStage.COMPLETED.value, OTCDealStage.CANCELLED.value, OTCDealStage.REJECTED.value]}
-    }, team_filter))
+    }, deals_filter))
     
     # Volume calculations
-    vol_query = apply_team_filter({"stage": OTCDealStage.COMPLETED.value}, team_filter)
+    vol_query = apply_team_filter({"stage": OTCDealStage.COMPLETED.value}, deals_filter)
     completed_deals_data = await db.otc_deals.find(
         vol_query,
         {"total_value": 1, "settled_at": 1, "fees": 1}
