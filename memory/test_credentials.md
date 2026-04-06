@@ -3,9 +3,9 @@
 ## Admin Account
 - Email: carlos@kryptobox.io
 - Password: senha123
-- Role: admin
-- Region: global
+- Role: Admin (global access)
 
-## Test Client (OTC Generated)
+## Test Client Account
 - Email: joao.mirror999@test.com
 - Password: senha123
+- Role: Client
