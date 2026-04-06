@@ -127,11 +127,16 @@ const RegisterPage = () => {
                 type="email"
                 required
                 value={formData.email}
-                onChange={handleChange}
+                onChange={inviteEmail ? undefined : handleChange}
+                readOnly={!!inviteEmail}
+                disabled={!!inviteEmail}
                 placeholder="joao@exemplo.com"
-                className="bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400"
+                className={`bg-zinc-800/50 border-gold-800/30 text-white placeholder:text-gray-500 focus:border-gold-400 ${inviteEmail ? 'opacity-70 cursor-not-allowed' : ''}`}
                 data-testid="register-email-input"
               />
+              {inviteEmail && (
+                <p className="text-xs text-gray-500">{t('auth.emailLocked') || 'Email associado ao seu convite'}</p>
+              )}
             </div>
 
             <div className="space-y-2">

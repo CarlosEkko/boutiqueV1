@@ -51,12 +51,58 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
             raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
 
     # Check if email already exists
-    existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    existing_user = await db.users.find_one({"email": {"$regex": f"^{user_data.email}$", "$options": "i"}}, {"_id": 0})
+    
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("auth.email_already_exists", lang)
-        )
+        # If user was auto-created from OTC lead and hasn't completed onboarding,
+        # allow them to "complete registration" by setting their own password and details
+        if not existing_user.get("is_onboarded", False) and existing_user.get("source") == "otc_lead":
+            # Update existing user with client-provided data
+            update_fields = {
+                "name": user_data.name,
+                "hashed_password": get_password_hash(user_data.password),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            if user_data.phone:
+                update_fields["phone"] = user_data.phone
+            if user_data.country:
+                update_fields["country"] = user_data.country
+            
+            await db.users.update_one(
+                {"id": existing_user["id"]},
+                {"$set": update_fields}
+            )
+            
+            # Create access token
+            access_token = create_access_token(data={"sub": existing_user["id"]})
+            
+            user_response = UserResponse(
+                id=existing_user["id"],
+                email=existing_user["email"],
+                name=user_data.name,
+                phone=user_data.phone or existing_user.get("phone", ""),
+                country=user_data.country or existing_user.get("country", ""),
+                created_at=datetime.fromisoformat(existing_user["created_at"]) if isinstance(existing_user.get("created_at"), str) else existing_user.get("created_at", datetime.now(timezone.utc)),
+                updated_at=datetime.now(timezone.utc),
+                is_active=existing_user.get("is_active", True),
+                is_approved=existing_user.get("is_approved", False),
+                is_admin=existing_user.get("is_admin", False),
+                kyc_status=existing_user.get("kyc_status", KYCStatus.NOT_STARTED),
+                membership_level=existing_user.get("membership_level", MembershipLevel.STANDARD),
+                is_onboarded=False,
+                two_factor_enabled=existing_user.get("two_factor_enabled", False)
+            )
+            
+            return TokenResponse(
+                access_token=access_token,
+                token_type="bearer",
+                user=user_response
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=t("auth.email_already_exists", lang)
+            )
     
     # Validate invite code if provided
     invited_by = None
