@@ -46,7 +46,7 @@ const getInitials = (name) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
-export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelete, t }) => {
+export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelete, onAdvanceKYC, onApproveKYC, t }) => {
   const style = STATUS_STYLES[lead.status] || STATUS_STYLES.new;
 
   return (
@@ -107,6 +107,18 @@ export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelet
               <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10"
                 onClick={e => { e.stopPropagation(); onPreQual(lead); }} title="Pré-Qualificação" data-testid={`prequal-lead-${lead.id}`}>
                 <FileText size={16} />
+              </Button>
+            )}
+            {lead.status === 'pre_qualified' && (
+              <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-blue-400 hover:bg-blue-400/10"
+                onClick={e => { e.stopPropagation(); onAdvanceKYC(lead.id); }} title="Avançar para KYC" data-testid={`advance-kyc-${lead.id}`}>
+                <Shield size={16} />
+              </Button>
+            )}
+            {lead.status === 'kyc_pending' && (
+              <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-400/10"
+                onClick={e => { e.stopPropagation(); onApproveKYC(lead.id); }} title="Aprovar KYC" data-testid={`approve-kyc-${lead.id}`}>
+                <CheckCircle size={16} />
               </Button>
             )}
             {lead.status === 'kyc_approved' && (

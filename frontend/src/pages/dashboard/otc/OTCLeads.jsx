@@ -125,6 +125,8 @@ const OTCLeads = () => {
               onSetup={openSetup}
               onConvert={handleConvertToClient}
               onDelete={handleDeleteLead}
+              onAdvanceKYC={handleAdvanceToKYC}
+              onApproveKYC={handleApproveKYC}
             />
           ))}
         </div>
