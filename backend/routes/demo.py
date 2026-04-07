@@ -23,6 +23,12 @@ def set_db(database):
 DEMO_CLIENT_ID = "demo-client-001"
 DEMO_CLIENT_EMAIL = "victoria.sterling@sterling-capital.com"
 
+
+async def check_demo_mode(user_id: str, database) -> bool:
+    """Check if a user currently has demo mode active."""
+    user = await database.users.find_one({"id": user_id}, {"_id": 0, "demo_mode": 1})
+    return bool(user and user.get("demo_mode"))
+
 # ─── Demo Data Templates ───
 
 DEMO_WALLETS = [

@@ -107,6 +107,7 @@ import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { DemoProvider } from "./context/DemoContext";
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -298,12 +299,14 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <CurrencyProvider>
+          <DemoProvider>
           <div className="App">
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>
             <Toaster />
           </div>
+          </DemoProvider>
         </CurrencyProvider>
       </AuthProvider>
     </LanguageProvider>

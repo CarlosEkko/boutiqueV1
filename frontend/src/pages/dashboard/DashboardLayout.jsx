@@ -7,6 +7,7 @@ import CurrencySelector from '../../components/CurrencySelector';
 import LanguageSelector from '../../components/LanguageSelector';
 import NotificationBell from '../../components/dashboard/NotificationBell';
 import DemoToggle from '../../components/dashboard/DemoToggle';
+import { useDemo } from '../../context/DemoContext';
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -69,7 +70,8 @@ import {
   Gem,
   FilePlus2,
   Flame,
-  Coins
+  Coins,
+  Monitor
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
@@ -220,6 +222,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const { demoMode } = useDemo();
   
   // Helper to translate labels from backend
   const translateLabel = (label) => {
@@ -812,6 +815,14 @@ const DashboardLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-gradient-to-r from-amber-600/90 via-amber-500/90 to-amber-600/90 text-white text-center py-2 px-4 text-sm font-medium tracking-wide flex items-center justify-center gap-2 border-b border-amber-400/30" data-testid="demo-banner">
+            <Monitor size={16} className="animate-pulse" />
+            <span>DEMO MODE — Dados simulados para demonstração</span>
+            <Monitor size={16} className="animate-pulse" />
+          </div>
+        )}
         {/* Top Bar with Notifications and Currency Selector */}
         <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4">
           <DemoToggle />

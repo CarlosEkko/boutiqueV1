@@ -43,7 +43,8 @@ def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Languag
 
 from routes.auth import get_current_user
 from routes.crm import get_team_filter, apply_team_filter, get_team_filter_for_deals
-from utils.auth import get_password_hash
+from routes.demo import check_demo_mode
+from utils.auth import get_password_hash, get_current_user_id
 from pydantic import BaseModel
 
 # Model for client RFQ request
@@ -65,12 +66,21 @@ async def get_otc_leads(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Get all OTC leads with filtering"""
     db = get_db()
     
+    # Check demo mode
+    demo_active = await check_demo_mode(user_id, db)
+    
     query = {}
+    
+    if demo_active:
+        query["is_demo"] = True
+    else:
+        query["is_demo"] = {"$ne": True}
     
     if status and status != "all":
         query["status"] = status
@@ -1219,12 +1229,21 @@ async def get_otc_clients(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Get all OTC clients"""
     db = get_db()
     
+    # Check demo mode
+    demo_active = await check_demo_mode(user_id, db)
+    
     query = {}
+    
+    if demo_active:
+        query["is_demo"] = True
+    else:
+        query["is_demo"] = {"$ne": True}
     
     if is_active is not None:
         query["is_active"] = is_active
@@ -1419,12 +1438,21 @@ async def get_otc_deals(
     assigned_to: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Get all OTC deals"""
     db = get_db()
     
+    # Check demo mode
+    demo_active = await check_demo_mode(user_id, db)
+    
     query = {}
+    
+    if demo_active:
+        query["is_demo"] = True
+    else:
+        query["is_demo"] = {"$ne": True}
     
     if stage and stage != "all":
         query["stage"] = stage
@@ -1452,10 +1480,14 @@ async def get_otc_deals(
 
 @router.get("/deals/pipeline")
 async def get_otc_pipeline(
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Get deals grouped by pipeline stage for Kanban view"""
     db = get_db()
+    
+    # Check demo mode
+    demo_active = await check_demo_mode(user_id, db)
     
     # Apply team-based visibility filter (deals use client_id, not country)
     team_filter = await get_team_filter_for_deals(current_user)
@@ -1465,7 +1497,12 @@ async def get_otc_pipeline(
     # Get counts for each stage
     for stage in OTCDealStage:
         if stage.value not in ["completed", "cancelled", "rejected"]:
-            stage_query = apply_team_filter({"stage": stage.value}, team_filter)
+            stage_query = {"stage": stage.value}
+            if demo_active:
+                stage_query["is_demo"] = True
+            else:
+                stage_query["is_demo"] = {"$ne": True}
+            stage_query = apply_team_filter(stage_query, team_filter)
             deals = await db.otc_deals.find(
                 stage_query,
                 {"_id": 0}

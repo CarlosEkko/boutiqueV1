@@ -24,7 +24,7 @@ def set_db(database):
 # ==================== MIDDLEWARE: Check Approved User ====================
 
 async def get_approved_user(user_id: str = Depends(get_current_user_id)):
-    """Check if user is approved for dashboard access"""
+    """Check if user is approved for dashboard access. In demo mode, swaps to demo client."""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -34,6 +34,17 @@ async def get_approved_user(user_id: str = Depends(get_current_user_id)):
             status_code=403, 
             detail="Access denied. Your account is pending approval."
         )
+    
+    # Demo mode: swap identity to demo client for rich data viewing
+    if user.get("demo_mode"):
+        from routes.demo import DEMO_CLIENT_ID
+        demo_user = await db.users.find_one({"id": DEMO_CLIENT_ID}, {"_id": 0})
+        if demo_user:
+            demo_user["_real_user_id"] = user_id
+            demo_user["demo_mode"] = True
+            demo_user["is_admin"] = user.get("is_admin", False)
+            demo_user["is_approved"] = True
+            return demo_user
     
     return user
 

@@ -1,51 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Monitor, MonitorOff } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import { useDemo } from '../../context/DemoContext';
 import { toast } from 'sonner';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 const DemoToggle = () => {
-  const { token } = useAuth();
-  const [demoMode, setDemoMode] = useState(false);
-  const [authorized, setAuthorized] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const checkStatus = useCallback(async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/api/demo/status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setDemoMode(data.demo_mode);
-      setAuthorized(data.demo_authorized);
-    } catch {
-      setAuthorized(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (token) checkStatus();
-  }, [token, checkStatus]);
+  const { demoMode, demoAuthorized, loading, toggleDemo } = useDemo();
 
   const handleToggle = async () => {
-    setLoading(true);
     try {
-      const { data } = await axios.post(`${API_URL}/api/demo/toggle`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setDemoMode(data.demo_mode);
-      toast.success(data.demo_mode ? 'Demo Mode ON' : 'Demo Mode OFF');
-      // Reload to refresh data
-      setTimeout(() => window.location.reload(), 500);
+      await toggleDemo();
+      toast.success(demoMode ? 'Demo Mode OFF' : 'Demo Mode ON');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to toggle demo mode');
-    } finally {
-      setLoading(false);
+      toast.error('Failed to toggle demo mode');
     }
   };
 
-  if (!authorized) return null;
+  if (!demoAuthorized) return null;
 
   return (
     <button
