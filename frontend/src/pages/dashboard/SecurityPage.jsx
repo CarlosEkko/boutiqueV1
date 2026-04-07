@@ -93,11 +93,11 @@ const SecurityPage = () => {
 
   const handlePasswordChange = async () => {
     if (passwordData.new_password !== passwordData.confirm_password) {
-      toast.error('As passwords não coincidem');
+      toast.error(t('profile.security.passwordsNoMatch'));
       return;
     }
     if (passwordData.new_password.length < 6) {
-      toast.error('Password deve ter pelo menos 6 caracteres');
+      toast.error(t('profile.security.passwordMinChars'));
       return;
     }
     
@@ -108,11 +108,11 @@ const SecurityPage = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Password alterada com sucesso!');
+      toast.success(t('profile.security.passwordChanged'));
       setShowPasswordDialog(false);
       setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Falha ao alterar password');
+      toast.error(error.response?.data?.detail || t('profile.security.failedPasswordChange'));
     }
   };
 
@@ -197,7 +197,7 @@ const SecurityPage = () => {
       setTwoFAQRCode(null);
       setVerificationCode('');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Código inválido');
+      toast.error(error.response?.data?.detail || t('profile.security.invalidCode'));
     }
   };
 
@@ -207,10 +207,10 @@ const SecurityPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success('2FA desativado');
+      toast.success(t('profile.security.twoFADisabled'));
       setSecuritySettings(prev => ({ ...prev, two_factor_enabled: false }));
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Falha ao desativar 2FA');
+      toast.error(error.response?.data?.detail || t('profile.security.failedDisable2FA'));
     }
   };
   const formatRelativeTime = (dateString) => {
@@ -222,10 +222,10 @@ const SecurityPage = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Agora mesmo';
-    if (diffMins < 60) return `Há ${diffMins} minutos`;
-    if (diffHours < 24) return `Há ${diffHours} horas`;
-    if (diffDays < 7) return `Há ${diffDays} dias`;
+    if (diffMins < 1) return t('profile.security.justNow');
+    if (diffMins < 60) return t('profile.security.minutesAgo').replace('{n}', diffMins);
+    if (diffHours < 24) return t('profile.security.hoursAgo').replace('{n}', diffHours);
+    if (diffDays < 7) return t('profile.security.daysAgo').replace('{n}', diffDays);
     return formatDate(dateString);
   };
 
@@ -259,7 +259,7 @@ const SecurityPage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Lock className="text-gold-400" size={20} />
-              Zona de Segurança
+              {t('profile.security.securityZone')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -268,14 +268,14 @@ const SecurityPage = () => {
               <div className="flex items-center gap-3">
                 <Mail className="text-gray-400" size={18} />
                 <div>
-                  <p className="text-white text-sm">Verificação de Email</p>
+                  <p className="text-white text-sm">{t('profile.security.emailVerification')}</p>
                   <p className="text-xs text-gray-500">{user.email}</p>
                 </div>
               </div>
               {securitySettings.email_verified ? (
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-0"><CheckCircle size={12} className="mr-1" /> Verificado</Badge>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-0"><CheckCircle size={12} className="mr-1" /> {t('profile.security.verified')}</Badge>
               ) : (
-                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600">Verificar</Button>
+                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600">{t('profile.security.verifyBtn')}</Button>
               )}
             </div>
 
@@ -284,7 +284,7 @@ const SecurityPage = () => {
               <div className="flex items-center gap-3">
                 <Key className="text-gray-400" size={18} />
                 <div>
-                  <p className="text-white text-sm">Autenticação 2FA</p>
+                  <p className="text-white text-sm">{t('profile.security.twoFA')}</p>
                   <p className="text-xs text-gray-500">Google Authenticator</p>
                 </div>
               </div>
@@ -294,7 +294,7 @@ const SecurityPage = () => {
                 variant={securitySettings.two_factor_enabled ? "outline" : "default"}
                 className={securitySettings.two_factor_enabled ? "border-emerald-800/30 text-emerald-400" : "bg-emerald-500 hover:bg-emerald-600"}
               >
-                {securitySettings.two_factor_enabled ? 'Gerir' : 'Ativar'}
+                {securitySettings.two_factor_enabled ? t('profile.security.manage') : t('profile.security.activate')}
               </Button>
             </div>
 
@@ -303,8 +303,8 @@ const SecurityPage = () => {
               <div className="flex items-center gap-3">
                 <Smartphone className="text-gray-400" size={18} />
                 <div>
-                  <p className="text-white text-sm">Verificação SMS</p>
-                  <p className="text-xs text-gray-500">{user.phone || 'Não configurado'}</p>
+                  <p className="text-white text-sm">{t('profile.security.smsVerification')}</p>
+                  <p className="text-xs text-gray-500">{user.phone || t('profile.security.notConfigured')}</p>
                 </div>
               </div>
               <Button 
@@ -313,7 +313,7 @@ const SecurityPage = () => {
                 className={securitySettings.sms_enabled ? "border-emerald-800/30 text-emerald-400" : "bg-emerald-500 hover:bg-emerald-600"}
                 disabled={!user.phone}
               >
-                {securitySettings.sms_enabled ? 'Ativado' : 'Ativar'}
+                {securitySettings.sms_enabled ? t('profile.security.activated') : t('profile.security.activate')}
               </Button>
             </div>
 
@@ -322,9 +322,9 @@ const SecurityPage = () => {
               <div className="flex items-center gap-3">
                 <MessageSquare className="text-gray-400" size={18} />
                 <div>
-                  <p className="text-white text-sm">Código Anti-Phishing</p>
+                  <p className="text-white text-sm">{t('profile.security.antiPhishing')}</p>
                   <p className="text-xs text-gray-500">
-                    {securitySettings.anti_phishing_code ? '••••••••' : 'Não configurado'}
+                    {securitySettings.anti_phishing_code ? '••••••••' : t('profile.security.notConfigured')}
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ const SecurityPage = () => {
                 variant={securitySettings.anti_phishing_code ? "outline" : "default"}
                 className={securitySettings.anti_phishing_code ? "border-emerald-800/30 text-emerald-400" : "bg-emerald-500 hover:bg-emerald-600"}
               >
-                {securitySettings.anti_phishing_code ? 'Alterar' : 'Configurar'}
+                {securitySettings.anti_phishing_code ? t('profile.security.changeBtn') : t('profile.security.configure')}
               </Button>
             </div>
 
@@ -343,8 +343,8 @@ const SecurityPage = () => {
               <div className="flex items-center gap-3">
                 <Lock className="text-gray-400" size={18} />
                 <div>
-                  <p className="text-white text-sm">Alterar Password</p>
-                  <p className="text-xs text-gray-500">Última alteração: Desconhecido</p>
+                  <p className="text-white text-sm">{t('profile.security.changePassword')}</p>
+                  <p className="text-xs text-gray-500">{t('profile.security.lastChangeUnknown')}</p>
                 </div>
               </div>
               <Button 
@@ -353,7 +353,7 @@ const SecurityPage = () => {
                 variant="outline"
                 className="border-zinc-700"
               >
-                Alterar
+                {t('profile.security.changeBtn')}
               </Button>
             </div>
           </CardContent>
@@ -364,23 +364,23 @@ const SecurityPage = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Clock className="text-gold-400" size={20} />
-              Atividade da Conta
+              {t('profile.security.accountActivity')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current Session */}
             <div className="p-4 bg-zinc-800/50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-400">Sessão Atual</p>
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-0">Ativa</Badge>
+                <p className="text-sm text-gray-400">{t('profile.security.currentSession')}</p>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-0">{t('profile.security.active')}</Badge>
               </div>
               <p className="text-white">{formatRelativeTime(user.last_login || user.updated_at)}</p>
-              <p className="text-xs text-gray-500 mt-1">IP: Oculto por segurança</p>
+              <p className="text-xs text-gray-500 mt-1">{t('profile.security.ipHidden')}</p>
             </div>
 
             {/* Member Since */}
             <div className="p-4 bg-zinc-800/50 rounded-lg">
-              <p className="text-sm text-gray-400 mb-2">Membro desde</p>
+              <p className="text-sm text-gray-400 mb-2">{t('profile.security.memberSince')}</p>
               <p className="text-white">{formatDate(user.created_at)}</p>
             </div>
 
@@ -388,10 +388,10 @@ const SecurityPage = () => {
             <div className="p-4 bg-zinc-800/50 rounded-lg">
               <p className="text-sm text-gray-400 mb-3 flex items-center gap-2">
                 <History size={14} />
-                Atividade Recente
+                {t('profile.security.recentActivity')}
               </p>
               {loadingActivity ? (
-                <p className="text-gray-500 text-sm">Carregando...</p>
+                <p className="text-gray-500 text-sm">{t('profile.security.loading')}</p>
               ) : activityLog.length > 0 ? (
                 <div className="space-y-2">
                   {activityLog.slice(0, 5).map((activity, idx) => (
@@ -402,7 +402,7 @@ const SecurityPage = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">Sem atividade registada</p>
+                <p className="text-gray-500 text-sm">{t('profile.security.noActivity')}</p>
               )}
             </div>
 
@@ -414,10 +414,10 @@ const SecurityPage = () => {
                 className="w-full border-red-900/50 text-red-400 hover:bg-red-900/20"
               >
                 <Power size={16} className="mr-2" />
-                Desativar Conta
+                {t('profile.security.deactivateAccount')}
               </Button>
               <p className="text-xs text-gray-500 text-center mt-2">
-                Pode reativar a sua conta contactando o suporte.
+                {t('profile.security.reactivateNote')}
               </p>
             </div>
           </CardContent>
@@ -430,12 +430,12 @@ const SecurityPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="text-gold-400" size={20} />
-              Alterar Password
+              {t('profile.security.changePassword')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-gray-400">Password Atual</Label>
+              <Label className="text-gray-400">{t('profile.security.currentPassword')}</Label>
               <div className="relative">
                 <Input 
                   type={showCurrentPassword ? "text" : "password"}
@@ -453,7 +453,7 @@ const SecurityPage = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-400">Nova Password</Label>
+              <Label className="text-gray-400">{t('profile.security.newPassword')}</Label>
               <div className="relative">
                 <Input 
                   type={showNewPassword ? "text" : "password"}
@@ -471,7 +471,7 @@ const SecurityPage = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-400">Confirmar Nova Password</Label>
+              <Label className="text-gray-400">{t('profile.security.confirmPassword')}</Label>
               <Input 
                 type="password" 
                 value={passwordData.confirm_password}
@@ -482,10 +482,10 @@ const SecurityPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPasswordDialog(false)} className="border-zinc-700">
-              Cancelar
+              {t('profile.security.cancel')}
             </Button>
             <Button onClick={handlePasswordChange} className="bg-emerald-500 hover:bg-emerald-600">
-              Alterar Password
+              {t('profile.security.updatePassword')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -497,30 +497,30 @@ const SecurityPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageSquare className="text-gold-400" size={20} />
-              Código Anti-Phishing
+              {t('profile.security.antiPhishing')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Este código aparecerá em todos os emails do KBEX.io para confirmar que são legítimos.
+              {t('profile.security.antiPhishingDesc')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label className="text-gray-400">Seu Código Anti-Phishing</Label>
+              <Label className="text-gray-400">{t('profile.security.antiPhishingLabel')}</Label>
               <Input 
                 value={antiPhishingCode}
                 onChange={(e) => setAntiPhishingCode(e.target.value)}
-                placeholder="Ex: MeuCodigo123"
+                placeholder="Ex: MyCode123"
                 className="bg-zinc-800 border-zinc-700"
               />
-              <p className="text-xs text-gray-500">Mínimo 4 caracteres. Escolha algo único que só você conhece.</p>
+              <p className="text-xs text-gray-500">{t('profile.security.antiPhishingMinChars')}</p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAntiPhishingDialog(false)} className="border-zinc-700">
-              Cancelar
+              {t('profile.security.cancel')}
             </Button>
             <Button onClick={handleSetAntiPhishing} className="bg-emerald-500 hover:bg-emerald-600">
-              Definir Código
+              {t('profile.security.setCode')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -532,30 +532,30 @@ const SecurityPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Key className="text-gold-400" size={20} />
-              Autenticação 2FA
+              {t('profile.security.twoFA')}
             </DialogTitle>
           </DialogHeader>
           
           {setting2FA ? (
             <div className="py-8 text-center">
               <RefreshCw className="animate-spin mx-auto text-gold-400 mb-4" size={32} />
-              <p className="text-gray-400">A gerar código QR...</p>
+              <p className="text-gray-400">{t('profile.security.generatingQR')}</p>
             </div>
           ) : securitySettings.two_factor_enabled ? (
             <div className="py-4 text-center">
               <div className="bg-emerald-900/20 p-4 rounded-lg mb-4 border border-emerald-500/30">
                 <CheckCircle className="mx-auto text-emerald-400 mb-2" size={32} />
-                <p className="text-emerald-400 font-medium">2FA está ativo</p>
+                <p className="text-emerald-400 font-medium">{t('profile.security.twoFAActive')}</p>
               </div>
               <p className="text-xs text-gray-500 mb-4">
-                A autenticação de dois fatores está a proteger a sua conta.
+                {t('profile.security.twoFAProtecting')}
               </p>
               <Button 
                 onClick={handleDisable2FA} 
                 variant="destructive"
                 className="w-full"
               >
-                Desativar 2FA
+                {t('profile.security.disable2FA')}
               </Button>
             </div>
           ) : twoFAQRCode ? (
@@ -565,12 +565,12 @@ const SecurityPage = () => {
               </div>
               
               <div className="bg-zinc-800 p-3 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">Chave secreta (backup):</p>
+                <p className="text-xs text-gray-400 mb-1">{t('profile.security.secretKey')}</p>
                 <p className="font-mono text-sm text-gold-400 break-all">{twoFASecret}</p>
               </div>
               
               <div className="space-y-2">
-                <Label>Código de Verificação</Label>
+                <Label>{t('profile.security.verificationCode')}</Label>
                 <Input
                   type="text"
                   maxLength={6}
@@ -580,13 +580,13 @@ const SecurityPage = () => {
                   className="bg-zinc-800 border-zinc-700 text-center text-2xl tracking-widest"
                 />
                 <p className="text-xs text-gray-500">
-                  Insira o código de 6 dígitos do Google Authenticator
+                  {t('profile.security.enterGoogleCode')}
                 </p>
               </div>
             </div>
           ) : (
             <div className="py-4 text-center">
-              <p className="text-gray-400">Erro ao carregar QR code. Tente novamente.</p>
+              <p className="text-gray-400">{t('profile.security.errorLoadingQR')}</p>
             </div>
           )}
           
@@ -601,7 +601,7 @@ const SecurityPage = () => {
               }} 
               className="border-zinc-700"
             >
-              Cancelar
+              {t('profile.security.cancel')}
             </Button>
             {twoFAQRCode && !securitySettings.two_factor_enabled && (
               <Button 
@@ -609,7 +609,7 @@ const SecurityPage = () => {
                 className="bg-emerald-500 hover:bg-emerald-600"
                 disabled={verificationCode.length !== 6}
               >
-                Verificar e Ativar
+                {t('profile.security.verifyAndActivate')}
               </Button>
             )}
           </DialogFooter>
@@ -622,27 +622,27 @@ const SecurityPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
               <AlertTriangle size={20} />
-              Desativar Conta
+              {t('profile.security.deactivateAccount')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Tem a certeza que deseja desativar a sua conta? Esta ação irá:
+              {t('profile.security.deactivateConfirm')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <ul className="space-y-2 text-sm text-gray-300">
-              <li className="flex items-center gap-2"><XCircle size={14} className="text-red-400" /> Terminar a sua sessão</li>
-              <li className="flex items-center gap-2"><XCircle size={14} className="text-red-400" /> Bloquear acesso à sua conta</li>
-              <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400" /> Manter os seus dados seguros</li>
-              <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400" /> Permitir reativação via suporte</li>
+              <li className="flex items-center gap-2"><XCircle size={14} className="text-red-400" /> {t('profile.security.endSession')}</li>
+              <li className="flex items-center gap-2"><XCircle size={14} className="text-red-400" /> {t('profile.security.blockAccess')}</li>
+              <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400" /> {t('profile.security.keepData')}</li>
+              <li className="flex items-center gap-2"><CheckCircle size={14} className="text-emerald-400" /> {t('profile.security.allowReactivation')}</li>
             </ul>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowDeactivateDialog(false)} className="border-zinc-700">
-              Cancelar
+              {t('profile.security.cancel')}
             </Button>
             <Button onClick={handleDeactivateAccount} className="bg-red-600 hover:bg-red-500">
               <Power size={16} className="mr-2" />
-              Desativar Conta
+              {t('profile.security.deactivateAccount')}
             </Button>
           </DialogFooter>
         </DialogContent>

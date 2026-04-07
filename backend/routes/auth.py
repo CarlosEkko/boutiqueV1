@@ -383,10 +383,13 @@ async def update_profile(
 
 # ==================== SECURITY ENDPOINTS ====================
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 @router.post("/change-password")
 async def change_password(
-    current_password: str,
-    new_password: str,
+    data: ChangePasswordRequest,
     user_id: str = Depends(get_current_user_id)
 ):
     """Change user's password"""
@@ -395,15 +398,15 @@ async def change_password(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Verify current password
-    if not verify_password(current_password, user_doc.get("hashed_password", "")):
+    if not verify_password(data.current_password, user_doc.get("hashed_password", "")):
         raise HTTPException(status_code=400, detail="Password atual incorreta")
     
     # Validate new password
-    if len(new_password) < 6:
+    if len(data.new_password) < 6:
         raise HTTPException(status_code=400, detail="Nova password deve ter pelo menos 6 caracteres")
     
     # Update password
-    hashed = get_password_hash(new_password)
+    hashed = get_password_hash(data.new_password)
     await db.users.update_one(
         {"id": user_id},
         {
@@ -417,20 +420,23 @@ async def change_password(
     return {"success": True, "message": "Password alterada com sucesso"}
 
 
+class AntiPhishingRequest(BaseModel):
+    code: str
+
 @router.post("/set-anti-phishing")
 async def set_anti_phishing(
-    code: str,
+    data: AntiPhishingRequest,
     user_id: str = Depends(get_current_user_id)
 ):
     """Set anti-phishing code"""
-    if len(code) < 4:
+    if len(data.code) < 4:
         raise HTTPException(status_code=400, detail="Código deve ter pelo menos 4 caracteres")
     
     await db.users.update_one(
         {"id": user_id},
         {
             "$set": {
-                "anti_phishing_code": code,
+                "anti_phishing_code": data.code,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }
         }
