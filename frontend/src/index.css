@@ -666,3 +666,27 @@ button, a, input, textarea {
 .email-body-content hr {
     border-color: #3f3f46 !important;
 }
+
+/* TinyMCE dropdowns must render above Shadcn Dialog (z-index 50) */
+.tox-tinymce-aux,
+.tox .tox-menu,
+.tox .tox-dialog,
+.tox .tox-dialog-wrap,
+.tox .tox-collection,
+.tox .tox-collection__group,
+.tox .tox-insert-table-picker,
+.tox-pop,
+.tox-pop__dialog,
+div.tox.tox-tinymce-aux {
+    z-index: 99999 !important;
+}
+
+/* Fix TinyMCE table grid picker visibility */
+.tox .tox-insert-table-picker > div {
+    border-color: #555 !important;
+}
+
+.tox .tox-insert-table-picker > div.tox-insert-table-picker--selected {
+    background-color: #D4AF37 !important;
+    border-color: #D4AF37 !important;
+}
