@@ -82,29 +82,53 @@ const OTCLeads = () => {
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
-          <Input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); }} onKeyDown={e => e.key === 'Enter' && fetchLeads()}
-            placeholder="Pesquisar leads..." className="pl-10 bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" />
+      {/* Status Tabs + Filters */}
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2 items-center flex-wrap">
+          {[
+            { key: 'all', label: 'Todos', active: 'bg-zinc-700 text-white' },
+            { key: 'new', label: 'Novo', active: 'bg-amber-500/20 text-amber-400 border border-amber-500/40' },
+            { key: 'contacted', label: 'Contactado', active: 'bg-blue-500/20 text-blue-400 border border-blue-500/40' },
+            { key: 'pre_qualified', label: 'Pré-Qualificado', active: 'bg-purple-500/20 text-purple-400 border border-purple-500/40' },
+            { key: 'kyc_pending', label: 'KYC Pendente', active: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
+            { key: 'kyc_approved', label: 'KYC Aprovado', active: 'bg-teal-500/20 text-teal-400 border border-teal-500/40' },
+            { key: 'setup_pending', label: 'Setup', active: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' },
+            { key: 'active_client', label: 'Cliente Ativo', active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' },
+            { key: 'not_qualified', label: 'Não Qualif.', active: 'bg-red-500/20 text-red-400 border border-red-500/40' },
+          ].map(tab => {
+            const count = tab.key === 'all' ? total : leads.filter(l => l.status === tab.key).length;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === tab.key ? tab.active : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                }`}
+                data-testid={`otc-tab-${tab.key}`}
+              >
+                {tab.label}
+                <span className="ml-1.5 text-xs opacity-70">({count})</span>
+              </button>
+            );
+          })}
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Estado" /></SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
-            <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allStatuses')}</SelectItem>
-            {['new', 'contacted', 'pre_qualified', 'not_qualified', 'kyc_pending', 'kyc_approved', 'active_client', 'lost', 'archived'].map(s => (
-              <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.statusLabels.${s}`) || s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-48 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Fonte" /></SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
-            <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allSources')}</SelectItem>
-            {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+            <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchLeads()}
+              placeholder="Pesquisar leads..." className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="otc-search" />
+          </div>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Fonte" /></SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-800">
+              <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allSources')}</SelectItem>
+              {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button variant="ghost" onClick={fetchLeads} className="text-zinc-400 hover:text-white">
+            <RefreshCw size={16} />
+          </Button>
+        </div>
       </div>
 
       {/* Lead Cards */}
