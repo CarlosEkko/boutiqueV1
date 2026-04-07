@@ -350,8 +350,7 @@ const SecurityPage = () => {
               <Button 
                 onClick={() => setShowPasswordDialog(true)}
                 size="sm" 
-                variant="outline"
-                className="border-zinc-700"
+                className="bg-emerald-500 hover:bg-emerald-600"
               >
                 {t('profile.security.changeBtn')}
               </Button>
