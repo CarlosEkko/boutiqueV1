@@ -216,7 +216,9 @@ export const useOTCLeads = () => {
     } catch (e) { toast.error(e.response?.data?.detail || 'Erro ao converter para cliente'); }
   };
 
-  const handleDeleteLead = async (leadId) => {
+  const handleDeleteLead = async (leadOrId) => {
+    const leadId = typeof leadOrId === 'string' ? leadOrId : leadOrId?.id;
+    if (!leadId) return;
     if (!window.confirm('Tem certeza que deseja eliminar este lead?')) return;
     try {
       await axios.delete(`${API_URL}/api/otc/leads/${leadId}`, { headers });
