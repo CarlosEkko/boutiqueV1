@@ -49,6 +49,7 @@ const AdminKnowledgeBase = () => {
   // Modal states
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showArticleModal, setShowArticleModal] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
   
   // Categories state
   const [categories, setCategories] = useState([]);
@@ -103,11 +104,13 @@ const AdminKnowledgeBase = () => {
   // Open article modal for new
   const openNewArticleModal = () => {
     resetArticleForm();
+    setEditorKey(prev => prev + 1);
     setShowArticleModal(true);
   };
 
   // Open article modal for edit
   const openEditArticleModal = (article) => {
+    setEditorKey(prev => prev + 1);
     loadArticle(article.id);
     setShowArticleModal(true);
   };
@@ -917,6 +920,7 @@ const AdminKnowledgeBase = () => {
               <label className="text-sm text-gray-400 mb-1 block">Conteúdo</label>
               <Suspense fallback={<div className="h-64 bg-zinc-800 rounded flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                 <RichTextEditor
+                  key={editorKey}
                   value={articleForm.content}
                   onChange={(content) => setArticleForm({ ...articleForm, content })}
                   placeholder="Escreva o conteúdo do artigo aqui..."

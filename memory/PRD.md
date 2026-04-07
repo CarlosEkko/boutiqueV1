@@ -34,7 +34,11 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - Fiat deposit isolation: Admin bank transfers restricted to finance roles
 - Auto-assign leads to creator
 - `set-internal-role` endpoint for user promotion
-- **CRM Client Isolation Fix (2026-04-12)**:
+- **Knowledge Base Editor & Rendering Improvements (2026-04-12)**:
+  - Fixed cache clearing: Editor fully resets (via `key` prop) when opening new article after editing
+  - Enhanced RichTextEditor toolbar: Header picker (H1-H3), size, colors, lists, indent, align, blockquote, code, link, image, video
+  - Comprehensive CSS for article rendering: headings, lists (ordered/unordered), tables, blockquotes, code blocks, alignment, indent, video embeds
+  - Dark theme compatible with gold accent styling
   - `get_crm_clients_overview` now filters by `invited_by`/`assigned_to` for non-admins (stats match list)
   - `get_crm_clients` uses `$and` to combine ownership + search filters without `$or` conflicts
   - `get_crm_client_detail` checks both `invited_by` and `assigned_to`
