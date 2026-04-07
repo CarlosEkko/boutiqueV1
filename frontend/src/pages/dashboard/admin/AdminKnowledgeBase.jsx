@@ -835,14 +835,24 @@ const AdminKnowledgeBase = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Article Modal */}
-      <Dialog open={showArticleModal} onOpenChange={setShowArticleModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingArticle ? 'Editar Artigo' : 'Novo Artigo'}
-            </DialogTitle>
-          </DialogHeader>
+      {/* Article Modal - Custom overlay (no Radix focus trap, compatible with TinyMCE) */}
+      {showArticleModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 bg-black/80" onClick={() => setShowArticleModal(false)} />
+          <div className="fixed inset-0 flex items-center justify-center p-4" style={{ pointerEvents: 'none' }}>
+            <div className="bg-zinc-900 border border-zinc-800 text-white w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl p-6 relative"
+              style={{ pointerEvents: 'auto' }}
+              onClick={(e) => e.stopPropagation()}>
+              
+              {/* Close button */}
+              <button onClick={() => setShowArticleModal(false)}
+                className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity text-zinc-400 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold">{editingArticle ? 'Editar Artigo' : 'Novo Artigo'}</h2>
+              </div>
           
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -962,7 +972,7 @@ const AdminKnowledgeBase = () => {
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-zinc-800">
             <Button
               variant="outline"
               onClick={() => setShowArticleModal(false)}
@@ -974,9 +984,12 @@ const AdminKnowledgeBase = () => {
               <Save size={16} className="mr-2" />
               {editingArticle ? 'Atualizar' : 'Criar'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
