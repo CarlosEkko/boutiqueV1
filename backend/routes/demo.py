@@ -23,11 +23,31 @@ def set_db(database):
 DEMO_CLIENT_ID = "demo-client-001"
 DEMO_CLIENT_EMAIL = "victoria.sterling@sterling-capital.com"
 
+# All available demo sections
+DEMO_SECTIONS = [
+    {"id": "portfolio", "label": "Portfolio & Wallets", "description": "Dashboard, saldos e alocações"},
+    {"id": "crypto_ops", "label": "Operações Crypto", "description": "Depósitos e levantamentos crypto"},
+    {"id": "fiat_ops", "label": "Operações Fiat", "description": "Depósitos e levantamentos fiat"},
+    {"id": "otc", "label": "OTC Desk", "description": "Leads, deals e pipeline OTC"},
+    {"id": "vault", "label": "Multi-Sign Vault", "description": "Signatários e transações vault"},
+    {"id": "transactions", "label": "Transações", "description": "Histórico de transações"},
+]
+
+ALL_SECTION_IDS = [s["id"] for s in DEMO_SECTIONS]
+
 
 async def check_demo_mode(user_id: str, database) -> bool:
     """Check if a user currently has demo mode active."""
-    user = await database.users.find_one({"id": user_id}, {"_id": 0, "demo_mode": 1})
+    user = await database.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "demo_mode": 1})
     return bool(user and user.get("demo_mode"))
+
+
+async def get_demo_sections(user_id: str, database) -> list:
+    """Get which demo sections a user can see. Returns list of section IDs."""
+    user = await database.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "demo_sections": 1, "demo_authorized": 1})
+    if not user or not user.get("demo_authorized"):
+        return []
+    return user.get("demo_sections", ALL_SECTION_IDS)
 
 # ─── Demo Data Templates ───
 
@@ -447,10 +467,14 @@ def _generate_vault_data(user_id):
 
 @router.post("/authorize/{user_id}")
 async def authorize_demo_access(user_id: str, admin: dict = Depends(get_admin_user)):
-    """Admin grants demo mode access to a user"""
+    """Admin grants demo mode access to a user with all sections enabled by default"""
     result = await db.users.update_one(
         {"id": user_id},
-        {"$set": {"demo_authorized": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "demo_authorized": True,
+            "demo_sections": ALL_SECTION_IDS,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
@@ -462,9 +486,63 @@ async def revoke_demo_access(user_id: str, admin: dict = Depends(get_admin_user)
     """Admin revokes demo mode access"""
     await db.users.update_one(
         {"id": user_id},
-        {"$set": {"demo_authorized": False, "demo_mode": False}}
+        {"$set": {
+            "demo_authorized": False,
+            "demo_mode": False,
+            "demo_sections": [],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     return {"success": True, "message": "Demo access revoked"}
+
+
+@router.get("/sections")
+async def list_demo_sections(admin: dict = Depends(get_admin_user)):
+    """List all available demo sections"""
+    return {"sections": DEMO_SECTIONS}
+
+
+@router.put("/permissions/{user_id}")
+async def update_demo_permissions(user_id: str, body: dict, admin: dict = Depends(get_admin_user)):
+    """Update which demo sections a specific user can see"""
+    sections = body.get("sections", [])
+    valid = [s for s in sections if s in ALL_SECTION_IDS]
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "demo_authorized": len(valid) > 0,
+            "demo_sections": valid,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"success": True, "sections": valid}
+
+
+@router.get("/permissions/{user_id}")
+async def get_demo_permissions(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Get demo permissions for a specific user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "demo_authorized": 1, "demo_sections": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "demo_authorized": user.get("demo_authorized", False),
+        "sections": user.get("demo_sections", [])
+    }
+
+
+@router.get("/authorized-users")
+async def list_demo_authorized_users(admin: dict = Depends(get_admin_user)):
+    """List all users with demo access and their section permissions"""
+    users = await db.users.find(
+        {"demo_authorized": True},
+        {"_id": 0, "id": 1, "email": 1, "name": 1, "demo_authorized": 1, "demo_sections": 1, "internal_role": 1}
+    ).to_list(100)
+    return {"users": users}
 
 
 @router.post("/toggle")
@@ -497,14 +575,15 @@ async def toggle_demo_mode(user_id: str = Depends(get_current_user_id)):
 @router.get("/status")
 async def get_demo_status(user_id: str = Depends(get_current_user_id)):
     """Get current demo mode status"""
-    user = await db.users.find_one({"id": user_id}, {"_id": 0, "demo_mode": 1, "demo_authorized": 1, "is_admin": 1})
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "demo_mode": 1, "demo_authorized": 1, "is_admin": 1, "demo_sections": 1})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     authorized = user.get("demo_authorized", False) or user.get("is_admin", False)
     return {
         "demo_mode": user.get("demo_mode", False),
-        "demo_authorized": authorized
+        "demo_authorized": authorized,
+        "sections": user.get("demo_sections", ALL_SECTION_IDS if authorized else [])
     }
 
 

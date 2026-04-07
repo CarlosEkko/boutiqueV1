@@ -21,10 +21,19 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - OTC lead conversion correctly inherits potential_tier → membership_level
 - Registration completion for auto-created users
 - Translation key collision fix
-- Demo Mode (2026-04-07): Full demo mode with rich mock data for sales pitches
-- KB access fix (2026-04-07): KB admin endpoints use `get_internal_user` for support staff access
-- Fiat deposit isolation fix (2026-04-07): Admin bank transfer endpoints restricted to finance roles only (`get_finance_user`). Sales managers can only see their own deposits.
-- Set internal role endpoint (2026-04-07): `POST /api/admin/users/{id}/set-internal-role`
+- **Demo Mode** (completed 2026-04-07):
+  - Full demo mode with rich mock data for sales pitches
+  - Demo client Victoria Sterling: 8 wallets ($8M+ portfolio), 16 transactions
+  - 7 crypto deposits + 5 crypto withdrawals with realistic data
+  - 5 OTC leads + 3 OTC deals
+  - 3 vault signatories + 4 vault transactions (multi-sign)
+  - 3 bank deposits (fiat)
+  - **Per-user demo permissions**: Admin can authorize users and control which 6 sections each sees (Portfolio, Crypto Ops, Fiat Ops, OTC, Vault, Transactions)
+  - UI: Toggle in top bar, amber banner, section checkboxes in Admin Staff modal
+- KB access fix: Endpoints use `get_internal_user` for support staff
+- Fiat deposit isolation: Admin bank transfers restricted to finance roles
+- Auto-assign leads to creator
+- `set-internal-role` endpoint for user promotion
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123

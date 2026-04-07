@@ -7,14 +7,17 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const DemoContext = createContext({
   demoMode: false,
   demoAuthorized: false,
+  sections: [],
   loading: false,
   toggleDemo: () => {},
+  hasSection: () => false,
 });
 
 export const DemoProvider = ({ children }) => {
   const { token } = useAuth();
   const [demoMode, setDemoMode] = useState(false);
   const [demoAuthorized, setDemoAuthorized] = useState(false);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const checkStatus = useCallback(async () => {
@@ -25,6 +28,7 @@ export const DemoProvider = ({ children }) => {
       });
       setDemoMode(data.demo_mode);
       setDemoAuthorized(data.demo_authorized);
+      setSections(data.sections || []);
     } catch {
       setDemoAuthorized(false);
     }
@@ -41,7 +45,6 @@ export const DemoProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDemoMode(data.demo_mode);
-      // Reload page to refresh all data
       setTimeout(() => window.location.reload(), 300);
     } catch {
       // handled by caller
@@ -50,8 +53,13 @@ export const DemoProvider = ({ children }) => {
     }
   };
 
+  const hasSection = useCallback((sectionId) => {
+    if (!demoMode) return false;
+    return sections.includes(sectionId);
+  }, [demoMode, sections]);
+
   return (
-    <DemoContext.Provider value={{ demoMode, demoAuthorized, loading, toggleDemo }}>
+    <DemoContext.Provider value={{ demoMode, demoAuthorized, sections, loading, toggleDemo, hasSection }}>
       {children}
     </DemoContext.Provider>
   );

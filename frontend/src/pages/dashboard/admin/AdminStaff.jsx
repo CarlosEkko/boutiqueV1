@@ -32,7 +32,8 @@ import {
   User,
   Key,
   CheckCircle,
-  XCircle
+  XCircle,
+  Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,6 +50,9 @@ const AdminStaff = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'inactive'
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState(null);
+  const [demoSections, setDemoSections] = useState([]);
+  const [demoAuthorized, setDemoAuthorized] = useState(false);
+  const [availableSections, setAvailableSections] = useState([]);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -129,6 +133,13 @@ const AdminStaff = () => {
       await axios.put(`${API_URL}/api/admin/internal-users/${selectedStaff.id}`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      // Save demo permissions
+      await axios.put(`${API_URL}/api/demo/permissions/${selectedStaff.id}`, 
+        { sections: demoAuthorized ? demoSections : [] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
       toast.success('Membro atualizado com sucesso');
       setShowEditModal(false);
       setSelectedStaff(null);
@@ -190,7 +201,7 @@ const AdminStaff = () => {
     }
   };
 
-  const openEditModal = (member) => {
+  const openEditModal = async (member) => {
     setSelectedStaff(member);
     setFormData({
       email: member.email,
@@ -201,6 +212,19 @@ const AdminStaff = () => {
       region: member.region,
       is_active: member.is_active
     });
+    // Fetch demo permissions for this user
+    try {
+      const [permRes, secRes] = await Promise.all([
+        axios.get(`${API_URL}/api/demo/permissions/${member.id}`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/demo/sections`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setDemoAuthorized(permRes.data.demo_authorized);
+      setDemoSections(permRes.data.sections || []);
+      setAvailableSections(secRes.data.sections);
+    } catch {
+      setDemoAuthorized(false);
+      setDemoSections([]);
+    }
     setShowEditModal(true);
   };
 
@@ -598,7 +622,7 @@ const AdminStaff = () => {
 
       {/* Edit Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-md">
+        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit className="text-gold-400" size={20} />
@@ -695,6 +719,68 @@ const AdminStaff = () => {
                   <><XCircle size={14} className="mr-1" /> Inativo</>
                 )}
               </Button>
+            </div>
+
+            {/* Demo Permissions */}
+            <div className="space-y-3 p-3 bg-amber-950/20 rounded-lg border border-amber-800/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Monitor size={16} className="text-amber-400" />
+                  <div>
+                    <p className="text-white text-sm font-medium">Demo Mode</p>
+                    <p className="text-xs text-gray-500">Secções visíveis na demonstração</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    const newAuth = !demoAuthorized;
+                    setDemoAuthorized(newAuth);
+                    if (newAuth && demoSections.length === 0) {
+                      setDemoSections(availableSections.map(s => s.id));
+                    }
+                    if (!newAuth) setDemoSections([]);
+                  }}
+                  size="sm"
+                  variant={demoAuthorized ? "default" : "outline"}
+                  className={demoAuthorized 
+                    ? "bg-amber-600 hover:bg-amber-500 text-white" 
+                    : "border-gray-700 text-gray-400"
+                  }
+                  data-testid="demo-auth-toggle"
+                >
+                  {demoAuthorized ? "Ativado" : "Desativado"}
+                </Button>
+              </div>
+              
+              {demoAuthorized && (
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-800/20">
+                  {availableSections.map((section) => (
+                    <label
+                      key={section.id}
+                      className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-all text-xs ${
+                        demoSections.includes(section.id) 
+                          ? 'bg-amber-900/30 border border-amber-700/40 text-amber-300'
+                          : 'bg-zinc-800/40 border border-zinc-700/30 text-gray-500'
+                      }`}
+                      data-testid={`demo-section-${section.id}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={demoSections.includes(section.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setDemoSections([...demoSections, section.id]);
+                          } else {
+                            setDemoSections(demoSections.filter(s => s !== section.id));
+                          }
+                        }}
+                        className="accent-amber-500 w-3.5 h-3.5"
+                      />
+                      <span>{section.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
