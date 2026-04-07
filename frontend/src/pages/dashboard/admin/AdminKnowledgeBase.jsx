@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -37,7 +37,7 @@ import { toast } from 'sonner';
 import { formatDate } from '../../../utils/formatters';
 
 // Lazy load the rich text editor
-const RichTextEditor = lazy(() => import('../../../components/RichTextEditor'));
+import RichTextEditor from '../../../components/RichTextEditor';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -837,7 +837,7 @@ const AdminKnowledgeBase = () => {
 
       {/* Article Modal */}
       <Dialog open={showArticleModal} onOpenChange={setShowArticleModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingArticle ? 'Editar Artigo' : 'Novo Artigo'}
@@ -918,14 +918,12 @@ const AdminKnowledgeBase = () => {
 
             <div>
               <label className="text-sm text-gray-400 mb-1 block">Conteúdo</label>
-              <Suspense fallback={<div className="h-64 bg-zinc-800 rounded flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
-                <RichTextEditor
-                  key={editorKey}
-                  value={articleForm.content}
-                  onChange={(content) => setArticleForm({ ...articleForm, content })}
-                  placeholder="Escreva o conteúdo do artigo aqui..."
-                />
-              </Suspense>
+              <RichTextEditor
+                key={editorKey}
+                value={articleForm.content}
+                onChange={(content) => setArticleForm({ ...articleForm, content })}
+                placeholder="Escreva o conteúdo do artigo aqui..."
+              />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
