@@ -124,6 +124,7 @@ const OTCLeads = () => {
       </div>
 
       {/* Lead Cards */}
+      <div className="mt-2">
       {loading ? (
         <div className="text-center py-12 text-zinc-600">A carregar...</div>
       ) : leads.length === 0 ? (
@@ -147,6 +148,7 @@ const OTCLeads = () => {
           ))}
         </div>
       )}
+      </div>
 
       {/* ===== DIALOGS ===== */}
       <CreateLeadDialog
