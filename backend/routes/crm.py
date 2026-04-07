@@ -651,6 +651,7 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
 
     from models.otc import OTCLead, OTCLeadSource, OTCLeadStatus
 
+    creator_id = getattr(current_user, 'id', None) or current_user.get("id")
     otc_lead = OTCLead(
         entity_name=lead.get("company_name") or lead.get("name", ""),
         contact_name=lead.get("name", ""),
@@ -662,10 +663,11 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
         notes=lead.get("notes"),
         status=OTCLeadStatus.NEW,
         workflow_stage=1,
+        assigned_to=creator_id,
         activity_log=[{
             "action": "lead_created",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+            "user_id": creator_id,
             "details": f"Lead OTC criado a partir do CRM Lead: {lead.get('name', '')}"
         }]
     )
@@ -1241,12 +1243,16 @@ async def get_crm_clients(
     is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     
-    # Build query - only clients (not internal users)
+    # Base filter: only clients (not internal users)
     query = {"user_type": {"$ne": "internal"}}
     
-    # If not admin, only show clients where current user is the account manager
+    # If not admin, only show clients where current user is the account manager or inviter
+    ownership_filter = None
     if not is_admin:
-        query["invited_by"] = current_user_id
+        ownership_filter = {"$or": [
+            {"invited_by": current_user_id},
+            {"assigned_to": current_user_id}
+        ]}
     
     if region and region != "all":
         query["region"] = region
@@ -1256,18 +1262,30 @@ async def get_crm_clients(
         query["kyc_status"] = kyc_status
     if is_approved is not None:
         query["is_approved"] = is_approved
+    
+    search_filter = None
     if search:
-        query["$or"] = [
+        search_filter = {"$or": [
             {"name": {"$regex": search, "$options": "i"}},
             {"email": {"$regex": search, "$options": "i"}},
             {"phone": {"$regex": search, "$options": "i"}}
-        ]
+        ]}
+    
+    # Combine all filters using $and to avoid $or conflicts
+    final_query = query
+    and_conditions = [query]
+    if ownership_filter:
+        and_conditions.append(ownership_filter)
+    if search_filter:
+        and_conditions.append(search_filter)
+    if len(and_conditions) > 1:
+        final_query = {"$and": and_conditions}
     
     # Sort
     sort_direction = -1 if sort_order == "desc" else 1
     
     cursor = db.users.find(
-        query,
+        final_query,
         {"_id": 0, "hashed_password": 0, "two_factor_secret": 0, "two_factor_secret_temp": 0}
     ).sort(sort_by, sort_direction).skip(skip).limit(limit)
     
@@ -1299,7 +1317,7 @@ async def get_crm_clients(
         clients.append(user)
     
     # Get total count for pagination
-    total = await db.users.count_documents(query)
+    total = await db.users.count_documents(final_query)
     
     return {
         "clients": clients,
@@ -1330,9 +1348,9 @@ async def get_crm_client_detail(
     if not user:
         raise HTTPException(status_code=404, detail="Client not found")
     
-    # Permission check: admin can see all, managers can only see their assigned clients
+    # Permission check: admin can see all, managers can only see their assigned/invited clients
     if not is_admin:
-        if user.get("invited_by") != current_user_id:
+        if user.get("invited_by") != current_user_id and user.get("assigned_to") != current_user_id:
             raise HTTPException(status_code=403, detail="Não tem permissão para ver este cliente")
     
     # Get all related data
@@ -1515,38 +1533,62 @@ async def get_crm_clients_overview(
     """Get overview statistics for CRM clients dashboard"""
     db = get_db()
     
+    # Check if user is admin
+    is_admin = getattr(current_user, 'is_admin', False) if hasattr(current_user, 'is_admin') else current_user.get("is_admin", False)
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    
+    # Base filter: only clients (not internal users)
+    base = {"user_type": {"$ne": "internal"}}
+    # Non-admins only see their own assigned/invited clients
+    if not is_admin:
+        base = {"$and": [
+            {"user_type": {"$ne": "internal"}},
+            {"$or": [{"invited_by": current_user_id}, {"assigned_to": current_user_id}]}
+        ]}
+    
     # Total clients
-    total_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}})
+    total_clients = await db.users.count_documents(base)
     
     # By region
-    europe_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "europe"})
-    mena_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "mena"})
-    latam_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "region": "latam"})
+    europe_clients = await db.users.count_documents({**base, "region": "europe"})
+    mena_clients = await db.users.count_documents({**base, "region": "mena"})
+    latam_clients = await db.users.count_documents({**base, "region": "latam"})
     
     # By tier
-    standard_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "standard"})
-    premium_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "premium"})
-    vip_clients = await db.users.count_documents({"user_type": {"$ne": "internal"}, "membership_level": "vip"})
+    standard_clients = await db.users.count_documents({**base, "membership_level": "standard"})
+    premium_clients = await db.users.count_documents({**base, "membership_level": "premium"})
+    vip_clients = await db.users.count_documents({**base, "membership_level": "vip"})
     
     # By KYC status
-    kyc_approved = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "approved"})
-    kyc_pending = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": "pending"})
-    kyc_not_started = await db.users.count_documents({"user_type": {"$ne": "internal"}, "kyc_status": {"$in": ["not_started", None]}})
+    kyc_approved = await db.users.count_documents({**base, "kyc_status": "approved"})
+    kyc_pending = await db.users.count_documents({**base, "kyc_status": "pending"})
+    kyc_not_started = await db.users.count_documents({**base, "kyc_status": {"$in": ["not_started", None]}})
     
     # Active this month (made a transaction or order)
     from datetime import datetime, timedelta
     month_ago = datetime.now(timezone.utc) - timedelta(days=30)
     month_ago_str = month_ago.isoformat()
     
-    # Get unique users with orders this month
+    # Get the set of user IDs that match our base filter (for non-admins, only their clients)
+    my_client_ids = set()
+    async for u in db.users.find(base, {"id": 1}):
+        if u.get("id"):
+            my_client_ids.add(u["id"])
+    
+    # Get unique users with orders this month (intersected with my clients)
     active_users = set()
     orders_cursor = db.trading_orders.find({"created_at": {"$gte": month_ago_str}}, {"user_id": 1})
     async for order in orders_cursor:
-        active_users.add(order.get("user_id"))
+        uid = order.get("user_id")
+        if uid in my_client_ids:
+            active_users.add(uid)
     
-    # Total trading volume this month
+    # Total trading volume this month (only for my clients)
+    order_filter = {"created_at": {"$gte": month_ago_str}, "status": "completed"}
+    if not is_admin:
+        order_filter["user_id"] = {"$in": list(my_client_ids)}
     orders = await db.trading_orders.find(
-        {"created_at": {"$gte": month_ago_str}, "status": "completed"},
+        order_filter,
         {"fiat_amount": 1}
     ).to_list(10000)
     total_volume = sum(o.get("fiat_amount", 0) for o in orders)

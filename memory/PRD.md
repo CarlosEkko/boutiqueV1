@@ -34,6 +34,11 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - Fiat deposit isolation: Admin bank transfers restricted to finance roles
 - Auto-assign leads to creator
 - `set-internal-role` endpoint for user promotion
+- **CRM Client Isolation Fix (2026-04-12)**:
+  - `get_crm_clients_overview` now filters by `invited_by`/`assigned_to` for non-admins (stats match list)
+  - `get_crm_clients` uses `$and` to combine ownership + search filters without `$or` conflicts
+  - `get_crm_client_detail` checks both `invited_by` and `assigned_to`
+  - `convert_lead_to_otc` now sets `assigned_to` on the OTC lead to the user who converts it
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123
@@ -45,6 +50,7 @@ git pull -> sudo docker-compose up --build -d
 ## Pending Issues
 - Sidebar translation labels not fully mapped (Tokenização, Team Hub, Multi-Sign) - P1
 - Safari cursor bug (recurring, P2)
+- Existing OTC leads converted before 2026-04-12 may have `assigned_to=None` — manual DB fix needed
 
 ## Upcoming Tasks
 - P1: TradingView chart widgets on Trading/Markets pages
