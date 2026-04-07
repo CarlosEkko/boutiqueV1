@@ -352,7 +352,12 @@ const OTCLeads = () => {
               <div><Label className="text-gray-400 text-sm">{t('otc.clientType')}</Label>
                 <Select value={preQualData.client_type} onValueChange={v => setPreQualData({...preQualData, client_type: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="individual" className="text-white">{t('otc.individual')}</SelectItem><SelectItem value="corporate" className="text-white">{t('otc.corporate')}</SelectItem><SelectItem value="institutional" className="text-white">{t('otc.institutional')}</SelectItem></SelectContent>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectItem value="retail" className="text-white">Retalho</SelectItem>
+                    <SelectItem value="hnwi" className="text-white">HNWI</SelectItem>
+                    <SelectItem value="corporate" className="text-white">Empresa</SelectItem>
+                    <SelectItem value="fund_institution" className="text-white">Fundo / Instituição</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
               <div><Label className="text-gray-400 text-sm">{t('otc.firstOperationValue')}</Label>
@@ -366,7 +371,18 @@ const OTCLeads = () => {
                 </Select>
               </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.operationObjective')}</Label><Input value={preQualData.operation_objective} onChange={e => setPreQualData({...preQualData, operation_objective: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div><Label className="text-gray-400 text-sm">{t('otc.operationObjective')}</Label>
+              <Select value={preQualData.operation_objective} onValueChange={v => setPreQualData({...preQualData, operation_objective: v})}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectItem value="trading" className="text-white">Trading</SelectItem>
+                  <SelectItem value="treasury" className="text-white">Tesouraria</SelectItem>
+                  <SelectItem value="hedging" className="text-white">Hedging</SelectItem>
+                  <SelectItem value="investment" className="text-white">Investimento</SelectItem>
+                  <SelectItem value="other" className="text-white">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div><Label className="text-gray-400 text-sm">{t('otc.fundSource')}</Label><Input value={preQualData.fund_source} onChange={e => setPreQualData({...preQualData, fund_source: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" /></div>
             <div><Label className="text-gray-400 text-sm">{t('otc.bankJurisdiction')}</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" /></div>
             <div><Label className="text-gray-400 text-sm">{t('otc.redFlagNotes')}</Label><Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>

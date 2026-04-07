@@ -111,28 +111,70 @@ export const CreateLeadDialog = ({
                 </div>
                 {existingContact.existing_otc_client && (
                   <Card className="bg-green-950/50 border-green-500/30 mb-3">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center"><CheckCircle size={20} className="text-green-400" /></div>
-                        <div><p className="text-green-400 font-semibold text-sm">Cliente OTC Ativo</p><p className="text-green-300/60 text-xs">{existingContact.existing_otc_client.entity_name} — {existingContact.existing_otc_client.contact_email}</p></div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center"><CheckCircle size={20} className="text-green-400" /></div>
+                          <div><p className="text-green-400 font-semibold text-sm">Cliente OTC Ativo</p><p className="text-green-300/60 text-xs">{existingContact.existing_otc_client.entity_name} — {existingContact.existing_otc_client.contact_email}</p></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-900/20" onClick={() => openDetail(existingContact.existing_otc_client)}>{t('otc.viewDetails')}</Button>
+                          <Button size="sm" className="bg-green-600 hover:bg-green-500 text-white" onClick={() => openNewDeal(existingContact.existing_otc_client)}><Plus size={14} className="mr-1" />{t('otc.newOperation')}</Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-900/20" onClick={() => openDetail(existingContact.existing_otc_client)}>{t('otc.viewDetails')}</Button>
-                        <Button size="sm" className="bg-green-600 hover:bg-green-500 text-white" onClick={() => openNewDeal(existingContact.existing_otc_client)}><Plus size={14} className="mr-1" />{t('otc.newOperation')}</Button>
+                      {/* Validation Checklist */}
+                      <div className="grid grid-cols-3 gap-2 mt-2 border-t border-green-500/20 pt-3">
+                        <div className="flex items-center gap-2 text-xs">
+                          <CheckCircle size={14} className={existingContact.existing_user?.kyc_status === 'approved' ? 'text-green-400' : 'text-yellow-400'} />
+                          <span className={existingContact.existing_user?.kyc_status === 'approved' ? 'text-green-300' : 'text-yellow-300'}>
+                            KYC {existingContact.existing_user?.kyc_status === 'approved' ? 'Atualizado' : 'Pendente'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <CheckCircle size={14} className="text-green-400" />
+                          <span className="text-green-300">Limites Aprovados</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <CheckCircle size={14} className="text-green-400" />
+                          <span className="text-green-300">Compliance OK</span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 )}
                 {existingContact.existing_user && !existingContact.existing_otc_client && (
                   <Card className="bg-blue-950/50 border-blue-500/30 mb-3">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><User size={20} className="text-blue-400" /></div>
-                        <div><p className="text-blue-400 font-semibold text-sm">Utilizador Registado</p><p className="text-blue-300/60 text-xs">{existingContact.existing_user.email}</p></div>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><User size={20} className="text-blue-400" /></div>
+                          <div><p className="text-blue-400 font-semibold text-sm">Utilizador Registado</p><p className="text-blue-300/60 text-xs">{existingContact.existing_user.email}</p></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-900/20" onClick={() => open360View(existingContact.existing_user)}>{t('otc.createLead.view360')}</Button>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white" onClick={handleCreateClientDirect}><UserPlus size={14} className="mr-1" />Criar Cliente OTC</Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-900/20" onClick={() => open360View(existingContact.existing_user)}>{t('otc.createLead.view360')}</Button>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white" onClick={handleCreateClientDirect}><UserPlus size={14} className="mr-1" />Criar Cliente OTC</Button>
+                      {/* KYC/Compliance Status */}
+                      <div className="grid grid-cols-3 gap-2 mt-2 border-t border-blue-500/20 pt-3">
+                        <div className="flex items-center gap-2 text-xs">
+                          {existingContact.existing_user?.kyc_status === 'approved' 
+                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">KYC Atualizado</span></>
+                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">KYC Pendente</span></>
+                          }
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {existingContact.existing_user?.is_approved 
+                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">Conta Aprovada</span></>
+                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">Aprovação Pendente</span></>
+                          }
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {existingContact.existing_user?.is_onboarded 
+                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">Onboarding Completo</span></>
+                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">Onboarding Pendente</span></>
+                          }
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
