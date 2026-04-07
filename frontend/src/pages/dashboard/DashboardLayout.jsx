@@ -637,8 +637,8 @@ const DashboardLayout = () => {
   // Separate client menus from admin menus
   const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao'];
   
-  // Default menus for clients (only Portfolio and Perfil)
-  const defaultClientDepts = ['portfolio', 'account'];
+  // Default menus for clients (Portfolio, Perfil, and Suporte)
+  const defaultClientDepts = ['portfolio', 'account', 'suporte'];
   
   // Filter client menus based on personalized settings
   let clientMenus = menuStructure.filter(m => clientMenuDepts.includes(m.department));
