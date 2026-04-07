@@ -26,7 +26,7 @@ AVAILABLE_MENUS = [
     {"value": "perfil", "label": "Perfil"},
     {"value": "otc_trading", "label": "OTC Trading"},
     {"value": "multi_sign", "label": "Multi-Sign"},
-    {"value": "suporte", "label": "Suporte & Base de Conhecimento"},
+    {"value": "suporte", "label": "Suporte"},
     {"value": "tokenizacao", "label": "Tokenização"},
 ]
 

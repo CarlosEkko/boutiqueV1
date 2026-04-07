@@ -147,7 +147,6 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
             "icon": "Headphones",
             "items": [
                 {"path": "/dashboard/support", "label": "Tickets de Suporte", "icon": "HelpCircle"},
-                {"path": "/help", "label": "Base de Conhecimento", "icon": "BookOpen"},
             ]
         })
         
