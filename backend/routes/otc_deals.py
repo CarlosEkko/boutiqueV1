@@ -355,15 +355,14 @@ async def update_deal_status(deal_id: str, status: str, user_id: str = Depends(g
 
 @router.delete("/deals/{deal_id}")
 async def delete_deal(deal_id: str, user_id: str = Depends(get_current_user_id)):
-    """Delete an OTC deal (only drafts)"""
+    """Delete an OTC deal and its related data"""
     db = get_db()
     deal = await db.otc_deals.find_one({"id": deal_id}, {"_id": 0})
     if not deal:
         raise HTTPException(status_code=404, detail="Negócio não encontrado")
-    if deal["status"] != "draft":
-        raise HTTPException(status_code=400, detail="Só é possível eliminar negócios em rascunho")
     await db.otc_deals.delete_one({"id": deal_id})
     await db.otc_compliance.delete_many({"deal_id": deal_id})
+    await db.otc_commissions.delete_many({"deal_id": deal_id})
     return {"success": True}
 
 
