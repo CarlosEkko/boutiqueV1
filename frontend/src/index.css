@@ -610,3 +610,59 @@ button, a, input, textarea {
     text-decoration: line-through;
     color: #9ca3af !important;
 }
+
+
+/* Team Hub Email Body - Force light text on dark background */
+.email-body-content,
+.email-body-content * {
+    color: #d1d5db !important;
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+.email-body-content a {
+    color: #D4AF37 !important;
+    text-decoration: underline;
+}
+
+.email-body-content strong,
+.email-body-content b {
+    color: #ffffff !important;
+}
+
+.email-body-content h1,
+.email-body-content h2,
+.email-body-content h3,
+.email-body-content h4 {
+    color: #ffffff !important;
+}
+
+.email-body-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.email-body-content table {
+    border-color: #3f3f46 !important;
+}
+
+.email-body-content td,
+.email-body-content th {
+    border-color: #3f3f46 !important;
+}
+
+.email-body-content blockquote {
+    border-left: 2px solid #D4AF37 !important;
+    padding-left: 1em;
+}
+
+.email-body-content pre,
+.email-body-content code {
+    background-color: #18181b !important;
+    border-radius: 4px;
+    padding: 0.2em 0.4em;
+}
+
+.email-body-content hr {
+    border-color: #3f3f46 !important;
+}

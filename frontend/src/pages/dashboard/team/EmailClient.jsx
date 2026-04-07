@@ -548,7 +548,7 @@ const EmailClient = () => {
               {loadingDetail ? (
                 <div className="text-center py-8 text-gray-600">A carregar...</div>
               ) : (
-                <div className="text-gray-200 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: messageDetail.body_html || '<p class="text-gray-500">(Sem conteúdo)</p>' }} />
+                <div className="email-body-content text-gray-200 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: messageDetail.body_html || '<p class="text-gray-500">(Sem conteúdo)</p>' }} />
               )}
             </div>
           </div>
