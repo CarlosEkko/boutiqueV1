@@ -218,12 +218,13 @@ async def get_team_filter(current_user) -> dict:
     Return a MongoDB query filter based on user role and CLIENT REGION.
     Hierarchy (by client/lead country → region):
     - admin / global_manager: no filter (sees everything)
-    - manager / sales_manager / local_manager: sees all records where client is in their region
-    - sales / support / others: sees all records where client is in their region
+    - manager / sales_manager / local_manager: sees records in their region OR assigned to them
+    - sales / support / others: sees records in their region OR assigned to them
     """
     role = getattr(current_user, 'internal_role', None)
     is_admin = getattr(current_user, 'is_admin', False)
     region = getattr(current_user, 'region', None)
+    user_id = getattr(current_user, 'id', None)
     if hasattr(region, 'value'):
         region = region.value
 
@@ -231,18 +232,24 @@ async def get_team_filter(current_user) -> dict:
     if is_admin or role in ('admin', 'global_manager'):
         return {}
 
-    # All other roles: filter by client/lead region (based on country field)
+    # All other roles: filter by client/lead region OR assigned to them
+    conditions = []
+    
+    if user_id:
+        conditions.append({"assigned_to": user_id})
+    
     if region and region != 'global':
         from models.user import COUNTRY_TO_REGION
-        # Get all country codes that belong to this region
         region_countries = [
             code for code, reg in COUNTRY_TO_REGION.items()
             if (reg.value if hasattr(reg, 'value') else reg) == region
         ]
         if region_countries:
-            return {"country": {"$in": region_countries}}
+            conditions.append({"country": {"$in": region_countries}})
 
-    # Fallback: no filter (shouldn't happen but safe default)
+    if conditions:
+        return {"$or": conditions}
+    
     return {}
 
 
