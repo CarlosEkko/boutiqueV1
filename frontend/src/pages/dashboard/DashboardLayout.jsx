@@ -222,7 +222,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const { demoMode } = useDemo();
+  const { demoMode, sections } = useDemo();
   
   // Helper to translate labels from backend
   const translateLabel = (label) => {
@@ -670,6 +670,32 @@ const DashboardLayout = () => {
   
   const adminMenus = menuStructure.filter(m => !clientMenuDepts.includes(m.department));
 
+  // Demo mode: hide menus for sections not in the user's demo permissions
+  const DEPT_TO_DEMO_SECTION = {
+    'portfolio': 'portfolio',
+    'investimentos': 'portfolio',
+    'transparencia': 'transactions',
+    'otc_trading': 'otc',
+    'multi_sign': 'vault',
+    'account': '_always_',
+    'otc_desk': 'otc',
+    'finance': 'fiat_ops',
+    'crm': 'otc',
+  };
+
+  const filterMenusByDemo = (menus) => {
+    if (!demoMode) return menus;
+    return menus.filter(m => {
+      const demoSection = DEPT_TO_DEMO_SECTION[m.department];
+      if (!demoSection) return false;
+      if (demoSection === '_always_') return true;
+      return sections.includes(demoSection);
+    });
+  };
+
+  const filteredClientMenus = filterMenusByDemo(clientMenus);
+  const filteredAdminMenus = filterMenusByDemo(adminMenus);
+
   return (
     <div className="min-h-screen bg-black flex">
       {/* Sidebar - Desktop */}
@@ -705,23 +731,23 @@ const DashboardLayout = () => {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
           {/* Client Menus */}
-          {clientMenus.length > 0 && (
+          {filteredClientMenus.length > 0 && (
             <div className="space-y-2">
-              {clientMenus.map((menu) => (
+              {filteredClientMenus.map((menu) => (
                 <MenuSection key={menu.department} menu={menu} />
               ))}
             </div>
           )}
 
           {/* Admin/Staff Menus */}
-          {adminMenus.length > 0 && (
+          {filteredAdminMenus.length > 0 && (
             <div className="pt-4 border-t border-gold-800/20 space-y-2">
               {sidebarOpen && (
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
                   {t('sidebar.gestaoLabel')}
                 </p>
               )}
-              {adminMenus.map((menu) => (
+              {filteredAdminMenus.map((menu) => (
                 <MenuSection key={menu.department} menu={menu} />
               ))}
             </div>
@@ -778,21 +804,21 @@ const DashboardLayout = () => {
         <div className="md:hidden fixed inset-0 z-40 bg-black/95 pt-16 overflow-y-auto">
           <nav className="p-4 space-y-4">
             {/* Client Menus */}
-            {clientMenus.length > 0 && (
+            {filteredClientMenus.length > 0 && (
               <div className="space-y-2">
-                {clientMenus.map((menu) => (
+                {filteredClientMenus.map((menu) => (
                   <MenuSection key={menu.department} menu={menu} isMobile={true} />
                 ))}
               </div>
             )}
             
             {/* Admin/Staff Menus */}
-            {adminMenus.length > 0 && (
+            {filteredAdminMenus.length > 0 && (
               <div className="pt-4 mt-4 border-t border-gold-800/20 space-y-2">
                 <p className="px-4 text-xs text-gold-400 uppercase mb-2 tracking-wider">
                   {t('sidebar.gestaoLabel')}
                 </p>
-                {adminMenus.map((menu) => (
+                {filteredAdminMenus.map((menu) => (
                   <MenuSection key={menu.department} menu={menu} isMobile={true} />
                 ))}
               </div>
