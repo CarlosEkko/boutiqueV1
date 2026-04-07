@@ -84,10 +84,10 @@ export const CreateLeadDialog = ({
                 <UserPlus size={20} className="text-amber-500" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>
+                <h2 className="text-xl font-semibold text-zinc-50">
                   {t('otc.createLead.title')}
                 </h2>
-                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]">
                   {STEPS[0].num} / 03 · {STEPS[0].label}
                 </p>
               </div>
@@ -102,7 +102,7 @@ export const CreateLeadDialog = ({
           </div>
         </div>
 
-        <div className="px-8 py-6 space-y-8" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        <div className="px-8 py-6 space-y-8">
           {/* Existing Contact Warning — Premium Card */}
           {showExistingWarning && existingContact && (
             <div className="rounded-xl border border-amber-500/30 bg-zinc-900 overflow-hidden" data-testid="existing-contact-warning">

@@ -67,12 +67,12 @@ const OTCLeads = () => {
   };
 
   return (
-    <div className="space-y-8" data-testid="otc-leads-page" style={{ fontFamily: 'Manrope, sans-serif' }}>
+    <div className="space-y-8" data-testid="otc-leads-page">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
           <p className="text-xs text-zinc-500 uppercase tracking-[0.2em] mb-2">OTC Desk</p>
-          <h1 className="text-3xl text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>
+          <h1 className="text-3xl text-zinc-50 font-light">
             Leads
           </h1>
           <p className="text-zinc-500 text-sm mt-1">{total} leads no pipeline</p>
@@ -349,8 +349,8 @@ const OTCLeads = () => {
                 <FileText size={20} className="text-amber-500" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>Pré-Qualificação</h2>
-                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>02 / 03 · {selectedLead?.entity_name}</p>
+                <h2 className="text-xl font-semibold text-zinc-50">Pré-Qualificação</h2>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]">02 / 03 · {selectedLead?.entity_name}</p>
               </div>
             </div>
             <div className="flex items-center gap-0">
@@ -359,7 +359,7 @@ const OTCLeads = () => {
               <div className="flex-1 h-[2px] bg-zinc-800 rounded-full" />
             </div>
           </div>
-          <div className="px-8 py-6 space-y-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+          <div className="px-8 py-6 space-y-6">
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="text-sm text-zinc-400 mb-2 block font-medium">Tipo de Cliente</Label>
@@ -368,7 +368,7 @@ const OTCLeads = () => {
                   <SelectContent className="bg-zinc-900 border-zinc-800">
                     <SelectItem value="retail" className="text-zinc-100">Retalho</SelectItem>
                     <SelectItem value="hnwi" className="text-zinc-100">HNWI</SelectItem>
-                    <SelectItem value="corporate" className="text-zinc-100">Empresa</SelectItem>
+                    <SelectItem value="company" className="text-zinc-100">Empresa</SelectItem>
                     <SelectItem value="fund_institution" className="text-zinc-100">Fundo / Instituição</SelectItem>
                   </SelectContent>
                 </Select>
@@ -466,8 +466,8 @@ const OTCLeads = () => {
                 <Settings size={20} className="text-amber-500" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>Setup Operacional</h2>
-                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>03 / 03 · {selectedLead?.entity_name}</p>
+                <h2 className="text-xl font-semibold text-zinc-50">Setup Operacional</h2>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]">03 / 03 · {selectedLead?.entity_name}</p>
               </div>
             </div>
             <div className="flex items-center gap-0">
@@ -476,7 +476,7 @@ const OTCLeads = () => {
               <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
             </div>
           </div>
-          <div className="px-8 py-6 space-y-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+          <div className="px-8 py-6 space-y-6">
             <div className="grid grid-cols-2 gap-5">
               <div>
                 <Label className="text-sm text-zinc-400 mb-2 block font-medium">Limite Diário (USD)</Label>

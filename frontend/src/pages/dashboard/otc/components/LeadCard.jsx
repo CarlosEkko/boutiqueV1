@@ -55,7 +55,7 @@ export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelet
       onClick={onClick}
       data-testid={`lead-card-${lead.id}`}
     >
-      <CardContent className="p-5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+      <CardContent className="p-5">
         <div className="flex items-center gap-5">
           {/* Avatar */}
           <div className="w-12 h-12 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-amber-500 font-semibold text-sm shrink-0">
@@ -65,7 +65,7 @@ export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelet
           {/* Main Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1">
-              <h3 className="text-zinc-100 font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <h3 className="text-zinc-100 font-semibold text-sm truncate">
                 {lead.entity_name}
               </h3>
               <Badge className={`text-[10px] px-2 py-0.5 border ${style.bg} ${style.text} ${style.border} font-medium`}>
