@@ -319,6 +319,7 @@ const OTCLeads = () => {
               <div className="pt-4 border-t border-zinc-800">
                 {(selectedLead.status === 'new' || selectedLead.status === 'contacted') && (
                   <div className="flex gap-3">
+                    <Button onClick={() => openPreQual(selectedLead)} className="flex-1 bg-purple-600 hover:bg-purple-500"><FileText size={16} className="mr-2" />{t('otc.preQualification')}</Button>
                     <Button onClick={() => handlePreQualify(selectedLead.id, true)} className="flex-1 bg-green-600 hover:bg-green-500"><CheckCircle size={16} className="mr-2" />{t('otc.preQualify')}</Button>
                     <Button onClick={() => handlePreQualify(selectedLead.id, false)} variant="outline" className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"><XCircle size={16} className="mr-2" />{t('otc.notQualified')}</Button>
                   </div>
@@ -377,14 +378,39 @@ const OTCLeads = () => {
                 <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
                   <SelectItem value="trading" className="text-white">Trading</SelectItem>
                   <SelectItem value="treasury" className="text-white">Tesouraria</SelectItem>
-                  <SelectItem value="hedging" className="text-white">Hedging</SelectItem>
-                  <SelectItem value="investment" className="text-white">Investimento</SelectItem>
+                  <SelectItem value="arbitrage" className="text-white">Arbitragem</SelectItem>
+                  <SelectItem value="remittances" className="text-white">Remessas</SelectItem>
+                  <SelectItem value="otc_b2b" className="text-white">OTC B2B</SelectItem>
                   <SelectItem value="other" className="text-white">Outro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.fundSource')}</Label><Input value={preQualData.fund_source} onChange={e => setPreQualData({...preQualData, fund_source: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.bankJurisdiction')}</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div><Label className="text-gray-400 text-sm">{t('otc.fundSource')}</Label>
+              <Select value={preQualData.fund_source} onValueChange={v => setPreQualData({...preQualData, fund_source: v})}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectItem value="income" className="text-white">Rendimento</SelectItem>
+                  <SelectItem value="company" className="text-white">Empresa</SelectItem>
+                  <SelectItem value="crypto_holdings" className="text-white">Holdings Crypto</SelectItem>
+                  <SelectItem value="asset_sale" className="text-white">Venda de Ativos</SelectItem>
+                  <SelectItem value="inheritance" className="text-white">Herança</SelectItem>
+                  <SelectItem value="investment_returns" className="text-white">Retornos de Investimento</SelectItem>
+                  <SelectItem value="other" className="text-white">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-gray-400 text-sm">Canal de Liquidação</Label>
+              <Select value={preQualData.settlement_channel} onValueChange={v => setPreQualData({...preQualData, settlement_channel: v})}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                  <SelectItem value="bank_transfer" className="text-white">Transferência Bancária</SelectItem>
+                  <SelectItem value="stablecoins" className="text-white">Stablecoins</SelectItem>
+                  <SelectItem value="on_chain" className="text-white">On-Chain</SelectItem>
+                  <SelectItem value="off_chain" className="text-white">Off-Chain</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-gray-400 text-sm">{t('otc.bankJurisdiction')}</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Ex: Suíça, Portugal..." /></div>
             <div><Label className="text-gray-400 text-sm">{t('otc.redFlagNotes')}</Label><Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
             <div><Label className="text-gray-400 text-sm">{t('otc.notes')}</Label><Textarea value={preQualData.notes} onChange={e => setPreQualData({...preQualData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
           </div>
@@ -408,7 +434,16 @@ const OTCLeads = () => {
               <div><Label className="text-gray-400 text-sm">{t('otc.settlementMethod')}</Label>
                 <Select value={setupData.settlement_method} onValueChange={v => setSetupData({...setupData, settlement_method: v})}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="bank_transfer" className="text-white">{t('otc.bankTransfer')}</SelectItem><SelectItem value="crypto" className="text-white">{t('otc.crypto')}</SelectItem><SelectItem value="both" className="text-white">{t('otc.both')}</SelectItem></SelectContent>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectItem value="sepa" className="text-white">SEPA</SelectItem>
+                    <SelectItem value="swift" className="text-white">SWIFT</SelectItem>
+                    <SelectItem value="pix" className="text-white">PIX</SelectItem>
+                    <SelectItem value="faster_payments" className="text-white">Faster Payments</SelectItem>
+                    <SelectItem value="usdt_onchain" className="text-white">USDT On-Chain</SelectItem>
+                    <SelectItem value="usdc_onchain" className="text-white">USDC On-Chain</SelectItem>
+                    <SelectItem value="crypto_onchain" className="text-white">Crypto On-Chain</SelectItem>
+                    <SelectItem value="internal" className="text-white">Interno</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
               <div><Label className="text-gray-400 text-sm">{t('otc.accountManager')}</Label>

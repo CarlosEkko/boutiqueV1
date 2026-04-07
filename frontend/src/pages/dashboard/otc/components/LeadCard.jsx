@@ -99,11 +99,7 @@ export const LeadCard = ({ lead, onVerify, onPreQual, onAdvanceKYC, onApproveKYC
           <div className="flex-shrink-0">{getStatusBadge(lead.status)}</div>
 
           <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
-            {lead.status === 'new' && (
-              <Button size="icon" variant="outline" className="w-10 h-10 border-blue-500/30 text-blue-400 hover:bg-blue-900/20"
-                onClick={e => { e.stopPropagation(); onVerify(lead.id); }} title={t('otc.verifyClient')} data-testid={`verify-lead-${lead.id}`}><UserCheck size={18} /></Button>
-            )}
-            {lead.status === 'contacted' && (
+            {(lead.status === 'new' || lead.status === 'contacted') && (
               <Button size="icon" variant="outline" className="w-10 h-10 border-purple-500/30 text-purple-400 hover:bg-purple-900/20"
                 onClick={e => { e.stopPropagation(); onPreQual(lead); }} title={t('otc.preQualification')} data-testid={`prequal-lead-${lead.id}`}><FileText size={18} /></Button>
             )}
