@@ -510,7 +510,7 @@ const OTCLeads = () => {
                 <Label className="text-sm text-zinc-400 mb-2 block font-medium">Account Manager</Label>
                 <Select value={setupData.account_manager_id} onValueChange={v => setSetupData({...setupData, account_manager_id: v})}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800">{teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-zinc-100 hover:bg-zinc-800">{m.name}{m.region ? ` (${m.region})` : ''}</SelectItem>)}</SelectContent>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">{teamMembers.filter((m, i, arr) => arr.findIndex(x => x.id === m.id) === i).map(m => <SelectItem key={m.id} value={m.id} className="text-zinc-100 hover:bg-zinc-800">{m.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
