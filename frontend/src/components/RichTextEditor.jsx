@@ -101,8 +101,31 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Escreva o conteúdo aq
           elementpath: true,
           link_default_target: '_blank',
           image_advtab: true,
-          automatic_uploads: false,
+          automatic_uploads: true,
           file_picker_types: 'image',
+          images_upload_handler: (blobInfo) => {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(blobInfo.blob());
+            });
+          },
+          file_picker_callback: (callback, value, meta) => {
+            if (meta.filetype === 'image') {
+              const input = document.createElement('input');
+              input.setAttribute('type', 'file');
+              input.setAttribute('accept', 'image/*');
+              input.onchange = function () {
+                const file = this.files[0];
+                const reader = new FileReader();
+                reader.onload = function () {
+                  callback(reader.result, { alt: file.name });
+                };
+                reader.readAsDataURL(file);
+              };
+              input.click();
+            }
+          },
           block_formats: 'Parágrafo=p; Título 1=h1; Título 2=h2; Título 3=h3; Pré-formatado=pre; Citação=blockquote',
           setup: (editor) => {
             editor.on('init', () => {
