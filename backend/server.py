@@ -73,6 +73,7 @@ from routes.risk_compliance import router as risk_compliance_router, set_db as s
 from routes.staking import router as staking_router
 from routes.tokenization import router as tokenization_router
 from routes.security import router as security_router, set_db as set_security_db
+from routes.demo import router as demo_router, set_db as set_demo_db
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -103,6 +104,7 @@ set_admin_multisign_db(db)
 set_otc_deals_db(db)
 set_risk_compliance_db(db)
 set_security_db(db)
+set_demo_db(db)
 set_security_logger_db(db)
 
 api_router.include_router(auth_router)
@@ -138,6 +140,7 @@ api_router.include_router(risk_compliance_router)
 api_router.include_router(staking_router)
 api_router.include_router(tokenization_router)
 api_router.include_router(security_router)
+api_router.include_router(demo_router)
 
 
 # Define Models
