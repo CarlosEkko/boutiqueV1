@@ -540,9 +540,9 @@ const DashboardLayout = () => {
                   : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <DeptIcon size={18} />
-                <span className="font-medium text-sm">{translateLabel(menu.label)}</span>
+              <div className="flex items-center gap-3 min-w-0">
+                <DeptIcon size={18} className="shrink-0" />
+                <span className="font-medium text-sm truncate">{translateLabel(menu.label)}</span>
                 {deptNotificationCount > 0 && !isExpanded && (
                   <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                     {deptNotificationCount > 99 ? '99+' : deptNotificationCount}
