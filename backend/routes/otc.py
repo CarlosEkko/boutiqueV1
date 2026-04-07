@@ -1141,7 +1141,7 @@ async def advance_lead_to_kyc(
     lead_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Advance a pre-qualified lead to KYC stage"""
+    """Advance a pre-qualified lead to KYC stage — sends onboarding email with Tier"""
     db = get_db()
     
     lead = await db.otc_leads.find_one({"id": lead_id})
@@ -1151,17 +1151,55 @@ async def advance_lead_to_kyc(
     if lead.get("status") != OTCLeadStatus.PRE_QUALIFIED.value:
         raise HTTPException(status_code=400, detail="Lead must be pre-qualified first")
     
+    current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
+    tier = lead.get("potential_tier", "standard")
+    
     # Update lead status to KYC pending
     await db.otc_leads.update_one(
         {"id": lead_id},
         {"$set": {
             "status": OTCLeadStatus.KYC_PENDING.value,
+            "kyc_sent_at": datetime.now(timezone.utc).isoformat(),
+            "kyc_sent_by": current_user_id,
             "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        "$push": {
+            "activity_log": {
+                "action": "advanced_to_kyc",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "user_id": current_user_id,
+                "details": f"Email de onboarding enviado. Tier: {tier}"
+            }
         }}
     )
     
+    # Send onboarding email
+    email_sent = False
+    contact_email = lead.get("contact_email")
+    contact_name = lead.get("contact_name", "")
+    entity_name = lead.get("entity_name", "")
+    
+    if contact_email:
+        try:
+            from services.email_service import send_onboarding_email
+            frontend_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+            email_sent = await send_onboarding_email(
+                to_email=contact_email,
+                to_name=contact_name,
+                entity_name=entity_name,
+                tier=tier,
+                register_url=f"{frontend_url}/register?ref=otc&tier={tier}"
+            )
+        except Exception as e:
+            print(f"Error sending onboarding email: {e}")
+    
     updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
-    return {"success": True, "lead": updated_lead, "message": "Lead avançado para KYC"}
+    return {
+        "success": True, 
+        "lead": updated_lead, 
+        "email_sent": email_sent,
+        "message": f"Lead avançado para KYC. {'Email enviado.' if email_sent else 'Email não enviado (verificar configuração Brevo).'}"
+    }
 
 
 @router.post("/leads/{lead_id}/approve-kyc")

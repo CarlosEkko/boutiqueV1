@@ -324,12 +324,14 @@ const OTCLeads = () => {
                 )}
                 {selectedLead.status === 'pre_qualified' && <Button onClick={() => handleAdvanceToKYC(selectedLead.id)} className="w-full bg-gold-500 hover:bg-gold-400 text-black"><ChevronRight size={16} className="mr-2" />{t('otc.advanceToKYC')}</Button>}
                 {selectedLead.status === 'kyc_pending' && (
-                  <div className="flex gap-3">
-                    <Button onClick={() => handleApproveKYC(selectedLead.id)} className="flex-1 bg-green-600 hover:bg-green-500"><CheckCircle size={16} className="mr-2" />{t('otc.approveKYC')}</Button>
-                    <Button onClick={() => handlePreQualify(selectedLead.id, false)} variant="outline" className="flex-1 border-red-600 text-red-400 hover:bg-red-900/20"><XCircle size={16} className="mr-2" />{t('otc.rejectKYC')}</Button>
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+                    <Shield size={20} className="mx-auto mb-2 text-amber-500" />
+                    <p className="text-amber-400 text-sm font-medium">KYC/KYB em Verificação</p>
+                    <p className="text-zinc-500 text-xs mt-1">A aprovação é feita em Risco & Conformidade após verificação Sumsub</p>
                   </div>
                 )}
-                {selectedLead.status === 'kyc_approved' && <Button onClick={() => handleConvertToClient(selectedLead.id)} className="w-full bg-gold-500 hover:bg-gold-400 text-black"><UserCheck size={16} className="mr-2" />{t('otc.convertToClient')}</Button>}
+                {selectedLead.status === 'kyc_approved' && <Button onClick={() => openSetup(selectedLead)} className="w-full bg-gold-500 hover:bg-gold-400 text-black"><Settings size={16} className="mr-2" />Setup Operacional</Button>}
+                {selectedLead.status === 'setup_pending' && <Button onClick={() => handleConvertToClient(selectedLead.id)} className="w-full bg-emerald-600 hover:bg-emerald-500"><UserCheck size={16} className="mr-2" />{t('otc.convertToClient')}</Button>}
                 {selectedLead.status !== 'active_client' && (
                   <div className="flex gap-3 mt-3">
                     <Button onClick={() => handleArchiveLead(selectedLead.id)} variant="outline" className="flex-1 border-gray-600 text-gray-400"><Archive size={16} className="mr-2" />{t('otc.archive')}</Button>

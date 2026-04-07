@@ -115,12 +115,6 @@ export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelet
                 <Shield size={16} />
               </Button>
             )}
-            {lead.status === 'kyc_pending' && (
-              <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-400/10"
-                onClick={e => { e.stopPropagation(); onApproveKYC(lead.id); }} title="Aprovar KYC" data-testid={`approve-kyc-${lead.id}`}>
-                <CheckCircle size={16} />
-              </Button>
-            )}
             {lead.status === 'kyc_approved' && (
               <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10"
                 onClick={e => { e.stopPropagation(); onSetup(lead); }} title="Setup Operacional" data-testid={`setup-lead-${lead.id}`}>
