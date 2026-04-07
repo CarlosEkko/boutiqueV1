@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useDemo } from '../../context/DemoContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -37,6 +38,7 @@ const CURRENCIES = ['EUR', 'USD', 'GBP', 'BRL', 'AED', 'CHF'];
 
 const BankAccountsPage = () => {
   const { token, user } = useAuth();
+  const { demoMode } = useDemo();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -59,17 +61,17 @@ const BankAccountsPage = () => {
 
   useEffect(() => {
     fetchAccounts();
-  }, [token]);
+  }, [token, demoMode]);
 
   const fetchAccounts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/bank-accounts`, {
+      const endpoint = demoMode ? `${API_URL}/api/demo/bank-accounts` : `${API_URL}/api/bank-accounts`;
+      const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAccounts(response.data || []);
     } catch (err) {
       console.error('Error fetching bank accounts:', err);
-      // Don't show error toast on 404 - just means no accounts yet
       if (err.response?.status !== 404) {
         toast.error('Falha ao carregar contas bancárias');
       }
@@ -219,8 +221,9 @@ const BankAccountsPage = () => {
             Atualizar
           </Button>
           <Button
-            onClick={() => { resetForm(); setShowAddModal(true); }}
-            className="bg-gold-500 hover:bg-gold-400"
+            onClick={() => { if (!demoMode) { resetForm(); setShowAddModal(true); } }}
+            className={`bg-gold-500 hover:bg-gold-400 ${demoMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={demoMode}
           >
             <Plus size={18} className="mr-2" />
             Adicionar Conta
@@ -293,6 +296,7 @@ const BankAccountsPage = () => {
                     </div>
                   </div>
 
+                  {!demoMode && (
                   <div className="flex items-center gap-2">
                     {!account.is_primary && account.status === 'verified' && (
                       <Button
@@ -316,6 +320,7 @@ const BankAccountsPage = () => {
                       <Trash2 size={14} />
                     </Button>
                   </div>
+                  )}
                 </div>
 
                 {account.status === 'rejected' && account.rejection_reason && (

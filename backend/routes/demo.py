@@ -101,6 +101,110 @@ def _generate_transactions(user_id):
     return txs
 
 
+def _generate_demo_profile():
+    """Generate mock profile data for demo presentations"""
+    return {
+        "id": DEMO_CLIENT_ID,
+        "name": "Victoria Sterling",
+        "email": "victoria.sterling@sterling-capital.com",
+        "phone": "+44 20 7946 0958",
+        "country": "GB",
+        "date_of_birth": "1982-03-15",
+        "address": "42 Kensington Palace Gardens, London W8 4QY, United Kingdom",
+        "user_type": "client",
+        "membership_level": "vip",
+        "region": "europe",
+        "is_active": True,
+        "is_approved": True,
+        "is_onboarded": True,
+        "kyc_status": "approved",
+        "is_demo": True,
+    }
+
+
+def _generate_bank_accounts(user_id):
+    """Generate realistic demo bank accounts"""
+    now = datetime.now(timezone.utc)
+    return [
+        {
+            "id": f"demo-bank-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "account_holder": "Victoria Sterling",
+            "bank_name": "UBS Switzerland AG",
+            "iban": "CH9300762011623852957",
+            "swift_bic": "UBSWCHZH80A",
+            "account_number": None,
+            "sort_code": None,
+            "routing_number": None,
+            "country": "CH",
+            "currency": "CHF",
+            "is_primary": True,
+            "status": "verified",
+            "rejection_reason": None,
+            "is_demo": True,
+            "created_at": (now - timedelta(days=80)).isoformat(),
+            "updated_at": (now - timedelta(days=75)).isoformat(),
+        },
+        {
+            "id": f"demo-bank-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "account_holder": "Sterling Capital Partners Ltd",
+            "bank_name": "Barclays Private Bank",
+            "iban": "GB29BARC20040156781234",
+            "swift_bic": "BARCGB22",
+            "account_number": "56781234",
+            "sort_code": "20-04-01",
+            "routing_number": None,
+            "country": "GB",
+            "currency": "GBP",
+            "is_primary": False,
+            "status": "verified",
+            "rejection_reason": None,
+            "is_demo": True,
+            "created_at": (now - timedelta(days=60)).isoformat(),
+            "updated_at": (now - timedelta(days=55)).isoformat(),
+        },
+        {
+            "id": f"demo-bank-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "account_holder": "Victoria Sterling",
+            "bank_name": "Julius Baer",
+            "iban": "CH4308401016529783901",
+            "swift_bic": "BAABORCHXXX",
+            "account_number": None,
+            "sort_code": None,
+            "routing_number": None,
+            "country": "CH",
+            "currency": "EUR",
+            "is_primary": False,
+            "status": "verified",
+            "rejection_reason": None,
+            "is_demo": True,
+            "created_at": (now - timedelta(days=45)).isoformat(),
+            "updated_at": (now - timedelta(days=40)).isoformat(),
+        },
+        {
+            "id": f"demo-bank-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "account_holder": "Sterling Capital Partners LLC",
+            "bank_name": "JP Morgan Chase",
+            "iban": None,
+            "swift_bic": "CHASUS33",
+            "account_number": "482917365012",
+            "sort_code": None,
+            "routing_number": "021000021",
+            "country": "US",
+            "currency": "USD",
+            "is_primary": False,
+            "status": "pending",
+            "rejection_reason": None,
+            "is_demo": True,
+            "created_at": (now - timedelta(days=3)).isoformat(),
+            "updated_at": (now - timedelta(days=3)).isoformat(),
+        },
+    ]
+
+
 def _generate_otc_leads():
     """Generate realistic OTC leads for CRM demo"""
     now = datetime.now(timezone.utc)
@@ -331,7 +435,7 @@ def _generate_vault_data(user_id):
         {
             "id": f"demo-sig-{uuid.uuid4().hex[:8]}",
             "owner_id": user_id,
-            "user_id": f"demo-sig-user-1",
+            "user_id": "demo-sig-user-1",
             "name": "James Sterling",
             "email": "james@sterling-capital.com",
             "role": "co_signer",
@@ -344,7 +448,7 @@ def _generate_vault_data(user_id):
         {
             "id": f"demo-sig-{uuid.uuid4().hex[:8]}",
             "owner_id": user_id,
-            "user_id": f"demo-sig-user-2",
+            "user_id": "demo-sig-user-2",
             "name": "Catherine Wells",
             "email": "c.wells@sterling-capital.com",
             "role": "approver",
@@ -597,7 +701,7 @@ async def seed_demo_data_endpoint(admin: dict = Depends(get_admin_user)):
 @router.post("/reset")
 async def reset_demo_data(admin: dict = Depends(get_admin_user)):
     """Reset all demo data"""
-    collections = ["wallets", "transactions", "otc_leads", "otc_deals", "otc_clients", "bank_transfers", "crypto_deposits", "crypto_withdrawals", "vault_signatories", "vault_settings", "vault_transactions", "demo_data"]
+    collections = ["wallets", "transactions", "otc_leads", "otc_deals", "otc_clients", "bank_transfers", "bank_accounts", "crypto_deposits", "crypto_withdrawals", "vault_signatories", "vault_settings", "vault_transactions", "demo_data"]
     counts = {}
     for col in collections:
         r = await db[col].delete_many({"is_demo": True})
@@ -626,6 +730,30 @@ async def get_demo_client(user_id: str = Depends(get_current_user_id)):
         "name": demo_client.get("name"),
         "token_hint": "Use demo client ID for API calls in demo mode"
     }
+
+
+@router.get("/profile")
+async def get_demo_profile(user_id: str = Depends(get_current_user_id)):
+    """Get mock profile data for demo mode — hides real user identity"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user or not user.get("demo_mode"):
+        raise HTTPException(status_code=403, detail="Demo mode not active")
+    return _generate_demo_profile()
+
+
+@router.get("/bank-accounts")
+async def get_demo_bank_accounts(user_id: str = Depends(get_current_user_id)):
+    """Get mock bank accounts for demo mode"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user or not user.get("demo_mode"):
+        raise HTTPException(status_code=403, detail="Demo mode not active")
+    accounts = await db.bank_accounts.find(
+        {"user_id": DEMO_CLIENT_ID, "is_demo": True},
+        {"_id": 0}
+    ).to_list(100)
+    if not accounts:
+        accounts = _generate_bank_accounts(DEMO_CLIENT_ID)
+    return accounts
 
 
 async def _seed_demo_data():
@@ -661,6 +789,7 @@ async def _seed_demo_data():
     await db.otc_leads.delete_many({"is_demo": True})
     await db.otc_deals.delete_many({"is_demo": True})
     await db.bank_transfers.delete_many({"is_demo": True})
+    await db.bank_accounts.delete_many({"is_demo": True})
     await db.crypto_deposits.delete_many({"is_demo": True})
     await db.crypto_withdrawals.delete_many({"is_demo": True})
     await db.vault_signatories.delete_many({"is_demo": True})
@@ -746,7 +875,12 @@ async def _seed_demo_data():
     if vault_txs:
         await db.vault_transactions.insert_many(vault_txs)
     
-    # 11. Mark seed as done
+    # 11. Create demo bank accounts
+    demo_bank_accounts = _generate_bank_accounts(DEMO_CLIENT_ID)
+    if demo_bank_accounts:
+        await db.bank_accounts.insert_many(demo_bank_accounts)
+    
+    # 12. Mark seed as done
     await db.demo_data.update_one(
         {"type": "seed_status"},
         {"$set": {"type": "seed_status", "seeded_at": now.isoformat(), "version": 1}},
@@ -767,5 +901,6 @@ async def _seed_demo_data():
             "crypto_withdrawals": len(crypto_withs),
             "vault_signatories": len(signatories),
             "vault_transactions": len(vault_txs),
+            "bank_accounts": len(demo_bank_accounts),
         }
     }

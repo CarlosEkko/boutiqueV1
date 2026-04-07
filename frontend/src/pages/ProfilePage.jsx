@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useDemo } from '../context/DemoContext';
 import { useLanguage } from '../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -9,11 +10,14 @@ import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
+import axios from 'axios';
 import { 
   User, Mail, Phone, Globe, Edit2, Save, X, Shield, Calendar,
   CreditCard, Bitcoin, ArrowUpCircle, ArrowDownCircle, 
   FileText, MapPin, Hash, Copy, RefreshCw
 } from 'lucide-react';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const COUNTRIES = [
   { code: 'PT', name: 'Portugal' },
@@ -31,12 +35,14 @@ const COUNTRIES = [
 ];
 
 const ProfilePage = () => {
-  const { user, loading, isAuthenticated, updateProfile } = useAuth();
+  const { user, loading, isAuthenticated, updateProfile, token } = useAuth();
+  const { demoMode } = useDemo();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [demoProfile, setDemoProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -62,18 +68,32 @@ const ProfilePage = () => {
     }
   }, [loading, isAuthenticated, navigate]);
 
+  // Fetch demo profile when demo mode is active
   useEffect(() => {
-    if (user) {
+    if (demoMode && token) {
+      axios.get(`${API_URL}/api/demo/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => setDemoProfile(res.data)).catch(() => {});
+    } else {
+      setDemoProfile(null);
+    }
+  }, [demoMode, token]);
+
+  // Use demo profile or real user
+  const displayUser = demoMode && demoProfile ? demoProfile : user;
+
+  useEffect(() => {
+    if (displayUser) {
       setFormData({
-        name: user.name || '',
-        phone: user.phone || '',
-        country: user.country || '',
-        date_of_birth: user.date_of_birth || '',
-        address: user.address || ''
+        name: displayUser.name || '',
+        phone: displayUser.phone || '',
+        country: displayUser.country || '',
+        date_of_birth: displayUser.date_of_birth || '',
+        address: displayUser.address || ''
       });
 
       // Set limits based on membership
-      if (user.membership_level === 'premium') {
+      if (displayUser.membership_level === 'premium') {
         setAccountLimits({
           fiat_deposit_daily: 100000,
           fiat_deposit_monthly: 1000000,
@@ -83,7 +103,7 @@ const ProfilePage = () => {
           crypto_withdrawal_daily: 250000,
           crypto_withdrawal_monthly: 2500000
         });
-      } else if (user.membership_level === 'vip' || user.membership_level === 'elite') {
+      } else if (displayUser.membership_level === 'vip' || displayUser.membership_level === 'elite') {
         setAccountLimits({
           fiat_deposit_daily: 'Ilimitado',
           fiat_deposit_monthly: 'Ilimitado',
@@ -95,7 +115,7 @@ const ProfilePage = () => {
         });
       }
     }
-  }, [user]);
+  }, [displayUser]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -121,11 +141,11 @@ const ProfilePage = () => {
 
   const handleCancel = () => {
     setFormData({
-      name: user?.name || '',
-      phone: user?.phone || '',
-      country: user?.country || '',
-      date_of_birth: user?.date_of_birth || '',
-      address: user?.address || ''
+      name: displayUser?.name || '',
+      phone: displayUser?.phone || '',
+      country: displayUser?.country || '',
+      date_of_birth: displayUser?.date_of_birth || '',
+      address: displayUser?.address || ''
     });
     setEditing(false);
   };
@@ -151,8 +171,8 @@ const ProfilePage = () => {
   };
 
   const getClientNumber = () => {
-    if (!user?.id) return '-';
-    return `KB-${user.id.slice(0, 8).toUpperCase()}`;
+    if (!displayUser?.id) return '-';
+    return `KB-${displayUser.id.slice(0, 8).toUpperCase()}`;
   };
 
   if (loading) {
@@ -189,25 +209,25 @@ const ProfilePage = () => {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-white text-2xl font-medium">
-              {getInitials(user.name)}
+              {getInitials(displayUser.name)}
             </div>
             
             <div className="text-center md:text-left flex-1">
-              <h2 className="text-xl font-medium text-white">{user.name}</h2>
-              <p className="text-gray-400">{user.email}</p>
+              <h2 className="text-xl font-medium text-white">{displayUser.name}</h2>
+              <p className="text-gray-400">{displayUser.email}</p>
               <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-                <Badge className={`${user.kyc_status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'} border-0`}>
+                <Badge className={`${displayUser.kyc_status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'} border-0`}>
                   <Shield size={12} className="mr-1" />
-                  {user.kyc_status === 'approved' ? t('profile.myProfile.kycVerified') : t('profile.myProfile.kycPending')}
+                  {displayUser.kyc_status === 'approved' ? t('profile.myProfile.kycVerified') : t('profile.myProfile.kycPending')}
                 </Badge>
                 <Badge className="bg-gold-500/20 text-gold-400 border-0">
-                  {user.membership_level === 'vip' || user.membership_level === 'elite' ? 'Elite' :
-                   user.membership_level === 'premium' ? 'Premium' : 'Standard'}
+                  {displayUser.membership_level === 'vip' || displayUser.membership_level === 'elite' ? 'Elite' :
+                   displayUser.membership_level === 'premium' ? 'Premium' : 'Standard'}
                 </Badge>
                 <Badge className="bg-blue-500/20 text-blue-400 border-0">
-                  {user.region === 'europe' ? 'Europa' :
-                   user.region === 'mena' ? 'MENA' :
-                   user.region === 'latam' ? 'LATAM' : 'Global'}
+                  {displayUser.region === 'europe' ? 'Europa' :
+                   displayUser.region === 'mena' ? 'MENA' :
+                   displayUser.region === 'latam' ? 'LATAM' : 'Global'}
                 </Badge>
               </div>
             </div>
@@ -306,7 +326,7 @@ const ProfilePage = () => {
               {t('profile.myProfile.personalInfo')}
             </CardTitle>
             {!editing ? (
-              <Button onClick={() => setEditing(true)} size="sm" variant="outline" className="border-zinc-700">
+              <Button onClick={() => !demoMode && setEditing(true)} size="sm" variant="outline" className={`border-zinc-700 ${demoMode ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={demoMode}>
                 <Edit2 size={14} className="mr-1" /> {t('profile.myProfile.editProfile')}
               </Button>
             ) : (
@@ -340,7 +360,7 @@ const ProfilePage = () => {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <p className="text-white">{getCountryName(user.country) || '-'}</p>
+                  <p className="text-white">{getCountryName(displayUser.country) || '-'}</p>
                 )}
               </div>
             </div>
@@ -350,7 +370,7 @@ const ProfilePage = () => {
               {editing ? (
                 <Input name="name" value={formData.name} onChange={handleChange} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
-                <p className="text-white">{user.name}</p>
+                <p className="text-white">{displayUser.name}</p>
               )}
             </div>
 
@@ -359,13 +379,13 @@ const ProfilePage = () => {
               {editing ? (
                 <Input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
-                <p className="text-white">{user.date_of_birth || '-'}</p>
+                <p className="text-white">{displayUser.date_of_birth || '-'}</p>
               )}
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
               <p className="text-xs text-gray-500 flex items-center gap-1"><FileText size={12} /> {t('profile.myProfile.documents')}</p>
-              <p className="text-white">{user.kyc_status === 'approved' ? t('profile.myProfile.verified') : t('profile.myProfile.kycPending')}</p>
+              <p className="text-white">{displayUser.kyc_status === 'approved' ? t('profile.myProfile.verified') : t('profile.myProfile.kycPending')}</p>
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
@@ -373,13 +393,13 @@ const ProfilePage = () => {
               {editing ? (
                 <Input name="address" value={formData.address} onChange={handleChange} placeholder={t('profile.myProfile.address')} className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
-                <p className="text-white">{user.address || '-'}</p>
+                <p className="text-white">{displayUser.address || '-'}</p>
               )}
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
               <p className="text-xs text-gray-500 flex items-center gap-1"><Mail size={12} /> Email</p>
-              <p className="text-white">{user.email}</p>
+              <p className="text-white">{displayUser.email}</p>
             </div>
 
             <div className="p-3 bg-zinc-800/50 rounded-lg">
@@ -387,7 +407,7 @@ const ProfilePage = () => {
               {editing ? (
                 <Input name="phone" value={formData.phone} onChange={handleChange} placeholder="+351 900 000 000" className="h-8 bg-zinc-700 border-zinc-600 text-white mt-1" />
               ) : (
-                <p className="text-white">{user.phone || '-'}</p>
+                <p className="text-white">{displayUser.phone || '-'}</p>
               )}
             </div>
           </CardContent>
