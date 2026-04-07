@@ -34,7 +34,11 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - Fiat deposit isolation: Admin bank transfers restricted to finance roles
 - Auto-assign leads to creator
 - `set-internal-role` endpoint for user promotion
-- **Knowledge Base Editor & Rendering Improvements (2026-04-12)**:
+- **OTC Desk Flow Verification (2026-04-12)**:
+  - Verified full OTC deals pipeline is implemented: draft → qualification → compliance → negotiation → approved → executing → settled (auto-commission) → closed
+  - Added missing status translations for all 5 languages (active, completed, pending_settlement, pending_quote, quoted, accepted)
+  - Backend: `otc_deals.py` with full deal CRUD, commission generation, compliance system
+  - Frontend: `OTCDealsPage.jsx`, `CommissionsPage.jsx`, `CompliancePage.jsx` in CRM section
   - Fixed cache clearing: Editor fully resets (via `key` prop) when opening new article after editing
   - Enhanced RichTextEditor toolbar: Header picker (H1-H3), size, colors, lists, indent, align, blockquote, code, link, image, video
   - Comprehensive CSS for article rendering: headings, lists (ordered/unordered), tables, blockquotes, code blocks, alignment, indent, video embeds
