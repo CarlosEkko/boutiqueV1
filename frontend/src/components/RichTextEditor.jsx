@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 
 const RichTextEditor = ({ value, onChange, placeholder = 'Escreva o conteúdo aqui...' }) => {
@@ -7,6 +7,27 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Escreva o conteúdo aq
   const handleEditorChange = (content) => {
     if (onChange) onChange(content);
   };
+
+  // Fix: Radix Dialog adds "inert" to TinyMCE auxiliary elements (menus, dialogs)
+  // which blocks all interaction. This observer removes it immediately.
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const auxEls = document.querySelectorAll(
+        '.tox-tinymce-aux[inert], .tox-dialog-wrap[inert], .tox-tinymce-aux[aria-hidden="true"]'
+      );
+      auxEls.forEach(el => {
+        el.removeAttribute('inert');
+        el.removeAttribute('aria-hidden');
+      });
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['inert', 'aria-hidden']
+    });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="kb-editor-tinymce">

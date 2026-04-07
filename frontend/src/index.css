@@ -667,26 +667,39 @@ button, a, input, textarea {
     border-color: #3f3f46 !important;
 }
 
-/* TinyMCE dropdowns must render above Shadcn Dialog (z-index 50) */
+/* TinyMCE dropdowns and dialogs must render above Shadcn Dialog (z-index 50) */
 .tox-tinymce-aux,
-.tox .tox-menu,
-.tox .tox-dialog,
-.tox .tox-dialog-wrap,
-.tox .tox-collection,
-.tox .tox-collection__group,
-.tox .tox-insert-table-picker,
-.tox-pop,
-.tox-pop__dialog,
+.tox-dialog-wrap,
 div.tox.tox-tinymce-aux {
     z-index: 99999 !important;
+    pointer-events: auto !important;
 }
 
-/* Fix TinyMCE table grid picker visibility */
-.tox .tox-insert-table-picker > div {
-    border-color: #555 !important;
+.tox-tinymce-aux .tox-dialog,
+.tox-tinymce-aux .tox-menu,
+.tox-tinymce-aux .tox-collection,
+.tox-tinymce-aux .tox-insert-table-picker,
+.tox-tinymce-aux .tox-swatches-menu,
+.tox-tinymce-aux .tox-color-input,
+.tox-dialog-wrap .tox-dialog {
+    z-index: 99999 !important;
+    pointer-events: auto !important;
 }
 
-.tox .tox-insert-table-picker > div.tox-insert-table-picker--selected {
-    background-color: #D4AF37 !important;
-    border-color: #D4AF37 !important;
+/* Ensure TinyMCE dialog inputs are editable (fix Radix inert override) */
+.tox-dialog input,
+.tox-dialog textarea,
+.tox-dialog select,
+.tox-dialog .tox-textarea,
+.tox-dialog .tox-textfield,
+.tox-dialog .tox-listbox,
+.tox-dialog iframe {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+/* TinyMCE dialog backdrop */
+.tox-dialog-wrap__backdrop {
+    z-index: 99998 !important;
 }
