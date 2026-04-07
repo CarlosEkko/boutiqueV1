@@ -372,8 +372,14 @@ async def create_otc_lead(
     if is_high_risk:
         red_flags.append(RedFlagType.HIGH_RISK_COUNTRY.value)
     
+    # Auto-assign lead to the creator if not explicitly assigned
+    creator_id = getattr(current_user, 'id', None) or current_user.get("id")
+    lead_dict = lead_data.dict()
+    if not lead_dict.get("assigned_to"):
+        lead_dict["assigned_to"] = creator_id
+
     lead = OTCLead(
-        **lead_data.dict(),
+        **lead_dict,
         status=OTCLeadStatus.NEW,
         workflow_stage=1,
         is_high_risk_country=is_high_risk,
@@ -381,7 +387,7 @@ async def create_otc_lead(
         activity_log=[{
             "action": "lead_created",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
+            "user_id": creator_id,
             "details": "Lead criado no sistema"
         }]
     )
