@@ -24,6 +24,8 @@ from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from routes.admin import get_admin_user, get_internal_user
 
+FINANCE_ROLES = {"admin", "global_manager", "finance", "finance_general", "finance_local"}
+
 router = APIRouter(prefix="/trading", tags=["Trading"])
 
 # Database reference
@@ -34,6 +36,21 @@ def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Languag
 
 # Database reference
 db = None
+
+
+async def get_finance_user(user_id: str = Depends(get_current_user_id)):
+    """Only admin or finance roles can access finance admin endpoints"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_admin = user.get("is_admin", False)
+    role = user.get("internal_role")
+    
+    if not is_admin and role not in FINANCE_ROLES:
+        raise HTTPException(status_code=403, detail="Finance access required")
+    
+    return user
 
 # Stripe integration
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
@@ -862,7 +879,7 @@ async def update_supported_crypto(
 async def list_bank_transfers(
     status: Optional[BankTransferStatus] = None,
     transfer_type: Optional[str] = None,
-    admin: dict = Depends(get_internal_user)
+    admin: dict = Depends(get_finance_user)
 ):
     """List all bank transfers"""
     query = {}
@@ -1113,7 +1130,7 @@ async def get_bank_details_for_deposit(currency: str, user: dict = Depends(get_c
 async def list_fiat_withdrawals(
     status: Optional[str] = None,
     currency: Optional[str] = None,
-    admin: dict = Depends(get_internal_user)
+    admin: dict = Depends(get_finance_user)
 ):
     """List all fiat withdrawal requests"""
     query = {}
@@ -1127,7 +1144,7 @@ async def list_fiat_withdrawals(
 
 
 @router.get("/admin/fiat-withdrawals/{withdrawal_id}", response_model=dict)
-async def get_fiat_withdrawal(withdrawal_id: str, admin: dict = Depends(get_internal_user)):
+async def get_fiat_withdrawal(withdrawal_id: str, admin: dict = Depends(get_finance_user)):
     """Get a specific fiat withdrawal request"""
     withdrawal = await db.fiat_withdrawals.find_one({"id": withdrawal_id}, {"_id": 0})
     if not withdrawal:

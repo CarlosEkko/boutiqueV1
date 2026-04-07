@@ -49,7 +49,11 @@ const AdminFiatDeposits = () => {
       setDeposits(response.data || []);
     } catch (err) {
       console.error('Failed to fetch deposits:', err);
-      toast.error('Erro ao carregar depósitos');
+      if (err.response?.status === 403) {
+        toast.error('Sem permissão para aceder aos depósitos. Acesso restrito ao departamento financeiro.');
+      } else {
+        toast.error('Erro ao carregar depósitos');
+      }
     } finally {
       setLoading(false);
     }

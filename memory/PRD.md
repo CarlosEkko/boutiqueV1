@@ -21,8 +21,10 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - OTC lead conversion correctly inherits potential_tier → membership_level
 - Registration completion for auto-created users
 - Translation key collision fix
-- Demo Mode (completed 2026-04-07): Full demo mode with rich mock data for sales pitches
-- KB access fix (2026-04-07): Knowledge Base admin endpoints now use `get_internal_user` instead of `get_admin_user`, allowing support staff to manage articles. Added `set-internal-role` endpoint for promoting users.
+- Demo Mode (2026-04-07): Full demo mode with rich mock data for sales pitches
+- KB access fix (2026-04-07): KB admin endpoints use `get_internal_user` for support staff access
+- Fiat deposit isolation fix (2026-04-07): Admin bank transfer endpoints restricted to finance roles only (`get_finance_user`). Sales managers can only see their own deposits.
+- Set internal role endpoint (2026-04-07): `POST /api/admin/users/{id}/set-internal-role`
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123
