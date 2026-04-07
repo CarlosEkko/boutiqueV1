@@ -656,13 +656,13 @@ async def submit_pre_qualification(
     update_data = {
         "client_type": data.client_type.value,
         "first_operation_value": data.first_operation_value,
-        "expected_frequency": data.expected_frequency.value,
+        "expected_frequency": data.expected_frequency.value if data.expected_frequency else None,
         "estimated_monthly_volume": data.estimated_monthly_volume,
-        "operation_objective": data.operation_objective.value,
+        "operation_objective": data.operation_objective.value if data.operation_objective else None,
         "operation_objective_detail": data.operation_objective_detail,
-        "fund_source": data.fund_source.value,
+        "fund_source": data.fund_source.value if data.fund_source else None,
         "fund_source_detail": data.fund_source_detail,
-        "settlement_channel": data.settlement_channel.value,
+        "settlement_channel": data.settlement_channel.value if data.settlement_channel else None,
         "bank_jurisdiction": data.bank_jurisdiction,
         "preferred_settlement_methods": data.preferred_settlement_methods,
         "red_flags": red_flags if red_flags else None,
@@ -675,6 +675,11 @@ async def submit_pre_qualification(
         existing_notes = lead.get("notes", "") or ""
         update_data["notes"] = f"{existing_notes}\n[Pré-Qualificação] {data.notes}".strip()
     
+    if data.red_flags_notes:
+        existing_notes = lead.get("notes", "") or ""
+        update_data["notes"] = f"{existing_notes}\n[Red Flags] {data.red_flags_notes}".strip()
+    
+    obj_label = data.operation_objective.value if data.operation_objective else "N/A"
     await db.otc_leads.update_one(
         {"id": lead_id},
         {"$set": update_data,
@@ -683,7 +688,7 @@ async def submit_pre_qualification(
                 "action": "pre_qualification_completed",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "user_id": getattr(current_user, 'id', None) or current_user.get("id"),
-                "details": f"Pré-qualificação completa. Tipo: {data.client_type.value}, Objetivo: {data.operation_objective.value}"
+                "details": f"Pré-qualificação completa. Tipo: {data.client_type.value}, Objetivo: {obj_label}"
             }
         }}
     )

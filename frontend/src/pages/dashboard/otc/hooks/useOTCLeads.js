@@ -144,17 +144,20 @@ export const useOTCLeads = () => {
   const handleSubmitPreQual = async () => {
     if (!selectedLead) return;
     try {
+      const cleaned = { ...preQualData };
+      // Remove empty string values so backend receives null instead of ""
+      Object.keys(cleaned).forEach(k => { if (cleaned[k] === '') delete cleaned[k]; });
       const payload = {
-        ...preQualData,
-        first_operation_value: parseFloat(String(preQualData.first_operation_value).replace(/\s/g, '')) || 0,
-        estimated_monthly_volume: parseFloat(String(preQualData.estimated_monthly_volume).replace(/\s/g, '')) || 0,
+        ...cleaned,
+        first_operation_value: cleaned.first_operation_value ? parseFloat(String(cleaned.first_operation_value).replace(/\s/g, '')) : null,
+        estimated_monthly_volume: cleaned.estimated_monthly_volume ? parseFloat(String(cleaned.estimated_monthly_volume).replace(/\s/g, '')) : null,
       };
       const r = await axios.post(`${API_URL}/api/otc/leads/${selectedLead.id}/pre-qualification`, payload, { headers });
       toast.success('Pré-qualificação submetida!');
       if (r.data.red_flags_detected?.length > 0) toast.warning(`Red flags: ${r.data.red_flags_detected.join(', ')}`);
       setShowPreQualDialog(false);
       fetchLeads();
-    } catch (e) { toast.error('Erro ao submeter pré-qualificação'); }
+    } catch (e) { toast.error(e.response?.data?.detail || 'Erro ao submeter pré-qualificação'); }
   };
 
   const handleSubmitSetup = async () => {

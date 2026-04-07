@@ -600,17 +600,18 @@ class CreateOTCLeadRequest(BaseModel):
 class PreQualificationRequest(BaseModel):
     """Request model for pre-qualification data"""
     client_type: ClientType
-    first_operation_value: float
-    expected_frequency: TradingFrequency
-    estimated_monthly_volume: float
-    operation_objective: OperationObjective
+    first_operation_value: Optional[float] = None
+    expected_frequency: Optional[TradingFrequency] = None
+    estimated_monthly_volume: Optional[float] = None
+    operation_objective: Optional[OperationObjective] = None
     operation_objective_detail: Optional[str] = None
-    fund_source: FundSource
+    fund_source: Optional[FundSource] = None
     fund_source_detail: Optional[str] = None
-    settlement_channel: SettlementChannel
+    settlement_channel: Optional[SettlementChannel] = None
     bank_jurisdiction: Optional[str] = None
     preferred_settlement_methods: Optional[List[str]] = None
     notes: Optional[str] = None
+    red_flags_notes: Optional[str] = None
 
 
 class OperationalSetupRequest(BaseModel):
