@@ -579,6 +579,36 @@ async def remove_user_admin(
     return {"success": True, "message": f"Admin rights removed from {user['email']}"}
 
 
+@router.post("/users/{user_id}/set-internal-role")
+async def set_user_internal_role(
+    user_id: str,
+    body: dict,
+    admin: dict = Depends(get_admin_user)
+):
+    """Set internal role for a user (promotes to internal user type)"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    role = body.get("internal_role", "support")
+    valid_roles = ["admin", "manager", "operator", "support", "compliance", "finance"]
+    if role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Valid: {valid_roles}")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "user_type": "internal",
+            "internal_role": role,
+            "is_admin": role == "admin",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"success": True, "message": f"User {user['email']} now has role: {role}"}
+
+
+
 @router.put("/users/{user_id}/assign-manager")
 async def assign_account_manager(
     user_id: str,

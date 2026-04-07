@@ -21,7 +21,8 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - OTC lead conversion correctly inherits potential_tier → membership_level
 - Registration completion for auto-created users
 - Translation key collision fix
-- **Demo Mode** (completed 2026-04-07): Full demo mode with rich mock data for sales pitches. Includes demo client Victoria Sterling, 8 wallets ($8M+ portfolio), 16 transactions, 5 OTC leads, 3 OTC deals, 3 bank deposits. Toggle in top-right bar. Amber banner when active. Dashboard, wallets, OTC leads/deals/clients all swap to demo data. Normal data fully isolated.
+- Demo Mode (completed 2026-04-07): Full demo mode with rich mock data for sales pitches
+- KB access fix (2026-04-07): Knowledge Base admin endpoints now use `get_internal_user` instead of `get_admin_user`, allowing support staff to manage articles. Added `set-internal-role` endpoint for promoting users.
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123

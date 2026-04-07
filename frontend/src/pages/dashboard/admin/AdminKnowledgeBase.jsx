@@ -145,6 +145,9 @@ const AdminKnowledgeBase = () => {
       setCategories(response.data);
     } catch (err) {
       console.error('Error fetching categories', err);
+      if (err.response?.status === 403) {
+        toast.error('Sem permissão para aceder às categorias. Contacte o administrador.');
+      }
     }
   };
 
@@ -293,6 +296,9 @@ const AdminKnowledgeBase = () => {
       setArticles(response.data);
     } catch (err) {
       console.error('Error fetching articles', err);
+      if (err.response?.status === 403) {
+        toast.error('Sem permissão para aceder aos artigos. Contacte o administrador.');
+      }
     } finally {
       setLoading(false);
     }

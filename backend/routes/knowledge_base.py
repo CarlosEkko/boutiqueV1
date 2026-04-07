@@ -17,7 +17,7 @@ from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from utils.turnstile import verify_turnstile
 from utils.rate_limit import check_rate_limit
-from routes.admin import get_admin_user
+from routes.admin import get_admin_user, get_internal_user
 
 router = APIRouter(prefix="/kb", tags=["Knowledge Base"])
 
@@ -299,7 +299,7 @@ async def create_public_ticket(ticket_data: PublicTicketCreate, request: Request
 # ==================== ADMIN: CATEGORIES ====================
 
 @router.get("/admin/categories")
-async def admin_list_categories(admin: dict = Depends(get_admin_user)):
+async def admin_list_categories(admin: dict = Depends(get_internal_user)):
     """Admin: List all categories"""
     categories = await db.kb_categories.find(
         {},
@@ -315,7 +315,7 @@ async def admin_list_categories(admin: dict = Depends(get_admin_user)):
 @router.post("/admin/categories")
 async def admin_create_category(
     category: KBCategoryCreate,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Create new category"""
     # Check if slug exists
@@ -339,7 +339,7 @@ async def admin_create_category(
 async def admin_update_category(
     category_id: str,
     update: KBCategoryUpdate,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Update category"""
     update_data = {k: v for k, v in update.model_dump().items() if v is not None}
@@ -363,7 +363,7 @@ async def admin_update_category(
 @router.delete("/admin/categories/{category_id}")
 async def admin_delete_category(
     category_id: str,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Delete category (only if empty)"""
     # Check for articles
@@ -389,7 +389,7 @@ async def admin_list_articles(
     status: Optional[str] = None,
     category_id: Optional[str] = None,
     search: Optional[str] = None,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: List all articles"""
     query = {}
@@ -420,7 +420,7 @@ async def admin_list_articles(
 @router.get("/admin/articles/{article_id}")
 async def admin_get_article(
     article_id: str,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Get article with full content"""
     article = await db.kb_articles.find_one({"id": article_id}, {"_id": 0})
@@ -434,7 +434,7 @@ async def admin_get_article(
 @router.post("/admin/articles")
 async def admin_create_article(
     article: KBArticleCreate,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Create new article"""
     # Check if slug exists
@@ -469,7 +469,7 @@ async def admin_create_article(
 async def admin_update_article(
     article_id: str,
     update: KBArticleUpdate,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Update article"""
     existing = await db.kb_articles.find_one({"id": article_id})
@@ -499,7 +499,7 @@ async def admin_update_article(
 @router.delete("/admin/articles/{article_id}")
 async def admin_delete_article(
     article_id: str,
-    admin: dict = Depends(get_admin_user)
+    admin: dict = Depends(get_internal_user)
 ):
     """Admin: Delete article"""
     result = await db.kb_articles.delete_one({"id": article_id})
