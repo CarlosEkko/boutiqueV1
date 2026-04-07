@@ -39,7 +39,21 @@ export const CreateLeadDialog = ({
   
   const [entityDropdownOpen, setEntityDropdownOpen] = useState(false);
   const [entitySearch, setEntitySearch] = useState('');
+  const [showValidation, setShowValidation] = useState(false);
   const entityRef = useRef(null);
+
+  const handleSubmit = () => {
+    if (!isFormValid) {
+      setShowValidation(true);
+      return;
+    }
+    handleCreateLead();
+  };
+
+  const getFieldClass = (value) => {
+    if (!showValidation || value) return 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30';
+    return 'bg-zinc-900 border-red-500/60 text-zinc-100 ring-1 ring-red-500/30';
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -207,7 +221,7 @@ export const CreateLeadDialog = ({
                       value={entitySearch || formData.entity_name}
                       onChange={e => handleEntitySearchChange(e.target.value)}
                       onFocus={() => setEntityDropdownOpen(true)}
-                      className="bg-zinc-900 border-zinc-800 text-zinc-100 pr-10 rounded-md focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30"
+                      className={`${getFieldClass(formData.entity_name)} pr-10 rounded-md`}
                       placeholder="Pesquisar ou criar entidade..."
                       data-testid="lead-entity-name"
                       autoComplete="off"
@@ -241,6 +255,7 @@ export const CreateLeadDialog = ({
                       )}
                     </div>
                   )}
+                  {showValidation && !formData.entity_name && <p className="text-red-400 text-xs mt-1">Campo obrigatório</p>}
                 </div>
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">País *</Label>
@@ -277,15 +292,18 @@ export const CreateLeadDialog = ({
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">Nome *</Label>
-                  <Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" data-testid="lead-contact-name" />
+                  <Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className={getFieldClass(formData.contact_name)} data-testid="lead-contact-name" />
+                  {showValidation && !formData.contact_name && <p className="text-red-400 text-xs mt-1">Campo obrigatório</p>}
                 </div>
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">Email *</Label>
-                  <Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" type="email" data-testid="lead-contact-email" />
+                  <Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className={getFieldClass(formData.contact_email)} type="email" data-testid="lead-contact-email" />
+                  {showValidation && !formData.contact_email && <p className="text-red-400 text-xs mt-1">Campo obrigatório</p>}
                 </div>
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">Telefone *</Label>
-                  <Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" placeholder="+351..." data-testid="lead-contact-phone" />
+                  <Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className={getFieldClass(formData.contact_phone)} placeholder="+351..." data-testid="lead-contact-phone" />
+                  {showValidation && !formData.contact_phone && <p className="text-red-400 text-xs mt-1">Campo obrigatório</p>}
                 </div>
               </div>
             </div>
@@ -340,8 +358,8 @@ export const CreateLeadDialog = ({
           </Button>
           <Button
             className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8 rounded-md transition-colors"
-            onClick={handleCreateLead}
-            disabled={!isFormValid || isSubmitting}
+            onClick={handleSubmit}
+            disabled={isSubmitting}
             data-testid="create-lead-submit"
           >
             {isSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" />A criar...</> : <>Criar Lead <ChevronRight size={16} className="ml-1" /></>}

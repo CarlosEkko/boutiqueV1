@@ -82,19 +82,18 @@ const OTCLeads = () => {
         </Button>
       </div>
 
-      {/* Status Tabs + Filters */}
-      <div className="flex flex-col gap-4">
+      {/* Status Tabs */}
+      <div className="flex flex-col gap-6">
         <div className="flex gap-2 items-center flex-wrap">
           {[
-            { key: 'all', label: 'Todos', active: 'bg-zinc-700 text-white' },
             { key: 'new', label: 'Novo', active: 'bg-amber-500/20 text-amber-400 border border-amber-500/40' },
             { key: 'contacted', label: 'Contactado', active: 'bg-blue-500/20 text-blue-400 border border-blue-500/40' },
             { key: 'pre_qualified', label: 'Pré-Qualificado', active: 'bg-purple-500/20 text-purple-400 border border-purple-500/40' },
             { key: 'kyc_pending', label: 'KYC Pendente', active: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
             { key: 'kyc_approved', label: 'KYC Aprovado', active: 'bg-teal-500/20 text-teal-400 border border-teal-500/40' },
             { key: 'setup_pending', label: 'Setup', active: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' },
-            { key: 'active_client', label: 'Cliente Ativo', active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' },
             { key: 'not_qualified', label: 'Não Qualif.', active: 'bg-red-500/20 text-red-400 border border-red-500/40' },
+            { key: 'all', label: 'Todos', active: 'bg-zinc-700 text-white' },
           ].map(tab => {
             const count = tab.key === 'all' ? total : leads.filter(l => l.status === tab.key).length;
             return (
@@ -118,13 +117,6 @@ const OTCLeads = () => {
             <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchLeads()}
               placeholder="Pesquisar leads..." className="bg-zinc-900 border-zinc-800 text-white pl-10" data-testid="otc-search" />
           </div>
-          <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="w-44 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Fonte" /></SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-800">
-              <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allSources')}</SelectItem>
-              {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}
-            </SelectContent>
-          </Select>
           <Button variant="ghost" onClick={fetchLeads} className="text-zinc-400 hover:text-white">
             <RefreshCw size={16} />
           </Button>
@@ -480,7 +472,7 @@ const OTCLeads = () => {
           </div>
           <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-8 py-5 flex items-center justify-between">
             <Button variant="outline" className="border-zinc-800 text-zinc-500 hover:text-zinc-300" onClick={() => setShowPreQualDialog(false)}>Cancelar</Button>
-            <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8" onClick={handleSubmitPreQual}>Submeter <ChevronRight size={16} className="ml-1" /></Button>
+            <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8" onClick={() => { if (!preQualData.client_type) { toast.error('Selecione o Tipo de Cliente'); return; } handleSubmitPreQual(); }}>Submeter <ChevronRight size={16} className="ml-1" /></Button>
           </div>
         </DialogContent>
       </Dialog>
