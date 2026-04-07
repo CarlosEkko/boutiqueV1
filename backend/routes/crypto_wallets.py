@@ -13,6 +13,7 @@ from services.fireblocks_service import FireblocksService
 from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from routes.admin import get_admin_user
+from routes.demo import check_demo_mode, DEMO_CLIENT_ID
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/crypto-wallets", tags=["Crypto Wallets"])
@@ -517,8 +518,12 @@ async def request_crypto_withdrawal(
 @router.get("/withdrawals")
 async def get_my_withdrawals(user_id: str = Depends(get_current_user_id)):
     """Get user's withdrawal history"""
+    # Demo mode: return demo client withdrawals
+    demo_active = await check_demo_mode(user_id, db)
+    query_user = DEMO_CLIENT_ID if demo_active else user_id
+    
     withdrawals = await db.crypto_withdrawals.find(
-        {"user_id": user_id},
+        {"user_id": query_user} if demo_active else {"user_id": user_id, "is_demo": {"$ne": True}},
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
     
@@ -1306,6 +1311,14 @@ async def get_my_deposits(
     user_id: str = Depends(get_current_user_id)
 ):
     """Get deposit history from Fireblocks"""
+    # Demo mode: return seeded crypto deposits
+    demo_active = await check_demo_mode(user_id, db)
+    if demo_active:
+        deposits = await db.crypto_deposits.find(
+            {"user_id": DEMO_CLIENT_ID, "is_demo": True}, {"_id": 0}
+        ).sort("created_at", -1).to_list(limit)
+        return {"deposits": deposits, "count": len(deposits)}
+    
     vault = await db.user_fireblocks_vaults.find_one({"user_id": user_id})
     
     if not vault:

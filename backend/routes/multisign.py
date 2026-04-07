@@ -10,6 +10,8 @@ import uuid
 import logging
 
 from routes.auth import get_current_user
+from routes.demo import check_demo_mode, DEMO_CLIENT_ID, DEMO_CLIENT_EMAIL
+from utils.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/vault", tags=["Vault Multi-Sign"])
@@ -135,11 +137,12 @@ def build_process_steps(tx):
 # ==================== SIGNATORIES ====================
 
 @router.get("/signatories")
-async def get_signatories(current_user=Depends(get_current_user)):
+async def get_signatories(current_user=Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
     """Get client's configured signatories."""
-    user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
+    demo_active = await check_demo_mode(user_id, db)
+    owner = DEMO_CLIENT_ID if demo_active else (current_user.id if hasattr(current_user, 'id') else current_user.get("id"))
     signatories = await db.vault_signatories.find(
-        {"owner_id": user_id}, {"_id": 0}
+        {"owner_id": owner}, {"_id": 0}
     ).to_list(50)
     return {"signatories": signatories}
 
@@ -192,9 +195,10 @@ async def remove_signatory(signatory_id: str, current_user=Depends(get_current_u
 # ==================== SETTINGS ====================
 
 @router.get("/settings")
-async def get_vault_settings(current_user=Depends(get_current_user)):
-    user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
-    settings = await db.vault_settings.find_one({"user_id": user_id}, {"_id": 0})
+async def get_vault_settings(current_user=Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
+    demo_active = await check_demo_mode(user_id, db)
+    owner = DEMO_CLIENT_ID if demo_active else (current_user.id if hasattr(current_user, 'id') else current_user.get("id"))
+    settings = await db.vault_settings.find_one({"user_id": owner}, {"_id": 0})
     if not settings:
         return {"required_signatures": 2, "transaction_timeout_hours": 48}
     return settings
@@ -331,10 +335,16 @@ async def create_vault_transaction(data: CreateVaultTransactionRequest, current_
 
 
 @router.get("/transactions")
-async def list_vault_transactions(status: Optional[str] = None, current_user=Depends(get_current_user)):
+async def list_vault_transactions(status: Optional[str] = None, current_user=Depends(get_current_user), user_id_token: str = Depends(get_current_user_id)):
     """List transactions the user owns or is a signer of."""
-    user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
-    user_email = current_user.email if hasattr(current_user, 'email') else current_user.get("email", "")
+    demo_active = await check_demo_mode(user_id_token, db)
+    
+    if demo_active:
+        user_id = DEMO_CLIENT_ID
+        user_email = DEMO_CLIENT_EMAIL
+    else:
+        user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
+        user_email = current_user.email if hasattr(current_user, 'email') else current_user.get("email", "")
 
     query = {"$or": [
         {"owner_id": user_id},

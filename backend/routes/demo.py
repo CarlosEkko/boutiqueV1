@@ -244,6 +244,205 @@ def _generate_otc_deals():
     ]
 
 
+def _generate_crypto_deposits(user_id):
+    """Generate realistic crypto deposit history"""
+    now = datetime.now(timezone.utc)
+    deposits = [
+        {"asset": "BTC", "amount": 5.0, "amount_usd": 487500.0, "status": "COMPLETED", "source": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkf", "confirmations": 6, "tx_hash": "a1b2c3d4e5f6789012345678abcdef0123456789abcdef0123456789abcdef01"},
+        {"asset": "ETH", "amount": 150.0, "amount_usd": 513000.0, "status": "COMPLETED", "source": "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD18", "confirmations": 64, "tx_hash": "0xdef456789abc0123456789abcdef0123456789abcdef0123456789abcdef0123"},
+        {"asset": "USDT", "amount": 1000000.0, "amount_usd": 1000000.0, "status": "COMPLETED", "source": "TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax", "confirmations": 20, "tx_hash": "0x789abc0123456789abcdef0123456789abcdef0123456789abcdef0123456789"},
+        {"asset": "BTC", "amount": 3.2587, "amount_usd": 317475.0, "status": "COMPLETED", "source": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy", "confirmations": 3, "tx_hash": "b2c3d4e5f6a1789012345678abcdef0123456789abcdef0123456789abcdef02"},
+        {"asset": "SOL", "amount": 2200.0, "amount_usd": 407000.0, "status": "COMPLETED", "source": "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV", "confirmations": 50, "tx_hash": "5nPqdYLMhGUqaLxvR8X1K3Q4T5V6W7X8Y9Z0"},
+        {"asset": "ETH", "amount": 35.32, "amount_usd": 120794.0, "status": "CONFIRMING", "source": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", "confirmations": 8, "tx_hash": "0xabc123456789def0123456789abcdef0123456789abcdef0123456789abcdef"},
+        {"asset": "BTC", "amount": 4.2, "amount_usd": 409500.0, "status": "PENDING", "source": "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", "confirmations": 0, "tx_hash": None},
+    ]
+    result = []
+    for i, d in enumerate(deposits):
+        result.append({
+            "id": f"demo-cdep-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "tx_hash": d["tx_hash"],
+            "asset": d["asset"],
+            "amount": d["amount"],
+            "amount_usd": d["amount_usd"],
+            "status": d["status"],
+            "source_address": d["source"],
+            "num_confirmations": d["confirmations"],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=i*4+1, hours=random.randint(1,18))).isoformat(),
+        })
+    return result
+
+
+def _generate_crypto_withdrawals(user_id):
+    """Generate realistic crypto withdrawal history"""
+    now = datetime.now(timezone.utc)
+    withdrawals = [
+        {"asset": "BTC", "amount": 2.0, "fee": 0.00015, "dest": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", "status": "completed", "tx_hash": "c3d4e5f6a1b2789012345678abcdef0123456789abcdef0123456789abcdef03"},
+        {"asset": "ETH", "amount": 50.0, "fee": 0.005, "dest": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", "status": "completed", "tx_hash": "0x456def789abc0123456789abcdef0123456789abcdef0123456789abcdef0456"},
+        {"asset": "USDT", "amount": 500000.0, "fee": 25.0, "dest": "TN3W4H6rK2ce4vX9YnFQHwKENnHjoxb3m9", "status": "completed", "tx_hash": "0xfed789abc0123456789abcdef0123456789abcdef0123456789abcdef012345"},
+        {"asset": "SOL", "amount": 500.0, "fee": 0.01, "dest": "DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy", "status": "pending_approval", "tx_hash": None},
+        {"asset": "BTC", "amount": 1.5, "fee": 0.0002, "dest": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", "status": "pending", "tx_hash": None},
+    ]
+    result = []
+    for i, w in enumerate(withdrawals):
+        result.append({
+            "id": f"demo-cwith-{uuid.uuid4().hex[:8]}",
+            "user_id": user_id,
+            "asset_id": w["asset"],
+            "amount": w["amount"],
+            "network_fee": w["fee"],
+            "net_amount": w["amount"] - w["fee"],
+            "destination_address": w["dest"],
+            "status": w["status"],
+            "tx_hash": w["tx_hash"],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=i*5+2, hours=random.randint(1,12))).isoformat(),
+            "updated_at": (now - timedelta(days=i*5+1)).isoformat(),
+        })
+    return result
+
+
+def _generate_vault_data(user_id):
+    """Generate realistic multi-sign vault data"""
+    now = datetime.now(timezone.utc)
+    
+    signatories = [
+        {
+            "id": f"demo-sig-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "user_id": f"demo-sig-user-1",
+            "name": "James Sterling",
+            "email": "james@sterling-capital.com",
+            "role": "co_signer",
+            "is_registered": True,
+            "status": "active",
+            "is_demo": True,
+            "added_at": (now - timedelta(days=60)).isoformat(),
+            "last_active": (now - timedelta(hours=12)).isoformat(),
+        },
+        {
+            "id": f"demo-sig-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "user_id": f"demo-sig-user-2",
+            "name": "Catherine Wells",
+            "email": "c.wells@sterling-capital.com",
+            "role": "approver",
+            "is_registered": True,
+            "status": "active",
+            "is_demo": True,
+            "added_at": (now - timedelta(days=45)).isoformat(),
+            "last_active": (now - timedelta(days=2)).isoformat(),
+        },
+        {
+            "id": f"demo-sig-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "user_id": None,
+            "name": "Robert Sterling Jr.",
+            "email": "robert.jr@sterling-capital.com",
+            "role": "viewer",
+            "is_registered": False,
+            "status": "active",
+            "is_demo": True,
+            "added_at": (now - timedelta(days=30)).isoformat(),
+            "last_active": None,
+        },
+    ]
+    
+    settings = {
+        "user_id": user_id,
+        "required_signatures": 2,
+        "transaction_timeout_hours": 48,
+        "auto_reject_on_timeout": True,
+        "notify_all_signers": True,
+        "is_demo": True,
+    }
+    
+    transactions = [
+        {
+            "id": f"demo-vtx-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "type": "withdrawal",
+            "asset": "BTC",
+            "amount": 3.5,
+            "destination": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+            "description": "Transfer to Ledger Cold Storage",
+            "status": "pending_signatures",
+            "required_signatures": 2,
+            "current_signatures": 1,
+            "signatures": [
+                {"user_id": user_id, "name": "Victoria Sterling", "email": DEMO_CLIENT_EMAIL, "status": "approved", "signed_at": (now - timedelta(hours=6)).isoformat()},
+                {"user_id": "demo-sig-user-1", "name": "James Sterling", "email": "james@sterling-capital.com", "status": "pending", "signed_at": None},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(hours=8)).isoformat(),
+            "expires_at": (now + timedelta(hours=40)).isoformat(),
+            "updated_at": (now - timedelta(hours=6)).isoformat(),
+        },
+        {
+            "id": f"demo-vtx-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "type": "withdrawal",
+            "asset": "ETH",
+            "amount": 100.0,
+            "destination": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+            "description": "DeFi allocation — Aave V3",
+            "status": "completed",
+            "required_signatures": 2,
+            "current_signatures": 2,
+            "signatures": [
+                {"user_id": user_id, "name": "Victoria Sterling", "email": DEMO_CLIENT_EMAIL, "status": "approved", "signed_at": (now - timedelta(days=3)).isoformat()},
+                {"user_id": "demo-sig-user-2", "name": "Catherine Wells", "email": "c.wells@sterling-capital.com", "status": "approved", "signed_at": (now - timedelta(days=3, hours=-2)).isoformat()},
+            ],
+            "tx_hash": "0x789def456abc0123456789abcdef0123456789abcdef0123456789abcdef0789",
+            "is_demo": True,
+            "created_at": (now - timedelta(days=4)).isoformat(),
+            "updated_at": (now - timedelta(days=3)).isoformat(),
+        },
+        {
+            "id": f"demo-vtx-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "type": "withdrawal",
+            "asset": "USDT",
+            "amount": 250000.0,
+            "destination": "TKzxdSv2FZKQrEqkKVgp5DcwEXBEKMg2Ax",
+            "description": "Margin funding — Institutional Account",
+            "status": "completed",
+            "required_signatures": 2,
+            "current_signatures": 2,
+            "signatures": [
+                {"user_id": user_id, "name": "Victoria Sterling", "email": DEMO_CLIENT_EMAIL, "status": "approved", "signed_at": (now - timedelta(days=7)).isoformat()},
+                {"user_id": "demo-sig-user-1", "name": "James Sterling", "email": "james@sterling-capital.com", "status": "approved", "signed_at": (now - timedelta(days=7, hours=-5)).isoformat()},
+            ],
+            "tx_hash": "0xabc789def0123456789abcdef0123456789abcdef0123456789abcdef012abc",
+            "is_demo": True,
+            "created_at": (now - timedelta(days=8)).isoformat(),
+            "updated_at": (now - timedelta(days=7)).isoformat(),
+        },
+        {
+            "id": f"demo-vtx-{uuid.uuid4().hex[:8]}",
+            "owner_id": user_id,
+            "type": "withdrawal",
+            "asset": "BTC",
+            "amount": 1.0,
+            "destination": "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+            "description": "Payment — Real Estate Token Settlement",
+            "status": "rejected",
+            "required_signatures": 2,
+            "current_signatures": 0,
+            "signatures": [
+                {"user_id": user_id, "name": "Victoria Sterling", "email": DEMO_CLIENT_EMAIL, "status": "approved", "signed_at": (now - timedelta(days=12)).isoformat()},
+                {"user_id": "demo-sig-user-2", "name": "Catherine Wells", "email": "c.wells@sterling-capital.com", "status": "rejected", "signed_at": (now - timedelta(days=11)).isoformat(), "rejection_reason": "Destination address not whitelisted"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=13)).isoformat(),
+            "updated_at": (now - timedelta(days=11)).isoformat(),
+        },
+    ]
+    
+    return signatories, settings, transactions
+
+
 # ─── Endpoints ───
 
 @router.post("/authorize/{user_id}")
@@ -319,7 +518,7 @@ async def seed_demo_data_endpoint(admin: dict = Depends(get_admin_user)):
 @router.post("/reset")
 async def reset_demo_data(admin: dict = Depends(get_admin_user)):
     """Reset all demo data"""
-    collections = ["wallets", "transactions", "otc_leads", "otc_deals", "otc_clients", "bank_transfers", "demo_data"]
+    collections = ["wallets", "transactions", "otc_leads", "otc_deals", "otc_clients", "bank_transfers", "crypto_deposits", "crypto_withdrawals", "vault_signatories", "vault_settings", "vault_transactions", "demo_data"]
     counts = {}
     for col in collections:
         r = await db[col].delete_many({"is_demo": True})
@@ -383,6 +582,11 @@ async def _seed_demo_data():
     await db.otc_leads.delete_many({"is_demo": True})
     await db.otc_deals.delete_many({"is_demo": True})
     await db.bank_transfers.delete_many({"is_demo": True})
+    await db.crypto_deposits.delete_many({"is_demo": True})
+    await db.crypto_withdrawals.delete_many({"is_demo": True})
+    await db.vault_signatories.delete_many({"is_demo": True})
+    await db.vault_settings.delete_many({"is_demo": True})
+    await db.vault_transactions.delete_many({"is_demo": True})
     
     # 3. Create wallets
     for w in DEMO_WALLETS:
@@ -445,7 +649,25 @@ async def _seed_demo_data():
     ]
     await db.bank_transfers.insert_many(deposits)
     
-    # 8. Mark seed as done
+    # 8. Create crypto deposits
+    crypto_deps = _generate_crypto_deposits(DEMO_CLIENT_ID)
+    if crypto_deps:
+        await db.crypto_deposits.insert_many(crypto_deps)
+    
+    # 9. Create crypto withdrawals
+    crypto_withs = _generate_crypto_withdrawals(DEMO_CLIENT_ID)
+    if crypto_withs:
+        await db.crypto_withdrawals.insert_many(crypto_withs)
+    
+    # 10. Create vault/multi-sign data
+    signatories, vault_settings, vault_txs = _generate_vault_data(DEMO_CLIENT_ID)
+    if signatories:
+        await db.vault_signatories.insert_many(signatories)
+    await db.vault_settings.insert_one(vault_settings)
+    if vault_txs:
+        await db.vault_transactions.insert_many(vault_txs)
+    
+    # 11. Mark seed as done
     await db.demo_data.update_one(
         {"type": "seed_status"},
         {"$set": {"type": "seed_status", "seeded_at": now.isoformat(), "version": 1}},
@@ -462,5 +684,9 @@ async def _seed_demo_data():
             "otc_leads": len(leads),
             "otc_deals": len(deals),
             "deposits": len(deposits),
+            "crypto_deposits": len(crypto_deps),
+            "crypto_withdrawals": len(crypto_withs),
+            "vault_signatories": len(signatories),
+            "vault_transactions": len(vault_txs),
         }
     }
