@@ -679,8 +679,6 @@ const DashboardLayout = () => {
     'multi_sign': 'vault',
     'account': '_always_',
     'otc_desk': 'otc',
-    'finance': 'fiat_ops',
-    'crm': 'otc',
   };
 
   const filterMenusByDemo = (menus) => {
