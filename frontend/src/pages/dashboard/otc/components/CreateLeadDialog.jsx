@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/ui/dialog';
+import { Dialog, DialogContent } from '../../../../components/ui/dialog';
 import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import { Textarea } from '../../../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { Card, CardContent } from '../../../../components/ui/card';
 import { FormattedNumberInput } from '../../../../components/FormattedNumberInput';
-import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2, Search } from 'lucide-react';
+import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2, Search, Shield, AlertTriangle } from 'lucide-react';
 import { COUNTRIES } from '../../../../utils/countries';
 import { useLanguage } from '../../../../i18n';
 
@@ -18,6 +17,12 @@ const TIER_OPTIONS = [
   { value: 'premium', label: 'Premium' },
   { value: 'vip', label: 'VIP' },
   { value: 'institutional', label: 'Institucional' },
+];
+
+const STEPS = [
+  { num: '01', label: 'VERIFICAÇÃO' },
+  { num: '02', label: 'PRÉ-QUALIFICAÇÃO' },
+  { num: '03', label: 'SETUP' },
 ];
 
 export const CreateLeadDialog = ({
@@ -36,7 +41,6 @@ export const CreateLeadDialog = ({
   const [entitySearch, setEntitySearch] = useState('');
   const entityRef = useRef(null);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handler = (e) => {
       if (entityRef.current && !entityRef.current.contains(e.target)) setEntityDropdownOpen(false);
@@ -71,295 +75,278 @@ export const CreateLeadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b border-zinc-800 pb-4">
-          <DialogTitle className="text-gold-400 flex items-center gap-2 text-xl">
-            <div className="w-8 h-8 rounded-full bg-gold-500/20 flex items-center justify-center">
-              <UserPlus size={18} className="text-gold-400" />
-            </div>
-            {t('otc.createLead.title')}
-          </DialogTitle>
-          <div className="flex items-center gap-2 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gold-500 flex items-center justify-center text-black font-bold text-sm">1</div>
-              <span className="text-gold-400 text-sm font-medium">{t('otc.createLead.step1')}</span>
-            </div>
-            <ChevronRight size={16} className="text-zinc-600" />
-            <div className="flex items-center gap-2 opacity-50">
-              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-sm">2</div>
-              <span className="text-zinc-400 text-sm">{t('otc.createLead.step2')}</span>
-            </div>
-            <ChevronRight size={16} className="text-zinc-600" />
-            <div className="flex items-center gap-2 opacity-50">
-              <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold text-sm">3</div>
-              <span className="text-zinc-400 text-sm">{t('otc.createLead.step3')}</span>
+      <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-5xl max-h-[90vh] overflow-y-auto p-0 shadow-2xl" data-testid="create-lead-dialog">
+        {/* Premium Header */}
+        <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 px-8 pt-8 pb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <UserPlus size={20} className="text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  {t('otc.createLead.title')}
+                </h2>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  {STEPS[0].num} / 03 · {STEPS[0].label}
+                </p>
+              </div>
             </div>
           </div>
-        </DialogHeader>
+          
+          {/* Progress Bar */}
+          <div className="flex items-center gap-0">
+            <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+            <div className="flex-1 h-[2px] bg-zinc-800 rounded-full" />
+            <div className="flex-1 h-[2px] bg-zinc-800 rounded-full" />
+          </div>
+        </div>
 
-        <div className="space-y-6 py-4">
-          {/* Existing Contact Warning */}
+        <div className="px-8 py-6 space-y-8" style={{ fontFamily: 'Manrope, sans-serif' }}>
+          {/* Existing Contact Warning — Premium Card */}
           {showExistingWarning && existingContact && (
-            <div className="relative overflow-hidden rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-950/80 via-zinc-900 to-zinc-950">
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10 animate-pulse" />
-              <div className="relative p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                    <Eye size={24} className="text-amber-400" />
-                  </div>
-                  <div><h3 className="text-amber-400 font-bold text-lg">{t('otc.createLead.existingContact')}</h3><p className="text-amber-300/60 text-sm">{t('otc.createLead.existingContact')}</p></div>
-                </div>
+            <div className="rounded-xl border border-amber-500/30 bg-zinc-900 overflow-hidden" data-testid="existing-contact-warning">
+              <div className="px-6 py-4 border-b border-amber-500/20 flex items-center gap-3">
+                <AlertTriangle size={18} className="text-amber-500" />
+                <span className="text-amber-500 text-sm font-semibold uppercase tracking-[0.15em]">Contacto Existente</span>
+              </div>
+              <div className="p-6 space-y-4">
                 {existingContact.existing_otc_client && (
-                  <Card className="bg-green-950/50 border-green-500/30 mb-3">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center"><CheckCircle size={20} className="text-green-400" /></div>
-                          <div><p className="text-green-400 font-semibold text-sm">Cliente OTC Ativo</p><p className="text-green-300/60 text-xs">{existingContact.existing_otc_client.entity_name} — {existingContact.existing_otc_client.contact_email}</p></div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-900/20" onClick={() => openDetail(existingContact.existing_otc_client)}>{t('otc.viewDetails')}</Button>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-500 text-white" onClick={() => openNewDeal(existingContact.existing_otc_client)}><Plus size={14} className="mr-1" />{t('otc.newOperation')}</Button>
-                        </div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-emerald-400/5 border border-emerald-400/20">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-md bg-emerald-400/10 flex items-center justify-center">
+                        <CheckCircle size={20} className="text-emerald-400" />
                       </div>
-                      {/* Validation Checklist */}
-                      <div className="grid grid-cols-3 gap-2 mt-2 border-t border-green-500/20 pt-3">
-                        <div className="flex items-center gap-2 text-xs">
-                          <CheckCircle size={14} className={existingContact.existing_user?.kyc_status === 'approved' ? 'text-green-400' : 'text-yellow-400'} />
-                          <span className={existingContact.existing_user?.kyc_status === 'approved' ? 'text-green-300' : 'text-yellow-300'}>
-                            KYC {existingContact.existing_user?.kyc_status === 'approved' ? 'Atualizado' : 'Pendente'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <CheckCircle size={14} className="text-green-400" />
-                          <span className="text-green-300">Limites Aprovados</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          <CheckCircle size={14} className="text-green-400" />
-                          <span className="text-green-300">Compliance OK</span>
-                        </div>
+                      <div>
+                        <p className="text-emerald-400 font-semibold text-sm">Cliente OTC Ativo</p>
+                        <p className="text-zinc-500 text-xs mt-0.5">{existingContact.existing_otc_client.entity_name} — {existingContact.existing_otc_client.contact_email}</p>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs" onClick={() => openDetail(existingContact.existing_otc_client)}>Detalhes</Button>
+                      <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-medium" onClick={() => openNewDeal(existingContact.existing_otc_client)}>
+                        <Plus size={12} className="mr-1" />Nova Operação
+                      </Button>
+                    </div>
+                  </div>
                 )}
                 {existingContact.existing_user && !existingContact.existing_otc_client && (
-                  <Card className="bg-blue-950/50 border-blue-500/30 mb-3">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><User size={20} className="text-blue-400" /></div>
-                          <div><p className="text-blue-400 font-semibold text-sm">Utilizador Registado</p><p className="text-blue-300/60 text-xs">{existingContact.existing_user.email}</p></div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-900/20" onClick={() => open360View(existingContact.existing_user)}>{t('otc.createLead.view360')}</Button>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white" onClick={handleCreateClientDirect}><UserPlus size={14} className="mr-1" />Criar Cliente OTC</Button>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-blue-400/5 border border-blue-400/20">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-md bg-blue-400/10 flex items-center justify-center">
+                        <User size={20} className="text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-blue-400 font-semibold text-sm">Utilizador Registado</p>
+                        <p className="text-zinc-500 text-xs mt-0.5">{existingContact.existing_user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs" onClick={() => open360View(existingContact.existing_user)}>Vista 360</Button>
+                      <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-medium" onClick={handleCreateClientDirect}>
+                        <UserPlus size={12} className="mr-1" />Criar OTC
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {/* Validation Checklist */}
+                {(existingContact.existing_otc_client || existingContact.existing_user) && (
+                  <div className="grid grid-cols-3 gap-4 pt-2">
+                    {[
+                      { ok: existingContact.existing_user?.kyc_status === 'approved', label: 'KYC', okText: 'Atualizado', failText: 'Pendente' },
+                      { ok: existingContact.existing_user?.is_approved, label: 'Limites', okText: 'Aprovados', failText: 'Pendente' },
+                      { ok: true, label: 'Compliance', okText: 'OK', failText: 'Pendente' },
+                    ].map((item, i) => (
+                      <div key={i} className={`flex items-center gap-2.5 p-3 rounded-lg border ${item.ok ? 'border-emerald-400/20 bg-emerald-400/5' : 'border-amber-400/20 bg-amber-400/5'}`}>
+                        {item.ok 
+                          ? <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+                          : <AlertTriangle size={14} className="text-amber-400 shrink-0" />
+                        }
+                        <div>
+                          <p className={`text-xs font-medium ${item.ok ? 'text-emerald-400' : 'text-amber-400'}`}>{item.label}</p>
+                          <p className="text-zinc-500 text-[10px]">{item.ok ? item.okText : item.failText}</p>
                         </div>
                       </div>
-                      {/* KYC/Compliance Status */}
-                      <div className="grid grid-cols-3 gap-2 mt-2 border-t border-blue-500/20 pt-3">
-                        <div className="flex items-center gap-2 text-xs">
-                          {existingContact.existing_user?.kyc_status === 'approved' 
-                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">KYC Atualizado</span></>
-                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">KYC Pendente</span></>
-                          }
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          {existingContact.existing_user?.is_approved 
-                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">Conta Aprovada</span></>
-                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">Aprovação Pendente</span></>
-                          }
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          {existingContact.existing_user?.is_onboarded 
-                            ? <><CheckCircle size={14} className="text-green-400" /><span className="text-green-300">Onboarding Completo</span></>
-                            : <><Eye size={14} className="text-yellow-400" /><span className="text-yellow-300">Onboarding Pendente</span></>
-                          }
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    ))}
+                  </div>
                 )}
                 {existingContact.existing_lead && (
-                  <Card className="bg-purple-950/50 border-purple-500/30 mb-3">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center"><TrendingUp size={20} className="text-purple-400" /></div>
-                        <div><p className="text-purple-400 font-semibold text-sm">Lead Existente</p><p className="text-purple-300/60 text-xs">{existingContact.existing_lead.entity_name} — {existingContact.existing_lead.status}</p></div>
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-purple-400/5 border border-purple-400/20">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-md bg-purple-400/10 flex items-center justify-center">
+                        <TrendingUp size={20} className="text-purple-400" />
                       </div>
-                      <Button size="sm" variant="outline" className="border-purple-500/30 text-purple-400 hover:bg-purple-900/20" onClick={() => openDetail(existingContact.existing_lead)}>Ver Lead</Button>
-                    </CardContent>
-                  </Card>
+                      <div>
+                        <p className="text-purple-400 font-semibold text-sm">Lead Existente</p>
+                        <p className="text-zinc-500 text-xs mt-0.5">{existingContact.existing_lead.entity_name} — {existingContact.existing_lead.status}</p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-xs" onClick={() => openDetail(existingContact.existing_lead)}>Ver Lead</Button>
+                  </div>
                 )}
-                <div className="flex gap-3 mt-4">
-                  <Button variant="outline" className="border-zinc-600 text-zinc-400" onClick={() => { setShowExistingWarning(false); setExistingContact(null); }}>Ignorar & Continuar</Button>
-                </div>
+                <Button variant="outline" className="border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 text-xs mt-2" onClick={() => { setShowExistingWarning(false); setExistingContact(null); }}>
+                  Ignorar & Continuar
+                </Button>
               </div>
             </div>
           )}
 
-          {/* Form Fields */}
+          {/* Entity & Contact — Two Column Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="bg-zinc-900/50 border-zinc-800">
-              <CardContent className="p-4 space-y-4">
-                <h3 className="text-white font-medium text-sm flex items-center gap-2"><Building size={16} className="text-gold-400" />{t('otc.createLead.entityName')}</h3>
-                <div className="space-y-3">
-                  <div className="relative" ref={entityRef}>
-                    <Label className="text-gray-400 text-sm">Entidade *</Label>
-                    <div className="relative">
-                      <Input
-                        value={entitySearch || formData.entity_name}
-                        onChange={e => handleEntitySearchChange(e.target.value)}
-                        onFocus={() => setEntityDropdownOpen(true)}
-                        className="bg-zinc-800 border-zinc-700 text-white pr-10"
-                        placeholder={t('otc.createLead.searchEntity')}
-                        data-testid="lead-entity-name"
-                        autoComplete="off"
-                      />
-                      <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+            {/* Entity Section */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-2.5 mb-1">
+                <Building size={15} className="text-amber-500" />
+                <span className="text-xs text-zinc-400 uppercase tracking-[0.15em] font-semibold">Entidade</span>
+              </div>
+              <div className="space-y-4">
+                <div className="relative" ref={entityRef}>
+                  <Label className="text-sm text-zinc-400 mb-2 block font-medium">Nome da Entidade *</Label>
+                  <div className="relative">
+                    <Input
+                      value={entitySearch || formData.entity_name}
+                      onChange={e => handleEntitySearchChange(e.target.value)}
+                      onFocus={() => setEntityDropdownOpen(true)}
+                      className="bg-zinc-900 border-zinc-800 text-zinc-100 pr-10 rounded-md focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30"
+                      placeholder="Pesquisar ou criar entidade..."
+                      data-testid="lead-entity-name"
+                      autoComplete="off"
+                    />
+                    <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+                  </div>
+                  {entityDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
+                      {filteredEntities.length > 0 && filteredEntities.map((entity, idx) => (
+                        <button key={idx} type="button" className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 flex items-center gap-3 border-b border-zinc-800/50 last:border-0 transition-colors" onClick={() => handleSelectEntity(entity)} data-testid={`entity-option-${idx}`}>
+                          <div className={`w-8 h-8 rounded-md flex items-center justify-center ${entity.type === 'client' ? 'bg-emerald-400/10' : 'bg-blue-400/10'}`}>
+                            <Building size={14} className={entity.type === 'client' ? 'text-emerald-400' : 'text-blue-400'} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-zinc-100 text-sm font-medium truncate">{entity.entity_name}</p>
+                            <p className="text-zinc-500 text-xs truncate">{entity.contact_name} · {entity.contact_email}</p>
+                          </div>
+                          <Badge className={`text-[10px] border ${entity.type === 'client' ? 'border-emerald-400/20 text-emerald-400 bg-emerald-400/10' : 'border-blue-400/20 text-blue-400 bg-blue-400/10'}`}>
+                            {entity.type === 'client' ? 'Cliente' : 'Lead'}
+                          </Badge>
+                        </button>
+                      ))}
+                      {entitySearch && (
+                        <button type="button" className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 flex items-center gap-3 text-amber-500 transition-colors" onClick={() => { setFormData({ ...formData, entity_name: entitySearch }); setEntityDropdownOpen(false); }} data-testid="entity-create-new">
+                          <div className="w-8 h-8 rounded-md bg-amber-500/10 flex items-center justify-center"><Plus size={14} className="text-amber-500" /></div>
+                          <span className="text-sm font-medium">Criar nova: "{entitySearch}"</span>
+                        </button>
+                      )}
+                      {!entitySearch && filteredEntities.length === 0 && (
+                        <div className="px-4 py-4 text-zinc-500 text-sm text-center">Comece a escrever para pesquisar...</div>
+                      )}
                     </div>
-                    {entityDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                        {filteredEntities.length > 0 && filteredEntities.map((entity, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            className="w-full px-3 py-2 text-left hover:bg-zinc-800 flex items-center gap-3 border-b border-zinc-800/50 last:border-0"
-                            onClick={() => handleSelectEntity(entity)}
-                            data-testid={`entity-option-${idx}`}
-                          >
-                            <div className={`w-7 h-7 rounded-md flex items-center justify-center ${entity.type === 'client' ? 'bg-green-500/20' : 'bg-blue-500/20'}`}>
-                              <Building size={14} className={entity.type === 'client' ? 'text-green-400' : 'text-blue-400'} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium truncate">{entity.entity_name}</p>
-                              <p className="text-zinc-500 text-xs truncate">{entity.contact_name} · {entity.contact_email}</p>
-                            </div>
-                            <Badge className={`text-[10px] ${entity.type === 'client' ? 'bg-green-900/30 text-green-400' : 'bg-blue-900/30 text-blue-400'}`}>
-                              {entity.type === 'client' ? t('otc.statusLabels.active_client') : 'Lead'}
-                            </Badge>
-                          </button>
-                        ))}
-                        {entitySearch && (
-                          <button
-                            type="button"
-                            className="w-full px-3 py-2 text-left hover:bg-zinc-800 flex items-center gap-3 text-gold-400"
-                            onClick={() => { setFormData({ ...formData, entity_name: entitySearch }); setEntityDropdownOpen(false); }}
-                            data-testid="entity-create-new"
-                          >
-                            <div className="w-7 h-7 rounded-md bg-gold-500/20 flex items-center justify-center">
-                              <Plus size={14} className="text-gold-400" />
-                            </div>
-                            <span className="text-sm font-medium">Criar nova: "{entitySearch}"</span>
-                          </button>
-                        )}
-                        {!entitySearch && filteredEntities.length === 0 && (
-                          <div className="px-3 py-3 text-zinc-500 text-sm text-center">Comece a escrever para pesquisar...</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div><Label className="text-gray-400 text-sm">{t('otc.country')} *</Label>
-                    <Select value={formData.country} onValueChange={v => setFormData({...formData, country: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-country"><SelectValue placeholder="Selecionar país" /></SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 max-h-60">
-                        {COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-white hover:bg-zinc-700">{c.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label className="text-gray-400 text-sm">{t('otc.source')}</Label>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-sm text-zinc-400 mb-2 block font-medium">País *</Label>
+                  <Select value={formData.country} onValueChange={v => setFormData({...formData, country: v})}>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30" data-testid="lead-country"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 max-h-60">{COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-zinc-100 hover:bg-zinc-800">{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm text-zinc-400 mb-2 block font-medium">Fonte</Label>
                     <Select value={formData.source} onValueChange={v => setFormData({...formData, source: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-source"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        {sourceOptions.map(s => (
-                          <SelectItem key={s} value={s} className="text-white hover:bg-zinc-700">
-                            {t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100" data-testid="lead-source"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800">{sourceOptions.map(s => <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div><Label className="text-gray-400 text-sm">{t('otc.potentialTier')}</Label>
+                  <div>
+                    <Label className="text-sm text-zinc-400 mb-2 block font-medium">Tier</Label>
                     <Select value={formData.potential_tier} onValueChange={v => setFormData({...formData, potential_tier: v})}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-tier"><SelectValue placeholder="Selecionar tier" /></SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                        {TIER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-zinc-700">{opt.label}</SelectItem>)}
-                      </SelectContent>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100" data-testid="lead-tier"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800">{TIER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-zinc-100 hover:bg-zinc-800">{opt.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-zinc-900/50 border-zinc-800">
-              <CardContent className="p-4 space-y-4">
-                <h3 className="text-white font-medium text-sm flex items-center gap-2"><User size={16} className="text-gold-400" />{t('otc.contactInfo')}</h3>
-                <div className="space-y-3">
-                  <div><Label className="text-gray-400 text-sm">{t('otc.name')} *</Label><Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-contact-name" /></div>
-                  <div><Label className="text-gray-400 text-sm">{t('otc.email')} *</Label><Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className="bg-zinc-800 border-zinc-700 text-white" type="email" data-testid="lead-contact-email" /></div>
-                  <div><Label className="text-gray-400 text-sm">{t('otc.phone')} *</Label><Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="+351..." data-testid="lead-contact-phone" /></div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="bg-zinc-900/50 border-zinc-800">
-            <CardContent className="p-4 space-y-4">
-              <h3 className="text-white font-medium text-sm flex items-center gap-2"><DollarSign size={16} className="text-gold-400" />{t('otc.tradingProfile')}</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div><Label className="text-gray-400 text-sm">{t('otc.type')}</Label>
-                  <Select value={formData.transaction_type} onValueChange={v => setFormData({...formData, transaction_type: v})}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-tx-type"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                      <SelectItem value="buy" className="text-white">{t('otc.buy')}</SelectItem>
-                      <SelectItem value="sell" className="text-white">{t('otc.sell')}</SelectItem>
-                      <SelectItem value="both" className="text-white">{t('otc.both')}</SelectItem>
-                      <SelectItem value="swap" className="text-white">Swap</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label className="text-gray-400 text-sm">{t('otc.asset')}</Label>
-                  <Select value={formData.target_asset} onValueChange={v => setFormData({...formData, target_asset: v})}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white" data-testid="lead-asset"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                      {['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'ADA', 'DOGE', 'Other'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div><Label className="text-gray-400 text-sm">{t('otc.createLead.estimatedVolume')}</Label>
-                  <FormattedNumberInput
-                    value={formData.estimated_volume_usd}
-                    onChange={v => setFormData({...formData, estimated_volume_usd: v})}
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                    placeholder="1 000 000"
-                    data-testid="lead-volume"
-                  />
-                </div>
-                <div><Label className="text-gray-400 text-sm">{t('otc.perOperation')}</Label>
-                  <FormattedNumberInput
-                    value={formData.volume_per_operation}
-                    onChange={v => setFormData({...formData, volume_per_operation: v})}
-                    className="bg-zinc-800 border-zinc-700 text-white"
-                    placeholder="500 000"
-                    data-testid="lead-vol-per-op"
-                  />
                 </div>
               </div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.notes')}</Label><Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} placeholder={t('otc.addNotes')} data-testid="lead-notes" /></div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Contact Section */}
+            <div className="space-y-5">
+              <div className="flex items-center gap-2.5 mb-1">
+                <User size={15} className="text-amber-500" />
+                <span className="text-xs text-zinc-400 uppercase tracking-[0.15em] font-semibold">Contacto</span>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm text-zinc-400 mb-2 block font-medium">Nome *</Label>
+                  <Input value={formData.contact_name} onChange={e => setFormData({...formData, contact_name: e.target.value})} onBlur={e => checkExistingContact('contact_name', e.target.value)} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" data-testid="lead-contact-name" />
+                </div>
+                <div>
+                  <Label className="text-sm text-zinc-400 mb-2 block font-medium">Email *</Label>
+                  <Input value={formData.contact_email} onChange={e => setFormData({...formData, contact_email: e.target.value})} onBlur={e => checkExistingContact('email', e.target.value)} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" type="email" data-testid="lead-contact-email" />
+                </div>
+                <div>
+                  <Label className="text-sm text-zinc-400 mb-2 block font-medium">Telefone *</Label>
+                  <Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" placeholder="+351..." data-testid="lead-contact-phone" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trading Profile */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2.5">
+              <DollarSign size={15} className="text-amber-500" />
+              <span className="text-xs text-zinc-400 uppercase tracking-[0.15em] font-semibold">Perfil de Trading</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Tipo</Label>
+                <Select value={formData.transaction_type} onValueChange={v => setFormData({...formData, transaction_type: v})}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100" data-testid="lead-tx-type"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="buy" className="text-zinc-100">Compra</SelectItem>
+                    <SelectItem value="sell" className="text-zinc-100">Venda</SelectItem>
+                    <SelectItem value="both" className="text-zinc-100">Ambos</SelectItem>
+                    <SelectItem value="swap" className="text-zinc-100">Swap</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Ativo</Label>
+                <Select value={formData.target_asset} onValueChange={v => setFormData({...formData, target_asset: v})}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100" data-testid="lead-asset"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">{['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'XRP', 'ADA', 'DOGE', 'Other'].map(a => <SelectItem key={a} value={a} className="text-zinc-100">{a}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Volume Estimado (USD)</Label>
+                <FormattedNumberInput value={formData.estimated_volume_usd} onChange={v => setFormData({...formData, estimated_volume_usd: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="1 000 000" data-testid="lead-volume" />
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Por Operação (USD)</Label>
+                <FormattedNumberInput value={formData.volume_per_operation} onChange={v => setFormData({...formData, volume_per_operation: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="500 000" data-testid="lead-vol-per-op" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm text-zinc-400 mb-2 block font-medium">Notas</Label>
+              <Textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 resize-none" rows={2} placeholder="Observações adicionais..." data-testid="lead-notes" />
+            </div>
+          </div>
         </div>
 
-        <DialogFooter className="border-t border-zinc-800 pt-4 flex gap-3">
-          <Button variant="outline" className="border-zinc-600 text-gray-400" onClick={() => { onOpenChange(false); resetForm(); }}>{t('otc.cancel')}</Button>
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-8 py-5 flex items-center justify-between">
+          <Button variant="outline" className="border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 px-6" onClick={() => { onOpenChange(false); resetForm(); }}>
+            Cancelar
+          </Button>
           <Button
-            className="bg-gold-500 hover:bg-gold-400 text-black font-medium"
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8 rounded-md transition-colors"
             onClick={handleCreateLead}
             disabled={!isFormValid || isSubmitting}
             data-testid="create-lead-submit"
           >
-            {isSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" />...</> : t('otc.createLead.submit')}
+            {isSubmitting ? <><Loader2 size={16} className="mr-2 animate-spin" />A criar...</> : <>Criar Lead <ChevronRight size={16} className="ml-1" /></>}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

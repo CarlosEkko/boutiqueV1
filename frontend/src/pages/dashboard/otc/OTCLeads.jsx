@@ -67,68 +67,64 @@ const OTCLeads = () => {
   };
 
   return (
-    <div className="space-y-6" data-testid="otc-leads-page">
+    <div className="space-y-8" data-testid="otc-leads-page" style={{ fontFamily: 'Manrope, sans-serif' }}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light text-white flex items-center gap-3">
-            <UserPlus className="text-gold-400" /> {t('otc.leads')}
+          <p className="text-xs text-zinc-500 uppercase tracking-[0.2em] mb-2">OTC Desk</p>
+          <h1 className="text-3xl text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>
+            Leads
           </h1>
-          <p className="text-gray-400 mt-1">{total} {t('otc.leadsInPipeline')}</p>
+          <p className="text-zinc-500 text-sm mt-1">{total} leads no pipeline</p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="new-lead-btn">
-            <Plus size={16} className="mr-2" /> {t('otc.newLead')}
-          </Button>
-        </div>
+        <Button onClick={() => { resetForm(); setShowCreateDialog(true); }} className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-6" data-testid="new-lead-btn">
+          <Plus size={16} className="mr-2" /> Novo Lead
+        </Button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
           <Input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); }} onKeyDown={e => e.key === 'Enter' && fetchLeads()}
-            placeholder={t('otc.searchLeads')} className="pl-10 bg-zinc-800 border-gold-500/20" />
+            placeholder="Pesquisar leads..." className="pl-10 bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white"><SelectValue placeholder={t('otc.status')} /></SelectTrigger>
-          <SelectContent className="bg-zinc-800 border-gold-500/30">
-            <SelectItem value="all" className="text-white hover:bg-zinc-700">{t('otc.allStatuses')}</SelectItem>
+          <SelectTrigger className="w-48 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-800">
+            <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allStatuses')}</SelectItem>
             {['new', 'contacted', 'pre_qualified', 'not_qualified', 'kyc_pending', 'kyc_approved', 'active_client', 'lost', 'archived'].map(s => (
-              <SelectItem key={s} value={s} className="text-white hover:bg-zinc-700">{t(`otc.statusLabels.${s}`) || s}</SelectItem>
+              <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.statusLabels.${s}`) || s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-48 bg-zinc-800 border-gold-500/30 text-white"><SelectValue placeholder={t('otc.source')} /></SelectTrigger>
-          <SelectContent className="bg-zinc-800 border-gold-500/30">
-            <SelectItem value="all" className="text-white hover:bg-zinc-700">{t('otc.allSources')}</SelectItem>
-            {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-white hover:bg-zinc-700">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}
+          <SelectTrigger className="w-48 bg-zinc-900 border-zinc-800 text-zinc-300"><SelectValue placeholder="Fonte" /></SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-800">
+            <SelectItem value="all" className="text-zinc-100 hover:bg-zinc-800">{t('otc.allSources')}</SelectItem>
+            {enums?.sources?.map(s => <SelectItem key={s} value={s} className="text-zinc-100 hover:bg-zinc-800">{t(`otc.sourceLabels.${s}`) || s.replace(/_/g, ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
       {/* Lead Cards */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">{t('otc.loading')}</div>
+        <div className="text-center py-12 text-zinc-600">A carregar...</div>
       ) : leads.length === 0 ? (
-        <Card className="bg-zinc-900/50 border-gold-500/20">
-          <CardContent className="py-16 text-center">
-            <UserPlus size={48} className="mx-auto mb-4 text-gold-400/30" />
-            <p className="text-gray-400 text-lg">{t('otc.noLeadsFound')}</p>
-            <p className="text-gray-500 text-sm mt-1">{t('otc.createFirstLead')}</p>
-          </CardContent>
-        </Card>
+        <div className="border border-zinc-800 rounded-xl bg-zinc-900/50 py-20 text-center">
+          <UserPlus size={40} className="mx-auto mb-4 text-zinc-700" />
+          <p className="text-zinc-400 text-base">Nenhum lead encontrado</p>
+          <p className="text-zinc-600 text-sm mt-1">Crie o primeiro lead para começar</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {leads.map(lead => (
-            <LeadCard key={lead.id} lead={lead}
-              onVerify={handleVerifyClient} onPreQual={openPreQual}
-              onAdvanceKYC={handleAdvanceToKYC} onApproveKYC={handleApproveKYC}
-              onSetup={openSetup} onConvert={handleConvertToClient}
-              onDetail={openDetail} onDelete={handleDeleteLead}
-              onRiskScan={handleTrustfullScan}
-              onScheduleMeeting={(lead) => { setMeetingLead(lead); setShowMeetingDialog(true); }}
+            <LeadCard key={lead.id} lead={lead} t={t}
+              onClick={() => openDetail(lead)}
+              onPreQual={openPreQual}
+              onSetup={openSetup}
+              onConvert={handleConvertToClient}
+              onDelete={handleDeleteLead}
             />
           ))}
         </div>
@@ -346,127 +342,195 @@ const OTCLeads = () => {
 
       {/* Pre-Qualification Dialog */}
       <Dialog open={showPreQualDialog} onOpenChange={setShowPreQualDialog}>
-        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="text-gold-400 flex items-center gap-2"><FileText className="text-gold-400" />{t('otc.preQualification')} — {selectedLead?.entity_name}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-gray-400 text-sm">{t('otc.clientType')}</Label>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto p-0 shadow-2xl">
+          <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 px-8 pt-8 pb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <FileText size={20} className="text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>Pré-Qualificação</h2>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>02 / 03 · {selectedLead?.entity_name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-0">
+              <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+              <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+              <div className="flex-1 h-[2px] bg-zinc-800 rounded-full" />
+            </div>
+          </div>
+          <div className="px-8 py-6 space-y-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Tipo de Cliente</Label>
                 <Select value={preQualData.client_type} onValueChange={v => setPreQualData({...preQualData, client_type: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectItem value="retail" className="text-white">Retalho</SelectItem>
-                    <SelectItem value="hnwi" className="text-white">HNWI</SelectItem>
-                    <SelectItem value="corporate" className="text-white">Empresa</SelectItem>
-                    <SelectItem value="fund_institution" className="text-white">Fundo / Instituição</SelectItem>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="retail" className="text-zinc-100">Retalho</SelectItem>
+                    <SelectItem value="hnwi" className="text-zinc-100">HNWI</SelectItem>
+                    <SelectItem value="corporate" className="text-zinc-100">Empresa</SelectItem>
+                    <SelectItem value="fund_institution" className="text-zinc-100">Fundo / Instituição</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.firstOperationValue')}</Label>
-                <FormattedNumberInput value={preQualData.first_operation_value} onChange={v => setPreQualData({...preQualData, first_operation_value: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100 000" data-testid="prequal-first-op" /></div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.estimatedMonthlyVolume')}</Label>
-                <FormattedNumberInput value={preQualData.estimated_monthly_volume} onChange={v => setPreQualData({...preQualData, estimated_monthly_volume: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="1 000 000" data-testid="prequal-monthly-vol" /></div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.frequency')}</Label>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Valor 1ª Operação (USD)</Label>
+                <FormattedNumberInput value={preQualData.first_operation_value} onChange={v => setPreQualData({...preQualData, first_operation_value: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="100 000" data-testid="prequal-first-op" />
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Volume Mensal Est. (USD)</Label>
+                <FormattedNumberInput value={preQualData.estimated_monthly_volume} onChange={v => setPreQualData({...preQualData, estimated_monthly_volume: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="1 000 000" data-testid="prequal-monthly-vol" />
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Frequência</Label>
                 <Select value={preQualData.expected_frequency} onValueChange={v => setPreQualData({...preQualData, expected_frequency: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="one_shot" className="text-white">{t('otc.oneShot')}</SelectItem><SelectItem value="weekly" className="text-white">{t('otc.weekly')}</SelectItem><SelectItem value="daily" className="text-white">{t('otc.daily')}</SelectItem><SelectItem value="multiple_daily" className="text-white">{t('otc.multipleDaily')}</SelectItem></SelectContent>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="one_shot" className="text-zinc-100">Única</SelectItem>
+                    <SelectItem value="weekly" className="text-zinc-100">Semanal</SelectItem>
+                    <SelectItem value="daily" className="text-zinc-100">Diária</SelectItem>
+                    <SelectItem value="multiple_daily" className="text-zinc-100">Múltipla Diária</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.operationObjective')}</Label>
-              <Select value={preQualData.operation_objective} onValueChange={v => setPreQualData({...preQualData, operation_objective: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectItem value="trading" className="text-white">Trading</SelectItem>
-                  <SelectItem value="treasury" className="text-white">Tesouraria</SelectItem>
-                  <SelectItem value="arbitrage" className="text-white">Arbitragem</SelectItem>
-                  <SelectItem value="remittances" className="text-white">Remessas</SelectItem>
-                  <SelectItem value="otc_b2b" className="text-white">OTC B2B</SelectItem>
-                  <SelectItem value="other" className="text-white">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Objectivo da Operação</Label>
+                <Select value={preQualData.operation_objective} onValueChange={v => setPreQualData({...preQualData, operation_objective: v})}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="trading" className="text-zinc-100">Trading</SelectItem>
+                    <SelectItem value="treasury" className="text-zinc-100">Tesouraria</SelectItem>
+                    <SelectItem value="arbitrage" className="text-zinc-100">Arbitragem</SelectItem>
+                    <SelectItem value="remittances" className="text-zinc-100">Remessas</SelectItem>
+                    <SelectItem value="otc_b2b" className="text-zinc-100">OTC B2B</SelectItem>
+                    <SelectItem value="other" className="text-zinc-100">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Origem dos Fundos</Label>
+                <Select value={preQualData.fund_source} onValueChange={v => setPreQualData({...preQualData, fund_source: v})}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="income" className="text-zinc-100">Rendimento</SelectItem>
+                    <SelectItem value="company" className="text-zinc-100">Empresa</SelectItem>
+                    <SelectItem value="crypto_holdings" className="text-zinc-100">Holdings Crypto</SelectItem>
+                    <SelectItem value="asset_sale" className="text-zinc-100">Venda de Ativos</SelectItem>
+                    <SelectItem value="inheritance" className="text-zinc-100">Herança</SelectItem>
+                    <SelectItem value="investment_returns" className="text-zinc-100">Retornos</SelectItem>
+                    <SelectItem value="other" className="text-zinc-100">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Canal de Liquidação</Label>
+                <Select value={preQualData.settlement_channel} onValueChange={v => setPreQualData({...preQualData, settlement_channel: v})}>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="bank_transfer" className="text-zinc-100">Transferência Bancária</SelectItem>
+                    <SelectItem value="stablecoins" className="text-zinc-100">Stablecoins</SelectItem>
+                    <SelectItem value="on_chain" className="text-zinc-100">On-Chain</SelectItem>
+                    <SelectItem value="off_chain" className="text-zinc-100">Off-Chain</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Jurisdição Bancária</Label>
+                <Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-amber-500/50" placeholder="Ex: Suíça, Portugal..." />
+              </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.fundSource')}</Label>
-              <Select value={preQualData.fund_source} onValueChange={v => setPreQualData({...preQualData, fund_source: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectItem value="income" className="text-white">Rendimento</SelectItem>
-                  <SelectItem value="company" className="text-white">Empresa</SelectItem>
-                  <SelectItem value="crypto_holdings" className="text-white">Holdings Crypto</SelectItem>
-                  <SelectItem value="asset_sale" className="text-white">Venda de Ativos</SelectItem>
-                  <SelectItem value="inheritance" className="text-white">Herança</SelectItem>
-                  <SelectItem value="investment_returns" className="text-white">Retornos de Investimento</SelectItem>
-                  <SelectItem value="other" className="text-white">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <Label className="text-sm text-zinc-400 mb-2 block font-medium">Red Flags</Label>
+              <Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 resize-none focus:border-amber-500/50" rows={2} />
             </div>
-            <div><Label className="text-gray-400 text-sm">Canal de Liquidação</Label>
-              <Select value={preQualData.settlement_channel} onValueChange={v => setPreQualData({...preQualData, settlement_channel: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                  <SelectItem value="bank_transfer" className="text-white">Transferência Bancária</SelectItem>
-                  <SelectItem value="stablecoins" className="text-white">Stablecoins</SelectItem>
-                  <SelectItem value="on_chain" className="text-white">On-Chain</SelectItem>
-                  <SelectItem value="off_chain" className="text-white">Off-Chain</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <Label className="text-sm text-zinc-400 mb-2 block font-medium">Notas</Label>
+              <Textarea value={preQualData.notes} onChange={e => setPreQualData({...preQualData, notes: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 resize-none focus:border-amber-500/50" rows={2} />
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.bankJurisdiction')}</Label><Input value={preQualData.bank_jurisdiction} onChange={e => setPreQualData({...preQualData, bank_jurisdiction: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="Ex: Suíça, Portugal..." /></div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.redFlagNotes')}</Label><Textarea value={preQualData.red_flags_notes} onChange={e => setPreQualData({...preQualData, red_flags_notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.notes')}</Label><Textarea value={preQualData.notes} onChange={e => setPreQualData({...preQualData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" className="border-zinc-600" onClick={() => setShowPreQualDialog(false)}>{t('otc.cancel')}</Button>
-            <Button className="bg-gold-500 hover:bg-gold-400 text-black" onClick={handleSubmitPreQual}>{t('otc.submitPreQual')}</Button>
-          </DialogFooter>
+          <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-8 py-5 flex items-center justify-between">
+            <Button variant="outline" className="border-zinc-800 text-zinc-500 hover:text-zinc-300" onClick={() => setShowPreQualDialog(false)}>Cancelar</Button>
+            <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8" onClick={handleSubmitPreQual}>Submeter <ChevronRight size={16} className="ml-1" /></Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Operational Setup Dialog */}
       <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
-        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="text-gold-400 flex items-center gap-2"><Settings className="text-gold-400" />{t('otc.operationalSetup')} — {selectedLead?.entity_name}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-gray-400 text-sm">{t('otc.dailyLimit')}</Label>
-                <FormattedNumberInput value={setupData.daily_limit} onChange={v => setSetupData({...setupData, daily_limit: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="100 000" data-testid="setup-daily-limit" /></div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.monthlyLimit')}</Label>
-                <FormattedNumberInput value={setupData.monthly_limit} onChange={v => setSetupData({...setupData, monthly_limit: v})} className="bg-zinc-800 border-zinc-700 text-white" placeholder="1 000 000" data-testid="setup-monthly-limit" /></div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.settlementMethod')}</Label>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto p-0 shadow-2xl">
+          <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 px-8 pt-8 pb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Settings size={20} className="text-amber-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-50" style={{ fontFamily: 'Playfair Display, serif' }}>Setup Operacional</h2>
+                <p className="text-zinc-500 text-xs mt-0.5 uppercase tracking-[0.2em]" style={{ fontFamily: 'Manrope, sans-serif' }}>03 / 03 · {selectedLead?.entity_name}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-0">
+              <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+              <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+              <div className="flex-1 h-[2px] bg-amber-500 rounded-full" />
+            </div>
+          </div>
+          <div className="px-8 py-6 space-y-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Limite Diário (USD)</Label>
+                <FormattedNumberInput value={setupData.daily_limit} onChange={v => setSetupData({...setupData, daily_limit: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="100 000" data-testid="setup-daily-limit" />
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Limite Mensal (USD)</Label>
+                <FormattedNumberInput value={setupData.monthly_limit} onChange={v => setSetupData({...setupData, monthly_limit: v})} className="bg-zinc-900 border-zinc-800 text-zinc-100" placeholder="1 000 000" data-testid="setup-monthly-limit" />
+              </div>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Método de Settlement</Label>
                 <Select value={setupData.settlement_method} onValueChange={v => setSetupData({...setupData, settlement_method: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder={t('otc.select')} /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectItem value="sepa" className="text-white">SEPA</SelectItem>
-                    <SelectItem value="swift" className="text-white">SWIFT</SelectItem>
-                    <SelectItem value="pix" className="text-white">PIX</SelectItem>
-                    <SelectItem value="faster_payments" className="text-white">Faster Payments</SelectItem>
-                    <SelectItem value="usdt_onchain" className="text-white">USDT On-Chain</SelectItem>
-                    <SelectItem value="usdc_onchain" className="text-white">USDC On-Chain</SelectItem>
-                    <SelectItem value="crypto_onchain" className="text-white">Crypto On-Chain</SelectItem>
-                    <SelectItem value="internal" className="text-white">Interno</SelectItem>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">
+                    <SelectItem value="sepa" className="text-zinc-100">SEPA</SelectItem>
+                    <SelectItem value="swift" className="text-zinc-100">SWIFT</SelectItem>
+                    <SelectItem value="pix" className="text-zinc-100">PIX</SelectItem>
+                    <SelectItem value="faster_payments" className="text-zinc-100">Faster Payments</SelectItem>
+                    <SelectItem value="usdt_onchain" className="text-zinc-100">USDT On-Chain</SelectItem>
+                    <SelectItem value="usdc_onchain" className="text-zinc-100">USDC On-Chain</SelectItem>
+                    <SelectItem value="crypto_onchain" className="text-zinc-100">Crypto On-Chain</SelectItem>
+                    <SelectItem value="internal" className="text-zinc-100">Interno</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-gray-400 text-sm">{t('otc.accountManager')}</Label>
+              <div>
+                <Label className="text-sm text-zinc-400 mb-2 block font-medium">Account Manager</Label>
                 <Select value={setupData.account_manager_id} onValueChange={v => setSetupData({...setupData, account_manager_id: v})}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
-                    {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white hover:bg-zinc-700">{m.name}{m.region ? ` (${m.region})` : ''}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800">{teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-zinc-100 hover:bg-zinc-800">{m.name}{m.region ? ` (${m.region})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.communicationChannel')}</Label>
+            <div>
+              <Label className="text-sm text-zinc-400 mb-2 block font-medium">Canal de Comunicação</Label>
               <Select value={setupData.communication_channel_type} onValueChange={v => setSetupData({...setupData, communication_channel_type: v})}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700 text-white"><SelectItem value="email" className="text-white">Email</SelectItem><SelectItem value="whatsapp" className="text-white">WhatsApp</SelectItem><SelectItem value="telegram" className="text-white">Telegram</SelectItem><SelectItem value="phone" className="text-white">{t('otc.phone')}</SelectItem></SelectContent>
+                <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30"><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800">
+                  <SelectItem value="email" className="text-zinc-100">Email</SelectItem>
+                  <SelectItem value="whatsapp" className="text-zinc-100">WhatsApp</SelectItem>
+                  <SelectItem value="telegram" className="text-zinc-100">Telegram</SelectItem>
+                  <SelectItem value="phone" className="text-zinc-100">Telefone</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            <div><Label className="text-gray-400 text-sm">{t('otc.notes')}</Label><Textarea value={setupData.notes} onChange={e => setSetupData({...setupData, notes: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white" rows={2} /></div>
+            <div>
+              <Label className="text-sm text-zinc-400 mb-2 block font-medium">Notas</Label>
+              <Textarea value={setupData.notes} onChange={e => setSetupData({...setupData, notes: e.target.value})} className="bg-zinc-900 border-zinc-800 text-zinc-100 resize-none focus:border-amber-500/50" rows={2} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" className="border-zinc-600" onClick={() => setShowSetupDialog(false)}>{t('otc.cancel')}</Button>
-            <Button className="bg-gold-500 hover:bg-gold-400 text-black" onClick={handleSubmitSetup}>{t('otc.saveSetup')}</Button>
-          </DialogFooter>
+          <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-8 py-5 flex items-center justify-between">
+            <Button variant="outline" className="border-zinc-800 text-zinc-500 hover:text-zinc-300" onClick={() => setShowSetupDialog(false)}>Cancelar</Button>
+            <Button className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold px-8" onClick={handleSubmitSetup}>Guardar Setup <ChevronRight size={16} className="ml-1" /></Button>
+          </div>
         </DialogContent>
       </Dialog>
 
