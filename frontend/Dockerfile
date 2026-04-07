@@ -22,6 +22,9 @@ ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 ENV CI=false
 RUN npm run build
 
+# Copy TinyMCE assets to build folder
+RUN cp -r node_modules/tinymce build/tinymce
+
 # Production stage with nginx
 FROM nginx:alpine
 
