@@ -281,7 +281,7 @@ const OTCLeads = () => {
                   </CardContent>
                 </Card>
                 <Card className="bg-zinc-900/50 border-zinc-800">
-                  <CardHeader className="pb-2"><CardTitle className="text-purple-400 text-sm flex items-center gap-2"><Building size={16} />{t('otc.settlement')}</CardTitle></CardHeader>
+                  <CardHeader className="pb-2"><CardTitle className="text-purple-400 text-sm flex items-center gap-2"><Building size={16} />{t('otc.settlementLabel') || 'Settlement'}</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                     {isEditing ? (
                       <div><Label className="text-gray-400 text-sm">{t('otc.settlementMethods')}</Label>

@@ -1182,6 +1182,7 @@ const translations = {
       asset: 'Asset',
       type: 'Type',
       settlement: 'Settlement',
+      settlementLabel: 'Settlement',
       settlementMethods: 'Settlement Methods',
       methods: 'Methods',
       exchange: 'Exchange',
@@ -1285,6 +1286,7 @@ const translations = {
           acceptance: 'Acceptance',
           execution: 'Execution',
           settlement: 'Settlement',
+      settlementLabel: 'Settlement',
           invoice: 'Invoice',
           post_sale: 'Post-Sale'
         },
@@ -1399,7 +1401,7 @@ const translations = {
           notes: 'Notes'
         }
       },
-      clients: {
+      clientsPage: {
         title: 'OTC Clients',
         search: 'Search clients...',
         newClient: 'New Client',
@@ -1436,7 +1438,7 @@ const translations = {
         errorDeleting: 'Error deleting client',
         errorUpdatingLimits: 'Error updating limits'
       },
-      quotes: {
+      quotesPage: {
         title: 'RFQ & Quotes',
         subtitle: 'Request for Quote management',
         loading: 'Loading...',
@@ -1453,7 +1455,7 @@ const translations = {
         errorRejecting: 'Error rejecting quote',
         errorLoading: 'Error loading data'
       },
-      execution: {
+      executionPage: {
         title: 'Execution',
         subtitle: 'Trade execution management',
         loading: 'Loading...',
@@ -1469,7 +1471,7 @@ const translations = {
         errorCompleting: 'Error completing execution',
         errorLoading: 'Error loading data'
       },
-      settlement: {
+      settlementPage: {
         title: 'Settlement',
         subtitle: 'Settlement management',
         loading: 'Loading...',
@@ -1484,7 +1486,7 @@ const translations = {
         errorCompleting: 'Error completing',
         errorLoading: 'Error loading data'
       },
-      invoices: {
+      invoicesPage: {
         title: 'Invoices',
         subtitle: 'Invoice management',
         loading: 'Loading...',
@@ -2680,6 +2682,7 @@ const translations = {
       asset: 'Asset',
       type: 'Tipo',
       settlement: 'Liquidação',
+      settlementLabel: 'Liquidação',
       settlementMethods: 'Métodos de Liquidação',
       methods: 'Métodos',
       exchange: 'Exchange',
@@ -2783,6 +2786,7 @@ const translations = {
           acceptance: 'Aceitação',
           execution: 'Execução',
           settlement: 'Liquidação',
+      settlementLabel: 'Liquidação',
           invoice: 'Fatura',
           post_sale: 'Pós-Venda'
         },
@@ -2897,7 +2901,7 @@ const translations = {
           notes: 'Notas'
         }
       },
-      clients: {
+      clientsPage: {
         title: 'Clientes OTC',
         search: 'Pesquisar clientes...',
         newClient: 'Novo Cliente',
@@ -2934,7 +2938,7 @@ const translations = {
         errorDeleting: 'Erro ao eliminar cliente',
         errorUpdatingLimits: 'Erro ao atualizar limites'
       },
-      quotes: {
+      quotesPage: {
         title: 'RFQ & Cotações',
         subtitle: 'Gestão de pedidos de cotação',
         loading: 'A carregar...',
@@ -2951,7 +2955,7 @@ const translations = {
         errorRejecting: 'Erro ao rejeitar cotação',
         errorLoading: 'Erro ao carregar dados'
       },
-      execution: {
+      executionPage: {
         title: 'Execução',
         subtitle: 'Gestão de execução de trades',
         loading: 'A carregar...',
@@ -2967,7 +2971,7 @@ const translations = {
         errorCompleting: 'Erro ao completar execução',
         errorLoading: 'Erro ao carregar dados'
       },
-      settlement: {
+      settlementPage: {
         title: 'Liquidação',
         subtitle: 'Gestão de liquidações',
         loading: 'A carregar...',
@@ -2982,7 +2986,7 @@ const translations = {
         errorCompleting: 'Erro ao completar',
         errorLoading: 'Erro ao carregar dados'
       },
-      invoices: {
+      invoicesPage: {
         title: 'Faturas',
         subtitle: 'Gestão de faturação',
         loading: 'A carregar...',
@@ -4171,6 +4175,7 @@ const translations = {
       asset: 'الأصل',
       type: 'النوع',
       settlement: 'التسوية',
+      settlementLabel: 'التسوية',
       settlementMethods: 'طرق التسوية',
       methods: 'الطرق',
       exchange: 'البورصة',
@@ -4274,6 +4279,7 @@ const translations = {
           acceptance: 'القبول',
           execution: 'التنفيذ',
           settlement: 'التسوية',
+      settlementLabel: 'التسوية',
           invoice: 'الفاتورة',
           post_sale: 'ما بعد البيع'
         },
@@ -4345,7 +4351,7 @@ const translations = {
         errorUpdateStatus: 'خطأ في تحديث الحالة', errorDelete: 'خطأ في الحذف', connectionError: 'خطأ في الاتصال',
         modal: { editTitle: 'تعديل صفقة OTC', createTitle: 'إنشاء صفقة OTC', subtitle: 'تحديد شروط الصفقة وتوزيع العمولات', dealType: 'نوع الصفقة', clientName: 'اسم العميل', email: 'البريد', asset: 'الأصل', quantity: 'الكمية', refCurrency: 'عملة المرجع', refPrice: 'السعر المرجعي', condition: 'الشرط', premium: 'علاوة (+)', discount: 'خصم (-)', gross: 'إجمالي (%)', net: 'صافي (%)', broker: 'الوسيط', kbexBroker: 'وسيط KBEX', none: 'لا شيء', select: 'اختر', brokerMargin: 'هامش الوسيط (%)', commCurrency: 'عملة العمولة', calculator: 'آلة حاسبة', adjPrice: 'السعر المعدل', totalValue: 'القيمة الإجمالية', kbexMargin: 'هامش KBEX', saving: 'جاري الحفظ...', update: 'تحديث', create: 'إنشاء صفقة', dealUpdated: 'تم تحديث الصفقة', dealCreated: 'تم إنشاء الصفقة', errorSaving: 'خطأ في الحفظ', notes: 'ملاحظات' }
       },
-      clients: {
+      clientsPage: {
         title: 'عملاء OTC', search: 'البحث عن عملاء...', newClient: 'عميل جديد',
         active: 'نشط', inactive: 'غير نشط', suspended: 'معلق', all: 'الكل',
         loading: 'جاري التحميل...', noClients: 'لم يتم العثور على عملاء',
@@ -4358,14 +4364,14 @@ const translations = {
         errorLoading: 'خطأ في التحميل', errorLinking: 'خطأ في الربط', errorUnlinking: 'خطأ في إلغاء الربط',
         errorDeleting: 'خطأ في الحذف', errorUpdatingLimits: 'خطأ في تحديث الحدود'
       },
-      quotes: {
+      quotesPage: {
         title: 'طلب تسعير', subtitle: 'إدارة طلبات التسعير', loading: 'جاري التحميل...',
         statusLabels: { pending: 'قيد الانتظار', sent: 'مرسل', accepted: 'مقبول', rejected: 'مرفوض', expired: 'منتهي' },
         manual: 'يدوي', market: 'سوق', addedToPrice: 'مضاف للسعر', subtractedFromPrice: 'مطروح من السعر',
         quoteCreated: 'تم إنشاء التسعير!', quoteAccepted: 'تم قبول التسعير!', quoteRejected: 'تم رفض التسعير',
         errorCreating: 'خطأ في الإنشاء', errorAccepting: 'خطأ في القبول', errorRejecting: 'خطأ في الرفض', errorLoading: 'خطأ في التحميل'
       },
-      execution: {
+      executionPage: {
         title: 'التنفيذ', subtitle: 'إدارة تنفيذ الصفقات', loading: 'جاري التحميل...',
         statusLabels: { pending_funds: 'في انتظار الأموال', funds_received: 'تم استلام الأموال', executing: 'قيد التنفيذ', executed: 'تم التنفيذ', failed: 'فشل' },
         stageLabels: { acceptance: 'مقبول', execution: 'قيد التنفيذ' },
@@ -4374,14 +4380,14 @@ const translations = {
         executionCompleted: 'اكتمل التنفيذ!', errorStarting: 'خطأ في البدء',
         errorConfirmingFunds: 'خطأ في تأكيد الأموال', errorCompleting: 'خطأ في الإكمال', errorLoading: 'خطأ في التحميل'
       },
-      settlement: {
+      settlementPage: {
         title: 'التسوية', subtitle: 'إدارة التسويات', loading: 'جاري التحميل...',
         statusLabels: { pending: 'قيد الانتظار', in_progress: 'قيد التقدم', completed: 'مكتمل', failed: 'فشل' },
         internal: 'داخلي', settlementCreated: 'تم إنشاء التسوية!', fiatConfirmed: 'تم تأكيد التسوية!',
         cryptoConfirmed: 'تم تأكيد التسوية!', settlementComplete: 'اكتملت التسوية!',
         errorCreating: 'خطأ في الإنشاء', errorConfirming: 'خطأ في التأكيد', errorCompleting: 'خطأ في الإكمال', errorLoading: 'خطأ في التحميل'
       },
-      invoices: {
+      invoicesPage: {
         title: 'الفواتير', subtitle: 'إدارة الفواتير', loading: 'جاري التحميل...',
         statusLabels: { draft: 'مسودة', sent: 'مرسلة', paid: 'مدفوعة', cancelled: 'ملغاة' },
         invoiceCreated: 'تم إنشاء الفاتورة!', invoiceSent: 'تم إرسال الفاتورة!', invoicePaid: 'تم الدفع!',
@@ -5529,6 +5535,7 @@ const translations = {
       asset: 'Actif',
       type: 'Type',
       settlement: 'Règlement',
+      settlementLabel: 'Règlement',
       settlementMethods: 'Méthodes de Règlement',
       methods: 'Méthodes',
       exchange: 'Exchange',
@@ -5632,6 +5639,7 @@ const translations = {
           acceptance: 'Acceptation',
           execution: 'Exécution',
           settlement: 'Règlement',
+      settlementLabel: 'Règlement',
           invoice: 'Facture',
           post_sale: 'Après-Vente'
         },
@@ -5698,7 +5706,7 @@ const translations = {
         errorUpdateStatus: 'Erreur de mise à jour', errorDelete: 'Erreur de suppression', connectionError: 'Erreur de connexion',
         modal: { editTitle: 'Modifier Affaire OTC', createTitle: 'Créer Affaire OTC', subtitle: 'Définir les conditions et la distribution des commissions', dealType: 'Type d\'Affaire', clientName: 'Nom du Client', email: 'Email', asset: 'Actif', quantity: 'Quantité', refCurrency: 'Devise Réf.', refPrice: 'Prix de Référence', condition: 'Condition', premium: 'Prime (+)', discount: 'Remise (-)', gross: 'Brut (%)', net: 'Net (%)', broker: 'Courtier', kbexBroker: 'Courtier KBEX', none: 'Aucun', select: 'Sélectionner', brokerMargin: 'Marge Courtier (%)', commCurrency: 'Devise Commission', calculator: 'Calculateur', adjPrice: 'Prix Ajusté', totalValue: 'Valeur Totale', kbexMargin: 'Marge KBEX', saving: 'Enregistrement...', update: 'Mettre à jour', create: 'Créer Affaire', dealUpdated: 'Affaire mise à jour', dealCreated: 'Affaire créée', errorSaving: 'Erreur d\'enregistrement', notes: 'Notes' }
       },
-      clients: {
+      clientsPage: {
         title: 'Clients OTC', search: 'Rechercher des clients...', newClient: 'Nouveau Client',
         active: 'Actif', inactive: 'Inactif', suspended: 'Suspendu', all: 'Tous',
         loading: 'Chargement...', noClients: 'Aucun client trouvé',
@@ -5711,14 +5719,14 @@ const translations = {
         errorLoading: 'Erreur de chargement', errorLinking: 'Erreur de liaison', errorUnlinking: 'Erreur',
         errorDeleting: 'Erreur de suppression', errorUpdatingLimits: 'Erreur de mise à jour'
       },
-      quotes: {
+      quotesPage: {
         title: 'Demandes de Prix', subtitle: 'Gestion des demandes de prix', loading: 'Chargement...',
         statusLabels: { pending: 'En Attente', sent: 'Envoyée', accepted: 'Acceptée', rejected: 'Rejetée', expired: 'Expirée' },
         manual: 'Manuel', market: 'Marché', addedToPrice: 'Ajouté au prix', subtractedFromPrice: 'Soustrait du prix',
         quoteCreated: 'Cotation créée!', quoteAccepted: 'Cotation acceptée!', quoteRejected: 'Cotation rejetée',
         errorCreating: 'Erreur de création', errorAccepting: 'Erreur d\'acceptation', errorRejecting: 'Erreur de rejet', errorLoading: 'Erreur de chargement'
       },
-      execution: {
+      executionPage: {
         title: 'Exécution', subtitle: 'Gestion d\'exécution', loading: 'Chargement...',
         statusLabels: { pending_funds: 'En Attente de Fonds', funds_received: 'Fonds Reçus', executing: 'En Exécution', executed: 'Exécuté', failed: 'Échoué' },
         stageLabels: { acceptance: 'Accepté', execution: 'En Exécution' },
@@ -5726,14 +5734,14 @@ const translations = {
         fundsConfirmed: 'Fonds confirmés!', executionCompleted: 'Exécution terminée!',
         errorStarting: 'Erreur de démarrage', errorConfirmingFunds: 'Erreur de confirmation', errorCompleting: 'Erreur', errorLoading: 'Erreur de chargement'
       },
-      settlement: {
+      settlementPage: {
         title: 'Règlement', subtitle: 'Gestion des règlements', loading: 'Chargement...',
         statusLabels: { pending: 'En Attente', in_progress: 'En Cours', completed: 'Terminé', failed: 'Échoué' },
         internal: 'Interne', settlementCreated: 'Règlement créé!', fiatConfirmed: 'Règlement fiat confirmé!',
         cryptoConfirmed: 'Règlement crypto confirmé!', settlementComplete: 'Règlement terminé!',
         errorCreating: 'Erreur de création', errorConfirming: 'Erreur de confirmation', errorCompleting: 'Erreur', errorLoading: 'Erreur de chargement'
       },
-      invoices: {
+      invoicesPage: {
         title: 'Factures', subtitle: 'Gestion de facturation', loading: 'Chargement...',
         statusLabels: { draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', cancelled: 'Annulée' },
         invoiceCreated: 'Facture créée!', invoiceSent: 'Facture envoyée!', invoicePaid: 'Facture payée!',
@@ -6128,6 +6136,7 @@ const translations = {
       asset: 'Activo',
       type: 'Tipo',
       settlement: 'Liquidación',
+      settlementLabel: 'Liquidación',
       settlementMethods: 'Métodos de Liquidación',
       methods: 'Métodos',
       exchange: 'Exchange',
@@ -6231,6 +6240,7 @@ const translations = {
           acceptance: 'Aceptación',
           execution: 'Ejecución',
           settlement: 'Liquidación',
+      settlementLabel: 'Liquidación',
           invoice: 'Factura',
           post_sale: 'Post-Venta'
         },
@@ -6297,7 +6307,7 @@ const translations = {
         errorUpdateStatus: 'Error al actualizar', errorDelete: 'Error al eliminar', connectionError: 'Error de conexión',
         modal: { editTitle: 'Editar Negocio OTC', createTitle: 'Crear Negocio OTC', subtitle: 'Definir condiciones y distribución de comisiones', dealType: 'Tipo de Negocio', clientName: 'Nombre del Cliente', email: 'Correo', asset: 'Activo', quantity: 'Cantidad', refCurrency: 'Moneda Ref.', refPrice: 'Precio de Referencia', condition: 'Condición', premium: 'Prima (+)', discount: 'Descuento (-)', gross: 'Bruto (%)', net: 'Neto (%)', broker: 'Corredor', kbexBroker: 'Corredor KBEX', none: 'Ninguno', select: 'Seleccionar', brokerMargin: 'Margen Corredor (%)', commCurrency: 'Moneda Comisión', calculator: 'Calculadora', adjPrice: 'Precio Ajustado', totalValue: 'Valor Total', kbexMargin: 'Margen KBEX', saving: 'Guardando...', update: 'Actualizar', create: 'Crear Negocio', dealUpdated: 'Negocio actualizado', dealCreated: 'Negocio creado', errorSaving: 'Error al guardar', notes: 'Notas' }
       },
-      clients: {
+      clientsPage: {
         title: 'Clientes OTC', search: 'Buscar clientes...', newClient: 'Nuevo Cliente',
         active: 'Activo', inactive: 'Inactivo', suspended: 'Suspendido', all: 'Todos',
         loading: 'Cargando...', noClients: 'No se encontraron clientes',
@@ -6310,14 +6320,14 @@ const translations = {
         errorLoading: 'Error de carga', errorLinking: 'Error al vincular', errorUnlinking: 'Error al desvincular',
         errorDeleting: 'Error al eliminar', errorUpdatingLimits: 'Error al actualizar límites'
       },
-      quotes: {
+      quotesPage: {
         title: 'RFQ & Cotizaciones', subtitle: 'Gestión de cotizaciones', loading: 'Cargando...',
         statusLabels: { pending: 'Pendiente', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada', expired: 'Expirada' },
         manual: 'Manual', market: 'Mercado', addedToPrice: 'Añadido al precio', subtractedFromPrice: 'Sustraído del precio',
         quoteCreated: '¡Cotización creada!', quoteAccepted: '¡Cotización aceptada!', quoteRejected: 'Cotización rechazada',
         errorCreating: 'Error al crear', errorAccepting: 'Error al aceptar', errorRejecting: 'Error al rechazar', errorLoading: 'Error de carga'
       },
-      execution: {
+      executionPage: {
         title: 'Ejecución', subtitle: 'Gestión de ejecución', loading: 'Cargando...',
         statusLabels: { pending_funds: 'Esperando Fondos', funds_received: 'Fondos Recibidos', executing: 'Ejecutando', executed: 'Ejecutado', failed: 'Fallido' },
         stageLabels: { acceptance: 'Aceptado', execution: 'En Ejecución' },
@@ -6325,14 +6335,14 @@ const translations = {
         fundsConfirmed: '¡Fondos confirmados!', executionCompleted: '¡Ejecución completada!',
         errorStarting: 'Error al iniciar', errorConfirmingFunds: 'Error al confirmar', errorCompleting: 'Error al completar', errorLoading: 'Error de carga'
       },
-      settlement: {
+      settlementPage: {
         title: 'Liquidación', subtitle: 'Gestión de liquidaciones', loading: 'Cargando...',
         statusLabels: { pending: 'Pendiente', in_progress: 'En Progreso', completed: 'Completado', failed: 'Fallido' },
         internal: 'Interno', settlementCreated: '¡Liquidación creada!', fiatConfirmed: '¡Liquidación fiat confirmada!',
         cryptoConfirmed: '¡Liquidación crypto confirmada!', settlementComplete: '¡Liquidación completada!',
         errorCreating: 'Error al crear', errorConfirming: 'Error al confirmar', errorCompleting: 'Error al completar', errorLoading: 'Error de carga'
       },
-      invoices: {
+      invoicesPage: {
         title: 'Facturas', subtitle: 'Gestión de facturación', loading: 'Cargando...',
         statusLabels: { draft: 'Borrador', sent: 'Enviada', paid: 'Pagada', cancelled: 'Cancelada' },
         invoiceCreated: '¡Factura creada!', invoiceSent: '¡Factura enviada!', invoicePaid: '¡Factura pagada!',
