@@ -25,7 +25,7 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Escreva o conteúdo aq
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
             'preview', 'anchor', 'searchreplace', 'visualblocks', 'code',
             'fullscreen', 'insertdatetime', 'media', 'table', 'help',
-            'wordcount', 'codesample', 'emoticons', 'quickbars'
+            'wordcount', 'codesample', 'emoticons'
           ],
           toolbar: [
             'blocks fontsize | bold italic underline strikethrough | forecolor backcolor | table',

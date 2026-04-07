@@ -200,6 +200,10 @@ const KnowledgeBasePage = () => {
     try {
       const response = await axios.get(`${API_URL}/api/kb/articles?search=${encodeURIComponent(searchTerm)}`);
       setSearchResults(response.data.articles || []);
+      // If searching from article/category view, navigate to landing to show results
+      if (articleSlug || categorySlug) {
+        navigate('/help');
+      }
     } catch (err) {
       console.error('Search error', err);
     }
