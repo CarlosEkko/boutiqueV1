@@ -1,7 +1,7 @@
 """
 Risk & Compliance Routes - KYT Forensic Queue & Risk Dashboard
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import Optional, List
 from datetime import datetime, timezone
 import logging
@@ -419,6 +419,9 @@ async def get_kyc_verification_detail(
         "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{applicant_id}" if applicant_id else None,
         "sumsub_data": sumsub_data,
         "docs_status": docs_status,
+        "manual_review": applicant.get("manual_review", False),
+        "manual_review_by": applicant.get("manual_review_by"),
+        "manual_review_reason": applicant.get("manual_review_reason"),
     }
 
 
@@ -495,3 +498,59 @@ async def refresh_kyc_verification(
     except Exception as e:
         logger.error(f"Error refreshing verification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/kyc-verifications/{target_user_id}/manual-review")
+async def manual_kyc_review(
+    target_user_id: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Manually approve or reject a KYC/KYB verification (fallback for Sumsub failures)."""
+    db = get_db()
+    data = await request.json()
+    
+    action = data.get("action")  # "approve" or "reject"
+    reason = data.get("reason", "")
+    
+    if action not in ("approve", "reject"):
+        raise HTTPException(status_code=400, detail="Ação inválida. Use 'approve' ou 'reject'.")
+    
+    applicant = await db.sumsub_applicants.find_one({"user_id": target_user_id}, {"_id": 0})
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant não encontrado.")
+    
+    admin = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "email": 1})
+    admin_name = admin.get("name", admin.get("email", "")) if admin else ""
+    
+    new_status = "approved" if action == "approve" else "rejected"
+    
+    update_fields = {
+        "status": new_status,
+        "review_answer": "GREEN" if action == "approve" else "RED",
+        "review_status": "completed",
+        "manual_review": True,
+        "manual_review_by": admin_name,
+        "manual_review_reason": reason,
+        "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    if action == "reject" and reason:
+        update_fields["moderation_comment"] = reason
+        update_fields["reject_labels"] = ["MANUAL_REVIEW"]
+    
+    await db.sumsub_applicants.update_one(
+        {"user_id": target_user_id},
+        {"$set": update_fields}
+    )
+    
+    # Update user kyc_status
+    await db.users.update_one(
+        {"id": target_user_id},
+        {"$set": {"kyc_status": new_status}}
+    )
+    
+    logger.info(f"Manual KYC review: {action} for user {target_user_id} by {admin_name}. Reason: {reason}")
+    
+    return {"success": True, "status": new_status, "action": action}

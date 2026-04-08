@@ -131,6 +131,32 @@ const KYCVerificationsPage = () => {
     return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleManualReview = async (userId, action) => {
+    const reason = action === 'reject'
+      ? window.prompt('Motivo da rejeição:')
+      : window.prompt('Nota (opcional):') || '';
+    
+    if (action === 'reject' && !reason) return;
+
+    try {
+      const res = await fetch(`${API}/api/risk-compliance/kyc-verifications/${userId}/manual-review`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action, reason: reason || '' })
+      });
+      if (res.ok) {
+        toast.success(action === 'approve' ? 'Verificação aprovada manualmente' : 'Verificação rejeitada');
+        fetchVerifications();
+        if (selectedUser === userId) openDetail(userId);
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || 'Erro ao processar revisão');
+      }
+    } catch (e) {
+      toast.error('Erro ao processar revisão manual');
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="kyc-verifications-page">
       {/* Header */}
@@ -277,6 +303,7 @@ const KYCVerificationsPage = () => {
               formatDate={formatDate}
               onRefresh={() => refreshVerification(detailData.user_id)}
               refreshing={refreshingId === detailData?.user_id}
+              onManualReview={handleManualReview}
             />
           ) : null}
         </DialogContent>
@@ -364,7 +391,7 @@ const VerificationRow = ({ v, getStatusBadge, formatDate, onView, onRefresh, ref
   );
 };
 
-const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing }) => {
+const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing, onManualReview }) => {
   const isKYB = data.verification_type === 'kyb';
   const docsStatus = data.docs_status;
   const sumsubInfo = data.sumsub_data;
@@ -423,6 +450,38 @@ const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing })
             <ExternalLink size={14} />
             Abrir no Dashboard Sumsub
           </a>
+        )}
+
+        {/* Manual Approval/Rejection */}
+        {data.status !== 'approved' && (
+          <div className="flex gap-2 mt-4 pt-4 border-t border-zinc-800">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white flex-1"
+              onClick={() => onManualReview(data.user_id, 'approve')}
+              data-testid="manual-approve-btn"
+            >
+              <CheckCircle size={14} className="mr-1.5" />
+              Aprovar Manualmente
+            </Button>
+            {data.status !== 'rejected' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 flex-1"
+                onClick={() => onManualReview(data.user_id, 'reject')}
+                data-testid="manual-reject-btn"
+              >
+                <XCircle size={14} className="mr-1.5" />
+                Rejeitar
+              </Button>
+            )}
+          </div>
+        )}
+        {data.manual_review && (
+          <p className="text-xs text-zinc-500 mt-2">
+            Revisão manual por {data.manual_review_by} {data.manual_review_reason ? `— ${data.manual_review_reason}` : ''}
+          </p>
         )}
       </div>
 
