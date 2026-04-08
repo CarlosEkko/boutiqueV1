@@ -53,7 +53,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-black flex items-center justify-center p-4 ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`dark min-h-screen bg-black flex items-center justify-center p-4 ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Background gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-800/20 via-black to-black" />
       

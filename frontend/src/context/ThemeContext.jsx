@@ -14,35 +14,27 @@ export const ThemeProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
-      root.classList.toggle('light-mode', !prefersDark);
-    } else {
-      root.classList.toggle('dark', theme === 'dark');
-      root.classList.toggle('light-mode', theme === 'light');
-    }
     localStorage.setItem('kbex-theme', theme);
   }, [theme]);
 
-  // Listen for system preference changes when in system mode
+  // Resolve actual theme (for 'system' preference)
+  const resolvedTheme = theme === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+
+  const isDark = resolvedTheme === 'dark';
+
+  // Listen for system preference changes
   useEffect(() => {
     if (theme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => {
-      const root = document.documentElement;
-      root.classList.toggle('dark', e.matches);
-      root.classList.toggle('light-mode', !e.matches);
-    };
+    const handler = () => {};
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
 
-  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isDark, resolvedTheme }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -21,7 +21,7 @@ const Home = () => {
   }, [location]);
 
   return (
-    <div className="bg-black min-h-screen">
+    <div className="dark bg-black min-h-screen">
       <Header />
       <HeroV2 />
       <Products />

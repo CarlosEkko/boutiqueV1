@@ -75,6 +75,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import ThemeToggle from '../../components/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -234,6 +235,7 @@ const DashboardLayout = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const { demoMode, sections } = useDemo();
+  const { resolvedTheme } = useTheme();
   
   // Helper to translate labels from backend
   const translateLabel = (label) => {
@@ -639,7 +641,7 @@ const DashboardLayout = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+      <div className={`min-h-screen ${resolvedTheme === 'light' ? 'bg-white' : 'bg-black'} flex items-center justify-center`}>
         <div className="text-gold-400">{t('sidebar.loading')}</div>
       </div>
     );
@@ -711,15 +713,15 @@ const DashboardLayout = () => {
   const filteredAdminMenus = filterMenusByDemo(adminMenus);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black flex">
+    <div className={`min-h-screen ${resolvedTheme === 'light' ? 'bg-white' : 'bg-black'} flex`} data-theme={resolvedTheme}>
       {/* Sidebar - Desktop */}
       <aside 
-        className={`hidden md:flex flex-col bg-gray-50 dark:bg-zinc-950 border-r border-gold-200 dark:border-gold-800/20 transition-all duration-300 h-screen sticky top-0 ${
+        className={`hidden md:flex flex-col ${resolvedTheme === 'light' ? 'bg-gray-50 border-gold-200' : 'bg-zinc-950 border-gold-800/20'} border-r transition-all duration-300 h-screen sticky top-0 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-gold-200 dark:border-gold-800/20">
+        <div className={`p-6 border-b ${resolvedTheme === 'light' ? 'border-gold-200' : 'border-gold-800/20'}`}>
           <div className="flex items-center justify-between">
             <NavLink to="/" className="flex items-center gap-2">
               <img 
@@ -728,7 +730,7 @@ const DashboardLayout = () => {
                 className="h-10 w-auto"
               />
               {sidebarOpen && (
-                <span className="text-xl font-light text-gray-900 dark:text-white">
+                <span className={`text-xl font-light ${resolvedTheme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                   <span className="text-gold-400">KB</span>EX
                 </span>
               )}
@@ -769,11 +771,11 @@ const DashboardLayout = () => {
         </nav>
 
         {/* User & Logout */}
-        <div className="p-4 border-t border-gold-200 dark:border-gold-800/20">
+        <div className={`p-4 border-t ${resolvedTheme === 'light' ? 'border-gold-200' : 'border-gold-800/20'}`}>
           {sidebarOpen && (
             <div className="mb-4 px-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.layout.loggedInAs')}</p>
-              <p className="text-gray-900 dark:text-white font-medium truncate">{user?.name}</p>
+              <p className={`text-sm ${resolvedTheme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>{t('dashboard.layout.loggedInAs')}</p>
+              <p className={`font-medium truncate ${resolvedTheme === 'light' ? 'text-gray-900' : 'text-white'}`}>{user?.name}</p>
               <p className="text-xs text-gold-400">{user?.internal_role || user?.membership_level || 'Standard'}</p>
             </div>
           )}
@@ -789,7 +791,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-zinc-950 border-b border-gold-200 dark:border-gold-800/20 px-4 py-3">
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 ${resolvedTheme === 'light' ? 'bg-white border-gold-200' : 'bg-zinc-950 border-gold-800/20'} border-b px-4 py-3`}>
         <div className="flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2">
             <img 
@@ -797,7 +799,7 @@ const DashboardLayout = () => {
               alt="KBEX.io" 
               className="h-8 w-auto"
             />
-            <span className="text-lg font-light text-gray-900 dark:text-white">
+            <span className={`text-lg font-light ${resolvedTheme === 'light' ? 'text-gray-900' : 'text-white'}`}>
               <span className="text-gold-400">KB</span>EX
             </span>
           </NavLink>
@@ -815,7 +817,7 @@ const DashboardLayout = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-white/95 dark:bg-black/95 pt-16 overflow-y-auto">
+        <div className={`md:hidden fixed inset-0 z-40 ${resolvedTheme === 'light' ? 'bg-white/95' : 'bg-black/95'} pt-16 overflow-y-auto`}>
           <nav className="p-4 space-y-4">
             {/* Client Menus */}
             {filteredClientMenus.length > 0 && (
