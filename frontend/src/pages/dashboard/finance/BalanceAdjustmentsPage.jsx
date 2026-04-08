@@ -374,19 +374,20 @@ const CreateAdjustmentDialog = ({ open, onClose, onSuccess }) => {
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('user_id', selectedClient.id);
-      formData.append('currency', selectedCurrency);
-      formData.append('amount', parseFloat(amount).toString());
-      formData.append('adjustment_type', adjustmentType);
-      formData.append('category', category);
-      formData.append('reason', reason);
-      if (document) formData.append('document', document);
-
       const res = await fetch(`${API}/api/finance/balance-adjustments`, {
         method: 'POST',
-        headers: { 'Authorization': getHeaders()['Authorization'] },
-        body: formData,
+        headers: {
+          'Authorization': getHeaders()['Authorization'],
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_id: selectedClient.id,
+          currency: selectedCurrency,
+          amount: parseFloat(amount),
+          adjustment_type: adjustmentType,
+          category: category,
+          reason: reason,
+        }),
       });
 
       if (res.ok) {

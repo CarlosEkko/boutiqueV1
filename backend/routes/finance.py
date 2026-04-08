@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from routes.admin import get_admin_user, get_internal_user
@@ -419,27 +419,32 @@ ADJUSTMENTS_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 @router.post("/balance-adjustments")
 async def create_balance_adjustment(
-    user_id: str = Form(...),
-    currency: str = Form(...),
-    amount: float = Form(...),
-    adjustment_type: str = Form(...),  # "credit" or "debit"
-    category: str = Form(...),
-    reason: str = Form(...),
-    document: Optional[UploadFile] = File(None),
+    request: Request,
     admin: dict = Depends(get_admin_user)
 ):
     """
     Create a manual balance adjustment (credit or debit) on a client's wallet.
-    Admin only. Records full audit trail.
+    Admin only. Records full audit trail. Accepts JSON body.
     """
     try:
-        # Validate adjustment type
+        data = await request.json()
+        user_id = data.get("user_id")
+        currency = data.get("currency")
+        amount = float(data.get("amount", 0))
+        adjustment_type = data.get("adjustment_type")
+        category = data.get("category")
+        reason = data.get("reason", "")
+        
+        # Validate
+        if not user_id or not currency or not adjustment_type or not category or not reason:
+            raise HTTPException(status_code=400, detail="Campos obrigatórios em falta.")
+        
         if adjustment_type not in ("credit", "debit"):
-            raise HTTPException(status_code=400, detail="Tipo de ajuste inválido. Use 'credit' ou 'debit'.")
+            raise HTTPException(status_code=400, detail="Tipo de ajuste inválido.")
         
         valid_categories = ["correction", "penalty", "fee", "bonus", "refund", "chargeback", "other"]
         if category not in valid_categories:
-            raise HTTPException(status_code=400, detail=f"Categoria inválida. Use: {', '.join(valid_categories)}")
+            raise HTTPException(status_code=400, detail=f"Categoria inválida.")
         
         if amount <= 0:
             raise HTTPException(status_code=400, detail="O valor deve ser positivo.")
@@ -456,13 +461,11 @@ async def create_balance_adjustment(
             {"_id": 0}
         )
         if not wallet:
-            # Also try lowercase
             wallet = await db.wallets.find_one(
                 {"user_id": user_id, "asset_id": currency},
                 {"_id": 0}
             )
         if not wallet:
-            # Auto-create wallet for this currency
             fiat_currencies = {"EUR": ("Euro", "€"), "USD": ("US Dollar", "$"), "GBP": ("British Pound", "£"), "BRL": ("Real Brasileiro", "R$"), "CHF": ("Swiss Franc", "CHF"), "AED": ("UAE Dirham", "AED"), "USDT": ("Tether", "₮"), "USDC": ("USD Coin", "USDC")}
             asset_info = fiat_currencies.get(currency_upper, (currency_upper, currency_upper))
             is_fiat = currency_upper in fiat_currencies
@@ -486,27 +489,9 @@ async def create_balance_adjustment(
             logger.info(f"Auto-created {currency_upper} wallet for user {user_id}")
         
         previous_balance = float(wallet.get("balance", 0) or 0)
-        
-        # Calculate new balance
         effective_amount = amount if adjustment_type == "credit" else -amount
         new_balance = previous_balance + effective_amount
         
-        # Handle document upload
-        document_url = None
-        if document and document.filename:
-            try:
-                ext = document.filename.rsplit(".", 1)[-1].lower() if "." in document.filename else "pdf"
-                doc_filename = f"adj_{uuid_mod.uuid4().hex[:12]}.{ext}"
-                ADJUSTMENTS_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-                doc_path = ADJUSTMENTS_UPLOAD_DIR / doc_filename
-                content = await document.read()
-                with open(doc_path, "wb") as f:
-                    f.write(content)
-                document_url = f"/api/uploads/file/adjustments/{doc_filename}"
-            except Exception as upload_err:
-                logger.warning(f"Failed to save document: {upload_err}")
-        
-        # Create adjustment record
         adjustment_id = str(uuid_mod.uuid4())
         admin_name = admin.get("name", admin.get("email", ""))
         admin_id = admin.get("id", "")
@@ -524,7 +509,7 @@ async def create_balance_adjustment(
             "reason": reason,
             "previous_balance": previous_balance,
             "new_balance": new_balance,
-            "document_url": document_url,
+            "document_url": None,
             "admin_id": admin_id,
             "admin_name": admin_name,
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -532,7 +517,6 @@ async def create_balance_adjustment(
         
         await db.balance_adjustments.insert_one(adjustment)
         
-        # Update wallet balance
         wallet_asset_id = wallet.get("asset_id", currency_upper)
         await db.wallets.update_one(
             {"user_id": user_id, "asset_id": wallet_asset_id},
@@ -543,7 +527,6 @@ async def create_balance_adjustment(
             }}
         )
         
-        # Also record as a transaction for audit
         tx = {
             "id": str(uuid_mod.uuid4()),
             "user_id": user_id,
@@ -561,9 +544,7 @@ async def create_balance_adjustment(
         }
         await db.transactions.insert_one(tx)
         
-        # Remove _id before returning
         adjustment.pop("_id", None)
-        
         logger.info(f"Balance adjustment {adjustment_id}: {adjustment_type} {amount} {currency_upper} for user {user_id} by admin {admin_name}")
         
         return {"success": True, "adjustment": adjustment}
