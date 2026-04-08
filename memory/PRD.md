@@ -6,7 +6,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 ## Tech Stack
 - Frontend: React, Tailwind CSS, Shadcn UI, React Context
 - Backend: FastAPI, MongoDB (Motor), Pydantic
-- Integrations: Sumsub, Trustfull, Brevo, Fireblocks
+- Integrations: Sumsub (KYC + KYB Quest), Trustfull, Brevo, Fireblocks
 - Infrastructure: Docker on VPS, Cloudflare WAF
 
 ## What's Implemented
@@ -21,27 +21,27 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - OTC lead conversion correctly inherits potential_tier -> membership_level
 - Registration completion for auto-created users
 - Translation key collision fix
-- **Demo Mode** (completed 2026-04-07):
-  - Full demo mode with rich mock data for sales pitches
-  - Demo client Victoria Sterling: 8 wallets ($8M+ portfolio), 16 transactions
-  - 7 crypto deposits + 5 crypto withdrawals with realistic data
-  - 5 OTC leads + 3 OTC deals
-  - 3 vault signatories + 4 vault transactions (multi-sign)
-  - 3 bank deposits (fiat)
-  - Demo Profile Mock, Demo Bank Accounts Mock
-  - Per-user demo permissions
-  - Edit/Add/Delete actions disabled in demo mode
+- **Demo Mode**: Full demo with rich mock data for sales pitches
 - KB access fix, Fiat deposit isolation, Auto-assign leads
-- OTC Desk Flow Verification (2026-04-12)
+- OTC Desk Flow Verification
 - TinyMCE Knowledge Base Editor
 - CSP and security headers in nginx.conf
 - Cloudflare SSL configuration
 - **OTC Setup Status Fix (2026-04-08)**:
-  - Added `setup_complete` status to OTCLeadStatus enum
-  - After operational setup submission, status now transitions to `setup_complete` (not `setup_pending`)
+  - Added `setup_complete` status enum
+  - After operational setup → status = `setup_complete` (not `setup_pending`)
   - Convert to Client accepts `setup_complete` status
-  - Frontend tabs and LeadCard updated with "Setup Completo" label and styling
-  - Migrated existing `setup_pending` leads in DB to `setup_complete`
+  - Frontend tabs and LeadCard updated
+- **KYC/KYB Verifications Page (2026-04-08)**:
+  - New page at `/dashboard/risk/kyc-verifications` under Risco & Conformidade
+  - Shows all Sumsub applicants with real-time status (init/pending/approved/rejected)
+  - Stats cards, type tabs (KYC/KYB), status tabs, search
+  - Detail dialog: user info, status, Sumsub level, documents status
+  - "Sincronizar" button fetches live data from Sumsub API
+  - Direct "Abrir no Dashboard Sumsub" link to cockpit
+  - KYB Quest support: `SUMSUB_KYB_LEVEL_NAME` env var, company applicant type
+  - Same webhook handles both KYC and KYB events
+  - 5-language translations for menu item
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123
@@ -49,6 +49,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 
 ## Deployment
 git pull -> sudo docker-compose up --build -d
+Add `SUMSUB_KYB_LEVEL_NAME=<your-kyb-level>` to docker-compose.yml env vars
 
 ## Pending Issues
 - P1: Reroute "Solicitar Acesso" to Lead Creation & Disable Public Registration
