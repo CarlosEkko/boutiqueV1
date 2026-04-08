@@ -329,7 +329,20 @@ const CreateAdjustmentDialog = ({ open, onClose, onSuccess }) => {
         const res = await fetch(`${API}/api/finance/client-wallets/${selectedClient.id}`, { headers: getHeaders() });
         if (res.ok) {
           const data = await res.json();
-          setWallets(data.wallets || []);
+          let clientWallets = data.wallets || [];
+          // If no wallets, show default currencies so admin can still adjust
+          if (clientWallets.length === 0) {
+            clientWallets = [
+              { asset_id: 'EUR', asset_name: 'Euro', balance: 0, asset_type: 'fiat' },
+              { asset_id: 'USD', asset_name: 'US Dollar', balance: 0, asset_type: 'fiat' },
+              { asset_id: 'GBP', asset_name: 'British Pound', balance: 0, asset_type: 'fiat' },
+              { asset_id: 'USDT', asset_name: 'Tether', balance: 0, asset_type: 'crypto' },
+              { asset_id: 'USDC', asset_name: 'USD Coin', balance: 0, asset_type: 'crypto' },
+              { asset_id: 'BTC', asset_name: 'Bitcoin', balance: 0, asset_type: 'crypto' },
+              { asset_id: 'ETH', asset_name: 'Ethereum', balance: 0, asset_type: 'crypto' },
+            ];
+          }
+          setWallets(clientWallets);
         }
       } catch (e) { /* ignore */ }
     })();

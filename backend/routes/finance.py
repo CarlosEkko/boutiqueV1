@@ -448,13 +448,35 @@ async def create_balance_adjustment(
     if not target_user:
         raise HTTPException(status_code=404, detail="Utilizador não encontrado.")
     
-    # Find the wallet
+    # Find the wallet (or create it if it doesn't exist)
     wallet = await db.wallets.find_one(
         {"user_id": user_id, "asset_id": currency},
         {"_id": 0}
     )
     if not wallet:
-        raise HTTPException(status_code=404, detail=f"Carteira {currency} não encontrada para este utilizador.")
+        # Auto-create wallet for this currency
+        import uuid as uuid_mod2
+        fiat_currencies = {"EUR": ("Euro", "€"), "USD": ("US Dollar", "$"), "GBP": ("British Pound", "£"), "BRL": ("Real Brasileiro", "R$"), "CHF": ("Swiss Franc", "CHF"), "AED": ("UAE Dirham", "AED"), "USDT": ("Tether", "₮"), "USDC": ("USD Coin", "USDC")}
+        asset_info = fiat_currencies.get(currency.upper(), (currency, currency))
+        is_fiat = currency.upper() in fiat_currencies
+        
+        wallet = {
+            "id": str(uuid_mod2.uuid4()),
+            "user_id": user_id,
+            "asset_id": currency.upper(),
+            "asset_name": asset_info[0],
+            "asset_type": "fiat" if is_fiat else "crypto",
+            "symbol": asset_info[1],
+            "address": None,
+            "balance": 0,
+            "available_balance": 0,
+            "pending_balance": 0,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.wallets.insert_one(wallet)
+        wallet.pop("_id", None)
+        logger.info(f"Auto-created {currency} wallet for user {user_id}")
     
     previous_balance = wallet.get("balance", 0)
     
