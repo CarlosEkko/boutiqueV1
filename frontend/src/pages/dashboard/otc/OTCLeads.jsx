@@ -61,6 +61,7 @@ const OTCLeads = () => {
       pre_qualified: 'bg-gold-900/30 text-gold-400', not_qualified: 'bg-gray-900/30 text-gray-400',
       kyc_pending: 'bg-yellow-900/30 text-yellow-400', kyc_approved: 'bg-green-900/30 text-green-400',
       active_client: 'bg-green-900/30 text-green-400', lost: 'bg-red-900/30 text-red-400',
+      setup_complete: 'bg-emerald-900/30 text-emerald-400',
       archived: 'bg-zinc-900/30 text-zinc-400',
     };
     return <Badge className={colors[status] || 'bg-gray-900/30 text-gray-400'}>{t(`otc.statusLabels.${status}`) || status}</Badge>;
@@ -91,7 +92,8 @@ const OTCLeads = () => {
             { key: 'pre_qualified', label: 'Pré-Qualificado', active: 'bg-purple-500/20 text-purple-400 border border-purple-500/40' },
             { key: 'kyc_pending', label: 'KYC Pendente', active: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
             { key: 'kyc_approved', label: 'KYC Aprovado', active: 'bg-teal-500/20 text-teal-400 border border-teal-500/40' },
-            { key: 'setup_pending', label: 'Setup', active: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' },
+            { key: 'setup_pending', label: 'Setup Pend.', active: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40' },
+            { key: 'setup_complete', label: 'Setup Completo', active: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' },
             { key: 'not_qualified', label: 'Não Qualif.', active: 'bg-red-500/20 text-red-400 border border-red-500/40' },
             { key: 'all', label: 'Todos', active: 'bg-zinc-700 text-white' },
           ].map(tab => {
@@ -350,6 +352,7 @@ const OTCLeads = () => {
                 )}
                 {selectedLead.status === 'kyc_approved' && <Button onClick={() => openSetup(selectedLead)} className="w-full bg-gold-500 hover:bg-gold-400 text-black"><Settings size={16} className="mr-2" />Setup Operacional</Button>}
                 {selectedLead.status === 'setup_pending' && <Button onClick={() => handleConvertToClient(selectedLead.id)} className="w-full bg-emerald-600 hover:bg-emerald-500"><UserCheck size={16} className="mr-2" />{t('otc.convertToClient')}</Button>}
+                {selectedLead.status === 'setup_complete' && <Button onClick={() => handleConvertToClient(selectedLead.id)} className="w-full bg-emerald-600 hover:bg-emerald-500"><UserCheck size={16} className="mr-2" />{t('otc.convertToClient')}</Button>}
                 {selectedLead.status !== 'active_client' && (
                   <div className="flex gap-3 mt-3">
                     <Button onClick={() => handleArchiveLead(selectedLead.id)} variant="outline" className="flex-1 border-gray-600 text-gray-400"><Archive size={16} className="mr-2" />{t('otc.archive')}</Button>

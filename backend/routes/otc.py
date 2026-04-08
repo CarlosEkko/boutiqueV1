@@ -764,7 +764,7 @@ async def submit_operational_setup(
         raise HTTPException(status_code=404, detail="Lead not found")
     
     # Verify lead is pre-qualified or KYC approved
-    valid_statuses = [OTCLeadStatus.PRE_QUALIFIED.value, OTCLeadStatus.KYC_APPROVED.value]
+    valid_statuses = [OTCLeadStatus.PRE_QUALIFIED.value, OTCLeadStatus.KYC_APPROVED.value, OTCLeadStatus.SETUP_PENDING.value]
     if lead.get("status") not in valid_statuses:
         raise HTTPException(status_code=400, detail="Lead must be pre-qualified or KYC approved")
     
@@ -777,7 +777,7 @@ async def submit_operational_setup(
         "settlement_method_defined": data.settlement_method.value,
         "communication_channel_created": True,
         "communication_channel_type": data.communication_channel_type,
-        "status": OTCLeadStatus.SETUP_PENDING.value,
+        "status": OTCLeadStatus.SETUP_COMPLETE.value,
         "workflow_stage": 4,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -1102,8 +1102,8 @@ async def convert_lead_to_client(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
     
-    if lead.get("status") not in [OTCLeadStatus.KYC_APPROVED.value, OTCLeadStatus.PRE_QUALIFIED.value]:
-        raise HTTPException(status_code=400, detail="Lead must be KYC approved or pre-qualified")
+    if lead.get("status") not in [OTCLeadStatus.KYC_APPROVED.value, OTCLeadStatus.PRE_QUALIFIED.value, OTCLeadStatus.SETUP_COMPLETE.value, OTCLeadStatus.SETUP_PENDING.value]:
+        raise HTTPException(status_code=400, detail="Lead must be KYC approved, pre-qualified, or setup complete")
     
     # Create OTC Client
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")

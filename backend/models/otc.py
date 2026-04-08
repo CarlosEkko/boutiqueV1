@@ -32,6 +32,7 @@ class OTCLeadStatus(str, Enum):
     KYC_APPROVED = "kyc_approved"
     KYC_REJECTED = "kyc_rejected"
     SETUP_PENDING = "setup_pending"
+    SETUP_COMPLETE = "setup_complete"
     ACTIVE_CLIENT = "active_client"
     LOST = "lost"
     ARCHIVED = "archived"

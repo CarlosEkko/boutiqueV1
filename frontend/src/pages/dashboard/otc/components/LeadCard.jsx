@@ -15,6 +15,7 @@ const STATUS_STYLES = {
   kyc_pending: { bg: 'bg-orange-400/10', text: 'text-orange-400', border: 'border-orange-400/20', label: 'KYC Pendente' },
   kyc_approved: { bg: 'bg-teal-400/10', text: 'text-teal-400', border: 'border-teal-400/20', label: 'KYC Aprovado' },
   setup_pending: { bg: 'bg-cyan-400/10', text: 'text-cyan-400', border: 'border-cyan-400/20', label: 'Setup Pendente' },
+  setup_complete: { bg: 'bg-emerald-400/10', text: 'text-emerald-400', border: 'border-emerald-400/20', label: 'Setup Completo' },
   active_client: { bg: 'bg-emerald-400/10', text: 'text-emerald-400', border: 'border-emerald-400/20', label: 'Cliente Ativo' },
   not_qualified: { bg: 'bg-rose-400/10', text: 'text-rose-400', border: 'border-rose-400/20', label: 'Não Qualificado' },
   rejected: { bg: 'bg-rose-400/10', text: 'text-rose-400', border: 'border-rose-400/20', label: 'Rejeitado' },
@@ -124,6 +125,12 @@ export const LeadCard = ({ lead, onClick, onPreQual, onSetup, onConvert, onDelet
             {lead.status === 'setup_pending' && (
               <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-400/10"
                 onClick={e => { e.stopPropagation(); onConvert(lead.id); }} title="Converter a Cliente" data-testid={`convert-lead-${lead.id}`}>
+                <CheckCircle size={16} />
+              </Button>
+            )}
+            {lead.status === 'setup_complete' && (
+              <Button size="icon" variant="ghost" className="w-9 h-9 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-400/10"
+                onClick={e => { e.stopPropagation(); onConvert(lead.id); }} title="Converter a Cliente" data-testid={`convert-complete-lead-${lead.id}`}>
                 <CheckCircle size={16} />
               </Button>
             )}
