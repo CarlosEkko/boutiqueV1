@@ -216,6 +216,16 @@ html:not(.dark) .bg-gold-500\/20 { background-color: rgba(165, 122, 80, 0.08); }
 /* Tooltip in light mode */
 html:not(.dark) .bg-zinc-800 { background-color: #2a2520; }
 
+/* ===== Sumsub WebSDK Safari Fix ===== */
+/* Prevent color-scheme inheritance from breaking Sumsub iframe in Safari */
+[data-testid="sumsub-sdk-container"] iframe {
+    color-scheme: normal !important;
+}
+[data-testid="sumsub-sdk-container"] {
+    color-scheme: normal;
+    -webkit-color-scheme: normal;
+}
+
 /* Input fields */
 html:not(.dark) .bg-zinc-800\/50 input,
 html:not(.dark) input.bg-zinc-800\/50 { background-color: #f0ede8; }

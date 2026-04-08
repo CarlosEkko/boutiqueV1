@@ -211,7 +211,14 @@ const SumsubKYC = () => {
           --sumsub-color-border: #3f3f46;
           --sumsub-border-radius: 8px;
         }
+        body {
+          background-color: #18181b !important;
+          color: #ffffff !important;
+          color-scheme: dark !important;
+        }
         .sumsub-logo { display: none !important; }
+        /* Safari iframe fix */
+        * { -webkit-text-fill-color: inherit; }
       `
     }
   };
@@ -298,7 +305,15 @@ const SumsubKYC = () => {
               </p>
             </div>
             
-            <div className="min-h-[600px]" data-testid="sumsub-sdk-container">
+            <div 
+              className="min-h-[600px]" 
+              data-testid="sumsub-sdk-container"
+              style={{ 
+                colorScheme: 'normal',
+                isolation: 'isolate',
+                backgroundColor: '#18181b'
+              }}
+            >
               <SumsubWebSdk
                 accessToken={accessToken}
                 expirationHandler={handleTokenExpiration}
