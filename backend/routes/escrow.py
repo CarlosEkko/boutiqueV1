@@ -11,9 +11,11 @@ import logging
 from models.escrow import (
     EscrowStatus, EscrowDealType, EscrowStructure, FeePayerType,
     SettlementType, ComplianceCheckStatus, DisputeStatus,
-    ESCROW_STATUS_TRANSITIONS, calculate_fee, split_fee,
+    ESCROW_STATUS_TRANSITIONS, VOLUME_TIERS, calculate_fee, split_fee,
+    calculate_risk_score,
     CreateEscrowDeal, UpdateEscrowDeal, AdvanceEscrowStatus,
-    OpenDispute, ResolveDispute
+    OpenDispute, ResolveDispute,
+    DepositRequest, ConfirmDeposit, SettleRequest, WhitelistAddress
 )
 
 logger = logging.getLogger(__name__)
@@ -230,6 +232,12 @@ async def create_escrow_deal(data: CreateEscrowDeal, current_user: dict = Depend
             "seller_deposit_amount": 0.0,
             "locked": False,
         },
+        "deposits": [],
+        "whitelist": [],
+        "settlement": None,
+        # Fee volume discount
+        "volume_discount_pct": fee_data.get("volume_discount_pct", 0),
+        "volume_discount": fee_data.get("volume_discount", 0),
         # Metadata
         "notes": data.notes,
         "timeline": [{
@@ -326,6 +334,17 @@ async def advance_escrow_status(deal_id: str, data: AdvanceEscrowStatus, current
             detail=f"Cannot transition from '{current}' to '{new_status}'. Allowed: {allowed_values}"
         )
 
+    # Compliance gating: block advance to ready_for_settlement if compliance not approved
+    if new_status in [EscrowStatus.READY_FOR_SETTLEMENT, "ready_for_settlement"] and not data.override:
+        compliance = deal.get("compliance", {})
+        required = ["buyer_kyc", "seller_kyc", "aml_check", "source_of_funds"]
+        unapproved = [k for k in required if compliance.get(k) != ComplianceCheckStatus.APPROVED]
+        if unapproved:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Compliance gate: the following checks must be approved before settlement: {unapproved}"
+            )
+
     now = datetime.now(timezone.utc)
 
     update = {
@@ -339,6 +358,10 @@ async def advance_escrow_status(deal_id: str, data: AdvanceEscrowStatus, current
     elif new_status == EscrowStatus.SETTLED:
         update["settled_at"] = now.isoformat()
         update["custody.locked"] = False
+
+    # Auto-calculate risk score on status changes
+    risk_score = calculate_risk_score(deal)
+    update["compliance.risk_score"] = risk_score
 
     timeline_entry = {
         "timestamp": now.isoformat(),
@@ -538,3 +561,364 @@ async def force_release(deal_id: str, notes: str = "", current_user: dict = Depe
     updated = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
     logger.warning(f"[ADMIN OVERRIDE] Force release on {deal_id} by {_user_email(current_user)}")
     return {"success": True, "deal": updated}
+
+
+# ==================== PHASE 2: DEPOSITS ====================
+
+@router.post("/deals/{deal_id}/deposit")
+async def register_deposit(deal_id: str, data: DepositRequest, current_user: dict = Depends(get_current_user)):
+    """Register a deposit from buyer or seller into escrow."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    if deal["status"] not in [EscrowStatus.DRAFT, EscrowStatus.AWAITING_DEPOSIT, "draft", "awaiting_deposit"]:
+        raise HTTPException(status_code=400, detail="Deposits only accepted in draft or awaiting_deposit status")
+
+    if data.party not in ["buyer", "seller"]:
+        raise HTTPException(status_code=400, detail="Party must be 'buyer' or 'seller'")
+
+    now = datetime.now(timezone.utc)
+    deposit_id = str(uuid.uuid4())
+
+    deposit_record = {
+        "id": deposit_id,
+        "party": data.party,
+        "amount": data.amount,
+        "asset": data.asset,
+        "tx_hash": data.tx_hash,
+        "source_address": data.source_address,
+        "confirmed": False,
+        "confirmed_by": None,
+        "confirmed_at": None,
+        "notes": data.notes,
+        "created_at": now.isoformat(),
+    }
+
+    # Update custody
+    custody_field = f"custody.{data.party}_deposit_amount"
+    deposited_field = f"custody.{data.party}_deposited"
+
+    updates = {
+        "updated_at": now.isoformat(),
+        custody_field: data.amount,
+    }
+
+    # If deal is in draft, move to awaiting_deposit
+    if deal["status"] in [EscrowStatus.DRAFT, "draft"]:
+        updates["status"] = EscrowStatus.AWAITING_DEPOSIT
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": updates.get("status", deal["status"]),
+        "action": f"Deposit registered: {data.party} - {data.amount} {data.asset}" + (f" (tx: {data.tx_hash[:12]}...)" if data.tx_hash else ""),
+        "performed_by": _user_email(current_user),
+        "notes": data.notes,
+    }
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {
+            "$set": updates,
+            "$push": {"timeline": timeline_entry, "deposits": deposit_record}
+        }
+    )
+
+    updated = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    return {"success": True, "deal": updated, "deposit_id": deposit_id}
+
+
+@router.post("/deals/{deal_id}/confirm-deposit")
+async def confirm_deposit(deal_id: str, data: ConfirmDeposit, current_user: dict = Depends(get_current_user)):
+    """Confirm a pending deposit (admin action). Auto-advances to funded if both confirmed."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    deposits = deal.get("deposits", [])
+    deposit_idx = None
+    for i, dep in enumerate(deposits):
+        if dep.get("id") == data.deposit_id:
+            deposit_idx = i
+            break
+
+    if deposit_idx is None:
+        raise HTTPException(status_code=404, detail="Deposit not found")
+
+    now = datetime.now(timezone.utc)
+    dep = deposits[deposit_idx]
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$set": {
+            f"deposits.{deposit_idx}.confirmed": data.confirmed,
+            f"deposits.{deposit_idx}.confirmed_by": _user_email(current_user),
+            f"deposits.{deposit_idx}.confirmed_at": now.isoformat(),
+            f"custody.{dep['party']}_deposited": data.confirmed,
+            "updated_at": now.isoformat(),
+        }}
+    )
+
+    # Check if both sides confirmed -> auto-advance to funded
+    updated_deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    custody = updated_deal.get("custody", {})
+    structure = updated_deal.get("structure", "two_sided")
+
+    should_fund = False
+    if structure == "two_sided":
+        should_fund = custody.get("buyer_deposited") and custody.get("seller_deposited")
+    else:
+        should_fund = custody.get("buyer_deposited") or custody.get("seller_deposited")
+
+    if should_fund and updated_deal["status"] in [EscrowStatus.AWAITING_DEPOSIT, "awaiting_deposit"]:
+        timeline_entry = {
+            "timestamp": now.isoformat(),
+            "status": EscrowStatus.FUNDED,
+            "action": "Auto-advanced to Funded: all required deposits confirmed",
+            "performed_by": "system",
+        }
+        await db["escrow_deals"].update_one(
+            {"id": deal_id},
+            {"$set": {"status": EscrowStatus.FUNDED, "custody.locked": True, "updated_at": now.isoformat()},
+             "$push": {"timeline": timeline_entry}}
+        )
+
+    confirmation_timeline = {
+        "timestamp": now.isoformat(),
+        "status": updated_deal["status"],
+        "action": f"Deposit {'confirmed' if data.confirmed else 'rejected'}: {dep['party']} - {dep['amount']} {dep['asset']}",
+        "performed_by": _user_email(current_user),
+        "notes": data.notes,
+    }
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$push": {"timeline": confirmation_timeline}}
+    )
+
+    final = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    return {"success": True, "deal": final}
+
+
+# ==================== PHASE 2: SETTLEMENT DvP ====================
+
+@router.post("/deals/{deal_id}/settle")
+async def execute_settlement(deal_id: str, data: SettleRequest, current_user: dict = Depends(get_current_user)):
+    """Execute DvP settlement. Both conditions must be met."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    if deal["status"] not in [EscrowStatus.READY_FOR_SETTLEMENT, "ready_for_settlement"]:
+        raise HTTPException(status_code=400, detail="Deal must be in 'ready_for_settlement' status")
+
+    custody = deal.get("custody", {})
+    structure = deal.get("structure", "two_sided")
+
+    # Verify DvP conditions
+    if structure == "two_sided":
+        if not custody.get("buyer_deposited") or not custody.get("seller_deposited"):
+            raise HTTPException(status_code=400, detail="DvP failed: both buyer and seller must have confirmed deposits")
+    else:
+        if not custody.get("buyer_deposited") and not custody.get("seller_deposited"):
+            raise HTTPException(status_code=400, detail="DvP failed: at least one party must have confirmed deposit")
+
+    # Compliance gate check
+    compliance = deal.get("compliance", {})
+    required = ["buyer_kyc", "seller_kyc", "aml_check", "source_of_funds"]
+    unapproved = [k for k in required if compliance.get(k) != ComplianceCheckStatus.APPROVED]
+    if unapproved:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Settlement blocked: compliance checks not approved: {unapproved}"
+        )
+
+    now = datetime.now(timezone.utc)
+
+    # Record the settlement
+    settlement_record = {
+        "id": str(uuid.uuid4()),
+        "executed_at": now.isoformat(),
+        "executed_by": _user_email(current_user),
+        "asset_a": deal["asset_a"],
+        "quantity_a": deal["quantity_a"],
+        "asset_b": deal["asset_b"],
+        "quantity_b": deal["quantity_b"],
+        "buyer_destination": data.buyer_destination,
+        "seller_destination": data.seller_destination,
+        "fee_total": deal["fee_total"],
+        "fee_buyer": deal["fee_buyer"],
+        "fee_seller": deal["fee_seller"],
+        "notes": data.notes,
+    }
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": EscrowStatus.SETTLED,
+        "action": f"DvP Settlement executed: {deal['quantity_a']} {deal['asset_a']} ↔ {deal['quantity_b']} {deal['asset_b']}",
+        "performed_by": _user_email(current_user),
+        "notes": data.notes,
+    }
+
+    # Record fee in ledger
+    fee_entry = {
+        "id": str(uuid.uuid4()),
+        "deal_id": deal["deal_id"],
+        "escrow_id": deal["id"],
+        "fee_total": deal["fee_total"],
+        "fee_buyer": deal["fee_buyer"],
+        "fee_seller": deal["fee_seller"],
+        "fee_schedule": deal["fee_schedule"],
+        "fee_rate": deal["fee_rate"],
+        "ticket_size": deal["ticket_size"],
+        "volume_discount_pct": deal.get("volume_discount_pct", 0),
+        "volume_discount": deal.get("volume_discount", 0),
+        "asset_a": deal["asset_a"],
+        "asset_b": deal["asset_b"],
+        "buyer_name": deal.get("buyer", {}).get("name", ""),
+        "seller_name": deal.get("seller", {}).get("name", ""),
+        "settled_at": now.isoformat(),
+        "recorded_by": _user_email(current_user),
+    }
+    await db["escrow_fee_ledger"].insert_one(fee_entry)
+    fee_entry.pop("_id", None)
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$set": {
+            "status": EscrowStatus.SETTLED,
+            "settled_at": now.isoformat(),
+            "custody.locked": False,
+            "settlement": settlement_record,
+            "updated_at": now.isoformat(),
+        }, "$push": {"timeline": timeline_entry}}
+    )
+
+    updated = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    logger.info(f"Settlement executed for {deal['deal_id']} by {_user_email(current_user)}")
+    return {"success": True, "deal": updated, "settlement": settlement_record, "fee_invoice": fee_entry}
+
+
+# ==================== PHASE 2: FEE LEDGER ====================
+
+@router.get("/fee-ledger")
+async def get_fee_ledger(
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get fee revenue ledger for KBEX."""
+    total = await db["escrow_fee_ledger"].count_documents({})
+    entries = await db["escrow_fee_ledger"].find(
+        {}, {"_id": 0}
+    ).sort("settled_at", -1).skip(skip).limit(limit).to_list(length=limit)
+
+    # Aggregate totals
+    agg = await db["escrow_fee_ledger"].aggregate([
+        {"$group": {
+            "_id": None,
+            "total_revenue": {"$sum": "$fee_total"},
+            "total_from_buyers": {"$sum": "$fee_buyer"},
+            "total_from_sellers": {"$sum": "$fee_seller"},
+            "total_volume": {"$sum": "$ticket_size"},
+            "deal_count": {"$sum": 1},
+        }}
+    ]).to_list(length=1)
+
+    totals = agg[0] if agg else {"total_revenue": 0, "total_from_buyers": 0, "total_from_sellers": 0, "total_volume": 0, "deal_count": 0}
+    totals.pop("_id", None)
+
+    return {
+        "entries": entries,
+        "total": total,
+        "totals": {k: round(v, 2) if isinstance(v, float) else v for k, v in totals.items()},
+    }
+
+
+@router.get("/fee-ledger/summary")
+async def get_fee_summary(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get fee revenue summary grouped by schedule."""
+    by_schedule = await db["escrow_fee_ledger"].aggregate([
+        {"$group": {
+            "_id": "$fee_schedule",
+            "revenue": {"$sum": "$fee_total"},
+            "volume": {"$sum": "$ticket_size"},
+            "count": {"$sum": 1},
+        }}
+    ]).to_list(length=10)
+
+    return {"by_schedule": [{**item, "schedule": item.pop("_id")} for item in by_schedule]}
+
+
+@router.get("/volume-tiers")
+async def get_volume_tiers(current_user: dict = Depends(get_current_user)):
+    """Get the volume tier discount schedule."""
+    # Convert infinity to a large number for JSON serialization
+    tiers = []
+    for tier in VOLUME_TIERS:
+        t = tier.copy()
+        if t.get("max") == float("inf"):
+            t["max"] = None  # Use None to represent infinity
+        tiers.append(t)
+    return {"tiers": tiers}
+
+
+# ==================== PHASE 2: WHITELISTS ====================
+
+@router.get("/deals/{deal_id}/whitelist")
+async def get_whitelist(deal_id: str, current_user: dict = Depends(get_current_user)):
+    """Get whitelisted addresses for an escrow deal."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+    return {"whitelist": deal.get("whitelist", [])}
+
+
+@router.post("/deals/{deal_id}/whitelist")
+async def add_whitelist_address(deal_id: str, data: WhitelistAddress, current_user: dict = Depends(get_current_user)):
+    """Add a whitelisted destination address for settlement."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    now = datetime.now(timezone.utc)
+    entry = {
+        "id": str(uuid.uuid4()),
+        "address": data.address,
+        "label": data.label,
+        "asset": data.asset,
+        "party": data.party,
+        "added_by": _user_email(current_user),
+        "added_at": now.isoformat(),
+    }
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": deal["status"],
+        "action": f"Whitelist address added: {data.party} - {data.label} ({data.address[:12]}...)",
+        "performed_by": _user_email(current_user),
+    }
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$push": {"whitelist": entry, "timeline": timeline_entry},
+         "$set": {"updated_at": now.isoformat()}}
+    )
+
+    return {"success": True, "entry": entry}
+
+
+@router.delete("/deals/{deal_id}/whitelist/{address_id}")
+async def remove_whitelist_address(deal_id: str, address_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove a whitelisted address."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$pull": {"whitelist": {"id": address_id}},
+         "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True}

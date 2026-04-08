@@ -107,6 +107,7 @@ import VaultCreateTransaction from "./pages/dashboard/vault/VaultCreateTransacti
 import VaultWallets from "./pages/dashboard/vault/VaultWallets";
 import EscrowDashboard from "./pages/dashboard/escrow/EscrowDashboard";
 import EscrowDeals from "./pages/dashboard/escrow/EscrowDeals";
+import FeeLedger from "./pages/dashboard/escrow/FeeLedger";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -292,6 +293,7 @@ function AppRoutes() {
         {/* Escrow Routes */}
         <Route path="escrow" element={<EscrowDashboard />} />
         <Route path="escrow/deals" element={<EscrowDeals />} />
+        <Route path="escrow/fees" element={<FeeLedger />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

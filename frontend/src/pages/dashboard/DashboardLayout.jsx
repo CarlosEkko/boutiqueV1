@@ -223,6 +223,7 @@ const labelTranslationMap = {
   // Escrow
   'Escrow': 'sidebar.escrow',
   'Deals': 'sidebar.escrowDeals',
+  'Fee Revenue': 'sidebar.escrowFees',
   // Team Hub & Multi-Sign
   'Team Hub': 'sidebar.teamHub',
   'Multi-Sign': 'sidebar.multiSign',

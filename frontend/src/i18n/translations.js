@@ -109,6 +109,7 @@ const translations = {
       // Escrow
       escrow: 'Escrow',
       escrowDeals: 'Deals',
+      escrowFees: 'Fee Revenue',
       // Section headers
       gestaoLabel: 'Management',
       loading: 'Loading...',
@@ -1676,6 +1677,7 @@ const translations = {
       // Escrow
       escrow: 'Escrow',
       escrowDeals: 'Deals',
+      escrowFees: 'Fee Revenue',
       // Section headers
       gestaoLabel: 'Gestão',
       loading: 'A carregar...',
@@ -4692,6 +4694,7 @@ const translations = {
       // Escrow
       escrow: 'Escrow',
       escrowDeals: 'Deals',
+      escrowFees: 'Fee Revenue',
       gestaoLabel: 'Gestion',
       loading: 'Chargement...',
     },
@@ -6109,6 +6112,7 @@ const translations = {
       // Escrow
       escrow: 'Escrow',
       escrowDeals: 'Deals',
+      escrowFees: 'Fee Revenue',
       gestaoLabel: 'Gestión',
       loading: 'Cargando...',
     },

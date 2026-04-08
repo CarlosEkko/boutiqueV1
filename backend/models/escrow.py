@@ -92,9 +92,26 @@ DEFAULT_FEE_SCHEDULES = {
     "custom": {"rate": 0.0, "min_fee": 0.0},
 }
 
+# Volume-based progressive tiers (applied over DEFAULT_FEE_SCHEDULES)
+VOLUME_TIERS = [
+    {"min": 0,         "max": 100_000,    "discount": 0.0},
+    {"min": 100_000,   "max": 500_000,    "discount": 0.10},   # 10% discount
+    {"min": 500_000,   "max": 1_000_000,  "discount": 0.20},   # 20% discount
+    {"min": 1_000_000, "max": 5_000_000,  "discount": 0.30},   # 30% discount
+    {"min": 5_000_000, "max": float("inf"), "discount": 0.40}, # 40% discount
+]
 
-def calculate_fee(ticket_size: float, schedule: str = "standard", custom_rate: float = None, custom_min: float = None) -> dict:
-    """Calculate escrow fee based on ticket size and fee schedule."""
+
+def get_volume_discount(ticket_size: float) -> float:
+    """Get volume discount factor for a given ticket size."""
+    for tier in VOLUME_TIERS:
+        if tier["min"] <= ticket_size < tier["max"]:
+            return tier["discount"]
+    return 0.0
+
+
+def calculate_fee(ticket_size: float, schedule: str = "standard", custom_rate: float = None, custom_min: float = None, apply_volume_discount: bool = True) -> dict:
+    """Calculate escrow fee based on ticket size, fee schedule and volume tiers."""
     if schedule == "custom" and custom_rate is not None:
         rate = custom_rate
         min_fee = custom_min or 0.0
@@ -104,12 +121,21 @@ def calculate_fee(ticket_size: float, schedule: str = "standard", custom_rate: f
         min_fee = config["min_fee"]
 
     calculated = ticket_size * rate
-    total = max(calculated, min_fee)
+    discount = 0.0
+    discount_pct = 0.0
+
+    if apply_volume_discount and schedule != "custom":
+        discount_pct = get_volume_discount(ticket_size)
+        discount = round(calculated * discount_pct, 2)
+
+    total = max(calculated - discount, min_fee)
     return {
         "fee_total": round(total, 2),
         "fee_rate": rate,
         "fee_min": min_fee,
         "calculated_fee": round(calculated, 2),
+        "volume_discount_pct": discount_pct,
+        "volume_discount": discount,
     }
 
 
@@ -223,3 +249,68 @@ class ResolveDispute(BaseModel):
     resolution: str
     winner: Optional[str] = None
     notes: Optional[str] = None
+
+
+# ==================== PHASE 2 MODELS ====================
+
+class DepositRequest(BaseModel):
+    party: str  # "buyer" or "seller"
+    amount: float
+    asset: str
+    tx_hash: Optional[str] = None
+    source_address: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ConfirmDeposit(BaseModel):
+    deposit_id: str
+    confirmed: bool = True
+    notes: Optional[str] = None
+
+
+class SettleRequest(BaseModel):
+    notes: Optional[str] = None
+    buyer_destination: Optional[str] = None
+    seller_destination: Optional[str] = None
+
+
+class WhitelistAddress(BaseModel):
+    address: str
+    label: str
+    asset: str
+    party: str  # "buyer" or "seller"
+
+
+def calculate_risk_score(deal: dict) -> float:
+    """Calculate risk score for a deal based on multiple factors."""
+    score = 50.0  # baseline
+    ticket = deal.get("ticket_size", 0)
+
+    # Ticket size risk
+    if ticket > 5_000_000:
+        score += 30
+    elif ticket > 1_000_000:
+        score += 20
+    elif ticket > 500_000:
+        score += 10
+
+    # Compliance risk
+    compliance = deal.get("compliance", {})
+    for field in ["buyer_kyc", "seller_kyc", "aml_check", "source_of_funds"]:
+        status = compliance.get(field, "pending")
+        if status == "rejected":
+            score += 15
+        elif status == "pending":
+            score += 5
+        elif status == "approved":
+            score -= 5
+
+    # Structure risk
+    if deal.get("structure") == "one_sided":
+        score += 10
+
+    # Cross-chain risk
+    if deal.get("settlement_type") == "cross_chain":
+        score += 10
+
+    return max(0, min(100, round(score, 1)))

@@ -339,6 +339,7 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/escrow", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/escrow/deals", "label": "Deals", "icon": "FileText"},
+            {"path": "/dashboard/escrow/fees", "label": "Fee Revenue", "icon": "DollarSign"},
         ]
     },
 }
