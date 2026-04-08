@@ -455,13 +455,12 @@ async def create_balance_adjustment(
     )
     if not wallet:
         # Auto-create wallet for this currency
-        import uuid as uuid_mod2
         fiat_currencies = {"EUR": ("Euro", "€"), "USD": ("US Dollar", "$"), "GBP": ("British Pound", "£"), "BRL": ("Real Brasileiro", "R$"), "CHF": ("Swiss Franc", "CHF"), "AED": ("UAE Dirham", "AED"), "USDT": ("Tether", "₮"), "USDC": ("USD Coin", "USDC")}
         asset_info = fiat_currencies.get(currency.upper(), (currency, currency))
         is_fiat = currency.upper() in fiat_currencies
         
         wallet = {
-            "id": str(uuid_mod2.uuid4()),
+            "id": str(uuid_mod.uuid4()),
             "user_id": user_id,
             "asset_id": currency.upper(),
             "asset_name": asset_info[0],
