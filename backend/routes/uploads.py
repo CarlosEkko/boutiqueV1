@@ -25,7 +25,8 @@ UPLOAD_DIRS = {
     "deposits": BASE_UPLOAD_DIR / "deposits",
     "withdrawals": BASE_UPLOAD_DIR / "withdrawals",
     "documents": BASE_UPLOAD_DIR / "documents",
-    "general": BASE_UPLOAD_DIR / "general"
+    "general": BASE_UPLOAD_DIR / "general",
+    "adjustments": BASE_UPLOAD_DIR / "adjustments"
 }
 
 # Create all directories

@@ -15,33 +15,23 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - Complete OTC CRM (11-stage workflow)
 - Invite-only registration gate
 - Hierarchical access control (region-based)
-- Region-based notification filtering
 - 5-language support (EN, PT, AR, FR, ES)
-- SecurityPage fully internationalized
-- OTC lead conversion correctly inherits potential_tier -> membership_level
-- Registration completion for auto-created users
-- Translation key collision fix
-- **Demo Mode**: Full demo with rich mock data for sales pitches
-- KB access fix, Fiat deposit isolation, Auto-assign leads
-- OTC Desk Flow Verification
+- Demo Mode with rich mock data
+- OTC Desk Flow with pre-qualification and setup
 - TinyMCE Knowledge Base Editor
-- CSP and security headers in nginx.conf
 - Cloudflare SSL configuration
-- **OTC Setup Status Fix (2026-04-08)**:
-  - Added `setup_complete` status enum
-  - After operational setup → status = `setup_complete` (not `setup_pending`)
-  - Convert to Client accepts `setup_complete` status
-  - Frontend tabs and LeadCard updated
-- **KYC/KYB Verifications Page (2026-04-08)**:
-  - New page at `/dashboard/risk/kyc-verifications` under Risco & Conformidade
-  - Shows all Sumsub applicants with real-time status (init/pending/approved/rejected)
-  - Stats cards, type tabs (KYC/KYB), status tabs, search
-  - Detail dialog: user info, status, Sumsub level, documents status
-  - "Sincronizar" button fetches live data from Sumsub API
-  - Direct "Abrir no Dashboard Sumsub" link to cockpit
-  - KYB Quest support: `SUMSUB_KYB_LEVEL_NAME` env var, company applicant type
-  - Same webhook handles both KYC and KYB events
-  - 5-language translations for menu item
+- **OTC Setup Status Fix (2026-04-08)**: Status advances to `setup_complete` after setup submission
+- **KYC/KYB Verifications Page (2026-04-08)**: Real-time Sumsub verification status with docs, refresh, Sumsub dashboard link. KYB Quest support.
+- **Balance Adjustments (2026-04-08)**:
+  - New page "Ajustes de Saldo" in Financeiro menu
+  - Admin-only manual balance adjustments (credit/debit)
+  - Categories: Correction, Penalty, Fee, Bonus, Refund, Chargeback, Other
+  - Document upload support for audit trail
+  - Full audit: previous/new balance, admin name, timestamp, reason
+  - Transactions recorded for each adjustment
+  - Client search + wallet selection in creation form
+  - Stats: total credits, debits, net balance
+  - 5-language translations
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123
@@ -49,17 +39,16 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 
 ## Deployment
 git pull -> sudo docker-compose up --build -d
-Add `SUMSUB_KYB_LEVEL_NAME=<your-kyb-level>` to docker-compose.yml env vars
 
 ## Pending Issues
 - P1: Reroute "Solicitar Acesso" to Lead Creation & Disable Public Registration
-- P1: Dark / Light Mode Toggle (user requested)
-- P2: Sidebar translation labels not fully mapped (Tokenizacao, Team Hub, Multi-Sign)
-- P2: Safari cursor bug (recurring)
+- P1: Dark / Light Mode Toggle
+- P2: Sidebar translation labels (Tokenizacao, Team Hub, Multi-Sign)
+- P2: Safari cursor bug
 
 ## Upcoming Tasks
 - P1: TradingView chart widgets on Trading/Markets pages
-- P2: Refactor HTTP polling to WebSockets for crypto prices
+- P2: WebSockets for crypto prices
 - P2: Whitelist functionality
 - P3: Product Pages (Launchpad, ICO)
-- P3: Refactor OTCLeads.jsx (2300+ lines) and translations.js (6600+ lines)
+- P3: Refactor OTCLeads.jsx and translations.js

@@ -251,6 +251,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/crypto-withdrawals", "label": "Levantamentos Crypto", "icon": "Bitcoin"},
             {"path": "/dashboard/admin/bank-accounts", "label": "Contas de Clientes", "icon": "Users"},
             {"path": "/dashboard/admin/company-accounts", "label": "Contas da Empresa", "icon": "Building"},
+            {"path": "/dashboard/finance/balance-adjustments", "label": "Ajustes de Saldo", "icon": "ArrowLeftRight"},
         ]
     },
     Department.CRM: {

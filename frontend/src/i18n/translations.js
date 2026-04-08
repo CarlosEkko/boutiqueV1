@@ -58,6 +58,7 @@ const translations = {
       levantamentosCrypto: 'Crypto Withdrawals',
       contasClientes: 'Client Accounts',
       contasEmpresa: 'Company Accounts',
+      ajustesSaldo: 'Balance Adjustments',
       // Items - CRM
       dashboardCrm: 'CRM Dashboard',
       meusClientes: 'My Clients',
@@ -1613,6 +1614,7 @@ const translations = {
       levantamentosCrypto: 'Levantamentos Crypto',
       contasClientes: 'Contas de Clientes',
       contasEmpresa: 'Contas da Empresa',
+      ajustesSaldo: 'Ajustes de Saldo',
       // Items - CRM
       dashboardCrm: 'Dashboard CRM',
       meusClientes: 'Meus Clientes',
@@ -3167,6 +3169,7 @@ const translations = {
       levantamentosCrypto: 'سحوبات العملات المشفرة',
       contasClientes: 'حسابات العملاء',
       contasEmpresa: 'حسابات الشركة',
+      ajustesSaldo: 'تعديلات الرصيد',
       // Items - CRM
       dashboardCrm: 'لوحة إدارة العملاء',
       meusClientes: 'عملائي',
@@ -4608,6 +4611,7 @@ const translations = {
       levantamentosCrypto: 'Retraits Crypto',
       contasClientes: 'Comptes Clients',
       contasEmpresa: 'Comptes Société',
+      ajustesSaldo: 'Ajustements de Solde',
       dashboardCrm: 'Tableau CRM',
       meusClientes: 'Mes Clients',
       fornecedores: 'Fournisseurs',
@@ -6015,6 +6019,7 @@ const translations = {
       levantamentosCrypto: 'Retiros Crypto',
       contasClientes: 'Cuentas de Clientes',
       contasEmpresa: 'Cuentas de Empresa',
+      ajustesSaldo: 'Ajustes de Saldo',
       dashboardCrm: 'Dashboard CRM',
       meusClientes: 'Mis Clientes',
       fornecedores: 'Proveedores',

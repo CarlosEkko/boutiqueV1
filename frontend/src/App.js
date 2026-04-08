@@ -87,6 +87,7 @@ import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
+import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustmentsPage";
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
 import RegisterPage from "./pages/RegisterPage";
 import StakingPage from "./pages/dashboard/investments/StakingPage";
@@ -233,6 +234,7 @@ function AppRoutes() {
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         <Route path="admin/finance" element={<FinancialDashboard />} />
+        <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
         <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
         
         {/* CRM Routes */}

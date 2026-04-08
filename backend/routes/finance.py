@@ -404,3 +404,222 @@ async def get_gas_station_finance(admin: dict = Depends(get_internal_user)):
     except Exception as e:
         logger.error(f"Gas station fetch failed: {e}")
         return {"health": "unknown", "error": str(e)}
+
+
+
+# ==================== BALANCE ADJUSTMENTS ====================
+
+from fastapi import UploadFile, File, Form, HTTPException
+from pathlib import Path
+import uuid as uuid_mod
+import aiofiles
+
+ADJUSTMENTS_UPLOAD_DIR = Path("/app/uploads/adjustments")
+ADJUSTMENTS_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+@router.post("/balance-adjustments")
+async def create_balance_adjustment(
+    user_id: str = Form(...),
+    currency: str = Form(...),
+    amount: float = Form(...),
+    adjustment_type: str = Form(...),  # "credit" or "debit"
+    category: str = Form(...),
+    reason: str = Form(...),
+    document: Optional[UploadFile] = File(None),
+    admin: dict = Depends(get_admin_user)
+):
+    """
+    Create a manual balance adjustment (credit or debit) on a client's wallet.
+    Admin only. Records full audit trail.
+    """
+    # Validate adjustment type
+    if adjustment_type not in ("credit", "debit"):
+        raise HTTPException(status_code=400, detail="Tipo de ajuste inválido. Use 'credit' ou 'debit'.")
+    
+    valid_categories = ["correction", "penalty", "fee", "bonus", "refund", "chargeback", "other"]
+    if category not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"Categoria inválida. Use: {', '.join(valid_categories)}")
+    
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="O valor deve ser positivo.")
+    
+    # Find the user
+    target_user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "name": 1, "email": 1})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilizador não encontrado.")
+    
+    # Find the wallet
+    wallet = await db.wallets.find_one(
+        {"user_id": user_id, "asset_id": currency},
+        {"_id": 0}
+    )
+    if not wallet:
+        raise HTTPException(status_code=404, detail=f"Carteira {currency} não encontrada para este utilizador.")
+    
+    previous_balance = wallet.get("balance", 0)
+    
+    # Calculate new balance
+    effective_amount = amount if adjustment_type == "credit" else -amount
+    new_balance = previous_balance + effective_amount
+    
+    # Handle document upload
+    document_url = None
+    if document:
+        ext = document.filename.rsplit(".", 1)[-1].lower() if document.filename and "." in document.filename else "pdf"
+        doc_filename = f"adj_{uuid_mod.uuid4().hex[:12]}.{ext}"
+        doc_path = ADJUSTMENTS_UPLOAD_DIR / doc_filename
+        async with aiofiles.open(doc_path, "wb") as f:
+            content = await document.read()
+            await f.write(content)
+        document_url = f"/api/uploads/file/adjustments/{doc_filename}"
+    
+    # Create adjustment record
+    adjustment_id = str(uuid_mod.uuid4())
+    admin_name = admin.get("name", admin.get("email", ""))
+    admin_id = admin.get("id", "")
+    
+    adjustment = {
+        "id": adjustment_id,
+        "user_id": user_id,
+        "user_name": target_user.get("name", ""),
+        "user_email": target_user.get("email", ""),
+        "currency": currency,
+        "amount": amount,
+        "effective_amount": effective_amount,
+        "adjustment_type": adjustment_type,
+        "category": category,
+        "reason": reason,
+        "previous_balance": previous_balance,
+        "new_balance": new_balance,
+        "document_url": document_url,
+        "admin_id": admin_id,
+        "admin_name": admin_name,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    
+    await db.balance_adjustments.insert_one(adjustment)
+    
+    # Update wallet balance
+    await db.wallets.update_one(
+        {"user_id": user_id, "asset_id": currency},
+        {"$set": {
+            "balance": new_balance,
+            "available_balance": new_balance
+        }}
+    )
+    
+    # Also record as a transaction for audit
+    tx = {
+        "id": str(uuid_mod.uuid4()),
+        "user_id": user_id,
+        "type": "balance_adjustment",
+        "adjustment_type": adjustment_type,
+        "category": category,
+        "amount": effective_amount,
+        "currency": currency,
+        "status": "completed",
+        "description": f"Ajuste de saldo: {reason}",
+        "admin_id": admin_id,
+        "admin_name": admin_name,
+        "adjustment_id": adjustment_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.transactions.insert_one(tx)
+    
+    # Remove _id before returning
+    adjustment.pop("_id", None)
+    
+    logger.info(f"Balance adjustment {adjustment_id}: {adjustment_type} {amount} {currency} for user {user_id} by admin {admin_name}")
+    
+    return {"success": True, "adjustment": adjustment}
+
+
+@router.get("/balance-adjustments")
+async def list_balance_adjustments(
+    user_id: Optional[str] = None,
+    category: Optional[str] = None,
+    adjustment_type: Optional[str] = None,
+    limit: int = 50,
+    admin: dict = Depends(get_admin_user)
+):
+    """List all balance adjustments with optional filters."""
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    if category:
+        query["category"] = category
+    if adjustment_type:
+        query["adjustment_type"] = adjustment_type
+    
+    adjustments = await db.balance_adjustments.find(query, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    
+    # Compute stats
+    total_credits = sum(a["amount"] for a in adjustments if a["adjustment_type"] == "credit")
+    total_debits = sum(a["amount"] for a in adjustments if a["adjustment_type"] == "debit")
+    
+    return {
+        "adjustments": adjustments,
+        "total": len(adjustments),
+        "stats": {
+            "total_credits": total_credits,
+            "total_debits": total_debits,
+            "net": total_credits - total_debits
+        }
+    }
+
+
+@router.get("/balance-adjustments/{adjustment_id}")
+async def get_balance_adjustment(
+    adjustment_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get a single balance adjustment by ID."""
+    adjustment = await db.balance_adjustments.find_one({"id": adjustment_id}, {"_id": 0})
+    if not adjustment:
+        raise HTTPException(status_code=404, detail="Ajuste não encontrado.")
+    return adjustment
+
+
+@router.get("/client-wallets/{target_user_id}")
+async def get_client_wallets(
+    target_user_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get all wallets for a specific client (admin use for adjustment form)."""
+    wallets = await db.wallets.find(
+        {"user_id": target_user_id},
+        {"_id": 0, "asset_id": 1, "asset_name": 1, "balance": 1, "asset_type": 1}
+    ).to_list(50)
+    return {"wallets": wallets}
+
+
+@router.get("/clients-list")
+async def get_clients_list(
+    search: Optional[str] = None,
+    admin: dict = Depends(get_admin_user)
+):
+    """Get a simple list of clients for the adjustment form dropdown."""
+    query = {}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}},
+            {"first_name": {"$regex": search, "$options": "i"}},
+            {"last_name": {"$regex": search, "$options": "i"}}
+        ]
+    
+    users = await db.users.find(
+        query,
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "first_name": 1, "last_name": 1}
+    ).sort("name", 1).to_list(100)
+    
+    result = []
+    for u in users:
+        name = u.get("name") or f"{u.get('first_name', '')} {u.get('last_name', '')}".strip()
+        result.append({
+            "id": u["id"],
+            "name": name,
+            "email": u.get("email", "")
+        })
+    
+    return {"clients": result}
