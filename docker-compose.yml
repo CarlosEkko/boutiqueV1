@@ -55,6 +55,7 @@ services:
       - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-}
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-}
       - AZURE_REDIRECT_URI=${AZURE_REDIRECT_URI:-}
+      - TRUSTFULL_API_KEY=${TRUSTFULL_API_KEY:-}
     volumes:
       - backend_uploads:/app/uploads
       - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
