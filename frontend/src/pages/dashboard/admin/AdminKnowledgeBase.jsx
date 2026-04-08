@@ -198,22 +198,28 @@ const AdminKnowledgeBase = () => {
     
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('category', 'general');
-      
-      const response = await axios.post(`${API_URL}/api/uploads/file`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
-        }
-      });
-      
-      setCategoryForm({ ...categoryForm, image_url: response.data.url });
-      toast.success('Imagem carregada!');
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const response = await axios.post(`${API_URL}/api/uploads/file-json`, {
+          file_data: base64,
+          filename: file.name,
+          content_type: file.type,
+          category: 'general'
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCategoryForm({ ...categoryForm, image_url: response.data.url });
+        toast.success('Imagem carregada!');
+        setUploadingImage(false);
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao ler ficheiro');
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       toast.error('Erro ao carregar imagem');
-    } finally {
       setUploadingImage(false);
     }
   };
@@ -235,22 +241,33 @@ const AdminKnowledgeBase = () => {
     
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('category', 'general');
-      
-      const response = await axios.post(`${API_URL}/api/uploads/file`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result.split(',')[1];
+          const response = await axios.post(`${API_URL}/api/uploads/file-json`, {
+            file_data: base64,
+            filename: file.name,
+            content_type: file.type,
+            category: 'general'
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setArticleForm({ ...articleForm, cover_image: response.data.url });
+          toast.success('Imagem carregada!');
+        } catch (err) {
+          toast.error('Erro ao carregar imagem');
+        } finally {
+          setUploadingImage(false);
         }
-      });
-      
-      setArticleForm({ ...articleForm, cover_image: response.data.url });
-      toast.success('Imagem carregada!');
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao ler ficheiro');
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       toast.error('Erro ao carregar imagem');
-    } finally {
       setUploadingImage(false);
     }
   };

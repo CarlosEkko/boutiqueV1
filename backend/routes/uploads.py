@@ -136,6 +136,78 @@ async def upload_file(
     }
 
 
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class Base64UploadRequest(PydanticBaseModel):
+    file_data: str  # base64 encoded file content
+    filename: str
+    content_type: str = "image/jpeg"
+    category: str = "general"
+    description: Optional[str] = None
+
+@router.post("/file-json")
+async def upload_file_json(
+    req: Base64UploadRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Upload a file via JSON (base64). Bypasses Cloudflare WAF restrictions on multipart/form-data.
+    """
+    import base64
+    
+    if req.category not in UPLOAD_DIRS:
+        req.category = "general"
+    
+    allowed_types = ALLOWED_IMAGE_TYPES | ALLOWED_DOCUMENT_TYPES
+    if req.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"File type not allowed: {req.content_type}")
+    
+    try:
+        content = base64.b64decode(req.file_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 data")
+    
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB")
+    
+    file_ext = get_file_extension(req.content_type, req.filename)
+    file_id = uuid.uuid4().hex[:12]
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+    new_filename = f"{timestamp}_{user_id[:8]}_{file_id}.{file_ext}"
+    
+    upload_dir = UPLOAD_DIRS[req.category]
+    file_path = upload_dir / new_filename
+    
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(content)
+    
+    file_record = {
+        "id": file_id,
+        "user_id": user_id,
+        "category": req.category,
+        "original_filename": req.filename,
+        "stored_filename": new_filename,
+        "content_type": req.content_type,
+        "size_bytes": len(content),
+        "description": req.description,
+        "url": f"/api/uploads/file/{req.category}/{new_filename}",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.uploaded_files.insert_one(file_record)
+    
+    return {
+        "success": True,
+        "file_id": file_id,
+        "url": file_record["url"],
+        "filename": new_filename,
+        "size": len(content),
+        "content_type": req.content_type
+    }
+
+
+
 @router.post("/public")
 async def upload_public_file(
     file: UploadFile = File(...),
@@ -362,6 +434,87 @@ async def upload_deposit_proof(
         "created_at": now
     }
     
+    await db.uploaded_files.insert_one(file_record)
+    
+    return {
+        "success": True,
+        "message": "Proof uploaded successfully. Awaiting admin approval.",
+        "url": file_url
+    }
+
+
+
+class DepositProofJsonRequest(PydanticBaseModel):
+    file_data: str  # base64 encoded
+    filename: str
+    content_type: str = "image/jpeg"
+
+@router.post("/deposit-proof-json/{deposit_id}")
+async def upload_deposit_proof_json(
+    deposit_id: str,
+    req: DepositProofJsonRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Upload proof of deposit via JSON (base64). Bypasses Cloudflare WAF."""
+    import base64
+    
+    deposit = await db.bank_transfers.find_one({
+        "id": deposit_id,
+        "user_id": user_id,
+        "transfer_type": "deposit"
+    })
+    
+    if not deposit:
+        raise HTTPException(status_code=404, detail="Deposit not found")
+    
+    if deposit.get("status") not in ["pending"]:
+        raise HTTPException(status_code=400, detail="Proof already submitted or deposit processed")
+    
+    if req.content_type not in ALLOWED_DOCUMENT_TYPES:
+        raise HTTPException(status_code=400, detail="File type not allowed. Please upload PDF, JPEG, or PNG.")
+    
+    try:
+        content = base64.b64decode(req.file_data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64 data")
+    
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB")
+    
+    file_ext = get_file_extension(req.content_type, req.filename)
+    new_filename = f"deposit_{deposit_id}_{uuid.uuid4().hex[:8]}.{file_ext}"
+    
+    upload_dir = UPLOAD_DIRS["deposits"]
+    file_path = upload_dir / new_filename
+    
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(content)
+    
+    file_url = f"/api/uploads/file/deposits/{new_filename}"
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.bank_transfers.update_one(
+        {"id": deposit_id},
+        {"$set": {
+            "proof_document_url": file_url,
+            "proof_filename": new_filename,
+            "status": "awaiting_approval",
+            "updated_at": now
+        }}
+    )
+    
+    file_record = {
+        "id": uuid.uuid4().hex[:12],
+        "user_id": user_id,
+        "category": "deposits",
+        "related_id": deposit_id,
+        "original_filename": req.filename,
+        "stored_filename": new_filename,
+        "content_type": req.content_type,
+        "size_bytes": len(content),
+        "url": file_url,
+        "created_at": now
+    }
     await db.uploaded_files.insert_one(file_record)
     
     return {

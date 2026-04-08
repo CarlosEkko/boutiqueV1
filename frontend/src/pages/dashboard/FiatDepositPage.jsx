@@ -85,16 +85,24 @@ const FiatDepositPage = () => {
 
   const submitProof = async (depositId, file) => {
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
       
       await axios.post(
-        `${API_URL}/api/uploads/deposit-proof/${depositId}`,
-        formData,
+        `${API_URL}/api/uploads/deposit-proof-json/${depositId}`,
+        {
+          file_data: base64,
+          filename: file.name,
+          content_type: file.type || 'image/jpeg'
+        },
         { 
           headers: { 
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
           } 
         }
       );
