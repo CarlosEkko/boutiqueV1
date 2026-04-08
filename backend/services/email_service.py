@@ -63,6 +63,9 @@ class BrevoEmailService:
             "onboard_contact": "Se tiver alguma dúvida, não hesite em contactar o seu gestor de conta ou responder a este email.",
             "onboard_regards": "Com os melhores cumprimentos,",
             "onboard_team": "Equipa KBEX.io",
+            "onboard_tier_title": "O Seu Plano",
+            "onboard_tier_label": "Nível",
+            "onboard_tier_fee": "Investimento Mínimo",
             "regions": "Europa | Médio Oriente | Brasil",
             # Team
             "team_subject": "Bem-vindo à Equipa",
@@ -107,6 +110,9 @@ class BrevoEmailService:
             "onboard_contact": "If you have any questions, do not hesitate to contact your account manager or reply to this email.",
             "onboard_regards": "Best regards,",
             "onboard_team": "KBEX.io Team",
+            "onboard_tier_title": "Your Plan",
+            "onboard_tier_label": "Tier",
+            "onboard_tier_fee": "Minimum Investment",
             "regions": "Europe | Middle East | Brazil",
             # Team
             "team_subject": "Welcome to the Team",
@@ -151,6 +157,9 @@ class BrevoEmailService:
             "onboard_contact": "Si vous avez des questions, n'hésitez pas à contacter votre gestionnaire de compte ou à répondre à cet email.",
             "onboard_regards": "Cordialement,",
             "onboard_team": "L'équipe KBEX.io",
+            "onboard_tier_title": "Votre Forfait",
+            "onboard_tier_label": "Niveau",
+            "onboard_tier_fee": "Investissement Minimum",
             "regions": "Europe | Moyen-Orient | Brésil",
             # Team
             "team_subject": "Bienvenue dans l'Équipe",
@@ -195,6 +204,9 @@ class BrevoEmailService:
             "onboard_contact": "إذا كان لديك أي أسئلة، لا تتردد في التواصل مع مدير حسابك أو الرد على هذا البريد الإلكتروني.",
             "onboard_regards": "مع أطيب التحيات،",
             "onboard_team": "فريق KBEX.io",
+            "onboard_tier_title": "خطتك",
+            "onboard_tier_label": "المستوى",
+            "onboard_tier_fee": "الحد الأدنى للاستثمار",
             "regions": "أوروبا | الشرق الأوسط | البرازيل",
             # Team
             "team_subject": "مرحباً بك في الفريق",
@@ -393,8 +405,21 @@ class BrevoEmailService:
         entity_name: str,
         registration_link: str,
         country: str = "",
+        tier: str = "standard",
+        tier_fee: str = "",
     ) -> Dict[str, Any]:
         """Send onboarding email to new OTC lead to register on the platform."""
+        
+        # Tier payment configuration
+        TIER_FEES = {
+            "standard": {"label": "Standard", "fee": "5 000", "currency": "EUR"},
+            "premium": {"label": "Premium", "fee": "50 000", "currency": "EUR"},
+            "vip": {"label": "VIP", "fee": "250 000", "currency": "EUR"},
+            "institutional": {"label": "Institutional", "fee": "1 000 000", "currency": "EUR"},
+        }
+        tier_info = TIER_FEES.get(tier, TIER_FEES["standard"])
+        if tier_fee:
+            tier_info["fee"] = tier_fee
         
         t = lambda key: self._t(country, key)
         lang = self._get_lang(country)
@@ -419,6 +444,21 @@ class BrevoEmailService:
                 <p style="color: #ffffff;">{t("onboard_greeting")} {to_name},</p>
                 
                 <p style="color: #d4d4d8;">{t("onboard_intro")}</p>
+                
+                <!-- Tier Information Card -->
+                <div style="background: linear-gradient(135deg, #1a1510 0%, #27272a 100%); padding: 24px; border-radius: 10px; margin: 24px 0; border: 1px solid #d4af3740;">
+                    <h3 style="color: #d4af37; margin: 0 0 16px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">{t("onboard_tier_title")}</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="color: #a1a1aa; padding: 8px 0; font-size: 14px;">{t("onboard_tier_label")}</td>
+                            <td style="color: #ffffff; padding: 8px 0; font-size: 14px; text-align: right; font-weight: 600;">{tier_info["label"]}</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #a1a1aa; padding: 8px 0; font-size: 14px; border-top: 1px solid #3f3f46;">{t("onboard_tier_fee")}</td>
+                            <td style="color: #d4af37; padding: 8px 0; font-size: 18px; text-align: right; font-weight: 700; border-top: 1px solid #3f3f46;">{tier_info["currency"]} {tier_info["fee"]}</td>
+                        </tr>
+                    </table>
+                </div>
                 
                 <p style="color: #d4d4d8;">{t("onboard_cta_text")}</p>
                 

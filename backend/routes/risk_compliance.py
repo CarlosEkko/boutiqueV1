@@ -267,53 +267,98 @@ async def get_kyc_verifications(
     results = []
     for app in applicants:
         app_user_id = app.get("user_id")
+        is_otc_lead = app.get("source") == "otc_lead"
         
-        # Get user info
-        user = await db.users.find_one(
-            {"id": app_user_id},
-            {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
-             "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1,
-             "created_at": 1}
-        )
-        
-        if not user:
-            continue
-        
-        user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
-        
-        # Apply search filter
-        if search:
-            search_lower = search.lower()
-            searchable = f"{user_name} {user.get('email', '')} {user.get('company_name', '')}".lower()
-            if search_lower not in searchable:
+        if is_otc_lead:
+            # OTC Lead entries have embedded info, no user record needed
+            user_name = app.get("name", "")
+            is_kyb = "kyb" in (app.get("level_name") or "").lower()
+            
+            # Apply search filter
+            if search:
+                search_lower = search.lower()
+                searchable = f"{user_name} {app.get('email', '')} {app.get('entity_name', '')}".lower()
+                if search_lower not in searchable:
+                    continue
+            
+            entry = {
+                "user_id": app.get("lead_id"),
+                "applicant_id": app.get("applicant_id"),
+                "email": app.get("email", ""),
+                "name": user_name,
+                "company_name": app.get("entity_name"),
+                "country": app.get("country"),
+                "phone": app.get("phone"),
+                "membership_level": app.get("tier_label", app.get("tier", "")),
+                "verification_type": "kyb" if is_kyb else "kyc",
+                "level_name": app.get("level_name"),
+                "status": app.get("status", "pending"),
+                "review_answer": app.get("review_answer"),
+                "review_status": app.get("review_status"),
+                "reject_labels": app.get("reject_labels"),
+                "reject_type": app.get("reject_type"),
+                "moderation_comment": app.get("moderation_comment"),
+                "docs_status": app.get("docs_status"),
+                "created_at": app.get("created_at"),
+                "updated_at": app.get("updated_at"),
+                "reviewed_at": app.get("reviewed_at"),
+                "source": "otc_lead",
+                "lead_id": app.get("lead_id"),
+                "tier": app.get("tier"),
+                "tier_label": app.get("tier_label"),
+                "tier_fee": app.get("tier_fee"),
+                "sumsub_link": None,
+            }
+            results.append(entry)
+        else:
+            # Standard Sumsub applicants — need user lookup
+            # Get user info
+            user = await db.users.find_one(
+                {"id": app_user_id},
+                {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
+                 "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1,
+                 "created_at": 1}
+            )
+            
+            if not user:
                 continue
-        
-        is_kyb = "kyb" in (app.get("level_name") or "").lower()
-        
-        entry = {
-            "user_id": app_user_id,
-            "applicant_id": app.get("applicant_id"),
-            "email": user.get("email", app.get("email", "")),
-            "name": user_name,
-            "company_name": user.get("company_name"),
-            "country": user.get("country"),
-            "phone": user.get("phone"),
-            "membership_level": user.get("membership_level"),
-            "verification_type": "kyb" if is_kyb else "kyc",
-            "level_name": app.get("level_name"),
-            "status": app.get("status", "init"),
-            "review_answer": app.get("review_answer"),
-            "review_status": app.get("review_status"),
-            "reject_labels": app.get("reject_labels"),
-            "reject_type": app.get("reject_type"),
-            "moderation_comment": app.get("moderation_comment"),
-            "docs_status": app.get("docs_status"),
-            "created_at": app.get("created_at"),
-            "updated_at": app.get("updated_at"),
-            "reviewed_at": app.get("reviewed_at"),
-            "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{app.get('applicant_id')}" if app.get("applicant_id") else None,
-        }
-        results.append(entry)
+            
+            user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+            
+            # Apply search filter
+            if search:
+                search_lower = search.lower()
+                searchable = f"{user_name} {user.get('email', '')} {user.get('company_name', '')}".lower()
+                if search_lower not in searchable:
+                    continue
+            
+            is_kyb = "kyb" in (app.get("level_name") or "").lower()
+            
+            entry = {
+                "user_id": app_user_id,
+                "applicant_id": app.get("applicant_id"),
+                "email": user.get("email", app.get("email", "")),
+                "name": user_name,
+                "company_name": user.get("company_name"),
+                "country": user.get("country"),
+                "phone": user.get("phone"),
+                "membership_level": user.get("membership_level"),
+                "verification_type": "kyb" if is_kyb else "kyc",
+                "level_name": app.get("level_name"),
+                "status": app.get("status", "init"),
+                "review_answer": app.get("review_answer"),
+                "review_status": app.get("review_status"),
+                "reject_labels": app.get("reject_labels"),
+                "reject_type": app.get("reject_type"),
+                "moderation_comment": app.get("moderation_comment"),
+                "docs_status": app.get("docs_status"),
+                "created_at": app.get("created_at"),
+                "updated_at": app.get("updated_at"),
+                "reviewed_at": app.get("reviewed_at"),
+                "source": "sumsub",
+                "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{app.get('applicant_id')}" if app.get("applicant_id") else None,
+            }
+            results.append(entry)
     
     # Compute stats
     total = len(results)
@@ -337,26 +382,48 @@ async def get_kyc_verification_detail(
     user_id: str = Depends(get_current_user_id)
 ):
     """
-    Get detailed verification info for a specific user.
+    Get detailed verification info for a specific user or OTC lead.
     Fetches live data from Sumsub API including document statuses.
     """
     db = get_db()
     
+    # Search by user_id first, then by lead_id (for OTC leads)
     applicant = await db.sumsub_applicants.find_one({"user_id": target_user_id}, {"_id": 0})
+    is_otc_lead = False
+    
+    if not applicant:
+        # Try searching by lead_id for OTC lead entries
+        applicant = await db.sumsub_applicants.find_one({"lead_id": target_user_id}, {"_id": 0})
+        if applicant:
+            is_otc_lead = True
+    
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
     
-    user = await db.users.find_one(
-        {"id": target_user_id},
-        {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
-         "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1}
-    )
+    user = None
+    lead = None
+    
+    if is_otc_lead:
+        # Get OTC lead info
+        lead = await db.otc_leads.find_one(
+            {"id": target_user_id},
+            {"_id": 0, "id": 1, "contact_email": 1, "contact_name": 1, "entity_name": 1,
+             "country": 1, "contact_phone": 1, "potential_tier": 1, "status": 1}
+        )
+    else:
+        # Get user info
+        user = await db.users.find_one(
+            {"id": target_user_id},
+            {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
+             "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1}
+        )
     
     applicant_id = applicant.get("applicant_id")
     sumsub_data = None
     docs_status = None
     
-    if applicant_id:
+    # Only fetch from Sumsub API for non-OTC leads (OTC leads don't have real Sumsub applicants)
+    if applicant_id and not is_otc_lead and not applicant_id.startswith("otc-"):
         try:
             from routes.sumsub import make_sumsub_request
             
@@ -392,37 +459,74 @@ async def get_kyc_verification_detail(
             logger.warning(f"Failed to fetch Sumsub data for {applicant_id}: {e}")
     
     is_kyb = "kyb" in (applicant.get("level_name") or "").lower()
-    user_name = ""
-    if user:
-        user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
     
-    return {
-        "user_id": target_user_id,
-        "applicant_id": applicant_id,
-        "email": user.get("email", applicant.get("email", "")) if user else applicant.get("email", ""),
-        "name": user_name,
-        "company_name": user.get("company_name") if user else None,
-        "country": user.get("country") if user else None,
-        "phone": user.get("phone") if user else None,
-        "membership_level": user.get("membership_level") if user else None,
-        "verification_type": "kyb" if is_kyb else "kyc",
-        "level_name": applicant.get("level_name"),
-        "status": applicant.get("status", "init"),
-        "review_answer": applicant.get("review_answer"),
-        "review_status": applicant.get("review_status"),
-        "reject_labels": applicant.get("reject_labels"),
-        "reject_type": applicant.get("reject_type"),
-        "moderation_comment": applicant.get("moderation_comment"),
-        "created_at": applicant.get("created_at"),
-        "updated_at": applicant.get("updated_at"),
-        "reviewed_at": applicant.get("reviewed_at"),
-        "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{applicant_id}" if applicant_id else None,
-        "sumsub_data": sumsub_data,
-        "docs_status": docs_status,
-        "manual_review": applicant.get("manual_review", False),
-        "manual_review_by": applicant.get("manual_review_by"),
-        "manual_review_reason": applicant.get("manual_review_reason"),
-    }
+    # Build response based on source
+    if is_otc_lead and lead:
+        return {
+            "user_id": target_user_id,
+            "applicant_id": applicant_id,
+            "email": lead.get("contact_email", applicant.get("email", "")),
+            "name": lead.get("contact_name", applicant.get("name", "")),
+            "company_name": lead.get("entity_name"),
+            "country": lead.get("country"),
+            "phone": lead.get("contact_phone"),
+            "membership_level": applicant.get("tier_label", applicant.get("tier", lead.get("potential_tier"))),
+            "verification_type": "kyb" if is_kyb else "kyc",
+            "level_name": applicant.get("level_name"),
+            "status": applicant.get("status", "pending"),
+            "review_answer": applicant.get("review_answer"),
+            "review_status": applicant.get("review_status"),
+            "reject_labels": applicant.get("reject_labels"),
+            "reject_type": applicant.get("reject_type"),
+            "moderation_comment": applicant.get("moderation_comment"),
+            "created_at": applicant.get("created_at"),
+            "updated_at": applicant.get("updated_at"),
+            "reviewed_at": applicant.get("reviewed_at"),
+            "sumsub_link": None,  # OTC leads don't have Sumsub link
+            "sumsub_data": None,
+            "docs_status": None,
+            "manual_review": applicant.get("manual_review", False),
+            "manual_review_by": applicant.get("manual_review_by"),
+            "manual_review_reason": applicant.get("manual_review_reason"),
+            "source": "otc_lead",
+            "lead_id": target_user_id,
+            "tier": applicant.get("tier"),
+            "tier_label": applicant.get("tier_label"),
+            "tier_fee": applicant.get("tier_fee"),
+        }
+    else:
+        user_name = ""
+        if user:
+            user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+        
+        return {
+            "user_id": target_user_id,
+            "applicant_id": applicant_id,
+            "email": user.get("email", applicant.get("email", "")) if user else applicant.get("email", ""),
+            "name": user_name,
+            "company_name": user.get("company_name") if user else None,
+            "country": user.get("country") if user else None,
+            "phone": user.get("phone") if user else None,
+            "membership_level": user.get("membership_level") if user else None,
+            "verification_type": "kyb" if is_kyb else "kyc",
+            "level_name": applicant.get("level_name"),
+            "status": applicant.get("status", "init"),
+            "review_answer": applicant.get("review_answer"),
+            "review_status": applicant.get("review_status"),
+            "reject_labels": applicant.get("reject_labels"),
+            "reject_type": applicant.get("reject_type"),
+            "moderation_comment": applicant.get("moderation_comment"),
+            "created_at": applicant.get("created_at"),
+            "updated_at": applicant.get("updated_at"),
+            "reviewed_at": applicant.get("reviewed_at"),
+            "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{applicant_id}" if applicant_id else None,
+            "sumsub_data": sumsub_data,
+            "docs_status": docs_status,
+            "manual_review": applicant.get("manual_review", False),
+            "manual_review_by": applicant.get("manual_review_by"),
+            "manual_review_reason": applicant.get("manual_review_reason"),
+            "source": "sumsub",
+        }
 
 
 @router.post("/kyc-verifications/{target_user_id}/refresh")
@@ -516,9 +620,16 @@ async def manual_kyc_review(
     if action not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="Ação inválida. Use 'approve' ou 'reject'.")
     
+    # Search by user_id first, then by lead_id (for OTC leads)
     applicant = await db.sumsub_applicants.find_one({"user_id": target_user_id}, {"_id": 0})
     if not applicant:
+        # Try searching by lead_id for OTC lead entries
+        applicant = await db.sumsub_applicants.find_one({"lead_id": target_user_id}, {"_id": 0})
+    
+    if not applicant:
         raise HTTPException(status_code=404, detail="Applicant não encontrado.")
+    
+    is_otc_lead = applicant.get("source") == "otc_lead"
     
     admin = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "email": 1})
     admin_name = admin.get("name", admin.get("email", "")) if admin else ""
@@ -540,17 +651,35 @@ async def manual_kyc_review(
         update_fields["moderation_comment"] = reason
         update_fields["reject_labels"] = ["MANUAL_REVIEW"]
     
-    await db.sumsub_applicants.update_one(
-        {"user_id": target_user_id},
-        {"$set": update_fields}
-    )
+    # Update sumsub_applicants using the correct field
+    if is_otc_lead:
+        await db.sumsub_applicants.update_one(
+            {"lead_id": target_user_id},
+            {"$set": update_fields}
+        )
+        # Also update the OTC lead status
+        lead_status = "kyc_approved" if action == "approve" else "not_qualified"
+        await db.otc_leads.update_one(
+            {"id": target_user_id},
+            {"$set": {
+                "status": lead_status,
+                "kyc_approved_at": datetime.now(timezone.utc).isoformat() if action == "approve" else None,
+                "kyc_approved_by": admin_name if action == "approve" else None,
+                "rejection_reason": f"KYC Rejeitado: {reason}" if action == "reject" else None,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    else:
+        await db.sumsub_applicants.update_one(
+            {"user_id": target_user_id},
+            {"$set": update_fields}
+        )
+        # Update user kyc_status
+        await db.users.update_one(
+            {"id": target_user_id},
+            {"$set": {"kyc_status": new_status}}
+        )
     
-    # Update user kyc_status
-    await db.users.update_one(
-        {"id": target_user_id},
-        {"$set": {"kyc_status": new_status}}
-    )
-    
-    logger.info(f"Manual KYC review: {action} for user {target_user_id} by {admin_name}. Reason: {reason}")
+    logger.info(f"Manual KYC review: {action} for {'lead' if is_otc_lead else 'user'} {target_user_id} by {admin_name}. Reason: {reason}")
     
     return {"success": True, "status": new_status, "action": action}

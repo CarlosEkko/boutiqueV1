@@ -314,6 +314,7 @@ const KYCVerificationsPage = () => {
 
 const VerificationRow = ({ v, getStatusBadge, formatDate, onView, onRefresh, refreshing }) => {
   const isKYB = v.verification_type === 'kyb';
+  const isOTCLead = v.source === 'otc_lead';
   
   return (
     <Card
@@ -334,8 +335,18 @@ const VerificationRow = ({ v, getStatusBadge, formatDate, onView, onRefresh, ref
                 <Badge className={`text-[10px] px-1.5 py-0 ${isKYB ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'} border`}>
                   {isKYB ? 'KYB' : 'KYC'}
                 </Badge>
+                {isOTCLead && (
+                  <Badge className="text-[10px] px-1.5 py-0 bg-gold-500/10 text-gold-400 border-gold-500/20 border">
+                    OTC Lead
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-zinc-500 truncate">{v.email}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-zinc-500 truncate">{v.email}</p>
+                {v.tier_fee && (
+                  <span className="text-[10px] text-gold-400 font-medium">{v.tier_fee}</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -360,17 +371,19 @@ const VerificationRow = ({ v, getStatusBadge, formatDate, onView, onRefresh, ref
             {getStatusBadge(v.status)}
             <span className="text-xs text-zinc-600 hidden lg:block w-28 text-right">{formatDate(v.updated_at)}</span>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="w-8 h-8 text-zinc-500 hover:text-amber-400"
-                onClick={(e) => { e.stopPropagation(); onRefresh(); }}
-                disabled={refreshing}
-                title="Sincronizar com Sumsub"
-                data-testid={`refresh-${v.user_id}`}
-              >
-                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-              </Button>
+              {!isOTCLead && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="w-8 h-8 text-zinc-500 hover:text-amber-400"
+                  onClick={(e) => { e.stopPropagation(); onRefresh(); }}
+                  disabled={refreshing}
+                  title="Sincronizar com Sumsub"
+                  data-testid={`refresh-${v.user_id}`}
+                >
+                  <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                </Button>
+              )}
               {v.sumsub_link && (
                 <Button
                   size="icon"
@@ -393,6 +406,7 @@ const VerificationRow = ({ v, getStatusBadge, formatDate, onView, onRefresh, ref
 
 const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing, onManualReview }) => {
   const isKYB = data.verification_type === 'kyb';
+  const isOTCLead = data.source === 'otc_lead';
   const docsStatus = data.docs_status;
   const sumsubInfo = data.sumsub_data;
 
@@ -416,17 +430,24 @@ const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing, o
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(data.status)}
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-zinc-700 text-zinc-400 hover:text-white h-8"
-              onClick={onRefresh}
-              disabled={refreshing}
-              data-testid="detail-refresh-btn"
-            >
-              <RefreshCw size={14} className={`mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-              Sincronizar
-            </Button>
+            {isOTCLead && (
+              <Badge className="text-[10px] px-1.5 py-0.5 bg-gold-500/10 text-gold-400 border-gold-500/20 border">
+                OTC Lead
+              </Badge>
+            )}
+            {!isOTCLead && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-zinc-700 text-zinc-400 hover:text-white h-8"
+                onClick={onRefresh}
+                disabled={refreshing}
+                data-testid="detail-refresh-btn"
+              >
+                <RefreshCw size={14} className={`mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
+                Sincronizar
+              </Button>
+            )}
           </div>
         </div>
 
@@ -437,6 +458,9 @@ const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing, o
           <InfoItem icon={Award} label="Tier" value={data.membership_level} />
           <InfoItem icon={FileText} label="Nível Sumsub" value={data.level_name} />
           <InfoItem icon={Clock} label="Criado em" value={formatDate(data.created_at)} />
+          {isOTCLead && data.tier_fee && (
+            <InfoItem icon={Award} label="Investimento Mínimo" value={data.tier_fee} />
+          )}
         </div>
 
         {data.sumsub_link && (

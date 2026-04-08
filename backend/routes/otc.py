@@ -1141,7 +1141,7 @@ async def advance_lead_to_kyc(
     lead_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Advance a pre-qualified lead to KYC stage — sends onboarding email with Tier"""
+    """Advance a pre-qualified lead to KYC stage — sends onboarding email with Tier and creates KYC verification entry"""
     db = get_db()
     
     lead = await db.otc_leads.find_one({"id": lead_id})
@@ -1153,52 +1153,94 @@ async def advance_lead_to_kyc(
     
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     tier = lead.get("potential_tier", "standard")
+    country = lead.get("country", lead.get("contact_country", ""))
+    
+    # Tier payment configuration
+    TIER_FEES = {
+        "standard": {"label": "Standard", "fee": "5 000", "currency": "EUR"},
+        "premium": {"label": "Premium", "fee": "50 000", "currency": "EUR"},
+        "vip": {"label": "VIP", "fee": "250 000", "currency": "EUR"},
+        "institutional": {"label": "Institutional", "fee": "1 000 000", "currency": "EUR"},
+    }
+    tier_info = TIER_FEES.get(tier, TIER_FEES["standard"])
+    
+    now_iso = datetime.now(timezone.utc).isoformat()
     
     # Update lead status to KYC pending
     await db.otc_leads.update_one(
         {"id": lead_id},
         {"$set": {
             "status": OTCLeadStatus.KYC_PENDING.value,
-            "kyc_sent_at": datetime.now(timezone.utc).isoformat(),
+            "kyc_sent_at": now_iso,
             "kyc_sent_by": current_user_id,
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "tier_fee": tier_info["fee"],
+            "tier_currency": tier_info["currency"],
+            "updated_at": now_iso
         },
         "$push": {
             "activity_log": {
                 "action": "advanced_to_kyc",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": now_iso,
                 "user_id": current_user_id,
-                "details": f"Email de onboarding enviado. Tier: {tier}"
+                "details": f"Email de onboarding enviado. Tier: {tier_info['label']} — Fee: {tier_info['fee']} {tier_info['currency']}"
             }
         }}
     )
     
-    # Send onboarding email
-    email_sent = False
-    contact_email = lead.get("contact_email")
+    # Create KYC verification entry in sumsub_applicants so it appears in Risk & Compliance
+    contact_email = lead.get("contact_email", "")
     contact_name = lead.get("contact_name", "")
     entity_name = lead.get("entity_name", "")
+    client_type = lead.get("client_type", "individual")
     
+    kyc_entry = {
+        "id": str(uuid.uuid4()),
+        "lead_id": lead_id,
+        "source": "otc_lead",
+        "applicant_id": f"otc-{lead_id[:8]}",
+        "email": contact_email,
+        "name": contact_name,
+        "entity_name": entity_name,
+        "level_name": "kyb-onboarding" if client_type in ["corporate", "institutional"] else "kyc-onboarding",
+        "status": "pending",
+        "review_status": "pending",
+        "tier": tier,
+        "tier_label": tier_info["label"],
+        "tier_fee": f"{tier_info['fee']} {tier_info['currency']}",
+        "country": country,
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "sent_by": current_user_id,
+    }
+    await db.sumsub_applicants.insert_one(kyc_entry)
+    
+    # Send onboarding email with tier details
+    email_sent = False
     if contact_email:
         try:
-            from services.email_service import send_onboarding_email
+            from services.email_service import email_service
             frontend_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
-            email_sent = await send_onboarding_email(
+            registration_link = f"{frontend_url}/register?email={contact_email}&ref=otc&tier={tier}"
+            result = await email_service.send_onboarding_email(
                 to_email=contact_email,
                 to_name=contact_name,
                 entity_name=entity_name,
+                registration_link=registration_link,
+                country=country,
                 tier=tier,
-                register_url=f"{frontend_url}/register?ref=otc&tier={tier}"
+                tier_fee=tier_info["fee"],
             )
+            email_sent = result.get("success", False) if isinstance(result, dict) else bool(result)
         except Exception as e:
-            print(f"Error sending onboarding email: {e}")
+            logger.error(f"Error sending onboarding email for lead {lead_id}: {e}")
     
     updated_lead = await db.otc_leads.find_one({"id": lead_id}, {"_id": 0})
     return {
         "success": True, 
         "lead": updated_lead, 
         "email_sent": email_sent,
-        "message": f"Lead avançado para KYC. {'Email enviado.' if email_sent else 'Email não enviado (verificar configuração Brevo).'}"
+        "tier_info": tier_info,
+        "message": f"Lead avançado para KYC. Tier: {tier_info['label']} — Fee: {tier_info['fee']} {tier_info['currency']}. {'Email enviado.' if email_sent else 'Email não enviado (verificar configuração Brevo).'}"
     }
 
 
