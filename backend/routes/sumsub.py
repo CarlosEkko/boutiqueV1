@@ -401,6 +401,99 @@ async def generate_access_token(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/generate-link")
+async def generate_external_link(user_id: str = Depends(get_current_user_id)):
+    """
+    Generate a Sumsub external WebSDK link (no iframe needed).
+    This bypasses all CSP/X-Frame-Options restrictions by opening
+    the verification in Sumsub's own domain.
+    """
+    try:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1, "name": 1, "country": 1})
+        user_email = user.get("email", "") if user else ""
+
+        # Ensure applicant exists
+        applicant = await db.sumsub_applicants.find_one({"user_id": user_id}, {"_id": 0})
+        if not applicant or not applicant.get("applicant_id"):
+            # Create applicant first
+            user_name = user.get("name", "") if user else ""
+            first_name = user_name.split(" ")[0] if user_name else ""
+            last_name = " ".join(user_name.split(" ")[1:]) if user_name and " " in user_name else ""
+            country = user.get("country", "") if user else ""
+
+            body = {"externalUserId": user_id, "email": user_email}
+            if first_name or last_name:
+                body["fixedInfo"] = {}
+                if first_name: body["fixedInfo"]["firstName"] = first_name
+                if last_name: body["fixedInfo"]["lastName"] = last_name
+                if country: body["fixedInfo"]["country"] = to_alpha3(country)
+
+            create_resp = make_sumsub_request("POST", "/resources/applicants", body=body, params={"levelName": SUMSUB_LEVEL_NAME})
+            if create_resp.status_code not in [200, 201]:
+                raise HTTPException(status_code=create_resp.status_code, detail=f"Failed to create applicant: {create_resp.text}")
+
+            result = create_resp.json()
+            applicant_id = result.get("id")
+            await db.sumsub_applicants.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "user_id": user_id, "applicant_id": applicant_id,
+                    "email": user_email, "level_name": SUMSUB_LEVEL_NAME,
+                    "status": "init",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }},
+                upsert=True
+            )
+        else:
+            applicant_id = applicant["applicant_id"]
+
+        # Generate external WebSDK link via Sumsub API
+        link_path = f"/resources/sdkIntegrations/levels/{SUMSUB_LEVEL_NAME}/websdkLink"
+        link_body = {
+            "externalUserId": user_id,
+            "ttlInSecs": 3600,
+            "lang": "pt",
+        }
+
+        link_resp = make_sumsub_request("POST", link_path, body=link_body)
+
+        if link_resp.status_code in [200, 201]:
+            link_data = link_resp.json()
+            external_url = link_data.get("url", "")
+            logger.info(f"Generated external WebSDK link for user {user_id}")
+            return {
+                "success": True,
+                "url": external_url,
+                "applicant_id": applicant_id,
+                "ttl_seconds": 3600,
+            }
+        else:
+            # Fallback: generate access token and build URL manually
+            logger.warning(f"External link API returned {link_resp.status_code}: {link_resp.text}. Using token fallback.")
+            token_path = f"/resources/accessTokens?userId={user_id}&ttlInSecs=1800&levelName={SUMSUB_LEVEL_NAME}"
+            token_resp = make_sumsub_request("POST", token_path)
+            if token_resp.status_code == 200:
+                token_data = token_resp.json()
+                sdk_token = token_data.get("token", "")
+                fallback_url = f"https://websdk.sumsub.com/idensic/#/?accessToken={sdk_token}&lang=pt"
+                return {
+                    "success": True,
+                    "url": fallback_url,
+                    "applicant_id": applicant_id,
+                    "ttl_seconds": 1800,
+                    "fallback": True,
+                }
+            else:
+                raise HTTPException(status_code=500, detail=f"Could not generate verification link: {link_resp.text}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating external link: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/status")
 async def get_applicant_status(user_id: str = Depends(get_current_user_id)):
     """

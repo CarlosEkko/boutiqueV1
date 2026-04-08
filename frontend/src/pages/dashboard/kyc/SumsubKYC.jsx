@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import SumsubWebSdk from '@sumsub/websdk-react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
@@ -7,14 +6,8 @@ import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
 import { 
-  ChevronLeft,
-  Shield,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  RefreshCw,
-  AlertTriangle,
-  ExternalLink
+  ChevronLeft, Shield, CheckCircle, XCircle, Loader2,
+  RefreshCw, AlertTriangle, ExternalLink, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,235 +19,102 @@ const SumsubKYC = () => {
   const { t } = useLanguage();
   
   const [step, setStep] = useState('loading');
-  const [accessToken, setAccessToken] = useState(null);
-  const [applicantId, setApplicantId] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
-  const [error, setError] = useState(null);
+  const [externalUrl, setExternalUrl] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sdkError, setSdkError] = useState(false);
+  const [windowOpened, setWindowOpened] = useState(false);
 
-  // Guard against StrictMode double-mount race condition
   const abortRef = useRef(null);
+  const pollRef = useRef(null);
 
-  // Detect Safari browser
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-  // Check initial status on mount
+  // Check initial KYC status on mount
   useEffect(() => {
-    // Cancel any previous in-flight request (handles StrictMode double-mount)
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
-    console.log('[KYC-v3] Component mounted, API:', API_URL);
-    checkInitialStatus(controller.signal);
-
-    return () => { controller.abort(); };
+    checkStatus(controller.signal);
+    return () => { controller.abort(); if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
 
-  const checkInitialStatus = async (signal) => {
+  const checkStatus = async (signal) => {
     try {
-      console.log('[KYC] Checking status...');
       const response = await axios.get(`${API_URL}/api/sumsub/status`, { signal });
       const data = response.data;
-      console.log('[KYC] Status response:', data.status, 'has_applicant:', data.has_applicant);
-      
       if (signal?.aborted) return;
 
       if (data.status === 'approved') {
         setVerificationStatus({ review_answer: 'GREEN' });
         setStep('complete');
       } else if (data.status === 'rejected') {
-        setVerificationStatus({ 
-          review_answer: 'RED',
-          reject_labels: data.local_data?.reject_labels 
-        });
+        setVerificationStatus({ review_answer: 'RED', reject_labels: data.local_data?.reject_labels });
         setStep('complete');
-      } else if (data.has_applicant) {
-        setApplicantId(data.applicant_id);
-        await fetchTokenViaApplicants(signal);
       } else {
         setStep('init');
       }
     } catch (err) {
-      if (err?.name === 'CanceledError' || signal?.aborted) return;
-      console.error('[KYC] Status check failed:', err?.response?.data || err.message);
+      if (err?.name === 'CanceledError') return;
       setStep('init');
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
   };
 
-  const fetchTokenViaApplicants = async (signal) => {
+  const generateLink = async () => {
+    setLoading(true);
     try {
-      console.log('[KYC] Fetching token via /applicants...');
-      const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
-        email: user?.email || 'user@example.com',
-        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
-        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
-        country: user?.country || ''
-      }, { signal });
-      
-      if (signal?.aborted) return;
-
-      const aid = response.data?.applicant_id;
-      const tkn = response.data?.sdk_token;
-      console.log('[KYC] Result:', { aid, hasToken: !!tkn });
-      
-      if (aid) setApplicantId(aid);
-      
-      if (tkn) {
-        setAccessToken(tkn);
-        setStep('verification');
+      const response = await axios.post(`${API_URL}/api/sumsub/generate-link`);
+      if (response.data?.url) {
+        setExternalUrl(response.data.url);
+        setStep('ready');
       } else {
-        throw new Error('Token não recebido do servidor');
+        toast.error('Erro ao gerar link de verificacao');
+        setStep('error');
       }
     } catch (err) {
-      if (err?.name === 'CanceledError' || signal?.aborted) return;
-      const detail = err.response?.data?.detail || err.message || 'Erro desconhecido';
-      console.error('[KYC] Token fetch failed:', detail);
-      setError(`Erro ao gerar token: ${detail}`);
-      setStep('error');
-    }
-  };
-
-  const initializeSDK = async () => {
-    setLoading(true);
-    setError(null);
-    setSdkError(false);
-    try {
-      await fetchTokenViaApplicants();
-    } catch (err) {
-      const errorDetail = err.response?.data?.detail || err.message || 'Erro desconhecido';
-      console.error('[KYC] Init failed:', errorDetail, err);
-      setError(`Erro ao inicializar verificação: ${errorDetail}`);
+      const detail = err.response?.data?.detail || err.message;
+      toast.error(`Erro: ${detail}`);
       setStep('error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTokenExpiration = useCallback(async () => {
-    try {
-      const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
-        email: user?.email || 'user@example.com',
-        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
-        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
-        country: user?.country || ''
-      });
-      return response.data.sdk_token;
-    } catch (err) {
-      console.error('Error refreshing token:', err);
-      throw err;
-    }
-  }, [user]);
-
-  const handleMessage = useCallback((type, payload) => {
-    console.log('Sumsub WebSDK message:', type, payload);
-    
-    switch (type) {
-      case 'idCheck.onStepCompleted':
-        console.log('Step completed:', payload);
-        break;
-      case 'idCheck.onApplicantStatusChanged':
-        console.log('Status changed:', payload);
-        if (payload?.reviewResult?.reviewAnswer === 'GREEN') {
-          setVerificationStatus({ review_answer: 'GREEN' });
-          setStep('complete');
-          toast.success('Verificação aprovada!');
-        } else if (payload?.reviewResult?.reviewAnswer === 'RED') {
-          setVerificationStatus({ 
-            review_answer: 'RED',
-            reject_labels: payload?.reviewResult?.rejectLabels
-          });
-          setStep('complete');
-          toast.error('Verificação rejeitada');
-        }
-        break;
-      case 'idCheck.onError':
-        console.error('SDK Error:', payload);
-        setSdkError(true);
-        toast.error('Erro na verificação — tente abrir em nova janela');
-        break;
-      default:
-        break;
-    }
-  }, []);
-
-  const handleError = useCallback((error) => {
-    console.error('Sumsub WebSDK error:', error);
-    setSdkError(true);
-  }, []);
-
-  // Open Sumsub in external window (Safari workaround)
-  const openSumsubExternal = () => {
-    if (!accessToken) return;
-    const url = `https://websdk.sumsub.com/idensic/#/uni_tFVPBfxn8JvVcX?accessToken=${encodeURIComponent(accessToken)}&lang=pt`;
-    const popup = window.open(url, 'sumsub_verification', 'width=800,height=700,scrollbars=yes,resizable=yes');
+  const openVerification = () => {
+    if (!externalUrl) return;
+    const popup = window.open(externalUrl, '_blank');
     if (!popup) {
-      toast.error('Pop-up bloqueado pelo browser. Permita pop-ups para kbex.io');
+      toast.error('Pop-up bloqueado. Permita pop-ups para este site.');
+      return;
     }
+    setWindowOpened(true);
+    setStep('waiting');
+    startPolling();
   };
 
-  // Poll for status updates
-  useEffect(() => {
-    if (step !== 'verification') return;
-    
-    const interval = setInterval(async () => {
+  const startPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
       try {
         const response = await axios.get(`${API_URL}/api/sumsub/status`);
         const data = response.data;
-        
         if (data.status === 'approved') {
           setVerificationStatus({ review_answer: 'GREEN' });
           setStep('complete');
-          clearInterval(interval);
+          clearInterval(pollRef.current);
+          toast.success('Verificacao aprovada!');
         } else if (data.status === 'rejected') {
-          setVerificationStatus({ 
-            review_answer: 'RED',
-            reject_labels: data.local_data?.reject_labels 
-          });
+          setVerificationStatus({ review_answer: 'RED', reject_labels: data.local_data?.reject_labels });
           setStep('complete');
-          clearInterval(interval);
+          clearInterval(pollRef.current);
+        } else if (data.status === 'pending') {
+          setStep('pending');
+          clearInterval(pollRef.current);
+          toast.info('Documentos submetidos. Em analise.');
         }
       } catch (err) {
-        console.error('Status poll error:', err);
+        // Ignore polling errors
       }
     }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [step]);
-
-  const sdkConfig = {
-    lang: 'pt',
-    theme: 'dark',
-    uiConf: {
-      customCssStr: `
-        :root {
-          --sumsub-color-primary: #d4af37;
-          --sumsub-color-primary-hover: #c9a431;
-          --sumsub-color-background-primary: #18181b;
-          --sumsub-color-background-secondary: #27272a;
-          --sumsub-color-text-primary: #ffffff;
-          --sumsub-color-text-secondary: #a1a1aa;
-          --sumsub-color-border: #3f3f46;
-          --sumsub-border-radius: 8px;
-        }
-        body {
-          background-color: #18181b !important;
-          color: #ffffff !important;
-          color-scheme: dark !important;
-        }
-        .sumsub-logo { display: none !important; }
-        /* Safari iframe fix */
-        * { -webkit-text-fill-color: inherit; }
-      `
-    }
-  };
-
-  const sdkOptions = {
-    addViewportTag: false,
-    adaptIframeHeight: true
   };
 
   if (loading && step === 'loading') {
@@ -282,120 +142,148 @@ const SumsubKYC = () => {
         </Button>
         <h1 className="text-2xl font-light text-white mb-2 flex items-center gap-3">
           <Shield className="text-gold-400" />
-          Verificação de Identidade
+          Verificacao de Identidade
         </h1>
         <p className="text-gray-400">
-          Complete a verificação KYC para aceder a todas as funcionalidades
+          Complete a verificacao KYC para aceder a todas as funcionalidades
         </p>
       </div>
 
-      {/* Init Step */}
+      {/* Step: Init — Start verification */}
       {step === 'init' && (
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-8 text-center">
             <Shield className="mx-auto text-gold-400 mb-4" size={64} />
-            <h2 className="text-xl text-white mb-4">Iniciar Verificação</h2>
+            <h2 className="text-xl text-white mb-4">Iniciar Verificacao</h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              Para garantir a segurança da sua conta e cumprir os requisitos regulatórios,
-              precisamos verificar a sua identidade. Este processo é rápido e seguro.
+              Para garantir a seguranca da sua conta e cumprir os requisitos regulatorios,
+              precisamos verificar a sua identidade.
             </p>
             
             <div className="bg-zinc-800/50 rounded-lg p-4 mb-6 text-left max-w-md mx-auto">
               <h3 className="text-gold-400 font-medium mb-2">O que vai precisar:</h3>
               <ul className="text-sm text-gray-400 space-y-1">
-                <li>• Documento de identificação válido (Passaporte, CC, Carta de Condução)</li>
-                <li>• Câmara para tirar selfie</li>
-                <li>• Boa iluminação</li>
+                <li>• Documento de identificacao valido (Passaporte, CC, Carta de Conducao)</li>
+                <li>• Camara para tirar selfie</li>
+                <li>• Boa iluminacao</li>
               </ul>
             </div>
             
             <Button
-              onClick={initializeSDK}
+              onClick={generateLink}
               disabled={loading}
               className="bg-gold-500 hover:bg-gold-400 text-black px-8"
               data-testid="start-verification-btn"
             >
-              {loading ? (
-                <Loader2 className="animate-spin mr-2" size={18} />
-              ) : null}
-              Iniciar Verificação
+              {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+              Iniciar Verificacao
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Verification Step - Sumsub WebSDK */}
-      {step === 'verification' && accessToken && (
-        <Card className="bg-zinc-900/50 border-gold-800/20 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="p-4 border-b border-gold-800/20 flex items-center justify-between">
-              <p className="text-sm text-gray-400">
-                Siga as instruções no ecrã para completar a verificação
-              </p>
-              {/* Always show external window fallback */}
-              <Button
-                onClick={openSumsubExternal}
-                variant="ghost"
-                size="sm"
-                className="text-gold-400 hover:text-gold-300 text-xs gap-1.5"
-                data-testid="open-sumsub-external-btn"
-              >
-                <ExternalLink size={14} />
-                Abrir em nova janela
-              </Button>
+      {/* Step: Ready — Link generated, waiting to open */}
+      {step === 'ready' && externalUrl && (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardContent className="p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-gold-500/20 flex items-center justify-center mx-auto mb-6">
+              <ExternalLink className="text-gold-400" size={40} />
             </div>
-            
-            {isSafari || sdkError ? (
-              /* Safari or SDK error: Open in external window */
-              <div className="p-8 text-center" data-testid="sumsub-fallback">
-                <AlertTriangle className="mx-auto text-amber-400 mb-4" size={48} />
-                <h3 className="text-lg text-white mb-3">
-                  {sdkError ? 'Erro ao carregar verificação' : 'Verificação no Safari'}
-                </h3>
-                <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
-                  {sdkError 
-                    ? 'A verificação embutida encontrou um erro. Clique abaixo para abrir numa nova janela.'
-                    : 'O Safari tem restrições de segurança que impedem a verificação embutida. Clique no botão abaixo para abrir a verificação numa nova janela.'
-                  }
-                </p>
-                <Button
-                  onClick={openSumsubExternal}
-                  className="bg-gold-500 hover:bg-gold-400 text-black px-8 py-3"
-                >
-                  <ExternalLink size={16} className="mr-2" />
-                  Abrir Verificação
-                </Button>
-                <p className="text-xs text-gray-500 mt-4">
-                  Após completar a verificação na nova janela, volte a esta página.
-                  O estado será atualizado automaticamente.
-                </p>
-              </div>
-            ) : (
-              /* Embedded SDK */
-              <div 
-                className="min-h-[600px]" 
-                data-testid="sumsub-sdk-container"
-                style={{ 
-                  colorScheme: 'normal',
-                  isolation: 'isolate',
-                  backgroundColor: '#18181b'
-                }}
-              >
-                <SumsubWebSdk
-                  accessToken={accessToken}
-                  expirationHandler={handleTokenExpiration}
-                  config={sdkConfig}
-                  options={sdkOptions}
-                  onMessage={handleMessage}
-                  onError={handleError}
-                />
-              </div>
-            )}
+            <h2 className="text-xl text-white mb-3">Link de Verificacao Pronto</h2>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+              Clique no botao abaixo para abrir a verificacao do Sumsub numa nova janela.
+              Complete todos os passos e volte a esta pagina.
+            </p>
+            <Button
+              onClick={openVerification}
+              className="bg-gold-500 hover:bg-gold-400 text-black px-8 py-3 text-base"
+              data-testid="open-verification-btn"
+            >
+              <ExternalLink size={18} className="mr-2" />
+              Abrir Verificacao
+            </Button>
+            <p className="text-xs text-gray-500 mt-4">
+              Abre numa nova janela do browser. O estado sera atualizado automaticamente.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Complete Step */}
+      {/* Step: Waiting — User is doing verification in other window */}
+      {step === 'waiting' && (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardContent className="p-8 text-center">
+            <div className="relative mx-auto mb-6 w-20 h-20">
+              <div className="absolute inset-0 rounded-full border-2 border-gold-500/30 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-gold-500/10 flex items-center justify-center">
+                <Clock className="text-gold-400" size={36} />
+              </div>
+            </div>
+            <h2 className="text-xl text-white mb-3">A aguardar verificacao...</h2>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+              Complete a verificacao na janela que foi aberta.
+              Esta pagina atualiza automaticamente quando terminar.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              A verificar estado a cada 5 segundos
+            </div>
+            <div className="mt-6 space-y-2">
+              <Button
+                onClick={openVerification}
+                variant="outline"
+                className="border-gold-500/30 text-gold-400 hover:bg-gold-500/10"
+                data-testid="reopen-verification-btn"
+              >
+                <ExternalLink size={14} className="mr-2" />
+                Reabrir janela de verificacao
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step: Pending — Documents submitted, under review */}
+      {step === 'pending' && (
+        <Card className="bg-zinc-900/50 border-gold-800/20">
+          <CardContent className="p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+              <Clock className="text-blue-400" size={48} />
+            </div>
+            <h2 className="text-2xl text-white mb-2">Documentos em Analise</h2>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              Os seus documentos foram submetidos e estao em analise.
+              Sera notificado quando o processo estiver concluido.
+            </p>
+            <Button
+              onClick={() => navigate('/dashboard/kyc')}
+              variant="outline"
+              className="border-gold-500/30 text-gold-400"
+              data-testid="back-to-kyc-btn"
+            >
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step: Error */}
+      {step === 'error' && (
+        <Card className="bg-zinc-900/50 border-red-800/20">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="mx-auto text-red-400 mb-4" size={48} />
+            <h2 className="text-xl text-white mb-3">Erro na Verificacao</h2>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+              Nao foi possivel gerar o link de verificacao. Tente novamente.
+            </p>
+            <Button onClick={generateLink} className="bg-gold-500 hover:bg-gold-400 text-black px-8" data-testid="retry-verification-btn">
+              <RefreshCw size={16} className="mr-2" /> Tentar Novamente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step: Complete */}
       {step === 'complete' && verificationStatus && (
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-8 text-center">
@@ -404,14 +292,11 @@ const SumsubKYC = () => {
                 <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="text-green-400" size={48} />
                 </div>
-                <h2 className="text-2xl text-white mb-2">Verificação Aprovada!</h2>
+                <h2 className="text-2xl text-white mb-2">Verificacao Aprovada!</h2>
                 <p className="text-gray-400 mb-6">
-                  A sua identidade foi verificada com sucesso. Agora tem acesso completo à plataforma.
+                  A sua identidade foi verificada com sucesso. Tem acesso completo a plataforma.
                 </p>
-                <Button
-                  onClick={() => navigate('/dashboard')}
-                  className="bg-gold-500 hover:bg-gold-400 text-black"
-                >
+                <Button onClick={() => navigate('/dashboard')} className="bg-gold-500 hover:bg-gold-400 text-black px-8" data-testid="go-to-dashboard-btn">
                   Ir para Dashboard
                 </Button>
               </>
@@ -420,71 +305,25 @@ const SumsubKYC = () => {
                 <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                   <XCircle className="text-red-400" size={48} />
                 </div>
-                <h2 className="text-2xl text-white mb-2">Verificação Não Aprovada</h2>
+                <h2 className="text-2xl text-white mb-2">Verificacao Rejeitada</h2>
                 <p className="text-gray-400 mb-4">
-                  Infelizmente não foi possível verificar a sua identidade.
+                  Infelizmente, a verificacao nao foi aprovada.
                 </p>
-                
-                {verificationStatus.reject_labels && verificationStatus.reject_labels.length > 0 && (
-                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6 text-left max-w-md mx-auto">
-                    <h3 className="text-red-400 font-medium mb-2">Motivos:</h3>
+                {verificationStatus.reject_labels && (
+                  <div className="bg-red-500/10 rounded-lg p-4 mb-6 max-w-md mx-auto text-left">
+                    <p className="text-sm text-red-400 font-medium mb-2">Motivos:</p>
                     <ul className="text-sm text-gray-400 space-y-1">
-                      {verificationStatus.reject_labels.map((label, idx) => (
-                        <li key={idx}>• {label}</li>
+                      {(Array.isArray(verificationStatus.reject_labels) ? verificationStatus.reject_labels : [verificationStatus.reject_labels]).map((label, i) => (
+                        <li key={i}>• {label}</li>
                       ))}
                     </ul>
                   </div>
                 )}
-                
-                <div className="flex gap-4 justify-center">
-                  <Button
-                    onClick={() => {
-                      setStep('init');
-                      setAccessToken(null);
-                    }}
-                    variant="outline"
-                    className="border-gold-500/30"
-                  >
-                    <RefreshCw size={16} className="mr-2" />
-                    Tentar Novamente
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/dashboard/support')}
-                    className="bg-gold-500 hover:bg-gold-400 text-black"
-                  >
-                    Contactar Suporte
-                  </Button>
-                </div>
+                <Button onClick={generateLink} className="bg-gold-500 hover:bg-gold-400 text-black px-8" data-testid="retry-kyc-btn">
+                  <RefreshCw size={16} className="mr-2" /> Tentar Novamente
+                </Button>
               </>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Error Step */}
-      {step === 'error' && (
-        <Card className="bg-zinc-900/50 border-red-800/30">
-          <CardContent className="p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="text-red-400" size={48} />
-            </div>
-            <h2 className="text-xl text-white mb-2">Erro na Verificação</h2>
-            <p className="text-gray-400 mb-4">
-              {error || 'Ocorreu um erro ao iniciar a verificação.'}
-            </p>
-            <p className="text-zinc-600 text-xs font-mono mb-6 max-w-md mx-auto break-all">
-              API: {API_URL}/api/sumsub | User: {user?.email || 'N/A'}
-            </p>
-            <Button
-              onClick={() => {
-                setError(null);
-                setStep('init');
-              }}
-              className="bg-gold-500 hover:bg-gold-400 text-black"
-            >
-              <RefreshCw size={16} className="mr-2" />
-              Tentar Novamente
-            </Button>
           </CardContent>
         </Card>
       )}

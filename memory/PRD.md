@@ -16,7 +16,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Demo Mode toggle for authorized users
 - Dark/Light mode toggle (Dashboard only; Landing/Auth stay Dark)
 
-## OTC Escrow Module — COMPLETE
+## OTC Escrow Module — COMPLETE (All 3 Phases)
 
 ### Phase 1 (April 8, 2026)
 - Data models with 10 escrow statuses (Draft → Closed)
@@ -32,50 +32,56 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Deal detail with visual pipeline, timeline
 
 ### Phase 2 (April 8, 2026)
-- **Settlement Engine DvP**: Dual-condition verification (Buyer + Seller deposits confirmed → atomic settlement)
-- **Deposit Management**: Register deposits with tx_hash, source_address; Confirm/reject deposits; Auto-advance to funded when all deposits confirmed
-- **Advanced Fee Engine**: Volume discount tiers (0-40% progressive by ticket size); Fee ledger (escrow_fee_ledger collection); Fee revenue dashboard with KPIs, schedule breakdown, invoice history
-- **Compliance Gating**: Blocks advance to ready_for_settlement unless all 4 checks approved (buyer_kyc, seller_kyc, aml_check, source_of_funds)
-- **Risk Scoring**: Auto-calculated (0-100) based on ticket_size, compliance, structure, settlement_type
-- **Whitelist**: Add/remove destination addresses per deal
-- **Settlement Record**: Full settlement details stored on deal with fee invoice in separate ledger
+- Settlement Engine DvP: Dual-condition verification
+- Deposit Management: Register deposits with tx_hash
+- Advanced Fee Engine: Volume discount tiers (0-40% progressive)
+- Fee Ledger dashboard with KPIs and invoice history
+- Compliance Gating: Blocks advance unless all 4 checks approved
+- Risk Scoring: Auto-calculated (0-100)
+- Whitelist: Add/remove destination addresses per deal
 
-### API Endpoints (Complete)
-- GET /api/escrow/dashboard
-- GET/POST /api/escrow/deals
-- GET/PUT/DELETE /api/escrow/deals/{id}
-- POST /api/escrow/deals/{id}/advance (with compliance gate)
-- POST /api/escrow/deals/{id}/deposit
-- POST /api/escrow/deals/{id}/confirm-deposit (with auto-advance)
-- POST /api/escrow/deals/{id}/settle (DvP + fee ledger)
-- POST /api/escrow/calculate-fee
-- PUT /api/escrow/deals/{id}/compliance
-- POST /api/escrow/deals/{id}/dispute
-- POST /api/escrow/deals/{id}/resolve-dispute
-- POST /api/escrow/deals/{id}/force-release
-- GET /api/escrow/fee-ledger
-- GET /api/escrow/fee-ledger/summary
-- GET /api/escrow/volume-tiers
-- GET/POST/DELETE /api/escrow/deals/{id}/whitelist
+### Phase 3 (April 8, 2026) — NEW
+- **Enhanced Dispute Resolution**: Status workflow (Open → Under Review → Evidence Required → Resolved), evidence upload, message thread between parties, admin resolution (Buyer/Seller/Split)
+- **Admin Force Release**: Enhanced force release with buyer/seller/split allocation and audit trail
+- **Reporting & Audit Layer**: Escrow statements with date/status filters, KPI dashboard (total deals, volume, fees), CSV export, full audit trail viewer per deal
+- **DisputePanel component**: Complete UI for dispute management within deal details
+- **EscrowReports page**: Dedicated reporting page at /dashboard/escrow/reports
+
+### Phase 3 API Endpoints
+- PUT /api/escrow/deals/{id}/dispute/status
+- POST /api/escrow/deals/{id}/dispute/evidence
+- POST /api/escrow/deals/{id}/dispute/message
+- POST /api/escrow/deals/{id}/admin-force-release
+- GET /api/escrow/reports/statement
+- GET /api/escrow/reports/audit-trail/{deal_id}
+- GET /api/escrow/reports/export
+
+## Sumsub KYC — FIXED (April 8, 2026)
+- **Definitive solution**: Eliminated iframe entirely, uses Sumsub External WebSDK Link API
+- Backend endpoint `POST /api/sumsub/generate-link` generates direct Sumsub verification URL
+- Frontend opens Sumsub on their own domain (in.sumsub.com) in new tab
+- Automatic polling (5s) detects verification completion
+- Works on ALL browsers: Chrome, Safari, Firefox, Incognito — bypasses all CSP/iframe blocks
 
 ## Other Completed Features
 - Multi-currency wallets (EUR, USD, AED, BRL)
 - OTC CRM: 11-step workflow
 - Brevo email integration
-- Sumsub KYC/KYB (Safari fallback)
 - Trustfull Risk Intelligence
 - Base64 JSON uploads
 - Sidebar translations (5 languages)
 - Demo Mode, Dark/Light toggle
 
 ## Upcoming Tasks
-- P2: TradingView chart widgets
+- P1: "Solicitar Acesso" → Lead OTC + Remove public registration
+- P1: TradingView chart widgets
 - P2: WebSocket prices (replace HTTP polling)
 
 ## Future Tasks
 - P2: Whitelist functionality (user-level)
+- P2: Brevo notifications for Escrow state changes
 - P3: Product Pages (Launchpad, ICO)
-- P3: Escrow Phase 3: Enhanced Dispute Resolution UI, Reporting/Audit, CSV/PDF export
+- P3: Refactoring OTCLeads.jsx and translations.js
 
 ## Integrations
 - Brevo (Emails), Sumsub (KYC), Trustfull (Risk), Binance & CoinMarketCap (Rates) — configured
@@ -84,5 +90,5 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 
 ## Key Constraints
 - Cloudflare WAF blocks multipart/form-data → use application/json
-- Safari ITP blocks Sumsub iframe → fallback new tab
+- Sumsub KYC → uses external link (no iframe) to bypass CSP
 - Theme toggle applies ONLY to dashboard
