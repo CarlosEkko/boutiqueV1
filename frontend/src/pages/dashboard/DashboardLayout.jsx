@@ -690,13 +690,18 @@ const DashboardLayout = () => {
     'multi_sign': 'vault',
     'account': '_always_',
     'otc_desk': 'otc',
+    'finance': 'fiat_ops',
+    'financeiro': 'fiat_ops',
+    'crm': 'otc',
+    'risk_compliance': '_always_',
   };
 
   const filterMenusByDemo = (menus) => {
     if (!demoMode) return menus;
     return menus.filter(m => {
       const demoSection = DEPT_TO_DEMO_SECTION[m.department];
-      if (!demoSection) return false;
+      // If department has no mapping, always show it (don't filter unmapped menus)
+      if (!demoSection) return true;
       if (demoSection === '_always_') return true;
       return sections.includes(demoSection);
     });
