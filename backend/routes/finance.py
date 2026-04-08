@@ -432,127 +432,147 @@ async def create_balance_adjustment(
     Create a manual balance adjustment (credit or debit) on a client's wallet.
     Admin only. Records full audit trail.
     """
-    # Validate adjustment type
-    if adjustment_type not in ("credit", "debit"):
-        raise HTTPException(status_code=400, detail="Tipo de ajuste inválido. Use 'credit' ou 'debit'.")
-    
-    valid_categories = ["correction", "penalty", "fee", "bonus", "refund", "chargeback", "other"]
-    if category not in valid_categories:
-        raise HTTPException(status_code=400, detail=f"Categoria inválida. Use: {', '.join(valid_categories)}")
-    
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail="O valor deve ser positivo.")
-    
-    # Find the user
-    target_user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "name": 1, "email": 1})
-    if not target_user:
-        raise HTTPException(status_code=404, detail="Utilizador não encontrado.")
-    
-    # Find the wallet (or create it if it doesn't exist)
-    wallet = await db.wallets.find_one(
-        {"user_id": user_id, "asset_id": currency},
-        {"_id": 0}
-    )
-    if not wallet:
-        # Auto-create wallet for this currency
-        fiat_currencies = {"EUR": ("Euro", "€"), "USD": ("US Dollar", "$"), "GBP": ("British Pound", "£"), "BRL": ("Real Brasileiro", "R$"), "CHF": ("Swiss Franc", "CHF"), "AED": ("UAE Dirham", "AED"), "USDT": ("Tether", "₮"), "USDC": ("USD Coin", "USDC")}
-        asset_info = fiat_currencies.get(currency.upper(), (currency, currency))
-        is_fiat = currency.upper() in fiat_currencies
+    try:
+        # Validate adjustment type
+        if adjustment_type not in ("credit", "debit"):
+            raise HTTPException(status_code=400, detail="Tipo de ajuste inválido. Use 'credit' ou 'debit'.")
         
-        wallet = {
+        valid_categories = ["correction", "penalty", "fee", "bonus", "refund", "chargeback", "other"]
+        if category not in valid_categories:
+            raise HTTPException(status_code=400, detail=f"Categoria inválida. Use: {', '.join(valid_categories)}")
+        
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="O valor deve ser positivo.")
+        
+        # Find the user
+        target_user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "name": 1, "email": 1})
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Utilizador não encontrado.")
+        
+        # Find the wallet (or create it if it doesn't exist)
+        currency_upper = currency.upper()
+        wallet = await db.wallets.find_one(
+            {"user_id": user_id, "asset_id": currency_upper},
+            {"_id": 0}
+        )
+        if not wallet:
+            # Also try lowercase
+            wallet = await db.wallets.find_one(
+                {"user_id": user_id, "asset_id": currency},
+                {"_id": 0}
+            )
+        if not wallet:
+            # Auto-create wallet for this currency
+            fiat_currencies = {"EUR": ("Euro", "€"), "USD": ("US Dollar", "$"), "GBP": ("British Pound", "£"), "BRL": ("Real Brasileiro", "R$"), "CHF": ("Swiss Franc", "CHF"), "AED": ("UAE Dirham", "AED"), "USDT": ("Tether", "₮"), "USDC": ("USD Coin", "USDC")}
+            asset_info = fiat_currencies.get(currency_upper, (currency_upper, currency_upper))
+            is_fiat = currency_upper in fiat_currencies
+            
+            wallet = {
+                "id": str(uuid_mod.uuid4()),
+                "user_id": user_id,
+                "asset_id": currency_upper,
+                "asset_name": asset_info[0],
+                "asset_type": "fiat" if is_fiat else "crypto",
+                "symbol": asset_info[1],
+                "address": None,
+                "balance": 0,
+                "available_balance": 0,
+                "pending_balance": 0,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.wallets.insert_one(wallet)
+            wallet.pop("_id", None)
+            logger.info(f"Auto-created {currency_upper} wallet for user {user_id}")
+        
+        previous_balance = float(wallet.get("balance", 0) or 0)
+        
+        # Calculate new balance
+        effective_amount = amount if adjustment_type == "credit" else -amount
+        new_balance = previous_balance + effective_amount
+        
+        # Handle document upload
+        document_url = None
+        if document and document.filename:
+            try:
+                ext = document.filename.rsplit(".", 1)[-1].lower() if "." in document.filename else "pdf"
+                doc_filename = f"adj_{uuid_mod.uuid4().hex[:12]}.{ext}"
+                ADJUSTMENTS_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+                doc_path = ADJUSTMENTS_UPLOAD_DIR / doc_filename
+                content = await document.read()
+                with open(doc_path, "wb") as f:
+                    f.write(content)
+                document_url = f"/api/uploads/file/adjustments/{doc_filename}"
+            except Exception as upload_err:
+                logger.warning(f"Failed to save document: {upload_err}")
+        
+        # Create adjustment record
+        adjustment_id = str(uuid_mod.uuid4())
+        admin_name = admin.get("name", admin.get("email", ""))
+        admin_id = admin.get("id", "")
+        
+        adjustment = {
+            "id": adjustment_id,
+            "user_id": user_id,
+            "user_name": target_user.get("name", ""),
+            "user_email": target_user.get("email", ""),
+            "currency": currency_upper,
+            "amount": amount,
+            "effective_amount": effective_amount,
+            "adjustment_type": adjustment_type,
+            "category": category,
+            "reason": reason,
+            "previous_balance": previous_balance,
+            "new_balance": new_balance,
+            "document_url": document_url,
+            "admin_id": admin_id,
+            "admin_name": admin_name,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        
+        await db.balance_adjustments.insert_one(adjustment)
+        
+        # Update wallet balance
+        wallet_asset_id = wallet.get("asset_id", currency_upper)
+        await db.wallets.update_one(
+            {"user_id": user_id, "asset_id": wallet_asset_id},
+            {"$set": {
+                "balance": new_balance,
+                "available_balance": new_balance,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Also record as a transaction for audit
+        tx = {
             "id": str(uuid_mod.uuid4()),
             "user_id": user_id,
-            "asset_id": currency.upper(),
-            "asset_name": asset_info[0],
-            "asset_type": "fiat" if is_fiat else "crypto",
-            "symbol": asset_info[1],
-            "address": None,
-            "balance": 0,
-            "available_balance": 0,
-            "pending_balance": 0,
+            "type": "balance_adjustment",
+            "adjustment_type": adjustment_type,
+            "category": category,
+            "amount": effective_amount,
+            "currency": currency_upper,
+            "status": "completed",
+            "description": f"Ajuste de saldo: {reason}",
+            "admin_id": admin_id,
+            "admin_name": admin_name,
+            "adjustment_id": adjustment_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat()
         }
-        await db.wallets.insert_one(wallet)
-        wallet.pop("_id", None)
-        logger.info(f"Auto-created {currency} wallet for user {user_id}")
+        await db.transactions.insert_one(tx)
+        
+        # Remove _id before returning
+        adjustment.pop("_id", None)
+        
+        logger.info(f"Balance adjustment {adjustment_id}: {adjustment_type} {amount} {currency_upper} for user {user_id} by admin {admin_name}")
+        
+        return {"success": True, "adjustment": adjustment}
     
-    previous_balance = wallet.get("balance", 0)
-    
-    # Calculate new balance
-    effective_amount = amount if adjustment_type == "credit" else -amount
-    new_balance = previous_balance + effective_amount
-    
-    # Handle document upload
-    document_url = None
-    if document:
-        ext = document.filename.rsplit(".", 1)[-1].lower() if document.filename and "." in document.filename else "pdf"
-        doc_filename = f"adj_{uuid_mod.uuid4().hex[:12]}.{ext}"
-        doc_path = ADJUSTMENTS_UPLOAD_DIR / doc_filename
-        async with aiofiles.open(doc_path, "wb") as f:
-            content = await document.read()
-            await f.write(content)
-        document_url = f"/api/uploads/file/adjustments/{doc_filename}"
-    
-    # Create adjustment record
-    adjustment_id = str(uuid_mod.uuid4())
-    admin_name = admin.get("name", admin.get("email", ""))
-    admin_id = admin.get("id", "")
-    
-    adjustment = {
-        "id": adjustment_id,
-        "user_id": user_id,
-        "user_name": target_user.get("name", ""),
-        "user_email": target_user.get("email", ""),
-        "currency": currency,
-        "amount": amount,
-        "effective_amount": effective_amount,
-        "adjustment_type": adjustment_type,
-        "category": category,
-        "reason": reason,
-        "previous_balance": previous_balance,
-        "new_balance": new_balance,
-        "document_url": document_url,
-        "admin_id": admin_id,
-        "admin_name": admin_name,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    
-    await db.balance_adjustments.insert_one(adjustment)
-    
-    # Update wallet balance
-    await db.wallets.update_one(
-        {"user_id": user_id, "asset_id": currency},
-        {"$set": {
-            "balance": new_balance,
-            "available_balance": new_balance
-        }}
-    )
-    
-    # Also record as a transaction for audit
-    tx = {
-        "id": str(uuid_mod.uuid4()),
-        "user_id": user_id,
-        "type": "balance_adjustment",
-        "adjustment_type": adjustment_type,
-        "category": category,
-        "amount": effective_amount,
-        "currency": currency,
-        "status": "completed",
-        "description": f"Ajuste de saldo: {reason}",
-        "admin_id": admin_id,
-        "admin_name": admin_name,
-        "adjustment_id": adjustment_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    await db.transactions.insert_one(tx)
-    
-    # Remove _id before returning
-    adjustment.pop("_id", None)
-    
-    logger.info(f"Balance adjustment {adjustment_id}: {adjustment_type} {amount} {currency} for user {user_id} by admin {admin_name}")
-    
-    return {"success": True, "adjustment": adjustment}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating balance adjustment: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 
 @router.get("/balance-adjustments")
