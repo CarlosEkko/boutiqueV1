@@ -623,16 +623,20 @@ const CRMClients = () => {
                         <span className="text-white">{clientDetail.wallets?.length || 0}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Transações:</span>
-                        <span className="text-white">{clientDetail.transactions?.length || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-gray-400">Ordens:</span>
                         <span className="text-white">{clientDetail.orders?.length || 0}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Investimentos:</span>
-                        <span className="text-white">{clientDetail.investments?.length || 0}</span>
+                        <span className="text-gray-400">Depositos Fiat:</span>
+                        <span className="text-green-400">{clientDetail.fiat_deposits?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Levantamentos:</span>
+                        <span className="text-orange-400">{clientDetail.fiat_withdrawals?.length || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Transacoes:</span>
+                        <span className="text-white">{clientDetail.transactions?.length || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Tickets:</span>
@@ -682,29 +686,24 @@ const CRMClients = () => {
               {/* Wallets Tab */}
               <TabsContent value="wallets" className="mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {clientDetail.wallets?.length > 0 ? (() => {
-                    const walletsWithBalance = clientDetail.wallets.filter(w => parseFloat(w.balance || 0) > 0);
-                    return walletsWithBalance.length > 0 ? (
-                      walletsWithBalance.map((wallet, idx) => (
-                        <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-white font-medium">{wallet.asset_id || wallet.asset_name || wallet.asset || '-'}</span>
-                            <Badge className={wallet.asset_type === 'fiat' ? 'bg-blue-900/30 text-blue-400' : 'bg-gold-900/30 text-gold-400'}>
-                              {wallet.asset_type === 'fiat' ? 'Fiat' : 'Crypto'}
-                            </Badge>
-                          </div>
-                          <p className="text-2xl font-mono text-white">{formatNumber(wallet.balance)} {wallet.asset_id || wallet.asset || ''}</p>
-                          {wallet.address && (
-                            <p className="text-gray-500 text-xs font-mono truncate mt-2">{wallet.address}</p>
-                          )}
+                  {clientDetail.wallets?.length > 0 ? (
+                    clientDetail.wallets.map((wallet, idx) => (
+                      <div key={idx} className="p-4 bg-zinc-800/50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white font-medium">{wallet.asset_name || wallet.asset_id || wallet.asset || '-'}</span>
+                          <Badge className={wallet.asset_type === 'fiat' ? 'bg-blue-900/30 text-blue-400' : 'bg-gold-900/30 text-gold-400'}>
+                            {wallet.asset_type === 'fiat' ? 'Fiat' : 'Crypto'}
+                          </Badge>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-2 text-center py-8">
-                        <p className="text-gray-500">Ainda não tem saldo em nenhuma carteira</p>
+                        <p className={`text-2xl font-mono ${parseFloat(wallet.balance || 0) < 0 ? 'text-red-400' : parseFloat(wallet.balance || 0) > 0 ? 'text-white' : 'text-gray-500'}`}>
+                          {formatNumber(wallet.balance || 0)} {wallet.asset_id || wallet.asset || ''}
+                        </p>
+                        {wallet.address && (
+                          <p className="text-gray-500 text-xs font-mono truncate mt-2">{wallet.address}</p>
+                        )}
                       </div>
-                    );
-                  })() : (
+                    ))
+                  ) : (
                     <p className="text-gray-500 text-center py-8 col-span-2">Sem carteiras</p>
                   )}
                 </div>
@@ -712,32 +711,66 @@ const CRMClients = () => {
 
               {/* Activity Tab */}
               <TabsContent value="activity" className="mt-4">
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
                   {clientDetail.activities?.length > 0 ? (
-                    clientDetail.activities.map((activity, idx) => (
-                      <div key={idx} className="p-3 bg-zinc-800/50 rounded-lg flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          activity.type === 'transaction' ? 'bg-blue-900/30' :
-                          activity.type === 'order' ? 'bg-green-900/30' :
-                          'bg-purple-900/30'
-                        }`}>
-                          {activity.type === 'transaction' ? (
-                            <History size={14} className="text-blue-400" />
-                          ) : activity.type === 'order' ? (
-                            <TrendingUp size={14} className="text-green-400" />
-                          ) : (
-                            <Ticket size={14} className="text-purple-400" />
-                          )}
+                    clientDetail.activities.map((activity, idx) => {
+                      const typeConfig = {
+                        fiat_deposit: { icon: ArrowDownRight, color: 'bg-green-900/30', textColor: 'text-green-400', label: 'Deposito Fiat' },
+                        fiat_withdrawal: { icon: ArrowUpRight, color: 'bg-orange-900/30', textColor: 'text-orange-400', label: 'Levantamento Fiat' },
+                        order: {
+                          icon: activity.subtype === 'buy' ? ArrowDownRight : ArrowUpRight,
+                          color: activity.subtype === 'buy' ? 'bg-emerald-900/30' : 'bg-red-900/30',
+                          textColor: activity.subtype === 'buy' ? 'text-emerald-400' : 'text-red-400',
+                          label: activity.subtype === 'buy' ? 'Compra Crypto' : 'Venda Crypto'
+                        },
+                        transaction: { icon: History, color: 'bg-blue-900/30', textColor: 'text-blue-400', label: 'Transacao' },
+                        ticket: { icon: Ticket, color: 'bg-purple-900/30', textColor: 'text-purple-400', label: 'Ticket' },
+                      };
+                      const cfg = typeConfig[activity.type] || typeConfig.transaction;
+                      const Icon = cfg.icon;
+                      
+                      const statusColor = {
+                        completed: 'bg-green-900/30 text-green-400',
+                        approved: 'bg-green-900/30 text-green-400',
+                        pending: 'bg-amber-900/30 text-amber-400',
+                        cancelled: 'bg-gray-900/30 text-gray-400',
+                        rejected: 'bg-red-900/30 text-red-400',
+                      };
+
+                      return (
+                        <div key={idx} className="p-3 bg-zinc-800/50 rounded-lg flex items-center gap-3">
+                          <div className={`p-2 rounded-full flex-shrink-0 ${cfg.color}`}>
+                            <Icon size={14} className={cfg.textColor} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-medium uppercase tracking-wider ${cfg.textColor}`}>{cfg.label}</span>
+                            </div>
+                            <p className="text-white text-sm truncate">{activity.description}</p>
+                            <p className="text-gray-500 text-xs">{formatDate(activity.date)}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
+                            {activity.amount && (
+                              <p className={`text-sm font-mono ${
+                                activity.type === 'fiat_withdrawal' || activity.subtype === 'sell' ? 'text-red-400' : 'text-green-400'
+                              }`}>
+                                {activity.type === 'fiat_withdrawal' || activity.subtype === 'sell' ? '-' : '+'}{formatNumber(Math.abs(activity.amount))} {activity.currency || ''}
+                              </p>
+                            )}
+                            {activity.crypto_amount && (
+                              <p className="text-xs text-gray-400 font-mono">
+                                {formatNumber(activity.crypto_amount)} {activity.crypto_asset || ''}
+                              </p>
+                            )}
+                            {activity.status && (
+                              <Badge className={`text-[10px] ${statusColor[activity.status] || 'bg-zinc-700 text-gray-300'}`}>
+                                {activity.status}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm">{activity.description}</p>
-                          <p className="text-gray-500 text-xs">{formatDate(activity.date)}</p>
-                        </div>
-                        {activity.status && (
-                          <Badge className="bg-zinc-700 text-gray-300">{activity.status}</Badge>
-                        )}
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p className="text-gray-500 text-center py-8">Sem atividade registada</p>
                   )}

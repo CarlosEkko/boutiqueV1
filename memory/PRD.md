@@ -20,18 +20,15 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals.
 - OTC Desk Flow with pre-qualification and setup
 - TinyMCE Knowledge Base Editor
 - Cloudflare SSL configuration
-- **OTC Setup Status Fix (2026-04-08)**: Status advances to `setup_complete` after setup submission
+- **OTC Setup Status Fix (2026-04-08)**: Status advances to `setup_complete`
 - **KYC/KYB Verifications Page (2026-04-08)**: Real-time Sumsub verification status with docs, refresh, Sumsub dashboard link. KYB Quest support.
-- **Balance Adjustments (2026-04-08)**:
-  - New page "Ajustes de Saldo" in Financeiro menu
-  - Admin-only manual balance adjustments (credit/debit)
-  - Categories: Correction, Penalty, Fee, Bonus, Refund, Chargeback, Other
-  - Document upload support for audit trail
-  - Full audit: previous/new balance, admin name, timestamp, reason
-  - Transactions recorded for each adjustment
-  - Client search + wallet selection in creation form
-  - Stats: total credits, debits, net balance
-  - 5-language translations
+- **Balance Adjustments (2026-04-08)**: Admin manual balance adjustments (credit/debit) with categories, reason, document upload, full audit trail.
+- **Bug Fix Ver Comprovativo (2026-04-08)**: Fixed field name mismatch (`proof_document_url` vs `proof_url`) in AdminFiatDeposits.
+- **CRM Visao 360 Completa (2026-04-08)**:
+  - Backend: Fetches bank_transfers (deposits + withdrawals), trading orders, and includes all in activity timeline
+  - Activity tab: Shows deposits fiat, levantamentos fiat, compras crypto, vendas crypto with distinct colors, icons, amounts, and status badges
+  - Wallets tab: Shows ALL wallets (not just > 0), with red color for negative balances
+  - Resumo Rapido: Shows counts for deposits fiat, levantamentos, ordens, transacoes, tickets
 
 ## Credentials
 - Preview Admin: carlos@kbex.io / senha123

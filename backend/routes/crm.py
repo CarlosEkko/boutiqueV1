@@ -1385,11 +1385,25 @@ async def get_crm_client_detail(
         {"_id": 0}
     ).sort("created_at", -1).limit(20).to_list(20)
     
-    # 6. Fiat deposits
-    fiat_deposits = await db.fiat_deposits.find(
+    # 6. Fiat deposits (bank_transfers with deposit type)
+    fiat_deposits = await db.bank_transfers.find(
+        {"user_id": client_id, "transfer_type": "deposit"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(30).to_list(30)
+    
+    # 6b. Fiat withdrawals (bank_transfers with withdrawal type)
+    fiat_withdrawals = await db.bank_transfers.find(
+        {"user_id": client_id, "transfer_type": "withdrawal"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(30).to_list(30)
+    
+    # 6c. Also check legacy fiat_deposits collection
+    legacy_deposits = await db.fiat_deposits.find(
         {"user_id": client_id},
         {"_id": 0}
     ).sort("created_at", -1).limit(20).to_list(20)
+    if legacy_deposits and not fiat_deposits:
+        fiat_deposits = legacy_deposits
     
     # 7. Trading stats
     trading_stats = await get_client_trading_stats(db, client_id)
@@ -1435,7 +1449,36 @@ async def get_crm_client_detail(
             "subtype": order.get("order_type", "trade"),
             "description": f"{order.get('order_type', 'Ordem')} {order.get('crypto_asset', '')} - {order.get('crypto_amount', 0)}",
             "date": order.get("created_at"),
-            "status": order.get("status")
+            "status": order.get("status"),
+            "amount": order.get("fiat_amount"),
+            "currency": order.get("fiat_currency", "EUR"),
+            "crypto_amount": order.get("crypto_amount"),
+            "crypto_asset": order.get("crypto_asset")
+        })
+    
+    # Add fiat deposits to timeline
+    for dep in fiat_deposits[:10]:
+        activities.append({
+            "type": "fiat_deposit",
+            "subtype": "deposit",
+            "description": f"Depósito Fiat - {dep.get('amount', 0)} {dep.get('currency', 'EUR')}",
+            "date": dep.get("created_at"),
+            "status": dep.get("status"),
+            "amount": dep.get("amount"),
+            "currency": dep.get("currency", "EUR"),
+            "proof_url": dep.get("proof_document_url")
+        })
+    
+    # Add fiat withdrawals to timeline
+    for wd in fiat_withdrawals[:10]:
+        activities.append({
+            "type": "fiat_withdrawal",
+            "subtype": "withdrawal",
+            "description": f"Levantamento Fiat - {wd.get('amount', 0)} {wd.get('currency', 'EUR')}",
+            "date": wd.get("created_at"),
+            "status": wd.get("status"),
+            "amount": wd.get("amount"),
+            "currency": wd.get("currency", "EUR")
         })
     
     # Sort activities by date
@@ -1449,9 +1492,10 @@ async def get_crm_client_detail(
         "investments": investments,
         "tickets": tickets,
         "fiat_deposits": fiat_deposits,
+        "fiat_withdrawals": fiat_withdrawals,
         "trading_stats": trading_stats,
         "account_manager": account_manager,
-        "activities": activities[:20]
+        "activities": activities[:30]
     }
 
 
