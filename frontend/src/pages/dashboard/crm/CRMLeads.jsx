@@ -824,7 +824,7 @@ const CRMLeads = () => {
                       <div className="flex justify-between"><span className="text-gray-500">Moeda:</span><span className="text-white">{detailLead.preferred_currency || 'EUR'}</span></div>
                       <div className="flex justify-between"><span className="text-gray-500">Status:</span><Badge className={`border-0 ${getStatusColor(detailLead.status)}`}>{getStatusLabel(detailLead.status)}</Badge></div>
                       {detailLead.interested_cryptos?.length > 0 && (
-                        <div className="flex justify-between items-center"><span className="text-gray-500">Cryptos:</span><div className="flex gap-1">{detailLead.interested_cryptos.map(c => <Badge key={c} className="bg-zinc-700 text-gray-300 text-xs">{c}</Badge>)}</div></div>
+                        <div className="flex justify-between items-start"><span className="text-gray-500 shrink-0">Cryptos:</span><div className="flex gap-1 flex-wrap justify-end">{detailLead.interested_cryptos.map(c => <Badge key={c} className="bg-zinc-700 text-gray-300 text-xs">{c}</Badge>)}</div></div>
                       )}
                     </div>
                   </CardContent>

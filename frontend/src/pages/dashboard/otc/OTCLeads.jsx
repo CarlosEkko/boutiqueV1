@@ -347,7 +347,7 @@ const OTCLeads = () => {
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-center">
                     <Shield size={20} className="mx-auto mb-2 text-amber-500" />
                     <p className="text-amber-400 text-sm font-medium">KYC/KYB em Verificação</p>
-                    <p className="text-zinc-500 text-xs mt-1">A aprovação é feita em Risco & Conformidade após verificação Sumsub</p>
+                    <p className="text-zinc-500 text-xs mt-1">A aprovação é feita em Risco & Conformidade após verificação KYC</p>
                   </div>
                 )}
                 {selectedLead.status === 'kyc_approved' && <Button onClick={() => openSetup(selectedLead)} className="w-full bg-gold-500 hover:bg-gold-400 text-black"><Settings size={16} className="mr-2" />Setup Operacional</Button>}
