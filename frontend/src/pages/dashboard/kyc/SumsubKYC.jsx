@@ -31,6 +31,9 @@ const SumsubKYC = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Detect Safari browser
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
   // Check initial status on mount
   useEffect(() => {
     console.log('[KYC-v2] Component mounted, API:', API_URL);
@@ -166,6 +169,16 @@ const SumsubKYC = () => {
     console.error('Sumsub WebSDK error:', error);
     setError(error?.message || 'Erro desconhecido');
   }, []);
+
+  // Open Sumsub in external window (Safari workaround)
+  const openSumsubExternal = () => {
+    if (!accessToken) return;
+    const url = `https://websdk.sumsub.com/idensic/#/uni_tFVPBfxn8JvVcX?accessToken=${encodeURIComponent(accessToken)}&lang=pt`;
+    const popup = window.open(url, 'sumsub_verification', 'width=800,height=700,scrollbars=yes,resizable=yes');
+    if (!popup) {
+      toast.error('Pop-up bloqueado pelo browser. Permita pop-ups para kbex.io');
+    }
+  };
 
   // Poll for status updates
   useEffect(() => {
@@ -305,24 +318,50 @@ const SumsubKYC = () => {
               </p>
             </div>
             
-            <div 
-              className="min-h-[600px]" 
-              data-testid="sumsub-sdk-container"
-              style={{ 
-                colorScheme: 'normal',
-                isolation: 'isolate',
-                backgroundColor: '#18181b'
-              }}
-            >
-              <SumsubWebSdk
-                accessToken={accessToken}
-                expirationHandler={handleTokenExpiration}
-                config={sdkConfig}
-                options={sdkOptions}
-                onMessage={handleMessage}
-                onError={handleError}
-              />
-            </div>
+            {isSafari ? (
+              /* Safari: Open in external window instead of iframe */
+              <div className="p-8 text-center" data-testid="sumsub-safari-fallback">
+                <AlertTriangle className="mx-auto text-amber-400 mb-4" size={48} />
+                <h3 className="text-lg text-white mb-3">
+                  Verificação no Safari
+                </h3>
+                <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+                  O Safari tem restrições de segurança que impedem a verificação embutida. 
+                  Clique no botão abaixo para abrir a verificação numa nova janela.
+                </p>
+                <Button
+                  onClick={openSumsubExternal}
+                  className="bg-gold-500 hover:bg-gold-400 text-black px-8 py-3"
+                  data-testid="open-sumsub-external-btn"
+                >
+                  Abrir Verificação
+                </Button>
+                <p className="text-xs text-gray-500 mt-4">
+                  Após completar a verificação na nova janela, volte a esta página.
+                  O estado será atualizado automaticamente.
+                </p>
+              </div>
+            ) : (
+              /* Non-Safari: Embedded SDK */
+              <div 
+                className="min-h-[600px]" 
+                data-testid="sumsub-sdk-container"
+                style={{ 
+                  colorScheme: 'normal',
+                  isolation: 'isolate',
+                  backgroundColor: '#18181b'
+                }}
+              >
+                <SumsubWebSdk
+                  accessToken={accessToken}
+                  expirationHandler={handleTokenExpiration}
+                  config={sdkConfig}
+                  options={sdkOptions}
+                  onMessage={handleMessage}
+                  onError={handleError}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
