@@ -35,6 +35,11 @@ DEMO_SECTIONS = [
 
 ALL_SECTION_IDS = [s["id"] for s in DEMO_SECTIONS]
 
+# Helper: returns the demo collection or the real one
+def demo_col(database, name, is_demo=False):
+    """Return demo_<name> collection when demo mode, else <name>."""
+    return database[f"demo_{name}"] if is_demo else database[name]
+
 
 async def check_demo_mode(user_id: str, database) -> bool:
     """Check if a user currently has demo mode active."""
@@ -567,6 +572,193 @@ def _generate_vault_data(user_id):
     return signatories, settings, transactions
 
 
+def _generate_escrow_deals():
+    """Generate realistic OTC Escrow deals for demo"""
+    now = datetime.now(timezone.utc)
+    
+    deals = [
+        {
+            "id": f"demo-esc-{uuid.uuid4().hex[:8]}",
+            "deal_id": "ESC-DEMO-0001",
+            "deal_type": "standard",
+            "status": "settled",
+            "asset_a": "BTC", "asset_b": "USDT",
+            "quantity_a": 25.0, "quantity_b": 2431250.0,
+            "agreed_price": 97250.0,
+            "ticket_size": 2431250.0,
+            "buyer": {"name": "Pacific Asset Management", "email": "j.chen@pacificam.sg"},
+            "seller": {"name": "Sterling Capital Partners", "email": DEMO_CLIENT_EMAIL},
+            "fee_schedule": "premium", "fee_payer": "split",
+            "fee_rate": 0.003, "fee_total": 7293.75,
+            "fee_buyer": 3646.88, "fee_seller": 3646.87,
+            "custody": {"locked": False, "locked_at": (now - timedelta(days=8)).isoformat(), "unlocked_at": (now - timedelta(days=5)).isoformat()},
+            "deposits": [
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "buyer", "asset": "USDT", "amount": 2431250, "confirmed": True, "tx_hash": "0xabc123...def456", "created_at": (now - timedelta(days=9)).isoformat()},
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "seller", "asset": "BTC", "amount": 25.0, "confirmed": True, "tx_hash": "bc1q789...xyz012", "created_at": (now - timedelta(days=9)).isoformat()},
+            ],
+            "settlement": {
+                "type": "dvp", "executed_by": "carlos@kbex.io",
+                "executed_at": (now - timedelta(days=5)).isoformat(),
+                "asset_a": "BTC", "quantity_a": 25.0,
+                "asset_b": "USDT", "quantity_b": 2431250.0,
+                "fee_total": 7293.75,
+            },
+            "compliance": {"kyc_buyer": "approved", "kyc_seller": "approved", "aml_check": "passed", "source_of_funds": "approved", "risk_score": 15},
+            "timeline": [
+                {"timestamp": (now - timedelta(days=12)).isoformat(), "status": "draft", "action": "Deal created", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=10)).isoformat(), "status": "awaiting_deposit", "action": "Advanced to Awaiting Deposit", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=9)).isoformat(), "status": "funded", "action": "Both parties deposited", "performed_by": "system"},
+                {"timestamp": (now - timedelta(days=5)).isoformat(), "status": "settled", "action": "DvP Settlement executed", "performed_by": "carlos@kbex.io"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=12)).isoformat(),
+            "updated_at": (now - timedelta(days=5)).isoformat(),
+            "created_by": "carlos@kbex.io",
+        },
+        {
+            "id": f"demo-esc-{uuid.uuid4().hex[:8]}",
+            "deal_id": "ESC-DEMO-0002",
+            "deal_type": "standard",
+            "status": "funded",
+            "asset_a": "ETH", "asset_b": "EUR",
+            "quantity_a": 500.0, "quantity_b": 1710000.0,
+            "agreed_price": 3420.0,
+            "ticket_size": 1710000.0,
+            "buyer": {"name": "Al Rashid Family Office", "email": "m.alrashid@arfo.ae"},
+            "seller": {"name": "Nordic Ventures AB", "email": "erik@nordicventures.se"},
+            "fee_schedule": "standard", "fee_payer": "buyer",
+            "fee_rate": 0.005, "fee_total": 8550.0,
+            "fee_buyer": 8550.0, "fee_seller": 0,
+            "custody": {"locked": True, "locked_at": (now - timedelta(days=2)).isoformat()},
+            "deposits": [
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "buyer", "asset": "EUR", "amount": 1710000, "confirmed": True, "tx_hash": "WIRE-2026-EUR-0042", "created_at": (now - timedelta(days=3)).isoformat()},
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "seller", "asset": "ETH", "amount": 500.0, "confirmed": True, "tx_hash": "0xeth456...abc789", "created_at": (now - timedelta(days=2)).isoformat()},
+            ],
+            "compliance": {"kyc_buyer": "approved", "kyc_seller": "approved", "aml_check": "passed", "source_of_funds": "pending", "risk_score": 28},
+            "timeline": [
+                {"timestamp": (now - timedelta(days=5)).isoformat(), "status": "draft", "action": "Deal created", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=4)).isoformat(), "status": "awaiting_deposit", "action": "Advanced to Awaiting Deposit", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=2)).isoformat(), "status": "funded", "action": "Both parties deposited — custody locked", "performed_by": "system"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=5)).isoformat(),
+            "updated_at": (now - timedelta(days=2)).isoformat(),
+            "created_by": "carlos@kbex.io",
+        },
+        {
+            "id": f"demo-esc-{uuid.uuid4().hex[:8]}",
+            "deal_id": "ESC-DEMO-0003",
+            "deal_type": "standard",
+            "status": "disputed",
+            "asset_a": "BTC", "asset_b": "USD",
+            "quantity_a": 10.0, "quantity_b": 972500.0,
+            "agreed_price": 97250.0,
+            "ticket_size": 972500.0,
+            "buyer": {"name": "Helvetia Trust AG", "email": "s.weber@helvetiatrust.ch"},
+            "seller": {"name": "Mediterranean Holdings", "email": "contact@medholdings.mt"},
+            "fee_schedule": "premium", "fee_payer": "split",
+            "fee_rate": 0.003, "fee_total": 2917.50,
+            "fee_buyer": 1458.75, "fee_seller": 1458.75,
+            "custody": {"locked": True, "locked_at": (now - timedelta(days=10)).isoformat()},
+            "deposits": [
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "buyer", "asset": "USD", "amount": 972500, "confirmed": True, "tx_hash": "WIRE-2026-USD-0089", "created_at": (now - timedelta(days=11)).isoformat()},
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "seller", "asset": "BTC", "amount": 10.0, "confirmed": True, "tx_hash": "bc1qsell...789abc", "created_at": (now - timedelta(days=10)).isoformat()},
+            ],
+            "dispute": {
+                "reason": "Seller claims BTC was sent from sanctioned address — buyer disputes origin",
+                "opened_by": "carlos@kbex.io",
+                "opened_at": (now - timedelta(days=3)).isoformat(),
+                "status": "under_review",
+                "evidence": [
+                    {"id": f"ev-{uuid.uuid4().hex[:6]}", "uploaded_by": "s.weber@helvetiatrust.ch", "file_name": "compliance_report.pdf", "description": "Chainalysis report showing clean source", "uploaded_at": (now - timedelta(days=2)).isoformat()},
+                    {"id": f"ev-{uuid.uuid4().hex[:6]}", "uploaded_by": "contact@medholdings.mt", "file_name": "tx_proof.pdf", "description": "Blockchain transaction proof from known exchange", "uploaded_at": (now - timedelta(days=1)).isoformat()},
+                ],
+                "messages": [
+                    {"id": f"msg-{uuid.uuid4().hex[:6]}", "sender": "carlos@kbex.io", "sender_role": "admin", "message": "Dispute opened. Both parties requested to provide evidence within 48h.", "timestamp": (now - timedelta(days=3)).isoformat()},
+                    {"id": f"msg-{uuid.uuid4().hex[:6]}", "sender": "s.weber@helvetiatrust.ch", "sender_role": "party", "message": "Chainalysis report attached. All source addresses are from regulated exchanges.", "timestamp": (now - timedelta(days=2)).isoformat()},
+                    {"id": f"msg-{uuid.uuid4().hex[:6]}", "sender": "contact@medholdings.mt", "sender_role": "party", "message": "Transaction proof uploaded. BTC originated from our Binance institutional account.", "timestamp": (now - timedelta(days=1)).isoformat()},
+                ],
+            },
+            "compliance": {"kyc_buyer": "approved", "kyc_seller": "approved", "aml_check": "flagged", "source_of_funds": "under_review", "risk_score": 62},
+            "timeline": [
+                {"timestamp": (now - timedelta(days=15)).isoformat(), "status": "draft", "action": "Deal created", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=12)).isoformat(), "status": "funded", "action": "Both parties deposited", "performed_by": "system"},
+                {"timestamp": (now - timedelta(days=3)).isoformat(), "status": "disputed", "action": "Dispute opened by admin", "performed_by": "carlos@kbex.io"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=15)).isoformat(),
+            "updated_at": (now - timedelta(days=1)).isoformat(),
+            "created_by": "carlos@kbex.io",
+        },
+        {
+            "id": f"demo-esc-{uuid.uuid4().hex[:8]}",
+            "deal_id": "ESC-DEMO-0004",
+            "deal_type": "standard",
+            "status": "awaiting_deposit",
+            "asset_a": "SOL", "asset_b": "USDT",
+            "quantity_a": 10000.0, "quantity_b": 1855000.0,
+            "agreed_price": 185.50,
+            "ticket_size": 1855000.0,
+            "buyer": {"name": "Pacific Asset Management", "email": "j.chen@pacificam.sg"},
+            "seller": {"name": "Al Rashid Family Office", "email": "m.alrashid@arfo.ae"},
+            "fee_schedule": "institutional", "fee_payer": "seller",
+            "fee_rate": 0.001, "fee_total": 1855.0,
+            "fee_buyer": 0, "fee_seller": 1855.0,
+            "custody": {"locked": False},
+            "deposits": [],
+            "compliance": {"kyc_buyer": "approved", "kyc_seller": "approved", "aml_check": "pending", "source_of_funds": "pending", "risk_score": 20},
+            "timeline": [
+                {"timestamp": (now - timedelta(hours=18)).isoformat(), "status": "draft", "action": "Deal created", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(hours=6)).isoformat(), "status": "awaiting_deposit", "action": "Advanced to Awaiting Deposit", "performed_by": "carlos@kbex.io"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(hours=18)).isoformat(),
+            "updated_at": (now - timedelta(hours=6)).isoformat(),
+            "created_by": "carlos@kbex.io",
+        },
+        {
+            "id": f"demo-esc-{uuid.uuid4().hex[:8]}",
+            "deal_id": "ESC-DEMO-0005",
+            "deal_type": "standard",
+            "status": "closed",
+            "asset_a": "BTC", "asset_b": "CHF",
+            "quantity_a": 50.0, "quantity_b": 4862500.0,
+            "agreed_price": 97250.0,
+            "ticket_size": 4862500.0,
+            "buyer": {"name": "Helvetia Trust AG", "email": "s.weber@helvetiatrust.ch"},
+            "seller": {"name": "Sterling Capital Partners", "email": DEMO_CLIENT_EMAIL},
+            "fee_schedule": "institutional", "fee_payer": "split",
+            "fee_rate": 0.001, "fee_total": 4862.50,
+            "fee_buyer": 2431.25, "fee_seller": 2431.25,
+            "custody": {"locked": False, "locked_at": (now - timedelta(days=25)).isoformat(), "unlocked_at": (now - timedelta(days=20)).isoformat()},
+            "deposits": [
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "buyer", "asset": "CHF", "amount": 4862500, "confirmed": True, "tx_hash": "WIRE-2026-CHF-0012", "created_at": (now - timedelta(days=26)).isoformat()},
+                {"id": f"dep-{uuid.uuid4().hex[:6]}", "party": "seller", "asset": "BTC", "amount": 50.0, "confirmed": True, "tx_hash": "bc1qlarge...btc456", "created_at": (now - timedelta(days=25)).isoformat()},
+            ],
+            "settlement": {
+                "type": "dvp", "executed_by": "carlos@kbex.io",
+                "executed_at": (now - timedelta(days=20)).isoformat(),
+                "asset_a": "BTC", "quantity_a": 50.0,
+                "asset_b": "CHF", "quantity_b": 4862500.0,
+                "fee_total": 4862.50,
+            },
+            "compliance": {"kyc_buyer": "approved", "kyc_seller": "approved", "aml_check": "passed", "source_of_funds": "approved", "risk_score": 8},
+            "timeline": [
+                {"timestamp": (now - timedelta(days=30)).isoformat(), "status": "draft", "action": "Deal created", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=27)).isoformat(), "status": "awaiting_deposit", "action": "Advanced to Awaiting Deposit", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=25)).isoformat(), "status": "funded", "action": "Both parties deposited", "performed_by": "system"},
+                {"timestamp": (now - timedelta(days=20)).isoformat(), "status": "settled", "action": "DvP Settlement executed", "performed_by": "carlos@kbex.io"},
+                {"timestamp": (now - timedelta(days=18)).isoformat(), "status": "closed", "action": "Deal closed after final verification", "performed_by": "carlos@kbex.io"},
+            ],
+            "is_demo": True,
+            "created_at": (now - timedelta(days=30)).isoformat(),
+            "updated_at": (now - timedelta(days=18)).isoformat(),
+            "created_by": "carlos@kbex.io",
+        },
+    ]
+    return deals
+
+
 # ─── Endpoints ───
 
 @router.post("/authorize/{user_id}")
@@ -700,11 +892,16 @@ async def seed_demo_data_endpoint(admin: dict = Depends(get_admin_user)):
 
 @router.post("/reset")
 async def reset_demo_data(admin: dict = Depends(get_admin_user)):
-    """Reset all demo data"""
-    collections = ["wallets", "transactions", "otc_leads", "otc_deals", "otc_clients", "bank_transfers", "bank_accounts", "crypto_deposits", "crypto_withdrawals", "vault_signatories", "vault_settings", "vault_transactions", "demo_data"]
+    """Reset all demo data from demo_* collections"""
+    demo_collections = [
+        "demo_wallets", "demo_transactions", "demo_otc_leads", "demo_otc_deals",
+        "demo_bank_transfers", "demo_bank_accounts", "demo_crypto_deposits",
+        "demo_crypto_withdrawals", "demo_vault_signatories", "demo_vault_settings",
+        "demo_vault_transactions", "demo_escrow_deals", "demo_data",
+    ]
     counts = {}
-    for col in collections:
-        r = await db[col].delete_many({"is_demo": True})
+    for col in demo_collections:
+        r = await db[col].delete_many({})
         counts[col] = r.deleted_count
     
     # Remove demo user
@@ -757,10 +954,10 @@ async def get_demo_bank_accounts(user_id: str = Depends(get_current_user_id)):
 
 
 async def _seed_demo_data():
-    """Seed all demo data into the database"""
+    """Seed all demo data into SEPARATE demo_* collections (not operational DB)."""
     now = datetime.now(timezone.utc)
     
-    # 1. Create demo client user
+    # 1. Create demo client user (stays in users collection but tagged)
     await db.users.update_one(
         {"id": DEMO_CLIENT_ID},
         {"$set": {
@@ -783,20 +980,24 @@ async def _seed_demo_data():
         upsert=True
     )
     
-    # 2. Clear old demo data
-    await db.wallets.delete_many({"is_demo": True})
-    await db.transactions.delete_many({"is_demo": True})
-    await db.otc_leads.delete_many({"is_demo": True})
-    await db.otc_deals.delete_many({"is_demo": True})
-    await db.bank_transfers.delete_many({"is_demo": True})
-    await db.bank_accounts.delete_many({"is_demo": True})
-    await db.crypto_deposits.delete_many({"is_demo": True})
-    await db.crypto_withdrawals.delete_many({"is_demo": True})
-    await db.vault_signatories.delete_many({"is_demo": True})
-    await db.vault_settings.delete_many({"is_demo": True})
-    await db.vault_transactions.delete_many({"is_demo": True})
+    # 2. Clear old demo data from demo_* collections
+    demo_collections = [
+        "demo_wallets", "demo_transactions", "demo_otc_leads", "demo_otc_deals",
+        "demo_bank_transfers", "demo_bank_accounts", "demo_crypto_deposits",
+        "demo_crypto_withdrawals", "demo_vault_signatories", "demo_vault_settings",
+        "demo_vault_transactions", "demo_escrow_deals",
+    ]
+    for col_name in demo_collections:
+        await db[col_name].delete_many({})
     
-    # 3. Create wallets
+    # Also clean any legacy demo data from operational collections
+    legacy_cols = ["wallets", "transactions", "otc_leads", "otc_deals", "bank_transfers",
+                   "bank_accounts", "crypto_deposits", "crypto_withdrawals",
+                   "vault_signatories", "vault_settings", "vault_transactions"]
+    for col_name in legacy_cols:
+        await db[col_name].delete_many({"is_demo": True})
+    
+    # 3. Create wallets → demo_wallets
     for w in DEMO_WALLETS:
         wallet = {
             "id": f"demo-wallet-{w['asset_id'].lower()}",
@@ -805,89 +1006,88 @@ async def _seed_demo_data():
             **w,
             "created_at": (now - timedelta(days=90)).isoformat(),
         }
-        await db.wallets.insert_one(wallet)
+        await db.demo_wallets.insert_one(wallet)
     
-    # 4. Create transactions
+    # 4. Transactions → demo_transactions
     txs = _generate_transactions(DEMO_CLIENT_ID)
     if txs:
-        await db.transactions.insert_many(txs)
+        await db.demo_transactions.insert_many(txs)
     
-    # 5. Create OTC leads
+    # 5. OTC leads → demo_otc_leads
     leads = _generate_otc_leads()
     if leads:
-        await db.otc_leads.insert_many(leads)
+        await db.demo_otc_leads.insert_many(leads)
     
-    # 6. Create OTC deals
+    # 6. OTC deals → demo_otc_deals
     deals = _generate_otc_deals()
     if deals:
-        await db.otc_deals.insert_many(deals)
+        await db.demo_otc_deals.insert_many(deals)
     
-    # 7. Create bank deposits for demo
+    # 7. Bank deposits → demo_bank_transfers
     deposits = [
         {
             "id": f"demo-dep-{uuid.uuid4().hex[:8]}",
             "user_id": DEMO_CLIENT_ID,
-            "amount": 500000,
-            "currency": "EUR",
-            "status": "completed",
-            "bank_reference": "KBEX-2026-EUR-00142",
+            "amount": 500000, "currency": "EUR",
+            "status": "completed", "bank_reference": "KBEX-2026-EUR-00142",
             "is_demo": True,
             "created_at": (now - timedelta(days=30)).isoformat(),
         },
         {
             "id": f"demo-dep-{uuid.uuid4().hex[:8]}",
             "user_id": DEMO_CLIENT_ID,
-            "amount": 750000,
-            "currency": "USD",
-            "status": "completed",
-            "bank_reference": "KBEX-2026-USD-00089",
+            "amount": 750000, "currency": "USD",
+            "status": "completed", "bank_reference": "KBEX-2026-USD-00089",
             "is_demo": True,
             "created_at": (now - timedelta(days=15)).isoformat(),
         },
         {
             "id": f"demo-dep-{uuid.uuid4().hex[:8]}",
             "user_id": DEMO_CLIENT_ID,
-            "amount": 100000,
-            "currency": "USD",
-            "status": "pending",
-            "bank_reference": "KBEX-2026-USD-00201",
+            "amount": 100000, "currency": "USD",
+            "status": "pending", "bank_reference": "KBEX-2026-USD-00201",
             "is_demo": True,
             "created_at": (now - timedelta(hours=4)).isoformat(),
         },
     ]
-    await db.bank_transfers.insert_many(deposits)
+    await db.demo_bank_transfers.insert_many(deposits)
     
-    # 8. Create crypto deposits
+    # 8. Crypto deposits → demo_crypto_deposits
     crypto_deps = _generate_crypto_deposits(DEMO_CLIENT_ID)
     if crypto_deps:
-        await db.crypto_deposits.insert_many(crypto_deps)
+        await db.demo_crypto_deposits.insert_many(crypto_deps)
     
-    # 9. Create crypto withdrawals
+    # 9. Crypto withdrawals → demo_crypto_withdrawals
     crypto_withs = _generate_crypto_withdrawals(DEMO_CLIENT_ID)
     if crypto_withs:
-        await db.crypto_withdrawals.insert_many(crypto_withs)
+        await db.demo_crypto_withdrawals.insert_many(crypto_withs)
     
-    # 10. Create vault/multi-sign data
+    # 10. Vault / Multi-Sign → demo_vault_*
     signatories, vault_settings, vault_txs = _generate_vault_data(DEMO_CLIENT_ID)
     if signatories:
-        await db.vault_signatories.insert_many(signatories)
-    await db.vault_settings.insert_one(vault_settings)
+        await db.demo_vault_signatories.insert_many(signatories)
+    await db.demo_vault_settings.insert_one(vault_settings)
     if vault_txs:
-        await db.vault_transactions.insert_many(vault_txs)
+        await db.demo_vault_transactions.insert_many(vault_txs)
     
-    # 11. Create demo bank accounts
+    # 11. Bank accounts → demo_bank_accounts
     demo_bank_accounts = _generate_bank_accounts(DEMO_CLIENT_ID)
     if demo_bank_accounts:
-        await db.bank_accounts.insert_many(demo_bank_accounts)
+        await db.demo_bank_accounts.insert_many(demo_bank_accounts)
     
-    # 12. Mark seed as done
+    # 12. Escrow deals → demo_escrow_deals
+    escrow_deals = _generate_escrow_deals()
+    if escrow_deals:
+        await db.demo_escrow_deals.insert_many(escrow_deals)
+    
+    # 13. Mark seed as done
     await db.demo_data.update_one(
         {"type": "seed_status"},
-        {"$set": {"type": "seed_status", "seeded_at": now.isoformat(), "version": 1}},
+        {"$set": {"type": "seed_status", "seeded_at": now.isoformat(), "version": 2}},
         upsert=True
     )
     
-    logger.info("Demo data seeded successfully")
+    logger.info("Demo data seeded to demo_* collections successfully")
     return {
         "success": True,
         "seeded": {
@@ -902,5 +1102,6 @@ async def _seed_demo_data():
             "vault_signatories": len(signatories),
             "vault_transactions": len(vault_txs),
             "bank_accounts": len(demo_bank_accounts),
+            "escrow_deals": len(escrow_deals),
         }
     }

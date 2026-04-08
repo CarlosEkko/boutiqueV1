@@ -10,7 +10,7 @@ import uuid
 import logging
 
 from routes.auth import get_current_user
-from routes.demo import check_demo_mode, DEMO_CLIENT_ID, DEMO_CLIENT_EMAIL
+from routes.demo import check_demo_mode, DEMO_CLIENT_ID, DEMO_CLIENT_EMAIL, demo_col
 from utils.auth import get_current_user_id
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,8 @@ async def get_signatories(current_user=Depends(get_current_user), user_id: str =
     """Get client's configured signatories."""
     demo_active = await check_demo_mode(user_id, db)
     owner = DEMO_CLIENT_ID if demo_active else (current_user.id if hasattr(current_user, 'id') else current_user.get("id"))
-    signatories = await db.vault_signatories.find(
+    col = demo_col(db, "vault_signatories", demo_active)
+    signatories = await col.find(
         {"owner_id": owner}, {"_id": 0}
     ).to_list(50)
     return {"signatories": signatories}
@@ -198,7 +199,8 @@ async def remove_signatory(signatory_id: str, current_user=Depends(get_current_u
 async def get_vault_settings(current_user=Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
     demo_active = await check_demo_mode(user_id, db)
     owner = DEMO_CLIENT_ID if demo_active else (current_user.id if hasattr(current_user, 'id') else current_user.get("id"))
-    settings = await db.vault_settings.find_one({"user_id": owner}, {"_id": 0})
+    col = demo_col(db, "vault_settings", demo_active)
+    settings = await col.find_one({"user_id": owner}, {"_id": 0})
     if not settings:
         return {"required_signatures": 2, "transaction_timeout_hours": 48}
     return settings
@@ -346,6 +348,7 @@ async def list_vault_transactions(status: Optional[str] = None, current_user=Dep
         user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
         user_email = current_user.email if hasattr(current_user, 'email') else current_user.get("email", "")
 
+    col = demo_col(db, "vault_transactions", demo_active)
     query = {"$or": [
         {"owner_id": user_id},
         {"signatures.user_id": user_id},
@@ -354,7 +357,7 @@ async def list_vault_transactions(status: Optional[str] = None, current_user=Dep
     if status and status != "all":
         query["status"] = status
 
-    txs = await db.vault_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    txs = await col.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
 
     pending_count = 0
     for tx in txs:
@@ -547,10 +550,19 @@ async def cancel_vault_transaction(tx_id: str, current_user=Depends(get_current_
 # ==================== DASHBOARD STATS ====================
 
 @router.get("/dashboard")
-async def get_vault_dashboard(current_user=Depends(get_current_user)):
+async def get_vault_dashboard(current_user=Depends(get_current_user), user_id_token: str = Depends(get_current_user_id)):
     """Get dashboard stats for the vault."""
-    user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
-    user_email = current_user.email if hasattr(current_user, 'email') else current_user.get("email", "")
+    demo_active = await check_demo_mode(user_id_token, db)
+    if demo_active:
+        user_id = DEMO_CLIENT_ID
+        user_email = DEMO_CLIENT_EMAIL
+    else:
+        user_id = current_user.id if hasattr(current_user, 'id') else current_user.get("id")
+        user_email = current_user.email if hasattr(current_user, 'email') else current_user.get("email", "")
+
+    tx_col = demo_col(db, "vault_transactions", demo_active)
+    sig_col = demo_col(db, "vault_signatories", demo_active)
+    set_col = demo_col(db, "vault_settings", demo_active)
 
     query = {"$or": [
         {"owner_id": user_id},
@@ -558,22 +570,21 @@ async def get_vault_dashboard(current_user=Depends(get_current_user)):
         {"signatures.email": {"$regex": f"^{user_email}$", "$options": "i"}}
     ]}
 
-    total = await db.vault_transactions.count_documents(query)
-    pending = await db.vault_transactions.count_documents({**query, "status": "pending_signatures"})
-    completed = await db.vault_transactions.count_documents({**query, "status": "completed"})
-    rejected = await db.vault_transactions.count_documents({**query, "status": "rejected"})
+    total = await tx_col.count_documents(query)
+    pending = await tx_col.count_documents({**query, "status": "pending_signatures"})
+    completed = await tx_col.count_documents({**query, "status": "completed"})
+    rejected = await tx_col.count_documents({**query, "status": "rejected"})
 
-    # Total secured value (completed transactions)
     pipeline = [
         {"$match": {**query, "status": "completed"}},
         {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
     ]
-    agg = await db.vault_transactions.aggregate(pipeline).to_list(1)
+    agg = await tx_col.aggregate(pipeline).to_list(1)
     total_secured = agg[0]["total"] if agg else 0
 
-    signatories_count = await db.vault_signatories.count_documents({"owner_id": user_id})
+    signatories_count = await sig_col.count_documents({"owner_id": user_id})
 
-    settings = await db.vault_settings.find_one({"user_id": user_id}, {"_id": 0})
+    settings = await set_col.find_one({"user_id": user_id}, {"_id": 0})
     threshold = settings.get("required_signatures", 2) if settings else 2
 
     return {

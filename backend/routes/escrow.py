@@ -30,6 +30,8 @@ def set_db(database):
     db = database
 
 from routes.auth import get_current_user
+from routes.demo import check_demo_mode, demo_col
+from utils.auth import get_current_user_id
 
 
 def _user_email(user) -> str:
@@ -51,9 +53,10 @@ def escrow_doc_to_response(doc: dict) -> dict:
 # ==================== DASHBOARD / KPIs ====================
 
 @router.get("/dashboard")
-async def get_escrow_dashboard(current_user: dict = Depends(get_current_user)):
+async def get_escrow_dashboard(current_user: dict = Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
     """Get escrow dashboard KPIs."""
-    collection = db["escrow_deals"]
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
 
     pipeline_counts = await collection.aggregate([
         {"$group": {"_id": "$status", "count": {"$sum": 1}}}
@@ -132,9 +135,13 @@ async def list_escrow_deals(
     sort_order: int = -1,
     skip: int = 0,
     limit: int = 50,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """List escrow deals with filters."""
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
+
     query = {}
     if status:
         query["status"] = status
@@ -149,8 +156,8 @@ async def list_escrow_deals(
             {"asset_b": {"$regex": search, "$options": "i"}},
         ]
 
-    total = await db["escrow_deals"].count_documents(query)
-    deals = await db["escrow_deals"].find(
+    total = await collection.count_documents(query)
+    deals = await collection.find(
         query, {"_id": 0}
     ).sort(sort_by, sort_order).skip(skip).limit(limit).to_list(length=limit)
 
@@ -158,9 +165,11 @@ async def list_escrow_deals(
 
 
 @router.get("/deals/{deal_id}")
-async def get_escrow_deal(deal_id: str, current_user: dict = Depends(get_current_user)):
+async def get_escrow_deal(deal_id: str, current_user: dict = Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
     """Get a single escrow deal by ID."""
-    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
+    deal = await collection.find_one({"id": deal_id}, {"_id": 0})
     if not deal:
         raise HTTPException(status_code=404, detail="Escrow deal not found")
     return deal
@@ -1121,9 +1130,12 @@ async def get_escrow_statement(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Generate escrow statement with optional filters."""
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
     query = {}
 
     if date_from:
@@ -1133,7 +1145,7 @@ async def get_escrow_statement(
     if status:
         query["status"] = status
 
-    deals = await db["escrow_deals"].find(query, {"_id": 0}).sort("created_at", -1).to_list(length=500)
+    deals = await collection.find(query, {"_id": 0}).sort("created_at", -1).to_list(length=500)
 
     # Aggregate stats
     total_volume = sum(d.get("ticket_size", 0) for d in deals)
@@ -1155,9 +1167,11 @@ async def get_escrow_statement(
 
 
 @router.get("/reports/audit-trail/{deal_id}")
-async def get_audit_trail(deal_id: str, current_user: dict = Depends(get_current_user)):
+async def get_audit_trail(deal_id: str, current_user: dict = Depends(get_current_user), user_id: str = Depends(get_current_user_id)):
     """Get complete audit trail for a specific escrow deal."""
-    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
+    deal = await collection.find_one({"id": deal_id}, {"_id": 0})
     if not deal:
         raise HTTPException(status_code=404, detail="Escrow deal not found")
 
@@ -1251,12 +1265,15 @@ async def export_deals_csv(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     status: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Export escrow deals as CSV-compatible JSON array."""
     if not _user_is_admin(current_user):
         raise HTTPException(status_code=403, detail="Admin only action")
 
+    demo_active = await check_demo_mode(user_id, db)
+    collection = demo_col(db, "escrow_deals", demo_active)
     query = {}
     if date_from:
         query.setdefault("created_at", {})["$gte"] = date_from
@@ -1265,7 +1282,7 @@ async def export_deals_csv(
     if status:
         query["status"] = status
 
-    deals = await db["escrow_deals"].find(query, {"_id": 0}).sort("created_at", -1).to_list(length=1000)
+    deals = await collection.find(query, {"_id": 0}).sort("created_at", -1).to_list(length=1000)
 
     rows = []
     for d in deals:
