@@ -365,10 +365,12 @@ const CreateAdjustmentDialog = ({ open, onClose, onSuccess }) => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedClient || !selectedCurrency || !amount || !category || !reason) {
-      toast.error('Preencha todos os campos obrigatorios');
-      return;
-    }
+    // Specific field validation
+    if (!selectedClient) { toast.error('Selecione um cliente'); return; }
+    if (!selectedCurrency) { toast.error('Selecione uma moeda/carteira'); return; }
+    if (!amount || parseFloat(amount) <= 0) { toast.error('Insira um valor válido'); return; }
+    if (!category) { toast.error('Selecione uma categoria'); return; }
+    if (!reason.trim()) { toast.error('Insira o motivo do ajuste'); return; }
 
     setSubmitting(true);
     try {
