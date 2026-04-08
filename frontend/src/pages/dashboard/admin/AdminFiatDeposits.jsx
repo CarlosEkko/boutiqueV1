@@ -332,10 +332,10 @@ const AdminFiatDeposits = () => {
                         )}
 
                         {/* Proof Document */}
-                        {deposit.proof_url && (
+                        {deposit.proof_document_url && (
                           <div className="mt-4">
                             <a 
-                              href={deposit.proof_url} 
+                              href={`${API_URL}${deposit.proof_document_url}`} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-gold-400 flex items-center gap-2 hover:underline"
