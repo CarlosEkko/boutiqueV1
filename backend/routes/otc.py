@@ -419,6 +419,15 @@ async def create_otc_lead(
 async def risk_scan_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
     """Manually trigger Risk Intelligence scoring for a lead."""
     db = get_db()
+
+    # Pre-check: verify TRUSTFULL_API_KEY is configured
+    api_key = os.environ.get("TRUSTFULL_API_KEY", "")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="TRUSTFULL_API_KEY não configurada. Adicione a variável ao docker-compose.yml e reinicie o container."
+        )
+
     lead = await db.otc_leads.find_one({"id": lead_id})
     if not lead:
         raise HTTPException(status_code=404, detail="Lead não encontrado")
@@ -429,6 +438,12 @@ async def risk_scan_lead(lead_id: str, current_user: dict = Depends(get_current_
         raise HTTPException(status_code=400, detail="Lead sem email")
 
     tf_result = await trustfull_score_lead(email, phone if phone else None)
+
+    # Check if API returned an error
+    email_error = tf_result.get("email_risk", {}).get("error")
+    if email_error and tf_result.get("combined_score") is None:
+        raise HTTPException(status_code=502, detail=f"Trustfull API error: {email_error}")
+
     update_data = {"trustfull_data": tf_result}
     tf_flags = tf_result.get("red_flags", [])
     if tf_flags:
