@@ -87,6 +87,7 @@ const translations = {
       riskCompliance: 'Risk & Compliance',
       dashboardRisco: 'Risk Dashboard',
       kytForensic: 'KYT Forensic',
+      verificacoesKycKyb: 'KYC/KYB Verifications',
       // Items - Admin Extra
       securityDashboard: 'Security Dashboard',
       // Items - Tokenization
@@ -1641,6 +1642,7 @@ const translations = {
       riskCompliance: 'Risco & Conformidade',
       dashboardRisco: 'Dashboard Risco',
       kytForensic: 'KYT Forensic',
+      verificacoesKycKyb: 'Verificações KYC/KYB',
       // Items - Admin Extra
       securityDashboard: 'Painel de Segurança',
       // Items - Tokenization
@@ -3194,6 +3196,7 @@ const translations = {
       riskCompliance: 'المخاطر والامتثال',
       dashboardRisco: 'لوحة المخاطر',
       kytForensic: 'تحليل KYT',
+      verificacoesKycKyb: 'تحققات KYC/KYB',
       // Items - Admin Extra
       securityDashboard: 'لوحة الأمان',
       // Items - Tokenization
@@ -4631,6 +4634,7 @@ const translations = {
       riskCompliance: 'Risques & Conformité',
       dashboardRisco: 'Tableau des Risques',
       kytForensic: 'KYT Forensique',
+      verificacoesKycKyb: 'Vérifications KYC/KYB',
       // Items - Admin Extra
       securityDashboard: 'Tableau de Sécurité',
       // Items - Tokenization
@@ -6036,6 +6040,7 @@ const translations = {
       riskCompliance: 'Riesgo y Cumplimiento',
       dashboardRisco: 'Dashboard de Riesgos',
       kytForensic: 'KYT Forense',
+      verificacoesKycKyb: 'Verificaciones KYC/KYB',
       securityDashboard: 'Dashboard de Seguridad',
       // Items - Tokenization
       tokenizacao: 'Tokenización',

@@ -232,3 +232,266 @@ async def risk_dashboard(user_id: str = Depends(get_current_user_id)):
         },
         "recent_analyses": recent_analyses[:10],
     }
+
+
+
+# ==================== KYC/KYB VERIFICATIONS ====================
+
+@router.get("/kyc-verifications")
+async def get_kyc_verifications(
+    status: Optional[str] = None,
+    verification_type: Optional[str] = None,
+    search: Optional[str] = None,
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    List all Sumsub verification applicants with their current status.
+    Joins sumsub_applicants with users to provide complete info.
+    Optionally fetches live status from Sumsub API.
+    """
+    db = get_db()
+    
+    query = {}
+    if status and status != "all":
+        query["status"] = status
+    if verification_type == "kyb":
+        query["level_name"] = {"$regex": "kyb", "$options": "i"}
+    elif verification_type == "kyc":
+        query["$or"] = [
+            {"level_name": {"$not": {"$regex": "kyb", "$options": "i"}}},
+            {"level_name": {"$exists": False}}
+        ]
+    
+    applicants = await db.sumsub_applicants.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
+    
+    results = []
+    for app in applicants:
+        app_user_id = app.get("user_id")
+        
+        # Get user info
+        user = await db.users.find_one(
+            {"id": app_user_id},
+            {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
+             "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1,
+             "created_at": 1}
+        )
+        
+        if not user:
+            continue
+        
+        user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+        
+        # Apply search filter
+        if search:
+            search_lower = search.lower()
+            searchable = f"{user_name} {user.get('email', '')} {user.get('company_name', '')}".lower()
+            if search_lower not in searchable:
+                continue
+        
+        is_kyb = "kyb" in (app.get("level_name") or "").lower()
+        
+        entry = {
+            "user_id": app_user_id,
+            "applicant_id": app.get("applicant_id"),
+            "email": user.get("email", app.get("email", "")),
+            "name": user_name,
+            "company_name": user.get("company_name"),
+            "country": user.get("country"),
+            "phone": user.get("phone"),
+            "membership_level": user.get("membership_level"),
+            "verification_type": "kyb" if is_kyb else "kyc",
+            "level_name": app.get("level_name"),
+            "status": app.get("status", "init"),
+            "review_answer": app.get("review_answer"),
+            "review_status": app.get("review_status"),
+            "reject_labels": app.get("reject_labels"),
+            "reject_type": app.get("reject_type"),
+            "moderation_comment": app.get("moderation_comment"),
+            "docs_status": app.get("docs_status"),
+            "created_at": app.get("created_at"),
+            "updated_at": app.get("updated_at"),
+            "reviewed_at": app.get("reviewed_at"),
+            "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{app.get('applicant_id')}" if app.get("applicant_id") else None,
+        }
+        results.append(entry)
+    
+    # Compute stats
+    total = len(results)
+    stats = {
+        "total": total,
+        "init": len([r for r in results if r["status"] == "init"]),
+        "created": len([r for r in results if r["status"] == "created"]),
+        "pending": len([r for r in results if r["status"] == "pending"]),
+        "approved": len([r for r in results if r["status"] == "approved"]),
+        "rejected": len([r for r in results if r["status"] == "rejected"]),
+        "kyc_count": len([r for r in results if r["verification_type"] == "kyc"]),
+        "kyb_count": len([r for r in results if r["verification_type"] == "kyb"]),
+    }
+    
+    return {"verifications": results, "stats": stats}
+
+
+@router.get("/kyc-verifications/{target_user_id}")
+async def get_kyc_verification_detail(
+    target_user_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get detailed verification info for a specific user.
+    Fetches live data from Sumsub API including document statuses.
+    """
+    db = get_db()
+    
+    applicant = await db.sumsub_applicants.find_one({"user_id": target_user_id}, {"_id": 0})
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+    
+    user = await db.users.find_one(
+        {"id": target_user_id},
+        {"_id": 0, "id": 1, "email": 1, "name": 1, "first_name": 1, "last_name": 1,
+         "country": 1, "phone": 1, "kyc_status": 1, "company_name": 1, "membership_level": 1}
+    )
+    
+    applicant_id = applicant.get("applicant_id")
+    sumsub_data = None
+    docs_status = None
+    
+    if applicant_id:
+        try:
+            from routes.sumsub import make_sumsub_request
+            
+            # Fetch applicant info from Sumsub
+            resp = make_sumsub_request("GET", f"/resources/applicants/{applicant_id}")
+            if resp.status_code == 200:
+                sumsub_data = resp.json()
+                # Update local record with latest review info
+                review = sumsub_data.get("review", {})
+                review_result = review.get("reviewResult", {})
+                update_fields = {
+                    "review_status": review.get("reviewStatus"),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+                if review_result.get("reviewAnswer"):
+                    update_fields["review_answer"] = review_result["reviewAnswer"]
+                    new_status = "approved" if review_result["reviewAnswer"] == "GREEN" else "rejected"
+                    update_fields["status"] = new_status
+                if review_result.get("rejectLabels"):
+                    update_fields["reject_labels"] = review_result["rejectLabels"]
+                
+                await db.sumsub_applicants.update_one(
+                    {"user_id": target_user_id},
+                    {"$set": update_fields}
+                )
+            
+            # Fetch document status
+            docs_resp = make_sumsub_request("GET", f"/resources/applicants/{applicant_id}/requiredIdDocsStatus")
+            if docs_resp.status_code == 200:
+                docs_status = docs_resp.json()
+                
+        except Exception as e:
+            logger.warning(f"Failed to fetch Sumsub data for {applicant_id}: {e}")
+    
+    is_kyb = "kyb" in (applicant.get("level_name") or "").lower()
+    user_name = ""
+    if user:
+        user_name = user.get("name") or f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+    
+    return {
+        "user_id": target_user_id,
+        "applicant_id": applicant_id,
+        "email": user.get("email", applicant.get("email", "")) if user else applicant.get("email", ""),
+        "name": user_name,
+        "company_name": user.get("company_name") if user else None,
+        "country": user.get("country") if user else None,
+        "phone": user.get("phone") if user else None,
+        "membership_level": user.get("membership_level") if user else None,
+        "verification_type": "kyb" if is_kyb else "kyc",
+        "level_name": applicant.get("level_name"),
+        "status": applicant.get("status", "init"),
+        "review_answer": applicant.get("review_answer"),
+        "review_status": applicant.get("review_status"),
+        "reject_labels": applicant.get("reject_labels"),
+        "reject_type": applicant.get("reject_type"),
+        "moderation_comment": applicant.get("moderation_comment"),
+        "created_at": applicant.get("created_at"),
+        "updated_at": applicant.get("updated_at"),
+        "reviewed_at": applicant.get("reviewed_at"),
+        "sumsub_link": f"https://cockpit.sumsub.com/checkus#/applicant/{applicant_id}" if applicant_id else None,
+        "sumsub_data": sumsub_data,
+        "docs_status": docs_status,
+    }
+
+
+@router.post("/kyc-verifications/{target_user_id}/refresh")
+async def refresh_kyc_verification(
+    target_user_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Fetch latest status from Sumsub and update local records."""
+    db = get_db()
+    
+    applicant = await db.sumsub_applicants.find_one({"user_id": target_user_id}, {"_id": 0})
+    if not applicant or not applicant.get("applicant_id"):
+        raise HTTPException(status_code=404, detail="Applicant not found")
+    
+    applicant_id = applicant["applicant_id"]
+    
+    try:
+        from routes.sumsub import make_sumsub_request
+        
+        resp = make_sumsub_request("GET", f"/resources/applicants/{applicant_id}")
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch from Sumsub")
+        
+        sumsub_data = resp.json()
+        review = sumsub_data.get("review", {})
+        review_result = review.get("reviewResult", {})
+        review_answer = review_result.get("reviewAnswer")
+        
+        update_fields = {
+            "review_status": review.get("reviewStatus"),
+            "applicant_type": sumsub_data.get("type", "individual"),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if review_answer:
+            update_fields["review_answer"] = review_answer
+            if review_answer == "GREEN":
+                update_fields["status"] = "approved"
+            elif review_answer == "RED":
+                update_fields["status"] = "rejected"
+        elif review.get("reviewStatus") == "pending":
+            update_fields["status"] = "pending"
+        
+        if review_result.get("rejectLabels"):
+            update_fields["reject_labels"] = review_result["rejectLabels"]
+        if review_result.get("reviewRejectType"):
+            update_fields["reject_type"] = review_result["reviewRejectType"]
+        if review_result.get("moderationComment"):
+            update_fields["moderation_comment"] = review_result["moderationComment"]
+        
+        # Fetch docs status too
+        docs_resp = make_sumsub_request("GET", f"/resources/applicants/{applicant_id}/requiredIdDocsStatus")
+        if docs_resp.status_code == 200:
+            update_fields["docs_status"] = docs_resp.json()
+        
+        await db.sumsub_applicants.update_one(
+            {"user_id": target_user_id},
+            {"$set": update_fields}
+        )
+        
+        # Sync user kyc_status
+        if review_answer:
+            kyc_status = "approved" if review_answer == "GREEN" else "rejected"
+            await db.users.update_one(
+                {"id": target_user_id},
+                {"$set": {"kyc_status": kyc_status}}
+            )
+        
+        return {"success": True, "status": update_fields.get("status", applicant.get("status")), "review_answer": review_answer}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error refreshing verification: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

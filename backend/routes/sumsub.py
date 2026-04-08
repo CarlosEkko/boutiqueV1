@@ -37,6 +37,7 @@ SUMSUB_APP_TOKEN = os.getenv("SUMSUB_APP_TOKEN", "")
 SUMSUB_SECRET_KEY = os.getenv("SUMSUB_SECRET_KEY", "")
 SUMSUB_API_URL = "https://api.sumsub.com"
 SUMSUB_LEVEL_NAME = os.getenv("SUMSUB_LEVEL_NAME", "basic-kyc-level")
+SUMSUB_KYB_LEVEL_NAME = os.getenv("SUMSUB_KYB_LEVEL_NAME", "kyb-quest-level")
 
 # Alpha-2 to Alpha-3 country code mapping
 COUNTRY_ALPHA2_TO_ALPHA3 = {
@@ -81,6 +82,8 @@ class ApplicantCreate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     country: Optional[str] = None
+    verification_type: Optional[str] = "kyc"  # "kyc" or "kyb"
+    company_name: Optional[str] = None
 
 class AccessTokenResponse(BaseModel):
     """Response model for access token"""
@@ -160,7 +163,8 @@ async def get_sumsub_config():
     """Get Sumsub configuration (non-sensitive)"""
     return {
         "configured": bool(SUMSUB_APP_TOKEN and SUMSUB_SECRET_KEY),
-        "level_name": SUMSUB_LEVEL_NAME
+        "level_name": SUMSUB_LEVEL_NAME,
+        "kyb_level_name": SUMSUB_KYB_LEVEL_NAME
     }
 
 
@@ -194,10 +198,19 @@ async def create_applicant(
         
         # Create applicant if needed
         if not applicant_id:
+            # Determine level based on verification type
+            is_kyb = data.verification_type == "kyb"
+            level_name = SUMSUB_KYB_LEVEL_NAME if is_kyb else SUMSUB_LEVEL_NAME
+            
             body = {
                 "externalUserId": user_id,
                 "email": data.email,
             }
+            
+            if is_kyb:
+                body["type"] = "company"
+                if data.company_name:
+                    body["info"] = {"companyInfo": {"companyName": data.company_name}}
             
             if data.phone:
                 body["phone"] = data.phone
@@ -215,7 +228,7 @@ async def create_applicant(
                 "POST",
                 "/resources/applicants",
                 body=body,
-                params={"levelName": SUMSUB_LEVEL_NAME}
+                params={"levelName": level_name}
             )
             
             # Handle 409 - applicant already exists in Sumsub
@@ -243,7 +256,8 @@ async def create_applicant(
                         "user_id": user_id,
                         "applicant_id": applicant_id,
                         "email": data.email,
-                        "level_name": SUMSUB_LEVEL_NAME,
+                        "level_name": level_name,
+                        "applicant_type": "company" if is_kyb else "individual",
                         "status": "init",
                         "created_at": datetime.now(timezone.utc).isoformat(),
                         "updated_at": datetime.now(timezone.utc).isoformat()
@@ -254,8 +268,12 @@ async def create_applicant(
         if not applicant_id:
             raise HTTPException(status_code=500, detail="Failed to obtain applicant ID")
         
+        # Determine level for token
+        applicant_record = await db.sumsub_applicants.find_one({"user_id": user_id})
+        token_level = (applicant_record or {}).get("level_name", SUMSUB_LEVEL_NAME)
+        
         # Generate access token in the same call
-        token_path = f"/resources/accessTokens?userId={user_id}&ttlInSecs=1800&levelName={SUMSUB_LEVEL_NAME}"
+        token_path = f"/resources/accessTokens?userId={user_id}&ttlInSecs=1800&levelName={token_level}"
         token_response = make_sumsub_request("POST", token_path)
         
         sdk_token = None
@@ -479,18 +497,24 @@ async def receive_webhook(request: Request):
         if webhook_type == "applicantReviewed":
             new_status = "approved" if review_answer == "GREEN" else "rejected"
             
-            # Update sumsub_applicants
+            # Update sumsub_applicants with full review details
+            update_fields = {
+                "status": new_status,
+                "review_answer": review_answer,
+                "reject_labels": review_result.get("rejectLabels"),
+                "reject_type": review_result.get("reviewRejectType"),
+                "moderation_comment": review_result.get("moderationComment"),
+                "client_comment": review_result.get("clientComment"),
+                "review_status": payload.get("reviewStatus"),
+                "level_name": payload.get("levelName"),
+                "applicant_type": payload.get("applicantType", "individual"),
+                "reviewed_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
             await db.sumsub_applicants.update_one(
                 {"user_id": user_id},
-                {
-                    "$set": {
-                        "status": new_status,
-                        "review_answer": review_answer,
-                        "reject_labels": review_result.get("rejectLabels"),
-                        "reviewed_at": datetime.now(timezone.utc).isoformat(),
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                }
+                {"$set": update_fields}
             )
             
             # Update user's kyc_status

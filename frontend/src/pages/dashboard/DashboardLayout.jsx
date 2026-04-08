@@ -206,6 +206,7 @@ const labelTranslationMap = {
   'Risk & Compliance': 'sidebar.riskCompliance',
   'Dashboard Risco': 'sidebar.dashboardRisco',
   'KYT Forensic': 'sidebar.kytForensic',
+  'Verificações KYC/KYB': 'sidebar.verificacoesKycKyb',
   'Security Dashboard': 'sidebar.securityDashboard',
   // Tokenization
   'Tokenização': 'sidebar.tokenizacao',

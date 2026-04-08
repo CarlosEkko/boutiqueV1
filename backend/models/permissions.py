@@ -314,6 +314,7 @@ DEPARTMENT_MENUS = {
         "icon": "FileSearch",
         "items": [
             {"path": "/dashboard/risk/dashboard", "label": "Dashboard Risco", "icon": "Shield"},
+            {"path": "/dashboard/risk/kyc-verifications", "label": "Verificações KYC/KYB", "icon": "UserCheck"},
             {"path": "/dashboard/risk/kyt-forensic", "label": "KYT Forensic", "icon": "FileSearch"},
             {"path": "/dashboard/admin/kyc", "label": "KYC/KYB", "icon": "UserCheck"},
         ]

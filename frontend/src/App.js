@@ -75,6 +75,7 @@ import CommissionsPage from "./pages/dashboard/crm/CommissionsPage";
 import CompliancePage from "./pages/dashboard/crm/CompliancePage";
 import KYTForensicPage from "./pages/dashboard/risk/KYTForensicPage";
 import RiskDashboardPage from "./pages/dashboard/risk/RiskDashboardPage";
+import KYCVerificationsPage from "./pages/dashboard/risk/KYCVerificationsPage";
 import OTCInvoices from "./pages/dashboard/otc/OTCInvoices";
 import OTCClients from "./pages/dashboard/otc/OTCClients";
 import ClientOTCPortal from "./pages/dashboard/ClientOTCPortal";
@@ -250,6 +251,7 @@ function AppRoutes() {
         
         {/* Risk & Compliance Routes */}
         <Route path="risk/dashboard" element={<RiskDashboardPage />} />
+        <Route path="risk/kyc-verifications" element={<KYCVerificationsPage />} />
         <Route path="risk/kyt-forensic" element={<KYTForensicPage />} />
         
         {/* OTC Desk Routes */}
