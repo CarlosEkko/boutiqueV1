@@ -281,6 +281,31 @@ class WhitelistAddress(BaseModel):
     party: str  # "buyer" or "seller"
 
 
+# ==================== PHASE 3 MODELS ====================
+
+class UpdateDisputeStatus(BaseModel):
+    new_status: str  # under_review, evidence_required, resolved_buyer, resolved_seller, resolved_split
+    notes: Optional[str] = None
+
+
+class DisputeMessage(BaseModel):
+    message: str
+    sender_role: Optional[str] = None  # admin, buyer, seller
+
+
+class DisputeEvidenceUpload(BaseModel):
+    file_name: str
+    file_data: Optional[str] = None  # base64
+    description: Optional[str] = None
+
+
+class ForceReleaseRequest(BaseModel):
+    release_to: str = "split"  # buyer, seller, split
+    notes: Optional[str] = None
+    amount_buyer: Optional[float] = None
+    amount_seller: Optional[float] = None
+
+
 def calculate_risk_score(deal: dict) -> float:
     """Calculate risk score for a deal based on multiple factors."""
     score = 50.0  # baseline

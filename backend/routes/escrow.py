@@ -15,7 +15,8 @@ from models.escrow import (
     calculate_risk_score,
     CreateEscrowDeal, UpdateEscrowDeal, AdvanceEscrowStatus,
     OpenDispute, ResolveDispute,
-    DepositRequest, ConfirmDeposit, SettleRequest, WhitelistAddress
+    DepositRequest, ConfirmDeposit, SettleRequest, WhitelistAddress,
+    UpdateDisputeStatus, DisputeMessage, DisputeEvidenceUpload, ForceReleaseRequest
 )
 
 logger = logging.getLogger(__name__)
@@ -922,3 +923,375 @@ async def remove_whitelist_address(deal_id: str, address_id: str, current_user: 
          "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     return {"success": True}
+
+
+# ==================== PHASE 3: ENHANCED DISPUTE RESOLUTION ====================
+
+@router.put("/deals/{deal_id}/dispute/status")
+async def update_dispute_status(deal_id: str, data: UpdateDisputeStatus, current_user: dict = Depends(get_current_user)):
+    """Update dispute status through the resolution workflow."""
+    if not _user_is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin only action")
+
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+    if deal["status"] != EscrowStatus.DISPUTED:
+        raise HTTPException(status_code=400, detail="Deal is not in disputed state")
+
+    valid_statuses = [
+        DisputeStatus.UNDER_REVIEW, DisputeStatus.EVIDENCE_REQUIRED,
+        DisputeStatus.RESOLVED_BUYER, DisputeStatus.RESOLVED_SELLER,
+        DisputeStatus.RESOLVED_SPLIT, DisputeStatus.CLOSED
+    ]
+    if data.new_status not in [s.value if hasattr(s, 'value') else s for s in valid_statuses] and data.new_status not in [s for s in valid_statuses]:
+        raise HTTPException(status_code=400, detail=f"Invalid dispute status: {data.new_status}")
+
+    now = datetime.now(timezone.utc)
+    dispute = deal.get("dispute", {})
+    dispute["status"] = data.new_status
+
+    # If resolved, set deal status back based on resolution
+    deal_status = EscrowStatus.DISPUTED
+    if data.new_status in ["resolved_buyer", "resolved_seller", "resolved_split", "closed"]:
+        dispute["resolution"] = data.notes or f"Resolved: {data.new_status}"
+        dispute["resolved_by"] = _user_email(current_user)
+        dispute["resolved_at"] = now.isoformat()
+        deal_status = EscrowStatus.CLOSED
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": deal_status,
+        "action": f"Dispute status updated to: {data.new_status}",
+        "performed_by": _user_email(current_user),
+        "notes": data.notes,
+    }
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$set": {
+            "status": deal_status,
+            "dispute": dispute,
+            "updated_at": now.isoformat(),
+        }, "$push": {"timeline": timeline_entry}}
+    )
+
+    updated = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    return {"success": True, "deal": updated}
+
+
+@router.post("/deals/{deal_id}/dispute/evidence")
+async def add_dispute_evidence(deal_id: str, data: DisputeEvidenceUpload, current_user: dict = Depends(get_current_user)):
+    """Add evidence to an active dispute (base64 JSON, Cloudflare-safe)."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+    if deal["status"] != EscrowStatus.DISPUTED:
+        raise HTTPException(status_code=400, detail="Deal must be in disputed state")
+
+    now = datetime.now(timezone.utc)
+    evidence_id = str(uuid.uuid4())
+
+    evidence_entry = {
+        "id": evidence_id,
+        "uploaded_by": _user_email(current_user),
+        "file_name": data.file_name,
+        "description": data.description,
+        "uploaded_at": now.isoformat(),
+        "has_file": bool(data.file_data),
+    }
+
+    # Store file data separately if provided
+    if data.file_data:
+        await db["escrow_evidence_files"].insert_one({
+            "evidence_id": evidence_id,
+            "deal_id": deal_id,
+            "file_name": data.file_name,
+            "file_data": data.file_data,
+            "uploaded_by": _user_email(current_user),
+            "uploaded_at": now.isoformat(),
+        })
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": deal["status"],
+        "action": f"Evidence uploaded: {data.file_name}",
+        "performed_by": _user_email(current_user),
+        "notes": data.description,
+    }
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$push": {
+            "dispute.evidence": evidence_entry,
+            "timeline": timeline_entry,
+        }, "$set": {"updated_at": now.isoformat()}}
+    )
+
+    return {"success": True, "evidence_id": evidence_id}
+
+
+@router.post("/deals/{deal_id}/dispute/message")
+async def add_dispute_message(deal_id: str, data: DisputeMessage, current_user: dict = Depends(get_current_user)):
+    """Add a message to the dispute thread."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+    if deal["status"] != EscrowStatus.DISPUTED:
+        raise HTTPException(status_code=400, detail="Deal must be in disputed state")
+
+    now = datetime.now(timezone.utc)
+    message_entry = {
+        "id": str(uuid.uuid4()),
+        "sender": _user_email(current_user),
+        "sender_role": data.sender_role or ("admin" if _user_is_admin(current_user) else "party"),
+        "message": data.message,
+        "timestamp": now.isoformat(),
+    }
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$push": {"dispute.messages": message_entry},
+         "$set": {"updated_at": now.isoformat()}}
+    )
+
+    return {"success": True, "message": message_entry}
+
+
+@router.post("/deals/{deal_id}/admin-force-release")
+async def admin_force_release(deal_id: str, data: ForceReleaseRequest, current_user: dict = Depends(get_current_user)):
+    """Admin force release with detailed allocation (buyer/seller/split)."""
+    if not _user_is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin only action")
+
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    now = datetime.now(timezone.utc)
+
+    release_record = {
+        "id": str(uuid.uuid4()),
+        "release_to": data.release_to,
+        "amount_buyer": data.amount_buyer,
+        "amount_seller": data.amount_seller,
+        "executed_by": _user_email(current_user),
+        "executed_at": now.isoformat(),
+        "notes": data.notes,
+    }
+
+    timeline_entry = {
+        "timestamp": now.isoformat(),
+        "status": EscrowStatus.CLOSED,
+        "action": f"[ADMIN FORCE RELEASE] Funds released to: {data.release_to}",
+        "performed_by": _user_email(current_user),
+        "notes": data.notes,
+    }
+
+    # Update dispute if exists
+    update_fields = {
+        "status": EscrowStatus.CLOSED,
+        "custody.locked": False,
+        "force_release": release_record,
+        "updated_at": now.isoformat(),
+    }
+
+    dispute = deal.get("dispute")
+    if dispute:
+        dispute["status"] = f"resolved_{data.release_to}" if data.release_to in ["buyer", "seller"] else DisputeStatus.RESOLVED_SPLIT
+        dispute["resolution"] = f"Admin force release to {data.release_to}"
+        dispute["resolved_by"] = _user_email(current_user)
+        dispute["resolved_at"] = now.isoformat()
+        update_fields["dispute"] = dispute
+
+    await db["escrow_deals"].update_one(
+        {"id": deal_id},
+        {"$set": update_fields, "$push": {"timeline": timeline_entry}}
+    )
+
+    updated = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    logger.warning(f"[ADMIN FORCE RELEASE] Deal {deal_id} - released to {data.release_to} by {_user_email(current_user)}")
+    return {"success": True, "deal": updated, "release": release_record}
+
+
+# ==================== PHASE 3: REPORTING & AUDIT ====================
+
+@router.get("/reports/statement")
+async def get_escrow_statement(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate escrow statement with optional filters."""
+    query = {}
+
+    if date_from:
+        query.setdefault("created_at", {})["$gte"] = date_from
+    if date_to:
+        query.setdefault("created_at", {})["$lte"] = date_to
+    if status:
+        query["status"] = status
+
+    deals = await db["escrow_deals"].find(query, {"_id": 0}).sort("created_at", -1).to_list(length=500)
+
+    # Aggregate stats
+    total_volume = sum(d.get("ticket_size", 0) for d in deals)
+    total_fees = sum(d.get("fee_total", 0) for d in deals)
+    by_status = {}
+    for d in deals:
+        s = d.get("status", "unknown")
+        by_status[s] = by_status.get(s, 0) + 1
+
+    return {
+        "deals": deals,
+        "total_deals": len(deals),
+        "total_volume": round(total_volume, 2),
+        "total_fees": round(total_fees, 2),
+        "by_status": by_status,
+        "filters": {"date_from": date_from, "date_to": date_to, "status": status},
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.get("/reports/audit-trail/{deal_id}")
+async def get_audit_trail(deal_id: str, current_user: dict = Depends(get_current_user)):
+    """Get complete audit trail for a specific escrow deal."""
+    deal = await db["escrow_deals"].find_one({"id": deal_id}, {"_id": 0})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Escrow deal not found")
+
+    # Collect all auditable events
+    timeline = deal.get("timeline", [])
+    deposits = deal.get("deposits", [])
+    dispute = deal.get("dispute", {})
+    evidence = dispute.get("evidence", []) if dispute else []
+    messages = dispute.get("messages", []) if dispute else []
+    settlement = deal.get("settlement")
+    force_release = deal.get("force_release")
+
+    # Build unified audit log
+    audit_entries = []
+
+    for t in timeline:
+        audit_entries.append({
+            "type": "status_change",
+            "timestamp": t.get("timestamp"),
+            "action": t.get("action"),
+            "performed_by": t.get("performed_by"),
+            "notes": t.get("notes"),
+            "status": t.get("status"),
+        })
+
+    for dep in deposits:
+        audit_entries.append({
+            "type": "deposit",
+            "timestamp": dep.get("created_at"),
+            "action": f"Deposit: {dep.get('party')} - {dep.get('amount')} {dep.get('asset')}",
+            "performed_by": dep.get("confirmed_by") or "system",
+            "notes": f"TX: {dep.get('tx_hash', 'N/A')} | Confirmed: {dep.get('confirmed')}",
+            "status": "deposit",
+        })
+
+    for ev in evidence:
+        audit_entries.append({
+            "type": "evidence",
+            "timestamp": ev.get("uploaded_at"),
+            "action": f"Evidence uploaded: {ev.get('file_name')}",
+            "performed_by": ev.get("uploaded_by"),
+            "notes": ev.get("description"),
+            "status": "disputed",
+        })
+
+    for msg in messages:
+        audit_entries.append({
+            "type": "dispute_message",
+            "timestamp": msg.get("timestamp"),
+            "action": f"Dispute message from {msg.get('sender_role', 'unknown')}",
+            "performed_by": msg.get("sender"),
+            "notes": msg.get("message"),
+            "status": "disputed",
+        })
+
+    if settlement:
+        audit_entries.append({
+            "type": "settlement",
+            "timestamp": settlement.get("executed_at"),
+            "action": f"Settlement: {settlement.get('quantity_a')} {settlement.get('asset_a')} ↔ {settlement.get('quantity_b')} {settlement.get('asset_b')}",
+            "performed_by": settlement.get("executed_by"),
+            "notes": f"Fee: ${settlement.get('fee_total', 0)}",
+            "status": "settled",
+        })
+
+    if force_release:
+        audit_entries.append({
+            "type": "force_release",
+            "timestamp": force_release.get("executed_at"),
+            "action": f"Force Release to: {force_release.get('release_to')}",
+            "performed_by": force_release.get("executed_by"),
+            "notes": force_release.get("notes"),
+            "status": "closed",
+        })
+
+    # Sort chronologically
+    audit_entries.sort(key=lambda x: x.get("timestamp") or "")
+
+    return {
+        "deal_id": deal.get("deal_id"),
+        "escrow_id": deal_id,
+        "current_status": deal.get("status"),
+        "audit_entries": audit_entries,
+        "total_events": len(audit_entries),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.get("/reports/export")
+async def export_deals_csv(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export escrow deals as CSV-compatible JSON array."""
+    if not _user_is_admin(current_user):
+        raise HTTPException(status_code=403, detail="Admin only action")
+
+    query = {}
+    if date_from:
+        query.setdefault("created_at", {})["$gte"] = date_from
+    if date_to:
+        query.setdefault("created_at", {})["$lte"] = date_to
+    if status:
+        query["status"] = status
+
+    deals = await db["escrow_deals"].find(query, {"_id": 0}).sort("created_at", -1).to_list(length=1000)
+
+    rows = []
+    for d in deals:
+        rows.append({
+            "deal_id": d.get("deal_id"),
+            "status": d.get("status"),
+            "deal_type": d.get("deal_type"),
+            "asset_a": d.get("asset_a"),
+            "asset_b": d.get("asset_b"),
+            "quantity_a": d.get("quantity_a"),
+            "quantity_b": d.get("quantity_b"),
+            "agreed_price": d.get("agreed_price"),
+            "ticket_size": d.get("ticket_size"),
+            "fee_schedule": d.get("fee_schedule"),
+            "fee_total": d.get("fee_total"),
+            "fee_buyer": d.get("fee_buyer"),
+            "fee_seller": d.get("fee_seller"),
+            "buyer_name": d.get("buyer", {}).get("name"),
+            "seller_name": d.get("seller", {}).get("name"),
+            "created_at": d.get("created_at"),
+            "settled_at": d.get("settled_at"),
+            "risk_score": d.get("compliance", {}).get("risk_score"),
+        })
+
+    return {
+        "rows": rows,
+        "total": len(rows),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }

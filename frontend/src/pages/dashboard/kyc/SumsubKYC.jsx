@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SumsubWebSdk from '@sumsub/websdk-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +13,8 @@ import {
   XCircle,
   Loader2,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,29 +25,42 @@ const SumsubKYC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   
-  const [step, setStep] = useState('loading'); // loading, init, verification, complete, error
+  const [step, setStep] = useState('loading');
   const [accessToken, setAccessToken] = useState(null);
   const [applicantId, setApplicantId] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sdkError, setSdkError] = useState(false);
+
+  // Guard against StrictMode double-mount race condition
+  const abortRef = useRef(null);
 
   // Detect Safari browser
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   // Check initial status on mount
   useEffect(() => {
-    console.log('[KYC-v2] Component mounted, API:', API_URL);
-    checkInitialStatus();
+    // Cancel any previous in-flight request (handles StrictMode double-mount)
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    console.log('[KYC-v3] Component mounted, API:', API_URL);
+    checkInitialStatus(controller.signal);
+
+    return () => { controller.abort(); };
   }, []);
 
-  const checkInitialStatus = async () => {
+  const checkInitialStatus = async (signal) => {
     try {
       console.log('[KYC] Checking status...');
-      const response = await axios.get(`${API_URL}/api/sumsub/status`);
+      const response = await axios.get(`${API_URL}/api/sumsub/status`, { signal });
       const data = response.data;
       console.log('[KYC] Status response:', data.status, 'has_applicant:', data.has_applicant);
       
+      if (signal?.aborted) return;
+
       if (data.status === 'approved') {
         setVerificationStatus({ review_answer: 'GREEN' });
         setStep('complete');
@@ -57,23 +71,21 @@ const SumsubKYC = () => {
         });
         setStep('complete');
       } else if (data.has_applicant) {
-        const aid = data.applicant_id;
-        setApplicantId(aid);
-        // Get token via /applicants endpoint (single call, Cloudflare-safe)
-        await fetchTokenViaApplicants();
+        setApplicantId(data.applicant_id);
+        await fetchTokenViaApplicants(signal);
       } else {
         setStep('init');
       }
     } catch (err) {
+      if (err?.name === 'CanceledError' || signal?.aborted) return;
       console.error('[KYC] Status check failed:', err?.response?.data || err.message);
       setStep('init');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
-  // Unified function: creates/finds applicant AND gets SDK token in one call
-  const fetchTokenViaApplicants = async () => {
+  const fetchTokenViaApplicants = async (signal) => {
     try {
       console.log('[KYC] Fetching token via /applicants...');
       const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
@@ -81,8 +93,10 @@ const SumsubKYC = () => {
         first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
         last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
         country: user?.country || ''
-      });
+      }, { signal });
       
+      if (signal?.aborted) return;
+
       const aid = response.data?.applicant_id;
       const tkn = response.data?.sdk_token;
       console.log('[KYC] Result:', { aid, hasToken: !!tkn });
@@ -96,6 +110,7 @@ const SumsubKYC = () => {
         throw new Error('Token não recebido do servidor');
       }
     } catch (err) {
+      if (err?.name === 'CanceledError' || signal?.aborted) return;
       const detail = err.response?.data?.detail || err.message || 'Erro desconhecido';
       console.error('[KYC] Token fetch failed:', detail);
       setError(`Erro ao gerar token: ${detail}`);
@@ -106,6 +121,7 @@ const SumsubKYC = () => {
   const initializeSDK = async () => {
     setLoading(true);
     setError(null);
+    setSdkError(false);
     try {
       await fetchTokenViaApplicants();
     } catch (err) {
@@ -120,7 +136,6 @@ const SumsubKYC = () => {
 
   const handleTokenExpiration = useCallback(async () => {
     try {
-      // Refresh token via the same /applicants endpoint
       const response = await axios.post(`${API_URL}/api/sumsub/applicants`, {
         email: user?.email || 'user@example.com',
         first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
@@ -158,7 +173,8 @@ const SumsubKYC = () => {
         break;
       case 'idCheck.onError':
         console.error('SDK Error:', payload);
-        toast.error('Erro na verificação');
+        setSdkError(true);
+        toast.error('Erro na verificação — tente abrir em nova janela');
         break;
       default:
         break;
@@ -167,7 +183,7 @@ const SumsubKYC = () => {
 
   const handleError = useCallback((error) => {
     console.error('Sumsub WebSDK error:', error);
-    setError(error?.message || 'Erro desconhecido');
+    setSdkError(true);
   }, []);
 
   // Open Sumsub in external window (Safari workaround)
@@ -312,28 +328,41 @@ const SumsubKYC = () => {
       {step === 'verification' && accessToken && (
         <Card className="bg-zinc-900/50 border-gold-800/20 overflow-hidden">
           <CardContent className="p-0">
-            <div className="p-4 border-b border-gold-800/20">
+            <div className="p-4 border-b border-gold-800/20 flex items-center justify-between">
               <p className="text-sm text-gray-400">
                 Siga as instruções no ecrã para completar a verificação
               </p>
+              {/* Always show external window fallback */}
+              <Button
+                onClick={openSumsubExternal}
+                variant="ghost"
+                size="sm"
+                className="text-gold-400 hover:text-gold-300 text-xs gap-1.5"
+                data-testid="open-sumsub-external-btn"
+              >
+                <ExternalLink size={14} />
+                Abrir em nova janela
+              </Button>
             </div>
             
-            {isSafari ? (
-              /* Safari: Open in external window instead of iframe */
-              <div className="p-8 text-center" data-testid="sumsub-safari-fallback">
+            {isSafari || sdkError ? (
+              /* Safari or SDK error: Open in external window */
+              <div className="p-8 text-center" data-testid="sumsub-fallback">
                 <AlertTriangle className="mx-auto text-amber-400 mb-4" size={48} />
                 <h3 className="text-lg text-white mb-3">
-                  Verificação no Safari
+                  {sdkError ? 'Erro ao carregar verificação' : 'Verificação no Safari'}
                 </h3>
                 <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
-                  O Safari tem restrições de segurança que impedem a verificação embutida. 
-                  Clique no botão abaixo para abrir a verificação numa nova janela.
+                  {sdkError 
+                    ? 'A verificação embutida encontrou um erro. Clique abaixo para abrir numa nova janela.'
+                    : 'O Safari tem restrições de segurança que impedem a verificação embutida. Clique no botão abaixo para abrir a verificação numa nova janela.'
+                  }
                 </p>
                 <Button
                   onClick={openSumsubExternal}
                   className="bg-gold-500 hover:bg-gold-400 text-black px-8 py-3"
-                  data-testid="open-sumsub-external-btn"
                 >
+                  <ExternalLink size={16} className="mr-2" />
                   Abrir Verificação
                 </Button>
                 <p className="text-xs text-gray-500 mt-4">
@@ -342,7 +371,7 @@ const SumsubKYC = () => {
                 </p>
               </div>
             ) : (
-              /* Non-Safari: Embedded SDK */
+              /* Embedded SDK */
               <div 
                 className="min-h-[600px]" 
                 data-testid="sumsub-sdk-container"

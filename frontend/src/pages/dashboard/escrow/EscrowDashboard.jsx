@@ -109,14 +109,25 @@ const EscrowDashboard = () => {
             Custódia profissional DvP para operações OTC
           </p>
         </div>
-        <Button
-          onClick={() => navigate('/dashboard/escrow/deals?new=true')}
-          className="bg-emerald-600 hover:bg-emerald-700"
-          data-testid="new-escrow-deal-btn"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Escrow Deal
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard/escrow/reports')}
+            className="border-white/10"
+            data-testid="escrow-reports-btn"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Reports
+          </Button>
+          <Button
+            onClick={() => navigate('/dashboard/escrow/deals?new=true')}
+            className="bg-emerald-600 hover:bg-emerald-700"
+            data-testid="new-escrow-deal-btn"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Escrow Deal
+          </Button>
+        </div>
       </div>
 
       {/* Primary KPIs */}

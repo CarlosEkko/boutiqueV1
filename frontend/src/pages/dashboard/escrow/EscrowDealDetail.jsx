@@ -12,6 +12,7 @@ import {
 import { Input } from '../../../components/ui/input';
 import axios from 'axios';
 import { toast } from 'sonner';
+import DisputePanel from './DisputePanel';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -587,22 +588,9 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
             </Card>
           )}
 
-          {/* Dispute Info */}
+          {/* Dispute Panel (Phase 3) */}
           {deal.dispute && (
-            <Card className="p-5 border border-red-500/20 bg-red-500/5">
-              <div className="flex items-center gap-2 mb-3">
-                <Scale className="w-4 h-4 text-red-400" />
-                <h3 className="text-xs font-semibold text-red-400 uppercase tracking-wider">Disputa</h3>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div><strong>Motivo:</strong> {deal.dispute.reason}</div>
-                <div><strong>Aberta por:</strong> {deal.dispute.opened_by}</div>
-                <div><strong>Data:</strong> {formatDate(deal.dispute.opened_at)}</div>
-                {deal.dispute.resolution && (
-                  <div className="p-2 rounded bg-white/[0.03] mt-2"><strong>Resolução:</strong> {deal.dispute.resolution}</div>
-                )}
-              </div>
-            </Card>
+            <DisputePanel deal={deal} token={token} onRefresh={() => { refreshDeal(); onUpdate(); }} />
           )}
         </div>
 

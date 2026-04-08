@@ -108,6 +108,7 @@ import VaultWallets from "./pages/dashboard/vault/VaultWallets";
 import EscrowDashboard from "./pages/dashboard/escrow/EscrowDashboard";
 import EscrowDeals from "./pages/dashboard/escrow/EscrowDeals";
 import FeeLedger from "./pages/dashboard/escrow/FeeLedger";
+import EscrowReports from "./pages/dashboard/escrow/EscrowReports";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -294,6 +295,7 @@ function AppRoutes() {
         <Route path="escrow" element={<EscrowDashboard />} />
         <Route path="escrow/deals" element={<EscrowDeals />} />
         <Route path="escrow/fees" element={<FeeLedger />} />
+        <Route path="escrow/reports" element={<EscrowReports onBack={() => window.history.back()} />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}
