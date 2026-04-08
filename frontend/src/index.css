@@ -65,21 +65,21 @@ html {
 
 /* Cursor styles for all browsers including Safari */
 html, body {
-    cursor: default !important;
+    cursor: default;
 }
 
 a, button, [role="button"], input[type="submit"], input[type="button"], 
-select, label, [onclick], .cursor-pointer, [data-testid] {
-    cursor: pointer !important;
+select, label[for], .cursor-pointer {
+    cursor: pointer;
 }
 
 input[type="text"], input[type="email"], input[type="password"], 
 input[type="number"], input[type="search"], textarea {
-    cursor: text !important;
+    cursor: text;
 }
 
 /* Ensure interactive elements are clickable */
-a, button, input, select, textarea, [role="button"], [onclick] {
+a, button, input, select, textarea, [role="button"] {
     -webkit-user-select: auto;
     user-select: auto;
     pointer-events: auto;

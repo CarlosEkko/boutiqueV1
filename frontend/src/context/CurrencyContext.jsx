@@ -31,7 +31,7 @@ export const CurrencyProvider = ({ children }) => {
   const supportedCurrencies = [
     { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
     { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
-    { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+    { code: 'AED', name: 'UAE Dirham', symbol: 'AED', flag: '🇦🇪' },
     { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
   ];
 
@@ -108,7 +108,7 @@ export const CurrencyProvider = ({ children }) => {
     } else if (curr.code === 'BRL') {
       return `R$${formatted}`;
     } else if (curr.code === 'AED') {
-      return `${formatted} د.إ`;
+      return `${formatted} AED`;
     }
     
     return `${curr.symbol}${formatted}`;

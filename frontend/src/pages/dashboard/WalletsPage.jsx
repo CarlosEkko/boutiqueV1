@@ -228,7 +228,7 @@ const WalletsPage = () => {
   const fiatSymbols = {
     EUR: '€',
     USD: '$',
-    AED: 'د.إ',
+    AED: 'AED ',
     BRL: 'R$'
   };
 

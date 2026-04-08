@@ -65,7 +65,7 @@ export const formatCurrency = (value, currency = 'EUR', decimals = 2) => {
   const symbols = {
     EUR: '€',
     USD: '$',
-    AED: 'د.إ',
+    AED: 'AED',
     BRL: 'R$',
     USDT: '$',
     USDC: '$',

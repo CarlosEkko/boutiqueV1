@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Globe, User, LogIn } from 'lucide-react';
 import { Button } from './ui/button';
 import CryptoTicker from './CryptoTicker';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-import gsap from 'gsap';
 
 const Header = () => {
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -13,9 +12,6 @@ const Header = () => {
   const location = useLocation();
   const { language, t, changeLanguage, isRTL } = useLanguage();
   const { user, isAuthenticated } = useAuth();
-  const cursorRef = useRef(null);
-  const cursorPointerRef = useRef(null);
-  const trailRefs = useRef([]);
 
   const navLinks = [
     { name: t('nav.home'), href: '/' },
@@ -35,121 +31,6 @@ const Header = () => {
     { code: 'AR', name: 'العربية' }
   ];
 
-  // Custom cursor with glow trail effect
-  useEffect(() => {
-    const cursor = cursorPointerRef.current;
-    const trails = trailRefs.current.filter(Boolean);
-    if (!cursor) return;
-
-    // Hide cursor initially
-    gsap.set(cursor, { autoAlpha: 0 });
-    trails.forEach(trail => gsap.set(trail, { autoAlpha: 0 }));
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let cursorX = 0;
-    let cursorY = 0;
-    const trailPositions = trails.map(() => ({ x: 0, y: 0 }));
-
-    const handleMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
-
-    const handleMouseEnter = () => {
-      gsap.to(cursor, { autoAlpha: 1, duration: 0.3 });
-      trails.forEach((trail, i) => {
-        gsap.to(trail, { autoAlpha: 0.6 - i * 0.1, duration: 0.3, delay: i * 0.05 });
-      });
-    };
-
-    const handleMouseLeave = () => {
-      gsap.to(cursor, { autoAlpha: 0, duration: 0.3 });
-      trails.forEach(trail => gsap.to(trail, { autoAlpha: 0, duration: 0.3 }));
-    };
-
-    // Animation loop for smooth cursor movement
-    const animate = () => {
-      // Smooth cursor follow
-      cursorX += (mouseX - cursorX) * 0.15;
-      cursorY += (mouseY - cursorY) * 0.15;
-      
-      gsap.set(cursor, { x: cursorX, y: cursorY });
-      
-      // Trail effect - each trail follows the previous with delay
-      trails.forEach((trail, i) => {
-        const target = i === 0 ? { x: cursorX, y: cursorY } : trailPositions[i - 1];
-        trailPositions[i].x += (target.x - trailPositions[i].x) * (0.12 - i * 0.015);
-        trailPositions[i].y += (target.y - trailPositions[i].y) * (0.12 - i * 0.015);
-        gsap.set(trail, { x: trailPositions[i].x, y: trailPositions[i].y });
-      });
-      
-      requestAnimationFrame(animate);
-    };
-    
-    animate();
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseenter', handleMouseEnter);
-    document.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseenter', handleMouseEnter);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-
-  // Magnetic effect for links
-  useEffect(() => {
-    const magneticLinks = document.querySelectorAll('.magnetic-link');
-    const cursor = cursorPointerRef.current;
-    
-    magneticLinks.forEach(link => {
-      const span = link.querySelector('span');
-      
-      const handleMouseMove = (e) => {
-        const rect = link.getBoundingClientRect();
-        const relX = e.clientX - rect.left;
-        const relY = e.clientY - rect.top;
-        
-        if (span) {
-          gsap.to(span, {
-            x: (relX - rect.width / 2) / rect.width * 30,
-            y: (relY - rect.height / 2) / rect.height * 30,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        }
-      };
-      
-      const handleMouseLeave = () => {
-        if (span) {
-          gsap.to(span, { x: 0, y: 0, duration: 0.3 });
-        }
-      };
-      
-      const handleMouseEnterLink = () => {
-        document.body.classList.add('cursor-hover');
-      };
-      
-      const handleMouseLeaveLink = () => {
-        document.body.classList.remove('cursor-hover');
-      };
-      
-      link.addEventListener('mousemove', handleMouseMove);
-      link.addEventListener('mouseleave', handleMouseLeave);
-      link.addEventListener('mouseenter', handleMouseEnterLink);
-      link.addEventListener('mouseleave', handleMouseLeaveLink);
-      
-      return () => {
-        link.removeEventListener('mousemove', handleMouseMove);
-        link.removeEventListener('mouseleave', handleMouseLeave);
-        link.removeEventListener('mouseenter', handleMouseEnterLink);
-        link.removeEventListener('mouseleave', handleMouseLeaveLink);
-      };
-    });
-  }, [isNavOpen, language]);
 
   // Prevent body scroll when nav is open
   useEffect(() => {
@@ -469,19 +350,6 @@ const Header = () => {
           right: 0;
           left: auto;
         }
-        
-        /* Cursor hover effect */
-        body.cursor-hover .cursor-dot {
-          transform: scale(2.5);
-          box-shadow: 0 0 12px rgba(165,122,80,0.6), 0 0 24px rgba(165,122,80,0.3), 0 0 36px rgba(165,122,80,0.15);
-        }
-        
-        body.cursor-hover .cursor-trail > div {
-          transform: scale(2);
-        }
-        
-        /* Custom cursor - disabled for better Safari compatibility */
-        /* Original cursor: none styles removed */
       `}</style>
     </>
   );

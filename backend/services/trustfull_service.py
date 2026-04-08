@@ -9,17 +9,26 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-TRUSTFULL_API_KEY = os.environ.get("TRUSTFULL_API_KEY", "")
 BASE_URL = "https://api.fido.id/1.0"
-HEADERS = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "x-api-key": TRUSTFULL_API_KEY,
-}
+
+
+def _get_headers():
+    """Build headers with the Trustfull API key at call-time."""
+    api_key = os.environ.get("TRUSTFULL_API_KEY", "")
+    if not api_key:
+        logger.error("TRUSTFULL_API_KEY not configured")
+    return {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "x-api-key": api_key,
+    }
 
 
 async def score_email(email: str) -> dict:
     """Score an email address via Trustfull. Returns simplified risk data."""
+    headers = _get_headers()
+    if not headers["x-api-key"]:
+        return {"error": "TRUSTFULL_API_KEY not configured", "score": None}
     try:
         payload = {
             "customer_id": str(uuid.uuid4()),
@@ -28,7 +37,7 @@ async def score_email(email: str) -> dict:
             "max_enrichment_time": 5.0,
         }
         async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(f"{BASE_URL}/email", json=payload, headers=HEADERS)
+            resp = await client.post(f"{BASE_URL}/email", json=payload, headers=headers)
             if resp.status_code != 200:
                 logger.error(f"Trustfull email API error {resp.status_code}: {resp.text}")
                 return {"error": resp.text, "score": None}
@@ -66,6 +75,9 @@ async def score_email(email: str) -> dict:
 
 async def score_phone(phone_number: str) -> dict:
     """Score a phone number via Trustfull. Returns simplified risk data."""
+    headers = _get_headers()
+    if not headers["x-api-key"]:
+        return {"error": "TRUSTFULL_API_KEY not configured", "score": None}
     try:
         clean_phone = phone_number.lstrip("+").replace(" ", "").replace("-", "")
         payload = {
@@ -75,7 +87,7 @@ async def score_phone(phone_number: str) -> dict:
             "max_enrichment_time": 5.0,
         }
         async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(f"{BASE_URL}/phone", json=payload, headers=HEADERS)
+            resp = await client.post(f"{BASE_URL}/phone", json=payload, headers=headers)
             if resp.status_code != 200:
                 logger.error(f"Trustfull phone API error {resp.status_code}: {resp.text}")
                 return {"error": resp.text, "score": None}
