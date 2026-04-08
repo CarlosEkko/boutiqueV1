@@ -1,51 +1,57 @@
 # KBEX.io - Product Requirements Document
 
 ## Overview
-Premium Crypto Boutique Exchange for HNW/UHNW individuals.
+KBEX.io is a premium Crypto Boutique Exchange designed for High-Net-Worth (HNW) and Ultra-High-Net-Worth (UHNW) individuals. The platform provides a comprehensive suite of services including an Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, and automated KYC via Sumsub.
 
-## Tech Stack
-- Frontend: React, Tailwind CSS, Shadcn UI, React Context
-- Backend: FastAPI, MongoDB (Motor), Pydantic
-- Integrations: Sumsub (KYC + KYB Quest), Trustfull, Brevo, Fireblocks
-- Infrastructure: Docker on VPS, Cloudflare WAF
+## Core Requirements
+- Fully translated platform (PT, EN, AR, FR, ES)
+- "Quiet luxury", trust, and exclusivity in UI/UX
+- Comprehensive OTC CRM with strict qualification and workflows
+- Region/Role-based hierarchy for staff management
+- Dark/Light theme support
 
-## What's Implemented
-- Multi-currency viewing with real-time crypto prices
-- Fiat deposits/withdrawals, wallet management
-- Complete OTC CRM (11-stage workflow)
-- Invite-only registration gate
-- Hierarchical access control (region-based)
-- 5-language support (EN, PT, AR, FR, ES)
-- Demo Mode with rich mock data
-- OTC Desk Flow with pre-qualification and setup
-- TinyMCE Knowledge Base Editor
-- Cloudflare SSL configuration
-- **OTC Setup Status Fix (2026-04-08)**: Status advances to `setup_complete`
-- **KYC/KYB Verifications Page (2026-04-08)**: Real-time Sumsub verification status with docs, refresh, Sumsub dashboard link. KYB Quest support.
-- **Balance Adjustments (2026-04-08)**: Admin manual balance adjustments (credit/debit) with categories, reason, document upload, full audit trail.
-- **Bug Fix Ver Comprovativo (2026-04-08)**: Fixed field name mismatch (`proof_document_url` vs `proof_url`) in AdminFiatDeposits.
-- **CRM Visao 360 Completa (2026-04-08)**:
-  - Backend: Fetches bank_transfers (deposits + withdrawals), trading orders, and includes all in activity timeline
-  - Activity tab: Shows deposits fiat, levantamentos fiat, compras crypto, vendas crypto with distinct colors, icons, amounts, and status badges
-  - Wallets tab: Shows ALL wallets (not just > 0), with red color for negative balances
-  - Resumo Rapido: Shows counts for deposits fiat, levantamentos, ordens, transacoes, tickets
+## Architecture
+- **Frontend:** React, Tailwind CSS, Shadcn UI, React Context
+- **Backend:** FastAPI, Pydantic, MongoDB (Motor)
+- **Deployment:** Docker Compose with Nginx Reverse Proxy + Cloudflare Strict SSL
+- **Theme:** Tailwind `darkMode: ["class"]` with ThemeContext (Dark/Light/System)
+
+## Key Features Implemented
+- Multi-currency portfolio dashboard
+- CRM 360-degree views with unified activity timeline
+- OTC Desk with 11-step lifecycle pipeline
+- KYC/KYB via Sumsub (automated + manual fallback)
+- Balance adjustments for admin
+- Custom maintenance page for VPS downtime
+- Dark/Light/System theme toggle
+- 5-language sidebar translations (EN, PT, AR, FR, ES)
+- Exclusive access model (no public registration)
+
+## Authentication Flow
+- Login-only AuthPage (no public registration)
+- "Solicitar Acesso" → Public form creates OTC Lead + CRM Lead
+- `/register` route gated — only accessible via invitation email (`?email=` param)
+- Brevo transactional emails for onboarding
+
+## Key Integrations
+- Brevo (transactional emails) — configured
+- Sumsub (KYC/KYB) — requires API key
+- Fireblocks (wallets) — requires API key
+- Cloudflare (WAF/proxy) — managed externally
+- CoinMarketCap/Binance (crypto rates) — requires API keys
 
 ## Credentials
-- Preview Admin: carlos@kbex.io / senha123
-- Test Client: joao.mirror999@test.com / senha123
+- Admin: `carlos@kbex.io` / `senha123`
 
-## Deployment
-git pull -> sudo docker-compose up --build -d
+## Known Constraints
+- Cloudflare WAF blocks `multipart/form-data` → use `application/json`
+- `index.html` must keep `class="dark"` for Shadcn compatibility
+- WebSockets not implemented (using 1s HTTP polling)
 
-## Pending Issues
-- P1: Reroute "Solicitar Acesso" to Lead Creation & Disable Public Registration
-- P1: Dark / Light Mode Toggle
-- P2: Sidebar translation labels (Tokenizacao, Team Hub, Multi-Sign)
-- P2: Safari cursor bug
-
-## Upcoming Tasks
+## Backlog
 - P1: TradingView chart widgets on Trading/Markets pages
-- P2: WebSockets for crypto prices
+- P2: Refactor HTTP polling to WebSockets
 - P2: Whitelist functionality
+- P2: Safari cursor bug fix
 - P3: Product Pages (Launchpad, ICO)
-- P3: Refactor OTCLeads.jsx and translations.js
+- P3: Refactor OTCLeads.jsx (2300+ lines) and translations.js (6600+ lines)
