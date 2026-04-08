@@ -24,6 +24,8 @@ const SumsubKYC = () => {
   const [loading, setLoading] = useState(true);
   const [windowOpened, setWindowOpened] = useState(false);
 
+  const [errorDetail, setErrorDetail] = useState(null);
+
   const abortRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -48,6 +50,11 @@ const SumsubKYC = () => {
       } else if (data.status === 'rejected') {
         setVerificationStatus({ review_answer: 'RED', reject_labels: data.local_data?.reject_labels });
         setStep('complete');
+      } else if (data.sdk_token) {
+        // If status response includes a token, use it directly
+        const fallbackUrl = `https://websdk.sumsub.com/idensic/#/?accessToken=${data.sdk_token}&lang=pt`;
+        setExternalUrl(fallbackUrl);
+        setStep('ready');
       } else {
         setStep('init');
       }
@@ -61,22 +68,43 @@ const SumsubKYC = () => {
 
   const generateLink = async () => {
     setLoading(true);
+    setErrorDetail(null);
     try {
+      // Try the dedicated generate-link endpoint first
       const response = await axios.post(`${API_URL}/api/sumsub/generate-link`);
       if (response.data?.url) {
         setExternalUrl(response.data.url);
         setStep('ready');
-      } else {
-        toast.error('Erro ao gerar link de verificacao');
-        setStep('error');
+        return;
       }
-    } catch (err) {
-      const detail = err.response?.data?.detail || err.message;
-      toast.error(`Erro: ${detail}`);
-      setStep('error');
-    } finally {
-      setLoading(false);
+    } catch (primaryErr) {
+      console.warn('[KYC] generate-link failed, trying fallback:', primaryErr?.response?.data?.detail || primaryErr.message);
     }
+
+    // Fallback: use the /applicants endpoint to get a token and build URL
+    try {
+      const fallbackResp = await axios.post(`${API_URL}/api/sumsub/applicants`, {
+        email: user?.email || '',
+        first_name: user?.first_name || user?.name?.split(' ')?.[0] || '',
+        last_name: user?.last_name || user?.name?.split(' ')?.slice(1)?.join(' ') || '',
+        country: user?.country || ''
+      });
+      const sdkToken = fallbackResp.data?.sdk_token;
+      if (sdkToken) {
+        const fallbackUrl = `https://websdk.sumsub.com/idensic/#/?accessToken=${sdkToken}&lang=pt`;
+        setExternalUrl(fallbackUrl);
+        setStep('ready');
+        return;
+      }
+    } catch (fallbackErr) {
+      const detail = fallbackErr.response?.data?.detail || fallbackErr.message;
+      console.error('[KYC] Fallback also failed:', detail);
+      setErrorDetail(detail);
+    }
+
+    toast.error('Erro ao gerar link de verificacao');
+    setStep('error');
+    setLoading(false);
   };
 
   const openVerification = () => {
@@ -191,7 +219,7 @@ const SumsubKYC = () => {
             </div>
             <h2 className="text-xl text-white mb-3">Link de Verificacao Pronto</h2>
             <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
-              Clique no botao abaixo para abrir a verificacao do Sumsub numa nova janela.
+              Clique no botao abaixo para abrir a verificacao KYC numa nova janela.
               Complete todos os passos e volte a esta pagina.
             </p>
             <Button
@@ -273,9 +301,14 @@ const SumsubKYC = () => {
           <CardContent className="p-8 text-center">
             <AlertTriangle className="mx-auto text-red-400 mb-4" size={48} />
             <h2 className="text-xl text-white mb-3">Erro na Verificacao</h2>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+            <p className="text-gray-400 mb-4 max-w-md mx-auto text-sm">
               Nao foi possivel gerar o link de verificacao. Tente novamente.
             </p>
+            {errorDetail && (
+              <div className="bg-red-500/10 rounded-lg p-3 mb-6 max-w-md mx-auto">
+                <p className="text-xs text-red-400 font-mono break-all">{errorDetail}</p>
+              </div>
+            )}
             <Button onClick={generateLink} className="bg-gold-500 hover:bg-gold-400 text-black px-8" data-testid="retry-verification-btn">
               <RefreshCw size={16} className="mr-2" /> Tentar Novamente
             </Button>
