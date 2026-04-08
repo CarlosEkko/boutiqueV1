@@ -105,6 +105,8 @@ import VaultTransactionDetail from "./pages/dashboard/vault/VaultTransactionDeta
 import VaultSignatories from "./pages/dashboard/vault/VaultSignatories";
 import VaultCreateTransaction from "./pages/dashboard/vault/VaultCreateTransaction";
 import VaultWallets from "./pages/dashboard/vault/VaultWallets";
+import EscrowDashboard from "./pages/dashboard/escrow/EscrowDashboard";
+import EscrowDeals from "./pages/dashboard/escrow/EscrowDeals";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -286,6 +288,10 @@ function AppRoutes() {
         <Route path="vault/new" element={<VaultCreateTransaction />} />
         <Route path="vault/signatories" element={<VaultSignatories />} />
         <Route path="vault/:id" element={<VaultTransactionDetail />} />
+
+        {/* Escrow Routes */}
+        <Route path="escrow" element={<EscrowDashboard />} />
+        <Route path="escrow/deals" element={<EscrowDeals />} />
       </Route>
 
       {/* Knowledge Base / Help - Public */}

@@ -118,6 +118,7 @@ const departmentConfig = {
   vault: { icon: ShieldCheck, color: 'text-amber-400', bgColor: 'bg-amber-500/20' },
   risk_compliance: { icon: FileSearch, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   tokenization: { icon: Gem, color: 'text-[#D4AF37]', bgColor: 'bg-[#D4AF37]/20' },
+  escrow: { icon: Lock, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -219,6 +220,9 @@ const labelTranslationMap = {
   'Definir Preço': 'sidebar.definirPreco',
   // Staking
   'Staking': 'sidebar.staking',
+  // Escrow
+  'Escrow': 'sidebar.escrow',
+  'Deals': 'sidebar.escrowDeals',
   // Team Hub & Multi-Sign
   'Team Hub': 'sidebar.teamHub',
   'Multi-Sign': 'sidebar.multiSign',

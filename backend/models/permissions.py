@@ -37,6 +37,7 @@ class Department(str, Enum):
     TRANSACTION_APPROVAL = "transaction_approval"
     RISK_COMPLIANCE = "risk_compliance"
     TOKENIZATION = "tokenization"
+    ESCROW = "escrow"
 
 
 # Role to Department access mapping
@@ -55,7 +56,8 @@ ROLE_PERMISSIONS = {
         Department.TEAM_HUB,
         Department.TRANSACTION_APPROVAL,
         Department.RISK_COMPLIANCE,
-        Department.TOKENIZATION
+        Department.TOKENIZATION,
+        Department.ESCROW
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -70,7 +72,8 @@ ROLE_PERMISSIONS = {
         Department.TEAM_HUB,
         Department.TRANSACTION_APPROVAL,
         Department.RISK_COMPLIANCE,
-        Department.TOKENIZATION
+        Department.TOKENIZATION,
+        Department.ESCROW
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -328,6 +331,14 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/tokenization/mint-burn", "label": "Mint & Burn", "icon": "Flame"},
             {"path": "/dashboard/tokenization/pricing", "label": "Definir Preço", "icon": "DollarSign"},
             {"path": "/dashboard/tokenization/management", "label": "Gestão", "icon": "Settings2"},
+        ]
+    },
+    Department.ESCROW: {
+        "label": "Escrow",
+        "icon": "Lock",
+        "items": [
+            {"path": "/dashboard/escrow", "label": "Dashboard", "icon": "LayoutDashboard"},
+            {"path": "/dashboard/escrow/deals", "label": "Deals", "icon": "FileText"},
         ]
     },
 }

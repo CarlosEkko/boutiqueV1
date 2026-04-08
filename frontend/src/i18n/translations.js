@@ -106,6 +106,9 @@ const translations = {
       aprovacoes: 'Approvals',
       cofre: 'Vault',
       signatarios: 'Signatories',
+      // Escrow
+      escrow: 'Escrow',
+      escrowDeals: 'Deals',
       // Section headers
       gestaoLabel: 'Management',
       loading: 'Loading...',
@@ -1670,6 +1673,9 @@ const translations = {
       aprovacoes: 'Aprovações',
       cofre: 'Cofre',
       signatarios: 'Signatários',
+      // Escrow
+      escrow: 'Escrow',
+      escrowDeals: 'Deals',
       // Section headers
       gestaoLabel: 'Gestão',
       loading: 'A carregar...',
@@ -3233,6 +3239,9 @@ const translations = {
       aprovacoes: 'الموافقات',
       cofre: 'الخزنة',
       signatarios: 'الموقعون',
+      // Escrow
+      escrow: 'Escrow',
+      escrowDeals: 'الصفقات',
       // Section headers
       gestaoLabel: 'الإدارة',
       loading: 'جاري التحميل...',
@@ -4680,6 +4689,9 @@ const translations = {
       aprovacoes: 'Approbations',
       cofre: 'Coffre-fort',
       signatarios: 'Signataires',
+      // Escrow
+      escrow: 'Escrow',
+      escrowDeals: 'Deals',
       gestaoLabel: 'Gestion',
       loading: 'Chargement...',
     },
@@ -6094,6 +6106,9 @@ const translations = {
       aprovacoes: 'Aprobaciones',
       cofre: 'Bóveda',
       signatarios: 'Signatarios',
+      // Escrow
+      escrow: 'Escrow',
+      escrowDeals: 'Deals',
       gestaoLabel: 'Gestión',
       loading: 'Cargando...',
     },
