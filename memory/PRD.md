@@ -1,53 +1,57 @@
 # KBEX.io - Product Requirements Document
 
 ## Overview
-KBEX.io is a premium Crypto Boutique Exchange designed for High-Net-Worth (HNW) and Ultra-High-Net-Worth (UHNW) individuals.
+Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OTC Desk, Fiat/Crypto Wallets, Onboarding, CRM, and automated KYC via Sumsub.
 
-## Architecture
-- **Frontend:** React, Tailwind CSS, Shadcn UI, React Context
-- **Backend:** FastAPI, Pydantic, MongoDB (Motor)
-- **Deployment:** Docker Compose with Nginx Reverse Proxy + Cloudflare Strict SSL
-- **Theme:** Tailwind `darkMode: ["class"]` with ThemeContext (Dark/Light/System)
+## Tech Stack
+- Frontend: React, Tailwind CSS, Shadcn UI
+- Backend: FastAPI, MongoDB (Motor)
+- Deployment: Docker Compose + Nginx (Cloudflare Strict SSL)
 
-## Key Features Implemented
-- Multi-currency portfolio dashboard with Dark/Light/System theme
-- CRM 360-degree views with unified activity timeline
-- OTC Desk with 11-step lifecycle pipeline
-- KYC/KYB via Sumsub (automated + manual fallback)
-- OTC Lead → KYC flow: creates KYC entry, sends tier-based onboarding email, appears in Risk & Compliance
-- Balance adjustments for admin
-- Custom maintenance page for VPS downtime (Nginx 502/503/504)
-- 5-language translations (EN, PT, AR, FR, ES) — complete sidebar
-- Exclusive access model (no public registration, invite-only)
-- Knowledge Base with articles and categories
-- JSON-based file uploads (bypasses Cloudflare WAF blocking FormData)
+## Core Requirements
+- Fully translated platform (PT, EN, AR, FR, ES)
+- "Quiet luxury" UI/UX with trust and exclusivity
+- Comprehensive OTC CRM with strict qualification workflows
+- Demo Mode toggle for authorized users
+- Dark/Light mode toggle (Dashboard only; Landing/Auth stay Dark)
 
-## Critical Technical Notes
-- **Cloudflare WAF blocks `multipart/form-data`** → All authenticated file uploads MUST use `POST /api/uploads/file-json` (base64 JSON) or `POST /api/uploads/deposit-proof-json/{id}`
-- **Deposit proof uploads** use `/api/uploads/deposit-proof-json/{id}` endpoint
-- `index.html` must keep `class="dark"` for Shadcn compatibility
-- WebSockets implemented for crypto prices
+## Completed Features
+- Multi-currency wallets (EUR, USD, AED, BRL) with fiat deposits
+- OTC CRM: 11-step workflow (Creation → Post-Sale)
+- Brevo email integration for onboarding
+- Sumsub KYC/KYB integration (Safari fallback for ITP)
+- Trustfull Risk Intelligence (email + phone scoring)
+- Base64 JSON uploads (bypasses Cloudflare WAF)
+- Custom Nginx maintenance page (502/503)
+- "Solicitar Acesso" → OTC Lead creation (public registration removed)
+- Sidebar translations (5 languages)
+- Demo Mode with mock data
+- Dashboard Dark/Light mode toggle
 
-## Tier Pricing
-- Standard: EUR 5,000
-- Premium: EUR 50,000
-- VIP: EUR 250,000
-- Institutional: EUR 1,000,000
+## Bug Fixes (April 8, 2026)
+- AED currency display: Changed from Arabic script 'د.إ' to 'AED' text for cross-browser compatibility (Safari was showing '0.00!')
+- Trustfull API: Fixed module-level key loading → now reads at call-time via _get_headers()
+- Safari cursor bug: Removed dead GSAP custom cursor code from Header.jsx, cleaned CSS cursor rules
 
-## Key API Endpoints
-- `POST /api/uploads/file-json` — Authenticated JSON file upload (base64)
-- `POST /api/uploads/deposit-proof-json/{id}` — Deposit proof JSON upload
-- `POST /api/otc/leads/{id}/advance-to-kyc` — Advances lead + sends email + creates KYC entry
-- `GET /api/risk-compliance/kyc-verifications` — Lists both Sumsub + OTC Lead verifications
+## Upcoming Tasks (P1)
+- TradingView chart widgets on Trading/Markets pages
+- Refactor HTTP polling → WebSockets for crypto prices
 
-## Credentials
-- Admin: `carlos@kbex.io` / `senha123`
+## Future Tasks (P2-P3)
+- Whitelist functionality
+- Product Pages (Launchpad, ICO)
+- Refactoring: OTCLeads.jsx (2300+ lines), translations.js (6600+ lines)
+- Convert remaining FormData uploads to base64 JSON
 
-## Backlog
-- P1: TradingView chart widgets on Trading/Markets pages
-- P2: Refactor HTTP polling to WebSockets
-- P2: Whitelist functionality
-- P2: Safari cursor bug fix
-- P3: Product Pages (Launchpad, ICO)
-- P3: Refactor OTCLeads.jsx and translations.js
-- P3: Convert remaining FormData uploads (KYC forms, Public Support) to JSON
+## Integrations
+- Brevo (Emails) — configured
+- Sumsub (KYC/KYB) — configured
+- Trustfull (Risk Intelligence) — configured
+- Binance & CoinMarketCap (Rates) — configured
+- Fireblocks (Wallets) — broken
+- Microsoft 365 (Azure AD) — pending
+
+## Key Constraints
+- Cloudflare WAF blocks multipart/form-data → must use application/json
+- Safari ITP blocks Sumsub iframe → fallback opens in new tab
+- Theme toggle applies ONLY to dashboard; Landing/Auth stay dark
