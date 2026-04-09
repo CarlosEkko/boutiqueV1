@@ -314,9 +314,12 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
     const gross = total * (form.gross_pct / 100);
     const net = total * (form.net_pct / 100);
     const margin = gross - net;
+    const commissionPct = form.gross_pct - form.net_pct;
+    const brokerPct = commissionPct * (form.broker_share_pct / 100);
+    const kbexBrokerPct = commissionPct - brokerPct;
     const brokerComm = margin * (form.broker_share_pct / 100);
     const memberComm = margin - brokerComm;
-    return { adj, total, gross, net, margin, brokerComm, memberComm };
+    return { adj, total, gross, net, margin, brokerComm, memberComm, commissionPct, brokerPct, kbexBrokerPct };
   }, [form]);
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
@@ -465,8 +468,8 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             </div>
 
             {/* Reference Price with Fiat/Crypto toggle */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-1">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')}</Label>
                 <div className="flex bg-zinc-800 rounded-full p-0.5" data-testid="price-view-toggle">
                   <button
@@ -680,14 +683,14 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 <div className="bg-zinc-800/80 border border-zinc-700/50 rounded-xl p-3 space-y-2">
                   <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem Corretores</p>
                   <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
-                  <p className="text-zinc-500 text-xs">Gross - Net = {fmtVal(calc.gross)} - {fmtVal(calc.net)}</p>
+                  <p className="text-zinc-500 text-xs">Gross - Net = {form.gross_pct}% - {form.net_pct}% = {calc.commissionPct.toFixed(1)}%</p>
                   <div className="space-y-1.5 pt-2 border-t border-zinc-700/30 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-zinc-400">{t('otc.deals.modal.broker')} ({form.broker_share_pct}%)</span>
+                      <span className="text-zinc-400">{t('otc.deals.modal.broker')} ({calc.brokerPct.toFixed(1)}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-400">{t('otc.deals.modal.kbexBroker')} ({100 - form.broker_share_pct}%)</span>
+                      <span className="text-zinc-400">{t('otc.deals.modal.kbexBroker')} ({calc.kbexBrokerPct.toFixed(1)}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
                     </div>
                   </div>
