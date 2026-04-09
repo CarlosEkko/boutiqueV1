@@ -111,6 +111,19 @@ const AdminTransparency = () => {
     }
   };
 
+  const deleteReport = async (reportId) => {
+    if (!window.confirm('Tem certeza que deseja eliminar este relatório?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/transparency/reports/${reportId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Relatório eliminado');
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Sem permissão para eliminar');
+    }
+  };
+
   const copyAddress = (address) => {
     navigator.clipboard.writeText(address);
     toast.success('Address copied');
@@ -432,6 +445,14 @@ const AdminTransparency = () => {
                           <ExternalLink size={18} />
                         </a>
                       )}
+                      <button
+                        onClick={() => deleteReport(report.id)}
+                        className="p-2 text-red-500/50 hover:text-red-400 transition-colors"
+                        title="Eliminar relatório"
+                        data-testid={`delete-report-${report.id}`}
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </CardContent>
                 </Card>

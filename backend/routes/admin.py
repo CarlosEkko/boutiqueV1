@@ -1214,6 +1214,25 @@ async def update_public_wallet_balance(
     return {"success": True, "message": "Balance updated"}
 
 
+@router.delete("/transparency/reports/{report_id}")
+async def delete_transparency_report(
+    report_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete a transparency report. Only Manager and Global Manager."""
+    role = admin.get("internal_role")
+    if role not in ("manager", "global_manager", "admin") and not admin.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Only Manager or Global Manager can delete reports")
+
+    result = await db.transparency_reports.delete_one({"id": report_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    return {"success": True, "message": "Report deleted"}
+
+
+
+
 
 # ==================== KYC/KYB ADMIN ====================
 

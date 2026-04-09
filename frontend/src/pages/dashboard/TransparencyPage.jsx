@@ -9,20 +9,21 @@ import {
   Wallet,
   ExternalLink,
   Copy,
-  CheckCircle,
-  Clock
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '../../utils/formatters';
+import ProtectedDocViewer from '../../components/ProtectedDocViewer';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const TransparencyPage = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [reports, setReports] = useState([]);
   const [reserves, setReserves] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('reserves');
+  const [viewingDoc, setViewingDoc] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -51,6 +52,7 @@ const TransparencyPage = () => {
     navigator.clipboard.writeText(address);
     toast.success('Address copied to clipboard');
   };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -61,6 +63,16 @@ const TransparencyPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Protected Document Viewer */}
+      {viewingDoc && (
+        <ProtectedDocViewer
+          url={viewingDoc.file_url}
+          title={viewingDoc.title}
+          userName={user?.name || user?.email || 'KBEX User'}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-light text-white">Transparency</h1>
@@ -112,7 +124,6 @@ const TransparencyPage = () => {
       {/* Reserves Tab */}
       {activeTab === 'reserves' && (
         <div className="space-y-6">
-          {/* Totals Summary */}
           {reserves?.totals_by_asset && Object.keys(reserves.totals_by_asset).length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Object.entries(reserves.totals_by_asset).map(([asset, balance]) => (
@@ -126,7 +137,6 @@ const TransparencyPage = () => {
             </div>
           )}
 
-          {/* Public Wallets */}
           <Card className="bg-zinc-900/50 border-gold-800/20">
             <CardHeader>
               <CardTitle className="text-white font-light flex items-center gap-2">
@@ -233,14 +243,14 @@ const TransparencyPage = () => {
                         {report.type?.replace('_', ' ')}
                       </Badge>
                       {report.file_url && (
-                        <a
-                          href={report.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-gold-400 hover:text-gold-300 bg-gold-500/20 rounded-lg"
+                        <button
+                          onClick={() => setViewingDoc(report)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gold-400 hover:text-gold-300 bg-gold-500/20 hover:bg-gold-500/30 rounded-lg transition-colors"
+                          data-testid={`view-report-${report.id}`}
                         >
-                          <ExternalLink size={18} />
-                        </a>
+                          <Eye size={16} />
+                          <span>Visualizar</span>
+                        </button>
                       )}
                     </div>
                   </div>
