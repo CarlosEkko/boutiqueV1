@@ -243,11 +243,29 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   });
   const [saving, setSaving] = useState(false);
   const [livePrice, setLivePrice] = useState(null);
+  const [otcClients, setOtcClients] = useState([]);
+  const [clientSearch, setClientSearch] = useState('');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   const getHeaders = () => {
     const token = sessionStorage.getItem('kryptobox_token');
     return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
   };
+
+  // Fetch OTC clients
+  useEffect(() => {
+    if (!open) return;
+    const fetchClients = async () => {
+      try {
+        const res = await fetch(`${API}/api/otc/clients`, { headers: getHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          setOtcClients(data.clients || data || []);
+        }
+      } catch (e) { console.error('Failed to fetch OTC clients:', e); }
+    };
+    fetchClients();
+  }, [open]);
 
   useEffect(() => {
     if (deal) {
@@ -354,15 +372,64 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
             </div>
 
-            {/* Client */}
+            {/* Client - OTC Client Selector */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.clientName')}</Label>
-                <Input value={form.client_name} onChange={e => updateField('client_name', e.target.value)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-client-name" />
+                <Input
+                  value={form.client_name}
+                  onChange={e => {
+                    updateField('client_name', e.target.value);
+                    setClientSearch(e.target.value);
+                    setShowClientDropdown(true);
+                  }}
+                  onFocus={() => setShowClientDropdown(true)}
+                  placeholder="Pesquisar cliente OTC..."
+                  className="bg-zinc-900 border-zinc-800 text-white"
+                  data-testid="modal-client-name"
+                  autoComplete="off"
+                />
+                {showClientDropdown && (
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {otcClients
+                      .filter(c => {
+                        const term = (clientSearch || form.client_name || '').toLowerCase();
+                        if (!term) return true;
+                        return (c.entity_name || c.contact_name || '').toLowerCase().includes(term) ||
+                               (c.contact_email || '').toLowerCase().includes(term);
+                      })
+                      .slice(0, 10)
+                      .map(c => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-zinc-800 transition-colors border-b border-zinc-800/50 last:border-0"
+                          data-testid={`client-option-${c.id}`}
+                          onClick={() => {
+                            updateField('client_name', c.entity_name || c.contact_name || '');
+                            updateField('client_email', c.contact_email || '');
+                            setShowClientDropdown(false);
+                            setClientSearch('');
+                          }}
+                        >
+                          <p className="text-white text-sm font-medium">{c.entity_name || c.contact_name}</p>
+                          <p className="text-zinc-500 text-xs">{c.contact_email}</p>
+                        </button>
+                      ))}
+                    {otcClients.filter(c => {
+                      const term = (clientSearch || form.client_name || '').toLowerCase();
+                      if (!term) return true;
+                      return (c.entity_name || c.contact_name || '').toLowerCase().includes(term) ||
+                             (c.contact_email || '').toLowerCase().includes(term);
+                    }).length === 0 && (
+                      <p className="px-3 py-2 text-zinc-500 text-xs">Nenhum cliente encontrado</p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.email')}</Label>
-                <Input value={form.client_email} onChange={e => updateField('client_email', e.target.value)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-client-email" />
+                <Input value={form.client_email} onChange={e => updateField('client_email', e.target.value)} className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-client-email" readOnly />
               </div>
             </div>
 
