@@ -87,6 +87,9 @@ const AdminOpportunities = () => {
     type: 'lending',
     fixed_rate: '',
     variable_rate: '',
+    indexante_base: '',
+    inflation_adjustment: false,
+    current_inflation: '',
     duration_days: '',
     min_investment: '',
     max_investment: '',
@@ -202,6 +205,9 @@ const AdminOpportunities = () => {
       type: 'lending',
       fixed_rate: '',
       variable_rate: '',
+      indexante_base: '',
+      inflation_adjustment: false,
+      current_inflation: '',
       duration_days: '',
       min_investment: '',
       max_investment: '',
@@ -221,6 +227,9 @@ const AdminOpportunities = () => {
         ...formData,
         fixed_rate: parseFloat(formData.fixed_rate) || 0,
         variable_rate: parseFloat(formData.variable_rate) || 0,
+        indexante_base: parseFloat(formData.indexante_base) || 0,
+        inflation_adjustment: formData.inflation_adjustment,
+        current_inflation: parseFloat(formData.current_inflation) || 0,
         expected_roi: (parseFloat(formData.fixed_rate) || 0) + (parseFloat(formData.variable_rate) || 0),
         duration_days: parseInt(formData.duration_days) || 30,
         min_investment: parseFloat(formData.min_investment) || 100,
@@ -537,6 +546,101 @@ const AdminOpportunities = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Indexante — Inflation-Adjusted Rate */}
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <TrendingUp size={18} className="text-amber-400" />
+                    Indexante (Ajuste por Inflação)
+                  </h3>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs text-zinc-400">Ativar</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(f => ({ ...f, inflation_adjustment: !f.inflation_adjustment }))}
+                      className={`relative w-10 h-5 rounded-full transition-colors ${formData.inflation_adjustment ? 'bg-amber-500' : 'bg-zinc-700'}`}
+                      data-testid="inflation-toggle"
+                    >
+                      <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${formData.inflation_adjustment ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </button>
+                  </label>
+                </div>
+
+                {formData.inflation_adjustment && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-gray-300">Indexante Médio Base (% ao mês)</Label>
+                        <Input
+                          name="indexante_base"
+                          type="number"
+                          step="0.01"
+                          value={formData.indexante_base}
+                          onChange={handleChange}
+                          placeholder="ex: 12.64"
+                          className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                          data-testid="indexante-base"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Taxa base mensal antes do ajuste</p>
+                      </div>
+                      <div>
+                        <Label className="text-gray-300">Inflação Mensal Real PT (%)</Label>
+                        <Input
+                          name="current_inflation"
+                          type="number"
+                          step="0.01"
+                          value={formData.current_inflation}
+                          onChange={handleChange}
+                          placeholder="ex: 0.3"
+                          className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                          data-testid="inflation-rate"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Inflação mensal real em Portugal (INE)</p>
+                      </div>
+                    </div>
+
+                    {/* Calculation Preview */}
+                    {(parseFloat(formData.indexante_base) > 0) && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 space-y-3">
+                        <p className="text-amber-400 text-xs uppercase tracking-wider font-semibold">Cálculo do Ajuste</p>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-zinc-400">Indexante Base</span>
+                            <span className="text-white font-mono">{parseFloat(formData.indexante_base || 0).toFixed(2)}% /mês</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-zinc-400">Inflação Mensal</span>
+                            <span className="text-white font-mono">{parseFloat(formData.current_inflation || 0).toFixed(2)}%</span>
+                          </div>
+                          <div className="border-t border-amber-500/20 pt-2">
+                            <p className="text-zinc-500 text-xs mb-2">
+                              Fórmula: Taxa ajustada = Indexante Base × (1 + Inflação Mensal / 100)
+                            </p>
+                            <div className="flex justify-between items-center">
+                              <span className="text-amber-400 font-medium">Taxa Mensal Ajustada</span>
+                              <span className="text-amber-400 font-bold text-xl font-mono">
+                                {(parseFloat(formData.indexante_base || 0) * (1 + parseFloat(formData.current_inflation || 0) / 100)).toFixed(4)}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="border-t border-amber-500/20 pt-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-zinc-400">Taxa Anual Equivalente</span>
+                              <span className="text-emerald-400 font-bold font-mono">
+                                {((parseFloat(formData.indexante_base || 0) * (1 + parseFloat(formData.current_inflation || 0) / 100)) * 12).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-zinc-500 text-xs mt-2 italic">
+                          Este indexante ajusta-se todos os meses conforme a inflação mensal real em Portugal.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Investment Limits */}
