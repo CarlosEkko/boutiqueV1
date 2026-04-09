@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { formatNumber, formatDate} from '../../../utils/formatters';
@@ -39,11 +39,13 @@ import {
   AlertTriangle,
   Zap,
   Eye,
-  Building
+  Building,
+  ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const CURRENCY_SYMBOLS = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
 
 const OTCQuotes = () => {
   const { token } = useAuth();
@@ -52,20 +54,34 @@ const OTCQuotes = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   
-  // Create Quote Dialog
+  // Create Quote Dialog — full negotiation form
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [marketPrice, setMarketPrice] = useState(null);
   const [fetchingPrice, setFetchingPrice] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
   
-  // Quote Form
-  const [quoteForm, setQuoteForm] = useState({
+  // Full negotiation form
+  const [negForm, setNegForm] = useState({
+    reference_price: 0,
+    reference_currency: 'EUR',
+    condition: 'premium',
+    condition_pct: 2,
+    gross_pct: 4,
+    net_pct: 2,
+    broker_id: '',
+    broker_name: '',
+    broker_type: 'internal',
+    member_id: '',
+    member_name: '',
+    broker_share_pct: 50,
+    commission_currency: 'EUR',
     spread_percent: 1.0,
     fees: 0,
     valid_for_minutes: 5,
-    is_manual: false,
-    manual_price: ''
+    notes: ''
   });
+  const [saving, setSaving] = useState(false);
 
   // Quote Detail Dialog
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -77,14 +93,27 @@ const OTCQuotes = () => {
 
   // Auto-refresh market price every second when dialog is open
   useEffect(() => {
-    if (showCreateDialog && selectedDeal && !quoteForm.is_manual) {
+    if (showCreateDialog && selectedDeal) {
       const interval = setInterval(() => {
         fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset, true);
       }, 1000);
       
       return () => clearInterval(interval);
     }
-  }, [showCreateDialog, selectedDeal, quoteForm.is_manual]);
+  }, [showCreateDialog, selectedDeal]);
+
+  // Fetch team members on mount
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/admin/team-members`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTeamMembers(res.data.members || res.data || []);
+      } catch (e) { /* ignore */ }
+    };
+    fetchTeam();
+  }, [token]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -126,12 +155,24 @@ const OTCQuotes = () => {
 
   const openCreateDialog = async (deal) => {
     setSelectedDeal(deal);
-    setQuoteForm({
+    setNegForm({
+      reference_price: 0,
+      reference_currency: deal.quote_asset || 'EUR',
+      condition: 'premium',
+      condition_pct: 2,
+      gross_pct: 4,
+      net_pct: 2,
+      broker_id: '',
+      broker_name: '',
+      broker_type: 'internal',
+      member_id: '',
+      member_name: '',
+      broker_share_pct: 50,
+      commission_currency: deal.quote_asset || 'EUR',
       spread_percent: 1.0,
       fees: 0,
       valid_for_minutes: 5,
-      is_manual: false,
-      manual_price: ''
+      notes: ''
     });
     setMarketPrice(null);
     setShowCreateDialog(true);
@@ -140,20 +181,41 @@ const OTCQuotes = () => {
     await fetchMarketPrice(deal.base_asset, deal.quote_asset);
   };
 
+  // Update negForm reference price when market price changes
+  useEffect(() => {
+    if (marketPrice?.price && negForm.reference_price === 0) {
+      setNegForm(f => ({ ...f, reference_price: marketPrice.price }));
+    }
+  }, [marketPrice]);
+
+  // Calculator
+  const calc = useMemo(() => {
+    const p = negForm.reference_price;
+    const adj = negForm.condition === 'premium' ? p * (1 + negForm.condition_pct / 100) : p * (1 - negForm.condition_pct / 100);
+    const qty = selectedDeal?.amount || 0;
+    const total = qty * adj;
+    const gross = total * (negForm.gross_pct / 100);
+    const net = total * (negForm.net_pct / 100);
+    const margin = gross - net;
+    const brokerComm = margin * (negForm.broker_share_pct / 100);
+    const memberComm = margin - brokerComm;
+    return { adj, total, gross, net, margin, brokerComm, memberComm };
+  }, [negForm, selectedDeal]);
+
+  const sym = CURRENCY_SYMBOLS[negForm.reference_currency] || '€';
+  const fmtVal = v => {
+    const parts = (v || 0).toFixed(2).split('.');
+    const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return `${sym}${intPart}.${parts[1]}`;
+  };
+
   const calculateFinalPrice = () => {
     if (!selectedDeal) return 0;
-    
-    const basePrice = quoteForm.is_manual && quoteForm.manual_price 
-      ? parseFloat(quoteForm.manual_price) 
-      : (marketPrice?.price || 0);
-    
-    const spreadAmount = basePrice * (quoteForm.spread_percent / 100);
-    
-    // Buy: client pays more, Sell: client receives less
+    const spreadAmount = calc.adj * (negForm.spread_percent / 100);
     if (selectedDeal.transaction_type === 'buy') {
-      return basePrice + spreadAmount;
+      return calc.adj + spreadAmount;
     } else {
-      return basePrice - spreadAmount;
+      return calc.adj - spreadAmount;
     }
   };
 
@@ -162,33 +224,61 @@ const OTCQuotes = () => {
     return selectedDeal.amount * calculateFinalPrice();
   };
 
-  const handleCreateQuote = async () => {
+  const handleCreateDealAndQuote = async () => {
     if (!selectedDeal) return;
+    setSaving(true);
     
     try {
-      const payload = {
-        deal_id: selectedDeal.id,
-        spread_percent: quoteForm.spread_percent,
-        fees: quoteForm.fees,
-        valid_for_minutes: quoteForm.valid_for_minutes,
-        is_manual: quoteForm.is_manual,
-        market_price: quoteForm.is_manual && quoteForm.manual_price 
-          ? parseFloat(quoteForm.manual_price) 
-          : null
+      // 1. Update the deal with negotiation conditions
+      const dealUpdate = {
+        reference_price: negForm.reference_price,
+        reference_currency: negForm.reference_currency,
+        condition: negForm.condition,
+        condition_pct: negForm.condition_pct,
+        gross_pct: negForm.gross_pct,
+        net_pct: negForm.net_pct,
+        broker_id: negForm.broker_id,
+        broker_name: negForm.broker_name,
+        broker_type: negForm.broker_type,
+        member_id: negForm.member_id,
+        member_name: negForm.member_name,
+        broker_share_pct: negForm.broker_share_pct,
+        commission_currency: negForm.commission_currency,
+        total_value: calc.total,
+        adjusted_price: calc.adj,
+        notes: negForm.notes,
       };
       
-      await axios.post(`${API_URL}/api/otc/quotes`, payload, {
+      await axios.put(`${API_URL}/api/otc-deals/deals/${selectedDeal.id}`, dealUpdate, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 2. Create and send the quote
+      const quotePayload = {
+        deal_id: selectedDeal.id,
+        spread_percent: negForm.spread_percent,
+        fees: negForm.fees,
+        valid_for_minutes: negForm.valid_for_minutes,
+        is_manual: true,
+        market_price: calc.adj,
+      };
+      
+      await axios.post(`${API_URL}/api/otc/quotes`, quotePayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success('Cotação criada e enviada!');
+      toast.success('Negociação criada e cotação enviada ao cliente!');
       setShowCreateDialog(false);
       fetchData();
     } catch (err) {
-      console.error('Failed to create quote:', err);
-      toast.error(err.response?.data?.detail || 'Erro ao criar cotação');
+      console.error('Failed to create deal + quote:', err);
+      toast.error(err.response?.data?.detail || 'Erro ao criar negociação');
+    } finally {
+      setSaving(false);
     }
   };
+
+  const updateNeg = (field, value) => setNegForm(f => ({ ...f, [field]: value }));
 
   const handleAcceptQuote = async (quoteId) => {
     try {
@@ -569,226 +659,249 @@ const OTCQuotes = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create Quote Dialog */}
+      {/* Create Negotiation + Quote Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-zinc-900 border-gold-800/30 text-white max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-gold-400 flex items-center gap-2">
-              <Calculator size={20} />
-              Criar Cotação
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              {selectedDeal && `Deal ${selectedDeal.deal_number} - ${selectedDeal.client_name}`}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 [&>button]:text-zinc-400" data-testid="create-negotiation-dialog">
+          <div className="p-6 pb-4 border-b border-zinc-800">
+            <div className="flex items-center gap-2 text-xl font-light" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <ArrowLeftRight className="text-yellow-500" size={20} />
+              Criar Negociação & Cotação
+            </div>
+            <p className="text-zinc-500 text-sm mt-1">
+              {selectedDeal && `${selectedDeal.deal_number} — ${selectedDeal.client_name} — ${selectedDeal.amount} ${selectedDeal.base_asset}/${selectedDeal.quote_asset}`}
+            </p>
+          </div>
           
           {selectedDeal && (
-            <div className="space-y-6 py-4">
-              {/* Deal Summary */}
-              <div className="p-4 bg-zinc-800/50 rounded-lg">
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-gray-400 text-xs uppercase mb-1">Operação</p>
-                    <Badge className={selectedDeal.transaction_type === 'buy' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}>
-                      {selectedDeal.transaction_type === 'buy' ? 'COMPRA' : 'VENDA'}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs uppercase mb-1">Quantidade</p>
-                    <p className="text-white font-mono text-lg">{formatNumber(selectedDeal.amount)} {selectedDeal.base_asset}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-xs uppercase mb-1">Moeda</p>
-                    <p className="text-white text-lg">{selectedDeal.quote_asset}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+              {/* Left: Form */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* Deal Info Summary */}
+                <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-zinc-500 text-xs uppercase mb-1">Operação</p>
+                      <Badge className={selectedDeal.transaction_type === 'buy' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-red-900/30 text-red-400'}>
+                        {selectedDeal.transaction_type === 'buy' ? 'COMPRA' : 'VENDA'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs uppercase mb-1">Cliente</p>
+                      <p className="text-white text-sm font-medium">{selectedDeal.client_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs uppercase mb-1">Quantidade</p>
+                      <p className="text-white font-mono">{formatNumber(selectedDeal.amount)} {selectedDeal.base_asset}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs uppercase mb-1">Moeda</p>
+                      <p className="text-white">{selectedDeal.quote_asset}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Market Price */}
-              <div className="p-4 bg-blue-900/20 rounded-lg border border-blue-500/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-400 text-sm font-medium flex items-center gap-2">
-                      <Zap size={16} />
-                      Preço de Mercado
-                    </p>
-                    {fetchingPrice ? (
-                      <p className="text-white text-2xl font-mono mt-1">Carregando...</p>
-                    ) : marketPrice ? (
-                      <p className="text-white text-2xl font-mono mt-1">
-                        ${formatNumber(marketPrice.price)} {selectedDeal.quote_asset}
+                {/* Market Price */}
+                <div className="p-4 bg-blue-900/10 rounded-lg border border-blue-500/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-400 text-sm font-medium flex items-center gap-2">
+                        <Zap size={16} /> Preço de Mercado
                       </p>
-                    ) : (
-                      <p className="text-yellow-400 text-sm mt-1">Preço não disponível - use manual</p>
+                      {fetchingPrice ? (
+                        <p className="text-white text-xl font-mono mt-1">Carregando...</p>
+                      ) : marketPrice ? (
+                        <p className="text-white text-xl font-mono mt-1">
+                          {CURRENCY_SYMBOLS[selectedDeal.quote_asset] || '$'}{formatNumber(marketPrice.price)} {selectedDeal.quote_asset}
+                        </p>
+                      ) : (
+                        <p className="text-yellow-400 text-sm mt-1">Insira manualmente</p>
+                      )}
+                    </div>
+                    <Button onClick={() => fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset)} variant="outline" size="sm" className="border-blue-500/30 text-blue-400" disabled={fetchingPrice}>
+                      <RefreshCw size={14} className={fetchingPrice ? 'animate-spin' : ''} />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Reference Price */}
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({negForm.reference_currency})</Label>
+                  <div className="relative">
+                    <Input type="number" step="any" value={negForm.reference_price} onChange={e => updateNeg('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="neg-ref-price" />
+                    {marketPrice && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => updateNeg('reference_price', marketPrice.price)}>
+                        <TrendingUp size={12} /> Usar mercado
+                      </span>
                     )}
                   </div>
-                  <Button
-                    onClick={() => fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset)}
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-500/30 text-blue-400"
-                    disabled={fetchingPrice}
-                  >
-                    <RefreshCw size={14} className={fetchingPrice ? 'animate-spin' : ''} />
-                  </Button>
+                </div>
+
+                {/* Condition */}
+                <div className="space-y-1.5">
+                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Condição</Label>
+                  <div className="flex gap-3">
+                    <div className="flex rounded-lg overflow-hidden border border-zinc-800 flex-shrink-0">
+                      <button onClick={() => updateNeg('condition', 'premium')} className={`px-4 py-2 text-sm font-medium ${negForm.condition === 'premium' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-950 text-zinc-500'}`}>Premium (+)</button>
+                      <button onClick={() => updateNeg('condition', 'discount')} className={`px-4 py-2 text-sm font-medium ${negForm.condition === 'discount' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500'}`}>Desconto (-)</button>
+                    </div>
+                    <div className="relative flex-1">
+                      <Input type="number" step="0.1" value={negForm.condition_pct} onChange={e => updateNeg('condition_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-condition-pct" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gross/Net */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Gross (%)</Label>
+                    <div className="relative">
+                      <Input type="number" step="0.1" value={negForm.gross_pct} onChange={e => updateNeg('gross_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-gross" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Net (%)</Label>
+                    <div className="relative">
+                      <Input type="number" step="0.1" value={negForm.net_pct} onChange={e => updateNeg('net_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-net" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Broker & Member */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor</Label>
+                    <Select value={negForm.broker_id || '_none'} onValueChange={v => {
+                      if (v === '_none') { updateNeg('broker_id', ''); updateNeg('broker_name', ''); return; }
+                      const m = teamMembers.find(t => t.id === v);
+                      updateNeg('broker_id', v); updateNeg('broker_name', m?.name || '');
+                    }}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800">
+                        <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
+                        {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor KBEX</Label>
+                    <Select value={negForm.member_id || '_none'} onValueChange={v => {
+                      if (v === '_none') { updateNeg('member_id', ''); updateNeg('member_name', ''); return; }
+                      const m = teamMembers.find(t => t.id === v);
+                      updateNeg('member_id', v); updateNeg('member_name', m?.name || '');
+                    }}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800">
+                        <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
+                        {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Broker share */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Margem Corretor (%)</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <Input type="number" step="5" value={negForm.broker_share_pct} onChange={e => updateNeg('broker_share_pct', Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-900 border-zinc-800 text-white pr-8" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                      </div>
+                      <span className="text-zinc-500 text-xs whitespace-nowrap">KBEX: {100 - negForm.broker_share_pct}%</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Validade Cotação</Label>
+                    <Select value={String(negForm.valid_for_minutes)} onValueChange={v => updateNeg('valid_for_minutes', parseInt(v))}>
+                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800">
+                        <SelectItem value="2" className="text-white">2 minutos</SelectItem>
+                        <SelectItem value="5" className="text-white">5 minutos</SelectItem>
+                        <SelectItem value="10" className="text-white">10 minutos</SelectItem>
+                        <SelectItem value="15" className="text-white">15 minutos</SelectItem>
+                        <SelectItem value="30" className="text-white">30 minutos</SelectItem>
+                        <SelectItem value="60" className="text-white">1 hora</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
-              {/* Quote Configuration */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Modo de Preço</Label>
-                  <Select 
-                    value={quoteForm.is_manual ? 'manual' : 'auto'} 
-                    onValueChange={(v) => setQuoteForm({...quoteForm, is_manual: v === 'manual'})}
-                  >
-                    <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                      <SelectItem value="auto" className="text-white hover:bg-zinc-700">
-                        <span className="flex items-center gap-2">
-                          <Zap size={14} /> Semi-Automático
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="manual" className="text-white hover:bg-zinc-700">
-                        <span className="flex items-center gap-2">
-                          <Calculator size={14} /> Manual
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {quoteForm.is_manual && (
-                  <div className="space-y-2">
-                    <Label>Preço Manual ({selectedDeal.quote_asset})</Label>
-                    <Input
-                      type="number" step="any"
-                      step="0.01"
-                      value={quoteForm.manual_price}
-                      onChange={(e) => setQuoteForm({...quoteForm, manual_price: e.target.value})}
-                      placeholder="Ex: 65000.00"
-                      className="bg-zinc-800 border-gold-500/30"
-                    />
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label>Spread (%)</Label>
-                  <Input
-                    type="number" step="any"
-                    step="0.1"
-                    value={quoteForm.spread_percent}
-                    onChange={(e) => setQuoteForm({...quoteForm, spread_percent: parseFloat(e.target.value) || 0})}
-                    className="bg-zinc-800 border-gold-500/30"
-                  />
-                  <p className="text-xs text-gray-500">
-                    {selectedDeal.transaction_type === 'buy' ? 'Adicionado ao preço' : 'Subtraído do preço'}
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Taxas Adicionais ({selectedDeal.quote_asset})</Label>
-                  <Input
-                    type="number" step="any"
-                    step="0.01"
-                    value={quoteForm.fees}
-                    onChange={(e) => setQuoteForm({...quoteForm, fees: parseFloat(e.target.value) || 0})}
-                    className="bg-zinc-800 border-gold-500/30"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Validade (minutos)</Label>
-                  <Select 
-                    value={String(quoteForm.valid_for_minutes)} 
-                    onValueChange={(v) => setQuoteForm({...quoteForm, valid_for_minutes: parseInt(v)})}
-                  >
-                    <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
-                      <SelectItem value="2" className="text-white hover:bg-zinc-700">2 minutos</SelectItem>
-                      <SelectItem value="5" className="text-white hover:bg-zinc-700">5 minutos</SelectItem>
-                      <SelectItem value="10" className="text-white hover:bg-zinc-700">10 minutos</SelectItem>
-                      <SelectItem value="15" className="text-white hover:bg-zinc-700">15 minutos</SelectItem>
-                      <SelectItem value="30" className="text-white hover:bg-zinc-700">30 minutos</SelectItem>
-                      <SelectItem value="60" className="text-white hover:bg-zinc-700">1 hora</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              {/* Right: Calculator */}
+              <div className="lg:col-span-1">
+                <Card className="bg-zinc-900 border-yellow-500/30 shadow-lg shadow-yellow-500/5 sticky top-4" data-testid="negotiation-calculator">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-yellow-500 flex items-center gap-2 text-base"><Calculator size={16} /> Calculadora</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Preço Ajustado</span>
+                        <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Valor Total</span>
+                        <span className="text-white font-bold">{fmtVal(calc.total)}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Gross ({negForm.gross_pct}%)</span>
+                        <span className="text-yellow-400 font-medium">{fmtVal(calc.gross)}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Net ({negForm.net_pct}%)</span>
+                        <span className="text-zinc-300">{fmtVal(calc.net)}</span>
+                      </div>
+                    </div>
 
-              {/* Quote Preview */}
-              <div className="p-4 bg-gold-900/20 rounded-lg border border-gold-500/30">
-                <h4 className="text-gold-400 font-medium mb-3 flex items-center gap-2">
-                  <DollarSign size={18} />
-                  Resumo da Cotação
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-400 text-sm">Preço Base</p>
-                    <p className="text-white font-mono">
-                      ${formatNumber(quoteForm.is_manual && quoteForm.manual_price ? parseFloat(quoteForm.manual_price) : (marketPrice?.price || 0))}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Spread ({quoteForm.spread_percent}%)</p>
-                    <p className="text-white font-mono">
-                      ${formatNumber((quoteForm.is_manual && quoteForm.manual_price ? parseFloat(quoteForm.manual_price) : (marketPrice?.price || 0)) * (quoteForm.spread_percent / 100))}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Preço Final</p>
-                    <p className="text-gold-400 font-mono text-xl">
-                      ${formatNumber(calculateFinalPrice())}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Valor Total</p>
-                    <p className="text-gold-400 font-mono text-xl">
-                      ${formatNumber(calculateTotalValue())}
-                    </p>
-                  </div>
-                </div>
-                
-                {quoteForm.fees > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gold-500/20">
-                    <p className="text-gray-400 text-sm">+ Taxas: <span className="text-white">${formatNumber(quoteForm.fees)}</span></p>
-                    <p className="text-gold-400 font-mono text-lg mt-1">
-                      Total com Taxas: ${formatNumber(calculateTotalValue() + quoteForm.fees)}
-                    </p>
-                  </div>
-                )}
-              </div>
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 space-y-2">
+                      <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem KBEX</p>
+                      <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
+                      <div className="space-y-1.5 pt-2 border-t border-yellow-500/20 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-zinc-400">Corretor ({negForm.broker_share_pct}%)</span>
+                          <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-zinc-400">KBEX ({100 - negForm.broker_share_pct}%)</span>
+                          <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Warning for manual mode without price */}
-              {quoteForm.is_manual && !quoteForm.manual_price && (
-                <div className="p-3 bg-yellow-900/20 rounded-lg border border-yellow-500/30 flex items-center gap-2">
-                  <AlertTriangle className="text-yellow-400" size={18} />
-                  <p className="text-yellow-400 text-sm">Insira um preço manual para continuar</p>
-                </div>
-              )}
+                    {/* Quote summary */}
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
+                      <p className="text-blue-400 text-xs uppercase tracking-wider font-semibold">Cotação ao Cliente</p>
+                      <div className="space-y-1.5 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-zinc-400">Spread ({negForm.spread_percent}%)</span>
+                          <span className="text-white">{fmtVal(calc.adj * (negForm.spread_percent / 100))}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-zinc-400">Preço Final</span>
+                          <span className="text-blue-400 font-bold">{fmtVal(calculateFinalPrice())}</span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-blue-500/20">
+                          <span className="text-zinc-400">Valor Total</span>
+                          <span className="text-blue-400 font-bold text-lg">{fmtVal(calculateTotalValue())}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button onClick={handleCreateDealAndQuote} disabled={saving || negForm.reference_price <= 0} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-5" data-testid="create-deal-quote-btn">
+                      {saving ? (
+                        <><RefreshCw size={16} className="animate-spin mr-2" /> A processar...</>
+                      ) : (
+                        <><Send size={16} className="mr-2" /> Criar Negociação & Enviar Cotação</>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-zinc-600">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleCreateQuote}
-              className="bg-gold-500 hover:bg-gold-400 text-black"
-              disabled={
-                (quoteForm.is_manual && !quoteForm.manual_price) ||
-                (!quoteForm.is_manual && !marketPrice)
-              }
-            >
-              <Send size={16} className="mr-2" />
-              Criar e Enviar Cotação
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
