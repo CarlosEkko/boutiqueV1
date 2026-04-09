@@ -632,21 +632,31 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                  {/* Base price & pair rate context */}
-                  <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Preço Base (1 {form.asset})</span>
-                    <span className="text-zinc-300">{fmtVal(form.reference_price)}</span>
-                  </div>
-                  {form.reference_price > 0 && (
-                    <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                      <span className="text-zinc-500">Par {form.reference_currency}/{form.asset}</span>
-                      <span className="text-zinc-300 font-mono">{(1 / form.reference_price).toFixed(6)}</span>
-                    </div>
+                  {priceMode === 'pair' ? (
+                    /* Par mode: show pair rate context */
+                    <>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Par {form.reference_currency}/{form.asset}</span>
+                        <span className="text-white font-mono">{form.reference_price > 0 ? (1 / form.reference_price).toFixed(6) : '—'}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Par Ajustado ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
+                        <span className="text-white font-medium font-mono">{calc.adj > 0 ? (1 / calc.adj).toFixed(6) : '—'}</span>
+                      </div>
+                    </>
+                  ) : (
+                    /* Unit mode: show price per unit */
+                    <>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Preço Base (1 {form.asset})</span>
+                        <span className="text-white font-mono">{fmtVal(form.reference_price)}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
+                        <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
+                      </div>
+                    </>
                   )}
-                  <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
-                    <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
-                  </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800 bg-zinc-800/30 -mx-3 px-3 rounded">
                     <span className="text-zinc-400 font-medium">{form.quantity} {form.asset} ×</span>
                     <span className="text-white font-bold text-base">{fmtVal(calc.total, 2)}</span>
