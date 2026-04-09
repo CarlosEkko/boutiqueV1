@@ -125,10 +125,14 @@ const AdminRevolutPage = () => {
     setReconciling(false);
   };
 
-  const totalBalance = accounts.reduce((sum, a) => {
-    if (a.currency === 'EUR') return sum + (a.balance || 0);
-    return sum;
-  }, 0);
+  // Group accounts: "Main" → Tesouraria & Onboarding, "kbex" → Conciliação de Clientes
+  const treasuryAccounts = accounts.filter(a => a.state === 'active' && (a.name || '').toLowerCase().includes('main'));
+  const clientAccounts = accounts.filter(a => a.state === 'active' && (a.name || '').toLowerCase().includes('kbex'));
+  const otherAccounts = accounts.filter(a => a.state === 'active' && !(a.name || '').toLowerCase().includes('main') && !(a.name || '').toLowerCase().includes('kbex'));
+
+  const treasuryBalanceEUR = treasuryAccounts.reduce((sum, a) => a.currency === 'EUR' ? sum + (a.balance || 0) : sum, 0);
+  const clientBalanceEUR = clientAccounts.reduce((sum, a) => a.currency === 'EUR' ? sum + (a.balance || 0) : sum, 0);
+  const totalBalance = accounts.reduce((sum, a) => a.currency === 'EUR' ? sum + (a.balance || 0) : sum, 0);
 
   const filteredUsers = users.filter(u =>
     u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -183,17 +187,23 @@ const AdminRevolutPage = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardContent className="p-4">
-            <p className="text-gray-400 text-xs uppercase">Saldo EUR</p>
+            <p className="text-gray-400 text-xs uppercase">Saldo Total EUR</p>
             <p className="text-2xl font-bold text-white mt-1">€ {fmtAmount(totalBalance)}</p>
           </CardContent>
         </Card>
-        <Card className="bg-zinc-900/50 border-zinc-800">
+        <Card className="bg-blue-900/10 border-blue-800/20">
           <CardContent className="p-4">
-            <p className="text-gray-400 text-xs uppercase">Contas Ativas</p>
-            <p className="text-2xl font-bold text-gold-400 mt-1">{accounts.filter(a => a.state === 'active').length}</p>
+            <p className="text-blue-400 text-xs uppercase">Tesouraria EUR</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">€ {fmtAmount(treasuryBalanceEUR)}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gold-900/10 border-gold-800/20">
+          <CardContent className="p-4">
+            <p className="text-gold-400 text-xs uppercase">Clientes EUR</p>
+            <p className="text-2xl font-bold text-gold-400 mt-1">€ {fmtAmount(clientBalanceEUR)}</p>
           </CardContent>
         </Card>
         <Card className="bg-amber-900/10 border-amber-800/20">
@@ -213,7 +223,7 @@ const AdminRevolutPage = () => {
       {/* Tabs */}
       <div className="flex gap-1 bg-zinc-900/30 p-1 rounded-lg w-fit">
         {[
-          { key: 'accounts', label: 'Contas', count: accounts.length },
+          { key: 'accounts', label: 'Contas', count: accounts.filter(a => a.state === 'active').length },
           { key: 'deposits', label: 'Depósitos', count: pendingCount },
         ].map(tab => (
           <button
@@ -229,26 +239,121 @@ const AdminRevolutPage = () => {
 
       {/* Accounts Tab */}
       {activeTab === 'accounts' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {accounts.filter(a => a.state === 'active').map(account => (
-            <Card key={account.id} className="bg-zinc-900/50 border-zinc-800 hover:border-gold-800/30 transition-colors">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{CURRENCY_FLAGS[account.currency] || '💱'}</span>
-                    <span className="text-white font-medium">{account.currency}</span>
-                  </div>
-                  <Badge className="bg-emerald-500/15 text-emerald-400 border-0 text-[10px]">Ativa</Badge>
+        <div className="space-y-8">
+          {/* Tesouraria & Onboarding (Main) */}
+          {treasuryAccounts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-8 bg-blue-500 rounded-full" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Tesouraria & Onboarding</h2>
+                  <p className="text-xs text-gray-400">Contas "Main" — Receitas e depósitos de onboarding</p>
                 </div>
-                <p className="text-2xl font-bold text-white font-mono">
-                  {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
-                </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {account.name} • Atualizado {new Date(account.updated_at).toLocaleDateString('pt-PT')}
-                </p>
+                <Badge className="bg-blue-500/15 text-blue-400 border-0 ml-auto">{treasuryAccounts.length} contas</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {treasuryAccounts.map(account => (
+                  <Card key={account.id} className="bg-zinc-900/50 border-blue-800/20 hover:border-blue-500/40 transition-colors">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{CURRENCY_FLAGS[account.currency] || '💱'}</span>
+                          <span className="text-white font-medium">{account.currency}</span>
+                        </div>
+                        <Badge className="bg-blue-500/15 text-blue-400 border-0 text-[10px]">Tesouraria</Badge>
+                      </div>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {account.name} • Atualizado {new Date(account.updated_at).toLocaleDateString('pt-PT')}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Conciliação de Clientes (kbex) */}
+          {clientAccounts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-8 bg-gold-500 rounded-full" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Conciliação de Clientes</h2>
+                  <p className="text-xs text-gray-400">Contas "kbex" — Depósitos e reconciliação de clientes</p>
+                </div>
+                <Badge className="bg-gold-500/15 text-gold-400 border-0 ml-auto">{clientAccounts.length} contas</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {clientAccounts.map(account => (
+                  <Card key={account.id} className="bg-zinc-900/50 border-gold-800/20 hover:border-gold-500/40 transition-colors">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{CURRENCY_FLAGS[account.currency] || '💱'}</span>
+                          <span className="text-white font-medium">{account.currency}</span>
+                        </div>
+                        <Badge className="bg-gold-500/15 text-gold-400 border-0 text-[10px]">Clientes</Badge>
+                      </div>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {account.name} • Atualizado {new Date(account.updated_at).toLocaleDateString('pt-PT')}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other accounts (if any don't match Main/kbex) */}
+          {otherAccounts.length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-8 bg-gray-500 rounded-full" />
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Outras Contas</h2>
+                  <p className="text-xs text-gray-400">Contas não classificadas</p>
+                </div>
+                <Badge className="bg-gray-500/15 text-gray-400 border-0 ml-auto">{otherAccounts.length} contas</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {otherAccounts.map(account => (
+                  <Card key={account.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-600 transition-colors">
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{CURRENCY_FLAGS[account.currency] || '💱'}</span>
+                          <span className="text-white font-medium">{account.currency}</span>
+                        </div>
+                        <Badge className="bg-gray-500/15 text-gray-400 border-0 text-[10px]">Outra</Badge>
+                      </div>
+                      <p className="text-2xl font-bold text-white font-mono">
+                        {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {account.name} • Atualizado {new Date(account.updated_at).toLocaleDateString('pt-PT')}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {accounts.filter(a => a.state === 'active').length === 0 && (
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-12 text-center">
+                <Landmark className="mx-auto mb-4 text-gray-500" size={48} />
+                <h3 className="text-lg text-white mb-2">Sem contas ativas</h3>
+                <p className="text-gray-400 text-sm">Conecte a sua conta Revolut Business para ver os saldos.</p>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
       )}
 
