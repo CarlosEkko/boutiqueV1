@@ -109,6 +109,41 @@ async def list_counterparties(admin: dict = Depends(get_admin_user)):
 
 # ---- Webhook ----
 
+@router.post("/webhooks/setup")
+async def setup_webhook(request: Request, admin: dict = Depends(get_admin_user)):
+    """Create a webhook on Revolut for real-time deposit notifications."""
+    from services.revolut_service import revolut_service
+    body = await request.json()
+    webhook_url = body.get("url")
+    if not webhook_url:
+        raise HTTPException(status_code=400, detail="url required")
+    
+    result = await revolut_service.create_webhook(webhook_url)
+    if isinstance(result, dict) and result.get("error"):
+        raise HTTPException(status_code=result.get("status", 400), detail=result["error"])
+    return result
+
+
+@router.get("/webhooks")
+async def list_webhooks(admin: dict = Depends(get_admin_user)):
+    """List all registered Revolut webhooks."""
+    from services.revolut_service import revolut_service
+    result = await revolut_service.list_webhooks()
+    if isinstance(result, dict) and result.get("error"):
+        raise HTTPException(status_code=result.get("status", 400), detail=result["error"])
+    return {"webhooks": result if isinstance(result, list) else []}
+
+
+@router.delete("/webhooks/{webhook_id}")
+async def delete_webhook(webhook_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete a Revolut webhook."""
+    from services.revolut_service import revolut_service
+    result = await revolut_service.delete_webhook(webhook_id)
+    if isinstance(result, dict) and result.get("error"):
+        raise HTTPException(status_code=result.get("status", 400), detail=result["error"])
+    return {"success": True, "message": "Webhook eliminado"}
+
+
 @router.post("/webhook")
 async def revolut_webhook(request: Request):
     """Handle Revolut webhook notifications for real-time deposit detection."""

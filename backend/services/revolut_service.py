@@ -245,12 +245,101 @@ class RevolutService:
                 "auth_url": self.get_authorization_url(),
             }
 
+        # Check webhook status
+        webhook_status = None
+        if self.db is not None:
+            wh = await self.db.revolut_tokens.find_one({"type": "webhook_config"}, {"_id": 0})
+            if wh:
+                webhook_status = {"id": wh.get("webhook_id"), "url": wh.get("url"), "events": wh.get("events")}
+
         return {
             "connected": True,
             "status": "active",
             "message": "Revolut Business conectado",
             "last_auth": tokens.get("saved_at_iso"),
+            "webhook": webhook_status,
         }
+
+    # ---- Webhook Management (API v2) ----
+
+    @property
+    def _v2_base(self):
+        if self.env == "sandbox":
+            return "https://sandbox-b2b.revolut.com/api/2.0"
+        return "https://b2b.revolut.com/api/2.0"
+
+    async def _v2_call(self, method: str, endpoint: str, json_data: dict = None) -> dict:
+        """Make authenticated call to Revolut API v2."""
+        token = await self._get_access_token()
+        if not token:
+            return {"error": "Not authenticated", "authenticated": False}
+
+        url = f"{self._v2_base}{endpoint}"
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            if method == "GET":
+                resp = await client.get(url, headers=headers)
+            elif method == "POST":
+                resp = await client.post(url, headers=headers, json=json_data)
+            elif method == "DELETE":
+                resp = await client.delete(url, headers=headers)
+            else:
+                return {"error": f"Unsupported method"}
+
+            if resp.status_code == 401:
+                new_token = await self.refresh_access_token()
+                if new_token:
+                    headers["Authorization"] = f"Bearer {new_token}"
+                    if method == "GET":
+                        resp = await client.get(url, headers=headers)
+                    elif method == "POST":
+                        resp = await client.post(url, headers=headers, json=json_data)
+                    elif method == "DELETE":
+                        resp = await client.delete(url, headers=headers)
+                else:
+                    return {"error": "Auth expired", "authenticated": False}
+
+            if resp.status_code == 204:
+                return {"success": True}
+            if resp.status_code >= 400:
+                return {"error": resp.text, "status": resp.status_code}
+            return resp.json()
+
+    async def create_webhook(self, webhook_url: str) -> dict:
+        """Register a webhook with Revolut for real-time deposit notifications."""
+        result = await self._v2_call("POST", "/webhooks", {
+            "url": webhook_url,
+            "events": ["TransactionCreated", "TransactionStateChanged"],
+        })
+        if "error" not in result and result.get("id"):
+            # Save webhook config
+            if self.db is not None:
+                await self.db.revolut_tokens.update_one(
+                    {"type": "webhook_config"},
+                    {"$set": {
+                        "type": "webhook_config",
+                        "webhook_id": result["id"],
+                        "url": webhook_url,
+                        "events": result.get("events", []),
+                        "signing_secret": result.get("signing_secret", ""),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    }},
+                    upsert=True,
+                )
+        return result
+
+    async def list_webhooks(self) -> dict:
+        """List all registered webhooks."""
+        return await self._v2_call("GET", "/webhooks")
+
+    async def delete_webhook(self, webhook_id: str) -> dict:
+        """Delete a webhook."""
+        result = await self._v2_call("DELETE", f"/webhooks/{webhook_id}")
+        if "error" not in result:
+            if self.db is not None:
+                await self.db.revolut_tokens.delete_one({"type": "webhook_config", "webhook_id": webhook_id})
+        return result
 
 
 # Global instance

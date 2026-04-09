@@ -162,14 +162,24 @@ const AdminRevolutPage = () => {
       </div>
 
       {/* Connection Status */}
-      <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border ${status?.connected ? 'bg-emerald-900/10 border-emerald-800/30' : 'bg-red-900/10 border-red-800/30'}`}>
-        {status?.connected ? (
-          <><Link2 size={16} className="text-emerald-400" /><span className="text-emerald-400 text-sm font-medium">Revolut Business Conectado</span></>
-        ) : (
-          <><Link2Off size={16} className="text-red-400" /><span className="text-red-400 text-sm">Não conectado</span>
-            {status?.auth_url && <a href={status.auth_url} target="_blank" rel="noreferrer" className="text-gold-400 underline text-sm ml-2">Autorizar</a>}
-          </>
-        )}
+      <div className={`flex items-center justify-between px-4 py-2.5 rounded-lg border ${status?.connected ? 'bg-emerald-900/10 border-emerald-800/30' : 'bg-red-900/10 border-red-800/30'}`}>
+        <div className="flex items-center gap-3">
+          {status?.connected ? (
+            <><Link2 size={16} className="text-emerald-400" /><span className="text-emerald-400 text-sm font-medium">Revolut Business Conectado</span></>
+          ) : (
+            <><Link2Off size={16} className="text-red-400" /><span className="text-red-400 text-sm">Não conectado</span>
+              {status?.auth_url && <a href={status.auth_url} target="_blank" rel="noreferrer" className="text-gold-400 underline text-sm ml-2">Autorizar</a>}
+            </>
+          )}
+        </div>
+        {status?.webhook ? (
+          <div className="flex items-center gap-2">
+            <CheckCircle size={14} className="text-emerald-400" />
+            <span className="text-emerald-400 text-xs">Webhook ativo</span>
+          </div>
+        ) : status?.connected ? (
+          <span className="text-amber-400 text-xs">Webhook não configurado</span>
+        ) : null}
       </div>
 
       {/* KPIs */}
