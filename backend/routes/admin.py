@@ -1627,3 +1627,85 @@ async def fix_membership_levels(admin: dict = Depends(get_admin_user)):
         "fixed_users": fixed,
         "message": f"{len(fixed)} utilizador(es) corrigido(s)"
     }
+
+
+
+@router.post("/sync-kyc-to-otc")
+async def sync_kyc_approved_to_otc_clients(admin: dict = Depends(get_admin_user)):
+    """
+    Retroactively convert all users with kyc_status='approved' 
+    who don't yet have an OTC Client record.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Find all approved users
+    cursor = db.users.find({"kyc_status": "approved"}, {"_id": 0})
+    approved_users = await cursor.to_list(500)
+    
+    created = []
+    skipped = []
+    
+    for user in approved_users:
+        user_email = user.get("email", "")
+        if not user_email:
+            continue
+        
+        # Check if OTC client already exists
+        existing = await db.otc_clients.find_one({
+            "contact_email": {"$regex": f"^{user_email}$", "$options": "i"}
+        })
+        if existing:
+            skipped.append(user_email)
+            continue
+        
+        # Try to find matching OTC lead
+        otc_lead = await db.otc_leads.find_one({
+            "contact_email": {"$regex": f"^{user_email}$", "$options": "i"}
+        })
+        
+        # Update lead status if found
+        if otc_lead and otc_lead.get("status") != "active_client":
+            await db.otc_leads.update_one(
+                {"id": otc_lead["id"]},
+                {"$set": {
+                    "status": "active_client",
+                    "workflow_stage": 5,
+                    "updated_at": now,
+                }}
+            )
+        
+        # Create OTC Client
+        otc_client = {
+            "id": str(uuid.uuid4()),
+            "entity_name": (otc_lead or {}).get("entity_name", user.get("name", user_email)),
+            "contact_name": (otc_lead or {}).get("contact_name", user.get("name", "")),
+            "contact_email": user_email,
+            "contact_phone": (otc_lead or {}).get("contact_phone", user.get("phone", "")),
+            "country": (otc_lead or {}).get("country", user.get("country", "")),
+            "client_type": "individual",
+            "source": (otc_lead or {}).get("source", "direct_registration"),
+            "kyc_status": "approved",
+            "is_active": True,
+            "daily_limit_usd": (otc_lead or {}).get("daily_limit_set", 100000),
+            "monthly_limit_usd": (otc_lead or {}).get("monthly_limit_set", 1000000),
+            "preferred_currency": (otc_lead or {}).get("preferred_currency", "EUR"),
+            "preferred_cryptos": (otc_lead or {}).get("interested_cryptos", []),
+            "notes": "Sincronizado retroativamente via sync-kyc-to-otc",
+            "user_id": user.get("id"),
+            "lead_id": otc_lead["id"] if otc_lead else None,
+            "created_at": now,
+            "updated_at": now,
+            "created_by": admin["id"],
+        }
+        await db.otc_clients.insert_one(otc_client)
+        created.append({"email": user_email, "entity": otc_client["entity_name"]})
+        logger.info(f"OTC Client sync-created for {user_email}")
+    
+    return {
+        "success": True,
+        "created_count": len(created),
+        "skipped_count": len(skipped),
+        "created": created,
+        "skipped": skipped,
+        "message": f"{len(created)} cliente(s) OTC criado(s), {len(skipped)} já existiam"
+    }
