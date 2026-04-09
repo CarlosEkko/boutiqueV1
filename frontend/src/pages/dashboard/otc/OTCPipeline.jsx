@@ -33,7 +33,8 @@ import {
   Calculator,
   Send,
   Zap,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../../i18n';
@@ -99,6 +100,21 @@ const OTCPipeline = () => {
       toast.error(t('otc.pipeline.errorLoadingPipeline'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteDeal = async (dealId) => {
+    if (!window.confirm('Tem certeza que deseja eliminar este negócio OTC? Esta ação não pode ser desfeita.')) return;
+    try {
+      await axios.delete(`${API_URL}/api/otc/deals/${dealId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Negócio eliminado com sucesso');
+      setShowDealDialog(false);
+      setSelectedDeal(null);
+      fetchPipeline();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar negócio');
     }
   };
 
@@ -377,6 +393,19 @@ const OTCPipeline = () => {
               
               {/* Actions based on stage */}
               <div className="pt-4 border-t border-gold-800/20 space-y-2">
+                {/* Delete Deal - always visible */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteDeal(selectedDeal.id)}
+                    className="text-red-500/60 hover:text-red-400 hover:bg-red-900/20"
+                    data-testid="delete-otc-deal-btn"
+                  >
+                    <Trash2 size={14} className="mr-1" />
+                    Eliminar
+                  </Button>
+                </div>
                 {/* For RFQ stage: Show Create Quote button */}
                 {selectedDeal.stage === 'rfq' && (
                   <Button

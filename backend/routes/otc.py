@@ -1802,6 +1802,26 @@ async def move_deal_stage(
     return {"success": True, "stage": new_stage.value}
 
 
+@router.delete("/deals/{deal_id}")
+async def delete_otc_deal(
+    deal_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an OTC deal and related data"""
+    db = get_db()
+    
+    deal = await db.otc_deals.find_one({"id": deal_id})
+    if not deal:
+        raise HTTPException(status_code=404, detail="Negócio não encontrado")
+    
+    await db.otc_deals.delete_one({"id": deal_id})
+    await db.otc_compliance.delete_many({"deal_id": deal_id})
+    await db.otc_commissions.delete_many({"deal_id": deal_id})
+    
+    return {"success": True, "message": "Negócio eliminado"}
+
+
+
 # ==================== QUOTES ====================
 
 @router.post("/quotes")
