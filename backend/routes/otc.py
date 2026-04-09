@@ -124,16 +124,25 @@ async def get_existing_entities(
     """Get existing entities (companies and contacts) for autocomplete in lead creation."""
     db = get_db()
     
+    # Check demo mode
+    user_id = current_user["id"] if isinstance(current_user, dict) else current_user.id
+    demo_active = await check_demo_mode(user_id, db)
+    
     entities = []
     seen = set()
     
-    search_filter = {}
+    # Build client filter with demo mode
+    client_filter = {}
+    if demo_active:
+        client_filter["is_demo"] = True
+    else:
+        client_filter["is_demo"] = {"$ne": True}
     if search:
-        search_filter = {"entity_name": {"$regex": search, "$options": "i"}}
+        client_filter["entity_name"] = {"$regex": search, "$options": "i"}
     
     # Fetch from OTC Clients
     clients = await db.otc_clients.find(
-        search_filter, {"_id": 0, "entity_name": 1, "contact_name": 1, "contact_email": 1, "contact_phone": 1, "country": 1}
+        client_filter, {"_id": 0, "entity_name": 1, "contact_name": 1, "contact_email": 1, "contact_phone": 1, "country": 1}
     ).sort("entity_name", 1).limit(50).to_list(50)
     
     for c in clients:
@@ -149,10 +158,18 @@ async def get_existing_entities(
                 "type": "client"
             })
     
-    # Fetch from OTC Leads (exclude archived/lost)
-    lead_filter = {"status": {"$nin": ["archived", "lost"]}}
+    # Build lead filter with demo mode
+    lead_filter = {"status": {"$nin": ["archived", "lost", "active_client"]}}
+    if demo_active:
+        lead_filter["is_demo"] = True
+    else:
+        lead_filter["is_demo"] = {"$ne": True}
     if search:
         lead_filter["entity_name"] = {"$regex": search, "$options": "i"}
+    
+    # Apply team filter
+    team_filter = await get_team_filter(current_user)
+    lead_filter = apply_team_filter(lead_filter, team_filter)
     
     leads = await db.otc_leads.find(
         lead_filter, {"_id": 0, "entity_name": 1, "contact_name": 1, "contact_email": 1, "contact_phone": 1, "country": 1}
