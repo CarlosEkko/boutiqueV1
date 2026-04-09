@@ -5,7 +5,7 @@ import { Input } from '../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Badge } from '../../../components/ui/badge';
 import { toast } from 'sonner';
-import { Settings, Save, RefreshCw, TrendingUp, Users, AlertTriangle, Crown, ChevronDown, ChevronUp, Shield, Plus, Trash2 } from 'lucide-react';
+import { Settings, Save, RefreshCw, TrendingUp, Users, AlertTriangle, Crown, ChevronDown, ChevronUp } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 const getHeaders = () => ({ Authorization: `Bearer ${sessionStorage.getItem('kryptobox_token')}`, 'Content-Type': 'application/json' });
@@ -26,9 +26,6 @@ export default function AdminKBEXRates() {
   const [expandedProduct, setExpandedProduct] = useState('otc');
   const [editedFees, setEditedFees] = useState({});
   const [savingFees, setSavingFees] = useState(false);
-  const [escrowTiers, setEscrowTiers] = useState([]);
-  const [editedEscrow, setEditedEscrow] = useState(null);
-  const [savingEscrow, setSavingEscrow] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -54,17 +51,7 @@ export default function AdminKBEXRates() {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { fetchConfig(); fetchAlerts(); fetchEscrowFees(); }, [fetchConfig, fetchAlerts]);
-
-  const fetchEscrowFees = async () => {
-    try {
-      const res = await fetch(`${API}/api/kbex-rates/escrow-fees`, { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setEscrowTiers(data.tiers || []);
-      }
-    } catch (e) { console.error(e); }
-  };
+  useEffect(() => { fetchConfig(); fetchAlerts(); }, [fetchConfig, fetchAlerts]);
 
   const seedDefaults = async () => {
     const res = await fetch(`${API}/api/kbex-rates/seed-defaults`, { method: 'POST', headers: getHeaders() });
@@ -125,54 +112,6 @@ export default function AdminKBEXRates() {
   if (loading) return <div className="flex items-center justify-center h-64"><RefreshCw className="animate-spin text-gold-500" size={24} /></div>;
 
   const hasEdits = Object.keys(edited).length > 0;
-
-  const escrowData = editedEscrow || escrowTiers;
-  const hasEscrowEdits = editedEscrow !== null;
-
-  const updateEscrowTier = (index, field, value) => {
-    const current = [...(editedEscrow || escrowTiers)];
-    current[index] = { ...current[index], [field]: parseFloat(value) || 0 };
-    setEditedEscrow(current);
-  };
-
-  const addEscrowTier = () => {
-    const current = [...(editedEscrow || escrowTiers)];
-    const lastMax = current.length > 0 ? current[current.length - 1].max_amount : 0;
-    current.push({ min_amount: lastMax > 0 ? lastMax + 1 : 0, max_amount: -1, fee_pct: 0.25, min_fee: 0 });
-    setEditedEscrow(current);
-  };
-
-  const removeEscrowTier = (index) => {
-    const current = [...(editedEscrow || escrowTiers)];
-    current.splice(index, 1);
-    setEditedEscrow(current);
-  };
-
-  const saveEscrowFees = async () => {
-    setSavingEscrow(true);
-    try {
-      const res = await fetch(`${API}/api/kbex-rates/escrow-fees`, {
-        method: 'PUT', headers: getHeaders(), body: JSON.stringify({ tiers: editedEscrow }),
-      });
-      if (res.ok) {
-        toast.success('Escrow fees atualizados');
-        setEditedEscrow(null);
-        fetchEscrowFees();
-      }
-    } catch (e) { toast.error('Erro ao guardar escrow fees'); }
-    setSavingEscrow(false);
-  };
-
-  const seedEscrowDefaults = async () => {
-    const res = await fetch(`${API}/api/kbex-rates/escrow-fees/seed`, { method: 'POST', headers: getHeaders() });
-    if (res.ok) {
-      const d = await res.json();
-      toast.success(`${d.seeded} tiers criados`);
-      fetchEscrowFees();
-    }
-  };
-
-  const fmtEur = (v) => v < 0 ? '∞' : `€${v.toLocaleString('pt-PT')}`;
 
   return (
     <div className="space-y-6" data-testid="admin-kbex-rates">
@@ -335,96 +274,6 @@ export default function AdminKBEXRates() {
           </Card>
         );
       })}
-
-      {/* Escrow Fee Tiers */}
-      <Card className="bg-zinc-900/50 border-zinc-800" data-testid="escrow-fees-section">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base text-white flex items-center gap-2">
-              <Shield size={16} className="text-gold-500" /> Escrow Fees por Ticket Size
-              <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs ml-2">{escrowData.length} tiers</Badge>
-            </CardTitle>
-            <div className="flex gap-2">
-              {escrowData.length === 0 && (
-                <Button onClick={seedEscrowDefaults} variant="outline" size="sm" className="border-zinc-700 text-zinc-300 text-xs h-7" data-testid="seed-escrow-btn">
-                  <RefreshCw size={12} className="mr-1" /> Seed Defaults
-                </Button>
-              )}
-              <Button onClick={addEscrowTier} variant="outline" size="sm" className="border-zinc-700 text-zinc-300 text-xs h-7" data-testid="add-escrow-tier-btn">
-                <Plus size={12} className="mr-1" /> Adicionar Tier
-              </Button>
-              {hasEscrowEdits && (
-                <Button onClick={saveEscrowFees} disabled={savingEscrow} size="sm" className="bg-gold-600 hover:bg-gold-500 text-black text-xs h-7" data-testid="save-escrow-btn">
-                  <Save size={12} className="mr-1" /> {savingEscrow ? 'A guardar...' : 'Guardar'}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left text-zinc-500 py-2 px-3">Ticket Size (EUR)</th>
-                  <th className="text-center text-zinc-500 py-2 px-3">De</th>
-                  <th className="text-center text-zinc-500 py-2 px-3">Até</th>
-                  <th className="text-center text-gold-500 py-2 px-3">Fee (%)</th>
-                  <th className="text-center text-amber-400 py-2 px-3">Fee Mínima (EUR)</th>
-                  <th className="text-center text-zinc-500 py-2 px-3 w-12"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {escrowData.map((tier, i) => (
-                  <tr key={i} className={`border-b border-zinc-800/50 ${hasEscrowEdits ? 'bg-gold-500/5' : ''}`}>
-                    <td className="py-2.5 px-3 text-zinc-400 text-xs">
-                      {fmtEur(tier.min_amount)} — {fmtEur(tier.max_amount)}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex justify-center">
-                        <Input type="number" min="0" step="1" value={tier.min_amount}
-                          onChange={e => updateEscrowTier(i, 'min_amount', e.target.value)}
-                          className="w-28 bg-zinc-800 border-zinc-700 text-white text-center text-sm h-8"
-                          data-testid={`escrow-min-${i}`} />
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex justify-center items-center gap-1">
-                        <Input type="number" step="1" value={tier.max_amount}
-                          onChange={e => updateEscrowTier(i, 'max_amount', e.target.value)}
-                          className="w-28 bg-zinc-800 border-zinc-700 text-white text-center text-sm h-8"
-                          data-testid={`escrow-max-${i}`} />
-                        <span className="text-zinc-600 text-xs whitespace-nowrap">(-1=∞)</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex justify-center">
-                        <Input type="number" min="0" step="0.05" value={tier.fee_pct}
-                          onChange={e => updateEscrowTier(i, 'fee_pct', e.target.value)}
-                          className="w-20 bg-zinc-800 border-zinc-700 text-white text-center text-sm h-8"
-                          data-testid={`escrow-fee-${i}`} />
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex justify-center">
-                        <Input type="number" min="0" step="100" value={tier.min_fee}
-                          onChange={e => updateEscrowTier(i, 'min_fee', e.target.value)}
-                          className="w-28 bg-zinc-800 border-zinc-700 text-white text-center text-sm h-8"
-                          data-testid={`escrow-minfee-${i}`} />
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <button onClick={() => removeEscrowTier(i)} className="text-red-500/50 hover:text-red-400 transition-colors" data-testid={`escrow-remove-${i}`}>
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

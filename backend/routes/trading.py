@@ -758,7 +758,7 @@ async def batch_update_crypto_fees(
 async def get_all_limits(admin: dict = Depends(get_admin_user)):
     """Get all trading limits configurations"""
     limits_list = []
-    for tier in ["standard", "premium", "vip"]:
+    for tier in ["broker", "standard", "premium", "vip", "institucional"]:
         limits = await get_user_limits(tier)
         limits_list.append(limits.model_dump())
     return limits_list
@@ -767,7 +767,7 @@ async def get_all_limits(admin: dict = Depends(get_admin_user)):
 @router.get("/admin/limits/{tier}", response_model=dict)
 async def get_tier_limits(tier: str, admin: dict = Depends(get_admin_user)):
     """Get trading limits for specific tier"""
-    if tier not in ["standard", "premium", "vip"]:
+    if tier not in ["broker", "standard", "premium", "vip", "institucional"]:
         raise HTTPException(status_code=400, detail="Invalid tier")
     limits = await get_user_limits(tier)
     return limits.model_dump()
@@ -780,7 +780,7 @@ async def update_tier_limits(
     admin: dict = Depends(get_admin_user)
 ):
     """Update trading limits for specific tier"""
-    if tier not in ["standard", "premium", "vip"]:
+    if tier not in ["broker", "standard", "premium", "vip", "institucional"]:
         raise HTTPException(status_code=400, detail="Invalid tier")
     
     current_limits = await get_user_limits(tier)

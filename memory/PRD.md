@@ -63,11 +63,14 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Auth page: Login only (registration gated by invite)
 - OTC Deal Calculator with precision formatting
 - KBEX Rate Engine with tier-based spreads
-- Escrow Fee Tiers editable table
+- Escrow Fee Tiers editable table (dedicated page)
 - OTC Lead visibility fix (created_by)
 - Protected Document Viewer (anti-copy, watermark)
 - Report deletion (role-restricted)
 - Safari cursor fix
+- Trading Limits: All 5 tiers (Broker, Standard, Premium, VIP, Institucional) with formatted inputs
+- Escrow Fees migrated to dedicated page (AdminEscrowFees.jsx)
+- Number formatting with space thousand separators on Limits page
 
 ## Upcoming Tasks
 - P1: TradingView chart widgets

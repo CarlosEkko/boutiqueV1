@@ -38,6 +38,42 @@ const SUPPORTED_CURRENCIES = [
   { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
 ];
 
+const formatWithSpaces = (value) => {
+  if (value === null || value === undefined || value === '') return '';
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '';
+  const parts = num.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${parts[0]}.${parts[1]}`;
+};
+
+const FormattedNumberInput = ({ value, onChange, className, ...props }) => {
+  const [focused, setFocused] = React.useState(false);
+  const [localValue, setLocalValue] = React.useState('');
+
+  const displayValue = focused ? localValue : formatWithSpaces(value);
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      value={displayValue}
+      onFocus={() => {
+        setFocused(true);
+        setLocalValue(value?.toString() || '');
+      }}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/\s/g, '');
+        setLocalValue(raw);
+        if (onChange) onChange({ target: { value: raw } });
+      }}
+      className={className}
+      {...props}
+    />
+  );
+};
+
 const AdminTradingPage = () => {
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState('crypto-fees');
@@ -896,8 +932,7 @@ const AdminTradingPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Compra</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].daily_buy_limit}
                         onChange={(e) => updateLimitField('daily_buy_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -906,8 +941,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Venda</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].daily_sell_limit}
                         onChange={(e) => updateLimitField('daily_sell_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -915,8 +949,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Conversão</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].daily_swap_limit}
                         onChange={(e) => updateLimitField('daily_swap_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -931,8 +964,7 @@ const AdminTradingPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Compra</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].monthly_buy_limit}
                         onChange={(e) => updateLimitField('monthly_buy_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -940,8 +972,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Venda</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].monthly_sell_limit}
                         onChange={(e) => updateLimitField('monthly_sell_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -949,8 +980,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Conversão</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].monthly_swap_limit}
                         onChange={(e) => updateLimitField('monthly_swap_limit', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -965,8 +995,7 @@ const AdminTradingPage = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Mín. Compra</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].min_buy_amount}
                         onChange={(e) => updateLimitField('min_buy_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -974,8 +1003,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Máx. Compra</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].max_buy_amount}
                         onChange={(e) => updateLimitField('max_buy_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -983,8 +1011,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Mín. Venda</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].min_sell_amount}
                         onChange={(e) => updateLimitField('min_sell_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
@@ -992,8 +1019,7 @@ const AdminTradingPage = () => {
                     </div>
                     <div>
                       <label className="text-sm text-gray-400 mb-1 block">Máx. Venda</label>
-                      <Input
-                        type="number" step="any"
+                      <FormattedNumberInput
                         value={limits[selectedTier].max_sell_amount}
                         onChange={(e) => updateLimitField('max_sell_amount', e.target.value)}
                         className="bg-zinc-800 border-zinc-700 text-white"
