@@ -378,8 +378,12 @@ async def create_otc_lead(
     if not lead_dict.get("assigned_to"):
         lead_dict["assigned_to"] = creator_id
 
+    # Check demo mode
+    demo_active = await check_demo_mode(creator_id, db)
+
     lead = OTCLead(
         **lead_dict,
+        created_by=creator_id,
         status=OTCLeadStatus.NEW,
         workflow_stage=1,
         is_high_risk_country=is_high_risk,
@@ -392,7 +396,11 @@ async def create_otc_lead(
         }]
     )
     
-    await db.otc_leads.insert_one(lead.dict())
+    lead_doc = lead.dict()
+    if demo_active:
+        lead_doc["is_demo"] = True
+
+    await db.otc_leads.insert_one(lead_doc)
 
     # Trigger Trustfull risk scoring (async, non-blocking)
     try:

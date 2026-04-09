@@ -232,11 +232,12 @@ async def get_team_filter(current_user) -> dict:
     if is_admin or role in ('admin', 'global_manager'):
         return {}
 
-    # All other roles: filter by client/lead region OR assigned to them
+    # All other roles: filter by assigned_to OR created_by OR client region
     conditions = []
     
     if user_id:
         conditions.append({"assigned_to": user_id})
+        conditions.append({"created_by": user_id})
     
     if region and region != 'global':
         from models.user import COUNTRY_TO_REGION

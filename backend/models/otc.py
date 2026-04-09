@@ -298,6 +298,7 @@ class OTCLead(BaseModel):
     
     # Assignment
     assigned_to: Optional[str] = None  # User ID
+    created_by: Optional[str] = None  # User ID who created the lead
     
     # Notes & History
     notes: Optional[str] = None
