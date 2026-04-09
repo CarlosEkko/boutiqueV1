@@ -487,6 +487,9 @@ const AdminOpportunities = () => {
                     <SelectContent className="bg-zinc-800 border-zinc-700">
                       <SelectItem value="USDT">USDT</SelectItem>
                       <SelectItem value="USDC">USDC</SelectItem>
+                      <SelectItem value="BTC">BTC</SelectItem>
+                      <SelectItem value="ETH">ETH</SelectItem>
+                      <SelectItem value="KBEX">KBEX</SelectItem>
                       <SelectItem value="EUR">EUR</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
                     </SelectContent>
