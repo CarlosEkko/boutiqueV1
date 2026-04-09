@@ -26,13 +26,22 @@ async def get_current_user_id(current_user=Depends(get_current_user)):
 
 PRODUCTS = ["otc", "exchange", "escrow", "spot"]
 TIERS = ["broker", "standard", "premium", "vip", "institucional"]
-TIER_FEES = {
+DEFAULT_TIER_FEES = {
     "broker": 0,
     "standard": 2500,
     "premium": 5000,
     "vip": 15000,
     "institucional": 50000,
 }
+
+
+async def get_tier_fees() -> dict:
+    """Get tier fees from DB, or defaults if not configured."""
+    db = get_db()
+    doc = await db.kbex_settings.find_one({"type": "tier_fees"}, {"_id": 0})
+    if doc and "fees" in doc:
+        return doc["fees"]
+    return DEFAULT_TIER_FEES
 
 
 class RateConfig(BaseModel):
@@ -64,11 +73,12 @@ async def get_rate_configs(admin_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=403, detail="Admin access required")
 
     configs = await db.kbex_rates.find({}, {"_id": 0}).to_list(1000)
+    fees = await get_tier_fees()
     return {
         "rates": configs,
         "products": PRODUCTS,
         "tiers": TIERS,
-        "tier_fees": TIER_FEES,
+        "tier_fees": fees,
     }
 
 
@@ -122,6 +132,39 @@ async def delete_rate_config(product: str, tier: str, asset: str = "*", admin_id
 
     result = await db.kbex_rates.delete_one({"product": product, "tier": tier, "asset": asset.upper() if asset != "*" else "*"})
     return {"success": True, "deleted": result.deleted_count}
+
+
+# ==================== TIER FEES MANAGEMENT ====================
+
+class TierFeesUpdate(BaseModel):
+    fees: dict
+
+
+@router.put("/tier-fees")
+async def update_tier_fees(payload: TierFeesUpdate, admin_id: str = Depends(get_current_user_id)):
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    current = await get_tier_fees()
+    updated_fees = {**current, **{k: float(v) for k, v in payload.fees.items() if k in TIERS}}
+    now = datetime.now(timezone.utc).isoformat()
+
+    await db.kbex_settings.update_one(
+        {"type": "tier_fees"},
+        {"$set": {"type": "tier_fees", "fees": updated_fees, "updated_by": admin_id, "updated_at": now}},
+        upsert=True,
+    )
+
+    await db.kbex_rates_audit.insert_one({
+        "action": "tier_fees_update",
+        "updated_by": admin_id,
+        "fees": updated_fees,
+        "updated_at": now,
+    })
+
+    return {"success": True, "fees": updated_fees}
 
 
 # ==================== RESOLVE: Get KBEX Rate ====================
@@ -180,9 +223,10 @@ async def resolve_rate(
 
 @router.get("/tiers")
 async def get_tier_info(admin_id: str = Depends(get_current_user_id)):
+    fees = await get_tier_fees()
     return {
         "tiers": TIERS,
-        "fees": TIER_FEES,
+        "fees": fees,
     }
 
 
@@ -201,7 +245,8 @@ async def upgrade_user_tier(payload: TierUpgrade, admin_id: str = Depends(get_cu
         raise HTTPException(status_code=404, detail="User not found")
 
     old_tier = user.get("membership_level", "standard")
-    fee = TIER_FEES.get(payload.new_tier, 0)
+    fees = await get_tier_fees()
+    fee = fees.get(payload.new_tier, 0)
     now = datetime.now(timezone.utc).isoformat()
 
     if payload.deduct_from_balance and fee > 0:

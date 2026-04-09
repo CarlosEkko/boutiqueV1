@@ -24,6 +24,8 @@ export default function AdminKBEXRates() {
   const [edited, setEdited] = useState({});
   const [renewalAlerts, setRenewalAlerts] = useState([]);
   const [expandedProduct, setExpandedProduct] = useState('otc');
+  const [editedFees, setEditedFees] = useState({});
+  const [savingFees, setSavingFees] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -58,6 +60,21 @@ export default function AdminKBEXRates() {
       toast.success(`${d.seeded} configurações criadas`);
       fetchConfig();
     }
+  };
+
+  const saveFees = async () => {
+    setSavingFees(true);
+    try {
+      const res = await fetch(`${API}/api/kbex-rates/tier-fees`, {
+        method: 'PUT', headers: getHeaders(), body: JSON.stringify({ fees: editedFees }),
+      });
+      if (res.ok) {
+        toast.success('Fees atualizados');
+        setEditedFees({});
+        fetchConfig();
+      }
+    } catch (e) { toast.error('Erro ao guardar fees'); }
+    setSavingFees(false);
   };
 
   const getRate = (product, tier) => {
@@ -139,18 +156,42 @@ export default function AdminKBEXRates() {
         </Card>
       )}
 
-      {/* Tier Fees Reference */}
+      {/* Tier Fees - Editable */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-zinc-400 flex items-center gap-2"><Crown size={14} className="text-gold-500" /> Fees Anuais por Tier</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm text-zinc-400 flex items-center gap-2"><Crown size={14} className="text-gold-500" /> Fees Anuais por Tier</CardTitle>
+            {Object.keys(editedFees).length > 0 && (
+              <Button onClick={saveFees} disabled={savingFees} size="sm" className="bg-gold-600 hover:bg-gold-500 text-black text-xs h-7" data-testid="save-fees-btn">
+                <Save size={12} className="mr-1" /> {savingFees ? 'A guardar...' : 'Guardar Fees'}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex flex-wrap gap-3">
-            {tiers.map(t => (
-              <div key={t} className={`px-4 py-2 rounded-lg ${TIER_COLORS[t]} text-sm font-medium`}>
-                {TIER_LABELS[t]}: {tierFees[t] === 0 ? 'Grátis' : `€${tierFees[t]?.toLocaleString('pt-PT')}/ano`}
-              </div>
-            ))}
+          <div className="grid grid-cols-5 gap-3">
+            {tiers.map(t => {
+              const fee = editedFees[t] !== undefined ? editedFees[t] : tierFees[t];
+              const isEdited = editedFees[t] !== undefined;
+              return (
+                <div key={t} className={`rounded-lg p-3 space-y-2 ${TIER_COLORS[t]} ${isEdited ? 'ring-1 ring-gold-500/50' : ''}`}>
+                  <span className="text-xs font-semibold uppercase tracking-wider">{TIER_LABELS[t]}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-400">€</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={fee}
+                      onChange={e => setEditedFees(prev => ({ ...prev, [t]: parseFloat(e.target.value) || 0 }))}
+                      className="bg-black/30 border-zinc-700/50 text-white text-sm h-7 w-full"
+                      data-testid={`tier-fee-${t}`}
+                    />
+                    <span className="text-xs text-zinc-500 whitespace-nowrap">/ano</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
