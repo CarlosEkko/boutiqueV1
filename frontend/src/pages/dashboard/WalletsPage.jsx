@@ -393,25 +393,29 @@ const WalletsPage = () => {
           {!isFiatWallet && wallet.address && (
             <div className="bg-zinc-800/50 rounded-lg p-3">
               <p className="text-xs text-gray-400 mb-1">{t('dashboard.wallets.depositAddress')}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-white font-mono truncate max-w-[180px]">
-                  {wallet.address}
-                </p>
-                <div className="flex gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyAddress(wallet.address);
-                    }}
-                    className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors"
-                  >
-                    <Copy size={14} />
-                  </button>
-                  <button className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors">
-                    <QrCode size={14} />
-                  </button>
+              {wallet.address.startsWith('mock_') ? (
+                <p className="text-sm text-amber-400/70 italic">Por iniciar</p>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white font-mono truncate max-w-[180px]">
+                    {wallet.address}
+                  </p>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyAddress(wallet.address);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors"
+                    >
+                      <Copy size={14} />
+                    </button>
+                    <button className="p-1.5 text-gray-400 hover:text-gold-400 transition-colors">
+                      <QrCode size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -792,7 +796,7 @@ const WalletsPage = () => {
                     )}
                   </div>
                   
-                  {selectedWallet.address ? (
+                  {selectedWallet.address && !selectedWallet.address.startsWith('mock_') ? (
                     <>
                       {/* QR Code */}
                       {showQRCode && (
@@ -826,21 +830,9 @@ const WalletsPage = () => {
                     </>
                   ) : (
                     <div className="text-center py-4">
-                      <p className="text-gray-400 text-sm mb-3">
-                        Nenhum endereço de depósito disponível
+                      <p className="text-amber-400/70 text-sm italic">
+                        Por iniciar
                       </p>
-                      <Button
-                        onClick={() => getDepositAddress(selectedWallet.asset_id)}
-                        disabled={loadingAddress}
-                        className="bg-gold-500 hover:bg-gold-400 text-black"
-                      >
-                        {loadingAddress ? (
-                          <RefreshCw className="animate-spin mr-2" size={16} />
-                        ) : (
-                          <Plus size={16} className="mr-2" />
-                        )}
-                        Gerar Endereço
-                      </Button>
                     </div>
                   )}
                 </div>
