@@ -82,6 +82,8 @@ const OTCQuotes = () => {
     notes: ''
   });
   const [saving, setSaving] = useState(false);
+  const [priceMode, setPriceMode] = useState('unit');
+  const [pairRate, setPairRate] = useState('');
 
   // Quote Detail Dialog
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -723,17 +725,69 @@ const OTCQuotes = () => {
                   </div>
                 </div>
 
-                {/* Reference Price */}
-                <div className="space-y-1.5">
-                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência ({negForm.reference_currency})</Label>
-                  <div className="relative">
-                    <Input type="number" step="any" value={negForm.reference_price} onChange={e => updateNeg('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="neg-ref-price" />
-                    {marketPrice && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => updateNeg('reference_price', marketPrice.price)}>
-                        <TrendingUp size={12} /> Usar mercado
-                      </span>
-                    )}
+                {/* Reference Price — with Pair Rate toggle */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência</Label>
+                    <div className="flex rounded overflow-hidden border border-zinc-800 text-xs">
+                      <button type="button" onClick={() => setPriceMode('unit')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'unit' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
+                        Preço / Unidade
+                      </button>
+                      <button type="button" onClick={() => setPriceMode('pair')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'pair' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
+                        Taxa de Par
+                      </button>
+                    </div>
                   </div>
+
+                  {priceMode === 'unit' ? (
+                    <div>
+                      <p className="text-xs text-zinc-600 mb-1.5">1 {selectedDeal?.base_asset} = ? {selectedDeal?.quote_asset}</p>
+                      <div className="relative">
+                        <Input type="number" step="any" value={negForm.reference_price} onChange={e => updateNeg('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="neg-ref-price" />
+                        {marketPrice && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => updateNeg('reference_price', marketPrice.price)}>
+                            <TrendingUp size={12} /> Usar mercado
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-zinc-600 mb-1.5">Par {selectedDeal?.quote_asset}/{selectedDeal?.base_asset} (1 {selectedDeal?.quote_asset} = ? {selectedDeal?.base_asset})</p>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={pairRate}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setPairRate(val);
+                          const num = parseFloat(val);
+                          if (num && num > 0) {
+                            updateNeg('reference_price', 1 / num);
+                          }
+                        }}
+                        className="bg-zinc-900 border-zinc-800 text-white"
+                        placeholder="ex: 1.1685"
+                        data-testid="neg-pair-rate"
+                      />
+                      {pairRate && parseFloat(pairRate) > 0 && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-1.5">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-zinc-400">Par {selectedDeal?.quote_asset}/{selectedDeal?.base_asset}</span>
+                            <span className="text-white font-mono">{parseFloat(pairRate).toFixed(6)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-zinc-400">Preço 1 {selectedDeal?.base_asset}</span>
+                            <span className="text-amber-400 font-mono font-semibold">{CURRENCY_SYMBOLS[selectedDeal?.quote_asset] || ''}{(1 / parseFloat(pairRate)).toFixed(6)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm border-t border-amber-500/20 pt-1.5">
+                            <span className="text-zinc-400">Valor {selectedDeal?.amount} {selectedDeal?.base_asset}</span>
+                            <span className="text-white font-mono font-bold">{CURRENCY_SYMBOLS[selectedDeal?.quote_asset] || ''}{(selectedDeal?.amount * (1 / parseFloat(pairRate))).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Condition */}

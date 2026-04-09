@@ -246,6 +246,8 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   const [otcClients, setOtcClients] = useState([]);
   const [clientSearch, setClientSearch] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [priceMode, setPriceMode] = useState('unit'); // 'unit' = price per asset, 'pair' = pair rate
+  const [pairRate, setPairRate] = useState('');
 
   const getHeaders = () => {
     const token = sessionStorage.getItem('kryptobox_token');
@@ -459,17 +461,76 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
             </div>
 
-            {/* Reference Price */}
-            <div className="space-y-1.5">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')} ({form.reference_currency})</Label>
-              <div className="relative">
-                <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="120 345.50" data-testid="modal-ref-price" />
-                {livePrice && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
-                    <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
-                  </span>
-                )}
+            {/* Reference Price — with Pair Rate toggle */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')}</Label>
+                <div className="flex rounded overflow-hidden border border-zinc-800 text-xs">
+                  <button onClick={() => setPriceMode('unit')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'unit' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
+                    Preço / Unidade
+                  </button>
+                  <button onClick={() => setPriceMode('pair')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'pair' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
+                    Taxa de Par
+                  </button>
+                </div>
               </div>
+
+              {priceMode === 'unit' ? (
+                /* Mode 1: Price per unit of asset (e.g. 1 USDC = 0.8558 EUR) */
+                <div>
+                  <p className="text-xs text-zinc-600 mb-1.5">1 {form.asset} = ? {form.reference_currency}</p>
+                  <div className="relative">
+                    <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="0.8558" data-testid="modal-ref-price" />
+                    {livePrice && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => {
+                        const priceKey = `price_${form.reference_currency.toLowerCase()}`;
+                        updateField('reference_price', livePrice[priceKey] || livePrice.price_eur || 0);
+                      }}>
+                        <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(6)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Mode 2: Pair rate (e.g. EUR/USDC = 1.1685 → 1 EUR buys 1.1685 USDC) */
+                <div className="space-y-2">
+                  <p className="text-xs text-zinc-600 mb-1.5">Par {form.reference_currency}/{form.asset} (1 {form.reference_currency} = ? {form.asset})</p>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={pairRate}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setPairRate(val);
+                        const num = parseFloat(val);
+                        if (num && num > 0) {
+                          updateField('reference_price', 1 / num);
+                        }
+                      }}
+                      className="bg-zinc-900 border-zinc-800 text-white"
+                      placeholder="ex: 1.1685"
+                      data-testid="modal-pair-rate"
+                    />
+                  </div>
+                  {pairRate && parseFloat(pairRate) > 0 && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Par {form.reference_currency}/{form.asset}</span>
+                        <span className="text-white font-mono">{parseFloat(pairRate).toFixed(6)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Preço 1 {form.asset}</span>
+                        <span className="text-amber-400 font-mono font-semibold">{sym}{(1 / parseFloat(pairRate)).toFixed(6)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm border-t border-amber-500/20 pt-1.5">
+                        <span className="text-zinc-400">Valor {form.quantity} {form.asset}</span>
+                        <span className="text-white font-mono font-bold">{sym}{(form.quantity * (1 / parseFloat(pairRate))).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Condition */}
