@@ -670,8 +670,7 @@ async def send_onboarding_email(
     return {
         "success": True,
         "email_sent": email_result.get("success", False),
-        "simulated": email_result.get("simulated", True),
-        "message": "Email de onboarding enviado" if email_result.get("success") else "Email simulado (Brevo não configurado)"
+        "message": "Email de onboarding enviado" if email_result.get("success") else "Erro ao enviar email"
     }
 
 

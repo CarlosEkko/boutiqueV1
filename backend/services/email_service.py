@@ -272,9 +272,12 @@ class BrevoEmailService:
         return self.EMAIL_STRINGS.get(lang, self.EMAIL_STRINGS["en"]).get(key, self.EMAIL_STRINGS["en"].get(key, ""))
     
     def __init__(self):
-        self.api_key = BREVO_API_KEY
         self.sender_email = BREVO_SENDER_EMAIL
         self.sender_name = BREVO_SENDER_NAME
+    
+    @property
+    def api_key(self):
+        return os.environ.get("BREVO_API_KEY", "")
     
     # Global email disclaimer - appended to all outgoing emails
     EMAIL_DISCLAIMER = """
