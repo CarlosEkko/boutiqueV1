@@ -93,7 +93,7 @@ const OTCDealsPage = () => {
   const deleteDeal = async (dealId) => {
     if (!window.confirm(t('otc.deals.confirmDelete'))) return;
     try {
-      const res = await fetch(`${API}/api/otc-deals/deals/${dealId}`, { method: 'DELETE', headers: getHeaders() });
+      const res = await fetch(`${API}/api/otc/deals/${dealId}`, { method: 'DELETE', headers: getHeaders() });
       if (res.ok) { toast.success(t('otc.deals.dealDeleted')); fetchDeals(); }
     } catch (e) { toast.error(t('otc.deals.errorDelete')); }
   };
@@ -204,11 +204,9 @@ const OTCDealsPage = () => {
                         <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white p-1" title={t('otc.deals.edit')} onClick={() => { setEditingDeal(deal); setShowModal(true); }} data-testid={`edit-${deal.id}`}>
                           <Edit size={14} />
                         </Button>
-                        {deal.status === 'draft' && (
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" title={t('otc.deals.delete')} onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
-                            <Trash2 size={14} />
-                          </Button>
-                        )}
+                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 p-1" title={t('otc.deals.delete')} onClick={() => deleteDeal(deal.id)} data-testid={`delete-${deal.id}`}>
+                          <Trash2 size={14} />
+                        </Button>
                       </div>
                     </td>
                   </tr>
