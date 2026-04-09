@@ -676,10 +676,12 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                   </div>
                 </div>
 
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 space-y-2">
-                  <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">{t('otc.deals.modal.kbexMargin')}</p>
+                {/* MARGEM CORRETORES */}
+                <div className="bg-zinc-800/80 border border-zinc-700/50 rounded-xl p-3 space-y-2">
+                  <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem Corretores</p>
                   <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
-                  <div className="space-y-1.5 pt-2 border-t border-yellow-500/20 text-sm">
+                  <p className="text-zinc-500 text-xs">Gross - Net = {fmtVal(calc.gross)} - {fmtVal(calc.net)}</p>
+                  <div className="space-y-1.5 pt-2 border-t border-zinc-700/30 text-sm">
                     <div className="flex justify-between">
                       <span className="text-zinc-400">{t('otc.deals.modal.broker')} ({form.broker_share_pct}%)</span>
                       <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
@@ -691,7 +693,13 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                   </div>
                 </div>
 
-                <Button onClick={handleSave} disabled={saving} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-5" data-testid="modal-save-btn">
+                {/* RECEITA KBEX */}
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 space-y-1">
+                  <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Receita KBEX</p>
+                  <p className="text-xl font-bold text-white">{fmtVal(calc.net)}</p>
+                </div>
+
+                <Button onClick={handleSave} disabled={saving} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-5 mt-2" data-testid="modal-save-btn">
                   {saving ? t('otc.deals.modal.saving') : deal ? t('otc.deals.modal.update') : t('otc.deals.modal.create')}
                 </Button>
               </CardContent>
