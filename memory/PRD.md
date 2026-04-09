@@ -16,55 +16,85 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Demo Mode with SEPARATE dump collections (demo_* prefix)
 - Dark/Light mode toggle (Dashboard only; Landing/Auth stay Dark)
 - Staking module with ETH-specific validators (Compounding/Legacy)
+- KBEX Rate Engine with tier-based spread configuration
 
-## Staking Module (Completed April 9, 2026)
-- **Supported Assets**: ETH, SOL, MATIC, ATOM, OSMO
-- **ETH Validators**:
-  - Compounding: 32 to 2048 ETH (flexible range)
-  - Legacy: exact multiples of 32 ETH (32, 64, 96...)
-- **Other Assets**: Generic staking with minimum amounts
-- **Providers**: Loaded from Fireblocks API (manual fallback)
-- **Vault Resolution**: Auto-resolves user's vault ID from profile (fireblocks_vault_id)
-- **Backend**: `/api/staking/assets`, `/api/staking/stake`, `/api/staking/unstake`, `/api/staking/claim-rewards`, `/api/staking/positions`, `/api/staking/summary`, `/api/staking/history`, `/api/staking/providers`
-- **Frontend**: Multi-step wizard (Asset -> Validator -> Amount -> Provider -> Review)
-- **Testing**: 35/35 backend tests passed, all frontend flows verified
+## KBEX Rate Engine (Completed April 9, 2026)
+### Backend (`/app/backend/routes/kbex_rates.py`)
+- **Rate Configuration**: Per product (OTC, Exchange, Escrow, Spot) × Per tier (Broker, Standard, Premium, VIP, Institucional) × Per asset (or wildcard *)
+- **Tier Fees**: Editable annual membership fees stored in MongoDB (`kbex_settings` collection)
+- **Spread Resolution**: Hierarchical lookup (product+tier+asset → product+tier+* → *+tier+* → 0%)
+- **Reference Price Integration**: `/api/otc-deals/reference-price/{asset}` now applies tier-based spread automatically
+- **Tier Upgrade**: Admin can upgrade user tier with automatic balance deduction
+- **Renewal Alerts**: Users expiring within 30 days flagged for admin
+- **Audit Trail**: All rate changes and tier upgrades logged in `kbex_rates_audit`
 
-## Demo Mode Architecture
-- All demo data stored in `demo_*` collections (demo_escrow_deals, demo_vault_*, etc.)
-- Production/operational collections never receive demo data
-- Routes auto-detect demo mode via `demo_col()` helper and swap collection
+### Endpoints
+- `GET /api/kbex-rates/config` — All rate configs + tiers + fees
+- `PUT /api/kbex-rates/config` — Bulk update rate spreads
+- `PUT /api/kbex-rates/tier-fees` — Update tier annual fees
+- `POST /api/kbex-rates/seed-defaults` — Seed default spread values
+- `GET /api/kbex-rates/resolve` — Resolve spread for user/product/asset
+- `POST /api/kbex-rates/upgrade-tier` — Upgrade user tier (deduct from balance)
+- `GET /api/kbex-rates/renewal-alerts` — Membership renewal alerts
+- `DELETE /api/kbex-rates/config` — Delete specific rate config
 
-## OTC Escrow Module (All 3 Phases Complete)
-### Phase 1: Models, Deals UI, Deal Details
-### Phase 2: DvP Settlement, Fee Engine, Compliance Gating, Fee Ledger
-### Phase 3: Dispute Resolution, Evidence Upload, Messages, Admin Force Release, Reporting & Audit Layer, CSV Export
+### Default Spreads
+| Tier | Buy Spread | Sell Spread |
+|------|-----------|-------------|
+| Broker | 0.1% | 0.1% |
+| Standard | 0.8% | 0.5% |
+| Premium | 0.5% | 0.3% |
+| VIP | 0.3% | 0.2% |
+| Institucional | 0.1% | 0.1% |
 
-## Sumsub KYC
-- Embedded iframe with Nginx CSP allowing `frame-src https://*.sumsub.com`
-- Backend: `POST /api/sumsub/applicants` for token generation
+### Default Annual Fees
+| Tier | Fee |
+|------|-----|
+| Broker | €0 |
+| Standard | €2,500 |
+| Premium | €5,000 |
+| VIP | €15,000 |
+| Institucional | €50,000 |
+
+### Admin UI (`/app/frontend/src/pages/dashboard/admin/AdminKBEXRates.jsx`)
+- Editable tier fees with inline inputs
+- Expandable rate tables per product
+- Save button appears on edit
+- Renewal alerts displayed at top
 
 ## OTC Deal Calculator (Updated April 9, 2026)
 - Toggle pill EUR/BTC (gold active state, matching Exchange page style)
-- 4+ decimal places for micro-values (fiat/crypto parities)
-- MARGEM CORRETORES: Shows Gross% - Net% = Commission% with real % split
+- 4 decimal places for small values (<10), 2 for large values (>=10)
+- MARGEM CORRETORES: Shows Gross% - Net% = Commission% with real % split per tier
 - RECEITA KBEX: Shows Net value (KBEX revenue)
-- Formula display: "Gross - Net = X% - Y% = Z%"
-- Broker/KBEX broker split based on actual % of total (not 50/50 fixed)
+- Broker/KBEX broker split based on actual % of total
+
+## Staking Module (Completed April 9, 2026)
+- **Supported Assets**: ETH, SOL, MATIC, ATOM, OSMO
+- **ETH Validators**: Compounding (32-2048 ETH) / Legacy (multiples of 32)
+- **Backend**: Full CRUD at `/api/staking/*`
+
+## Demo Mode Architecture
+- All demo data stored in `demo_*` collections
+- Production/operational collections never receive demo data
+
+## OTC Escrow Module (All 3 Phases Complete)
+
+## Sumsub KYC
+- Embedded iframe with Nginx CSP
 
 ## Completed Features
 - Multi-currency wallets (EUR, USD, AED, BRL)
 - OTC CRM: 11-step workflow
 - Brevo email integration
 - Trustfull Risk Intelligence
-- Base64 JSON uploads (Cloudflare-safe)
-- Sidebar translations (5 languages)
 - Demo Mode with separate dump collections
 - Multi-Sign vault with demo data
-- Staking module (ETH Compounding/Legacy + SOL, MATIC, ATOM, OSMO)
-- "Solicitar Acesso" -> CRM + OTC Lead generation (verified working)
+- Staking module
+- "Solicitar Acesso" → CRM + OTC Lead generation (verified)
 - Auth page: Login only (registration gated by invite)
 - OTC Deal Calculator with precision formatting and toggle
-- MARGEM CORRETORES + RECEITA KBEX sections in calculator
+- KBEX Rate Engine with tier-based spreads and editable fees
 - Safari cursor fix (custom cursor disabled)
 
 ## Upcoming Tasks
@@ -79,6 +109,11 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - P3: Refactoring OTCLeads.jsx, OTCDealsPage.jsx and translations.js
 
 ## Key Constraints
-- Cloudflare WAF blocks multipart/form-data -> use application/json
-- Demo data -> demo_* collections, never in operational DB
+- Cloudflare WAF blocks multipart/form-data → use application/json
+- Demo data → demo_* collections, never in operational DB
 - Theme toggle applies ONLY to dashboard
+
+## DB Collections (New)
+- `kbex_rates`: Rate spread configs per product/tier/asset
+- `kbex_settings`: Tier fees and other settings
+- `kbex_rates_audit`: Audit trail for rate and tier changes
