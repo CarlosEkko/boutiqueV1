@@ -19,60 +19,50 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - KBEX Rate Engine with tier-based spread configuration
 
 ## KBEX Rate Engine (Completed April 9, 2026)
-### Backend (`/app/backend/routes/kbex_rates.py`)
-- **Rate Configuration**: Per product (OTC, Exchange, Escrow, Spot) × Per tier (Broker, Standard, Premium, VIP, Institucional) × Per asset (or wildcard *)
-- **Tier Fees**: Editable annual membership fees stored in MongoDB (`kbex_settings` collection)
-- **Spread Resolution**: Hierarchical lookup (product+tier+asset → product+tier+* → *+tier+* → 0%)
-- **Reference Price Integration**: `/api/otc-deals/reference-price/{asset}` now applies tier-based spread automatically
-- **Tier Upgrade**: Admin can upgrade user tier with automatic balance deduction
-- **Renewal Alerts**: Users expiring within 30 days flagged for admin
-- **Audit Trail**: All rate changes and tier upgrades logged in `kbex_rates_audit`
+### Rate Configuration
+- Per product (OTC, Exchange, Escrow, Spot) × Per tier (Broker, Standard, Premium, VIP, Institucional) × Per asset (or wildcard *)
+- Tier Fees: Editable annual membership fees stored in MongoDB
+- Spread Resolution: Hierarchical lookup (product+tier+asset → product+tier+* → *+tier+* → 0%)
+- Reference Price Integration: `/api/otc-deals/reference-price/{asset}` applies tier-based spread
+
+### Escrow Fee Tiers (Completed April 9, 2026)
+- Editable fee table based on ticket size
+- 6 default tiers from €0 to ∞
+- Each tier: min_amount, max_amount, fee_pct, min_fee
+- Endpoint: `GET /api/kbex-rates/escrow-fees/calculate?amount=X`
+- Admin can add/remove/edit tiers
+
+### Tier Management
+- Upgrade user tier with automatic balance deduction
+- Renewal alerts for expiring memberships (30 days)
+- Audit trail for all changes
 
 ### Endpoints
 - `GET /api/kbex-rates/config` — All rate configs + tiers + fees
 - `PUT /api/kbex-rates/config` — Bulk update rate spreads
 - `PUT /api/kbex-rates/tier-fees` — Update tier annual fees
+- `GET/PUT /api/kbex-rates/escrow-fees` — Escrow fee tiers CRUD
+- `GET /api/kbex-rates/escrow-fees/calculate` — Calculate escrow fee for amount
 - `POST /api/kbex-rates/seed-defaults` — Seed default spread values
+- `POST /api/kbex-rates/escrow-fees/seed` — Seed default escrow tiers
 - `GET /api/kbex-rates/resolve` — Resolve spread for user/product/asset
-- `POST /api/kbex-rates/upgrade-tier` — Upgrade user tier (deduct from balance)
+- `POST /api/kbex-rates/upgrade-tier` — Upgrade user tier
 - `GET /api/kbex-rates/renewal-alerts` — Membership renewal alerts
-- `DELETE /api/kbex-rates/config` — Delete specific rate config
-
-### Default Spreads
-| Tier | Buy Spread | Sell Spread |
-|------|-----------|-------------|
-| Broker | 0.1% | 0.1% |
-| Standard | 0.8% | 0.5% |
-| Premium | 0.5% | 0.3% |
-| VIP | 0.3% | 0.2% |
-| Institucional | 0.1% | 0.1% |
-
-### Default Annual Fees
-| Tier | Fee |
-|------|-----|
-| Broker | €0 |
-| Standard | €2,500 |
-| Premium | €5,000 |
-| VIP | €15,000 |
-| Institucional | €50,000 |
-
-### Admin UI (`/app/frontend/src/pages/dashboard/admin/AdminKBEXRates.jsx`)
-- Editable tier fees with inline inputs
-- Expandable rate tables per product
-- Save button appears on edit
-- Renewal alerts displayed at top
 
 ## OTC Deal Calculator (Updated April 9, 2026)
-- Toggle pill EUR/BTC (gold active state, matching Exchange page style)
+- Toggle pill EUR/BTC (gold active state)
 - 4 decimal places for small values (<10), 2 for large values (>=10)
-- MARGEM CORRETORES: Shows Gross% - Net% = Commission% with real % split per tier
-- RECEITA KBEX: Shows Net value (KBEX revenue)
-- Broker/KBEX broker split based on actual % of total
+- MARGEM CORRETORES: Gross% - Net% = Commission% with real % split
+- RECEITA KBEX: Net value (KBEX revenue)
+
+## OTC Lead Visibility Fix (April 9, 2026)
+- Added `created_by` field to OTCLead model
+- Team filter now checks: assigned_to OR created_by OR region
+- Demo mode: leads created in demo mode now get `is_demo: True`
 
 ## Staking Module (Completed April 9, 2026)
-- **Supported Assets**: ETH, SOL, MATIC, ATOM, OSMO
-- **ETH Validators**: Compounding (32-2048 ETH) / Legacy (multiples of 32)
-- **Backend**: Full CRUD at `/api/staking/*`
+- Supported Assets: ETH, SOL, MATIC, ATOM, OSMO
+- ETH Validators: Compounding (32-2048 ETH) / Legacy (multiples of 32)
 
 ## Demo Mode Architecture
 - All demo data stored in `demo_*` collections
@@ -80,8 +70,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 
 ## OTC Escrow Module (All 3 Phases Complete)
 
-## Sumsub KYC
-- Embedded iframe with Nginx CSP
+## Sumsub KYC — Embedded iframe
 
 ## Completed Features
 - Multi-currency wallets (EUR, USD, AED, BRL)
@@ -95,6 +84,8 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Auth page: Login only (registration gated by invite)
 - OTC Deal Calculator with precision formatting and toggle
 - KBEX Rate Engine with tier-based spreads and editable fees
+- Escrow Fee Tiers with editable table
+- OTC Lead visibility fix (created_by + team filter)
 - Safari cursor fix (custom cursor disabled)
 
 ## Upcoming Tasks
@@ -113,7 +104,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - Demo data → demo_* collections, never in operational DB
 - Theme toggle applies ONLY to dashboard
 
-## DB Collections (New)
+## DB Collections
 - `kbex_rates`: Rate spread configs per product/tier/asset
-- `kbex_settings`: Tier fees and other settings
-- `kbex_rates_audit`: Audit trail for rate and tier changes
+- `kbex_settings`: Tier fees, escrow fee tiers, and other settings
+- `kbex_rates_audit`: Audit trail for rate, tier, and escrow changes
