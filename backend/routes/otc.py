@@ -1614,10 +1614,33 @@ async def get_otc_pipeline(
                 {"_id": 0}
             ).sort("created_at", -1).to_list(50)
             
+            # Sanitize deals for JSON serialization
+            sanitized_deals = []
+            for d in deals:
+                clean = {}
+                for k, v in d.items():
+                    if hasattr(v, 'isoformat'):
+                        clean[k] = v.isoformat()
+                    elif isinstance(v, (str, int, float, bool, type(None), list, dict)):
+                        clean[k] = v
+                    else:
+                        clean[k] = str(v)
+                sanitized_deals.append(clean)
+            
+            # Safe total_value sum (handle strings and None)
+            total_val = 0
+            for d in sanitized_deals:
+                tv = d.get("total_value")
+                if tv is not None:
+                    try:
+                        total_val += float(tv)
+                    except (ValueError, TypeError):
+                        pass
+            
             pipeline[stage.value] = {
-                "deals": deals,
-                "count": len(deals),
-                "total_value": sum(d.get("total_value") or 0 for d in deals)
+                "deals": sanitized_deals,
+                "count": len(sanitized_deals),
+                "total_value": total_val
             }
     
     return pipeline

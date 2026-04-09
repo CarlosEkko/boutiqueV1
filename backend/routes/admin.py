@@ -468,15 +468,64 @@ async def update_kyc_status(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    now = datetime.now(timezone.utc).isoformat()
+    
     await db.users.update_one(
         {"id": user_id},
         {
             "$set": {
                 "kyc_status": status,
-                "updated_at": datetime.now(timezone.utc).isoformat()
+                "updated_at": now
             }
         }
     )
+    
+    # If KYC approved, auto-promote OTC lead and create OTC client
+    if status == "approved" or status == KYCStatus.APPROVED:
+        user_email = user.get("email", "")
+        otc_lead = await db.otc_leads.find_one({
+            "contact_email": {"$regex": f"^{user_email}$", "$options": "i"},
+            "status": {"$nin": ["lost", "active_client"]}
+        })
+        if otc_lead:
+            await db.otc_leads.update_one(
+                {"id": otc_lead["id"]},
+                {"$set": {
+                    "status": "active_client",
+                    "workflow_stage": 5,
+                    "updated_at": now,
+                }}
+            )
+            logger.info(f"OTC Lead {otc_lead['id']} promoted after KYC status update")
+        
+        existing_otc_client = await db.otc_clients.find_one({
+            "contact_email": {"$regex": f"^{user_email}$", "$options": "i"}
+        })
+        if not existing_otc_client:
+            otc_client = {
+                "id": str(uuid.uuid4()),
+                "entity_name": (otc_lead or {}).get("entity_name", user.get("name", user_email)),
+                "contact_name": (otc_lead or {}).get("contact_name", user.get("name", "")),
+                "contact_email": user_email,
+                "contact_phone": (otc_lead or {}).get("contact_phone", user.get("phone", "")),
+                "country": (otc_lead or {}).get("country", user.get("country", "")),
+                "client_type": "individual",
+                "source": (otc_lead or {}).get("source", "direct_registration"),
+                "kyc_status": "approved",
+                "is_active": True,
+                "daily_limit_usd": 100000,
+                "monthly_limit_usd": 1000000,
+                "preferred_currency": "EUR",
+                "preferred_cryptos": [],
+                "notes": "Auto-criado após aprovação KYC",
+                "user_id": user_id,
+                "lead_id": otc_lead["id"] if otc_lead else None,
+                "created_at": now,
+                "updated_at": now,
+                "created_by": admin["id"],
+            }
+            await db.otc_clients.insert_one(otc_client)
+            logger.info(f"OTC Client auto-created for {user_email}")
     
     return {"success": True, "message": f"KYC status updated to {status}"}
 
@@ -1286,6 +1335,93 @@ async def approve_kyc(user_id: str, admin: dict = Depends(get_admin_user)):
             }
         }
     )
+    
+    # --- Auto-promote OTC Lead & create OTC Client ---
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if user:
+        user_email = user.get("email", "")
+        # Find associated OTC lead by email
+        otc_lead = await db.otc_leads.find_one({
+            "contact_email": {"$regex": f"^{user_email}$", "$options": "i"},
+            "status": {"$nin": ["lost", "active_client"]}
+        })
+        if otc_lead:
+            # Advance lead to active_client
+            await db.otc_leads.update_one(
+                {"id": otc_lead["id"]},
+                {"$set": {
+                    "status": "active_client",
+                    "workflow_stage": 5,
+                    "updated_at": now,
+                    "activity_log": (otc_lead.get("activity_log") or []) + [{
+                        "action": "kyc_approved_auto",
+                        "description": f"KYC aprovado pelo admin. Lead promovido a cliente OTC.",
+                        "performed_by": admin["id"],
+                        "timestamp": now,
+                    }]
+                }}
+            )
+            logger.info(f"OTC Lead {otc_lead['id']} promoted to active_client after KYC approval")
+            
+            # Create OTC Client if not exists
+            existing_otc_client = await db.otc_clients.find_one({
+                "contact_email": {"$regex": f"^{user_email}$", "$options": "i"}
+            })
+            if not existing_otc_client:
+                otc_client = {
+                    "id": str(uuid.uuid4()),
+                    "entity_name": otc_lead.get("entity_name", user.get("name", "")),
+                    "contact_name": otc_lead.get("contact_name", user.get("name", "")),
+                    "contact_email": user_email,
+                    "contact_phone": otc_lead.get("contact_phone", user.get("phone", "")),
+                    "country": otc_lead.get("country", user.get("country", "")),
+                    "client_type": otc_lead.get("pre_qualification_data", {}).get("client_type", "individual") if otc_lead.get("pre_qualification_data") else "individual",
+                    "source": otc_lead.get("source", ""),
+                    "assigned_to": otc_lead.get("assigned_to", ""),
+                    "kyc_status": "approved",
+                    "is_active": True,
+                    "daily_limit_usd": otc_lead.get("daily_limit_set", 100000),
+                    "monthly_limit_usd": otc_lead.get("monthly_limit_set", 1000000),
+                    "preferred_currency": otc_lead.get("preferred_currency", "EUR"),
+                    "preferred_cryptos": otc_lead.get("interested_cryptos", []),
+                    "notes": otc_lead.get("notes", ""),
+                    "lead_id": otc_lead["id"],
+                    "user_id": user_id,
+                    "created_at": now,
+                    "updated_at": now,
+                    "created_by": admin["id"],
+                }
+                await db.otc_clients.insert_one(otc_client)
+                logger.info(f"OTC Client auto-created from KYC approval: {otc_client['entity_name']} ({user_email})")
+        else:
+            # No OTC lead but KYC approved — still create OTC Client from user data
+            existing_otc_client = await db.otc_clients.find_one({
+                "contact_email": {"$regex": f"^{user_email}$", "$options": "i"}
+            })
+            if not existing_otc_client:
+                otc_client = {
+                    "id": str(uuid.uuid4()),
+                    "entity_name": user.get("name", user_email),
+                    "contact_name": user.get("name", ""),
+                    "contact_email": user_email,
+                    "contact_phone": user.get("phone", ""),
+                    "country": user.get("country", ""),
+                    "client_type": "individual",
+                    "source": "direct_registration",
+                    "kyc_status": "approved",
+                    "is_active": True,
+                    "daily_limit_usd": 100000,
+                    "monthly_limit_usd": 1000000,
+                    "preferred_currency": "EUR",
+                    "preferred_cryptos": [],
+                    "notes": "Auto-criado após aprovação KYC",
+                    "user_id": user_id,
+                    "created_at": now,
+                    "updated_at": now,
+                    "created_by": admin["id"],
+                }
+                await db.otc_clients.insert_one(otc_client)
+                logger.info(f"OTC Client auto-created (no lead) for {user_email}")
     
     return {"success": True, "message": "KYC approved"}
 
