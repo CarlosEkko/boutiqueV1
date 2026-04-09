@@ -631,6 +631,12 @@ async def send_onboarding_email(
     
     email_result = {"success": False, "simulated": True}
     
+    # Get tier from lead pre-qualification data
+    tier = lead.get("potential_tier", "standard")
+    pre_qual = lead.get("pre_qualification_data", {})
+    if pre_qual and pre_qual.get("proposed_tier"):
+        tier = pre_qual["proposed_tier"]
+    
     if email_service:
         email_result = await email_service.send_onboarding_email(
             to_email=contact_email,
@@ -638,6 +644,7 @@ async def send_onboarding_email(
             entity_name=entity_name,
             registration_link=registration_link,
             country=lead.get("country", ""),
+            tier=tier,
         )
     
     # Update lead
@@ -1197,10 +1204,12 @@ async def advance_lead_to_kyc(
     
     # Tier payment configuration
     TIER_FEES = {
+        "broker": {"label": "Broker", "fee": "25 000", "currency": "EUR"},
         "standard": {"label": "Standard", "fee": "5 000", "currency": "EUR"},
         "premium": {"label": "Premium", "fee": "50 000", "currency": "EUR"},
         "vip": {"label": "VIP", "fee": "250 000", "currency": "EUR"},
         "institutional": {"label": "Institutional", "fee": "1 000 000", "currency": "EUR"},
+        "institucional": {"label": "Institucional", "fee": "1 000 000", "currency": "EUR"},
     }
     tier_info = TIER_FEES.get(tier, TIER_FEES["standard"])
     

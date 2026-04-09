@@ -235,10 +235,32 @@ class BrevoEmailService:
     }
 
     def _get_lang(self, country: str) -> str:
-        """Get language code from country code, default to 'en'."""
+        """Get language code from country code or name, default to 'en'."""
         if not country:
             return "pt"
-        return self.COUNTRY_LANG.get(country.upper(), "en")
+        c = country.strip().upper()
+        # Direct ISO code match
+        if c in self.COUNTRY_LANG:
+            return self.COUNTRY_LANG[c]
+        # Full country name to ISO mapping
+        NAME_TO_ISO = {
+            "PORTUGAL": "PT", "BRASIL": "BR", "BRAZIL": "BR", "ANGOLA": "AO", "MOÇAMBIQUE": "MZ",
+            "MOZAMBIQUE": "MZ", "CABO VERDE": "CV", "CAPE VERDE": "CV",
+            "FRANCE": "FR", "FRANÇA": "FR", "BELGIUM": "BE", "BÉLGICA": "BE", "SWITZERLAND": "CH",
+            "SUÍÇA": "CH", "CANADA": "CA", "CANADÁ": "CA", "MOROCCO": "MA", "MARROCOS": "MA",
+            "SAUDI ARABIA": "SA", "ARÁBIA SAUDITA": "SA",
+            "UNITED ARAB EMIRATES": "AE", "EMIRADOS ÁRABES UNIDOS": "AE", "UAE": "AE",
+            "QATAR": "QA", "KUWAIT": "KW", "BAHRAIN": "BH", "OMAN": "OM",
+            "JORDAN": "JO", "JORDÂNIA": "JO", "LEBANON": "LB", "LÍBANO": "LB",
+            "EGYPT": "EG", "EGITO": "EG", "IRAQ": "IQ", "IRAQUE": "IQ",
+            "SPAIN": "ES", "ESPANHA": "ES", "GERMANY": "DE", "ALEMANHA": "DE",
+            "ITALY": "IT", "ITÁLIA": "IT", "UNITED KINGDOM": "GB", "REINO UNIDO": "GB", "UK": "GB",
+            "UNITED STATES": "US", "ESTADOS UNIDOS": "US", "USA": "US", "EUA": "US",
+        }
+        iso = NAME_TO_ISO.get(c)
+        if iso:
+            return self.COUNTRY_LANG.get(iso, "en")
+        return "en"
 
     def _get_lang_from_region(self, region: str) -> str:
         """Get language code from team region."""
@@ -412,10 +434,12 @@ class BrevoEmailService:
         
         # Tier payment configuration
         TIER_FEES = {
+            "broker": {"label": "Broker", "fee": "25 000", "currency": "EUR"},
             "standard": {"label": "Standard", "fee": "5 000", "currency": "EUR"},
             "premium": {"label": "Premium", "fee": "50 000", "currency": "EUR"},
             "vip": {"label": "VIP", "fee": "250 000", "currency": "EUR"},
             "institutional": {"label": "Institutional", "fee": "1 000 000", "currency": "EUR"},
+            "institucional": {"label": "Institucional", "fee": "1 000 000", "currency": "EUR"},
         }
         tier_info = TIER_FEES.get(tier, TIER_FEES["standard"])
         if tier_fee:
