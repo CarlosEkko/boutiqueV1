@@ -1,380 +1,821 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Card, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
-import { Coins, TrendingUp, ArrowUpCircle, ArrowDownCircle, Gift, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import {
+  Coins, TrendingUp, ArrowUpCircle, ArrowDownCircle,
+  Loader2, AlertCircle, ChevronRight, ChevronLeft,
+  Check, Clock, Gift, History, Layers
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDate } from '../../../utils/formatters';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
+/* ─── crypto colour map ─── */
+const ASSET_COLORS = {
+  ETH: { bg: 'bg-indigo-500/15', border: 'border-indigo-500/30', text: 'text-indigo-400', accent: '#818cf8' },
+  SOL: { bg: 'bg-violet-500/15', border: 'border-violet-500/30', text: 'text-violet-400', accent: '#a78bfa' },
+  MATIC: { bg: 'bg-purple-500/15', border: 'border-purple-500/30', text: 'text-purple-400', accent: '#c084fc' },
+  ATOM: { bg: 'bg-sky-500/15', border: 'border-sky-500/30', text: 'text-sky-400', accent: '#38bdf8' },
+  OSMO: { bg: 'bg-fuchsia-500/15', border: 'border-fuchsia-500/30', text: 'text-fuchsia-400', accent: '#e879f9' },
+};
+
+const ASSET_ICONS = {
+  ETH: '⟠', SOL: '◎', MATIC: '⬡', ATOM: '⚛', OSMO: '🧬',
+};
+
 const StakingPage = () => {
   const { token } = useAuth();
-  const [chains, setChains] = useState([]);
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  /* ─── state ─── */
+  const [assets, setAssets] = useState([]);
   const [providers, setProviders] = useState([]);
   const [positions, setPositions] = useState([]);
   const [summary, setSummary] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('positions');
-  const [showStakeModal, setShowStakeModal] = useState(false);
-  const [showUnstakeModal, setShowUnstakeModal] = useState(false);
-  const [stakeForm, setStakeForm] = useState({ vault_account_id: '', provider_id: '', amount: '' });
-  const [actionLoading, setActionLoading] = useState(false);
 
-  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  /* wizard state */
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [step, setStep] = useState(1);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedValidator, setSelectedValidator] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [amountError, setAmountError] = useState('');
 
+  /* unstake */
+  const [unstakeOpen, setUnstakeOpen] = useState(false);
+  const [unstakePos, setUnstakePos] = useState(null);
+  const [unstakeAmount, setUnstakeAmount] = useState('');
+  const [unstakeLoading, setUnstakeLoading] = useState(false);
+
+  /* ─── fetch ─── */
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [chainsR, providersR, positionsR, summaryR, historyR] = await Promise.all([
-        fetch(`${API}/api/staking/chains`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/staking/providers`, { headers }).then(r => r.json()),
+      const [assetsR, posR, sumR, histR] = await Promise.all([
+        fetch(`${API}/api/staking/assets`, { headers }).then(r => r.json()),
         fetch(`${API}/api/staking/positions`, { headers }).then(r => r.json()),
         fetch(`${API}/api/staking/summary`, { headers }).then(r => r.json()),
         fetch(`${API}/api/staking/history`, { headers }).then(r => r.json()),
       ]);
-      setChains(chainsR.chains || []);
-      setProviders(providersR.providers || []);
-      setPositions(positionsR.positions || []);
-      setSummary(summaryR.summary || null);
-      setHistory(historyR.history || []);
+      setAssets(assetsR.assets || []);
+      setPositions(posR.positions || []);
+      setSummary(sumR.summary || null);
+      setHistory(histR.history || []);
     } catch (e) {
       console.error('Staking fetch error:', e);
     }
     setLoading(false);
   };
 
-  const handleStake = async () => {
-    if (!stakeForm.vault_account_id || !stakeForm.provider_id || !stakeForm.amount) {
-      toast.error('Preencha todos os campos'); return;
-    }
-    setActionLoading(true);
+  /* ─── fetch providers for selected asset ─── */
+  const fetchProviders = async (chain) => {
     try {
+      const res = await fetch(`${API}/api/staking/providers?chain=${chain}`, { headers });
+      const data = await res.json();
+      setProviders(data.providers || []);
+    } catch {
+      setProviders([]);
+    }
+  };
+
+  /* ─── wizard helpers ─── */
+  const resetWizard = () => {
+    setStep(1);
+    setSelectedAsset(null);
+    setSelectedValidator(null);
+    setAmount('');
+    setSelectedProvider('');
+    setNote('');
+    setAmountError('');
+    setProviders([]);
+  };
+
+  const openWizard = () => { resetWizard(); setWizardOpen(true); };
+
+  const selectAsset = (asset) => {
+    setSelectedAsset(asset);
+    setSelectedValidator(null);
+    setAmount('');
+    setAmountError('');
+    fetchProviders(asset.id);
+    // ETH has validator types → go to step 2, others skip to step 3
+    if (asset.validator_types && asset.validator_types.length > 0) {
+      setStep(2);
+    } else {
+      setStep(3);
+    }
+  };
+
+  const selectValidatorType = (vt) => {
+    setSelectedValidator(vt);
+    setAmount('');
+    setAmountError('');
+    setStep(3);
+  };
+
+  const validateAmount = (val) => {
+    const num = parseFloat(val);
+    if (!val || isNaN(num) || num <= 0) {
+      setAmountError('Insira um montante válido');
+      return false;
+    }
+    if (!selectedAsset) return false;
+
+    if (num < selectedAsset.min_stake) {
+      setAmountError(`Mínimo: ${selectedAsset.min_stake} ${selectedAsset.symbol}`);
+      return false;
+    }
+
+    if (selectedAsset.id === 'ETH' && selectedValidator) {
+      if (selectedValidator.id === 'compounding') {
+        if (num < 32 || num > 2048) {
+          setAmountError('Compounding: 32 a 2048 ETH');
+          return false;
+        }
+      } else if (selectedValidator.id === 'legacy') {
+        if (num < 32 || num % 32 !== 0) {
+          setAmountError('Legacy: múltiplos exatos de 32 ETH');
+          return false;
+        }
+      }
+    }
+
+    setAmountError('');
+    return true;
+  };
+
+  const goToProvider = () => {
+    if (validateAmount(amount)) setStep(4);
+  };
+
+  const goToReview = () => {
+    if (!selectedProvider) {
+      toast.error('Selecione um provider');
+      return;
+    }
+    setStep(5);
+  };
+
+  /* ─── submit stake ─── */
+  const handleStake = async () => {
+    setSubmitting(true);
+    try {
+      const provObj = providers.find(p => p.id === selectedProvider);
+      const body = {
+        asset_id: selectedAsset.id,
+        validator_type: selectedValidator?.id || null,
+        provider_id: selectedProvider,
+        provider_name: provObj?.name || selectedProvider,
+        amount: parseFloat(amount),
+        note,
+      };
       const res = await fetch(`${API}/api/staking/stake`, {
-        method: 'POST', headers, body: JSON.stringify(stakeForm)
+        method: 'POST', headers, body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (data.success) {
-        toast.success(data.message || 'Staking iniciado');
-        setShowStakeModal(false);
-        setStakeForm({ vault_account_id: '', provider_id: '', amount: '' });
+      if (res.ok && data.success) {
+        toast.success(data.message || 'Staking iniciado com sucesso');
+        setWizardOpen(false);
+        resetWizard();
         fetchAll();
       } else {
-        toast.error(data.detail || 'Erro ao fazer staking');
+        toast.error(data.detail || 'Erro ao submeter staking');
       }
-    } catch (e) { toast.error('Erro de conexão'); }
-    setActionLoading(false);
+    } catch {
+      toast.error('Erro de conexão');
+    }
+    setSubmitting(false);
+  };
+
+  /* ─── unstake ─── */
+  const openUnstake = (pos) => {
+    setUnstakePos(pos);
+    setUnstakeAmount('');
+    setUnstakeOpen(true);
   };
 
   const handleUnstake = async () => {
-    if (!stakeForm.vault_account_id || !stakeForm.provider_id || !stakeForm.amount) {
-      toast.error('Preencha todos os campos'); return;
-    }
-    setActionLoading(true);
+    const num = parseFloat(unstakeAmount);
+    if (!num || num <= 0) { toast.error('Montante inválido'); return; }
+    if (num > unstakePos.amount) { toast.error('Montante superior ao staked'); return; }
+    setUnstakeLoading(true);
     try {
       const res = await fetch(`${API}/api/staking/unstake`, {
-        method: 'POST', headers, body: JSON.stringify(stakeForm)
+        method: 'POST', headers,
+        body: JSON.stringify({ position_id: unstakePos.id, amount: num }),
       });
       const data = await res.json();
-      if (data.success) {
-        toast.success(data.message || 'Unstaking iniciado');
-        setShowUnstakeModal(false);
-        setStakeForm({ vault_account_id: '', provider_id: '', amount: '' });
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        setUnstakeOpen(false);
         fetchAll();
       } else {
-        toast.error(data.detail || 'Erro ao fazer unstaking');
+        toast.error(data.detail || 'Erro');
       }
-    } catch (e) { toast.error('Erro de conexão'); }
-    setActionLoading(false);
+    } catch { toast.error('Erro de conexão'); }
+    setUnstakeLoading(false);
   };
 
-  const handleClaimRewards = async (position) => {
+  /* ─── claim rewards ─── */
+  const handleClaim = async (pos) => {
     try {
       const res = await fetch(`${API}/api/staking/claim-rewards`, {
         method: 'POST', headers,
-        body: JSON.stringify({
-          vault_account_id: position.vaultAccountId || '',
-          provider_id: position.providerId || position.chainDescriptor || '',
-        })
+        body: JSON.stringify({ position_id: pos.id }),
       });
       const data = await res.json();
-      if (data.success) { toast.success('Claim de recompensas iniciado'); fetchAll(); }
+      if (res.ok && data.success) { toast.success(data.message); fetchAll(); }
       else { toast.error(data.detail || 'Erro'); }
-    } catch (e) { toast.error('Erro de conexão'); }
+    } catch { toast.error('Erro de conexão'); }
+  };
+
+  /* ─── total steps for ETH vs others ─── */
+  const totalSteps = selectedAsset?.validator_types?.length > 0 ? 5 : 4;
+  const adjustedStep = (selectedAsset?.validator_types?.length > 0) ? step : (step <= 1 ? step : step - 1);
+
+  /* ─── format date ─── */
+  const fmtDate = (d) => {
+    if (!d) return '';
+    try { return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch { return d; }
+  };
+
+  const statusColor = (s) => {
+    if (s === 'active') return 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/20';
+    if (s === 'pending') return 'bg-amber-400/10 text-amber-400 border border-amber-400/20';
+    if (s === 'unstaking') return 'bg-rose-400/10 text-rose-400 border border-rose-400/20';
+    return 'bg-zinc-700 text-zinc-300';
   };
 
   const tabs = [
-    { key: 'positions', label: 'Posições', icon: Coins },
-    { key: 'providers', label: 'Validadores', icon: TrendingUp },
-    { key: 'chains', label: 'Redes', icon: RefreshCw },
-    { key: 'history', label: 'Histórico', icon: Gift },
+    { key: 'positions', label: 'Posições', icon: Layers },
+    { key: 'history', label: 'Histórico', icon: History },
   ];
 
+  /* ─── RENDER ─── */
   if (loading) return (
     <div className="flex items-center justify-center h-64" data-testid="staking-loading">
-      <Loader2 className="animate-spin text-[#D4AF37]" size={32} />
+      <Loader2 className="animate-spin text-amber-500" size={32} />
     </div>
   );
 
   return (
-    <div className="space-y-6" data-testid="staking-page">
-      {/* Header */}
+    <div className="space-y-8" data-testid="staking-page">
+      {/* ═══ HEADER ═══ */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Coins className="text-[#D4AF37]" size={28} />
+          <p className="text-xs text-amber-500 uppercase tracking-[0.2em] font-medium mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            Delegated Staking
+          </p>
+          <h1 className="text-3xl font-light text-white" style={{ fontFamily: 'Playfair Display, serif' }} data-testid="staking-title">
             Staking
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">Gerencie as suas posições de staking delegado</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowStakeModal(true)} className="bg-emerald-600 hover:bg-emerald-500" data-testid="stake-btn">
-            <ArrowUpCircle size={16} className="mr-2" /> Stake
-          </Button>
-          <Button onClick={() => setShowUnstakeModal(true)} variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" data-testid="unstake-btn">
-            <ArrowDownCircle size={16} className="mr-2" /> Unstake
-          </Button>
-        </div>
+        <Button
+          onClick={openWizard}
+          className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 transition-colors"
+          data-testid="new-stake-btn"
+        >
+          <ArrowUpCircle size={16} className="mr-2" /> Novo Stake
+        </Button>
       </div>
 
-      {/* Summary Cards */}
+      {/* ═══ SUMMARY CARDS ═══ */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-zinc-900/60 border-zinc-800">
-          <CardContent className="p-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Posições Ativas</p>
-            <p className="text-2xl font-bold text-white mt-1" data-testid="positions-count">{positions.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/60 border-zinc-800">
-          <CardContent className="p-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Validadores</p>
-            <p className="text-2xl font-bold text-white mt-1">{providers.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/60 border-zinc-800">
-          <CardContent className="p-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Redes Suportadas</p>
-            <p className="text-2xl font-bold text-white mt-1">{chains.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-zinc-900/60 border-zinc-800">
-          <CardContent className="p-4">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Ações Registadas</p>
-            <p className="text-2xl font-bold text-[#D4AF37] mt-1">{history.length}</p>
-          </CardContent>
-        </Card>
+        <SummaryCard label="Posições Ativas" value={summary?.active_positions ?? 0} testId="summary-active" />
+        <SummaryCard label="Pendentes" value={summary?.pending_positions ?? 0} testId="summary-pending" />
+        <SummaryCard label="Total Posições" value={summary?.total_positions ?? 0} testId="summary-total" />
+        <SummaryCard label="Ativos Staked" value={summary?.by_asset?.length ?? 0} testId="summary-assets" highlight />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-zinc-800 pb-2">
+      {/* ═══ BY-ASSET BREAKDOWN ═══ */}
+      {summary?.by_asset?.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {summary.by_asset.map(a => {
+            const colors = ASSET_COLORS[a.asset] || ASSET_COLORS.ETH;
+            return (
+              <Card key={a.asset} className={`bg-zinc-900/60 border ${colors.border}`}>
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center text-lg`}>
+                    {ASSET_ICONS[a.asset] || '●'}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-semibold ${colors.text}`}>{a.total_staked} {a.asset}</p>
+                    <p className="text-xs text-zinc-500">{a.count} posição(ões)</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ═══ TABS ═══ */}
+      <div className="flex gap-1 border-b border-zinc-800">
         {tabs.map(tab => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-t-lg text-sm font-medium transition-colors ${
-              activeTab === tab.key ? 'bg-zinc-800 text-[#D4AF37] border-b-2 border-[#D4AF37]' : 'text-zinc-400 hover:text-white'
-            }`} data-testid={`tab-${tab.key}`}>
-            <tab.icon size={16} /> {tab.label}
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors relative
+              ${activeTab === tab.key
+                ? 'text-amber-500'
+                : 'text-zinc-500 hover:text-zinc-300'}`}
+            data-testid={`tab-${tab.key}`}
+          >
+            <tab.icon size={15} /> {tab.label}
+            {activeTab === tab.key && (
+              <span className="absolute bottom-0 left-0 right-0 h-px bg-amber-500" />
+            )}
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* ═══ POSITIONS ═══ */}
       {activeTab === 'positions' && (
         <div className="space-y-3" data-testid="positions-list">
           {positions.length === 0 ? (
             <Card className="bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-8 text-center">
-                <AlertCircle className="mx-auto text-zinc-600 mb-3" size={32} />
-                <p className="text-zinc-400">Sem posições de staking ativas</p>
-                <p className="text-xs text-zinc-500 mt-1">Clique em "Stake" para começar</p>
+              <CardContent className="p-12 text-center">
+                <Coins className="mx-auto text-zinc-700 mb-4" size={40} />
+                <p className="text-zinc-400 font-light text-lg">Sem posições de staking</p>
+                <p className="text-xs text-zinc-600 mt-2">Clique em "Novo Stake" para começar</p>
               </CardContent>
             </Card>
-          ) : positions.map((pos, i) => (
-            <Card key={i} className="bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 transition-colors">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
-                    <Coins className="text-[#D4AF37]" size={20} />
+          ) : positions.map(pos => {
+            const colors = ASSET_COLORS[pos.asset_id] || ASSET_COLORS.ETH;
+            return (
+              <Card key={pos.id} className="bg-zinc-900/60 border border-zinc-800 hover:border-zinc-700 transition-colors" data-testid={`position-${pos.id}`}>
+                <CardContent className="p-5 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className={`w-11 h-11 rounded-lg ${colors.bg} flex items-center justify-center text-xl shrink-0`}>
+                      {ASSET_ICONS[pos.asset_id] || '●'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white font-medium">{pos.asset_name || pos.asset_id}</p>
+                      <p className="text-xs text-zinc-500 truncate">
+                        {pos.validator_type && <span className="capitalize">{pos.validator_type} · </span>}
+                        {pos.provider_name || pos.provider_id}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white font-medium">{pos.chainDescriptor || pos.chain || 'N/A'}</p>
-                    <p className="text-xs text-zinc-500">Vault: {pos.vaultAccountId || 'N/A'}</p>
+                  <div className="flex items-center gap-6 flex-wrap">
+                    <div className="text-right">
+                      <p className="text-white font-semibold tabular-nums">{pos.amount} {pos.asset_id}</p>
+                      <p className="text-xs text-zinc-500">{fmtDate(pos.created_at)}</p>
+                    </div>
+                    <span className={`px-2.5 py-1 rounded text-xs font-medium ${statusColor(pos.status)}`}>
+                      {pos.status}
+                    </span>
+                    <div className="flex gap-1.5">
+                      {pos.status === 'active' && (
+                        <>
+                          <Button size="sm" variant="ghost" className="text-amber-500 hover:bg-amber-500/10 h-8 px-2.5" onClick={() => handleClaim(pos)} data-testid={`claim-${pos.id}`}>
+                            <Gift size={14} className="mr-1" /> Claim
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-400/10 h-8 px-2.5" onClick={() => openUnstake(pos)} data-testid={`unstake-${pos.id}`}>
+                            <ArrowDownCircle size={14} className="mr-1" /> Unstake
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-white font-semibold">{pos.amount || pos.stakedAmount || '0'}</p>
-                    <p className="text-xs text-emerald-400">{pos.rewardsAmount ? `+${pos.rewardsAmount} rewards` : ''}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    pos.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-                    pos.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-zinc-700 text-zinc-300'
-                  }`}>{pos.status || 'active'}</span>
-                  {pos.rewardsAmount && parseFloat(pos.rewardsAmount) > 0 && (
-                    <Button size="sm" variant="ghost" className="text-[#D4AF37] hover:bg-[#D4AF37]/10" onClick={() => handleClaimRewards(pos)}>
-                      <Gift size={14} className="mr-1" /> Claim
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {activeTab === 'providers' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="providers-list">
-          {providers.map((prov, i) => (
-            <Card key={i} className="bg-zinc-900/60 border-zinc-800">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-white font-medium">{prov.chainDescriptor ? `Validador ${prov.chainDescriptor}` : `Validador ${i + 1}`}</p>
-                  <span className="text-xs bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-1 rounded">{prov.chainDescriptor || ''}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-zinc-400">
-                  <div>APY: <span className="text-emerald-400 font-medium">{prov.apy || prov.apr || 'N/A'}%</span></div>
-                  <div>Min: <span className="text-white">{prov.minStakeAmount || 'N/A'}</span></div>
-                  <div>Lock-up: <span className="text-white">{prov.lockupPeriod || 'Flexível'}</span></div>
-                  <div>Fee: <span className="text-white">{prov.serviceFee || '0'}%</span></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {providers.length === 0 && (
-            <Card className="bg-zinc-900/40 border-zinc-800 col-span-2">
-              <CardContent className="p-8 text-center text-zinc-400">Nenhum validador disponível</CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'chains' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="chains-list">
-          {chains.map((chain, i) => (
-            <Card key={i} className="bg-zinc-900/60 border-zinc-800">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Coins className="text-[#D4AF37]" size={18} />
-                </div>
-                <div>
-                  <p className="text-white font-medium">{chain.chainDescriptor || chain.name || chain}</p>
-                  <p className="text-xs text-zinc-500">{typeof chain === 'object' ? (chain.stakingType || 'Delegated') : ''}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
+      {/* ═══ HISTORY ═══ */}
       {activeTab === 'history' && (
         <div className="space-y-2" data-testid="staking-history">
           {history.length === 0 ? (
             <Card className="bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-8 text-center text-zinc-400">Sem histórico de staking</CardContent>
+              <CardContent className="p-12 text-center text-zinc-500">Sem histórico de staking</CardContent>
             </Card>
           ) : history.map((h, i) => (
-            <Card key={i} className="bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-3 flex items-center justify-between">
+            <Card key={h.id || i} className="bg-zinc-900/40 border-zinc-800">
+              <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className={`w-2 h-2 rounded-full ${
+                  <span className={`w-2.5 h-2.5 rounded-full ${
                     h.action === 'stake' ? 'bg-emerald-400' :
-                    h.action === 'unstake' ? 'bg-red-400' : 'bg-[#D4AF37]'
+                    h.action === 'unstake' ? 'bg-rose-400' : 'bg-amber-400'
                   }`} />
                   <div>
                     <p className="text-sm text-white font-medium capitalize">{h.action?.replace('_', ' ')}</p>
-                    <p className="text-xs text-zinc-500">{h.amount || ''}</p>
+                    <p className="text-xs text-zinc-500">
+                      {h.amount} {h.asset_id}
+                      {h.validator_type && <span className="ml-1 text-zinc-600">· {h.validator_type}</span>}
+                    </p>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500">{h.created_at ? formatDate(h.created_at, true) : ''}</p>
+                <p className="text-xs text-zinc-500">{fmtDate(h.created_at)}</p>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Stake Modal */}
-      <Dialog open={showStakeModal} onOpenChange={setShowStakeModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ArrowUpCircle className="text-emerald-400" size={20} /> Stake</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Vault Account ID</label>
-              <Input value={stakeForm.vault_account_id} onChange={e => setStakeForm(p => ({...p, vault_account_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" data-testid="stake-vault-input" />
+      {/* ═══════════════════════════════════════════
+          STAKE WIZARD MODAL
+         ═══════════════════════════════════════════ */}
+      <Dialog open={wizardOpen} onOpenChange={(v) => { if (!v) { setWizardOpen(false); resetWizard(); } }}>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-2xl p-0 gap-0 [&>button]:text-zinc-400" data-testid="stake-wizard">
+          {/* Header */}
+          <div className="p-6 pb-4 border-b border-zinc-800">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-amber-500 uppercase tracking-[0.2em] font-medium" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                {step <= 1 && '01 · ATIVO'}
+                {step === 2 && '02 · VALIDADOR'}
+                {step === 3 && (selectedAsset?.validator_types?.length > 0 ? '03 · MONTANTE' : '02 · MONTANTE')}
+                {step === 4 && (selectedAsset?.validator_types?.length > 0 ? '04 · PROVIDER' : '03 · PROVIDER')}
+                {step === 5 && (selectedAsset?.validator_types?.length > 0 ? '05 · CONFIRMAR' : '04 · CONFIRMAR')}
+              </p>
+              <p className="text-xs text-zinc-600">{Math.min(step, totalSteps)} / {totalSteps}</p>
             </div>
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Validador</label>
-              <Select value={stakeForm.provider_id} onValueChange={v => setStakeForm(p => ({...p, provider_id: v}))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="stake-provider-select">
-                  <SelectValue placeholder="Selecionar validador" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {providers.map((p, i) => (
-                    <SelectItem key={i} value={p.id || p.providerId || `prov-${i}`}>
-                      {p.chainDescriptor ? `Validador ${p.chainDescriptor}` : `Validador ${i + 1}`} ({p.chainDescriptor || ''})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Montante</label>
-              <Input type="number" value={stakeForm.amount} onChange={e => setStakeForm(p => ({...p, amount: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="0.00" data-testid="stake-amount-input" />
+            <div className="w-full h-px bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${(Math.min(step, totalSteps) / totalSteps) * 100}%` }} />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStakeModal(false)} className="border-zinc-700">Cancelar</Button>
-            <Button onClick={handleStake} disabled={actionLoading} className="bg-emerald-600 hover:bg-emerald-500" data-testid="stake-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar Stake'}
-            </Button>
-          </DialogFooter>
+
+          <div className="p-6 min-h-[340px]">
+            {/* ─── STEP 1: SELECT ASSET ─── */}
+            {step === 1 && (
+              <div data-testid="wizard-step-asset">
+                <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Selecionar Ativo
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6">Escolha o ativo que pretende fazer staking</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {assets.map(asset => {
+                    const c = ASSET_COLORS[asset.id] || ASSET_COLORS.ETH;
+                    return (
+                      <button
+                        key={asset.id}
+                        onClick={() => selectAsset(asset)}
+                        className={`text-left p-4 rounded-lg border ${c.border} ${c.bg} hover:brightness-125 transition-all group`}
+                        data-testid={`asset-${asset.id}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{ASSET_ICONS[asset.id]}</span>
+                            <div>
+                              <p className="text-white font-medium">{asset.name}</p>
+                              <p className="text-xs text-zinc-500">{asset.chain}</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                        </div>
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+                          <p className="text-xs text-zinc-500">APY</p>
+                          <p className={`text-sm font-medium ${c.text}`}>{asset.apy_range}</p>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-zinc-500">Min</p>
+                          <p className="text-xs text-zinc-400">{asset.min_stake} {asset.symbol}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ─── STEP 2: VALIDATOR TYPE (ETH only) ─── */}
+            {step === 2 && selectedAsset && (
+              <div data-testid="wizard-step-validator">
+                <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Tipo de Validador
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6">Selecione o tipo de validador para {selectedAsset.symbol}</p>
+                <div className="space-y-3">
+                  {selectedAsset.validator_types.map(vt => (
+                    <button
+                      key={vt.id}
+                      onClick={() => selectValidatorType(vt)}
+                      className="w-full text-left p-5 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:border-amber-500/30 hover:bg-zinc-900 transition-all group"
+                      data-testid={`validator-${vt.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-medium text-lg">{vt.name}</p>
+                          <p className="text-sm text-zinc-500 mt-1">{vt.description}</p>
+                        </div>
+                        <ChevronRight size={18} className="text-zinc-600 group-hover:text-amber-500 transition-colors" />
+                      </div>
+                      <div className="flex gap-6 mt-4 pt-3 border-t border-zinc-800">
+                        <div>
+                          <p className="text-xs text-zinc-600">APY</p>
+                          <p className="text-sm text-emerald-400 font-medium">{vt.apy}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-zinc-600">Mínimo</p>
+                          <p className="text-sm text-zinc-300">{vt.min_amount} ETH</p>
+                        </div>
+                        {vt.max_amount && (
+                          <div>
+                            <p className="text-xs text-zinc-600">Máximo</p>
+                            <p className="text-sm text-zinc-300">{vt.max_amount} ETH</p>
+                          </div>
+                        )}
+                        {vt.increment && (
+                          <div>
+                            <p className="text-xs text-zinc-600">Incremento</p>
+                            <p className="text-sm text-zinc-300">{vt.increment} ETH</p>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <Button variant="ghost" className="mt-4 text-zinc-500 hover:text-white" onClick={() => { setStep(1); setSelectedAsset(null); }}>
+                  <ChevronLeft size={16} className="mr-1" /> Voltar
+                </Button>
+              </div>
+            )}
+
+            {/* ─── STEP 3: AMOUNT ─── */}
+            {step === 3 && selectedAsset && (
+              <div data-testid="wizard-step-amount">
+                <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Montante
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6">
+                  Insira o montante de {selectedAsset.symbol} para staking
+                  {selectedValidator && <span className="text-amber-500/80"> ({selectedValidator.name})</span>}
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-2 block font-medium">Montante ({selectedAsset.symbol})</label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => { setAmount(e.target.value); if (e.target.value) validateAmount(e.target.value); }}
+                        placeholder={`Min: ${selectedValidator?.min_amount || selectedAsset.min_stake}`}
+                        className="bg-zinc-900 border-zinc-800 text-white text-lg py-6 pr-16 focus:border-amber-500/50"
+                        data-testid="stake-amount-input"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm font-medium">
+                        {selectedAsset.symbol}
+                      </span>
+                    </div>
+                    {amountError && (
+                      <p className="text-rose-400 text-xs mt-2 flex items-center gap-1" data-testid="amount-error">
+                        <AlertCircle size={12} /> {amountError}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quick amount buttons for ETH */}
+                  {selectedAsset.id === 'ETH' && (
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedValidator?.id === 'legacy'
+                        ? [32, 64, 96, 128, 160, 192, 224, 256]
+                        : [32, 64, 128, 256, 512, 1024, 2048]
+                      ).map(v => (
+                        <button
+                          key={v}
+                          onClick={() => { setAmount(String(v)); validateAmount(String(v)); }}
+                          className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors
+                            ${amount === String(v) ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' : 'border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
+                          data-testid={`quick-amount-${v}`}
+                        >
+                          {v} ETH
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Validation hints */}
+                  <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-4">
+                    <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Regras</p>
+                    {selectedValidator ? (
+                      <ul className="space-y-1 text-xs text-zinc-400">
+                        <li className="flex items-center gap-2">
+                          <Check size={12} className="text-emerald-400" /> Mínimo: {selectedValidator.min_amount} {selectedAsset.symbol}
+                        </li>
+                        {selectedValidator.max_amount && (
+                          <li className="flex items-center gap-2">
+                            <Check size={12} className="text-emerald-400" /> Máximo: {selectedValidator.max_amount} {selectedAsset.symbol}
+                          </li>
+                        )}
+                        {selectedValidator.increment && (
+                          <li className="flex items-center gap-2">
+                            <Check size={12} className="text-emerald-400" /> Múltiplos de {selectedValidator.increment} {selectedAsset.symbol}
+                          </li>
+                        )}
+                      </ul>
+                    ) : (
+                      <ul className="space-y-1 text-xs text-zinc-400">
+                        <li className="flex items-center gap-2">
+                          <Check size={12} className="text-emerald-400" /> Mínimo: {selectedAsset.min_stake} {selectedAsset.symbol}
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check size={12} className="text-emerald-400" /> APY estimado: {selectedAsset.apy_range}
+                        </li>
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-6">
+                  <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={() => {
+                    if (selectedAsset.validator_types?.length > 0) { setStep(2); setSelectedValidator(null); }
+                    else { setStep(1); setSelectedAsset(null); }
+                  }}>
+                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                  </Button>
+                  <Button
+                    onClick={goToProvider}
+                    disabled={!amount || !!amountError}
+                    className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 disabled:opacity-40"
+                    data-testid="amount-next-btn"
+                  >
+                    Continuar <ChevronRight size={16} className="ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── STEP 4: SELECT PROVIDER ─── */}
+            {step === 4 && (
+              <div data-testid="wizard-step-provider">
+                <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Selecionar Provider
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6">Escolha o provider de staking via Fireblocks</p>
+
+                {providers.length === 0 ? (
+                  <div className="space-y-4">
+                    <Card className="bg-zinc-900/40 border-zinc-800">
+                      <CardContent className="p-8 text-center">
+                        <AlertCircle className="mx-auto text-amber-500/50 mb-3" size={32} />
+                        <p className="text-zinc-400">Nenhum provider disponível via Fireblocks para {selectedAsset?.symbol}</p>
+                        <p className="text-xs text-zinc-600 mt-2">Insira manualmente o ID do provider</p>
+                      </CardContent>
+                    </Card>
+                    <div>
+                      <label className="text-sm text-zinc-400 mb-2 block font-medium">Provider ID (manual)</label>
+                      <Input
+                        value={selectedProvider}
+                        onChange={e => setSelectedProvider(e.target.value)}
+                        placeholder="ID do provider"
+                        className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
+                        data-testid="provider-manual-input"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {providers.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedProvider(p.id)}
+                        className={`w-full text-left p-4 rounded-lg border transition-all
+                          ${selectedProvider === p.id
+                            ? 'border-amber-500/50 bg-amber-500/5'
+                            : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'}`}
+                        data-testid={`provider-${p.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white font-medium">{p.name || p.id}</p>
+                            <p className="text-xs text-zinc-500">{p.chain}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {p.apy && (
+                              <div className="text-right">
+                                <p className="text-xs text-zinc-600">APY</p>
+                                <p className="text-sm text-emerald-400 font-medium">{p.apy}%</p>
+                              </div>
+                            )}
+                            {p.fee && (
+                              <div className="text-right">
+                                <p className="text-xs text-zinc-600">Fee</p>
+                                <p className="text-sm text-zinc-400">{p.fee}%</p>
+                              </div>
+                            )}
+                            {selectedProvider === p.id && (
+                              <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
+                                <Check size={12} className="text-zinc-950" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-6">
+                  <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={() => setStep(3)}>
+                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                  </Button>
+                  <Button
+                    onClick={goToReview}
+                    disabled={!selectedProvider}
+                    className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 disabled:opacity-40"
+                    data-testid="provider-next-btn"
+                  >
+                    Rever <ChevronRight size={16} className="ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── STEP 5: REVIEW & CONFIRM ─── */}
+            {step === 5 && (
+              <div data-testid="wizard-step-review">
+                <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Confirmar Staking
+                </h3>
+                <p className="text-sm text-zinc-500 mb-6">Reveja os detalhes antes de confirmar</p>
+
+                <div className="bg-zinc-900/60 rounded-lg border border-zinc-800 divide-y divide-zinc-800">
+                  <ReviewRow label="Ativo" value={`${selectedAsset?.name} (${selectedAsset?.symbol})`} icon={ASSET_ICONS[selectedAsset?.id]} />
+                  {selectedValidator && <ReviewRow label="Validador" value={selectedValidator.name} />}
+                  <ReviewRow label="Montante" value={`${amount} ${selectedAsset?.symbol}`} highlight />
+                  <ReviewRow label="Provider" value={providers.find(p => p.id === selectedProvider)?.name || selectedProvider} />
+                  <ReviewRow label="APY Estimado" value={selectedValidator?.apy || selectedAsset?.apy_range || '-'} />
+                </div>
+
+                <div className="mt-4">
+                  <label className="text-sm text-zinc-400 mb-2 block font-medium">Nota (opcional)</label>
+                  <Input
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    placeholder="Nota interna..."
+                    className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
+                    data-testid="stake-note-input"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between mt-6">
+                  <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={() => setStep(4)}>
+                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                  </Button>
+                  <Button
+                    onClick={handleStake}
+                    disabled={submitting}
+                    className="bg-amber-500 text-zinc-950 font-medium px-8 hover:bg-amber-400"
+                    data-testid="stake-confirm-btn"
+                  >
+                    {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : <ArrowUpCircle size={16} className="mr-2" />}
+                    {submitting ? 'A processar...' : 'Confirmar Stake'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Unstake Modal */}
-      <Dialog open={showUnstakeModal} onOpenChange={setShowUnstakeModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+      {/* ═══ UNSTAKE MODAL ═══ */}
+      <Dialog open={unstakeOpen} onOpenChange={setUnstakeOpen}>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-md [&>button]:text-zinc-400" data-testid="unstake-modal">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><ArrowDownCircle className="text-red-400" size={20} /> Unstake</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <ArrowDownCircle className="text-rose-400" size={20} /> Unstake
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Vault Account ID</label>
-              <Input value={stakeForm.vault_account_id} onChange={e => setStakeForm(p => ({...p, vault_account_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" />
+          {unstakePos && (
+            <div className="space-y-4 py-2">
+              <div className="bg-zinc-900/50 rounded-lg p-4 border border-zinc-800">
+                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Posição</p>
+                <p className="text-white font-medium">{unstakePos.asset_name || unstakePos.asset_id}</p>
+                <p className="text-sm text-zinc-400">Staked: {unstakePos.amount} {unstakePos.asset_id}</p>
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-2 block font-medium">Montante a retirar</label>
+                <Input
+                  type="number"
+                  value={unstakeAmount}
+                  onChange={e => setUnstakeAmount(e.target.value)}
+                  placeholder={`Máx: ${unstakePos.amount}`}
+                  className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
+                  data-testid="unstake-amount-input"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Validador</label>
-              <Select value={stakeForm.provider_id} onValueChange={v => setStakeForm(p => ({...p, provider_id: v}))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar validador" /></SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {providers.map((p, i) => (
-                    <SelectItem key={i} value={p.id || p.providerId || `prov-${i}`}>
-                      {p.chainDescriptor ? `Validador ${p.chainDescriptor}` : `Validador ${i + 1}`} ({p.chainDescriptor || ''})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Montante</label>
-              <Input type="number" value={stakeForm.amount} onChange={e => setStakeForm(p => ({...p, amount: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="0.00" />
-            </div>
-          </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUnstakeModal(false)} className="border-zinc-700">Cancelar</Button>
-            <Button onClick={handleUnstake} disabled={actionLoading} className="bg-red-600 hover:bg-red-500" data-testid="unstake-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar Unstake'}
+            <Button variant="ghost" onClick={() => setUnstakeOpen(false)} className="text-zinc-500">Cancelar</Button>
+            <Button onClick={handleUnstake} disabled={unstakeLoading} className="bg-rose-600 hover:bg-rose-500 text-white" data-testid="unstake-confirm-btn">
+              {unstakeLoading ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar Unstake'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -382,5 +823,25 @@ const StakingPage = () => {
     </div>
   );
 };
+
+/* ─── Small components ─── */
+const SummaryCard = ({ label, value, testId, highlight }) => (
+  <Card className="bg-zinc-900/60 border border-zinc-800">
+    <CardContent className="p-4">
+      <p className="text-xs text-zinc-500 uppercase tracking-wider font-medium" style={{ fontFamily: 'Manrope, sans-serif' }}>{label}</p>
+      <p className={`text-2xl font-bold mt-1 tabular-nums ${highlight ? 'text-amber-500' : 'text-white'}`} data-testid={testId}>{value}</p>
+    </CardContent>
+  </Card>
+);
+
+const ReviewRow = ({ label, value, icon, highlight }) => (
+  <div className="flex items-center justify-between p-4">
+    <p className="text-sm text-zinc-500">{label}</p>
+    <p className={`text-sm font-medium ${highlight ? 'text-amber-500 text-lg' : 'text-white'} flex items-center gap-2`}>
+      {icon && <span className="text-lg">{icon}</span>}
+      {value}
+    </p>
+  </div>
+);
 
 export default StakingPage;

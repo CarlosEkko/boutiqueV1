@@ -70,7 +70,7 @@ from routes.omnibus import router as omnibus_router, set_db as set_omnibus_db
 from routes.admin_multisign import router as admin_multisign_router, set_db as set_admin_multisign_db
 from routes.otc_deals import router as otc_deals_router, set_db as set_otc_deals_db
 from routes.risk_compliance import router as risk_compliance_router, set_db as set_risk_compliance_db
-from routes.staking import router as staking_router
+from routes.staking import router as staking_router, set_db as set_staking_db
 from routes.tokenization import router as tokenization_router
 from routes.security import router as security_router, set_db as set_security_db
 from routes.demo import router as demo_router, set_db as set_demo_db
@@ -107,6 +107,7 @@ set_risk_compliance_db(db)
 set_security_db(db)
 set_demo_db(db)
 set_escrow_db(db)
+set_staking_db(db)
 set_security_logger_db(db)
 
 api_router.include_router(auth_router)
