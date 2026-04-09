@@ -325,7 +325,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
   const fmtVal = (v, forceDecimals) => {
     const abs = Math.abs(v || 0);
-    const decimals = forceDecimals != null ? forceDecimals : (abs < 10 ? 6 : 4);
+    const decimals = forceDecimals != null ? forceDecimals : (abs < 10 ? 4 : 2);
     const parts = (v || 0).toFixed(decimals).split('.');
     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `${sym}${intPart}.${parts[1]}`;
