@@ -685,13 +685,13 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                   <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
                   <p className="text-zinc-500 text-xs">Gross - Net = {form.gross_pct}% - {form.net_pct}% = {calc.commissionPct.toFixed(1)}%</p>
                   <div className="space-y-1.5 pt-2 border-t border-zinc-700/30 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">{t('otc.deals.modal.broker')} ({calc.brokerPct.toFixed(1)}%)</span>
-                      <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-zinc-400 whitespace-nowrap">{t('otc.deals.modal.broker')} ({calc.brokerPct.toFixed(1)}%)</span>
+                      <span className="text-emerald-400 font-medium whitespace-nowrap">{fmtVal(calc.brokerComm)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">{t('otc.deals.modal.kbexBroker')} ({calc.kbexBrokerPct.toFixed(1)}%)</span>
-                      <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-zinc-400 whitespace-nowrap">{t('otc.deals.modal.kbexBroker')} ({calc.kbexBrokerPct.toFixed(1)}%)</span>
+                      <span className="text-emerald-400 font-medium whitespace-nowrap">{fmtVal(calc.memberComm)}</span>
                     </div>
                   </div>
                 </div>
