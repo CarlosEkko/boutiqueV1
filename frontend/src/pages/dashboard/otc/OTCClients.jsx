@@ -80,6 +80,7 @@ const OTCClients = () => {
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [entityContacts, setEntityContacts] = useState([]);
 
   useEffect(() => {
     fetchClients();
@@ -126,12 +127,31 @@ const OTCClients = () => {
     toast.success('Copiado!');
   };
 
+  const fetchEntityContacts = async (clientId) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/otc/clients/${clientId}/entity-contacts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEntityContacts(res.data.contacts || []);
+    } catch (err) {
+      console.error('Error fetching entity contacts:', err);
+      setEntityContacts([]);
+    }
+  };
+
+  const openPermissionsDialog = (client) => {
+    setSelectedClient(client);
+    setSelectedUserId('');
+    setEntityContacts([]);
+    fetchEntityContacts(client.id);
+    setShowPermissionsDialog(true);
+  };
+
   const handleLinkUser = async () => {
     if (!selectedClient || !selectedUserId) {
       toast.error('Selecione um utilizador');
       return;
     }
-    
     try {
       await axios.post(`${API_URL}/api/otc/clients/${selectedClient.id}/link-user`, 
         { user_id: selectedUserId },
@@ -390,10 +410,7 @@ const OTCClients = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            setSelectedClient(client);
-                            setShowPermissionsDialog(true);
-                          }}
+                          onClick={() => openPermissionsDialog(client)}
                           className="text-gold-400 hover:text-gold-300"
                           title="Gerir Permissões Portal"
                         >
@@ -600,7 +617,7 @@ const OTCClients = () => {
                     <Button
                       onClick={() => {
                         setShowDetailDialog(false);
-                        setShowPermissionsDialog(true);
+                        openPermissionsDialog(selectedClient);
                       }}
                       className="bg-gold-500 hover:bg-gold-400 text-black"
                     >
@@ -642,25 +659,30 @@ const OTCClients = () => {
             <div className="p-3 bg-zinc-800/50 rounded-lg">
               <p className="text-gray-400 text-xs uppercase mb-1">Cliente OTC</p>
               <p className="text-white">{selectedClient?.entity_name}</p>
-              <p className="text-gray-400 text-sm">{selectedClient?.contact_email}</p>
             </div>
             
             <div className="space-y-2">
-              <Label className="text-white">Selecionar Utilizador Registado</Label>
+              <Label className="text-white">Selecionar Contacto da Entidade</Label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="bg-zinc-800 border-gold-500/30 text-white">
-                  <SelectValue placeholder="Escolha um utilizador..." />
+                  <SelectValue placeholder="Escolha um contacto..." />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-gold-500/30 max-h-60">
-                  {users.map((user) => (
-                    <SelectItem 
-                      key={user.id} 
-                      value={user.id}
-                      className="text-white hover:bg-zinc-700"
-                    >
-                      {user.name} ({user.email})
-                    </SelectItem>
-                  ))}
+                  {entityContacts.length > 0 ? (
+                    entityContacts.map((contact) => (
+                      <SelectItem 
+                        key={contact.id} 
+                        value={contact.id}
+                        className="text-white hover:bg-zinc-700"
+                      >
+                        {contact.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-center text-gray-500 text-sm">
+                      Nenhum contacto registado encontrado para esta entidade
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-gray-500 text-xs">

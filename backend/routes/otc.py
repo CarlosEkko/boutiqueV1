@@ -1447,6 +1447,53 @@ async def update_otc_client(
     return {"success": True, "message": "Client updated"}
 
 
+@router.get("/clients/{client_id}/entity-contacts")
+async def get_entity_contacts(
+    client_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get registered users whose email matches contacts under this entity"""
+    db = get_db()
+    
+    client = await db.otc_clients.find_one({"id": client_id}, {"_id": 0})
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    entity_name = client.get("entity_name", "")
+    
+    # Collect all contact emails from leads and clients with same entity_name
+    contact_emails = set()
+    
+    leads = await db.otc_leads.find(
+        {"entity_name": {"$regex": f"^{entity_name}$", "$options": "i"}},
+        {"_id": 0, "contact_email": 1}
+    ).to_list(100)
+    for l in leads:
+        if l.get("contact_email"):
+            contact_emails.add(l["contact_email"].lower())
+    
+    clients = await db.otc_clients.find(
+        {"entity_name": {"$regex": f"^{entity_name}$", "$options": "i"}},
+        {"_id": 0, "contact_email": 1}
+    ).to_list(100)
+    for c in clients:
+        if c.get("contact_email"):
+            contact_emails.add(c["contact_email"].lower())
+    
+    if not contact_emails:
+        return {"contacts": []}
+    
+    # Find registered users matching those emails
+    email_conditions = [{"email": {"$regex": f"^{e}$", "$options": "i"}} for e in contact_emails]
+    users = await db.users.find(
+        {"$or": email_conditions},
+        {"_id": 0, "id": 1, "name": 1, "email": 1}
+    ).to_list(100)
+    
+    return {"contacts": [{"id": u["id"], "name": u.get("name", "")} for u in users]}
+
+
+
 @router.post("/clients/{client_id}/link-user")
 async def link_user_to_otc_client(
     client_id: str,
