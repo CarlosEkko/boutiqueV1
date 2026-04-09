@@ -440,7 +440,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 <Select value={form.asset} onValueChange={v => updateField('asset', v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-asset"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
-                    {['BTC', 'ETH', 'USDT', 'USDC'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}
+                    {['BTC', 'ETH', 'USDT', 'USDC', 'EUR', 'USD', 'AED', 'BRL'].map(a => <SelectItem key={a} value={a} className="text-white">{a}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -453,7 +453,7 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
                 <Select value={form.reference_currency} onValueChange={v => updateField('reference_currency', v)}>
                   <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white" data-testid="modal-currency"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800">
-                    {['EUR', 'USD', 'AED', 'BRL'].map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}
+                    {['EUR', 'USD', 'AED', 'BRL', 'BTC', 'ETH', 'USDT', 'USDC'].map(c => <SelectItem key={c} value={c} className="text-white">{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
