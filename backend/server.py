@@ -76,6 +76,7 @@ from routes.security import router as security_router, set_db as set_security_db
 from routes.demo import router as demo_router, set_db as set_demo_db
 from routes.escrow import router as escrow_router, set_db as set_escrow_db
 from routes.inflation import router as inflation_router
+from routes.kbex_rates import router as kbex_rates_router, set_db as set_kbex_rates_db
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -110,6 +111,7 @@ set_demo_db(db)
 set_escrow_db(db)
 set_staking_db(db)
 set_security_logger_db(db)
+set_kbex_rates_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)
@@ -147,6 +149,7 @@ api_router.include_router(security_router)
 api_router.include_router(demo_router)
 api_router.include_router(escrow_router)
 api_router.include_router(inflation_router)
+api_router.include_router(kbex_rates_router)
 
 
 # Define Models

@@ -961,13 +961,13 @@ async def commissions_summary(user_id: str = Depends(get_current_user_id)):
 # ==================== REFERENCE PRICE ====================
 
 @router.get("/reference-price/{asset}")
-async def get_reference_price(asset: str):
-    """Get KBEX reference price for an asset (from Binance)"""
+async def get_reference_price(asset: str, product: str = "otc", user_id: str = Depends(get_current_user_id)):
+    """Get KBEX reference price for an asset with tier-based spread applied."""
     price = await get_binance_price(asset)
     if price == 0:
         return {"asset": asset, "price_usd": 0, "source": "unavailable"}
 
-    # Also get EUR rate
+    # Get EUR rate
     eur_rate = 1.0
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -977,13 +977,37 @@ async def get_reference_price(asset: str):
     except Exception:
         eur_rate = 1.08
 
+    # Resolve KBEX spread based on user tier
+    buy_spread = 0
+    sell_spread = 0
+    tier = "standard"
+    try:
+        from routes.kbex_rates import resolve_spread
+        db = get_db()
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "membership_level": 1})
+        tier = (user or {}).get("membership_level", "standard")
+        spread_config = await resolve_spread(product, tier, asset)
+        buy_spread = spread_config.get("buy_spread_pct", 0)
+        sell_spread = spread_config.get("sell_spread_pct", 0)
+    except Exception as e:
+        logger.warning(f"Failed to resolve KBEX spread: {e}")
+
+    base_eur = price / eur_rate
+    buy_price_eur = round(base_eur * (1 + buy_spread / 100), 4)
+    sell_price_eur = round(base_eur * (1 - sell_spread / 100), 4)
+
     return {
         "asset": asset,
         "price_usd": price,
-        "price_eur": round(price / eur_rate, 2),
-        "price_aed": round(price * 3.673, 2),
-        "price_brl": round(price * 5.50, 2),
+        "price_eur": buy_price_eur,
+        "price_eur_sell": sell_price_eur,
+        "price_eur_market": round(base_eur, 4),
+        "price_aed": round(price * 3.673 * (1 + buy_spread / 100), 4),
+        "price_brl": round(price * 5.50 * (1 + buy_spread / 100), 4),
         "eur_usd_rate": eur_rate,
+        "buy_spread_pct": buy_spread,
+        "sell_spread_pct": sell_spread,
+        "tier": tier,
         "source": "KBEX",
     }
 

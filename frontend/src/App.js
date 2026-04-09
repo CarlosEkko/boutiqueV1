@@ -39,7 +39,8 @@ import {
   AdminReferrals,
   AdminAdmissionFees,
   AdminClientMenus,
-  SecurityDashboardPage
+  SecurityDashboardPage,
+  AdminKBEXRates
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -233,6 +234,7 @@ function AppRoutes() {
         <Route path="admin/clients" element={<AdminClients />} />
         <Route path="admin/pipeline" element={<AdminPipeline />} />
         <Route path="admin/settings" element={<AdminSettings />} />
+                <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
         <Route path="admin/referrals" element={<AdminReferrals />} />
         <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
         <Route path="admin/client-menus" element={<AdminClientMenus />} />

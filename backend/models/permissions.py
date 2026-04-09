@@ -239,6 +239,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/approvals/settings", "label": "Multi-Sign", "icon": "ShieldCheck"},
             {"path": "/dashboard/admin/multisign-clients", "label": "Clientes Multi-Sign", "icon": "Users"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
+            {"path": "/dashboard/admin/kbex-rates", "label": "KBEX Rates", "icon": "TrendingUp"},
             {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]
     },
