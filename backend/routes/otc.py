@@ -1956,13 +1956,40 @@ async def get_otc_dashboard(
         {"total_value": 1, "settled_at": 1, "fees": 1}
     ).to_list(10000)
     
-    total_volume = sum((d.get("total_value") or 0) for d in completed_deals_data)
-    total_revenue = sum((d.get("fees") or 0) for d in completed_deals_data)
+    total_volume = 0
+    total_revenue = 0
+    for d in completed_deals_data:
+        try:
+            tv = d.get("total_value")
+            total_volume += float(tv) if tv is not None else 0
+        except (ValueError, TypeError):
+            pass
+        try:
+            f = d.get("fees")
+            total_revenue += float(f) if f is not None else 0
+        except (ValueError, TypeError):
+            pass
     
-    # Volume by period
-    volume_24h = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= day_ago)
-    volume_7d = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= week_ago)
-    volume_30d = sum((d.get("total_value") or 0) for d in completed_deals_data if d.get("settled_at", "") >= month_ago)
+    # Volume by period — safely compare dates
+    def safe_date_str(val):
+        """Convert datetime or string to comparable ISO string"""
+        if val is None:
+            return ""
+        if hasattr(val, 'isoformat'):
+            return val.isoformat()
+        return str(val)
+    
+    def safe_float(val):
+        if val is None:
+            return 0
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return 0
+    
+    volume_24h = sum(safe_float(d.get("total_value")) for d in completed_deals_data if safe_date_str(d.get("settled_at")) >= day_ago)
+    volume_7d = sum(safe_float(d.get("total_value")) for d in completed_deals_data if safe_date_str(d.get("settled_at")) >= week_ago)
+    volume_30d = sum(safe_float(d.get("total_value")) for d in completed_deals_data if safe_date_str(d.get("settled_at")) >= month_ago)
     
     # Pipeline by stage
     pipeline = {}
