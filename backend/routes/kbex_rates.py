@@ -369,3 +369,110 @@ async def seed_default_rates(admin_id: str = Depends(get_current_user_id)):
                 count += 1
 
     return {"success": True, "seeded": count}
+
+
+# ==================== ESCROW FEE TIERS ====================
+
+class EscrowFeeTier(BaseModel):
+    min_amount: float
+    max_amount: float  # Use -1 for unlimited
+    fee_pct: float
+    min_fee: float
+
+
+class EscrowFeeTiersUpdate(BaseModel):
+    tiers: List[EscrowFeeTier]
+
+
+@router.get("/escrow-fees")
+async def get_escrow_fees(admin_id: str = Depends(get_current_user_id)):
+    db = get_db()
+    doc = await db.kbex_settings.find_one({"type": "escrow_fees"}, {"_id": 0})
+    tiers = (doc or {}).get("tiers", [])
+    return {"tiers": tiers}
+
+
+@router.put("/escrow-fees")
+async def update_escrow_fees(payload: EscrowFeeTiersUpdate, admin_id: str = Depends(get_current_user_id)):
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    now = datetime.now(timezone.utc).isoformat()
+    tiers_data = [t.dict() for t in payload.tiers]
+
+    await db.kbex_settings.update_one(
+        {"type": "escrow_fees"},
+        {"$set": {"type": "escrow_fees", "tiers": tiers_data, "updated_by": admin_id, "updated_at": now}},
+        upsert=True,
+    )
+
+    await db.kbex_rates_audit.insert_one({
+        "action": "escrow_fees_update",
+        "updated_by": admin_id,
+        "tiers": tiers_data,
+        "updated_at": now,
+    })
+
+    return {"success": True, "tiers": tiers_data}
+
+
+@router.post("/escrow-fees/seed")
+async def seed_escrow_fees(admin_id: str = Depends(get_current_user_id)):
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    existing = await db.kbex_settings.find_one({"type": "escrow_fees"})
+    if existing:
+        return {"success": True, "seeded": 0, "message": "Already configured"}
+
+    default_tiers = [
+        {"min_amount": 0, "max_amount": 100000, "fee_pct": 1.5, "min_fee": 1000},
+        {"min_amount": 100001, "max_amount": 500000, "fee_pct": 1.0, "min_fee": 1500},
+        {"min_amount": 500001, "max_amount": 1000000, "fee_pct": 0.75, "min_fee": 5000},
+        {"min_amount": 1000001, "max_amount": 5000000, "fee_pct": 0.5, "min_fee": 7500},
+        {"min_amount": 5000001, "max_amount": 10000000, "fee_pct": 0.35, "min_fee": 25000},
+        {"min_amount": 10000001, "max_amount": -1, "fee_pct": 0.25, "min_fee": 25000},
+    ]
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.kbex_settings.insert_one({
+        "type": "escrow_fees",
+        "tiers": default_tiers,
+        "updated_by": admin_id,
+        "updated_at": now,
+    })
+
+    return {"success": True, "seeded": len(default_tiers)}
+
+
+async def resolve_escrow_fee(amount: float) -> dict:
+    """Resolve the escrow fee for a given amount."""
+    db = get_db()
+    doc = await db.kbex_settings.find_one({"type": "escrow_fees"}, {"_id": 0})
+    tiers = (doc or {}).get("tiers", [])
+
+    for tier in tiers:
+        max_amt = tier.get("max_amount", -1)
+        if amount >= tier["min_amount"] and (max_amt == -1 or amount <= max_amt):
+            fee_calculated = amount * (tier["fee_pct"] / 100)
+            fee_final = max(fee_calculated, tier["min_fee"])
+            return {
+                "amount": amount,
+                "fee_pct": tier["fee_pct"],
+                "min_fee": tier["min_fee"],
+                "fee_calculated": round(fee_calculated, 2),
+                "fee_final": round(fee_final, 2),
+                "tier_range": f"{tier['min_amount']} - {'∞' if max_amt == -1 else max_amt}",
+            }
+
+    return {"amount": amount, "fee_pct": 0, "min_fee": 0, "fee_calculated": 0, "fee_final": 0, "tier_range": "N/A"}
+
+
+@router.get("/escrow-fees/calculate")
+async def calculate_escrow_fee(amount: float, _user: str = Depends(get_current_user_id)):
+    return await resolve_escrow_fee(amount)
+
