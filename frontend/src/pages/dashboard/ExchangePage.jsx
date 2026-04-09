@@ -61,6 +61,11 @@ const ExchangePage = () => {
   // Payment status polling
   const [pollingStatus, setPollingStatus] = useState(null);
 
+  // Dropdown open states (must be before fetchCryptos to prevent scroll reset)
+  const [cryptoDropdownOpen, setCryptoDropdownOpen] = useState(false);
+  const [fromCryptoDropdownOpen, setFromCryptoDropdownOpen] = useState(false);
+  const [toCryptoDropdownOpen, setToCryptoDropdownOpen] = useState(false);
+
   useEffect(() => {
     fetchCryptos();
     // Fees will be loaded when selectedCrypto is set
@@ -113,6 +118,10 @@ const ExchangePage = () => {
   }, [fromCrypto?.symbol, activeTab]);
 
   const fetchCryptos = async (silent = false) => {
+    // Skip state updates when any dropdown is open (prevents scroll reset)
+    if (silent && (cryptoDropdownOpen || fromCryptoDropdownOpen || toCryptoDropdownOpen)) {
+      return;
+    }
     try {
       const response = await axios.get(`${API_URL}/api/trading/cryptos?currency=${currency}`);
       
@@ -419,10 +428,6 @@ const ExchangePage = () => {
   const sellPreview = calculateSellPreview();
   const swapPreview = calculateSwapPreview();
 
-  const [cryptoDropdownOpen, setCryptoDropdownOpen] = useState(false);
-  const [fromCryptoDropdownOpen, setFromCryptoDropdownOpen] = useState(false);
-  const [toCryptoDropdownOpen, setToCryptoDropdownOpen] = useState(false);
-  
   const CryptoSelector = ({ value, onChange, exclude = null, dropdownOpen, setDropdownOpen }) => {
     const filteredCryptos = cryptos.filter(c => !exclude || c.symbol !== exclude.symbol);
     
