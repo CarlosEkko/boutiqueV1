@@ -102,3 +102,11 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - 12 accounts detected (EUR, USD, GBP, USDT, CHF, PLN, ZAR, AUD, CAD)
 - Auto-refresh tokens (40 min lifetime)
 
+
+## Admin Revolut Page (2026-04-09)
+- Full admin page with accounts overview, deposit tracking, and reconciliation
+- Sync deposits from Revolut API and match to client fiat wallets
+- Webhook endpoint at POST /api/revolut/webhook for real-time deposit detection
+- Reconciliation dialog: search clients, assign deposit to fiat wallet, log transaction
+- Route: /dashboard/admin/revolut | Sidebar: Admin > Revolut Business
+
