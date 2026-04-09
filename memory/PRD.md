@@ -95,3 +95,10 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - `kbex_settings`: Tier fees, escrow fees
 - `kbex_rates_audit`: Audit trail
 - `transparency_reports`: Audit report documents
+
+## Revolut Business API Integration (2026-04-09)
+- OAuth2 connected (Production) with X509 certificate auth
+- Endpoints: /api/revolut/status, /accounts, /transactions, /counterparties
+- 12 accounts detected (EUR, USD, GBP, USDT, CHF, PLN, ZAR, AUD, CAD)
+- Auto-refresh tokens (40 min lifetime)
+

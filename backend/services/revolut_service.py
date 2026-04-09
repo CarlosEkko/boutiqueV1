@@ -67,9 +67,9 @@ class RevolutService:
         private_key = self._load_private_key()
         now = int(time.time())
         payload = {
-            "iss": self.urls["auth"].replace("/app-confirm", ""),
+            "iss": self.redirect_uri.split("://")[1].split("/")[0],
             "sub": self.client_id,
-            "aud": self.urls["token"],
+            "aud": "https://revolut.com",
             "iat": now,
             "exp": now + 2400,
             "jti": str(uuid.uuid4()),
