@@ -320,9 +320,9 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   }, [form]);
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
-  const fmtVal = v => {
+  const fmtVal = (v, forceDecimals) => {
     const abs = Math.abs(v || 0);
-    const decimals = abs < 10 ? 4 : 2;
+    const decimals = forceDecimals != null ? forceDecimals : (abs < 10 ? 6 : 4);
     const parts = (v || 0).toFixed(decimals).split('.');
     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `${sym}${intPart}.${parts[1]}`;
@@ -480,22 +480,24 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
               {priceView === 'unit' ? (
                 <div>
-                  <p className="text-zinc-600 text-xs mb-1">1 {form.asset} = ? {form.reference_currency}</p>
                   <div className="relative">
                     <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="0.8654" data-testid="modal-ref-price" />
-                    {livePrice && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => {
-                        const pk = `price_${form.reference_currency.toLowerCase()}`;
-                        updateField('reference_price', livePrice[pk] || livePrice.price_eur || 0);
-                      }}>
-                        <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(4)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
-                      </span>
-                    )}
+                    {livePrice && (() => {
+                      const rawPrice = livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0;
+                      const fixedParts = rawPrice.toFixed(4).split('.');
+                      const intFormatted = fixedParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                      return (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => {
+                          updateField('reference_price', rawPrice);
+                        }}>
+                          <TrendingUp size={12} /> KBEX: {sym}{intFormatted}.{fixedParts[1]}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
                 <div>
-                  <p className="text-zinc-600 text-xs mb-1">1 {form.reference_currency} = ? {form.asset}</p>
                   <div className="relative">
                     <Input
                       type="number"
