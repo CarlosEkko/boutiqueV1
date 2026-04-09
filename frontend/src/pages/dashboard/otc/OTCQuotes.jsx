@@ -205,8 +205,10 @@ const OTCQuotes = () => {
   }, [negForm, selectedDeal]);
 
   const sym = CURRENCY_SYMBOLS[negForm.reference_currency] || '€';
-  const fmtVal = v => {
-    const parts = (v || 0).toFixed(2).split('.');
+  const fmtVal = (v, forceDecimals) => {
+    const abs = Math.abs(v);
+    const decimals = forceDecimals || (abs < 1 ? 6 : abs < 100 ? 4 : 2);
+    const parts = (v || 0).toFixed(decimals).split('.');
     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `${sym}${intPart}.${parts[1]}`;
   };

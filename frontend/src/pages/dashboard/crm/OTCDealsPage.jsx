@@ -322,8 +322,10 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
   }, [form]);
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
-  const fmtVal = v => {
-    const parts = v.toFixed(2).split('.');
+  const fmtVal = (v, forceDecimals) => {
+    const abs = Math.abs(v);
+    const decimals = forceDecimals || (abs < 1 ? 6 : abs < 100 ? 4 : 2);
+    const parts = v.toFixed(decimals).split('.');
     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `${sym}${intPart}.${parts[1]}`;
   };
@@ -630,21 +632,32 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
+                  {/* Base price & pair rate context */}
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')}</span>
+                    <span className="text-zinc-500">Preço Base (1 {form.asset})</span>
+                    <span className="text-zinc-300">{fmtVal(form.reference_price)}</span>
+                  </div>
+                  {form.reference_price > 0 && (
+                    <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                      <span className="text-zinc-500">Par {form.reference_currency}/{form.asset}</span>
+                      <span className="text-zinc-300 font-mono">{(1 / form.reference_price).toFixed(6)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                    <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
                     <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
                   </div>
-                  <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">{t('otc.deals.modal.totalValue')}</span>
-                    <span className="text-white font-bold">{fmtVal(calc.total)}</span>
+                  <div className="flex justify-between py-1.5 border-b border-zinc-800 bg-zinc-800/30 -mx-3 px-3 rounded">
+                    <span className="text-zinc-400 font-medium">{form.quantity} {form.asset} ×</span>
+                    <span className="text-white font-bold text-base">{fmtVal(calc.total, 2)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.gross')} ({form.gross_pct}%)</span>
-                    <span className="text-yellow-400 font-medium">{fmtVal(calc.gross)}</span>
+                    <span className="text-yellow-400 font-medium">{fmtVal(calc.gross, 2)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.net')} ({form.net_pct}%)</span>
-                    <span className="text-zinc-300">{fmtVal(calc.net)}</span>
+                    <span className="text-zinc-300">{fmtVal(calc.net, 2)}</span>
                   </div>
                 </div>
 
