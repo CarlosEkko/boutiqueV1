@@ -67,6 +67,7 @@ Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OT
 - OTC Lead visibility fix (created_by)
 - Protected Document Viewer (anti-copy, watermark)
 - Report deletion (role-restricted)
+- Admin Transparency: PDF upload real (base64) + Delete public wallets
 - Safari cursor fix
 - Trading Limits: All 5 tiers (Broker, Standard, Premium, VIP, Institucional) with formatted inputs
 - Escrow Fees migrated to dedicated page (AdminEscrowFees.jsx)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -13,7 +13,10 @@ import {
   FileText,
   ExternalLink,
   Copy,
-  Trash2
+  Trash2,
+  Upload,
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +46,10 @@ const AdminTransparency = () => {
     auditor: '',
     file_url: ''
   });
+
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchData();
@@ -98,6 +105,7 @@ const AdminTransparency = () => {
       });
       toast.success('Report added');
       setShowReportForm(false);
+      setUploadedFileName('');
       setReportForm({
         title: '',
         type: 'audit',
@@ -121,6 +129,59 @@ const AdminTransparency = () => {
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Sem permissão para eliminar');
+    }
+  };
+
+  const deleteWallet = async (walletId) => {
+    if (!window.confirm('Tem certeza que deseja eliminar esta wallet?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/transparency/wallets/${walletId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Wallet eliminada');
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar wallet');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas ficheiros PDF são aceites');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Ficheiro demasiado grande. Máximo 10MB');
+      return;
+    }
+
+    setUploadingFile(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const res = await axios.post(`${API_URL}/api/uploads/file-json`, {
+          file_data: base64,
+          filename: file.name,
+          content_type: 'application/pdf',
+          category: 'documents',
+          description: `Audit Report: ${reportForm.title || file.name}`
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setReportForm(prev => ({ ...prev, file_url: res.data.url }));
+        setUploadedFileName(file.name);
+        toast.success('PDF carregado com sucesso');
+        setUploadingFile(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error('Erro ao carregar ficheiro');
+      setUploadingFile(false);
     }
   };
 
@@ -295,6 +356,7 @@ const AdminTransparency = () => {
                         <button
                           onClick={() => copyAddress(wallet.address)}
                           className="p-2 text-gray-400 hover:text-gold-400"
+                          title="Copiar endereço"
                         >
                           <Copy size={18} />
                         </button>
@@ -303,9 +365,18 @@ const AdminTransparency = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 text-gray-400 hover:text-gold-400"
+                          title="Ver no blockchain"
                         >
                           <ExternalLink size={18} />
                         </a>
+                        <button
+                          onClick={() => deleteWallet(wallet.id)}
+                          className="p-2 text-red-500/50 hover:text-red-400 transition-colors"
+                          title="Eliminar wallet"
+                          data-testid={`delete-wallet-${wallet.id}`}
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                     </div>
                   </CardContent>
@@ -391,13 +462,52 @@ const AdminTransparency = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <Label className="text-gray-300">File URL (optional)</Label>
-                    <Input
-                      value={reportForm.file_url}
-                      onChange={(e) => setReportForm({...reportForm, file_url: e.target.value})}
-                      placeholder="https://..."
-                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
+                    <Label className="text-gray-300">Ficheiro PDF</Label>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept=".pdf,application/pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
                     />
+                    <div className="mt-1">
+                      {uploadedFileName ? (
+                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-4 py-3">
+                          <CheckCircle size={18} className="text-emerald-400" />
+                          <span className="text-emerald-300 text-sm flex-1 truncate">{uploadedFileName}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUploadedFileName('');
+                              setReportForm(prev => ({ ...prev, file_url: '' }));
+                              if (fileInputRef.current) fileInputRef.current.value = '';
+                            }}
+                            className="text-zinc-400 hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingFile}
+                          className="w-full flex items-center justify-center gap-2 bg-zinc-800 border border-dashed border-gold-800/30 rounded-lg px-4 py-6 text-gray-400 hover:text-gold-400 hover:border-gold-500/50 transition-colors"
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              <span>A carregar...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={18} />
+                              <span>Clique para carregar PDF (máx. 10MB)</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">

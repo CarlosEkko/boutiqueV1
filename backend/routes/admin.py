@@ -1231,6 +1231,19 @@ async def delete_transparency_report(
     return {"success": True, "message": "Report deleted"}
 
 
+@router.delete("/transparency/wallets/{wallet_id}")
+async def delete_public_wallet(
+    wallet_id: str,
+    admin: dict = Depends(get_admin_user)
+):
+    """Delete a public wallet from proof of reserves"""
+    result = await db.public_wallets.delete_one({"id": wallet_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Wallet not found")
+
+    return {"success": True, "message": "Wallet deleted"}
+
+
 
 
 
