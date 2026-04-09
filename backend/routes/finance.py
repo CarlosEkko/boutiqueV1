@@ -234,6 +234,25 @@ async def _get_gas_station_data():
     if not gas_vault:
         return {"health": "unknown", "error": "Gas Station vault not found", "assets": [], "warnings": []}
     
+    # Fetch crypto prices for fiat conversion
+    asset_prices = {}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get("https://api.binance.com/api/v3/ticker/price")
+            if resp.status_code == 200:
+                for t in resp.json():
+                    asset_prices[t["symbol"]] = float(t["price"])
+    except Exception:
+        pass
+    
+    price_map = {
+        "ETH": asset_prices.get("ETHUSDT", 0),
+        "BNB_BSC": asset_prices.get("BNBUSDT", 0),
+        "TRX": asset_prices.get("TRXUSDT", 0),
+        "MATIC_POLYGON": asset_prices.get("MATICUSDT", 0),
+    }
+    
     assets = []
     warnings = []
     health = "healthy"
@@ -246,11 +265,13 @@ async def _get_gas_station_data():
         # Only include gas-relevant assets
         thresholds = GAS_THRESHOLDS.get(asset_id)
         if total > 0 or thresholds:
+            fiat_value = available * price_map.get(asset_id, 0)
             asset_data = {
                 "asset_id": asset_id,
                 "total": total,
                 "available": available,
                 "pending": float(asset.get("pending", 0)),
+                "fiat_value": round(fiat_value, 2),
             }
             
             if thresholds:
@@ -409,7 +430,7 @@ async def get_gas_station_finance(admin: dict = Depends(get_internal_user)):
 
 # ==================== BALANCE ADJUSTMENTS ====================
 
-from fastapi import UploadFile, File, Form, HTTPException
+from fastapi import UploadFile, File, Form
 from pathlib import Path
 import uuid as uuid_mod
 import aiofiles
@@ -444,7 +465,7 @@ async def create_balance_adjustment(
         
         valid_categories = ["correction", "penalty", "fee", "bonus", "refund", "chargeback", "other"]
         if category not in valid_categories:
-            raise HTTPException(status_code=400, detail=f"Categoria inválida.")
+            raise HTTPException(status_code=400, detail="Categoria inválida.")
         
         if amount <= 0:
             raise HTTPException(status_code=400, detail="O valor deve ser positivo.")

@@ -155,7 +155,7 @@ const FinancialDashboard = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-zinc-400 uppercase tracking-widest flex items-center gap-2">
                 <Fuel className={`w-4 h-4 ${gas_station.health === 'critical' ? 'text-red-500' : gas_station.health === 'warning' ? 'text-amber-500' : 'text-emerald-500'}`} />
-                Gas Station Fireblocks
+                Gas Station
                 <Badge className={`ml-2 text-[10px] uppercase font-bold ${gas_station.health === 'critical' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : gas_station.health === 'warning' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
                   {gas_station.health === 'critical' ? 'Crítico' : gas_station.health === 'warning' ? 'Baixo' : 'Saudável'}
                 </Badge>
@@ -190,6 +190,9 @@ const FinancialDashboard = () => {
                   <p className={`text-lg font-mono font-light ${a.status === 'critical' ? 'text-red-400' : a.status === 'warning' ? 'text-amber-400' : 'text-emerald-400'}`}>
                     {a.available < 0.001 ? a.available.toExponential(2) : a.available.toFixed(6)}
                   </p>
+                  {a.fiat_value != null && (
+                    <p className="text-xs text-zinc-400 font-mono mt-0.5">≈ ${a.fiat_value.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  )}
                   <p className="text-[10px] text-zinc-500 mt-1">Disponível</p>
                 </div>
               ))}
@@ -202,10 +205,6 @@ const FinancialDashboard = () => {
                     {w}
                   </p>
                 ))}
-                <p className="text-[10px] text-zinc-600 mt-2">
-                  Ação: Transfira ETH/BNB para o vault "GAS STATION" na Fireblocks Console.
-                  ERC20/BEP20 usam gas automaticamente deste vault.
-                </p>
               </div>
             )}
           </CardContent>
