@@ -321,10 +321,15 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
   const fmtVal = v => {
-    const parts = v.toFixed(2).split('.');
+    const abs = Math.abs(v || 0);
+    const decimals = abs < 10 ? 4 : 2;
+    const parts = (v || 0).toFixed(decimals).split('.');
     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `${sym}${intPart}.${parts[1]}`;
   };
+
+  // Pair toggle state: 'unit' = price per asset unit, 'pair' = inverted pair rate
+  const [priceView, setPriceView] = useState('unit');
 
   const handleSave = async () => {
     setSaving(true);
@@ -459,17 +464,63 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </div>
             </div>
 
-            {/* Reference Price */}
+            {/* Reference Price with Fiat/Crypto toggle */}
             <div className="space-y-1.5">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')} ({form.reference_currency})</Label>
-              <div className="relative">
-                <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="120 345.50" data-testid="modal-ref-price" />
-                {livePrice && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1">
-                    <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
-                  </span>
-                )}
+              <div className="flex items-center justify-between">
+                <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')}</Label>
+                <button
+                  type="button"
+                  onClick={() => setPriceView(v => v === 'unit' ? 'pair' : 'unit')}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded border border-zinc-700 text-xs font-medium text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition-colors"
+                  data-testid="price-view-toggle"
+                >
+                  <ArrowLeftRight size={12} />
+                  {priceView === 'unit' ? `${form.asset}/${form.reference_currency}` : `${form.reference_currency}/${form.asset}`}
+                </button>
               </div>
+              {priceView === 'unit' ? (
+                <div>
+                  <p className="text-zinc-600 text-xs mb-1">1 {form.asset} = ? {form.reference_currency}</p>
+                  <div className="relative">
+                    <FormattedNumberInput value={form.reference_price} onChange={v => updateField('reference_price', parseFloat(v) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" placeholder="0.8654" data-testid="modal-ref-price" />
+                    {livePrice && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => {
+                        const pk = `price_${form.reference_currency.toLowerCase()}`;
+                        updateField('reference_price', livePrice[pk] || livePrice.price_eur || 0);
+                      }}>
+                        <TrendingUp size={12} /> KBEX: {sym}{((livePrice[`price_${form.reference_currency.toLowerCase()}`] || livePrice.price_eur || 0).toFixed(4)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-zinc-600 text-xs mb-1">1 {form.reference_currency} = ? {form.asset}</p>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={form.reference_price > 0 ? (1 / form.reference_price).toFixed(6) : ''}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value);
+                        if (val && val > 0) updateField('reference_price', 1 / val);
+                      }}
+                      className="bg-zinc-900 border-zinc-800 text-white pr-36"
+                      placeholder="1.1685"
+                      data-testid="modal-pair-rate"
+                    />
+                    {livePrice && (() => {
+                      const pk = `price_${form.reference_currency.toLowerCase()}`;
+                      const up = livePrice[pk] || livePrice.price_eur || 0;
+                      return up > 0 ? (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => updateField('reference_price', up)}>
+                          <TrendingUp size={12} /> KBEX: {(1 / up).toFixed(6)}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Condition */}
@@ -569,10 +620,29 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')}</span>
-                    <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
-                  </div>
+                  {priceView === 'pair' ? (
+                    <>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Par {form.reference_currency}/{form.asset}</span>
+                        <span className="text-white font-mono">{form.reference_price > 0 ? (1 / form.reference_price).toPrecision(6) : '—'}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
+                        <span className="text-white font-medium font-mono">{calc.adj > 0 ? (1 / calc.adj).toPrecision(6) : '—'}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">Preço Ref. (1 {form.asset})</span>
+                        <span className="text-white font-mono">{fmtVal(form.reference_price)}</span>
+                      </div>
+                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
+                        <span className="text-zinc-500">{t('otc.deals.modal.adjPrice')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
+                        <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.totalValue')}</span>
                     <span className="text-white font-bold">{fmtVal(calc.total)}</span>
