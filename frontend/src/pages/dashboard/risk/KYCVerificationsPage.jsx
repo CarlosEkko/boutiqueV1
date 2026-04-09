@@ -24,11 +24,11 @@ const STATUS_CONFIG = {
 };
 
 const TABS = [
-  { key: 'all', label: 'Todos' },
   { key: 'pending', label: 'Em Verificação' },
   { key: 'init', label: 'Iniciados' },
   { key: 'approved', label: 'Aprovados' },
   { key: 'rejected', label: 'Rejeitados' },
+  { key: 'all', label: 'Todos' },
 ];
 
 const TYPE_TABS = [
@@ -42,7 +42,7 @@ const KYCVerificationsPage = () => {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [detailData, setDetailData] = useState(null);
