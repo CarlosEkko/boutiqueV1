@@ -468,15 +468,32 @@ const DealModal = ({ open, onClose, deal, teamMembers, onSaved }) => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.deals.modal.refPrice')}</Label>
-                <button
-                  type="button"
-                  onClick={() => setPriceView(v => v === 'unit' ? 'pair' : 'unit')}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded border border-zinc-700 text-xs font-medium text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition-colors"
-                  data-testid="price-view-toggle"
-                >
-                  <ArrowLeftRight size={12} />
-                  {priceView === 'unit' ? `${form.asset}/${form.reference_currency}` : `${form.reference_currency}/${form.asset}`}
-                </button>
+                <div className="flex bg-zinc-800 rounded-full p-0.5" data-testid="price-view-toggle">
+                  <button
+                    type="button"
+                    onClick={() => setPriceView('unit')}
+                    className={`px-3 py-1 text-xs rounded-full transition-all font-medium ${
+                      priceView === 'unit'
+                        ? 'bg-gold-600/80 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    data-testid="price-view-unit"
+                  >
+                    {form.reference_currency}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPriceView('pair')}
+                    className={`px-3 py-1 text-xs rounded-full transition-all font-medium ${
+                      priceView === 'pair'
+                        ? 'bg-gold-600/80 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    data-testid="price-view-pair"
+                  >
+                    {form.asset}
+                  </button>
+                </div>
               </div>
               {priceView === 'unit' ? (
                 <div>
