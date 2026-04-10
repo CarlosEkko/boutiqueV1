@@ -1,11 +1,7 @@
-# KBEX.io Test Credentials
+## Test Credentials
 
-## Admin Account
-- Email: carlos@kbex.io
-- Password: senha123
-- Role: Admin
-- Access: Full platform access
+### Preview Environment
+- Admin: carlos@kbex.io / senha123
 
-## API URL
-- Preview: https://boutique-exchange.preview.emergentagent.com
-- Production: https://kbex.io
+### VPS (kbex.io)
+- Admin: carlos@kbex.io / cascaca2

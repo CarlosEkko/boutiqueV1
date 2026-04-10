@@ -1,112 +1,95 @@
 # KBEX.io - Product Requirements Document
 
-## Overview
-Premium Crypto Boutique Exchange for HNW/UHNW individuals. Features Exchange, OTC Desk, Professional Escrow (DvP), Fiat/Crypto Wallets, Onboarding, CRM, Staking, and automated KYC.
+## Original Problem Statement
+KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-High-Net-Worth (UHNW) individuals. Core features include Exchange, OTC Desk, Escrow Module, Fiat/Crypto Wallets, Cold Wallet (Trezor), Onboarding, CRM, Staking, and automated KYC via Sumsub.
+
+## Product Requirements
+- Fully translated platform (PT, EN, AR, FR, ES)
+- "Quiet luxury", trust, exclusivity in UI/UX
+- Comprehensive OTC CRM and General CRM with strict qualification workflows
+- Integration with Revolut Business API for fiat deposit reconciliation
+- Trezor Connect integration for cold wallet management
+- Exclusivity: Platform is invite-only
 
 ## Tech Stack
 - Frontend: React, Tailwind CSS, Shadcn UI
-- Backend: FastAPI, MongoDB (Motor)
-- Deployment: Docker Compose + Nginx (Cloudflare Strict SSL)
+- Backend: FastAPI, Motor (MongoDB), Pydantic
+- Integrations: Revolut Business API v2 (X.509 JWT), Brevo Emails, Trezor Connect (CDN), Sumsub KYC
+- Deployment: Docker, Docker-Compose on VPS
 
-## Core Requirements
-- Fully translated platform (PT, EN, AR, FR, ES)
-- "Quiet luxury" UI/UX with trust and exclusivity
-- Comprehensive OTC CRM with strict qualification workflows
-- Professional OTC Escrow with DvP settlement, fee engine, compliance gating
-- Demo Mode with SEPARATE dump collections (demo_* prefix)
-- Dark/Light mode toggle (Dashboard only; Landing/Auth stay Dark)
-- Staking module with ETH-specific validators (Compounding/Legacy)
-- KBEX Rate Engine with tier-based spread configuration
+## Key Routes
+| Page | Route |
+|------|-------|
+| Dashboard | /dashboard |
+| Wallets | /dashboard/wallets |
+| Cold Wallet | /dashboard/cold-wallet |
+| Fiat Deposit | /dashboard/fiat-deposit |
+| Admin Bank Accounts | /dashboard/admin/contas-bancarias |
+| Admin Cold Wallet | /dashboard/admin/cold-wallet |
 
-## KBEX Rate Engine (April 9, 2026)
-- Rate Configuration: Per product × Per tier × Per asset
-- Tier Fees: Editable annual fees (Broker €0, Standard €2500, Premium €5000, VIP €15000, Institucional €50000)
-- Spread Resolution: Hierarchical lookup
-- Reference Price: `/api/otc-deals/reference-price/{asset}` applies tier-based spread
-- Escrow Fee Tiers: Editable table by ticket size (6 default tiers)
-- Tier Upgrade: Admin deducts from user balance
-- Renewal Alerts: 30-day expiry warnings
-- Audit Trail: All changes logged
-
-## OTC Deal Calculator (April 9, 2026)
-- Toggle pill EUR/BTC (gold active state)
-- 4 decimals for small values, 2 for large
-- MARGEM CORRETORES: Gross% - Net% with real % split
-- RECEITA KBEX: Net value
-
-## OTC Lead Visibility Fix (April 9, 2026)
-- Added `created_by` field to OTCLead model
-- Team filter: assigned_to OR created_by OR region
-- Demo mode flag on lead creation
-
-## Protected Document Viewer (April 9, 2026)
-- Transparency/Audit Reports PDFs viewable in protected viewer
-- Protections: disable right-click, Ctrl+C/P/S, F12, PrintScreen, user-select:none
-- Dynamic watermark with user name/email
-- Sandboxed iframe (no download)
-- Delete reports: Only Manager/Global Manager/Admin
-- Endpoint: `DELETE /api/admin/transparency/reports/{id}`
-
-## Staking Module (April 9, 2026)
-- Supported: ETH, SOL, MATIC, ATOM, OSMO
-- ETH Validators: Compounding/Legacy
-
-## Completed Features
-- Multi-currency wallets (EUR, USD, AED, BRL)
-- OTC CRM: 11-step workflow
-- Brevo email integration
-- Trustfull Risk Intelligence
-- Demo Mode with separate dump collections
-- Multi-Sign vault with demo data
-- Staking module
-- "Solicitar Acesso" → CRM + OTC Lead generation
-- Auth page: Login only (registration gated by invite)
-- OTC Deal Calculator with precision formatting
-- KBEX Rate Engine with tier-based spreads
-- Escrow Fee Tiers editable table (dedicated page)
-- OTC Lead visibility fix (created_by)
-- Protected Document Viewer (anti-copy, watermark)
-- Report deletion (role-restricted)
-- Admin Transparency: PDF upload real (base64) + Delete public wallets
-- OTC Clients: Modal "Conceder Acesso" filtra apenas contactos da entidade, sem mostrar email
-- Safari cursor fix
-- Trading Limits: All 5 tiers (Broker, Standard, Premium, VIP, Institucional) with formatted inputs
-- Escrow Fees migrated to dedicated page (AdminEscrowFees.jsx)
-- Number formatting with space thousand separators on Limits page
-
-## Upcoming Tasks
-- P1: TradingView chart widgets
-- P1: Complete frontend translations
-- P2: WebSocket prices (replace polling)
-
-## Future Tasks
-- P2: Whitelist functionality
-- P2: Brevo notifications for Escrow
-- P3: Product Pages (Launchpad, ICO)
-- P3: Refactoring large files
-
-## Key Constraints
-- Cloudflare WAF blocks multipart → use JSON
-- Demo data → demo_* collections only
-- Theme toggle: Dashboard only
+## Key API Endpoints
+- `GET /api/revolut/accounts` — Fetch Revolut accounts
+- `POST /api/revolut/sync-bank-details` — Sync IBAN/BIC for all accounts
+- `GET /api/revolut/public/bank-details/{currency}` — Public: get kbex account IBAN for client deposits
+- `POST /api/revolut/webhook` — Revolut transaction webhooks
+- `GET /api/cold-wallet/addresses` — Client cold wallet addresses
+- `POST /api/cold-wallet/addresses` — Save client cold wallet address
+- `GET /api/cold-wallet/treasury` — Admin treasury cold wallet addresses
+- `POST /api/cold-wallet/treasury` — Save treasury cold wallet address
 
 ## DB Collections
-- `kbex_rates`: Rate spread configs
-- `kbex_settings`: Tier fees, escrow fees
-- `kbex_rates_audit`: Audit trail
-- `transparency_reports`: Audit report documents
+- `revolut_bank_details` — Cached IBAN/BIC for Main and kbex accounts
+- `revolut_deposits` — Synced deposits from Revolut
+- `cold_wallet_addresses` — Client and treasury cold wallet addresses (type: client/treasury)
 
-## Revolut Business API Integration (2026-04-09)
-- OAuth2 connected (Production) with X509 certificate auth
-- Endpoints: /api/revolut/status, /accounts, /transactions, /counterparties
-- 12 accounts detected (EUR, USD, GBP, USDT, CHF, PLN, ZAR, AUD, CAD)
-- Auto-refresh tokens (40 min lifetime)
+## Account Structure (Revolut)
+- **Main accounts** → Tesouraria & Onboarding (taxas de admissão)
+- **kbex accounts** → Conciliação de Clientes (depósitos fiat)
 
+## Supported Fiat Currencies
+EUR, USD, AED, BRL, GBP, CHF, QAR, SAR, HKD
 
-## Admin Revolut Page (2026-04-09)
-- Full admin page with accounts overview, deposit tracking, and reconciliation
-- Sync deposits from Revolut API and match to client fiat wallets
-- Webhook endpoint at POST /api/revolut/webhook for real-time deposit detection
-- Reconciliation dialog: search clients, assign deposit to fiat wallet, log transaction
-- Route: /dashboard/admin/revolut | Sidebar: Admin > Revolut Business
+## What's Been Implemented
 
+### This Session (April 10, 2026)
+- Separated Revolut accounts: Main (Treasury) vs kbex (Client Reconciliation)
+- Removed "Contas da Empresa" from sidebar menu
+- Renamed "Revolut Business" to "Contas Bancárias" in menu, title, and URL
+- Added "Sincronizar IBAN" button for admin to cache bank details
+- Reformulated Fiat Deposit page with 4-step flow (Currency → Amount → Reference → Confirm)
+- Bank details (IBAN/BIC) now come from Revolut kbex accounts
+- Added fiat currencies: GBP, CHF, QAR, SAR, HKD (total 9)
+- Removed "Outras Contas" section, added flags for AED, HKD, QAR, SAR
+- Integrated Trezor Connect via CDN (BTC, ETH, LTC)
+- Client Cold Wallet page (/dashboard/cold-wallet) with own menu section
+- Admin Cold Wallet page (/dashboard/admin/cold-wallet) for treasury
+- Fixed CSP in nginx.conf to allow connect.trezor.io
+- Fixed Revolut webhook status detection (fallback to API check)
+- Fixed docker-compose.yml with Revolut env vars and certs mount
+
+### Previous Sessions
+- OTC CRM with 11-step workflow
+- Brevo email integration
+- Revolut Business API integration (X.509 certs)
+- Escrow lifecycle, Staking, Gas Station
+- KYC/KYB automation via Sumsub
+- KBEX Rates Engine
+- Demo Mode
+
+## Pending Issues
+- P2: Safari cursor bug (recurring 12+ times)
+- P2: Incomplete frontend translations
+
+## Upcoming Tasks
+- P1: TradingView chart widgets on Trading/Markets pages
+- P2: Automatic deposit reconciliation via Reference ID matching
+- P2: WebSocket refactor for crypto prices (replace 1s HTTP polling)
+
+## Future/Backlog
+- P2: Whitelist functionality
+- P3: Product Pages (Launchpad/ICO)
+- P3: Refactor large files (OTCLeads.jsx, OTCDealsPage.jsx, translations.js)
+
+## Credentials
+- Admin: carlos@kbex.io
+- VPS password: cascaca2 (different from preview)
