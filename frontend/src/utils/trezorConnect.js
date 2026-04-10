@@ -1,5 +1,10 @@
+/**
+ * Trezor Connect - CDN-based loader
+ * Loads Trezor Connect from the official CDN to avoid SES lockdown issues
+ */
+
 let TrezorConnect = null;
-let isInitialized = false;
+let loadPromise = null;
 
 export const BLOCKCHAIN_CONFIG = {
   BTC: {
@@ -28,38 +33,53 @@ export const BLOCKCHAIN_CONFIG = {
   },
 };
 
-const loadTrezor = async () => {
-  if (TrezorConnect) return TrezorConnect;
-  const module = await import('@trezor/connect-web');
-  TrezorConnect = module.default;
-  return TrezorConnect;
+const loadTrezorFromCDN = () => {
+  if (TrezorConnect) return Promise.resolve(TrezorConnect);
+  if (loadPromise) return loadPromise;
+
+  loadPromise = new Promise((resolve, reject) => {
+    if (window.TrezorConnect) {
+      TrezorConnect = window.TrezorConnect;
+      resolve(TrezorConnect);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://connect.trezor.io/9/trezor-connect.js';
+    script.async = true;
+    script.onload = () => {
+      TrezorConnect = window.TrezorConnect;
+      if (TrezorConnect) {
+        resolve(TrezorConnect);
+      } else {
+        reject(new Error('TrezorConnect not found after script load'));
+      }
+    };
+    script.onerror = () => reject(new Error('Failed to load Trezor Connect from CDN'));
+    document.head.appendChild(script);
+  });
+
+  return loadPromise;
 };
 
 export const initTrezor = async () => {
-  if (isInitialized) return;
-  const tc = await loadTrezor();
-  tc.init({
-    manifest: {
-      email: 'support@kbex.io',
-      appName: 'KBEX Exchange',
-      appUrl: window.location.origin,
-    },
-    connectSrc: 'https://connect.trezor.io/9/',
+  const tc = await loadTrezorFromCDN();
+  tc.manifest({
+    email: 'support@kbex.io',
+    appUrl: window.location.origin,
   });
-  isInitialized = true;
+  return tc;
 };
 
 export const getDeviceFeatures = async () => {
-  await initTrezor();
-  const tc = await loadTrezor();
+  const tc = await initTrezor();
   const result = await tc.getFeatures();
   if (result.success) return result.payload;
   throw new Error(result.payload?.error || 'Failed to connect device');
 };
 
 export const getAddress = async (coin, path, showOnTrezor = true) => {
-  await initTrezor();
-  const tc = await loadTrezor();
+  const tc = await initTrezor();
   const config = BLOCKCHAIN_CONFIG[coin];
   if (!config) throw new Error(`Unsupported coin: ${coin}`);
 
@@ -81,23 +101,8 @@ export const getAddress = async (coin, path, showOnTrezor = true) => {
   throw new Error(result.payload?.error || 'Failed to get address');
 };
 
-export const getAddressBundle = async (coins) => {
-  await initTrezor();
-  const results = {};
-  for (const coin of coins) {
-    try {
-      const addr = await getAddress(coin, null, false);
-      results[coin] = addr;
-    } catch (err) {
-      results[coin] = { error: err.message };
-    }
-  }
-  return results;
-};
-
 export const getAccountInfo = async (coin, path) => {
-  await initTrezor();
-  const tc = await loadTrezor();
+  const tc = await initTrezor();
   const config = BLOCKCHAIN_CONFIG[coin];
   if (!config) throw new Error(`Unsupported coin: ${coin}`);
 
@@ -119,8 +124,7 @@ export const formatBalance = (balance, decimals = 8) => {
 };
 
 export const signEthTransaction = async (path, transaction) => {
-  await initTrezor();
-  const tc = await loadTrezor();
+  const tc = await initTrezor();
   const result = await tc.ethereumSignTransaction({
     path,
     transaction,
@@ -130,8 +134,7 @@ export const signEthTransaction = async (path, transaction) => {
 };
 
 export const signBtcTransaction = async (inputs, outputs) => {
-  await initTrezor();
-  const tc = await loadTrezor();
+  const tc = await initTrezor();
   const result = await tc.signTransaction({
     inputs,
     outputs,

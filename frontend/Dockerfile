@@ -4,7 +4,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Install native build dependencies for packages like @trezor/connect-web (usb)
-RUN apk add --no-cache python3 make g++ linux-headers eudev-dev
+RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package.json ./
