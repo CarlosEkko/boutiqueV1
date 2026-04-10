@@ -295,7 +295,7 @@ const AdminRevolutPage = () => {
 
           {/* Conciliação de Clientes (kbex) */}
           {clientAccounts.length > 0 && (
-            <div>
+            <div className="pt-4">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-2 h-8 bg-gold-500 rounded-full" />
                 <div>
