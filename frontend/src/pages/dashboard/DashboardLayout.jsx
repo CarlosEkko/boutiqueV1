@@ -701,7 +701,10 @@ const DashboardLayout = () => {
     'otc_desk': 'otc',
     'finance': 'fiat_ops',
     'financeiro': 'fiat_ops',
-    'crm': 'otc',
+    'crm': '_hidden_in_demo_',
+    'support': '_hidden_in_demo_',
+    'suporte': '_hidden_in_demo_',
+    'team_hub': '_hidden_in_demo_',
     'risk_compliance': '_always_',
   };
 
