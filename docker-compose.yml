@@ -56,9 +56,13 @@ services:
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-}
       - AZURE_REDIRECT_URI=${AZURE_REDIRECT_URI:-}
       - TRUSTFULL_API_KEY=${TRUSTFULL_API_KEY:-}
+      - REVOLUT_CLIENT_ID=${REVOLUT_CLIENT_ID}
+      - REVOLUT_REDIRECT_URI=${REVOLUT_REDIRECT_URI:-https://kbex.io/api/revolut/callback}
+      - REVOLUT_ENV=${REVOLUT_ENV:-production}
     volumes:
       - backend_uploads:/app/uploads
       - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
+      - ./backend/certs:/app/certs:ro
     networks:
       - kbex-network
     healthcheck:
