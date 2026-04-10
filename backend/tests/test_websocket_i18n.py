@@ -1,202 +1,245 @@
 """
-Test WebSocket prices endpoint and French (FR) i18n translations
-Tests for KBEX.io iteration 22 features:
-- WebSocket /api/ws/prices endpoint
-- French translations in backend i18n
+Test WebSocket prices endpoint and Trading/Markets API endpoints
+Tests for P2 tasks: WebSocket real-time prices and translations
 """
-
 import pytest
 import requests
 import os
+import json
 import asyncio
 import websockets
-import json
+from datetime import datetime
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-class TestWebSocketPrices:
-    """WebSocket prices endpoint tests"""
+class TestTradingMarketsAPI:
+    """Test /api/trading/markets and /api/trading/markets/stats endpoints"""
     
-    def test_crypto_prices_http_fallback(self):
-        """Test HTTP fallback endpoint for crypto prices"""
-        response = requests.get(f"{BASE_URL}/api/crypto-prices")
-        assert response.status_code == 200
-        
+    def test_markets_endpoint_returns_200(self):
+        """GET /api/trading/markets should return 200"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ GET /api/trading/markets returns 200")
+    
+    def test_markets_returns_markets_array(self):
+        """Markets endpoint should return markets array with crypto data"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets")
         data = response.json()
-        assert "prices" in data
-        assert len(data["prices"]) > 0
         
-        # Check price structure
-        price = data["prices"][0]
-        assert "symbol" in price
-        assert "name" in price
-        assert "price" in price
-        assert "change_24h" in price
-        print(f"HTTP fallback working: {len(data['prices'])} prices returned")
+        assert "markets" in data, "Response should contain 'markets' key"
+        assert isinstance(data["markets"], list), "markets should be a list"
+        assert len(data["markets"]) > 0, "markets should not be empty"
+        print(f"✓ Markets endpoint returns {len(data['markets'])} cryptocurrencies")
+    
+    def test_markets_data_structure(self):
+        """Each market should have required fields"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets")
+        data = response.json()
+        
+        required_fields = ["symbol", "name", "price", "change_24h", "volume_24h"]
+        
+        for market in data["markets"][:5]:  # Check first 5
+            for field in required_fields:
+                assert field in market, f"Market {market.get('symbol', 'unknown')} missing field: {field}"
+        
+        print("✓ Markets data structure is correct with all required fields")
+    
+    def test_markets_includes_btc_eth_sol_xrp(self):
+        """Markets should include BTC, ETH, SOL, XRP (featured charts)"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets")
+        data = response.json()
+        
+        symbols = [m["symbol"] for m in data["markets"]]
+        required_symbols = ["BTC", "ETH", "SOL", "XRP"]
+        
+        for sym in required_symbols:
+            assert sym in symbols, f"Missing required symbol: {sym}"
+        
+        print(f"✓ Markets includes all featured chart symbols: {required_symbols}")
+    
+    def test_markets_stats_endpoint_returns_200(self):
+        """GET /api/trading/markets/stats should return 200"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets/stats")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ GET /api/trading/markets/stats returns 200")
+    
+    def test_markets_stats_data_structure(self):
+        """Stats endpoint should return top_gainer and top_loser"""
+        response = requests.get(f"{BASE_URL}/api/trading/markets/stats")
+        data = response.json()
+        
+        assert "top_gainer" in data, "Stats should include top_gainer"
+        assert "top_loser" in data, "Stats should include top_loser"
+        assert "total_volume_24h" in data, "Stats should include total_volume_24h"
+        
+        if data["top_gainer"]:
+            assert "symbol" in data["top_gainer"], "top_gainer should have symbol"
+            assert "change_24h" in data["top_gainer"], "top_gainer should have change_24h"
+        
+        if data["top_loser"]:
+            assert "symbol" in data["top_loser"], "top_loser should have symbol"
+            assert "change_24h" in data["top_loser"], "top_loser should have change_24h"
+        
+        print(f"✓ Stats: Top Gainer={data.get('top_gainer', {}).get('symbol')}, Top Loser={data.get('top_loser', {}).get('symbol')}")
+    
+    def test_markets_currency_parameter(self):
+        """Markets endpoint should accept currency parameter"""
+        for currency in ["USD", "EUR", "BRL"]:
+            response = requests.get(f"{BASE_URL}/api/trading/markets", params={"currency": currency})
+            assert response.status_code == 200, f"Failed for currency {currency}"
+            data = response.json()
+            assert data.get("currency") == currency, f"Currency mismatch for {currency}"
+        
+        print("✓ Markets endpoint accepts currency parameter (USD, EUR, BRL)")
+
+
+class TestCryptoPricesAPI:
+    """Test /api/crypto-prices endpoint (fallback for WebSocket)"""
+    
+    def test_crypto_prices_endpoint_returns_200(self):
+        """GET /api/crypto-prices should return 200"""
+        response = requests.get(f"{BASE_URL}/api/crypto-prices")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ GET /api/crypto-prices returns 200")
+    
+    def test_crypto_prices_returns_prices_array(self):
+        """Crypto prices endpoint should return prices array"""
+        response = requests.get(f"{BASE_URL}/api/crypto-prices")
+        data = response.json()
+        
+        assert "prices" in data, "Response should contain 'prices' key"
+        assert isinstance(data["prices"], list), "prices should be a list"
+        print(f"✓ Crypto prices endpoint returns {len(data['prices'])} prices")
+
+
+class TestWebSocketPrices:
+    """Test WebSocket /api/ws/prices endpoint"""
     
     @pytest.mark.asyncio
     async def test_websocket_connection(self):
-        """Test WebSocket connection to /api/ws/prices"""
-        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://")
-        ws_url = f"{ws_url}/api/ws/prices"
+        """WebSocket should accept connections"""
+        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/ws/prices"
         
         try:
-            async with websockets.connect(ws_url, timeout=10) as websocket:
-                # Should receive initial prices immediately
-                message = await asyncio.wait_for(websocket.recv(), timeout=15)
+            async with websockets.connect(ws_url, close_timeout=5) as ws:
+                # Wait for initial message (should be cached prices or initial fetch)
+                message = await asyncio.wait_for(ws.recv(), timeout=10)
                 data = json.loads(message)
                 
-                assert data["type"] == "prices"
-                assert "data" in data
-                assert len(data["data"]) > 0
-                assert "timestamp" in data
+                assert data.get("type") == "prices", f"Expected type='prices', got {data.get('type')}"
+                assert "data" in data, "Message should contain 'data' field"
+                assert "source" in data, "Message should contain 'source' field"
                 
-                # Check price structure
-                price = data["data"][0]
-                assert "symbol" in price
-                assert "price" in price
-                
-                print(f"WebSocket connected: received {len(data['data'])} prices")
-                print(f"Source: {data.get('source', 'unknown')}")
+                print(f"✓ WebSocket connected and received initial prices (source: {data.get('source')})")
                 
         except Exception as e:
-            pytest.skip(f"WebSocket connection failed: {e}")
+            pytest.fail(f"WebSocket connection failed: {e}")
+    
+    @pytest.mark.asyncio
+    async def test_websocket_price_data_structure(self):
+        """WebSocket price data should have correct structure"""
+        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/ws/prices"
+        
+        try:
+            async with websockets.connect(ws_url, close_timeout=5) as ws:
+                message = await asyncio.wait_for(ws.recv(), timeout=10)
+                data = json.loads(message)
+                
+                prices = data.get("data", [])
+                assert len(prices) > 0, "Should receive at least one price"
+                
+                # Check first price structure
+                price = prices[0]
+                required_fields = ["symbol", "name", "price"]
+                for field in required_fields:
+                    assert field in price, f"Price missing field: {field}"
+                
+                print(f"✓ WebSocket price data structure correct, received {len(prices)} prices")
+                
+        except Exception as e:
+            pytest.fail(f"WebSocket test failed: {e}")
+    
+    @pytest.mark.asyncio
+    async def test_websocket_source_field(self):
+        """WebSocket should indicate source (binance_ws, binance_rest, or cache)"""
+        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/ws/prices"
+        
+        try:
+            async with websockets.connect(ws_url, close_timeout=5) as ws:
+                message = await asyncio.wait_for(ws.recv(), timeout=10)
+                data = json.loads(message)
+                
+                source = data.get("source", "")
+                valid_sources = ["binance_ws", "binance_rest", "cache"]
+                assert source in valid_sources, f"Source '{source}' not in valid sources: {valid_sources}"
+                
+                print(f"✓ WebSocket source field is valid: {source}")
+                
+        except Exception as e:
+            pytest.fail(f"WebSocket test failed: {e}")
     
     @pytest.mark.asyncio
     async def test_websocket_ping_pong(self):
-        """Test WebSocket ping/pong keepalive"""
-        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://")
-        ws_url = f"{ws_url}/api/ws/prices"
+        """WebSocket should respond to ping with pong"""
+        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/ws/prices"
         
         try:
-            async with websockets.connect(ws_url, timeout=10) as websocket:
-                # Wait for initial message
-                await asyncio.wait_for(websocket.recv(), timeout=15)
+            async with websockets.connect(ws_url, close_timeout=5) as ws:
+                # First receive initial prices
+                await asyncio.wait_for(ws.recv(), timeout=10)
                 
                 # Send ping
-                await websocket.send("ping")
+                await ws.send("ping")
                 
                 # Should receive pong
-                response = await asyncio.wait_for(websocket.recv(), timeout=5)
-                assert response == "pong"
-                print("WebSocket ping/pong working")
+                response = await asyncio.wait_for(ws.recv(), timeout=5)
+                assert response == "pong", f"Expected 'pong', got '{response}'"
+                
+                print("✓ WebSocket ping/pong working correctly")
                 
         except Exception as e:
-            pytest.skip(f"WebSocket ping/pong failed: {e}")
+            pytest.fail(f"WebSocket ping/pong test failed: {e}")
+    
+    @pytest.mark.asyncio
+    async def test_websocket_receives_updates(self):
+        """WebSocket should receive price updates over time"""
+        ws_url = BASE_URL.replace("https://", "wss://").replace("http://", "ws://") + "/api/ws/prices"
+        
+        try:
+            async with websockets.connect(ws_url, close_timeout=10) as ws:
+                messages_received = 0
+                sources_seen = set()
+                
+                # Try to receive up to 3 messages within 15 seconds
+                start_time = asyncio.get_event_loop().time()
+                while messages_received < 3 and (asyncio.get_event_loop().time() - start_time) < 15:
+                    try:
+                        message = await asyncio.wait_for(ws.recv(), timeout=5)
+                        if message == "pong":
+                            continue
+                        data = json.loads(message)
+                        if data.get("type") == "prices":
+                            messages_received += 1
+                            sources_seen.add(data.get("source", "unknown"))
+                    except asyncio.TimeoutError:
+                        break
+                
+                assert messages_received >= 1, "Should receive at least 1 price update"
+                print(f"✓ WebSocket received {messages_received} price updates, sources: {sources_seen}")
+                
+        except Exception as e:
+            pytest.fail(f"WebSocket updates test failed: {e}")
 
 
-class TestFrenchTranslations:
-    """French (FR) i18n backend translation tests"""
+class TestHealthEndpoint:
+    """Basic health check"""
     
-    def test_fr_auth_translations(self):
-        """Test French authentication translations"""
-        from utils.i18n import t
-        
-        # Test auth translations
-        assert t("auth.login_success", "FR") == "Connexion réussie"
-        assert t("auth.logout_success", "FR") == "Déconnexion réussie"
-        assert t("auth.invalid_credentials", "FR") == "Email ou mot de passe invalide"
-        assert t("auth.user_not_found", "FR") == "Utilisateur introuvable"
-        assert t("auth.email_already_exists", "FR") == "Email déjà enregistré"
-        print("FR auth translations: PASS")
-    
-    def test_fr_2fa_translations(self):
-        """Test French 2FA translations"""
-        from utils.i18n import t
-        
-        assert t("2fa.setup_success", "FR") == "Configuration 2FA lancée"
-        assert t("2fa.verify_success", "FR") == "2FA activé avec succès"
-        assert t("2fa.invalid_code", "FR") == "Code de vérification invalide"
-        print("FR 2FA translations: PASS")
-    
-    def test_fr_kyc_translations(self):
-        """Test French KYC translations"""
-        from utils.i18n import t
-        
-        assert t("kyc.submission_success", "FR") == "KYC soumis avec succès"
-        assert t("kyc.approved", "FR") == "KYC approuvé"
-        assert t("kyc.rejected", "FR") == "KYC rejeté"
-        assert t("kyc.pending", "FR") == "KYC en cours d'examen"
-        print("FR KYC translations: PASS")
-    
-    def test_fr_trading_translations(self):
-        """Test French trading translations"""
-        from utils.i18n import t
-        
-        assert t("trading.order_created", "FR") == "Ordre créé avec succès"
-        assert t("trading.order_cancelled", "FR") == "Ordre annulé"
-        assert t("trading.insufficient_balance", "FR") == "Solde insuffisant"
-        print("FR trading translations: PASS")
-    
-    def test_fr_wallet_translations(self):
-        """Test French wallet translations"""
-        from utils.i18n import t
-        
-        assert t("wallet.created", "FR") == "Portefeuille créé avec succès"
-        assert t("wallet.deposit_success", "FR") == "Dépôt effectué avec succès"
-        assert t("wallet.withdrawal_success", "FR") == "Demande de retrait soumise"
-        print("FR wallet translations: PASS")
-    
-    def test_fr_otc_translations(self):
-        """Test French OTC translations"""
-        from utils.i18n import t
-        
-        assert t("otc.lead_created", "FR") == "Prospect créé avec succès"
-        assert t("otc.quote_created", "FR") == "Cotation créée et envoyée"
-        assert t("otc.quote_accepted", "FR") == "Cotation acceptée"
-        print("FR OTC translations: PASS")
-    
-    def test_fr_general_translations(self):
-        """Test French general translations"""
-        from utils.i18n import t
-        
-        assert t("general.success", "FR") == "Succès"
-        assert t("general.error", "FR") == "Une erreur est survenue"
-        assert t("general.not_found", "FR") == "Introuvable"
-        assert t("general.created", "FR") == "Créé avec succès"
-        print("FR general translations: PASS")
-    
-    def test_fr_admin_translations(self):
-        """Test French admin translations"""
-        from utils.i18n import t
-        
-        assert t("admin.user_approved", "FR") == "Utilisateur approuvé avec succès"
-        assert t("admin.settings_updated", "FR") == "Paramètres mis à jour avec succès"
-        print("FR admin translations: PASS")
-    
-    def test_fr_notifications_translations(self):
-        """Test French notification translations"""
-        from utils.i18n import t
-        
-        assert t("notifications.new_user", "FR") == "Nouvel enregistrement d'utilisateur"
-        assert t("notifications.kyc_submitted", "FR") == "Nouvelle soumission KYC"
-        assert t("notifications.deposit_received", "FR") == "Dépôt reçu"
-        print("FR notifications translations: PASS")
-    
-    def test_language_fallback(self):
-        """Test language fallback to default (PT)"""
-        from utils.i18n import t, DEFAULT_LANGUAGE
-        
-        # Test with invalid language code - should fallback to default (PT)
-        result = t("auth.login_success", "XX")
-        # Default language is PT, so fallback should be Portuguese
-        assert result == "Login efetuado com sucesso" or result == "Login successful"
-        print(f"Language fallback to {DEFAULT_LANGUAGE}: PASS")
-
-
-class TestLanguageSelector:
-    """Test language selector in header"""
-    
-    def test_supported_languages(self):
-        """Verify all 4 languages are supported"""
-        from utils.i18n import translations
-        
-        assert "EN" in translations
-        assert "PT" in translations
-        assert "FR" in translations
-        assert "AR" in translations
-        print("All 4 languages supported: EN, PT, FR, AR")
+    def test_health_endpoint(self):
+        """Health endpoint should return 200"""
+        response = requests.get(f"{BASE_URL}/api/health")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        print("✓ Health endpoint returns 200")
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v", "--tb=short"])

@@ -1567,6 +1567,69 @@ const translations = {
         errorLoading: 'Error loading data',
         errorLoadingDetails: 'Error loading invoice details'
       }
+    },
+    // Markets Page
+    markets: {
+      title: 'Markets',
+      subtitle: 'Real-time prices of major cryptocurrencies',
+      featuredCharts: 'Featured Charts',
+      spot: 'All',
+      gainers: 'Top Gainers',
+      losers: 'Top Losers',
+      favorites: 'Favorites',
+      search: 'Search cryptocurrency...',
+      name: 'Name',
+      price: 'Price',
+      action: 'Action',
+      noFavorites: 'No favorites',
+      addFavorites: 'Click the star to add cryptocurrencies to favorites',
+      totalMarketCap: 'Total Market Cap',
+      topGainer: 'Top Gainer',
+      topLoser: 'Top Loser'
+    },
+    // Trading Page
+    trading: {
+      title: 'Trading',
+      searchPair: 'Search pair...',
+      favorites: 'Favorites',
+      allPairs: 'All Pairs',
+      price: 'Price',
+      change24h: '24h Change',
+      volume24h: 'Volume 24h',
+      marketCap: 'Market Cap',
+      buySell: 'Buy/Sell',
+      change1h: '1h Change',
+      change7d: '7d Change',
+      globalRank: 'Global Rank',
+      viewOnCMC: 'View on CoinMarketCap'
+    },
+    // Fiat Deposit
+    fiatDeposit: {
+      title: 'Fiat Deposit',
+      subtitle: 'Deposit via bank transfer',
+      amount: 'Amount',
+      currency: 'Currency',
+      minDeposit: 'Minimum deposit',
+      requestDeposit: 'Request Deposit',
+      referenceCode: 'Reference Code',
+      copyCode: 'Copy Code',
+      bankDetails: 'Bank Details',
+      instructions: 'Include the code in the transfer description',
+      myDeposits: 'My Deposits',
+      status: { pending: 'Pending', completed: 'Completed', rejected: 'Rejected' }
+    },
+    // Fiat Withdrawal
+    fiatWithdrawal: {
+      title: 'Fiat Withdrawal',
+      subtitle: 'Withdraw to your bank account',
+      amount: 'Amount',
+      bankAccount: 'Bank Account',
+      iban: 'IBAN',
+      swift: 'SWIFT/BIC',
+      accountHolder: 'Account Holder',
+      requestWithdrawal: 'Request Withdrawal',
+      myWithdrawals: 'My Withdrawals',
+      processingTime: 'Processing time: 1-3 business days'
     }
   },
   
@@ -3134,6 +3197,65 @@ const translations = {
         errorLoading: 'Erro ao carregar dados',
         errorLoadingDetails: 'Erro ao carregar detalhes da fatura'
       }
+    },
+    markets: {
+      title: 'Mercados',
+      subtitle: 'Preços em tempo real das principais criptomoedas',
+      featuredCharts: 'Gráficos em Destaque',
+      spot: 'Todos',
+      gainers: 'Maiores Altas',
+      losers: 'Maiores Quedas',
+      favorites: 'Favoritos',
+      search: 'Pesquisar criptomoeda...',
+      name: 'Nome',
+      price: 'Preço',
+      action: 'Ação',
+      noFavorites: 'Sem favoritos',
+      addFavorites: 'Clique na estrela para adicionar criptomoedas aos favoritos',
+      totalMarketCap: 'Market Cap Total',
+      topGainer: 'Maior Alta',
+      topLoser: 'Maior Queda'
+    },
+    trading: {
+      title: 'Trading',
+      searchPair: 'Pesquisar par...',
+      favorites: 'Favoritos',
+      allPairs: 'Todos os Pares',
+      price: 'Preço',
+      change24h: 'Var. 24h',
+      volume24h: 'Volume 24h',
+      marketCap: 'Market Cap',
+      buySell: 'Comprar/Vender',
+      change1h: 'Variação 1h',
+      change7d: 'Variação 7d',
+      globalRank: 'Rank Global',
+      viewOnCMC: 'Ver no CoinMarketCap'
+    },
+    fiatDeposit: {
+      title: 'Depósito Fiat',
+      subtitle: 'Depositar via transferência bancária',
+      amount: 'Montante',
+      currency: 'Moeda',
+      minDeposit: 'Depósito mínimo',
+      requestDeposit: 'Solicitar Depósito',
+      referenceCode: 'Código de Referência',
+      copyCode: 'Copiar Código',
+      bankDetails: 'Dados Bancários',
+      instructions: 'Inclua o código na descrição da transferência',
+      myDeposits: 'Meus Depósitos',
+      status: { pending: 'Pendente', completed: 'Concluído', rejected: 'Rejeitado' }
+    },
+    fiatWithdrawal: {
+      title: 'Levantamento Fiat',
+      subtitle: 'Levantar para a sua conta bancária',
+      amount: 'Montante',
+      bankAccount: 'Conta Bancária',
+      iban: 'IBAN',
+      swift: 'SWIFT/BIC',
+      accountHolder: 'Titular da Conta',
+      requestWithdrawal: 'Solicitar Levantamento',
+      myWithdrawals: 'Meus Levantamentos',
+      processingTime: 'Tempo de processamento: 1-3 dias úteis'
     }
   },
   
@@ -4594,6 +4716,65 @@ const translations = {
         errorCreating: 'خطأ في الإنشاء', errorSending: 'خطأ في الإرسال', errorMarkingPaid: 'خطأ في تسجيل الدفع',
         errorLoading: 'خطأ في التحميل', errorLoadingDetails: 'خطأ في تحميل التفاصيل'
       }
+    },
+    markets: {
+      title: 'الأسواق',
+      subtitle: 'أسعار العملات المشفرة الرئيسية في الوقت الفعلي',
+      featuredCharts: 'الرسوم البيانية المميزة',
+      spot: 'الكل',
+      gainers: 'الأكثر ارتفاعاً',
+      losers: 'الأكثر انخفاضاً',
+      favorites: 'المفضلة',
+      search: 'البحث عن عملة مشفرة...',
+      name: 'الاسم',
+      price: 'السعر',
+      action: 'إجراء',
+      noFavorites: 'لا توجد مفضلات',
+      addFavorites: 'انقر على النجمة لإضافة العملات المشفرة إلى المفضلة',
+      totalMarketCap: 'القيمة السوقية الإجمالية',
+      topGainer: 'الأكثر ارتفاعاً',
+      topLoser: 'الأكثر انخفاضاً'
+    },
+    trading: {
+      title: 'التداول',
+      searchPair: 'البحث عن زوج...',
+      favorites: 'المفضلة',
+      allPairs: 'جميع الأزواج',
+      price: 'السعر',
+      change24h: 'التغير 24 ساعة',
+      volume24h: 'الحجم 24 ساعة',
+      marketCap: 'القيمة السوقية',
+      buySell: 'شراء/بيع',
+      change1h: 'التغير ساعة',
+      change7d: 'التغير 7 أيام',
+      globalRank: 'الترتيب العالمي',
+      viewOnCMC: 'عرض في CoinMarketCap'
+    },
+    fiatDeposit: {
+      title: 'إيداع نقدي',
+      subtitle: 'الإيداع عبر التحويل البنكي',
+      amount: 'المبلغ',
+      currency: 'العملة',
+      minDeposit: 'الحد الأدنى للإيداع',
+      requestDeposit: 'طلب إيداع',
+      referenceCode: 'رمز المرجع',
+      copyCode: 'نسخ الرمز',
+      bankDetails: 'التفاصيل البنكية',
+      instructions: 'قم بتضمين الرمز في وصف التحويل',
+      myDeposits: 'إيداعاتي',
+      status: { pending: 'قيد الانتظار', completed: 'مكتمل', rejected: 'مرفوض' }
+    },
+    fiatWithdrawal: {
+      title: 'سحب نقدي',
+      subtitle: 'السحب إلى حسابك البنكي',
+      amount: 'المبلغ',
+      bankAccount: 'الحساب البنكي',
+      iban: 'IBAN',
+      swift: 'SWIFT/BIC',
+      accountHolder: 'صاحب الحساب',
+      requestWithdrawal: 'طلب سحب',
+      myWithdrawals: 'عمليات السحب',
+      processingTime: 'وقت المعالجة: 1-3 أيام عمل'
     }
   },
   
@@ -6015,6 +6196,65 @@ const translations = {
         errorCreating: 'Erreur de création', errorSending: 'Erreur d\'envoi', errorMarkingPaid: 'Erreur',
         errorLoading: 'Erreur de chargement', errorLoadingDetails: 'Erreur de chargement des détails'
       }
+    },
+    markets: {
+      title: 'Marchés',
+      subtitle: 'Prix en temps réel des principales cryptomonnaies',
+      featuredCharts: 'Graphiques en Vedette',
+      spot: 'Tous',
+      gainers: 'Plus Fortes Hausses',
+      losers: 'Plus Fortes Baisses',
+      favorites: 'Favoris',
+      search: 'Rechercher une cryptomonnaie...',
+      name: 'Nom',
+      price: 'Prix',
+      action: 'Action',
+      noFavorites: 'Aucun favori',
+      addFavorites: 'Cliquez sur l\'étoile pour ajouter des cryptomonnaies aux favoris',
+      totalMarketCap: 'Cap. Marché Totale',
+      topGainer: 'Plus Forte Hausse',
+      topLoser: 'Plus Forte Baisse'
+    },
+    trading: {
+      title: 'Trading',
+      searchPair: 'Rechercher une paire...',
+      favorites: 'Favoris',
+      allPairs: 'Toutes les Paires',
+      price: 'Prix',
+      change24h: 'Var. 24h',
+      volume24h: 'Volume 24h',
+      marketCap: 'Cap. Marché',
+      buySell: 'Acheter/Vendre',
+      change1h: 'Variation 1h',
+      change7d: 'Variation 7j',
+      globalRank: 'Rang Mondial',
+      viewOnCMC: 'Voir sur CoinMarketCap'
+    },
+    fiatDeposit: {
+      title: 'Dépôt Fiat',
+      subtitle: 'Déposer par virement bancaire',
+      amount: 'Montant',
+      currency: 'Devise',
+      minDeposit: 'Dépôt minimum',
+      requestDeposit: 'Demander un Dépôt',
+      referenceCode: 'Code de Référence',
+      copyCode: 'Copier le Code',
+      bankDetails: 'Coordonnées Bancaires',
+      instructions: 'Incluez le code dans la description du virement',
+      myDeposits: 'Mes Dépôts',
+      status: { pending: 'En attente', completed: 'Terminé', rejected: 'Rejeté' }
+    },
+    fiatWithdrawal: {
+      title: 'Retrait Fiat',
+      subtitle: 'Retirer vers votre compte bancaire',
+      amount: 'Montant',
+      bankAccount: 'Compte Bancaire',
+      iban: 'IBAN',
+      swift: 'SWIFT/BIC',
+      accountHolder: 'Titulaire du Compte',
+      requestWithdrawal: 'Demander un Retrait',
+      myWithdrawals: 'Mes Retraits',
+      processingTime: 'Délai de traitement : 1-3 jours ouvrables'
     }
   },
 
@@ -6683,6 +6923,65 @@ const translations = {
         errorCreating: 'Error al crear', errorSending: 'Error al enviar', errorMarkingPaid: 'Error',
         errorLoading: 'Error de carga', errorLoadingDetails: 'Error al cargar detalles'
       }
+    },
+    markets: {
+      title: 'Mercados',
+      subtitle: 'Precios en tiempo real de las principales criptomonedas',
+      featuredCharts: 'Gráficos Destacados',
+      spot: 'Todos',
+      gainers: 'Mayores Alzas',
+      losers: 'Mayores Caídas',
+      favorites: 'Favoritos',
+      search: 'Buscar criptomoneda...',
+      name: 'Nombre',
+      price: 'Precio',
+      action: 'Acción',
+      noFavorites: 'Sin favoritos',
+      addFavorites: 'Haz clic en la estrella para agregar criptomonedas a favoritos',
+      totalMarketCap: 'Cap. Mercado Total',
+      topGainer: 'Mayor Alza',
+      topLoser: 'Mayor Caída'
+    },
+    trading: {
+      title: 'Trading',
+      searchPair: 'Buscar par...',
+      favorites: 'Favoritos',
+      allPairs: 'Todos los Pares',
+      price: 'Precio',
+      change24h: 'Var. 24h',
+      volume24h: 'Volumen 24h',
+      marketCap: 'Cap. Mercado',
+      buySell: 'Comprar/Vender',
+      change1h: 'Variación 1h',
+      change7d: 'Variación 7d',
+      globalRank: 'Ranking Global',
+      viewOnCMC: 'Ver en CoinMarketCap'
+    },
+    fiatDeposit: {
+      title: 'Depósito Fiat',
+      subtitle: 'Depositar mediante transferencia bancaria',
+      amount: 'Monto',
+      currency: 'Moneda',
+      minDeposit: 'Depósito mínimo',
+      requestDeposit: 'Solicitar Depósito',
+      referenceCode: 'Código de Referencia',
+      copyCode: 'Copiar Código',
+      bankDetails: 'Datos Bancarios',
+      instructions: 'Incluya el código en la descripción de la transferencia',
+      myDeposits: 'Mis Depósitos',
+      status: { pending: 'Pendiente', completed: 'Completado', rejected: 'Rechazado' }
+    },
+    fiatWithdrawal: {
+      title: 'Retiro Fiat',
+      subtitle: 'Retirar a su cuenta bancaria',
+      amount: 'Monto',
+      bankAccount: 'Cuenta Bancaria',
+      iban: 'IBAN',
+      swift: 'SWIFT/BIC',
+      accountHolder: 'Titular de la Cuenta',
+      requestWithdrawal: 'Solicitar Retiro',
+      myWithdrawals: 'Mis Retiros',
+      processingTime: 'Tiempo de procesamiento: 1-3 días hábiles'
     }
   }
 };

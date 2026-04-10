@@ -212,7 +212,7 @@ const MarketsPage = () => {
               <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                   <Globe size={14} />
-                  Market Cap Total
+                  {t('markets.totalMarketCap', 'Market Cap Total')}
                 </div>
                 <p className="text-xl font-medium text-white">
                   {formatVolume(stats.total_market_cap)}
@@ -221,7 +221,7 @@ const MarketsPage = () => {
               <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                   <BarChart3 size={14} />
-                  Volume 24h
+                  {t('trading.volume24h', 'Volume 24h')}
                 </div>
                 <p className="text-xl font-medium text-white">
                   {formatVolume(stats.total_volume_24h)}
@@ -230,7 +230,7 @@ const MarketsPage = () => {
               <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                   <TrendingUp size={14} className="text-green-400" />
-                  Maior Alta
+                  {t('markets.topGainer', 'Maior Alta')}
                 </div>
                 {stats.top_gainer && (
                   <p className="text-xl font-medium text-green-400">
@@ -241,7 +241,7 @@ const MarketsPage = () => {
               <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                   <TrendingDown size={14} className="text-red-400" />
-                  Maior Queda
+                  {t('markets.topLoser', 'Maior Queda')}
                 </div>
                 {stats.top_loser && (
                   <p className="text-xl font-medium text-red-400">

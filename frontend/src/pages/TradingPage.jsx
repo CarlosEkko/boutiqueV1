@@ -190,7 +190,7 @@ const TradingPage = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                   <Input
                     type="text"
-                    placeholder="Pesquisar par..."
+                    placeholder={t('trading.searchPair', 'Pesquisar par...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 bg-zinc-800/50 border-zinc-700 text-white text-sm h-9"
@@ -200,7 +200,7 @@ const TradingPage = () => {
                 {/* Favorites */}
                 <div className="mb-4">
                   <h3 className="text-xs text-gray-500 uppercase mb-2 flex items-center gap-1">
-                    <Star size={12} className="text-gold-400" /> Favoritos
+                    <Star size={12} className="text-gold-400" /> {t('trading.favorites', 'Favoritos')}
                   </h3>
                   <div className="space-y-1">
                     {markets.filter(m => favorites.includes(m.symbol)).map(market => (
@@ -232,7 +232,7 @@ const TradingPage = () => {
                 
                 {/* All Pairs */}
                 <div>
-                  <h3 className="text-xs text-gray-500 uppercase mb-2">Todos os Pares</h3>
+                  <h3 className="text-xs text-gray-500 uppercase mb-2">{t('trading.allPairs', 'Todos os Pares')}</h3>
                   <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
                     {loading ? (
                       <div className="flex items-center justify-center py-8">
@@ -311,11 +311,11 @@ const TradingPage = () => {
                   {selectedMarket && (
                     <div className="flex items-center gap-6 text-sm">
                       <div>
-                        <p className="text-gray-500">Preço</p>
+                        <p className="text-gray-500">{t('trading.price', 'Preço')}</p>
                         <p className="text-white text-lg font-medium">{formatPrice(selectedMarket.price)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">24h Var.</p>
+                        <p className="text-gray-500">{t('trading.change24h', '24h Var.')}</p>
                         <p className={`text-lg font-medium flex items-center gap-1 ${
                           selectedMarket.change_24h >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
@@ -324,18 +324,18 @@ const TradingPage = () => {
                         </p>
                       </div>
                       <div className="hidden md:block">
-                        <p className="text-gray-500">Volume 24h</p>
+                        <p className="text-gray-500">{t('trading.volume24h', 'Volume 24h')}</p>
                         <p className="text-white">{formatVolume(selectedMarket.volume_24h)}</p>
                       </div>
                       <div className="hidden lg:block">
-                        <p className="text-gray-500">Market Cap</p>
+                        <p className="text-gray-500">{t('trading.marketCap', 'Market Cap')}</p>
                         <p className="text-white">{formatVolume(selectedMarket.market_cap)}</p>
                       </div>
                       <Button
                         onClick={() => navigate(`/dashboard/exchange?asset=${selectedMarket.symbol}`)}
                         className="bg-gold-500 hover:bg-gold-400 text-black font-medium"
                       >
-                        Comprar/Vender
+                        {t('trading.buySell', 'Comprar/Vender')}
                       </Button>
                     </div>
                   )}
@@ -354,7 +354,7 @@ const TradingPage = () => {
               {selectedMarket && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
-                    <p className="text-gray-500 text-sm mb-1">Variação 1h</p>
+                    <p className="text-gray-500 text-sm mb-1">{t('trading.change1h', 'Variação 1h')}</p>
                     <p className={`text-lg font-medium ${
                       selectedMarket.change_1h >= 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
@@ -362,7 +362,7 @@ const TradingPage = () => {
                     </p>
                   </div>
                   <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
-                    <p className="text-gray-500 text-sm mb-1">Variação 7d</p>
+                    <p className="text-gray-500 text-sm mb-1">{t('trading.change7d', 'Variação 7d')}</p>
                     <p className={`text-lg font-medium ${
                       selectedMarket.change_7d >= 0 ? 'text-green-400' : 'text-red-400'
                     }`}>
@@ -370,7 +370,7 @@ const TradingPage = () => {
                     </p>
                   </div>
                   <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
-                    <p className="text-gray-500 text-sm mb-1">Rank Global</p>
+                    <p className="text-gray-500 text-sm mb-1">{t('trading.globalRank', 'Rank Global')}</p>
                     <p className="text-lg font-medium text-white">#{selectedMarket.rank}</p>
                   </div>
                   <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4">
@@ -381,7 +381,7 @@ const TradingPage = () => {
                       className="flex items-center gap-2 text-gold-400 hover:text-gold-300 transition-colors"
                     >
                       <ExternalLink size={16} />
-                      Ver no CoinMarketCap
+                      {t('trading.viewOnCMC', 'Ver no CoinMarketCap')}
                     </a>
                   </div>
                 </div>
