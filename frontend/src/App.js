@@ -55,6 +55,7 @@ import AdminKnowledgeBase from "./pages/dashboard/admin/AdminKnowledgeBase";
 import PublicSupportPage from "./pages/PublicSupportPage";
 import { KYCStatus, KYCForm, KYBForm } from "./pages/dashboard/kyc";
 import SumsubKYC from "./pages/dashboard/kyc/SumsubKYC";
+import SumsubKYB from "./pages/dashboard/kyc/SumsubKYB";
 import CRMDashboard from "./pages/dashboard/crm/CRMDashboard";
 import CRMSuppliers from "./pages/dashboard/crm/CRMSuppliers";
 import CRMLeads from "./pages/dashboard/crm/CRMLeads";
@@ -205,7 +206,7 @@ function AppRoutes() {
         {/* KYC Routes */}
         <Route path="kyc" element={<KYCStatus />} />
         <Route path="kyc/kyc" element={<SumsubKYC />} />
-        <Route path="kyc/kyb" element={<KYBForm />} />
+        <Route path="kyc/kyb" element={<SumsubKYB />} />
         <Route path="kyc/sumsub" element={<SumsubKYC />} />
         <Route path="kyc/individual" element={<SumsubKYC />} />
         

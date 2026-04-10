@@ -47,13 +47,8 @@ const KYCStatus = () => {
     if (type === 'kyc') {
       navigate('/dashboard/kyc/sumsub');
     } else {
-      try {
-        await axios.post(`${API_URL}/api/kyc/start?verification_type=${type}`);
-        toast.success(`${type.toUpperCase()} ${t('kyc.status.inProgress')}`);
-        navigate(`/dashboard/kyc/${type}`);
-      } catch (error) {
-        toast.error(error.response?.data?.detail || 'Error');
-      }
+      // KYB now goes directly to the Sumsub KYB flow
+      navigate('/dashboard/kyc/kyb');
     }
   };
 
@@ -261,14 +256,20 @@ const KYCStatus = () => {
           </div>
 
           {kybStatus === 'not_started' && (
-            <Button 
-              onClick={() => startVerification('kyb')}
-              className="w-full bg-gold-500 hover:bg-gold-600 text-black"
-              data-testid="start-kyb-btn"
-            >
-              {t('kyc.status.startKyb')}
-              <ChevronRight size={18} className="ml-2" />
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => startVerification('kyb')}
+                className="w-full bg-gold-500 hover:bg-gold-600 text-black"
+                data-testid="start-kyb-btn"
+              >
+                <Zap size={18} className="mr-2" />
+                {t('kyc.status.startKyb')}
+                <ChevronRight size={18} className="ml-2" />
+              </Button>
+              <p className="text-xs text-gray-500 text-center">
+                Verificação automática via Sumsub - KYB Quest
+              </p>
+            </div>
           )}
 
           {kybStatus === 'in_progress' && (
