@@ -376,6 +376,8 @@ async def get_leads(
     db = get_db()
     
     query = {}
+    # Exclude leads converted to OTC — they should only appear in OTC Pipeline
+    query["converted_to_otc"] = {"$ne": True}
     if status:
         query["status"] = status
     if is_qualified is not None:
@@ -632,10 +634,12 @@ async def convert_lead_to_otc(lead_id: str, current_user: dict = Depends(get_cur
 
     await db.otc_leads.insert_one(otc_doc)
 
-    # Update CRM lead to mark conversion
+    # Update CRM lead to mark conversion — will be hidden from CRM Geral listing
     await db.crm_leads.update_one(
         {"_id": ObjectId(lead_id)},
         {"$set": {
+            "converted_to_otc": True,
+            "converted_to_otc_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "tags": list(set((lead.get("tags") or []) + ["otc-convertido"])),
             "notes": (lead.get("notes") or "") + f"\n[Convertido para Lead OTC em {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M')}]"

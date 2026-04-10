@@ -10,11 +10,12 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 - Integration with Revolut Business API for fiat deposit reconciliation
 - Trezor Connect integration for cold wallet management (Send/Receive/Derive)
 - Exclusivity: Platform is invite-only
+- KYB via Sumsub (company info form → Sumsub WebSDK)
 
 ## Tech Stack
 - Frontend: React, Tailwind CSS, Shadcn UI
 - Backend: FastAPI, Motor (MongoDB), Pydantic
-- Integrations: Revolut Business API v2 (X.509 JWT), Brevo Emails, Trezor Connect (CDN), Sumsub KYC
+- Integrations: Revolut Business API v2 (X.509 JWT), Brevo Emails, Trezor Connect (CDN), Sumsub KYC/KYB
 - Deployment: Docker, Docker-Compose on VPS
 
 ## Key Routes
@@ -24,88 +25,62 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 | Wallets | /dashboard/wallets |
 | Cold Wallet | /dashboard/cold-wallet |
 | Fiat Deposit | /dashboard/fiat-deposit |
+| Fiat Withdrawal | /dashboard/fiat-withdrawal |
+| KYC/KYB Status | /dashboard/kyc |
+| KYB Sumsub | /dashboard/kyc/kyb |
+| KYC Sumsub | /dashboard/kyc/sumsub |
 | Admin Bank Accounts | /dashboard/admin/contas-bancarias |
 | Admin Cold Wallet | /dashboard/admin/cold-wallet |
 
 ## Key API Endpoints
-- `GET /api/revolut/accounts` — Fetch Revolut accounts
-- `POST /api/revolut/sync-bank-details` — Sync IBAN/BIC for all accounts
-- `GET /api/revolut/public/bank-details/{currency}` — Public: get kbex account IBAN for client deposits
-- `POST /api/revolut/webhook` — Revolut transaction webhooks
-- `GET /api/cold-wallet/addresses` — Client cold wallet addresses
-- `POST /api/cold-wallet/addresses` — Save client cold wallet address
-- `GET /api/cold-wallet/treasury` — Admin treasury cold wallet addresses
-- `POST /api/cold-wallet/treasury` — Save treasury cold wallet address
+- `POST /api/crm/leads/public` — Public: create CRM lead only (no OTC lead)
+- `POST /api/crm/leads/{id}/convert-to-otc` — Convert CRM lead to OTC lead (hides from CRM Geral)
+- `GET /api/crm/leads` — List CRM leads (excludes converted_to_otc=true)
 - `GET /api/cold-wallet/fee-estimate/{coin}` — Fee estimates (BTC/ETH/LTC)
 - `GET /api/cold-wallet/eth-params/{address}` — ETH nonce, gas, balance
 - `GET /api/cold-wallet/utxos/{address}` — BTC/LTC UTXOs
 - `POST /api/cold-wallet/broadcast` — Broadcast signed transaction
-- `GET /api/cold-wallet/transactions` — Transaction history
-- `GET /api/cold-wallet/raw-tx/{txid}` — Raw BTC transaction hex
-- `GET /api/cold-wallet/admin/utxos/{address}` — Admin UTXO fetch
-- `GET /api/cold-wallet/admin/eth-params/{address}` — Admin ETH params
-- `GET /api/cold-wallet/admin/fee-estimate/{coin}` — Admin fee estimates
-- `POST /api/cold-wallet/admin/broadcast` — Admin broadcast signed tx
+- `POST /api/sumsub/applicants` — Create KYC/KYB applicant (verification_type: kyc|kyb)
+- `GET /api/sumsub/status` — Check verification status
 
 ## DB Collections
-- `revolut_bank_details` — Cached IBAN/BIC for Main and kbex accounts
-- `revolut_deposits` — Synced deposits from Revolut
-- `cold_wallet_addresses` — Client and treasury cold wallet addresses (type: client/treasury)
-- `cold_wallet_transactions` — Transaction log for broadcast transactions
-
-## Account Structure (Revolut)
-- **Main accounts** → Tesouraria & Onboarding (taxas de admissão)
-- **kbex accounts** → Conciliação de Clientes (depósitos fiat)
-
-## Supported Fiat Currencies
-EUR, USD, AED, BRL, GBP, CHF, QAR, SAR, HKD
+- `crm_leads` — CRM General leads (field: converted_to_otc hides from listing)
+- `otc_leads` — OTC Pipeline leads
+- `cold_wallet_addresses` — Client/treasury cold wallet addresses
+- `cold_wallet_transactions` — Broadcast transaction log
+- `revolut_bank_details` — Cached IBAN/BIC
 
 ## What's Been Implemented
 
 ### This Session (April 10, 2026)
-- **Send/Receive for Trezor Cold Wallet** (Client + Admin)
-  - Receive Modal: QR code generation, address copy, coin-specific URI schemes (bitcoin:, ethereum:, litecoin:)
-  - Send Modal: 4-step wizard (Form → Review → Signing → Result)
-  - Transaction composition: UTXO selection for BTC/LTC, ETH tx params (nonce, gas)
-  - Fee estimation: Fast/Medium/Slow for BTC/LTC, gas price for ETH
-  - Transaction signing via Trezor Connect (signTransaction, ethereumSignTransaction)
-  - Broadcast via public blockchain APIs (Blockstream, Blockcypher, public ETH RPC)
-  - Transaction history with block explorer links
-- **Backend blockchain service** (blockchain_service.py)
-  - BTC UTXOs via Blockstream API
-  - ETH params via public RPC (publicnode, ankr, llamarpc fallback)
-  - Fee estimates for BTC/ETH/LTC
-  - Broadcast for BTC/ETH/LTC
-  - Raw transaction hex fetch for Trezor sign inputs
-- **New API endpoints**: fee-estimate, eth-params, utxos, broadcast, transactions, raw-tx, admin variants
-- **Frontend helpers** (trezorConnect.js): composeInputs, composeOutputs, ethToWei, toHex
+- **Trezor Send/Receive** (Client + Admin Cold Wallet pages)
+- **KYB/Sumsub integration** (company info form → Sumsub WebSDK)
+- **Fix: fiat-withdraw black screen** (corrected URL + added alias route)
+- **Demo mode**: CRM, Suporte, Team Hub hidden
+- **"Solicitar Acesso"**: Creates lead in CRM Geral ONLY (removed OTC auto-creation)
+- **CRM→OTC conversion**: Converting a CRM lead to OTC hides it from CRM Geral listing
 
 ### Previous Sessions
-- Separated Revolut accounts: Main (Treasury) vs kbex (Client Reconciliation)
-- Integrated Trezor Connect via CDN (BTC, ETH, LTC)
-- Client Cold Wallet page + Admin Cold Wallet page
-- OTC CRM with 11-step workflow
+- Revolut Business API integration (Main vs kbex accounts)
+- Trezor Connect via CDN (derive BTC/ETH/LTC addresses)
+- OTC CRM 11-step workflow
 - Brevo email integration
-- Revolut Business API integration (X.509 certs)
 - Escrow lifecycle, Staking, Gas Station
-- KYC/KYB automation via Sumsub
-- KBEX Rates Engine
-- Demo Mode
+- KYC/KYB automation via Sumsub (KYC level)
 
 ## Pending Issues
-- P1: Reroute "Solicitar Acesso" to Lead Creation & Disable Public Registration
 - P2: Safari cursor bug (recurring 13+ times)
 - P2: Incomplete frontend translations
 
 ## Upcoming Tasks
 - P1: TradingView chart widgets on Trading/Markets pages
-- P2: Automatic deposit reconciliation via Reference ID matching
-- P2: WebSocket refactor for crypto prices (replace 1s HTTP polling)
+- P2: Automatic deposit reconciliation via Reference ID
+- P2: WebSocket for crypto prices (replace 1s HTTP polling)
 
 ## Future/Backlog
 - P2: Whitelist functionality
 - P3: Product Pages (Launchpad/ICO)
-- P3: Refactor large files (OTCLeads.jsx, OTCDealsPage.jsx, translations.js)
+- P3: Refactor large files (OTCLeads.jsx, OTCDealsPage.jsx)
 
 ## Credentials
 - Admin: carlos@kbex.io
