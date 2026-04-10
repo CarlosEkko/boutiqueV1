@@ -11,8 +11,9 @@ COPY package.json ./
 COPY package-lock.json* ./
 COPY yarn.lock* ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile --ignore-optional 2>/dev/null || yarn install --ignore-optional || npm install --legacy-peer-deps
+# Install dependencies with fix for ajv
+RUN npm install --legacy-peer-deps && \
+    npm install ajv@8 ajv-keywords@5 --legacy-peer-deps
 
 # Copy source code
 COPY . .
