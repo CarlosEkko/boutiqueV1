@@ -50,6 +50,7 @@ const AdminRevolutPage = () => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [reconciling, setReconciling] = useState(false);
+  const [syncingBankDetails, setSyncingBankDetails] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -147,6 +148,17 @@ const AdminRevolutPage = () => {
     );
   }
 
+  const syncBankDetails = async () => {
+    setSyncingBankDetails(true);
+    try {
+      const res = await axios.post(`${API}/api/revolut/sync-bank-details`, {}, { headers });
+      toast.success(`Dados bancários sincronizados: ${res.data.synced} contas`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao sincronizar dados bancários');
+    }
+    setSyncingBankDetails(false);
+  };
+
   return (
     <div className="space-y-6" data-testid="admin-revolut-page">
       {/* Header */}
@@ -159,6 +171,10 @@ const AdminRevolutPage = () => {
           <p className="text-gray-400 text-sm mt-1">Saldos, depósitos e reconciliação automática</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="border-zinc-700" onClick={syncBankDetails} disabled={syncingBankDetails}>
+            {syncingBankDetails ? <Loader2 size={14} className="animate-spin mr-2" /> : <Landmark size={14} className="mr-2" />}
+            Sincronizar IBAN
+          </Button>
           <Button variant="outline" size="sm" className="border-zinc-700" onClick={fetchAll}>
             <RefreshCw size={14} className="mr-2" /> Atualizar
           </Button>

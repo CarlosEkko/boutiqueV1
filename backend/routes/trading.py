@@ -2237,8 +2237,33 @@ async def submit_transfer_proof(
 # ==================== USER: FIAT DEPOSITS ====================
 
 async def get_kbex_bank_account(currency: str) -> dict:
-    """Get KBEX bank account details from company_bank_accounts collection (unified)"""
-    # Use unified company_bank_accounts collection
+    """Get KBEX bank account details from cached Revolut bank details (Main accounts)"""
+    # First try cached Revolut bank details
+    cached = await db.revolut_bank_details.find_one(
+        {"currency": currency.upper(), "account_type": "main"},
+        {"_id": 0}
+    )
+    
+    if cached and cached.get("bank_details"):
+        details_list = cached["bank_details"]
+        if isinstance(details_list, list) and len(details_list) > 0:
+            bd = details_list[0]
+            return {
+                "bank_name": "Revolut Business",
+                "account_holder": bd.get("beneficiary", "KBEX Financial Services"),
+                "iban": bd.get("iban"),
+                "bic": bd.get("bic"),
+                "account_number": bd.get("account_number"),
+                "routing_number": bd.get("routing_number"),
+                "sort_code": bd.get("sort_code"),
+                "pix_key": None,
+                "bank_country": bd.get("bank_country"),
+                "schemes": bd.get("schemes", []),
+                "estimated_time": bd.get("estimated_time"),
+                "beneficiary_address": bd.get("beneficiary_address"),
+            }
+    
+    # Fallback to company_bank_accounts collection
     account = await db.company_bank_accounts.find_one(
         {"currency": currency.upper(), "is_active": True},
         {"_id": 0}
@@ -2247,7 +2272,6 @@ async def get_kbex_bank_account(currency: str) -> dict:
     if not account:
         return None
     
-    # Format response with consistent field names
     return {
         "bank_name": account.get("bank_name"),
         "account_holder": account.get("account_holder", "KBEX Financial Services"),

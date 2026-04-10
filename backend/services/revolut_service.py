@@ -219,6 +219,10 @@ class RevolutService:
             params["to"] = to_date
         return await self._api_call("GET", "/transactions", params=params)
 
+    async def get_bank_details(self, account_id: str) -> dict:
+        """Get bank details (IBAN, BIC, etc.) for a specific Revolut account."""
+        return await self._api_call("GET", f"/accounts/{account_id}/bank-details")
+
     async def get_counterparties(self) -> dict:
         """List saved counterparties (beneficiaries)."""
         return await self._api_call("GET", "/counterparties")
