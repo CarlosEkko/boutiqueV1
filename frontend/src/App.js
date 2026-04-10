@@ -214,6 +214,7 @@ function AppRoutes() {
         <Route path="exchange" element={<ExchangePage />} />
         <Route path="fiat-deposit" element={<FiatDepositPage />} />
         <Route path="fiat-withdrawal" element={<FiatWithdrawalPage />} />
+        <Route path="fiat-withdraw" element={<FiatWithdrawalPage />} />
         <Route path="crypto-deposit" element={<CryptoDepositPage />} />
         <Route path="crypto-withdrawal" element={<CryptoWithdrawalPage />} />
         

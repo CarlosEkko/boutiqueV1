@@ -858,7 +858,7 @@ const WalletsPage = () => {
                     </Button>
                     <Button 
                       className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white"
-                      onClick={() => window.location.href = '/dashboard/fiat-withdraw'}
+                      onClick={() => window.location.href = '/dashboard/fiat-withdrawal'}
                       data-testid="withdraw-btn"
                     >
                       {t('dashboard.wallets.withdraw', 'Sacar')}
