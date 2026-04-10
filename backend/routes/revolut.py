@@ -220,7 +220,7 @@ async def get_bank_details_for_currency(
 
 @router.post("/sync-bank-details")
 async def sync_bank_details(admin: dict = Depends(get_admin_user)):
-    """Sync and cache bank details for all Main accounts locally."""
+    """Sync and cache bank details for all kbex (client) and Main (treasury) accounts locally."""
     from services.revolut_service import revolut_service
     from datetime import datetime, timezone
     
@@ -231,13 +231,18 @@ async def sync_bank_details(admin: dict = Depends(get_admin_user)):
     if not isinstance(accounts_result, list):
         return {"synced": 0}
     
-    main_accounts = [
-        a for a in accounts_result
-        if a.get("state") == "active" and "main" in (a.get("name", "")).lower()
-    ]
-    
     synced = 0
-    for account in main_accounts:
+    for account in accounts_result:
+        if account.get("state") != "active":
+            continue
+        name_lower = (account.get("name", "")).lower()
+        if "kbex" in name_lower:
+            account_type = "kbex"
+        elif "main" in name_lower:
+            account_type = "main"
+        else:
+            continue
+        
         bank_details = await revolut_service.get_bank_details(account["id"])
         if isinstance(bank_details, dict) and bank_details.get("error"):
             continue
@@ -248,7 +253,7 @@ async def sync_bank_details(admin: dict = Depends(get_admin_user)):
                 "account_id": account["id"],
                 "account_name": account.get("name"),
                 "currency": account.get("currency", "").upper(),
-                "account_type": "main",
+                "account_type": account_type,
                 "bank_details": bank_details,
                 "synced_at": datetime.now(timezone.utc).isoformat(),
             }},
@@ -256,14 +261,14 @@ async def sync_bank_details(admin: dict = Depends(get_admin_user)):
         )
         synced += 1
     
-    return {"synced": synced, "message": f"{synced} contas Main sincronizadas"}
+    return {"synced": synced, "message": f"{synced} contas sincronizadas"}
 
 
 @router.get("/public/bank-details/{currency}")
 async def get_public_bank_details(currency: str):
-    """Public endpoint: Get cached bank details for client deposits (Main accounts)."""
+    """Public endpoint: Get cached bank details for client deposits (kbex accounts)."""
     cached = await get_db().revolut_bank_details.find_one(
-        {"currency": currency.upper(), "account_type": "main"},
+        {"currency": currency.upper(), "account_type": "kbex"},
         {"_id": 0}
     )
     

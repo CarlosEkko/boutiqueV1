@@ -166,7 +166,7 @@ const AdminRevolutPage = () => {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Landmark className="text-gold-400" />
-            Contas Bancárias — Revolut Business
+            Contas Bancárias
           </h1>
           <p className="text-gray-400 text-sm mt-1">Saldos, depósitos e reconciliação automática</p>
         </div>

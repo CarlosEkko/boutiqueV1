@@ -177,6 +177,7 @@ const labelTranslationMap = {
   'Levantamentos Crypto': 'sidebar.levantamentosCrypto',
   'Contas de Clientes': 'sidebar.contasClientes',
   'Contas da Empresa': 'sidebar.contasEmpresa',
+  'Contas Bancárias': 'sidebar.contasBancarias',
   'Ajustes de Saldo': 'sidebar.ajustesSaldo',
   // Items - CRM
   'Dashboard CRM': 'sidebar.dashboardCrm',

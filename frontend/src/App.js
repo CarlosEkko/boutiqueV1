@@ -242,7 +242,7 @@ function AppRoutes() {
         <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
         <Route path="admin/client-menus" element={<AdminClientMenus />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
-        <Route path="admin/revolut" element={<AdminRevolutPage />} />
+        <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         <Route path="admin/finance" element={<FinancialDashboard />} />
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />

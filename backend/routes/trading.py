@@ -2237,10 +2237,10 @@ async def submit_transfer_proof(
 # ==================== USER: FIAT DEPOSITS ====================
 
 async def get_kbex_bank_account(currency: str) -> dict:
-    """Get KBEX bank account details from cached Revolut bank details (Main accounts)"""
-    # First try cached Revolut bank details
+    """Get KBEX bank account details from cached Revolut bank details (kbex client accounts)"""
+    # First try cached Revolut bank details (kbex accounts for client deposits)
     cached = await db.revolut_bank_details.find_one(
-        {"currency": currency.upper(), "account_type": "main"},
+        {"currency": currency.upper(), "account_type": "kbex"},
         {"_id": 0}
     )
     
