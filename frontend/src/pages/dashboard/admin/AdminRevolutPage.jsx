@@ -22,6 +22,8 @@ const API = process.env.REACT_APP_BACKEND_URL;
 const CURRENCY_FLAGS = {
   EUR: '🇪🇺', USD: '🇺🇸', GBP: '🇬🇧', CHF: '🇨🇭', PLN: '🇵🇱',
   ZAR: '🇿🇦', AUD: '🇦🇺', CAD: '🇨🇦', USDT: '₮', BTC: '₿',
+  AED: '🇦🇪', HKD: '🇭🇰', QAR: '🇶🇦', SAR: '🇸🇦', BRL: '🇧🇷',
+  JPY: '🇯🇵', SGD: '🇸🇬', SEK: '🇸🇪', NOK: '🇳🇴', DKK: '🇩🇰',
 };
 
 const fmtAmount = (val, cur) => {
@@ -239,7 +241,7 @@ const AdminRevolutPage = () => {
       {/* Tabs */}
       <div className="flex gap-1 bg-zinc-900/30 p-1 rounded-lg w-fit">
         {[
-          { key: 'accounts', label: 'Contas', count: accounts.filter(a => a.state === 'active').length },
+          { key: 'accounts', label: 'Contas', count: treasuryAccounts.length + clientAccounts.length },
           { key: 'deposits', label: 'Depósitos', count: pendingCount },
         ].map(tab => (
           <button
@@ -312,41 +314,6 @@ const AdminRevolutPage = () => {
                           <span className="text-white font-medium">{account.currency}</span>
                         </div>
                         <Badge className="bg-gold-500/15 text-gold-400 border-0 text-[10px]">Clientes</Badge>
-                      </div>
-                      <p className="text-2xl font-bold text-white font-mono">
-                        {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {account.name} • Atualizado {new Date(account.updated_at).toLocaleDateString('pt-PT')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Other accounts (if any don't match Main/kbex) */}
-          {otherAccounts.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-2 h-8 bg-gray-500 rounded-full" />
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Outras Contas</h2>
-                  <p className="text-xs text-gray-400">Contas não classificadas</p>
-                </div>
-                <Badge className="bg-gray-500/15 text-gray-400 border-0 ml-auto">{otherAccounts.length} contas</Badge>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {otherAccounts.map(account => (
-                  <Card key={account.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-600 transition-colors">
-                    <CardContent className="p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{CURRENCY_FLAGS[account.currency] || '💱'}</span>
-                          <span className="text-white font-medium">{account.currency}</span>
-                        </div>
-                        <Badge className="bg-gray-500/15 text-gray-400 border-0 text-[10px]">Outra</Badge>
                       </div>
                       <p className="text-2xl font-bold text-white font-mono">
                         {fmtAmount(account.balance)} <span className="text-sm text-gray-400 font-sans">{account.currency}</span>
