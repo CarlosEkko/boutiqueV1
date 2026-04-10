@@ -158,7 +158,6 @@ DEPARTMENT_MENUS = {
                 "items": [
                     {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
                     {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
-                    {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
                     {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
                 ]
             },
@@ -195,6 +194,13 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/investments", "label": "Investimentos", "icon": "TrendingUp"},
             {"path": "/dashboard/staking", "label": "Staking", "icon": "Coins"},
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
+        ]
+    },
+    "cold_wallet": {
+        "label": "Cold Wallet",
+        "icon": "Shield",
+        "items": [
+            {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
         ]
     },
     Department.TRANSPARENCIA: {

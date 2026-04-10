@@ -47,15 +47,20 @@ const loadTrezorFromCDN = () => {
     const script = document.createElement('script');
     script.src = 'https://connect.trezor.io/9/trezor-connect.js';
     script.async = true;
+    script.crossOrigin = 'anonymous';
     script.onload = () => {
-      TrezorConnect = window.TrezorConnect;
-      if (TrezorConnect) {
+      if (window.TrezorConnect) {
+        TrezorConnect = window.TrezorConnect;
         resolve(TrezorConnect);
       } else {
-        reject(new Error('TrezorConnect not found after script load'));
+        loadPromise = null;
+        reject(new Error('Trezor Connect carregou mas não está disponível. Verifique se o Trezor Bridge está instalado.'));
       }
     };
-    script.onerror = () => reject(new Error('Failed to load Trezor Connect from CDN'));
+    script.onerror = () => {
+      loadPromise = null;
+      reject(new Error('Não foi possível carregar Trezor Connect. Verifique a sua ligação à internet e se connect.trezor.io não está bloqueado.'));
+    };
     document.head.appendChild(script);
   });
 
