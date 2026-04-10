@@ -162,7 +162,7 @@ const AdminRevolutPage = () => {
   };
 
   return (
-    <div className="space-y-6" data-testid="admin-revolut-page">
+    <div className="space-y-8" data-testid="admin-revolut-page">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -187,7 +187,7 @@ const AdminRevolutPage = () => {
       <div className={`flex items-center justify-between px-4 py-2.5 rounded-lg border ${status?.connected ? 'bg-emerald-900/10 border-emerald-800/30' : 'bg-red-900/10 border-red-800/30'}`}>
         <div className="flex items-center gap-3">
           {status?.connected ? (
-            <><Link2 size={16} className="text-emerald-400" /><span className="text-emerald-400 text-sm font-medium">Revolut Business Conectado</span></>
+            <><Link2 size={16} className="text-emerald-400" /><span className="text-emerald-400 text-sm font-medium">Contas Conectadas</span></>
           ) : (
             <><Link2Off size={16} className="text-red-400" /><span className="text-red-400 text-sm">Não conectado</span>
               {status?.auth_url && <a href={status.auth_url} target="_blank" rel="noreferrer" className="text-gold-400 underline text-sm ml-2">Autorizar</a>}
@@ -261,7 +261,7 @@ const AdminRevolutPage = () => {
           {/* Tesouraria & Onboarding (Main) */}
           {treasuryAccounts.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="w-2 h-8 bg-blue-500 rounded-full" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Tesouraria & Onboarding</h2>
@@ -296,7 +296,7 @@ const AdminRevolutPage = () => {
           {/* Conciliação de Clientes (kbex) */}
           {clientAccounts.length > 0 && (
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="w-2 h-8 bg-gold-500 rounded-full" />
                 <div>
                   <h2 className="text-lg font-semibold text-white">Conciliação de Clientes</h2>
