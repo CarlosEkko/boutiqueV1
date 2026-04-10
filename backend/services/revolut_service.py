@@ -255,6 +255,19 @@ class RevolutService:
             wh = await self.db.revolut_tokens.find_one({"type": "webhook_config"}, {"_id": 0})
             if wh:
                 webhook_status = {"id": wh.get("webhook_id"), "url": wh.get("url"), "events": wh.get("events")}
+            else:
+                try:
+                    webhooks = await self.list_webhooks()
+                    if isinstance(webhooks, list) and len(webhooks) > 0:
+                        wh_api = webhooks[0]
+                        webhook_status = {"id": wh_api.get("id"), "url": wh_api.get("url"), "events": wh_api.get("events", [])}
+                        await self.db.revolut_tokens.update_one(
+                            {"type": "webhook_config"},
+                            {"$set": {"type": "webhook_config", "webhook_id": wh_api.get("id"), "url": wh_api.get("url"), "events": wh_api.get("events", [])}},
+                            upsert=True,
+                        )
+                except Exception:
+                    pass
 
         return {
             "connected": True,
