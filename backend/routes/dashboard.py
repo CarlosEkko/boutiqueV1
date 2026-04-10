@@ -65,6 +65,11 @@ async def get_portfolio_overview(user: dict = Depends(get_approved_user)):
         {"asset_id": "USD", "asset_name": "US Dollar", "asset_type": "fiat", "symbol": "$"},
         {"asset_id": "AED", "asset_name": "UAE Dirham", "asset_type": "fiat", "symbol": "د.إ"},
         {"asset_id": "BRL", "asset_name": "Brazilian Real", "asset_type": "fiat", "symbol": "R$"},
+        {"asset_id": "GBP", "asset_name": "British Pound", "asset_type": "fiat", "symbol": "£"},
+        {"asset_id": "CHF", "asset_name": "Swiss Franc", "asset_type": "fiat", "symbol": "CHF"},
+        {"asset_id": "QAR", "asset_name": "Qatari Riyal", "asset_type": "fiat", "symbol": "QAR"},
+        {"asset_id": "SAR", "asset_name": "Saudi Riyal", "asset_type": "fiat", "symbol": "SAR"},
+        {"asset_id": "HKD", "asset_name": "Hong Kong Dollar", "asset_type": "fiat", "symbol": "HK$"},
     ]
     
     existing_asset_ids = {w.get("asset_id") for w in wallets}

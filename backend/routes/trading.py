@@ -64,7 +64,7 @@ BINANCE_API_URL = "https://api.binance.com/api/v3"
 COINMARKETCAP_API_KEY = os.environ.get("COINMARKETCAP_API_KEY", "")
 
 # Supported fiat currencies
-SUPPORTED_FIAT = ["USD", "EUR", "AED", "BRL"]
+SUPPORTED_FIAT = ["USD", "EUR", "AED", "BRL", "GBP", "CHF", "QAR", "SAR", "HKD"]
 
 # Exchange rates cache (updated every 5 minutes)
 EXCHANGE_RATES_CACHE = {
