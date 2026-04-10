@@ -158,6 +158,7 @@ DEPARTMENT_MENUS = {
                 "items": [
                     {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
                     {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
+                    {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
                     {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
                 ]
             },
@@ -256,6 +257,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/crypto-withdrawals", "label": "Levantamentos Crypto", "icon": "Bitcoin"},
             {"path": "/dashboard/admin/bank-accounts", "label": "Contas de Clientes", "icon": "Users"},
             {"path": "/dashboard/admin/contas-bancarias", "label": "Contas Bancárias", "icon": "Landmark"},
+            {"path": "/dashboard/admin/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
             {"path": "/dashboard/finance/balance-adjustments", "label": "Ajustes de Saldo", "icon": "ArrowLeftRight"},
         ]
     },

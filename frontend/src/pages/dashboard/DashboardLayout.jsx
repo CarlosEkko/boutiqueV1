@@ -178,6 +178,7 @@ const labelTranslationMap = {
   'Contas de Clientes': 'sidebar.contasClientes',
   'Contas da Empresa': 'sidebar.contasEmpresa',
   'Contas Bancárias': 'sidebar.contasBancarias',
+  'Cold Wallet': 'sidebar.coldWallet',
   'Ajustes de Saldo': 'sidebar.ajustesSaldo',
   // Items - CRM
   'Dashboard CRM': 'sidebar.dashboardCrm',

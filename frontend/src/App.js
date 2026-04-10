@@ -88,6 +88,8 @@ import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminRevolutPage from "./pages/dashboard/admin/AdminRevolutPage";
+import AdminColdWalletPage from "./pages/dashboard/admin/AdminColdWalletPage";
+import ColdWalletPage from "./pages/dashboard/ColdWalletPage";
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustmentsPage";
@@ -180,6 +182,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardOverview />} />
         <Route path="wallets" element={<WalletsPage />} />
+        <Route path="cold-wallet" element={<ColdWalletPage />} />
         <Route path="whitelist" element={<WhitelistPage />} />
         <Route path="crypto-transactions" element={<CryptoTransactionsPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
@@ -243,6 +246,7 @@ function AppRoutes() {
         <Route path="admin/client-menus" element={<AdminClientMenus />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
         <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
+        <Route path="admin/cold-wallet" element={<AdminColdWalletPage />} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         <Route path="admin/finance" element={<FinancialDashboard />} />
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
