@@ -40,6 +40,7 @@ const AdminRevolutPage = () => {
   const [deposits, setDeposits] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [reconciledCount, setReconciledCount] = useState(0);
+  const [autoReconciledCount, setAutoReconciledCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('accounts');
@@ -71,9 +72,11 @@ const AdminRevolutPage = () => {
   const fetchDeposits = useCallback(async (filter) => {
     try {
       const res = await axios.get(`${API}/api/revolut/deposits?status=${filter || depositFilter}`, { headers });
-      setDeposits(res.data.deposits || []);
+      const deps = res.data.deposits || [];
+      setDeposits(deps);
       setPendingCount(res.data.pending_count || 0);
       setReconciledCount(res.data.reconciled_count || 0);
+      setAutoReconciledCount(deps.filter(d => d.auto_reconciled).length);
     } catch { /* */ }
   }, [token, depositFilter]);
 
@@ -90,7 +93,13 @@ const AdminRevolutPage = () => {
     setSyncing(true);
     try {
       const res = await axios.post(`${API}/api/revolut/sync-deposits`, {}, { headers });
-      toast.success(`Sincronizado: ${res.data.new_deposits} novos depósitos`);
+      const { new_deposits, auto_reconciled, auto_reconciled_details } = res.data;
+      if (auto_reconciled > 0) {
+        const names = (auto_reconciled_details || []).map(d => `${d.currency} ${d.amount?.toLocaleString('pt-PT')} → ${d.user_name}`).join(', ');
+        toast.success(`${new_deposits} novos depósitos. ${auto_reconciled} reconciliados automaticamente: ${names}`);
+      } else {
+        toast.success(`Sincronizado: ${new_deposits} novos depósitos`);
+      }
       fetchDeposits();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao sincronizar');
@@ -205,7 +214,7 @@ const AdminRevolutPage = () => {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardContent className="p-4">
             <p className="text-gray-400 text-xs uppercase">Saldo Total EUR</p>
@@ -226,7 +235,7 @@ const AdminRevolutPage = () => {
         </Card>
         <Card className="bg-amber-900/10 border-amber-800/20">
           <CardContent className="p-4">
-            <p className="text-amber-400 text-xs uppercase">Depósitos Pendentes</p>
+            <p className="text-amber-400 text-xs uppercase">Dep. Pendentes</p>
             <p className="text-2xl font-bold text-amber-400 mt-1">{pendingCount}</p>
           </CardContent>
         </Card>
@@ -234,6 +243,12 @@ const AdminRevolutPage = () => {
           <CardContent className="p-4">
             <p className="text-emerald-400 text-xs uppercase">Reconciliados</p>
             <p className="text-2xl font-bold text-emerald-400 mt-1">{reconciledCount}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-900/10 border-blue-800/20">
+          <CardContent className="p-4">
+            <p className="text-blue-400 text-xs uppercase">Auto-Reconciliados</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{autoReconciledCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -377,16 +392,32 @@ const AdminRevolutPage = () => {
                               +{fmtAmount(dep.amount)} {dep.currency}
                             </p>
                             {dep.reconciled ? (
-                              <Badge className="bg-emerald-500/15 text-emerald-400 border-0 text-[10px]">
-                                <CheckCircle size={10} className="mr-1" /> Reconciliado
-                              </Badge>
+                              dep.auto_reconciled ? (
+                                <Badge className="bg-blue-500/15 text-blue-400 border-0 text-[10px]" data-testid={`badge-auto-${dep.transaction_id}`}>
+                                  <CheckCircle size={10} className="mr-1" /> Auto
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-emerald-500/15 text-emerald-400 border-0 text-[10px]">
+                                  <CheckCircle size={10} className="mr-1" /> Manual
+                                </Badge>
+                              )
                             ) : (
                               <Badge className="bg-amber-500/15 text-amber-400 border-0 text-[10px]">Pendente</Badge>
+                            )}
+                            {dep.matched_reference_code && (
+                              <Badge className="bg-violet-500/15 text-violet-400 border-0 text-[10px] font-mono">
+                                {dep.matched_reference_code}
+                              </Badge>
                             )}
                           </div>
                           <p className="text-gray-400 text-sm mt-0.5">
                             {dep.counterparty_name || dep.reference || 'Transferência recebida'}
                           </p>
+                          {dep.reference && dep.reference !== dep.counterparty_name && (
+                            <p className="text-gray-500 text-xs mt-0.5 font-mono">
+                              Ref: {dep.reference}
+                            </p>
+                          )}
                           <p className="text-gray-500 text-xs mt-0.5">
                             {dep.created_at ? new Date(dep.created_at).toLocaleString('pt-PT') : ''}
                           </p>
@@ -397,6 +428,9 @@ const AdminRevolutPage = () => {
                           <div className="text-xs text-gray-400">
                             <p className="text-emerald-400">{dep.reconciled_to_name}</p>
                             <p>{dep.reconciled_to_email}</p>
+                            {dep.reconciled_at && (
+                              <p className="text-gray-500 mt-0.5">{new Date(dep.reconciled_at).toLocaleString('pt-PT')}</p>
+                            )}
                           </div>
                         ) : (
                           <Button

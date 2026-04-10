@@ -12,15 +12,30 @@ import {
   ArrowUpDown, 
   RefreshCw,
   Globe,
-  DollarSign,
   BarChart3,
-  Loader2
+  Loader2,
+  LineChart
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// TradingView Mini Chart Widget
+const MiniChart = ({ symbol, width = '100%', height = 220 }) => {
+  const containerId = `tv-mini-${symbol}`;
+  
+  return (
+    <div className="overflow-hidden rounded-lg" style={{ width, height }}>
+      <iframe
+        src={`https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BINANCE:${symbol}USDT&dateRange=1M&trendLineColor=%23D4AF37&underLineColor=rgba(212,175,55,0.07)&underLineBottomColor=rgba(0,0,0,0)&isTransparent=true&autosize=1&largeChartUrl=`}
+        style={{ width: '100%', height: '100%', border: 'none' }}
+        title={`${symbol} Chart`}
+      />
+    </div>
+  );
+};
 
 const MarketsPage = () => {
   const { t } = useLanguage();
@@ -236,6 +251,28 @@ const MarketsPage = () => {
               </div>
             </div>
           )}
+
+          {/* Featured Charts */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <LineChart size={18} className="text-gold-400" />
+              <h2 className="text-lg font-medium text-white">
+                {t('markets.featuredCharts', 'Gráficos em Destaque')}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {['BTC', 'ETH', 'SOL', 'XRP'].map(sym => (
+                <div 
+                  key={sym} 
+                  className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl overflow-hidden cursor-pointer hover:border-gold-500/30 transition-colors"
+                  onClick={() => navigate(`/trading?symbol=${sym}USDT`)}
+                  data-testid={`featured-chart-${sym}`}
+                >
+                  <MiniChart symbol={sym} height={200} />
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Tabs & Search */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">

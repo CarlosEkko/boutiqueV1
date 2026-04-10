@@ -1,15 +1,22 @@
 """
 Revolut Business API Routes
-OAuth flow, account listing, transaction monitoring.
+OAuth flow, account listing, transaction monitoring, automatic deposit reconciliation.
 """
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 from typing import Optional
+from datetime import datetime, timezone
 import logging
+import re
+import uuid
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/revolut", tags=["Revolut"])
+
+# Pattern to match reference codes in transfer descriptions
+# DEP + 8 hex chars (fiat deposit) or KB + 8 hex chars (trading order deposit)
+REF_CODE_PATTERN = re.compile(r'(DEP[0-9A-Fa-f]{8}|KB[0-9A-Fa-f]{8})', re.IGNORECASE)
 
 db = None
 def set_db(database):
@@ -25,6 +32,124 @@ def get_db():
 
 # Reuse admin auth dependency
 from routes.admin import get_admin_user
+
+
+async def _auto_reconcile_deposit(deposit_doc: dict) -> dict | None:
+    """
+    Attempt to automatically reconcile a Revolut deposit by matching its reference
+    against pending bank_transfers reference_code.
+    
+    Returns reconciliation result dict if matched, None otherwise.
+    """
+    reference = deposit_doc.get("reference", "")
+    if not reference:
+        return None
+
+    # Search for known reference code patterns in the transfer description
+    match = REF_CODE_PATTERN.search(reference)
+    if not match:
+        return None
+
+    ref_code = match.group(1).upper()
+    logger.info(f"Auto-reconcile: Found reference code '{ref_code}' in deposit {deposit_doc.get('transaction_id')}")
+
+    # Look up the bank_transfer with this reference_code
+    bank_transfer = await get_db().bank_transfers.find_one(
+        {"reference_code": ref_code, "status": {"$in": ["pending", "awaiting_approval"]}},
+        {"_id": 0}
+    )
+    if not bank_transfer:
+        logger.info(f"Auto-reconcile: No pending bank_transfer found for ref '{ref_code}'")
+        return None
+
+    user_id = bank_transfer["user_id"]
+    currency = deposit_doc.get("currency", bank_transfer.get("currency", "EUR"))
+    amount = deposit_doc.get("amount", 0)
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # Find user info
+    user = await get_db().users.find_one({"id": user_id}, {"_id": 0, "id": 1, "name": 1, "email": 1})
+    if not user:
+        logger.warning(f"Auto-reconcile: User '{user_id}' not found for ref '{ref_code}'")
+        return None
+
+    # Credit user's fiat wallet
+    wallet = await get_db().fiat_wallets.find_one(
+        {"user_id": user_id, "currency": currency}, {"_id": 0}
+    )
+    if wallet:
+        new_balance = wallet.get("balance", 0) + amount
+        await get_db().fiat_wallets.update_one(
+            {"user_id": user_id, "currency": currency},
+            {"$set": {"balance": new_balance, "updated_at": now_iso}}
+        )
+    else:
+        new_balance = amount
+        await get_db().fiat_wallets.insert_one({
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "currency": currency,
+            "balance": amount,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+        })
+
+    # Mark revolut_deposits as reconciled
+    await get_db().revolut_deposits.update_one(
+        {"transaction_id": deposit_doc["transaction_id"]},
+        {"$set": {
+            "reconciled": True,
+            "auto_reconciled": True,
+            "reconciled_to": user_id,
+            "reconciled_to_name": user.get("name", ""),
+            "reconciled_to_email": user.get("email", ""),
+            "reconciled_at": now_iso,
+            "reconciled_by": "system",
+            "matched_reference_code": ref_code,
+            "matched_bank_transfer_id": bank_transfer.get("id", ""),
+        }}
+    )
+
+    # Update bank_transfer status to completed
+    await get_db().bank_transfers.update_one(
+        {"reference_code": ref_code},
+        {"$set": {
+            "status": "completed",
+            "updated_at": now_iso,
+            "approved_by": "auto_reconciliation",
+            "approved_at": now_iso,
+            "revolut_transaction_id": deposit_doc.get("transaction_id", ""),
+        }}
+    )
+
+    # Log fiat transaction
+    await get_db().fiat_transactions.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "type": "deposit",
+        "amount": amount,
+        "currency": currency,
+        "status": "completed",
+        "method": "revolut_auto_reconciliation",
+        "reference": ref_code,
+        "revolut_tx_id": deposit_doc.get("transaction_id", ""),
+        "created_at": now_iso,
+    })
+
+    logger.info(
+        f"Auto-reconcile SUCCESS: {currency} {amount} → {user.get('name')} ({user.get('email')}) "
+        f"ref={ref_code}, tx={deposit_doc.get('transaction_id')}"
+    )
+
+    return {
+        "user_id": user_id,
+        "user_name": user.get("name", ""),
+        "user_email": user.get("email", ""),
+        "amount": amount,
+        "currency": currency,
+        "reference_code": ref_code,
+        "new_balance": new_balance,
+    }
 
 
 # ---- OAuth Flow ----
@@ -146,30 +271,55 @@ async def delete_webhook(webhook_id: str, admin: dict = Depends(get_admin_user))
 
 @router.post("/webhook")
 async def revolut_webhook(request: Request):
-    """Handle Revolut webhook notifications for real-time deposit detection."""
+    """Handle Revolut webhook notifications for real-time deposit detection and auto-reconciliation."""
     body = await request.json()
     event = body.get("event", "")
     data = body.get("data", {})
     
     logger.info(f"Revolut webhook: {event}")
     
-    if event == "TransactionCreated" and data.get("type") == "transfer":
+    if event in ("TransactionCreated", "TransactionStateChanged"):
         legs = data.get("legs", [])
         for leg in legs:
             amount = leg.get("amount", 0)
             if amount > 0:  # Incoming transfer (credit)
-                await get_db().revolut_deposits.insert_one({
-                    "transaction_id": data.get("id"),
-                    "amount": amount / 100,  # Convert from minor units
+                tx_id = data.get("id")
+                existing = await get_db().revolut_deposits.find_one(
+                    {"transaction_id": tx_id}, {"_id": 0}
+                )
+                
+                deposit_doc = {
+                    "transaction_id": tx_id,
+                    "amount": amount / 100,
                     "currency": leg.get("currency", "EUR"),
                     "reference": data.get("reference", ""),
-                    "counterparty": leg.get("counterparty", {}),
+                    "counterparty_name": leg.get("counterparty", {}).get("account_name", ""),
+                    "counterparty_id": leg.get("counterparty", {}).get("id", ""),
                     "state": data.get("state", ""),
                     "created_at": data.get("created_at", ""),
+                    "completed_at": data.get("completed_at", ""),
                     "reconciled": False,
                     "reconciled_to": None,
                     "reconciled_at": None,
-                })
+                }
+                
+                if not existing:
+                    await get_db().revolut_deposits.insert_one(deposit_doc)
+                    logger.info(f"Webhook: New deposit stored, tx={tx_id}")
+                else:
+                    # Update state if changed
+                    await get_db().revolut_deposits.update_one(
+                        {"transaction_id": tx_id},
+                        {"$set": {"state": data.get("state", "")}}
+                    )
+                    deposit_doc = existing
+                
+                # Attempt auto-reconciliation for completed transactions
+                if data.get("state") == "completed" and not deposit_doc.get("reconciled"):
+                    deposit_doc["transaction_id"] = tx_id
+                    result = await _auto_reconcile_deposit(deposit_doc)
+                    if result:
+                        logger.info(f"Webhook auto-reconcile: {result['currency']} {result['amount']} → {result['user_name']}")
     
     return {"ok": True}
 
@@ -222,7 +372,6 @@ async def get_bank_details_for_currency(
 async def sync_bank_details(admin: dict = Depends(get_admin_user)):
     """Sync and cache bank details for all kbex (client) and Main (treasury) accounts locally."""
     from services.revolut_service import revolut_service
-    from datetime import datetime, timezone
     
     accounts_result = await revolut_service.get_accounts()
     if isinstance(accounts_result, dict) and accounts_result.get("error"):
@@ -284,7 +433,7 @@ async def get_public_bank_details(currency: str):
 
 @router.post("/sync-deposits")
 async def sync_deposits(admin: dict = Depends(get_admin_user)):
-    """Sync recent incoming deposits from Revolut and detect unreconciled ones."""
+    """Sync recent incoming deposits from Revolut, detect unreconciled ones, and auto-reconcile matches."""
     from services.revolut_service import revolut_service
     
     txs = await revolut_service.get_transactions(count=200)
@@ -292,21 +441,23 @@ async def sync_deposits(admin: dict = Depends(get_admin_user)):
         raise HTTPException(status_code=400, detail=txs["error"])
     
     if not isinstance(txs, list):
-        return {"synced": 0, "new_deposits": 0}
+        return {"synced": 0, "new_deposits": 0, "auto_reconciled": 0}
     
     new_count = 0
+    auto_reconciled = 0
+    auto_reconciled_details = []
+
     for tx in txs:
         legs = tx.get("legs", [])
         for leg in legs:
             amount = leg.get("amount", 0)
             if amount > 0 and tx.get("state") == "completed":
-                # Check if already tracked
                 existing = await get_db().revolut_deposits.find_one(
                     {"transaction_id": tx["id"]}, {"_id": 0}
                 )
                 if not existing:
                     counterparty = leg.get("counterparty", {})
-                    await get_db().revolut_deposits.insert_one({
+                    deposit_doc = {
                         "transaction_id": tx["id"],
                         "amount": amount / 100,
                         "currency": leg.get("currency", "EUR"),
@@ -319,10 +470,34 @@ async def sync_deposits(admin: dict = Depends(get_admin_user)):
                         "reconciled": False,
                         "reconciled_to": None,
                         "reconciled_at": None,
-                    })
+                    }
+                    await get_db().revolut_deposits.insert_one(deposit_doc)
                     new_count += 1
+                    
+                    # Attempt auto-reconciliation for new deposits
+                    result = await _auto_reconcile_deposit(deposit_doc)
+                    if result:
+                        auto_reconciled += 1
+                        auto_reconciled_details.append(result)
     
-    return {"synced": len(txs), "new_deposits": new_count}
+    # Also attempt to reconcile any existing unreconciled deposits
+    unreconciled = await get_db().revolut_deposits.find(
+        {"reconciled": False, "reference": {"$ne": ""}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    for dep in unreconciled:
+        result = await _auto_reconcile_deposit(dep)
+        if result:
+            auto_reconciled += 1
+            auto_reconciled_details.append(result)
+    
+    return {
+        "synced": len(txs),
+        "new_deposits": new_count,
+        "auto_reconciled": auto_reconciled,
+        "auto_reconciled_details": auto_reconciled_details,
+    }
 
 
 @router.get("/deposits")
@@ -354,7 +529,6 @@ async def reconcile_deposit(
     admin: dict = Depends(get_admin_user),
 ):
     """Manually reconcile a deposit to a client's fiat wallet."""
-    from datetime import datetime, timezone
     body = await request.json()
     user_id = body.get("user_id")
     
@@ -389,7 +563,6 @@ async def reconcile_deposit(
             {"$set": {"balance": new_balance, "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
     else:
-        import uuid
         await get_db().fiat_wallets.insert_one({
             "id": str(uuid.uuid4()),
             "user_id": user_id,
@@ -404,6 +577,7 @@ async def reconcile_deposit(
         {"transaction_id": transaction_id},
         {"$set": {
             "reconciled": True,
+            "auto_reconciled": False,
             "reconciled_to": user_id,
             "reconciled_to_name": user.get("name", ""),
             "reconciled_to_email": user.get("email", ""),
@@ -413,7 +587,6 @@ async def reconcile_deposit(
     )
     
     # Log the transaction
-    import uuid
     await get_db().fiat_transactions.insert_one({
         "id": str(uuid.uuid4()),
         "user_id": user_id,
