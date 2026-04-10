@@ -49,7 +49,7 @@ const AdminColdWalletPage = () => {
   const connectDevice = async () => {
     setConnecting(true);
     try {
-      initTrezor();
+      await initTrezor();
       const features = await getDeviceFeatures();
       setDevice(features);
       toast.success('Trezor da Tesouraria conectada!');

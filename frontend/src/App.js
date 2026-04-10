@@ -88,8 +88,8 @@ import BankAccountsPage from "./pages/dashboard/BankAccountsPage";
 import SecurityPage from "./pages/dashboard/SecurityPage";
 import AdminBankAccounts from "./pages/dashboard/admin/AdminBankAccounts";
 import AdminRevolutPage from "./pages/dashboard/admin/AdminRevolutPage";
-import AdminColdWalletPage from "./pages/dashboard/admin/AdminColdWalletPage";
-import ColdWalletPage from "./pages/dashboard/ColdWalletPage";
+const AdminColdWalletPage = React.lazy(() => import("./pages/dashboard/admin/AdminColdWalletPage"));
+const ColdWalletPage = React.lazy(() => import("./pages/dashboard/ColdWalletPage"));
 import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustmentsPage";
@@ -182,7 +182,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardOverview />} />
         <Route path="wallets" element={<WalletsPage />} />
-        <Route path="cold-wallet" element={<ColdWalletPage />} />
+        <Route path="cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><ColdWalletPage /></React.Suspense>} />
         <Route path="whitelist" element={<WhitelistPage />} />
         <Route path="crypto-transactions" element={<CryptoTransactionsPage />} />
         <Route path="transactions" element={<TransactionsPage />} />
@@ -246,7 +246,7 @@ function AppRoutes() {
         <Route path="admin/client-menus" element={<AdminClientMenus />} />
         <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
         <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
-        <Route path="admin/cold-wallet" element={<AdminColdWalletPage />} />
+        <Route path="admin/cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><AdminColdWalletPage /></React.Suspense>} />
         <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
         <Route path="admin/finance" element={<FinancialDashboard />} />
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />

@@ -1,5 +1,4 @@
-import TrezorConnect from '@trezor/connect-web';
-
+let TrezorConnect = null;
 let isInitialized = false;
 
 export const BLOCKCHAIN_CONFIG = {
@@ -29,9 +28,17 @@ export const BLOCKCHAIN_CONFIG = {
   },
 };
 
-export const initTrezor = () => {
+const loadTrezor = async () => {
+  if (TrezorConnect) return TrezorConnect;
+  const module = await import('@trezor/connect-web');
+  TrezorConnect = module.default;
+  return TrezorConnect;
+};
+
+export const initTrezor = async () => {
   if (isInitialized) return;
-  TrezorConnect.init({
+  const tc = await loadTrezor();
+  tc.init({
     manifest: {
       email: 'support@kbex.io',
       appName: 'KBEX Exchange',
@@ -43,19 +50,21 @@ export const initTrezor = () => {
 };
 
 export const getDeviceFeatures = async () => {
-  initTrezor();
-  const result = await TrezorConnect.getFeatures();
+  await initTrezor();
+  const tc = await loadTrezor();
+  const result = await tc.getFeatures();
   if (result.success) return result.payload;
   throw new Error(result.payload?.error || 'Failed to connect device');
 };
 
 export const getAddress = async (coin, path, showOnTrezor = true) => {
-  initTrezor();
+  await initTrezor();
+  const tc = await loadTrezor();
   const config = BLOCKCHAIN_CONFIG[coin];
   if (!config) throw new Error(`Unsupported coin: ${coin}`);
 
   if (coin === 'ETH') {
-    const result = await TrezorConnect.ethereumGetAddress({
+    const result = await tc.ethereumGetAddress({
       path: path || config.path,
       showOnTrezor,
     });
@@ -63,7 +72,7 @@ export const getAddress = async (coin, path, showOnTrezor = true) => {
     throw new Error(result.payload?.error || 'Failed to get ETH address');
   }
 
-  const result = await TrezorConnect.getAddress({
+  const result = await tc.getAddress({
     path: path || config.path,
     coin: config.coin,
     showOnTrezor,
@@ -73,7 +82,7 @@ export const getAddress = async (coin, path, showOnTrezor = true) => {
 };
 
 export const getAddressBundle = async (coins) => {
-  initTrezor();
+  await initTrezor();
   const results = {};
   for (const coin of coins) {
     try {
@@ -87,11 +96,12 @@ export const getAddressBundle = async (coins) => {
 };
 
 export const getAccountInfo = async (coin, path) => {
-  initTrezor();
+  await initTrezor();
+  const tc = await loadTrezor();
   const config = BLOCKCHAIN_CONFIG[coin];
   if (!config) throw new Error(`Unsupported coin: ${coin}`);
 
-  const result = await TrezorConnect.getAccountInfo({
+  const result = await tc.getAccountInfo({
     coin: config.coin,
     path: path || config.path,
     details: 'tokenBalances',
@@ -109,8 +119,9 @@ export const formatBalance = (balance, decimals = 8) => {
 };
 
 export const signEthTransaction = async (path, transaction) => {
-  initTrezor();
-  const result = await TrezorConnect.ethereumSignTransaction({
+  await initTrezor();
+  const tc = await loadTrezor();
+  const result = await tc.ethereumSignTransaction({
     path,
     transaction,
   });
@@ -119,8 +130,9 @@ export const signEthTransaction = async (path, transaction) => {
 };
 
 export const signBtcTransaction = async (inputs, outputs) => {
-  initTrezor();
-  const result = await TrezorConnect.signTransaction({
+  await initTrezor();
+  const tc = await loadTrezor();
+  const result = await tc.signTransaction({
     inputs,
     outputs,
     coin: 'btc',
