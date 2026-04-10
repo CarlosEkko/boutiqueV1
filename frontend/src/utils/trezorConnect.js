@@ -138,14 +138,94 @@ export const signEthTransaction = async (path, transaction) => {
   throw new Error(result.payload?.error || 'Failed to sign ETH transaction');
 };
 
-export const signBtcTransaction = async (inputs, outputs) => {
+export const signBtcTransaction = async (inputs, outputs, coin = 'btc') => {
   const tc = await initTrezor();
   const result = await tc.signTransaction({
     inputs,
     outputs,
-    coin: 'btc',
+    coin,
     push: false,
   });
   if (result.success) return result.payload;
   throw new Error(result.payload?.error || 'Failed to sign BTC transaction');
 };
+
+/**
+ * Compose BTC/LTC transaction inputs from UTXOs.
+ * Selects UTXOs greedily to cover amount + fee.
+ * @returns {{ inputs, totalInput }} or throws if insufficient funds.
+ */
+export const composeInputs = (utxos, amountSat, feeSat, derivationPath) => {
+  const sorted = [...utxos].sort((a, b) => b.value - a.value);
+  const needed = amountSat + feeSat;
+  const selected = [];
+  let totalInput = 0;
+
+  for (const utxo of sorted) {
+    selected.push(utxo);
+    totalInput += utxo.value;
+    if (totalInput >= needed) break;
+  }
+
+  if (totalInput < needed) {
+    throw new Error(`Saldo insuficiente. Disponível: ${totalInput} sat, Necessário: ${needed} sat`);
+  }
+
+  const inputs = selected.map(u => ({
+    address_n: derivationPath
+      ? derivationPath.split('/').slice(1).map(p => {
+          const h = p.endsWith("'");
+          const n = parseInt(p.replace("'", ''));
+          return h ? (n | 0x80000000) >>> 0 : n;
+        })
+      : [],
+    prev_hash: u.txid,
+    prev_index: u.vout,
+    amount: String(u.value),
+    script_type: 'SPENDWITNESS',
+  }));
+
+  return { inputs, totalInput };
+};
+
+/**
+ * Compose BTC/LTC transaction outputs.
+ */
+export const composeOutputs = (toAddress, amountSat, totalInput, feeSat, changeAddress) => {
+  const outputs = [{
+    address: toAddress,
+    amount: String(amountSat),
+    script_type: 'PAYTOADDRESS',
+  }];
+
+  const change = totalInput - amountSat - feeSat;
+  if (change > 546) { // dust threshold
+    outputs.push({
+      address: changeAddress,
+      amount: String(change),
+      script_type: 'PAYTOADDRESS',
+    });
+  }
+
+  return outputs;
+};
+
+/**
+ * Convert ETH amount to wei string.
+ */
+export const ethToWei = (ethAmount) => {
+  const parts = ethAmount.toString().split('.');
+  const whole = parts[0] || '0';
+  const frac = (parts[1] || '').padEnd(18, '0').slice(0, 18);
+  const wei = BigInt(whole) * BigInt(10n ** 18n) + BigInt(frac);
+  return '0x' + wei.toString(16);
+};
+
+/**
+ * Convert number to hex string for ETH transactions.
+ */
+export const toHex = (value) => {
+  if (typeof value === 'string' && value.startsWith('0x')) return value;
+  return '0x' + BigInt(value).toString(16);
+};
+
