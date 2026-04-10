@@ -257,7 +257,7 @@ const AdminRevolutPage = () => {
 
       {/* Accounts Tab */}
       {activeTab === 'accounts' && (
-        <div className="space-y-8">
+        <div className="space-y-12">
           {/* Tesouraria & Onboarding (Main) */}
           {treasuryAccounts.length > 0 && (
             <div>
