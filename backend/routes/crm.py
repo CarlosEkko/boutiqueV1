@@ -96,48 +96,6 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
     await db.crm_leads.insert_one(doc)
     lead_id = doc["_id"]
 
-    # Also create an OTC Lead for the OTC pipeline
-    otc_lead_id = None
-    is_high_risk = False
-    try:
-        from models.otc import OTCLead, OTCLeadStatus, OTCLeadSource, TransactionType, FATF_HIGH_RISK_COUNTRIES, RedFlagType
-        is_high_risk = country_code in FATF_HIGH_RISK_COUNTRIES
-        red_flags = [RedFlagType.HIGH_RISK_COUNTRY.value] if is_high_risk else []
-        otc_lead = OTCLead(
-            entity_name=lead_data.name,
-            contact_name=lead_data.name,
-            contact_email=lead_data.email,
-            contact_phone=lead_data.phone,
-            country=country_code or "N/A",
-            source=OTCLeadSource.WEBSITE,
-            source_detail="Solicitar Acesso - Landing Page",
-            status=OTCLeadStatus.NEW,
-            workflow_stage=1,
-            is_high_risk_country=is_high_risk,
-            red_flags=red_flags if red_flags else None,
-            transaction_type=TransactionType.BUY,
-            notes=lead_data.message or "",
-            activity_log=[{
-                "action": "lead_created",
-                "timestamp": now.isoformat(),
-                "user_id": "public_website",
-                "details": f"Lead criado via formulário público 'Solicitar Acesso'{' — PAÍS DE ALTO RISCO' if is_high_risk else ''}"
-            }]
-        )
-        # Check for existing OTC lead with same email
-        existing_otc = await db.otc_leads.find_one({
-            "contact_email": {"$regex": f"^{lead_data.email}$", "$options": "i"},
-            "status": {"$nin": ["lost", "archived"]}
-        })
-        if not existing_otc:
-            await db.otc_leads.insert_one(otc_lead.dict())
-            otc_lead_id = otc_lead.id
-            logger.info(f"OTC Lead created from public form: {otc_lead_id} for {lead_data.email}")
-        else:
-            logger.info(f"OTC Lead already exists for {lead_data.email}, skipping creation")
-    except Exception as e:
-        logger.warning(f"Failed to create OTC Lead from public form: {e}")
-
     # Trigger Risk Intelligence scan (async, non-blocking)
     try:
         ri_result = await risk_intelligence_scan(lead_data.email, lead_data.phone)
@@ -146,12 +104,6 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
                 {"_id": lead_id},
                 {"$set": {"risk_intelligence_data": ri_result}}
             )
-            # Also update OTC lead if created
-            if otc_lead_id:
-                await db.otc_leads.update_one(
-                    {"id": otc_lead_id},
-                    {"$set": {"trustfull_data": ri_result}}
-                )
             logger.info(f"Risk Intelligence score for {lead_data.email}: {ri_result.get('combined_score')} ({ri_result.get('risk_level')})")
     except Exception as e:
         logger.warning(f"Risk Intelligence scoring failed for {lead_data.email}: {e}")
@@ -184,8 +136,6 @@ async def create_public_lead(lead_data: PublicLeadRequest, request: Request):
         "success": True,
         "already_exists": False,
         "email_sent": email_sent,
-        "otc_lead_created": otc_lead_id is not None,
-        "is_high_risk_country": is_high_risk,
         "message": "Pedido de acesso recebido com sucesso. A nossa equipa entrará em contacto brevemente."
     }
 
