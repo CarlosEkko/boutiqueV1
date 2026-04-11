@@ -97,6 +97,9 @@ import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustmentsPage";
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
 import RegisterPage from "./pages/RegisterPage";
+import LaunchpadPage from "./pages/LaunchpadPage";
+import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
+import AdminLaunchpadPage from "./pages/dashboard/admin/AdminLaunchpadPage";
 import StakingPage from "./pages/dashboard/investments/StakingPage";
 import TokenizationPage from "./pages/dashboard/investments/TokenizationPage";
 import TokensListPage from "./pages/dashboard/tokenization/TokensListPage";
@@ -160,6 +163,7 @@ function AppRoutes() {
       <Route path="/trading" element={<TradingPage />} />
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
+      <Route path="/launchpad" element={<LaunchpadPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/auth/o365/callback" element={<O365Callback />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -190,6 +194,7 @@ function AppRoutes() {
         <Route path="transactions" element={<TransactionsPage />} />
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="staking" element={<StakingPage />} />
+        <Route path="launchpad" element={<ClientLaunchpadPage />} />
         <Route path="tokenization" element={<TokensListPage />} />
         <Route path="tokenization/issue" element={<IssueTokenPage />} />
         <Route path="tokenization/mint-burn" element={<MintBurnPage />} />
@@ -254,6 +259,7 @@ function AppRoutes() {
         <Route path="admin/finance" element={<FinancialDashboard />} />
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
         <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
+        <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
         
         {/* CRM Routes */}
         <Route path="crm" element={<CRMDashboard />} />

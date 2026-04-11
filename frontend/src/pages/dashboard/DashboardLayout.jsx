@@ -222,6 +222,10 @@ const labelTranslationMap = {
   'Definir Preço': 'sidebar.definirPreco',
   // Staking
   'Staking': 'sidebar.staking',
+  // Launchpad
+  'Launchpad': 'sidebar.launchpad',
+  'Token Sales': 'sidebar.tokenSales',
+  'Gerir Token Sales': 'sidebar.gerirTokenSales',
   // Escrow
   'Escrow': 'sidebar.escrow',
   'Deals': 'sidebar.escrowDeals',

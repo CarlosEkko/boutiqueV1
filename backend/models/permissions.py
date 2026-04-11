@@ -38,6 +38,7 @@ class Department(str, Enum):
     RISK_COMPLIANCE = "risk_compliance"
     TOKENIZATION = "tokenization"
     ESCROW = "escrow"
+    LAUNCHPAD = "launchpad"
 
 
 # Role to Department access mapping
@@ -57,7 +58,8 @@ ROLE_PERMISSIONS = {
         Department.TRANSACTION_APPROVAL,
         Department.RISK_COMPLIANCE,
         Department.TOKENIZATION,
-        Department.ESCROW
+        Department.ESCROW,
+        Department.LAUNCHPAD
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -73,7 +75,8 @@ ROLE_PERMISSIONS = {
         Department.TRANSACTION_APPROVAL,
         Department.RISK_COMPLIANCE,
         Department.TOKENIZATION,
-        Department.ESCROW
+        Department.ESCROW,
+        Department.LAUNCHPAD
     ],
     StaffRole.MANAGER: [
         Department.PORTFOLIO,
@@ -350,6 +353,13 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/escrow", "label": "Dashboard", "icon": "LayoutDashboard"},
             {"path": "/dashboard/escrow/deals", "label": "Deals", "icon": "FileText"},
             {"path": "/dashboard/escrow/fees", "label": "Fee Revenue", "icon": "DollarSign"},
+        ]
+    },
+    Department.LAUNCHPAD: {
+        "label": "Launchpad",
+        "icon": "Rocket",
+        "items": [
+            {"path": "/dashboard/admin/launchpad", "label": "Gerir Token Sales", "icon": "Rocket"},
         ]
     },
 }

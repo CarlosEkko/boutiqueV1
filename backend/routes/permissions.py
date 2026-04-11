@@ -164,6 +164,16 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
             ]
         })
         
+        # Add Launchpad menu for clients
+        client_menus.append({
+            "department": "launchpad",
+            "label": "Launchpad",
+            "icon": "Rocket",
+            "items": [
+                {"path": "/dashboard/launchpad", "label": "Token Sales", "icon": "Rocket"},
+            ]
+        })
+        
         return {"menus": client_menus}
     
     # Get custom permissions if any
