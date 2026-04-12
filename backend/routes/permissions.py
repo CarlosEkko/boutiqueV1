@@ -164,6 +164,16 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
             ]
         })
         
+        # Add Cold Wallet menu for clients
+        client_menus.append({
+            "department": "cold_wallet",
+            "label": "Cold Wallet",
+            "icon": "Shield",
+            "items": [
+                {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
+            ]
+        })
+        
         # Add Launchpad menu for clients
         client_menus.append({
             "department": "launchpad",

@@ -39,6 +39,7 @@ class Department(str, Enum):
     TOKENIZATION = "tokenization"
     ESCROW = "escrow"
     LAUNCHPAD = "launchpad"
+    COLD_WALLET = "cold_wallet"
 
 
 # Role to Department access mapping
@@ -59,7 +60,8 @@ ROLE_PERMISSIONS = {
         Department.RISK_COMPLIANCE,
         Department.TOKENIZATION,
         Department.ESCROW,
-        Department.LAUNCHPAD
+        Department.LAUNCHPAD,
+        Department.COLD_WALLET
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -199,7 +201,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/roi", "label": "ROI", "icon": "PieChart"},
         ]
     },
-    "cold_wallet": {
+    Department.COLD_WALLET: {
         "label": "Cold Wallet",
         "icon": "Shield",
         "items": [

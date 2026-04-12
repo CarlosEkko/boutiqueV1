@@ -119,6 +119,8 @@ const departmentConfig = {
   risk_compliance: { icon: FileSearch, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   tokenization: { icon: Gem, color: 'text-[#D4AF37]', bgColor: 'bg-[#D4AF37]/20' },
   escrow: { icon: Lock, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
+  cold_wallet: { icon: Shield, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  launchpad: { icon: Zap, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -659,7 +661,7 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao'];
+  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'launchpad'];
   
   // Default menus for clients (Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];
@@ -679,7 +681,9 @@ const DashboardLayout = () => {
         'otc_trading': 'otc_trading',
         'multi_sign': 'multi_sign',
         'suporte': 'suporte',
-        'tokenizacao': 'tokenizacao'
+        'tokenizacao': 'tokenizacao',
+        'cold_wallet': 'cold_wallet',
+        'launchpad': 'launchpad'
       };
       
       clientMenus = clientMenus.filter(m => {
