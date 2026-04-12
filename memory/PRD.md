@@ -47,6 +47,8 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 ### Session April 12, 2026
 - **Ticker Duplicado Removido**: Removido o `SimpleTicker` da TradingPage que duplicava o TradingView Ticker Tape do Header
 - **Referências Binance Removidas**: Substituídos todos os prefixos `BINANCE:` nos símbolos TradingView por `COINBASE:` / `BITSTAMP:` / `CRYPTO:` para manter o white-label
+- **Menu Navegação**: Removido "CONTACTO" do menu overlay, fonte reduzida para 6vh
+- **Cold Wallet Redesenhada**: UI completamente reescrita inspirada no Trezor Suite com sidebar própria (device status, contas, tabs Dashboard/Atividade), portfolio overview, botões Send/Receive prominentes, cards de ativos, e histórico de transações
 
 ### Session April 11, 2026
 - **Launchpad/ICO System**: Full implementation with public page (hero, stats, featured sale, countdown, progress bars, filter tabs), client dashboard (browse & subscribe, my subscriptions), and admin management (create/edit/delete sales, view/distribute/refund subscriptions)
