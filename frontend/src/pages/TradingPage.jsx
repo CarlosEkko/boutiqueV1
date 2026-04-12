@@ -61,35 +61,6 @@ const TradingViewWidget = ({ symbol = 'BTCUSDT' }) => {
   );
 };
 
-// Simple Ticker using API data instead of TradingView widget
-const SimpleTicker = ({ markets }) => {
-  if (!markets || markets.length === 0) return null;
-  
-  return (
-    <div className="overflow-hidden whitespace-nowrap py-2">
-      <div className="inline-flex animate-marquee">
-        {[...markets, ...markets].slice(0, 16).map((market, index) => (
-          <span 
-            key={`${market.symbol}-${index}`} 
-            className="inline-flex items-center gap-2 px-4 text-sm"
-          >
-            <img 
-              src={market.logo} 
-              alt={market.symbol}
-              className="w-4 h-4 rounded-full"
-              onError={(e) => e.target.style.display = 'none'}
-            />
-            <span className="text-white">{market.symbol}/USD</span>
-            <span className="text-gray-400">${market.price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span className={market.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}>
-              {market.change_24h >= 0 ? '+' : ''}{market.change_24h?.toFixed(2)}%
-            </span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const TradingPage = () => {
   const { t } = useLanguage();
@@ -172,11 +143,6 @@ const TradingPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Header />
-      
-      {/* Ticker Tape */}
-      <div className="pt-20 border-b border-zinc-800/50 bg-zinc-900/30">
-        <SimpleTicker markets={markets} />
-      </div>
       
       <main className="py-6">
         <div className="max-w-[1920px] mx-auto px-4">
