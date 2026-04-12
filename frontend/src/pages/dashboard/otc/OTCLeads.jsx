@@ -245,7 +245,7 @@ const OTCLeads = () => {
                     {selectedLead.trustfull_data.red_flags?.length > 0 && (
                       <div className="mt-3 p-2 bg-red-950/30 border border-red-900/30 rounded-lg">
                         <p className="text-red-400 text-xs font-medium mb-1">Red Flags:</p>
-                        <div className="flex flex-wrap gap-1">{selectedLead.trustfull_data.red_flags.map((f, i) => <Badge key={i} className="bg-red-900/40 text-red-400 text-[10px]">{f}</Badge>)}</div>
+                        <div className="flex flex-wrap gap-1">{selectedLead.trustfull_data.red_flags.map((f, i) => <Badge key={`flag-${f}-${i}`} className="bg-red-900/40 text-red-400 text-[10px]">{f}</Badge>)}</div>
                       </div>
                     )}
                   </CardContent>
@@ -315,7 +315,7 @@ const OTCLeads = () => {
                       </div>
                     ) : (
                       <div><span className="text-gray-400 text-sm">{t('otc.methods')}:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">{selectedLead.preferred_settlement_methods?.length > 0 ? selectedLead.preferred_settlement_methods.map((m, i) => <Badge key={i} className="bg-gold-500/20 text-gold-400 uppercase text-xs">{m}</Badge>) : <span className="text-gray-500">N/A</span>}</div>
+                        <div className="flex flex-wrap gap-1 mt-1">{selectedLead.preferred_settlement_methods?.length > 0 ? selectedLead.preferred_settlement_methods.map((m, i) => <Badge key={`method-${m}-${i}`} className="bg-gold-500/20 text-gold-400 uppercase text-xs">{m}</Badge>) : <span className="text-gray-500">N/A</span>}</div>
                       </div>
                     )}
                     <div className="flex justify-between"><span className="text-gray-400">Exchange:</span><span className="text-white">{selectedLead.current_exchange || '-'}</span></div>

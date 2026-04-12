@@ -546,7 +546,7 @@ const DetailView = ({ data, getStatusBadge, formatDate, onRefresh, refreshing, o
               <p className="text-xs text-zinc-500 mb-2">Motivos de Rejeição</p>
               <div className="flex flex-wrap gap-1.5">
                 {data.reject_labels.map((label, i) => (
-                  <Badge key={i} className="bg-rose-500/10 text-rose-400 border-rose-500/20 border text-xs">
+                  <Badge key={`reject-${label}-${i}`} className="bg-rose-500/10 text-rose-400 border-rose-500/20 border text-xs">
                     {label}
                   </Badge>
                 ))}
@@ -684,7 +684,7 @@ const DocumentsGrid = ({ docsStatus }) => {
       {documents.map((doc, i) => {
         const statusCfg = DOC_STATUS_COLORS[doc.status] || DOC_STATUS_COLORS.not_uploaded;
         return (
-          <div key={i} className="flex items-center justify-between bg-zinc-800/40 rounded-lg px-4 py-3">
+          <div key={doc.label || doc.idDocType || i} className="flex items-center justify-between bg-zinc-800/40 rounded-lg px-4 py-3">
             <div className="flex items-center gap-3">
               <FileText size={16} className="text-zinc-500" />
               <div>

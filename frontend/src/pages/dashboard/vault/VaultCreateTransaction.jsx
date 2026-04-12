@@ -51,7 +51,7 @@ const VaultCreateTransaction = () => {
       const sigs = (res.data.signatories || []).filter(s => s.role !== 'viewer');
       setSignatories(sigs);
       setSelectedSigners(sigs.map(s => s.id));
-    }).catch(() => {});
+    }).catch((err) => { console.error('Failed to load signatories', err); });
 
     // Fetch user's cofres
     axios.get(`${API_URL}/api/omnibus/my-cofres`, { headers }).then(res => {
@@ -65,7 +65,7 @@ const VaultCreateTransaction = () => {
           setForm(f => ({ ...f, source_wallet: list[0].name }));
         }
       }
-    }).catch(() => {});
+    }).catch((err) => { console.error('Failed to load cofres', err); });
   }, [token]);
 
   const selectedAsset = ASSETS.find(a => a.symbol === form.asset);

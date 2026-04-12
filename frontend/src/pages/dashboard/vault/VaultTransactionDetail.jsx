@@ -36,18 +36,18 @@ const VaultTransactionDetail = () => {
 
   const fetchTx = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/vault/transactions/${id}`, { headers });
+      const res = await axios.get(`${API_URL}/api/vault/transactions/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setTx(res.data);
     } catch { navigate('/dashboard/vault'); }
     finally { setLoading(false); }
-  }, [id]);
+  }, [id, token, navigate]);
 
   useEffect(() => { fetchTx(); }, [fetchTx]);
   useEffect(() => {
     if (tx?.status !== 'pending_signatures') return;
     const iv = setInterval(fetchTx, 10000);
     return () => clearInterval(iv);
-  }, [tx?.status]);
+  }, [tx?.status, fetchTx]);
 
   const handleSign = async () => {
     setSigning(true);
@@ -211,7 +211,7 @@ const VaultTransactionDetail = () => {
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-3 flex items-center gap-2"><FileText size={13} /> Activity Log</h3>
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
                   {tx.activity_log.map((log, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs py-1 border-b border-zinc-800/30 last:border-0">
+                    <div key={`${log.at}-${log.action}-${i}`} className="flex items-start gap-2 text-xs py-1 border-b border-zinc-800/30 last:border-0">
                       <span className="text-zinc-600 font-mono whitespace-nowrap">{formatDate(log.at, true)}</span>
                       <Badge className={`rounded-full text-[10px] px-2 py-0 ${
                         log.action === 'signed' ? 'bg-emerald-500/10 text-emerald-400' :
@@ -275,7 +275,7 @@ const VaultTransactionDetail = () => {
                             </p>
                             <div className="space-y-1.5">
                               {(step.details.signers || []).map((s, i) => (
-                                <div key={i} className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
+                                <div key={s.id || s.name || i} className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
                                   s.status === 'signed' ? 'bg-emerald-500/5 border-emerald-500/15' :
                                   s.status === 'rejected' ? 'bg-rose-500/5 border-rose-500/15' :
                                   'bg-zinc-800/30 border-zinc-700/30'
