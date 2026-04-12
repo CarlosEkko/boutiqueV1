@@ -380,12 +380,41 @@ const ColdWalletPage = () => {
       await initTrezor();
       const features = await getDeviceFeatures();
       setDevice(features);
-      toast.success('Trezor conectada com sucesso!');
+      toast.success('Trezor conectada! A sincronizar carteiras...');
+
+      // Auto-derive all wallets sequentially after connection
+      for (const coin of Object.keys(BLOCKCHAIN_CONFIG)) {
+        try {
+          setLoadingCoin(coin);
+          const addrResult = await getAddress(coin, null, true);
+          let accountData = null;
+          try { accountData = await getAccountInfo(coin); } catch { /* ok */ }
+          const walletData = {
+            address: addrResult.address,
+            path: addrResult.serializedPath || addrResult.path,
+            balance: accountData?.balance || '0',
+            availableBalance: accountData?.availableBalance || '0',
+          };
+          setWallets(prev => ({ ...prev, [coin]: walletData }));
+          try {
+            await axios.post(`${API_URL}/api/cold-wallet/addresses`, { coin, address: walletData.address, path: walletData.path, balance: walletData.balance }, { headers });
+          } catch { /* silent */ }
+        } catch (err) {
+          console.error(`Failed to derive ${coin}:`, err);
+        }
+      }
+      setLoadingCoin(null);
+      fetchSavedAddresses();
+      toast.success('Todas as carteiras sincronizadas!');
     } catch (err) { toast.error(err.message || 'Falha ao conectar Trezor'); }
     setConnecting(false);
   };
 
   const deriveAddress = async (coin) => {
+    if (!device) {
+      toast.error('Conecte a Trezor primeiro');
+      return;
+    }
     setLoadingCoin(coin);
     try {
       const addrResult = await getAddress(coin, null, true);
@@ -581,7 +610,14 @@ const ColdWalletPage = () => {
             <>
               {/* Portfolio Overview */}
               <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
-                <p className="text-gray-400 text-sm mb-2">Portfolio</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-gray-400 text-sm">Portfolio</p>
+                  {connecting && loadingCoin && (
+                    <span className="text-gold-400 text-xs flex items-center gap-1.5">
+                      <Loader2 size={12} className="animate-spin" /> A sincronizar {loadingCoin}...
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-light text-white tracking-tight">
                     {activeWallet ? formatBalance(activeWallet.balance, activeCfg.decimals) : '0'}
@@ -596,14 +632,14 @@ const ColdWalletPage = () => {
               </div>
 
               {/* Quick Actions for Selected Coin (when no wallet derived) */}
-              {device && !activeWallet && (
+              {device && !activeWallet && !connecting && (
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-8 text-center space-y-4">
                   <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: `${activeMeta.color}15` }}>
                     <span className="text-3xl" style={{ color: activeMeta.color }}>{activeCfg.icon}</span>
                   </div>
                   <div>
                     <h3 className="text-white text-lg font-medium">{activeMeta.label}</h3>
-                    <p className="text-gray-500 text-sm mt-1">Derive o endereco para comecar a usar esta carteira</p>
+                    <p className="text-gray-500 text-sm mt-1">Sincronize o endereco para comecar a usar esta carteira</p>
                   </div>
                   <Button
                     onClick={() => deriveAddress(activeCoin)}
@@ -612,9 +648,9 @@ const ColdWalletPage = () => {
                     data-testid={`derive-${activeCoin}-btn`}
                   >
                     {loadingCoin === activeCoin ? (
-                      <><Loader2 className="animate-spin mr-2" size={16} /> A derivar...</>
+                      <><Loader2 className="animate-spin mr-2" size={16} /> A sincronizar...</>
                     ) : (
-                      <><HardDrive size={16} className="mr-2" /> Derivar Endereco {activeCoin}</>
+                      <><HardDrive size={16} className="mr-2" /> Sincronizar {activeCoin}</>
                     )}
                   </Button>
                 </div>
@@ -655,15 +691,17 @@ const ColdWalletPage = () => {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-medium text-white">Meus Ativos</h2>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={deriveAll}
-                      className="border-zinc-700 text-gray-400 hover:text-white hover:bg-zinc-800 gap-2 h-8 text-xs"
-                      data-testid="activate-assets-btn"
-                    >
-                      <Plus size={14} /> Ativar mais ativos
-                    </Button>
+                    {!connecting && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={deriveAll}
+                        className="border-zinc-700 text-gray-400 hover:text-white hover:bg-zinc-800 gap-2 h-8 text-xs"
+                        data-testid="activate-assets-btn"
+                      >
+                        <Plus size={14} /> Ativar mais ativos
+                      </Button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -725,12 +763,12 @@ const ColdWalletPage = () => {
                               variant="outline"
                               size="sm"
                               onClick={(e) => { e.stopPropagation(); deriveAddress(coin); }}
-                              disabled={loadingCoin === coin}
+                              disabled={loadingCoin === coin || connecting}
                               className={`w-full border-zinc-700 ${meta.text} hover:bg-zinc-800 text-xs h-8 mt-2`}
                               data-testid={`derive-${coin}-btn`}
                             >
-                              {loadingCoin === coin ? <Loader2 className="animate-spin mr-1" size={12} /> : <HardDrive size={12} className="mr-1" />}
-                              {loadingCoin === coin ? 'A derivar...' : 'Ativar'}
+                              {(loadingCoin === coin || connecting) ? <Loader2 className="animate-spin mr-1" size={12} /> : <HardDrive size={12} className="mr-1" />}
+                              {loadingCoin === coin ? 'A sincronizar...' : connecting ? 'Aguarde...' : 'Sincronizar'}
                             </Button>
                           )}
                         </div>
