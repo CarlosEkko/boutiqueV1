@@ -12,8 +12,28 @@ import {
   ChevronRight, Handshake, UserPlus, Globe, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const CHART_COLORS = ['#D4AF37', '#60A5FA', '#34D399', '#F97316', '#A78BFA', '#F87171', '#38BDF8', '#FBBF24'];
+
+const ChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
+      <p className="text-gray-400 text-xs mb-1.5">{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} className="text-sm" style={{ color: p.color }}>
+          {p.name}: <span className="font-mono font-medium">{formatCurrency(p.value)}</span>
+        </p>
+      ))}
+    </div>
+  );
+};
 
 const formatCurrency = (v) => {
   if (!v) return '€0';
@@ -740,22 +760,37 @@ const CommercialDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [overview, setOverview] = useState(null);
   const [ranking, setRanking] = useState([]);
+  const [timeline, setTimeline] = useState([]);
+  const [regions, setRegions] = useState([]);
+  const [productMix, setProductMix] = useState([]);
   const [period, setPeriod] = useState('monthly');
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const [ovRes, rkRes] = await Promise.all([
+      const [ovRes, rkRes, tlRes, rgRes, pmRes] = await Promise.all([
         axios.get(`${API_URL}/api/commercial/dashboard/overview?period=${period}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API_URL}/api/commercial/dashboard/sellers-ranking?period=${period}&metric=volume`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
+        axios.get(`${API_URL}/api/commercial/dashboard/timeline?months=6`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/commercial/dashboard/regions?period=${period}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/commercial/dashboard/product-mix?period=${period}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
       ]);
       setOverview(ovRes.data);
       setRanking(rkRes.data);
+      setTimeline(tlRes.data);
+      setRegions(rgRes.data);
+      setProductMix(pmRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -849,6 +884,144 @@ const CommercialDashboard = () => {
                   <p className="text-2xl font-light text-white">{overview?.team_stats?.active_goals || 0}</p>
                   <p className="text-gray-500 text-xs mt-1">Metas Ativas</p>
                 </div>
+              </div>
+
+              {/* ─── Charts Section ─── */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Timeline - Area Chart */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-5">
+                    <h3 className="text-white font-medium mb-4">Evolucao Mensal</h3>
+                    <div className="h-[280px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={timeline} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="gradVolume" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#34D399" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                          <XAxis dataKey="month" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
+                          <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
+                          <Tooltip content={<ChartTooltip />} />
+                          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#a1a1aa' }} />
+                          <Area type="monotone" dataKey="volume" name="Volume" stroke="#D4AF37" fill="url(#gradVolume)" strokeWidth={2} />
+                          <Area type="monotone" dataKey="revenue" name="Receita" stroke="#34D399" fill="url(#gradRevenue)" strokeWidth={2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Deals per Month - Bar Chart */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-5">
+                    <h3 className="text-white font-medium mb-4">Negocios por Mes</h3>
+                    <div className="h-[280px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={timeline} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                          <XAxis dataKey="month" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={{ stroke: '#3f3f46' }} tickLine={false} />
+                          <YAxis tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
+                                <p className="text-gray-400 text-xs mb-1">{label}</p>
+                                <p className="text-sm text-gold-400">Negocios: <span className="font-mono font-medium">{payload[0]?.value}</span></p>
+                              </div>
+                            );
+                          }} />
+                          <Bar dataKey="deals" name="Negocios" fill="#D4AF37" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Regional Comparison - Horizontal Bar */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-5">
+                    <h3 className="text-white font-medium mb-4">Comparacao por Regiao</h3>
+                    <div className="h-[280px]">
+                      {regions.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={regions} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
+                            <XAxis type="number" tick={{ fill: '#71717a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => formatCurrency(v)} />
+                            <YAxis type="category" dataKey="region" tick={{ fill: '#e4e4e7', fontSize: 12 }} axisLine={false} tickLine={false} width={55} />
+                            <Tooltip content={<ChartTooltip />} />
+                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#a1a1aa' }} />
+                            <Bar dataKey="total_volume" name="Volume" fill="#60A5FA" radius={[0, 4, 4, 0]} maxBarSize={24} />
+                            <Bar dataKey="total_revenue" name="Receita" fill="#34D399" radius={[0, 4, 4, 0]} maxBarSize={24} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-600 text-sm">
+                          <div className="text-center">
+                            <Globe size={32} className="mx-auto mb-2 opacity-30" />
+                            <p>Sem dados regionais</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Product Mix - Pie Chart */}
+                <Card className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-5">
+                    <h3 className="text-white font-medium mb-4">Mix de Produtos</h3>
+                    <div className="h-[280px]">
+                      {productMix.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={productMix}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={100}
+                              dataKey="volume"
+                              nameKey="name"
+                              paddingAngle={3}
+                              stroke="none"
+                            >
+                              {productMix.map((_, idx) => (
+                                <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const d = payload[0].payload;
+                              return (
+                                <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 shadow-xl">
+                                  <p className="text-white text-sm font-medium mb-1">{d.name}</p>
+                                  <p className="text-gray-400 text-xs">Volume: {formatCurrency(d.volume)}</p>
+                                  <p className="text-gray-400 text-xs">Receita: {formatCurrency(d.revenue)}</p>
+                                  <p className="text-gray-400 text-xs">Negocios: {d.deals}</p>
+                                </div>
+                              );
+                            }} />
+                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: '#a1a1aa' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-gray-600 text-sm">
+                          <div className="text-center">
+                            <Briefcase size={32} className="mx-auto mb-2 opacity-30" />
+                            <p>Sem dados de produtos</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Sellers Ranking */}

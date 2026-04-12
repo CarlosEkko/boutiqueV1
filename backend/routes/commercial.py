@@ -662,6 +662,111 @@ async def get_regional_breakdown(
     return regions
 
 
+@router.get("/dashboard/timeline")
+async def get_timeline_data(
+    months: int = 6,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Monthly evolution of volume and revenue for the last N months"""
+    await require_admin_or_manager(user_id)
+
+    now = datetime.now(timezone.utc)
+    timeline = []
+
+    for i in range(months - 1, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        start = datetime(y, m, 1, tzinfo=timezone.utc)
+        if m == 12:
+            end = datetime(y + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            end = datetime(y, m + 1, 1, tzinfo=timezone.utc)
+
+        start_iso = start.isoformat()
+        end_iso = end.isoformat()
+
+        pipeline = [
+            {"$match": {"created_at": {"$gte": start_iso, "$lt": end_iso}}},
+            {"$group": {
+                "_id": None,
+                "volume": {"$sum": "$volume"},
+                "revenue": {"$sum": "$revenue"},
+                "deals": {"$sum": 1},
+            }}
+        ]
+
+        stats = {"volume": 0, "revenue": 0, "deals": 0}
+        async for doc in db.commercial_deals.aggregate(pipeline):
+            stats = {"volume": doc.get("volume", 0), "revenue": doc.get("revenue", 0), "deals": doc.get("deals", 0)}
+
+        # Also OTC
+        pipeline_otc = [
+            {"$match": {"created_at": {"$gte": start_iso, "$lt": end_iso}}},
+            {"$group": {
+                "_id": None,
+                "volume": {"$sum": {"$multiply": ["$quantity", "$reference_price"]}},
+                "revenue": {"$sum": "$commission_total"},
+                "deals": {"$sum": 1},
+            }}
+        ]
+        async for doc in db.otc_deals.aggregate(pipeline_otc):
+            stats["volume"] += doc.get("volume", 0)
+            stats["revenue"] += doc.get("revenue", 0)
+            stats["deals"] += doc.get("deals", 0)
+
+        month_names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+        timeline.append({
+            "month": f"{month_names[m - 1]} {y}",
+            "month_num": m,
+            "year": y,
+            "volume": round(stats["volume"], 2),
+            "revenue": round(stats["revenue"], 2),
+            "deals": stats["deals"],
+        })
+
+    return timeline
+
+
+@router.get("/dashboard/product-mix")
+async def get_product_mix(
+    period: str = "monthly",
+    user_id: str = Depends(get_current_user_id)
+):
+    """Product type distribution for pie chart"""
+    await require_admin_or_manager(user_id)
+
+    now = datetime.now(timezone.utc)
+    if period == "monthly":
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    pipeline = [
+        {"$match": {"created_at": {"$gte": start.isoformat()}}},
+        {"$group": {
+            "_id": "$product_type",
+            "volume": {"$sum": "$volume"},
+            "revenue": {"$sum": "$revenue"},
+            "deals": {"$sum": 1},
+        }},
+        {"$sort": {"volume": -1}}
+    ]
+
+    mix = []
+    async for doc in db.commercial_deals.aggregate(pipeline):
+        mix.append({
+            "name": doc["_id"] or "Outros",
+            "volume": round(doc.get("volume", 0), 2),
+            "revenue": round(doc.get("revenue", 0), 2),
+            "deals": doc.get("deals", 0),
+        })
+
+    return mix
+
+
 # ==================== HELPERS ====================
 
 async def _update_seller_goals(seller_id: str, volume: float, revenue: float):
