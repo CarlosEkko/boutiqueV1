@@ -360,6 +360,26 @@ const ColdWalletPage = () => {
     fetchTxHistory();
   }, [token]);
 
+  // Load previously saved wallets from backend on mount
+  useEffect(() => {
+    if (savedAddresses.length > 0) {
+      const loaded = {};
+      for (const addr of savedAddresses) {
+        if (BLOCKCHAIN_CONFIG[addr.coin] && !wallets[addr.coin]) {
+          loaded[addr.coin] = {
+            address: addr.address,
+            path: addr.path || '',
+            balance: addr.balance || '0',
+            availableBalance: '0',
+          };
+        }
+      }
+      if (Object.keys(loaded).length > 0) {
+        setWallets(prev => ({ ...prev, ...loaded }));
+      }
+    }
+  }, [savedAddresses]);
+
   const fetchSavedAddresses = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/cold-wallet/addresses`, { headers });
@@ -382,31 +402,39 @@ const ColdWalletPage = () => {
       setDevice(features);
       toast.success('Trezor conectada! A sincronizar carteiras...');
 
-      // Auto-derive all wallets sequentially after connection
-      for (const coin of Object.keys(BLOCKCHAIN_CONFIG)) {
+      // Auto-derive all wallets sequentially with delay to avoid USB conflicts
+      const coins = Object.keys(BLOCKCHAIN_CONFIG);
+      for (let i = 0; i < coins.length; i++) {
+        const coin = coins[i];
         try {
           setLoadingCoin(coin);
-          const addrResult = await getAddress(coin, null, true);
-          let accountData = null;
-          try { accountData = await getAccountInfo(coin); } catch { /* ok */ }
+          // Small delay between calls to let Trezor session settle
+          if (i > 0) await new Promise(r => setTimeout(r, 500));
+          
+          const addrResult = await getAddress(coin, null, false); // showOnTrezor=false for speed
           const walletData = {
             address: addrResult.address,
             path: addrResult.serializedPath || addrResult.path,
-            balance: accountData?.balance || '0',
-            availableBalance: accountData?.availableBalance || '0',
+            balance: '0',
+            availableBalance: '0',
           };
           setWallets(prev => ({ ...prev, [coin]: walletData }));
+          
+          // Save address to backend (backend can fetch balance from blockchain)
           try {
             await axios.post(`${API_URL}/api/cold-wallet/addresses`, { coin, address: walletData.address, path: walletData.path, balance: walletData.balance }, { headers });
           } catch { /* silent */ }
         } catch (err) {
-          console.error(`Failed to derive ${coin}:`, err);
+          console.error(`Failed to derive ${coin}:`, err.message);
+          // Continue with next coin even if one fails
         }
       }
       setLoadingCoin(null);
       fetchSavedAddresses();
-      toast.success('Todas as carteiras sincronizadas!');
-    } catch (err) { toast.error(err.message || 'Falha ao conectar Trezor'); }
+      toast.success('Carteiras sincronizadas!');
+    } catch (err) { 
+      toast.error(err.message || 'Falha ao conectar Trezor'); 
+    }
     setConnecting(false);
   };
 
@@ -417,22 +445,20 @@ const ColdWalletPage = () => {
     }
     setLoadingCoin(coin);
     try {
-      const addrResult = await getAddress(coin, null, true);
-      let accountData = null;
-      try { accountData = await getAccountInfo(coin); } catch { /* ok */ }
+      const addrResult = await getAddress(coin, null, false);
       const walletData = {
         address: addrResult.address,
         path: addrResult.serializedPath || addrResult.path,
-        balance: accountData?.balance || '0',
-        availableBalance: accountData?.availableBalance || '0',
+        balance: '0',
+        availableBalance: '0',
       };
       setWallets(prev => ({ ...prev, [coin]: walletData }));
       try {
         await axios.post(`${API_URL}/api/cold-wallet/addresses`, { coin, address: walletData.address, path: walletData.path, balance: walletData.balance }, { headers });
         fetchSavedAddresses();
       } catch { /* silent */ }
-      toast.success(`Endereco ${coin} derivado com sucesso`);
-    } catch (err) { toast.error(err.message || `Falha ao derivar ${coin}`); }
+      toast.success(`${coin} sincronizado com sucesso`);
+    } catch (err) { toast.error(err.message || `Falha ao sincronizar ${coin}`); }
     setLoadingCoin(null);
   };
 
