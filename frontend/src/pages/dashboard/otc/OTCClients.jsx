@@ -85,7 +85,7 @@ const OTCClients = () => {
   useEffect(() => {
     fetchClients();
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const fetchClients = async () => {
     try {

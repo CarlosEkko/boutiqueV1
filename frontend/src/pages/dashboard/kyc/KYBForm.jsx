@@ -69,7 +69,7 @@ const KYBForm = () => {
   useEffect(() => {
     fetchKYBStatus();
     fetchDocuments();
-  }, []);
+  }, [token]);
 
   const fetchKYBStatus = async () => {
     try {

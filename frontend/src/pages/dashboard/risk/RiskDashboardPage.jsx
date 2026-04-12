@@ -26,9 +26,9 @@ const RiskDashboardPage = () => {
       if (res.ok) setData(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, []);
+  }, [token]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [token]);
 
   const kpis = data?.kpis;
 

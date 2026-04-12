@@ -69,7 +69,7 @@ const VaultWallets = () => {
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
 
-  useEffect(() => { fetchCofres(); }, []);
+  useEffect(() => { fetchCofres(); }, [token]);
 
   const fetchCofres = async () => {
     try {

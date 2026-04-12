@@ -39,7 +39,7 @@ export default function AdminKBEXRates() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, []);
+  }, [token]);
 
   const fetchAlerts = useCallback(async () => {
     try {
@@ -49,7 +49,7 @@ export default function AdminKBEXRates() {
         setRenewalAlerts(data.alerts || []);
       }
     } catch (e) { console.error(e); }
-  }, []);
+  }, [token]);
 
   useEffect(() => { fetchConfig(); fetchAlerts(); }, [fetchConfig, fetchAlerts]);
 

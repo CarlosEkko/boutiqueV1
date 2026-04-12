@@ -37,9 +37,9 @@ const CommissionsPage = () => {
       if (summRes.ok) setSummary(await summRes.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, []);
+  }, [token]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [token]);
 
   const updateStatus = async (commissionId, newStatus) => {
     try {

@@ -67,7 +67,7 @@ const KYCForm = () => {
   useEffect(() => {
     fetchKYCStatus();
     fetchDocuments();
-  }, []);
+  }, [token]);
 
   const fetchKYCStatus = async () => {
     try {

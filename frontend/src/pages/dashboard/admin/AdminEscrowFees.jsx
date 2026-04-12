@@ -26,7 +26,7 @@ export default function AdminEscrowFees() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, []);
+  }, [token]);
 
   useEffect(() => { fetchTiers(); }, [fetchTiers]);
 

@@ -61,7 +61,7 @@ export const CreateLeadDialog = ({
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [token]);
 
   const handleEntitySearchChange = (val) => {
     setEntitySearch(val);

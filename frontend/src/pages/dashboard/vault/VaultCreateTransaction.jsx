@@ -66,7 +66,7 @@ const VaultCreateTransaction = () => {
         }
       }
     }).catch(() => {});
-  }, []);
+  }, [token]);
 
   const selectedAsset = ASSETS.find(a => a.symbol === form.asset);
 

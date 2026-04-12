@@ -29,7 +29,7 @@ const ApprovalSettingsPage = () => {
   useEffect(() => {
     fetchSettings();
     fetchInternalUsers();
-  }, []);
+  }, [token]);
 
   const fetchSettings = async () => {
     try {

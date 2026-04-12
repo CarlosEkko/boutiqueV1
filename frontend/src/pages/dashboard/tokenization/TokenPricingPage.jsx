@@ -21,7 +21,7 @@ const TokenPricingPage = () => {
 
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [token]);
 
   const fetchData = async () => {
     setLoading(true);

@@ -64,16 +64,16 @@ const OTCDealsPage = () => {
       if (res.ok) setDeals(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, []);
+  }, [token]);
 
   const fetchTeam = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/otc-deals/team-members`, { headers: getHeaders() });
       if (res.ok) setTeamMembers(await res.json());
     } catch (e) { console.error(e); }
-  }, []);
+  }, [token]);
 
-  useEffect(() => { fetchDeals(); fetchTeam(); }, []);
+  useEffect(() => { fetchDeals(); fetchTeam(); }, [token]);
 
   const advanceStatus = async (dealId, newStatus) => {
     try {

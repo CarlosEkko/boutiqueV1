@@ -108,7 +108,7 @@ const AdminLaunchpadPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => { fetchSales(); }, [fetchSales]);
 

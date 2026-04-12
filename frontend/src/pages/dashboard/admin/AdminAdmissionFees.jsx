@@ -57,7 +57,7 @@ const AdminAdmissionFees = () => {
 
   useEffect(() => {
     fetchAllPayments();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     // Filter payments based on selected filter

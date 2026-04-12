@@ -25,7 +25,7 @@ const TokenManagementPage = () => {
 
   const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  useEffect(() => { fetchCollections(); }, []);
+  useEffect(() => { fetchCollections(); }, [token]);
 
   const fetchCollections = async () => {
     setLoading(true);

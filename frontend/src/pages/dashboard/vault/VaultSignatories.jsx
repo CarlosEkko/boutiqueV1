@@ -29,7 +29,7 @@ const VaultSignatories = () => {
   const [saving, setSaving] = useState(false);
   const headers = { Authorization: `Bearer ${token}` };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [token]);
 
   const fetchAll = async () => {
     try {

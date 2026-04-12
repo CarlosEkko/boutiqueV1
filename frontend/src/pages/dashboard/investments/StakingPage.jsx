@@ -58,7 +58,7 @@ const StakingPage = () => {
   const [unstakeLoading, setUnstakeLoading] = useState(false);
 
   /* ─── fetch ─── */
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [token]);
 
   const fetchAll = async () => {
     setLoading(true);

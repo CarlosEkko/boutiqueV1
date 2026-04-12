@@ -30,7 +30,7 @@ const KYCStatus = () => {
 
   useEffect(() => {
     fetchKYCStatus();
-  }, []);
+  }, [token]);
 
   const fetchKYCStatus = async () => {
     try {

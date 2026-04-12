@@ -38,7 +38,7 @@ const CRMDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [token]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
