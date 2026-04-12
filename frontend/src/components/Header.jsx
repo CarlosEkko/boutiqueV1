@@ -21,7 +21,6 @@ const Header = () => {
     { name: 'Launchpad', href: '/launchpad' },
     { name: t('nav.institutional'), href: '/institutional' },
     { name: t('nav.cryptoAtm'), href: '/crypto-atm' },
-    { name: t('nav.contact'), href: '/#contact' }
   ];
 
   const languages = [
@@ -252,7 +251,7 @@ const Header = () => {
                 <a
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href)}
-                  className={`magnetic-link nav-link relative no-underline overflow-hidden cursor-pointer px-[10px] py-[2px] z-[2] inline-block uppercase tracking-[3px] md:tracking-[5px] text-[3vh] md:text-[7vh] leading-[1.4] transition-all duration-200 font-['Inter'] font-light ${
+                  className={`magnetic-link nav-link relative no-underline overflow-hidden cursor-pointer px-[10px] py-[2px] z-[2] inline-block uppercase tracking-[3px] md:tracking-[5px] text-[3vh] md:text-[6vh] leading-[1.4] transition-all duration-200 font-['Inter'] font-light ${
                     isActiveLink(link.href) 
                       ? 'text-white' 
                       : 'text-white/60 hover:text-white'
