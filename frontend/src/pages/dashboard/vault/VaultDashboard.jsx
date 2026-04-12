@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -31,19 +31,19 @@ const VaultDashboard = () => {
   const [loading, setLoading] = useState(true);
   const headers = { Authorization: `Bearer ${token}` };
 
-  useEffect(() => { fetchAll(); }, [filter]);
-
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     try {
       const [dashRes, txRes] = await Promise.all([
-        axios.get(`${API_URL}/api/vault/dashboard`, { headers }),
-        axios.get(`${API_URL}/api/vault/transactions?status=${filter}`, { headers })
+        axios.get(`${API_URL}/api/vault/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/vault/transactions?status=${filter}`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setStats(dashRes.data);
       setTxs(txRes.data.transactions || []);
     } catch { toast.error('Erro ao carregar vault'); }
     finally { setLoading(false); }
-  };
+  }, [token, filter]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const filtered = txs.filter(tx => {
     if (!search) return true;
@@ -162,7 +162,7 @@ const VaultDashboard = () => {
                       {tx.status === 'pending_signatures' && (
                         <div className="flex items-center justify-end gap-1.5 mt-1.5">
                           {(tx.signatures || []).map((s, i) => (
-                            <div key={i} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[8px] font-bold ${
+                            <div key={s.user_id || s.name || i} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[8px] font-bold ${
                               s.status === 'signed' ? 'bg-emerald-500 border-emerald-400 text-white' :
                               s.status === 'rejected' ? 'bg-rose-500 border-rose-400 text-white' :
                               'bg-zinc-800 border-zinc-600 text-zinc-400'
