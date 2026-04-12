@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Shield, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Shield, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from './ui/button';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
  * Protected Document Viewer
@@ -77,7 +79,7 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     };
   }, []);
 
-  const watermarkText = userName || 'KBEX Confidential';
+  const watermarkText = 'KBEX';
 
   return (
     <div
@@ -134,21 +136,26 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
 
       {/* Document area with watermark overlay */}
       <div className="flex-1 relative overflow-auto">
-        {/* PDF iframe */}
+        {/* PDF embed */}
         <div className="flex justify-center p-4" style={{ minHeight: '100%' }}>
-          <iframe
-            src={`${url}#toolbar=0&navpanes=0&scrollbar=1`}
-            title={title}
+          <object
+            data={`${url.startsWith('http') ? url : API_URL + url}#toolbar=0&navpanes=0`}
+            type="application/pdf"
             className="bg-white rounded shadow-2xl"
             style={{
               width: `${zoom}%`,
               maxWidth: '1200px',
               height: 'calc(100vh - 120px)',
               border: 'none',
-              pointerEvents: 'auto',
             }}
-            sandbox="allow-same-origin"
-          />
+          >
+            <iframe
+              src={`${url.startsWith('http') ? url : API_URL + url}#toolbar=0&navpanes=0`}
+              title={title}
+              className="w-full h-full"
+              style={{ border: 'none' }}
+            />
+          </object>
         </div>
 
         {/* Watermark overlay - covers the entire document area */}
@@ -160,7 +167,7 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='rgba(128,128,128,0.08)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-35 200 150)'%3E${encodeURIComponent(watermarkText)}%3C/text%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='20' font-weight='bold' fill='rgba(180,160,100,0.12)' text-anchor='middle' dominant-baseline='middle' transform='rotate(-35 200 150)'%3E${encodeURIComponent(watermarkText)}%3C/text%3E%3C/svg%3E")`,
               backgroundRepeat: 'repeat',
             }}
           />
@@ -182,7 +189,7 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
           Este documento é confidencial. Cópia, impressão e captura de ecrã estão desativadas.
         </span>
         <span className="text-zinc-600 text-xs">
-          Visualizado por: {watermarkText}
+          Visualizado por: {userName || 'KBEX User'} | KBEX.io
         </span>
       </div>
     </div>
