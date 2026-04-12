@@ -1147,6 +1147,7 @@ async def create_transparency_report(
     summary: str,
     auditor: Optional[str] = None,
     file_url: Optional[str] = None,
+    report_date: Optional[str] = None,
     admin: dict = Depends(get_admin_user)
 ):
     """Create a transparency/audit report"""
@@ -1157,7 +1158,7 @@ async def create_transparency_report(
         "summary": summary,
         "auditor": auditor,
         "file_url": file_url,
-        "report_date": datetime.now(timezone.utc).isoformat(),
+        "report_date": report_date or datetime.now(timezone.utc).isoformat(),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     

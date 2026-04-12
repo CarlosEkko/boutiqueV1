@@ -44,6 +44,7 @@ const AdminTransparency = () => {
     type: 'audit',
     summary: '',
     auditor: '',
+    report_date: new Date().toISOString().split('T')[0],
     file_url: ''
   });
 
@@ -111,6 +112,7 @@ const AdminTransparency = () => {
         type: 'audit',
         summary: '',
         auditor: '',
+        report_date: new Date().toISOString().split('T')[0],
         file_url: ''
       });
       fetchData();
@@ -447,6 +449,18 @@ const AdminTransparency = () => {
                       onChange={(e) => setReportForm({...reportForm, auditor: e.target.value})}
                       placeholder="e.g., Deloitte"
                       className="bg-zinc-800 border-gold-800/30 text-white mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-gray-300">Data do Relatório</Label>
+                    <Input
+                      type="date"
+                      value={reportForm.report_date}
+                      onChange={(e) => setReportForm({...reportForm, report_date: e.target.value})}
+                      required
+                      className="bg-zinc-800 border-gold-800/30 text-white mt-1"
+                      data-testid="report-date-input"
                     />
                   </div>
 
