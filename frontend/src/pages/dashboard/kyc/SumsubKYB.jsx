@@ -198,7 +198,7 @@ const SumsubKYB = () => {
   }, [user, companyInfo.company_name]);
 
   const handleMessage = useCallback((type, payload) => {
-    console.log('Sumsub KYB message:', type, payload);
+    // Sumsub KYB message handled
     switch (type) {
       case 'idCheck.onApplicantStatusChanged':
         if (payload?.reviewResult?.reviewAnswer === 'GREEN') {

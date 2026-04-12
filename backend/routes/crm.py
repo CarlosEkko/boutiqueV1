@@ -158,9 +158,14 @@ def get_user_id(current_user):
         return current_user.get("id") or current_user.get("user_id")
     return None
 
+_db = None
+
+def set_db(database):
+    global _db
+    _db = database
+
 def get_db():
-    from server import db
-    return db
+    return _db
 
 
 async def get_team_filter(current_user) -> dict:
@@ -533,7 +538,7 @@ async def send_registration_email(lead_id: str, current_user: dict = Depends(get
                 "registration_email_sent": True,
                 "registration_email_sent_at": datetime.now(timezone.utc).isoformat(),
                 "notes_history": lead.get("notes_history", []) + [{
-                    "note": f"Utilizador já registado. Email de onboarding reenviado.",
+                    "note": "Utilizador já registado. Email de onboarding reenviado.",
                     "created_at": datetime.now(timezone.utc).isoformat(),
                 }],
                 "updated_at": datetime.now(timezone.utc)
@@ -1128,7 +1133,6 @@ async def get_deal_stages():
 @router.get("/enums/task-priorities")
 async def get_task_priorities():
     """Get task priority options"""
-    from models.crm import TaskPriority
     labels = {
         "low": "Baixa",
         "medium": "Média",
@@ -1819,7 +1823,7 @@ async def get_advanced_crm_dashboard(
                     overdue_count += 1
                 elif hasattr(due_date, 'isoformat') and due_date < now:
                     overdue_count += 1
-            except:
+            except Exception:
                 pass
     
     compliance_stats = {

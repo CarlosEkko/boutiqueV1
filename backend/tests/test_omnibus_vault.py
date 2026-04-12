@@ -1,3 +1,4 @@
+import os
 """
 Omnibus Vault API Tests
 Tests for the Omnibus Vault structure for OTC/Multi-Sign clients.
@@ -17,7 +18,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials from test_credentials.md
 ADMIN_EMAIL = "carlos@kbex.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 
 class TestOmnibusVaultAPI:

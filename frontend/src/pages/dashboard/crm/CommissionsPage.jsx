@@ -130,7 +130,7 @@ const CommissionsPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {summary.brokers?.map((b, i) => (
-                <div key={i} className="p-3 bg-zinc-950 rounded-lg border border-zinc-800 space-y-2">
+                <div key={b.name || i} className="p-3 bg-zinc-950 rounded-lg border border-zinc-800 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-medium">{b.name}</span>
                     {b.role?.includes('Externo') && <Badge className="bg-zinc-800 text-zinc-500 text-[10px]">Externo</Badge>}

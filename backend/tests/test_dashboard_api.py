@@ -1,3 +1,4 @@
+import os
 """
 Backend API Tests for Kryptobox Dashboard System
 Tests: Dashboard Overview, Wallets, Transactions, Investments, ROI, Transparency
@@ -13,11 +14,11 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials from main agent
 APPROVED_USER_EMAIL = "joao@teste.com"
-APPROVED_USER_PASSWORD = "senha123"
+APPROVED_USER_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 # New user for testing non-approved flow
 NEW_USER_EMAIL = f"novo_test_{uuid.uuid4().hex[:8]}@teste.com"
-NEW_USER_PASSWORD = "senha123"
+NEW_USER_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 NEW_USER_NAME = "Novo User Test"
 
 # Store tokens

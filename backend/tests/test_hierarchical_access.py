@@ -1,3 +1,4 @@
+import os
 """
 Test Hierarchical Access Control for KBEX Exchange
 Tests the new region-based filtering for OTC leads, deals, pipeline, dashboard, and notifications.
@@ -13,7 +14,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "carlos@kryptobox.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 
 class TestAdminLogin:

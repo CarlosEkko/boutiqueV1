@@ -1,3 +1,4 @@
+import os
 """
 Demo Mode Feature Tests
 Tests for the demo mode toggle functionality for KBEX.io platform.
@@ -20,7 +21,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Admin credentials from test_credentials.md
 ADMIN_EMAIL = "carlos@kbex.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 
 class TestDemoMode:

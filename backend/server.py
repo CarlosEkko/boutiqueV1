@@ -51,7 +51,7 @@ from routes.uploads import router as uploads_router, set_db as set_uploads_db
 from routes.crypto_wallets import router as crypto_wallets_router, set_db as set_crypto_wallets_db
 from routes.knowledge_base import router as kb_router, set_db as set_kb_db
 from routes.permissions import router as permissions_router, set_db as set_permissions_db
-from routes.crm import router as crm_router
+from routes.crm import router as crm_router, set_db as set_crm_db
 from routes.referrals import router as referrals_router, set_db as set_referrals_db
 from routes.otc import router as otc_router, set_db as set_otc_db
 from routes.bank_accounts import router as bank_accounts_router, set_db as set_bank_accounts_db
@@ -120,6 +120,7 @@ set_revolut_db(db)
 set_cold_wallet_db(db)
 set_launchpad_db(db)
 set_commercial_db(db)
+set_crm_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)

@@ -21,26 +21,25 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => {
     // Check if session is still valid on load
-    const stored = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
-    const ts = sessionStorage.getItem(SESSION_TIMESTAMP_KEY) || localStorage.getItem(SESSION_TIMESTAMP_KEY);
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    const ts = sessionStorage.getItem(SESSION_TIMESTAMP_KEY);
     if (stored && ts) {
       const elapsed = Date.now() - parseInt(ts, 10);
       if (elapsed > INACTIVITY_TIMEOUT) {
-        // Session expired - clear everything
         sessionStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_TIMESTAMP_KEY);
-        localStorage.removeItem(SESSION_KEY);
-        localStorage.removeItem(SESSION_TIMESTAMP_KEY);
         return null;
       }
       return stored;
     }
     // Migrate old localStorage token to sessionStorage
-    if (stored) {
-      sessionStorage.setItem(SESSION_KEY, stored);
+    const legacyStored = localStorage.getItem(SESSION_KEY);
+    if (legacyStored) {
+      sessionStorage.setItem(SESSION_KEY, legacyStored);
       sessionStorage.setItem(SESSION_TIMESTAMP_KEY, Date.now().toString());
       localStorage.removeItem(SESSION_KEY);
-      return stored;
+      localStorage.removeItem(SESSION_TIMESTAMP_KEY);
+      return legacyStored;
     }
     return null;
   });

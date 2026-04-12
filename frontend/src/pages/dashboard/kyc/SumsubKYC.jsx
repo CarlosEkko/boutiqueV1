@@ -121,7 +121,7 @@ const SumsubKYC = () => {
   }, [user]);
 
   const handleMessage = useCallback((type, payload) => {
-    console.log('Sumsub message:', type, payload);
+    // Sumsub message handled
     switch (type) {
       case 'idCheck.onApplicantStatusChanged':
         if (payload?.reviewResult?.reviewAnswer === 'GREEN') {
