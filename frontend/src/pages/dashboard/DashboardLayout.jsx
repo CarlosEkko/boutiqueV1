@@ -121,6 +121,7 @@ const departmentConfig = {
   escrow: { icon: Lock, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   cold_wallet: { icon: Shield, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   launchpad: { icon: Zap, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  commercial: { icon: BarChart3, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -232,6 +233,13 @@ const labelTranslationMap = {
   'Escrow': 'sidebar.escrow',
   'Deals': 'sidebar.escrowDeals',
   'Fee Revenue': 'sidebar.escrowFees',
+  // Commercial
+  'Gestão Comercial': 'sidebar.gestaoComercial',
+  'Vendedores': 'sidebar.vendedores',
+  'Equipas': 'sidebar.equipas',
+  'Metas': 'sidebar.metas',
+  'Produtos': 'sidebar.produtos',
+  'Negócios': 'sidebar.negocios',
   // Team Hub & Multi-Sign
   'Team Hub': 'sidebar.teamHub',
   'Multi-Sign': 'sidebar.multiSign',

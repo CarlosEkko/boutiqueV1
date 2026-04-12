@@ -40,6 +40,7 @@ class Department(str, Enum):
     ESCROW = "escrow"
     LAUNCHPAD = "launchpad"
     COLD_WALLET = "cold_wallet"
+    COMMERCIAL = "commercial"
 
 
 # Role to Department access mapping
@@ -61,7 +62,8 @@ ROLE_PERMISSIONS = {
         Department.TOKENIZATION,
         Department.ESCROW,
         Department.LAUNCHPAD,
-        Department.COLD_WALLET
+        Department.COLD_WALLET,
+        Department.COMMERCIAL
     ],
     StaffRole.GLOBAL_MANAGER: [
         Department.PORTFOLIO,
@@ -362,6 +364,18 @@ DEPARTMENT_MENUS = {
         "icon": "Rocket",
         "items": [
             {"path": "/dashboard/admin/launchpad", "label": "Gerir Token Sales", "icon": "Rocket"},
+        ]
+    },
+    Department.COMMERCIAL: {
+        "label": "Gestão Comercial",
+        "icon": "BarChart3",
+        "items": [
+            {"path": "/dashboard/commercial", "label": "Dashboard", "icon": "BarChart3"},
+            {"path": "/dashboard/commercial/sellers", "label": "Vendedores", "icon": "Users"},
+            {"path": "/dashboard/commercial/teams", "label": "Equipas", "icon": "Users"},
+            {"path": "/dashboard/commercial/goals", "label": "Metas", "icon": "Target"},
+            {"path": "/dashboard/commercial/products", "label": "Produtos", "icon": "Briefcase"},
+            {"path": "/dashboard/commercial/deals", "label": "Negócios", "icon": "Handshake"},
         ]
     },
 }
