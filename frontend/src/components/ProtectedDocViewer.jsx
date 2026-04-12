@@ -21,7 +21,6 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
   const [shielded, setShielded] = useState(false);
   const [error, setError] = useState(null);
   const canvasRefs = useRef([]);
-  const shieldTimer = useRef(null);
 
   const fullUrl = url.startsWith('http') ? url : API_URL + url;
 
@@ -61,10 +60,13 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     });
   }, [pages, zoom]);
 
-  const activateShield = useCallback((duration = 3000) => {
+  const activateShield = useCallback(() => {
     setShielded(true);
-    if (shieldTimer.current) clearTimeout(shieldTimer.current);
-    shieldTimer.current = setTimeout(() => setShielded(false), duration);
+    // Shield stays on until user manually dismisses it
+  }, []);
+
+  const dismissShield = useCallback(() => {
+    setShielded(false);
   }, []);
 
   // All protections
@@ -76,7 +78,7 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
       ) {
         e.preventDefault();
         e.stopPropagation();
-        if (e.key.toLowerCase() === 'p') activateShield(5000);
+        if (e.key.toLowerCase() === 'p') activateShield();
         return false;
       }
       // Block Ctrl/Cmd + Shift + I, J, S (dev tools, screenshot)
@@ -109,15 +111,15 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     const handleDrag = (e) => { e.preventDefault(); return false; };
 
     // Window blur = user switched away or screenshot tool activated
-    const handleWindowBlur = () => { activateShield(2000); };
+    const handleWindowBlur = () => { activateShield(); };
 
     // Visibility change
     const handleVisibilityChange = () => {
-      if (document.hidden) activateShield(3000);
+      if (document.hidden) activateShield();
     };
 
     // Block printing entirely
-    const handleBeforePrint = (e) => { e.preventDefault(); activateShield(5000); };
+    const handleBeforePrint = (e) => { e.preventDefault(); activateShield(); };
 
     document.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('contextmenu', handleContextMenu, true);
@@ -164,7 +166,7 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
       document.body.style.webkitUserSelect = '';
       const s = document.getElementById('kbex-print-block');
       if (s) s.remove();
-      if (shieldTimer.current) clearTimeout(shieldTimer.current);
+      if (shielded) return; // Don't remove listeners while shielded
     };
   }, [activateShield]);
 
@@ -213,6 +215,13 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
             <Shield className="text-gold-400 mx-auto mb-4" size={56} />
             <p className="text-white text-xl font-medium">Documento Protegido</p>
             <p className="text-gray-500 text-sm mt-2">Capturas de ecra e impressao nao sao permitidas.</p>
+            <button
+              onClick={dismissShield}
+              className="mt-6 px-6 py-2.5 bg-gold-600 hover:bg-gold-500 text-black text-sm font-medium rounded-lg transition-colors"
+              data-testid="dismiss-shield-btn"
+            >
+              Continuar a visualizar
+            </button>
             <p className="text-gold-600/50 text-xs mt-4">KBEX.io</p>
           </div>
         </div>
