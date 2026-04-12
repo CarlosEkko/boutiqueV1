@@ -692,3 +692,636 @@ async def _update_seller_goals(seller_id: str, volume: float, revenue: float):
                 "updated_at": now,
             }}
         )
+
+
+# ══════════════════════════════════════════════════════════════
+# FASE 2: SISTEMA DE COMISSÕES
+# ══════════════════════════════════════════════════════════════
+
+class CommissionTableCreate(BaseModel):
+    name: str
+    product_type: Optional[str] = None
+    region: Optional[str] = None
+    team_id: Optional[str] = None
+    seller_id: Optional[str] = None
+    client_type: Optional[str] = None  # retail, vip, institutional
+    commission_type: str = "pct_revenue"  # pct_revenue, pct_volume, fixed, staircase
+    rate: float = 0  # base rate (% or fixed)
+    staircase_tiers: Optional[List[Dict[str, Any]]] = None  # [{threshold, rate}]
+    is_active: bool = True
+
+class CommissionTableUpdate(BaseModel):
+    name: Optional[str] = None
+    rate: Optional[float] = None
+    commission_type: Optional[str] = None
+    staircase_tiers: Optional[List[Dict[str, Any]]] = None
+    is_active: Optional[bool] = None
+
+class CommissionRuleCreate(BaseModel):
+    name: str
+    rule_type: str  # bonus, accelerator, penalty, split, override
+    trigger_metric: Optional[str] = None  # volume, revenue, deals_count
+    trigger_threshold: Optional[float] = None  # e.g. 120% of goal
+    value: float = 0  # bonus amount or multiplier
+    value_type: str = "pct"  # pct, fixed
+    applies_to_role: Optional[str] = None  # seller, leader, all
+    split_leader_pct: Optional[float] = None
+    description: Optional[str] = None
+    is_active: bool = True
+
+class PaymentPeriodCreate(BaseModel):
+    period_label: str  # "Abril 2026", "Q1 2026"
+    start_date: str
+    end_date: str
+
+class CommissionSimulation(BaseModel):
+    seller_id: str
+    volume: float = 0
+    revenue: float = 0
+    deals_count: int = 0
+    product_type: Optional[str] = None
+
+
+# ─── Commission Tables CRUD ───────────────────────────────────
+
+@router.get("/commission-tables")
+async def list_commission_tables(user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    tables = []
+    async for t in db.commission_tables.find({}, {"_id": 0}).sort("name", 1):
+        tables.append(t)
+    return tables
+
+
+@router.post("/commission-tables")
+async def create_commission_table(table: CommissionTableCreate, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    doc = {
+        "id": str(uuid.uuid4()),
+        **table.dict(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": user_id,
+    }
+    await db.commission_tables.insert_one(doc)
+    # Audit log
+    await _log_audit(user_id, "commission_table_created", {"table_id": doc["id"], "name": table.name})
+    del doc["_id"]
+    return doc
+
+
+@router.put("/commission-tables/{table_id}")
+async def update_commission_table(table_id: str, update: CommissionTableUpdate, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    old = await db.commission_tables.find_one({"id": table_id}, {"_id": 0})
+    data = {k: v for k, v in update.dict().items() if v is not None}
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.commission_tables.update_one({"id": table_id}, {"$set": data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Table not found")
+    await _log_audit(user_id, "commission_table_updated", {"table_id": table_id, "changes": data, "previous": old})
+    return {"success": True}
+
+
+@router.delete("/commission-tables/{table_id}")
+async def delete_commission_table(table_id: str, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    await db.commission_tables.delete_one({"id": table_id})
+    await _log_audit(user_id, "commission_table_deleted", {"table_id": table_id})
+    return {"success": True}
+
+
+# ─── Commission Rules CRUD ────────────────────────────────────
+
+@router.get("/commission-rules")
+async def list_commission_rules(user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    rules = []
+    async for r in db.commission_rules.find({}, {"_id": 0}).sort("name", 1):
+        rules.append(r)
+    return rules
+
+
+@router.post("/commission-rules")
+async def create_commission_rule(rule: CommissionRuleCreate, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    doc = {
+        "id": str(uuid.uuid4()),
+        **rule.dict(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": user_id,
+    }
+    await db.commission_rules.insert_one(doc)
+    await _log_audit(user_id, "commission_rule_created", {"rule_id": doc["id"], "name": rule.name})
+    del doc["_id"]
+    return doc
+
+
+@router.put("/commission-rules/{rule_id}")
+async def update_commission_rule(rule_id: str, update: dict, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    update.pop("id", None)
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.commission_rules.update_one({"id": rule_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Rule not found")
+    return {"success": True}
+
+
+@router.delete("/commission-rules/{rule_id}")
+async def delete_commission_rule(rule_id: str, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    await db.commission_rules.delete_one({"id": rule_id})
+    return {"success": True}
+
+
+# ─── Commission Calculation Engine ────────────────────────────
+
+async def _find_best_table(seller_id: str, product_type: str = None, region: str = None, team_id: str = None) -> dict:
+    """Find the most specific commission table for a seller/deal context.
+    Priority: seller > team > region > product > global default"""
+    # Try seller-specific
+    t = await db.commission_tables.find_one({"seller_id": seller_id, "is_active": True}, {"_id": 0})
+    if t:
+        return t
+    # Try team-specific
+    if team_id:
+        t = await db.commission_tables.find_one({"team_id": team_id, "seller_id": None, "is_active": True}, {"_id": 0})
+        if t:
+            return t
+    # Try region
+    if region:
+        t = await db.commission_tables.find_one({"region": region, "team_id": None, "seller_id": None, "is_active": True}, {"_id": 0})
+        if t:
+            return t
+    # Try product type
+    if product_type:
+        t = await db.commission_tables.find_one({"product_type": product_type, "region": None, "team_id": None, "seller_id": None, "is_active": True}, {"_id": 0})
+        if t:
+            return t
+    # Global default
+    t = await db.commission_tables.find_one({"product_type": None, "region": None, "team_id": None, "seller_id": None, "is_active": True}, {"_id": 0})
+    return t
+
+
+def _calc_base_commission(table: dict, volume: float, revenue: float) -> float:
+    """Calculate base commission from a table"""
+    if not table:
+        return 0
+    ctype = table.get("commission_type", "pct_revenue")
+    rate = table.get("rate", 0)
+
+    if ctype == "pct_revenue":
+        return revenue * (rate / 100)
+    elif ctype == "pct_volume":
+        return volume * (rate / 100)
+    elif ctype == "fixed":
+        return rate
+    elif ctype == "staircase":
+        tiers = table.get("staircase_tiers") or []
+        # Sorted descending by threshold
+        tiers_sorted = sorted(tiers, key=lambda t: t.get("threshold", 0), reverse=True)
+        for tier in tiers_sorted:
+            if revenue >= tier.get("threshold", 0):
+                return revenue * (tier.get("rate", 0) / 100)
+        return 0
+    return 0
+
+
+async def _apply_rules(seller_id: str, base_commission: float, volume: float, revenue: float, deals_count: int) -> dict:
+    """Apply advanced rules (bonus, accelerators, penalties, splits)"""
+    bonuses = 0
+    penalties = 0
+    leader_split = 0
+    rule_details = []
+
+    rules = []
+    async for r in db.commission_rules.find({"is_active": True}, {"_id": 0}):
+        rules.append(r)
+
+    # Check seller goals for acceleration
+    now = datetime.now(timezone.utc).isoformat()
+    goals = []
+    async for g in db.commercial_goals.find({
+        "seller_id": seller_id,
+        "start_date": {"$lte": now},
+        "end_date": {"$gte": now}
+    }, {"_id": 0}):
+        goals.append(g)
+
+    goal_achievement_pct = 0
+    if goals:
+        # Use first active goal as reference
+        g = goals[0]
+        target = g.get("target_value", 1)
+        current = g.get("current_value", 0)
+        goal_achievement_pct = (current / target * 100) if target > 0 else 0
+
+    for rule in rules:
+        rtype = rule.get("rule_type")
+        threshold = rule.get("trigger_threshold", 0)
+        value = rule.get("value", 0)
+        vtype = rule.get("value_type", "pct")
+
+        if rtype == "bonus" and goal_achievement_pct >= (threshold or 100):
+            bonus = base_commission * (value / 100) if vtype == "pct" else value
+            bonuses += bonus
+            rule_details.append({"rule": rule["name"], "type": "bonus", "amount": bonus})
+
+        elif rtype == "accelerator" and goal_achievement_pct >= (threshold or 120):
+            accel = base_commission * (value / 100) if vtype == "pct" else value
+            bonuses += accel
+            rule_details.append({"rule": rule["name"], "type": "accelerator", "amount": accel})
+
+        elif rtype == "penalty" and goal_achievement_pct < (threshold or 50):
+            pen = base_commission * (value / 100) if vtype == "pct" else value
+            penalties += pen
+            rule_details.append({"rule": rule["name"], "type": "penalty", "amount": -pen})
+
+        elif rtype == "split":
+            split_pct = rule.get("split_leader_pct", 10)
+            leader_split = base_commission * (split_pct / 100)
+            rule_details.append({"rule": rule["name"], "type": "split", "leader_amount": leader_split})
+
+    return {
+        "bonuses": bonuses,
+        "penalties": penalties,
+        "leader_split": leader_split,
+        "rule_details": rule_details,
+        "goal_achievement_pct": round(goal_achievement_pct, 1),
+    }
+
+
+@router.post("/commissions/calculate")
+async def calculate_commissions_for_period(
+    period: PaymentPeriodCreate,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Calculate commissions for all sellers in a given period"""
+    await require_admin_or_manager(user_id)
+
+    # Get all deals in period
+    deals = []
+    async for d in db.commercial_deals.find({
+        "created_at": {"$gte": period.start_date, "$lte": period.end_date}
+    }, {"_id": 0}):
+        deals.append(d)
+
+    # Also fetch settled OTC deals
+    async for d in db.otc_deals.find({
+        "created_at": {"$gte": period.start_date, "$lte": period.end_date},
+        "status": {"$in": ["settled", "closed"]}
+    }, {"_id": 0}):
+        deals.append({
+            "seller_id": d.get("broker_id") or d.get("member_id"),
+            "volume": (d.get("quantity", 0) * d.get("reference_price", 0)),
+            "revenue": d.get("commission_total", 0) or d.get("broker_commission", 0) + d.get("member_commission", 0),
+            "product_type": "otc",
+            "region": d.get("region"),
+            "team_id": d.get("team_id"),
+            "client_name": d.get("client_name", ""),
+            "created_at": d.get("created_at"),
+            "otc_deal_id": d.get("id"),
+        })
+
+    # Group deals by seller
+    seller_deals = {}
+    for d in deals:
+        sid = d.get("seller_id")
+        if not sid:
+            continue
+        if sid not in seller_deals:
+            seller_deals[sid] = {"volume": 0, "revenue": 0, "deals_count": 0, "deals": []}
+        seller_deals[sid]["volume"] += d.get("volume", 0)
+        seller_deals[sid]["revenue"] += d.get("revenue", 0)
+        seller_deals[sid]["deals_count"] += 1
+        seller_deals[sid]["deals"].append(d)
+
+    # Calculate commissions for each seller
+    results = []
+    payment_id = str(uuid.uuid4())
+
+    for sid, data in seller_deals.items():
+        seller = await db.users.find_one({"id": sid}, {"_id": 0, "id": 1, "name": 1, "email": 1, "region": 1})
+        if not seller:
+            continue
+
+        table = await _find_best_table(sid, "otc", seller.get("region"))
+        base = _calc_base_commission(table, data["volume"], data["revenue"])
+        rules_result = await _apply_rules(sid, base, data["volume"], data["revenue"], data["deals_count"])
+
+        total = base + rules_result["bonuses"] - rules_result["penalties"] - rules_result["leader_split"]
+
+        commission_record = {
+            "id": str(uuid.uuid4()),
+            "payment_id": payment_id,
+            "period_label": period.period_label,
+            "start_date": period.start_date,
+            "end_date": period.end_date,
+            "seller_id": sid,
+            "seller_name": seller.get("name"),
+            "seller_email": seller.get("email"),
+            "region": seller.get("region"),
+            "volume": data["volume"],
+            "revenue": data["revenue"],
+            "deals_count": data["deals_count"],
+            "table_used": table.get("name") if table else "Sem tabela",
+            "base_commission": round(base, 2),
+            "bonuses": round(rules_result["bonuses"], 2),
+            "penalties": round(rules_result["penalties"], 2),
+            "leader_split": round(rules_result["leader_split"], 2),
+            "total_commission": round(max(total, 0), 2),
+            "rule_details": rules_result["rule_details"],
+            "goal_achievement_pct": rules_result["goal_achievement_pct"],
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_by": user_id,
+        }
+        await db.commercial_commissions.insert_one(commission_record)
+        del commission_record["_id"]
+        results.append(commission_record)
+
+    await _log_audit(user_id, "commissions_calculated", {
+        "payment_id": payment_id, "period": period.period_label, "sellers": len(results)
+    })
+
+    return {"payment_id": payment_id, "period": period.period_label, "commissions": results}
+
+
+@router.post("/commissions/simulate")
+async def simulate_commission(sim: CommissionSimulation, user_id: str = Depends(get_current_user_id)):
+    """Simulate commission for a seller before finalizing"""
+    await require_admin_or_manager(user_id)
+
+    seller = await db.users.find_one({"id": sim.seller_id}, {"_id": 0, "id": 1, "name": 1, "region": 1})
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    table = await _find_best_table(sim.seller_id, sim.product_type, seller.get("region"))
+    base = _calc_base_commission(table, sim.volume, sim.revenue)
+    rules_result = await _apply_rules(sim.seller_id, base, sim.volume, sim.revenue, sim.deals_count)
+    total = base + rules_result["bonuses"] - rules_result["penalties"] - rules_result["leader_split"]
+
+    return {
+        "seller": seller,
+        "table_used": table.get("name") if table else "Sem tabela",
+        "base_commission": round(base, 2),
+        "bonuses": round(rules_result["bonuses"], 2),
+        "penalties": round(rules_result["penalties"], 2),
+        "leader_split": round(rules_result["leader_split"], 2),
+        "total_commission": round(max(total, 0), 2),
+        "rule_details": rules_result["rule_details"],
+        "goal_achievement_pct": rules_result["goal_achievement_pct"],
+    }
+
+
+@router.get("/commissions/payments")
+async def list_commission_payments(
+    status: Optional[str] = None,
+    user_id: str = Depends(get_current_user_id)
+):
+    """List all calculated commissions grouped by period"""
+    await require_admin_or_manager(user_id)
+    query = {}
+    if status:
+        query["status"] = status
+    commissions = []
+    async for c in db.commercial_commissions.find(query, {"_id": 0}).sort("created_at", -1).limit(500):
+        commissions.append(c)
+    return commissions
+
+
+@router.put("/commissions/payments/{commission_id}/approve")
+async def approve_commission(commission_id: str, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    result = await db.commercial_commissions.update_one(
+        {"id": commission_id, "status": "pending"},
+        {"$set": {"status": "approved", "approved_by": user_id, "approved_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Commission not found or already processed")
+    await _log_audit(user_id, "commission_approved", {"commission_id": commission_id})
+    return {"success": True}
+
+
+@router.put("/commissions/payments/{commission_id}/pay")
+async def mark_commission_paid(commission_id: str, user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    result = await db.commercial_commissions.update_one(
+        {"id": commission_id, "status": "approved"},
+        {"$set": {"status": "paid", "paid_at": datetime.now(timezone.utc).isoformat(), "paid_by": user_id}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Commission not found or not approved")
+    await _log_audit(user_id, "commission_paid", {"commission_id": commission_id})
+    return {"success": True}
+
+
+@router.put("/commissions/payments/{commission_id}/reject")
+async def reject_commission(commission_id: str, reason: str = "", user_id: str = Depends(get_current_user_id)):
+    await require_admin_or_manager(user_id)
+    result = await db.commercial_commissions.update_one(
+        {"id": commission_id},
+        {"$set": {"status": "rejected", "rejected_by": user_id, "reject_reason": reason, "rejected_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Commission not found")
+    return {"success": True}
+
+
+@router.get("/commissions/history")
+async def commission_payment_history(
+    seller_id: Optional[str] = None,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Full payment history"""
+    await require_admin_or_manager(user_id)
+    query = {"status": "paid"}
+    if seller_id:
+        query["seller_id"] = seller_id
+    history = []
+    async for c in db.commercial_commissions.find(query, {"_id": 0}).sort("paid_at", -1).limit(200):
+        history.append(c)
+    return history
+
+
+# ══════════════════════════════════════════════════════════════
+# FASE 3: RELATÓRIOS E AUDITORIA
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/reports/commissions")
+async def report_commissions(
+    start_date: str,
+    end_date: str,
+    format: str = "json",
+    user_id: str = Depends(get_current_user_id)
+):
+    """Commissions report by period - supports JSON, CSV"""
+    await require_admin_or_manager(user_id)
+
+    commissions = []
+    async for c in db.commercial_commissions.find({
+        "start_date": {"$gte": start_date},
+        "end_date": {"$lte": end_date}
+    }, {"_id": 0}).sort("seller_name", 1):
+        commissions.append(c)
+
+    if format == "csv":
+        from fastapi.responses import StreamingResponse
+        import io, csv
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Vendedor", "Email", "Regiao", "Periodo", "Volume", "Receita", "Negocios",
+                         "Tabela", "Base", "Bonus", "Penalidade", "Split Lider", "Total", "Estado"])
+        for c in commissions:
+            writer.writerow([
+                c.get("seller_name"), c.get("seller_email"), c.get("region"), c.get("period_label"),
+                c.get("volume", 0), c.get("revenue", 0), c.get("deals_count", 0),
+                c.get("table_used"), c.get("base_commission", 0), c.get("bonuses", 0),
+                c.get("penalties", 0), c.get("leader_split", 0), c.get("total_commission", 0), c.get("status")
+            ])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=comissoes_{start_date}_{end_date}.csv"}
+        )
+
+    return {"commissions": commissions, "total": len(commissions)}
+
+
+@router.get("/reports/performance")
+async def report_performance(
+    start_date: str,
+    end_date: str,
+    group_by: str = "seller",
+    format: str = "json",
+    user_id: str = Depends(get_current_user_id)
+):
+    """Performance report - by seller, product, or region"""
+    await require_admin_or_manager(user_id)
+
+    group_field = f"${group_by}_id" if group_by == "seller" else f"${group_by}" if group_by in ["region", "product_type"] else "$seller_id"
+
+    pipeline = [
+        {"$match": {"created_at": {"$gte": start_date, "$lte": end_date}}},
+        {"$group": {
+            "_id": group_field,
+            "total_volume": {"$sum": "$volume"},
+            "total_revenue": {"$sum": "$revenue"},
+            "deal_count": {"$sum": 1},
+            "clients": {"$addToSet": "$client_name"},
+        }},
+        {"$sort": {"total_volume": -1}}
+    ]
+
+    rows = []
+    async for doc in db.commercial_deals.aggregate(pipeline):
+        entry = {
+            "group": doc["_id"],
+            "total_volume": doc.get("total_volume", 0),
+            "total_revenue": doc.get("total_revenue", 0),
+            "deal_count": doc.get("deal_count", 0),
+            "client_count": len(doc.get("clients", [])),
+        }
+        if group_by == "seller":
+            seller = await db.users.find_one({"id": doc["_id"]}, {"_id": 0, "name": 1, "email": 1, "region": 1})
+            if seller:
+                entry["name"] = seller.get("name")
+                entry["email"] = seller.get("email")
+                entry["region"] = seller.get("region")
+        rows.append(entry)
+
+    if format == "csv":
+        from fastapi.responses import StreamingResponse
+        import io, csv
+        output = io.StringIO()
+        writer = csv.writer(output)
+        if group_by == "seller":
+            writer.writerow(["Vendedor", "Email", "Regiao", "Volume", "Receita", "Negocios", "Clientes"])
+            for r in rows:
+                writer.writerow([r.get("name"), r.get("email"), r.get("region"), r["total_volume"], r["total_revenue"], r["deal_count"], r["client_count"]])
+        else:
+            writer.writerow([group_by.capitalize(), "Volume", "Receita", "Negocios", "Clientes"])
+            for r in rows:
+                writer.writerow([r["group"], r["total_volume"], r["total_revenue"], r["deal_count"], r["client_count"]])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=performance_{group_by}_{start_date}_{end_date}.csv"}
+        )
+
+    return {"group_by": group_by, "rows": rows}
+
+
+@router.get("/reports/deals-audit")
+async def report_deals_audit(
+    start_date: str,
+    end_date: str,
+    seller_id: Optional[str] = None,
+    format: str = "json",
+    user_id: str = Depends(get_current_user_id)
+):
+    """Audit report of all deals in period"""
+    await require_admin_or_manager(user_id)
+
+    query = {"created_at": {"$gte": start_date, "$lte": end_date}}
+    if seller_id:
+        query["seller_id"] = seller_id
+
+    deals = []
+    async for d in db.commercial_deals.find(query, {"_id": 0}).sort("created_at", -1):
+        deals.append(d)
+
+    if format == "csv":
+        from fastapi.responses import StreamingResponse
+        import io, csv
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID", "Data", "Cliente", "Produto", "Asset", "Volume", "Receita", "Vendedor", "Regiao", "Equipa"])
+        for d in deals:
+            writer.writerow([
+                d.get("id"), d.get("created_at"), d.get("client_name"), d.get("product_type"),
+                d.get("asset"), d.get("volume", 0), d.get("revenue", 0),
+                d.get("seller_id"), d.get("region"), d.get("team_id")
+            ])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=audit_deals_{start_date}_{end_date}.csv"}
+        )
+
+    return {"deals": deals, "total": len(deals)}
+
+
+# ─── Audit Log ────────────────────────────────────────────────
+
+@router.get("/audit-log")
+async def get_audit_log(
+    action: Optional[str] = None,
+    limit: int = 100,
+    user_id: str = Depends(get_current_user_id)
+):
+    """View audit log of commercial module actions"""
+    await require_admin_or_manager(user_id)
+    query = {}
+    if action:
+        query["action"] = action
+    logs = []
+    async for l in db.commercial_audit_log.find(query, {"_id": 0}).sort("timestamp", -1).limit(limit):
+        logs.append(l)
+    return logs
+
+
+async def _log_audit(user_id: str, action: str, details: dict = None):
+    """Write an immutable audit log entry"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "email": 1})
+    await db.commercial_audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "user_name": user.get("name") if user else "Unknown",
+        "action": action,
+        "details": details or {},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })

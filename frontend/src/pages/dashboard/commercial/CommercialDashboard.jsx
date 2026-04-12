@@ -9,7 +9,7 @@ import { Label } from '../../../components/ui/label';
 import {
   BarChart3, Users, Target, TrendingUp, DollarSign, Briefcase,
   ArrowUpRight, ArrowDownRight, Award, Plus, X, Loader2,
-  ChevronRight, Handshake, UserPlus, Globe
+  ChevronRight, Handshake, UserPlus, Globe, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -352,6 +352,388 @@ const GoalsTab = ({ token }) => {
   );
 };
 
+// ─── Commissions Tab ─────────────────────────────────────────
+const CommissionsTab = ({ token }) => {
+  const [tables, setTables] = useState([]);
+  const [rules, setRules] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showTableForm, setShowTableForm] = useState(false);
+  const [showRuleForm, setShowRuleForm] = useState(false);
+  const [showCalcForm, setShowCalcForm] = useState(false);
+  const [tableForm, setTableForm] = useState({ name: '', commission_type: 'pct_revenue', rate: '' });
+  const [ruleForm, setRuleForm] = useState({ name: '', rule_type: 'bonus', trigger_threshold: '', value: '', value_type: 'pct', split_leader_pct: '' });
+  const [calcForm, setCalcForm] = useState({ period_label: '', start_date: '', end_date: '' });
+  const [subTab, setSubTab] = useState('tables');
+
+  const fetchAll = async () => {
+    try {
+      const [tRes, rRes, pRes] = await Promise.all([
+        axios.get(`${API_URL}/api/commercial/commission-tables`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/commercial/commission-rules`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/commercial/commissions/payments`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setTables(tRes.data);
+      setRules(rRes.data);
+      setPayments(pRes.data);
+    } catch { /* silent */ }
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAll(); }, [token]);
+
+  const createTable = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/api/commercial/commission-tables`, { ...tableForm, rate: parseFloat(tableForm.rate) }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Tabela criada');
+      setShowTableForm(false);
+      setTableForm({ name: '', commission_type: 'pct_revenue', rate: '' });
+      fetchAll();
+    } catch { toast.error('Erro'); }
+  };
+
+  const createRule = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_URL}/api/commercial/commission-rules`, {
+        ...ruleForm,
+        trigger_threshold: ruleForm.trigger_threshold ? parseFloat(ruleForm.trigger_threshold) : null,
+        value: parseFloat(ruleForm.value),
+        split_leader_pct: ruleForm.split_leader_pct ? parseFloat(ruleForm.split_leader_pct) : null,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Regra criada');
+      setShowRuleForm(false);
+      fetchAll();
+    } catch { toast.error('Erro'); }
+  };
+
+  const calculateCommissions = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${API_URL}/api/commercial/commissions/calculate`, calcForm, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`Comissoes calculadas: ${res.data.commissions?.length || 0} vendedores`);
+      setShowCalcForm(false);
+      fetchAll();
+    } catch { toast.error('Erro ao calcular'); }
+  };
+
+  const updatePaymentStatus = async (id, action) => {
+    try {
+      await axios.put(`${API_URL}/api/commercial/commissions/payments/${id}/${action}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`Comissao ${action === 'approve' ? 'aprovada' : action === 'pay' ? 'paga' : 'rejeitada'}`);
+      fetchAll();
+    } catch (err) { toast.error(err.response?.data?.detail || 'Erro'); }
+  };
+
+  if (loading) return <div className="text-gray-400 text-center py-12">A carregar...</div>;
+
+  return (
+    <div className="space-y-4">
+      {/* Sub-tabs */}
+      <div className="flex gap-2">
+        {[
+          { key: 'tables', label: 'Tabelas' },
+          { key: 'rules', label: 'Regras' },
+          { key: 'payments', label: `Pagamentos (${payments.length})` },
+        ].map(st => (
+          <button key={st.key} onClick={() => setSubTab(st.key)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${subTab === st.key ? 'bg-zinc-800 text-white' : 'text-gray-500 hover:text-white'}`}>
+            {st.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tables Sub-tab */}
+      {subTab === 'tables' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-white font-medium">Tabelas de Comissao</h3>
+            <Button size="sm" onClick={() => setShowTableForm(!showTableForm)} className="bg-gold-600 hover:bg-gold-500 text-black gap-2 h-8">
+              {showTableForm ? <X size={14} /> : <Plus size={14} />} {showTableForm ? 'Cancelar' : 'Nova Tabela'}
+            </Button>
+          </div>
+          {showTableForm && (
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-4">
+                <form onSubmit={createTable} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div><Label className="text-gray-400 text-xs">Nome</Label><Input value={tableForm.name} onChange={e => setTableForm({...tableForm, name: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="OTC Europa" /></div>
+                  <div><Label className="text-gray-400 text-xs">Tipo</Label>
+                    <select value={tableForm.commission_type} onChange={e => setTableForm({...tableForm, commission_type: e.target.value})} className="w-full h-10 px-3 bg-zinc-800 border border-zinc-700 text-white rounded-md mt-1 text-sm">
+                      <option value="pct_revenue">% Receita</option><option value="pct_volume">% Volume</option><option value="fixed">Fixa</option><option value="staircase">Escalonada</option>
+                    </select>
+                  </div>
+                  <div><Label className="text-gray-400 text-xs">Taxa (%)</Label><Input type="number" step="0.01" value={tableForm.rate} onChange={e => setTableForm({...tableForm, rate: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" /></div>
+                  <div className="flex items-end"><Button type="submit" className="bg-gold-600 hover:bg-gold-500 text-black w-full">Criar</Button></div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <div className="space-y-2">
+            {tables.map(t => (
+              <div key={t.id} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">{t.name}</p>
+                  <p className="text-gray-500 text-xs">{t.commission_type} | {t.rate}% {t.region ? `| ${t.region}` : ''} {t.product_type ? `| ${t.product_type}` : ''}</p>
+                </div>
+                <Badge className={`border-0 text-xs ${t.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>{t.is_active ? 'Ativa' : 'Inativa'}</Badge>
+              </div>
+            ))}
+            {tables.length === 0 && <div className="text-center py-8 text-gray-500">Nenhuma tabela configurada</div>}
+          </div>
+        </div>
+      )}
+
+      {/* Rules Sub-tab */}
+      {subTab === 'rules' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-white font-medium">Regras Avancadas</h3>
+            <Button size="sm" onClick={() => setShowRuleForm(!showRuleForm)} className="bg-gold-600 hover:bg-gold-500 text-black gap-2 h-8">
+              {showRuleForm ? <X size={14} /> : <Plus size={14} />} {showRuleForm ? 'Cancelar' : 'Nova Regra'}
+            </Button>
+          </div>
+          {showRuleForm && (
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-4">
+                <form onSubmit={createRule} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div><Label className="text-gray-400 text-xs">Nome</Label><Input value={ruleForm.name} onChange={e => setRuleForm({...ruleForm, name: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="Bonus Meta 100%" /></div>
+                  <div><Label className="text-gray-400 text-xs">Tipo</Label>
+                    <select value={ruleForm.rule_type} onChange={e => setRuleForm({...ruleForm, rule_type: e.target.value})} className="w-full h-10 px-3 bg-zinc-800 border border-zinc-700 text-white rounded-md mt-1 text-sm">
+                      <option value="bonus">Bonus</option><option value="accelerator">Acelerador</option><option value="penalty">Penalizacao</option><option value="split">Split Lider</option>
+                    </select>
+                  </div>
+                  <div><Label className="text-gray-400 text-xs">Threshold (%)</Label><Input type="number" value={ruleForm.trigger_threshold} onChange={e => setRuleForm({...ruleForm, trigger_threshold: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="100" /></div>
+                  <div><Label className="text-gray-400 text-xs">Valor (%)</Label><Input type="number" step="0.01" value={ruleForm.value} onChange={e => setRuleForm({...ruleForm, value: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" /></div>
+                  {ruleForm.rule_type === 'split' && (
+                    <div><Label className="text-gray-400 text-xs">Split Lider (%)</Label><Input type="number" value={ruleForm.split_leader_pct} onChange={e => setRuleForm({...ruleForm, split_leader_pct: e.target.value})} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="10" /></div>
+                  )}
+                  <div className="flex items-end"><Button type="submit" className="bg-gold-600 hover:bg-gold-500 text-black w-full">Criar</Button></div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <div className="space-y-2">
+            {rules.map(r => (
+              <div key={r.id} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">{r.name}</p>
+                  <p className="text-gray-500 text-xs">{r.rule_type} | Threshold: {r.trigger_threshold || '-'}% | Valor: {r.value}%</p>
+                </div>
+                <Badge className={`border-0 text-xs ${
+                  r.rule_type === 'bonus' ? 'bg-emerald-500/10 text-emerald-400' :
+                  r.rule_type === 'accelerator' ? 'bg-blue-500/10 text-blue-400' :
+                  r.rule_type === 'penalty' ? 'bg-red-500/10 text-red-400' :
+                  'bg-gold-500/10 text-gold-400'
+                }`}>{r.rule_type}</Badge>
+              </div>
+            ))}
+            {rules.length === 0 && <div className="text-center py-8 text-gray-500">Nenhuma regra configurada</div>}
+          </div>
+        </div>
+      )}
+
+      {/* Payments Sub-tab */}
+      {subTab === 'payments' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-white font-medium">Calculo e Pagamento</h3>
+            <Button size="sm" onClick={() => setShowCalcForm(!showCalcForm)} className="bg-gold-600 hover:bg-gold-500 text-black gap-2 h-8">
+              {showCalcForm ? <X size={14} /> : <DollarSign size={14} />} {showCalcForm ? 'Cancelar' : 'Calcular Periodo'}
+            </Button>
+          </div>
+          {showCalcForm && (
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-4">
+                <form onSubmit={calculateCommissions} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div><Label className="text-gray-400 text-xs">Periodo</Label><Input value={calcForm.period_label} onChange={e => setCalcForm({...calcForm, period_label: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="Abril 2026" /></div>
+                  <div><Label className="text-gray-400 text-xs">Data Inicio</Label><Input type="date" value={calcForm.start_date} onChange={e => setCalcForm({...calcForm, start_date: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" /></div>
+                  <div><Label className="text-gray-400 text-xs">Data Fim</Label><Input type="date" value={calcForm.end_date} onChange={e => setCalcForm({...calcForm, end_date: e.target.value})} required className="bg-zinc-800 border-zinc-700 text-white mt-1" /></div>
+                  <div className="flex items-end"><Button type="submit" className="bg-gold-600 hover:bg-gold-500 text-black w-full">Calcular</Button></div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-12 gap-2 px-5 py-3 bg-zinc-800/30 text-gray-500 text-[11px] uppercase tracking-wider">
+              <div className="col-span-2">Vendedor</div>
+              <div className="col-span-1">Periodo</div>
+              <div className="col-span-1">Volume</div>
+              <div className="col-span-1">Receita</div>
+              <div className="col-span-1">Base</div>
+              <div className="col-span-1">Bonus</div>
+              <div className="col-span-1">Total</div>
+              <div className="col-span-1">Meta</div>
+              <div className="col-span-1">Estado</div>
+              <div className="col-span-2">Acoes</div>
+            </div>
+            {payments.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">Nenhuma comissao calculada</div>
+            ) : payments.map((p, i) => (
+              <div key={p.id} className={`grid grid-cols-12 gap-2 px-5 py-3 items-center text-sm ${i > 0 ? 'border-t border-zinc-800/50' : ''}`}>
+                <div className="col-span-2 text-white truncate">{p.seller_name}</div>
+                <div className="col-span-1 text-gray-400 text-xs">{p.period_label}</div>
+                <div className="col-span-1 text-gray-400 font-mono text-xs">{formatCurrency(p.volume)}</div>
+                <div className="col-span-1 text-gray-400 font-mono text-xs">{formatCurrency(p.revenue)}</div>
+                <div className="col-span-1 text-white font-mono text-xs">{formatCurrency(p.base_commission)}</div>
+                <div className="col-span-1 text-emerald-400 font-mono text-xs">+{formatCurrency(p.bonuses)}</div>
+                <div className="col-span-1 text-gold-400 font-mono text-xs font-bold">{formatCurrency(p.total_commission)}</div>
+                <div className="col-span-1 text-gray-400 text-xs">{p.goal_achievement_pct}%</div>
+                <div className="col-span-1">
+                  <Badge className={`border-0 text-[10px] ${
+                    p.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' :
+                    p.status === 'approved' ? 'bg-blue-500/10 text-blue-400' :
+                    p.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
+                    'bg-gold-500/10 text-gold-400'
+                  }`}>{p.status}</Badge>
+                </div>
+                <div className="col-span-2 flex gap-1">
+                  {p.status === 'pending' && (
+                    <>
+                      <button onClick={() => updatePaymentStatus(p.id, 'approve')} className="px-2 py-1 text-[10px] bg-emerald-500/10 text-emerald-400 rounded hover:bg-emerald-500/20">Aprovar</button>
+                      <button onClick={() => updatePaymentStatus(p.id, 'reject')} className="px-2 py-1 text-[10px] bg-red-500/10 text-red-400 rounded hover:bg-red-500/20">Rejeitar</button>
+                    </>
+                  )}
+                  {p.status === 'approved' && (
+                    <button onClick={() => updatePaymentStatus(p.id, 'pay')} className="px-2 py-1 text-[10px] bg-gold-500/10 text-gold-400 rounded hover:bg-gold-500/20">Marcar Pago</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Reports Tab ─────────────────────────────────────────────
+const ReportsTab = ({ token }) => {
+  const [reportType, setReportType] = useState('commissions');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [groupBy, setGroupBy] = useState('seller');
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchAudit = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/commercial/audit-log?limit=50`, { headers: { Authorization: `Bearer ${token}` } });
+        setAuditLogs(res.data);
+      } catch { /* silent */ }
+    };
+    fetchAudit();
+  }, [token]);
+
+  const generateReport = async (format = 'json') => {
+    if (!startDate || !endDate) { toast.error('Selecione as datas'); return; }
+    setLoading(true);
+    try {
+      if (format === 'csv') {
+        const url = reportType === 'commissions'
+          ? `${API_URL}/api/commercial/reports/commissions?start_date=${startDate}&end_date=${endDate}&format=csv`
+          : reportType === 'performance'
+          ? `${API_URL}/api/commercial/reports/performance?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}&format=csv`
+          : `${API_URL}/api/commercial/reports/deals-audit?start_date=${startDate}&end_date=${endDate}&format=csv`;
+        const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' });
+        const blob = new Blob([res.data], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `relatorio_${reportType}_${startDate}_${endDate}.csv`;
+        a.click();
+        toast.success('CSV exportado');
+      } else {
+        const url = reportType === 'commissions'
+          ? `${API_URL}/api/commercial/reports/commissions?start_date=${startDate}&end_date=${endDate}`
+          : reportType === 'performance'
+          ? `${API_URL}/api/commercial/reports/performance?start_date=${startDate}&end_date=${endDate}&group_by=${groupBy}`
+          : `${API_URL}/api/commercial/reports/deals-audit?start_date=${startDate}&end_date=${endDate}`;
+        const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        setReportData(res.data);
+      }
+    } catch { toast.error('Erro ao gerar relatorio'); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Report Generator */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
+        <CardContent className="p-5 space-y-4">
+          <h3 className="text-white font-medium">Gerar Relatorio</h3>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div>
+              <Label className="text-gray-400 text-xs">Tipo</Label>
+              <select value={reportType} onChange={e => setReportType(e.target.value)} className="w-full h-10 px-3 bg-zinc-800 border border-zinc-700 text-white rounded-md mt-1 text-sm">
+                <option value="commissions">Comissoes</option>
+                <option value="performance">Performance</option>
+                <option value="audit">Auditoria Negocios</option>
+              </select>
+            </div>
+            {reportType === 'performance' && (
+              <div>
+                <Label className="text-gray-400 text-xs">Agrupar por</Label>
+                <select value={groupBy} onChange={e => setGroupBy(e.target.value)} className="w-full h-10 px-3 bg-zinc-800 border border-zinc-700 text-white rounded-md mt-1 text-sm">
+                  <option value="seller">Vendedor</option><option value="product_type">Produto</option><option value="region">Regiao</option>
+                </select>
+              </div>
+            )}
+            <div>
+              <Label className="text-gray-400 text-xs">Data Inicio</Label>
+              <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+            <div>
+              <Label className="text-gray-400 text-xs">Data Fim</Label>
+              <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button onClick={() => generateReport('json')} disabled={loading} className="bg-zinc-700 hover:bg-zinc-600 text-white flex-1">
+                {loading ? <Loader2 size={14} className="animate-spin" /> : 'Ver'}
+              </Button>
+              <Button onClick={() => generateReport('csv')} disabled={loading} className="bg-gold-600 hover:bg-gold-500 text-black flex-1">CSV</Button>
+            </div>
+          </div>
+
+          {/* Report Results */}
+          {reportData && (
+            <div className="mt-4 bg-zinc-800/50 rounded-xl p-4 max-h-[400px] overflow-auto">
+              <p className="text-gray-400 text-xs mb-2">{reportData.total || reportData.rows?.length || reportData.commissions?.length || 0} resultados</p>
+              <pre className="text-gray-300 text-xs font-mono whitespace-pre-wrap">{JSON.stringify(reportData, null, 2)}</pre>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Audit Log */}
+      <div>
+        <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+          <Shield size={16} className="text-gold-400" /> Log de Auditoria
+        </h3>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-zinc-800/30 text-gray-500 text-xs uppercase tracking-wider">
+            <div className="col-span-2">Data</div>
+            <div className="col-span-2">Utilizador</div>
+            <div className="col-span-3">Acao</div>
+            <div className="col-span-5">Detalhes</div>
+          </div>
+          {auditLogs.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">Sem registos</div>
+          ) : auditLogs.map((l, i) => (
+            <div key={l.id} className={`grid grid-cols-12 gap-4 px-5 py-3 items-center text-sm ${i > 0 ? 'border-t border-zinc-800/50' : ''}`}>
+              <div className="col-span-2 text-gray-500 text-xs">{l.timestamp?.split('T')[0]} {l.timestamp?.split('T')[1]?.substring(0,5)}</div>
+              <div className="col-span-2 text-white text-xs">{l.user_name}</div>
+              <div className="col-span-3"><Badge className="bg-zinc-700 text-gray-300 border-0 text-[10px]">{l.action}</Badge></div>
+              <div className="col-span-5 text-gray-500 text-xs truncate">{JSON.stringify(l.details).substring(0, 80)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Dashboard ──────────────────────────────────────────
 const CommercialDashboard = () => {
   const { token } = useAuth();
@@ -387,6 +769,8 @@ const CommercialDashboard = () => {
     { key: 'sellers', label: 'Vendedores', icon: Users },
     { key: 'teams', label: 'Equipas', icon: Users },
     { key: 'goals', label: 'Metas', icon: Target },
+    { key: 'commissions', label: 'Comissoes', icon: DollarSign },
+    { key: 'reports', label: 'Relatorios', icon: Briefcase },
   ];
 
   return (
@@ -513,6 +897,8 @@ const CommercialDashboard = () => {
       {activeTab === 'sellers' && <SellersTab token={token} />}
       {activeTab === 'teams' && <TeamsTab token={token} />}
       {activeTab === 'goals' && <GoalsTab token={token} />}
+      {activeTab === 'commissions' && <CommissionsTab token={token} />}
+      {activeTab === 'reports' && <ReportsTab token={token} />}
     </div>
   );
 };

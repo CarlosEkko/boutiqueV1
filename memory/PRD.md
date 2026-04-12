@@ -53,7 +53,10 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 - **Cold Wallet Auto-Sync**: Ao conectar Trezor, deriva automaticamente BTC/ETH/LTC com delay 500ms entre chamadas
 - **PDF Viewer Protegido**: Renderização via canvas (pdfjs-dist), sem download, anti-screenshot (window.blur activa escudo permanente até clique), anti-print (CSS @media print), watermark "KBEX"
 - **Data Relatórios Auditoria**: Campo "Data do Relatório" adicionado ao formulário admin
-- **Módulo Gestão Comercial (Fase 1)**: Backend API completo (`routes/commercial.py`) com CRUD de equipas, vendedores, metas, produtos, deals. Dashboard frontend com KPIs, ranking vendedores, tabs (Dashboard/Vendedores/Equipas/Metas), filtro período
+- **Módulo Gestão Comercial Completo (Fases 1-3)**:
+  - Fase 1: Backend+Frontend para Vendedores, Equipas, Metas com progresso, KPIs, Rankings
+  - Fase 2: Tabelas de comissão configuráveis (% receita, % volume, fixa, escalonada), regras avançadas (bónus, acelerador, penalização, split líder), cálculo automático por período, simulação, aprovação/pagamento com workflow (pending→approved→paid)
+  - Fase 3: Relatórios exportáveis (CSV) para comissões, performance por vendedor/produto/região, auditoria de negócios. Log de auditoria imutável para todas as acções do módulo
 
 ### Session April 11, 2026
 - **Launchpad/ICO System**: Full implementation with public page (hero, stats, featured sale, countdown, progress bars, filter tabs), client dashboard (browse & subscribe, my subscriptions), and admin management (create/edit/delete sales, view/distribute/refund subscriptions)
@@ -71,8 +74,6 @@ KBEX.io is a premium Crypto Boutique Exchange for High-Net-Worth (HNW) / Ultra-H
 - Trezor Cold Wallet Send/Receive, Sumsub KYB, Demo mode updates, CRM lead routing
 
 ## Upcoming Tasks
-- P1: Gestão Comercial Fase 2 — Sistema de Comissões (tabelas configuráveis, regras avançadas, cálculo automático, pagamentos)
-- P2: Gestão Comercial Fase 3 — Relatórios exportáveis (CSV/Excel/PDF), auditoria, permissões por perfil
 - P2: Whitelist functionality
 - P3: Refactor large files (OTCLeads.jsx, OTCDealsPage.jsx)
 
