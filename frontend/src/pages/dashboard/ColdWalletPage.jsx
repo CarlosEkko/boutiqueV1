@@ -419,8 +419,8 @@ const ColdWalletPage = () => {
   };
 
   const activeWallet = wallets[activeCoin];
-  const activeMeta = COIN_META[activeCoin];
-  const activeCfg = BLOCKCHAIN_CONFIG[activeCoin];
+  const activeMeta = COIN_META[activeCoin] || COIN_META.BTC;
+  const activeCfg = BLOCKCHAIN_CONFIG[activeCoin] || BLOCKCHAIN_CONFIG.BTC;
 
   const totalBalanceUSD = 0; // Would come from price API in production
 
@@ -588,7 +588,7 @@ const ColdWalletPage = () => {
                   </span>
                   <span className="text-xl text-gray-500 mb-1 ml-1">{activeCoin}</span>
                 </div>
-                {activeWallet && (
+                {activeWallet?.address && (
                   <p className="text-gray-500 text-sm mt-2 font-mono">
                     {activeWallet.address.substring(0, 12)}...{activeWallet.address.substring(activeWallet.address.length - 8)}
                   </p>
