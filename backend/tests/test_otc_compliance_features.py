@@ -14,7 +14,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "carlos@kbex.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 # Valid BTC address for reserves testing (has balance)
 VALID_BTC_ADDRESS = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"

@@ -119,7 +119,7 @@ class TestAuthLogin:
             f"{BASE_URL}/api/auth/login",
             json={
                 "email": "carlos@kryptobox.io",
-                "password": "senha123"
+                "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
             }
         )
         

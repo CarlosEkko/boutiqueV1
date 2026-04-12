@@ -411,7 +411,7 @@ async def get_crypto_price(symbol: str) -> dict:
             )
             
             return price_info
-    except httpx.HTTPStatusError as e:
+    except httpx.HTTPStatusError:
         # If symbol not found on Binance, try with cached/expired data
         if cached:
             return cached
@@ -465,9 +465,9 @@ async def check_user_limits(user: dict, order_type: str, amount_usd: float) -> b
     
     elif order_type == "sell":
         if daily_used + amount_usd > limits.daily_sell_limit:
-            raise HTTPException(status_code=400, detail=f"Daily sell limit exceeded")
+            raise HTTPException(status_code=400, detail="Daily sell limit exceeded")
         if monthly_used + amount_usd > limits.monthly_sell_limit:
-            raise HTTPException(status_code=400, detail=f"Monthly sell limit exceeded")
+            raise HTTPException(status_code=400, detail="Monthly sell limit exceeded")
         if amount_usd < limits.min_sell_amount:
             raise HTTPException(status_code=400, detail=f"Minimum sell amount is ${limits.min_sell_amount:.2f}")
         if amount_usd > limits.max_sell_amount:
@@ -475,9 +475,9 @@ async def check_user_limits(user: dict, order_type: str, amount_usd: float) -> b
     
     elif order_type == "swap":
         if daily_used + amount_usd > limits.daily_swap_limit:
-            raise HTTPException(status_code=400, detail=f"Daily swap limit exceeded")
+            raise HTTPException(status_code=400, detail="Daily swap limit exceeded")
         if monthly_used + amount_usd > limits.monthly_swap_limit:
-            raise HTTPException(status_code=400, detail=f"Monthly swap limit exceeded")
+            raise HTTPException(status_code=400, detail="Monthly swap limit exceeded")
         if amount_usd < limits.min_swap_amount:
             raise HTTPException(status_code=400, detail=f"Minimum swap amount is ${limits.min_swap_amount:.2f}")
         if amount_usd > limits.max_swap_amount:

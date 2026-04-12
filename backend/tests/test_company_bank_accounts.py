@@ -11,7 +11,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Admin credentials
 ADMIN_EMAIL = "carlos@kryptobox.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 
 class TestCompanyBankAccountsPublic:

@@ -71,7 +71,7 @@ from routes.admin_multisign import router as admin_multisign_router, set_db as s
 from routes.otc_deals import router as otc_deals_router, set_db as set_otc_deals_db
 from routes.risk_compliance import router as risk_compliance_router, set_db as set_risk_compliance_db
 from routes.staking import router as staking_router, set_db as set_staking_db
-from routes.tokenization import router as tokenization_router
+from routes.tokenization import router as tokenization_router, set_db as set_tokenization_db
 from routes.security import router as security_router, set_db as set_security_db
 from routes.demo import router as demo_router, set_db as set_demo_db
 from routes.escrow import router as escrow_router, set_db as set_escrow_db
@@ -121,6 +121,7 @@ set_cold_wallet_db(db)
 set_launchpad_db(db)
 set_commercial_db(db)
 set_crm_db(db)
+set_tokenization_db(db)
 
 api_router.include_router(auth_router)
 api_router.include_router(dashboard_router)

@@ -17,7 +17,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials from test_credentials.md
 ADMIN_EMAIL = "carlos@kbex.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 # Existing cofres from context
 EXISTING_COFRE_PRINCIPAL = "a641ea39-5faf-4baf-aa65-bf841d093112"

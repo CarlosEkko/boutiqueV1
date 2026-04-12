@@ -15,9 +15,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tokenization", tags=["Tokenization"])
 
 
+_db = None
+
+def set_db(database):
+    global _db
+    _db = database
+
 def get_db():
-    from server import db
-    return db
+    return _db
 
 
 # ==================== MODELS ====================

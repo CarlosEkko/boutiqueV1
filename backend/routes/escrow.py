@@ -554,7 +554,7 @@ async def force_release(deal_id: str, notes: str = "", current_user: dict = Depe
     timeline_entry = {
         "timestamp": now.isoformat(),
         "status": EscrowStatus.CLOSED,
-        "action": f"[ADMIN OVERRIDE] Force release executed",
+        "action": "[ADMIN OVERRIDE] Force release executed",
         "performed_by": _user_email(current_user),
         "notes": notes,
     }

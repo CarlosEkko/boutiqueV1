@@ -379,7 +379,7 @@ async def approve_transaction(tx_id: str, data: ApprovalActionRequest, staff: di
             "sent_at": now,
             "tx_hash": simulated_tx_id,
             "confirmations": "(-/-)",
-            "details": f"Network Confirmations (-/-)"
+            "details": "Network Confirmations (-/-)"
         }
         update["status"] = "completed"
         update["completed_at"] = now

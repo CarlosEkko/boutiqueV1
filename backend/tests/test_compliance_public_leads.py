@@ -19,7 +19,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://boutique-exchange.pr
 
 # Test credentials
 ADMIN_EMAIL = "carlos@kbex.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 TEST_DEAL_ID = "baa39416-6cca-4140-ad25-14167c741f52"
 
 

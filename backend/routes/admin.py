@@ -1388,7 +1388,7 @@ async def approve_kyc(user_id: str, admin: dict = Depends(get_admin_user)):
                     "updated_at": now,
                     "activity_log": (otc_lead.get("activity_log") or []) + [{
                         "action": "kyc_approved_auto",
-                        "description": f"KYC aprovado pelo admin. Lead promovido a cliente OTC.",
+                        "description": "KYC aprovado pelo admin. Lead promovido a cliente OTC.",
                         "performed_by": admin["id"],
                         "timestamp": now,
                     }]

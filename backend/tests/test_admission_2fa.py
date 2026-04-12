@@ -20,7 +20,7 @@ class TestAdmissionFeesAndReferralSettings:
         """Login as admin before each test"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200, "Admin login failed"
         self.token = response.json()["access_token"]
@@ -132,7 +132,7 @@ class TestTwoFactorAuthentication:
         """Login as admin before each test"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200, "Admin login failed"
         self.token = response.json()["access_token"]

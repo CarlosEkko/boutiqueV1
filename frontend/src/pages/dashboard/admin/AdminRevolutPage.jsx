@@ -66,7 +66,7 @@ const AdminRevolutPage = () => {
     try {
       const res = await axios.get(`${API}/api/revolut/accounts`, { headers });
       setAccounts(res.data.accounts || []);
-    } catch { /* */ }
+    } catch (err) { console.error('Failed to fetch Revolut accounts', err); }
   }, [token]);
 
   const fetchDeposits = useCallback(async (filter) => {
@@ -77,7 +77,7 @@ const AdminRevolutPage = () => {
       setPendingCount(res.data.pending_count || 0);
       setReconciledCount(res.data.reconciled_count || 0);
       setAutoReconciledCount(deps.filter(d => d.auto_reconciled).length);
-    } catch { /* */ }
+    } catch (err) { console.error('Failed to fetch deposits', err); }
   }, [token, depositFilter]);
 
   const fetchAll = useCallback(async () => {

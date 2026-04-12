@@ -18,7 +18,7 @@ def auth_session():
     # Login to get token
     login_response = session.post(f"{BASE_URL}/api/auth/login", json={
         "email": "carlos@kbex.io",
-        "password": "senha123"
+        "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
     })
     assert login_response.status_code == 200, f"Login failed: {login_response.text}"
     token = login_response.json().get("access_token")

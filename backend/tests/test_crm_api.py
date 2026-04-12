@@ -16,7 +16,7 @@ class TestCRMAuth:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
         token = response.json().get("access_token")
@@ -46,7 +46,7 @@ class TestCRMLeads:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200
         return response.json().get("access_token")
@@ -198,7 +198,7 @@ class TestCRMDeals:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200
         return response.json().get("access_token")
@@ -322,7 +322,7 @@ class TestCRMContacts:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200
         return response.json().get("access_token")
@@ -441,7 +441,7 @@ class TestCRMTasks:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200
         return response.json().get("access_token")
@@ -601,7 +601,7 @@ class TestCRMDashboard:
         """Authenticate and get token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kryptobox.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert response.status_code == 200
         return response.json().get("access_token")

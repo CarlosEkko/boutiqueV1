@@ -26,7 +26,7 @@ class TestKYBSumsubIntegration:
         # Login to get auth token
         login_response = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         
         if login_response.status_code == 200:

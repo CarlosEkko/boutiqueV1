@@ -39,7 +39,7 @@ const VaultSignatories = () => {
       ]);
       setSignatories(sigRes.data.signatories || []);
       setSettings(setRes.data);
-    } catch { }
+    } catch (err) { console.error('Failed to load vault signatories', err); }
     finally { setLoading(false); }
   };
 

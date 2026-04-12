@@ -389,7 +389,7 @@ async def get_dashboard_overview(
     user_id: str = Depends(get_current_user_id)
 ):
     """Global commercial dashboard - KPIs overview"""
-    user = await require_admin_or_manager(user_id)
+    await require_admin_or_manager(user_id)
 
     now = datetime.now(timezone.utc)
     if period == "monthly":
@@ -498,7 +498,6 @@ async def get_sellers_ranking(
     start_iso = start.isoformat()
 
     # Aggregate commercial deals by seller
-    sort_field = "$volume" if metric == "volume" else "$revenue" if metric == "revenue" else 1
     group_sum = {"$sum": "$volume"} if metric == "volume" else {"$sum": "$revenue"} if metric == "revenue" else {"$sum": 1}
 
     pipeline = [
@@ -1387,7 +1386,8 @@ async def report_commissions(
 
     if format == "csv":
         from fastapi.responses import StreamingResponse
-        import io, csv
+        import io
+        import csv
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["Vendedor", "Email", "Regiao", "Periodo", "Volume", "Receita", "Negocios",
@@ -1492,7 +1492,8 @@ async def report_performance(
 
     if format == "csv":
         from fastapi.responses import StreamingResponse
-        import io, csv
+        import io
+        import csv
         output = io.StringIO()
         writer = csv.writer(output)
         if group_by == "seller":
@@ -1534,7 +1535,8 @@ async def report_deals_audit(
 
     if format == "csv":
         from fastapi.responses import StreamingResponse
-        import io, csv
+        import io
+        import csv
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["ID", "Data", "Cliente", "Produto", "Asset", "Volume", "Receita", "Vendedor", "Regiao", "Equipa"])
@@ -1568,8 +1570,8 @@ async def get_audit_log(
     if action:
         query["action"] = action
     logs = []
-    async for l in db.commercial_audit_log.find(query, {"_id": 0}).sort("timestamp", -1).limit(limit):
-        logs.append(l)
+    async for entry in db.commercial_audit_log.find(query, {"_id": 0}).sort("timestamp", -1).limit(limit):
+        logs.append(entry)
     return logs
 
 

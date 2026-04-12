@@ -546,7 +546,7 @@ async def invest_in_opportunity(
     if user_region not in allowed_regions and "all" not in allowed_regions:
         raise HTTPException(
             status_code=403,
-            detail=f"This opportunity is not available in your region"
+            detail="This opportunity is not available in your region"
         )
     
     # Check tier eligibility

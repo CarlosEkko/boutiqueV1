@@ -26,7 +26,7 @@ class TestOTCDealsAPI:
         # Login as admin
         login_resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
         token = login_resp.json().get('access_token')
@@ -176,7 +176,7 @@ class TestOTCDealStatusWorkflow:
         
         login_resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert login_resp.status_code == 200
         token = login_resp.json().get('access_token')
@@ -239,7 +239,7 @@ class TestOTCCommissions:
         
         login_resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert login_resp.status_code == 200
         token = login_resp.json().get('access_token')
@@ -370,7 +370,7 @@ class TestOTCCompliance:
         
         login_resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert login_resp.status_code == 200
         token = login_resp.json().get('access_token')
@@ -505,7 +505,7 @@ class TestOTCDealsEdgeCases:
         
         login_resp = self.session.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         assert login_resp.status_code == 200
         token = login_resp.json().get('access_token')

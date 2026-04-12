@@ -19,7 +19,7 @@ def api_session():
     # Login as admin
     login_response = session.post(f"{BASE_URL}/api/auth/login", json={
         "email": "carlos@kryptobox.io",
-        "password": "senha123"
+        "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
     })
     assert login_response.status_code == 200, f"Login failed: {login_response.text}"
     

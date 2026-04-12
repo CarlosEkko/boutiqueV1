@@ -23,7 +23,7 @@ class TestCRMLeadMembershipInheritance:
         """Get admin token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         if response.status_code == 200:
             return response.json().get("access_token")
@@ -159,7 +159,7 @@ class TestAdmissionFeeStatusWithCrypto:
         """Get admin token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         if response.status_code == 200:
             return response.json().get("access_token")
@@ -256,7 +256,7 @@ class TestAdminAdmissionFeeSettings:
         """Get admin token"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "carlos@kbex.io",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         if response.status_code == 200:
             return response.json().get("access_token")
@@ -369,7 +369,7 @@ class TestExistingVIPUser:
         """Test that testvip@test.com has VIP membership level"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "testvip@test.com",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         
         # User may or may not exist, skip if not found
@@ -385,7 +385,7 @@ class TestExistingVIPUser:
         """Test admission fee status for VIP user shows VIP tier amount"""
         login_response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": "testvip@test.com",
-            "password": "senha123"
+            "password": os.getenv("TEST_ADMIN_PASSWORD", "senha123")
         })
         
         if login_response.status_code != 200:

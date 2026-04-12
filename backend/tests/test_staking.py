@@ -13,7 +13,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials
 TEST_EMAIL = "carlos@kbex.io"
-TEST_PASSWORD = "senha123"
+TEST_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 
 @pytest.fixture(scope="module")

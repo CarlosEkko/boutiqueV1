@@ -19,19 +19,19 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # ==================== TEST CREDENTIALS ====================
 ADMIN_EMAIL = "carlos@kryptobox.io"
-ADMIN_PASSWORD = "senha123"
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 LOCAL_MANAGER_EUROPE_EMAIL = "manager_europe@kbex.io"
-LOCAL_MANAGER_EUROPE_PASSWORD = "senha123"
+LOCAL_MANAGER_EUROPE_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 SUPPORT_LATAM_EMAIL = "support_latam@kbex.io"
-SUPPORT_LATAM_PASSWORD = "senha123"
+SUPPORT_LATAM_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 CLIENT_LATAM_EMAIL = "maria@teste.com"
-CLIENT_LATAM_PASSWORD = "senha123"
+CLIENT_LATAM_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 CLIENT_EUROPE_EMAIL = "sandra@kryptobox.io"
-CLIENT_EUROPE_PASSWORD = "senha123"
+CLIENT_EUROPE_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "senha123")
 
 # ==================== STORE TOKENS ====================
 admin_token = None
