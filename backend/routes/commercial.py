@@ -582,6 +582,9 @@ async def get_seller_kpis(
     now = datetime.now(timezone.utc)
     if period == "monthly":
         start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif period == "quarterly":
+        q_month = ((now.month - 1) // 3) * 3 + 1
+        start = now.replace(month=q_month, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -608,7 +611,7 @@ async def get_seller_kpis(
             "avg_ticket": doc.get("total_volume", 0) / max(doc.get("deal_count", 1), 1),
         }
 
-    # Get active goals
+    # Active goals
     goals = []
     async for g in db.commercial_goals.find({
         "seller_id": seller_id,
@@ -622,6 +625,118 @@ async def get_seller_kpis(
         "period": period,
         "kpis": kpis,
         "goals": goals,
+    }
+
+
+@router.get("/dashboard/seller/{seller_id}/analytics")
+async def get_seller_full_analytics(
+    seller_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Complete analytics for a seller: KPIs, timeline, deals, goals, commissions"""
+    await require_admin_or_manager(user_id)
+
+    seller = await db.users.find_one({"id": seller_id}, {"_id": 0, "password_hash": 0})
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # --- Period KPIs (month + year) ---
+    async def _agg_kpis(start_iso):
+        pipeline = [
+            {"$match": {"seller_id": seller_id, "created_at": {"$gte": start_iso}}},
+            {"$group": {
+                "_id": None,
+                "volume": {"$sum": "$volume"},
+                "revenue": {"$sum": "$revenue"},
+                "deals": {"$sum": 1},
+                "clients": {"$addToSet": "$client_name"},
+            }}
+        ]
+        async for doc in db.commercial_deals.aggregate(pipeline):
+            return {
+                "volume": doc.get("volume", 0),
+                "revenue": doc.get("revenue", 0),
+                "deals": doc.get("deals", 0),
+                "clients": len(doc.get("clients", [])),
+                "avg_ticket": doc.get("volume", 0) / max(doc.get("deals", 1), 1),
+            }
+        return {"volume": 0, "revenue": 0, "deals": 0, "clients": 0, "avg_ticket": 0}
+
+    kpis_month = await _agg_kpis(month_start)
+    kpis_year = await _agg_kpis(year_start)
+
+    # Lifetime
+    kpis_all = await _agg_kpis("2000-01-01")
+
+    # --- 6 month timeline ---
+    timeline = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        s = datetime(y, m, 1, tzinfo=timezone.utc)
+        e = datetime(y, m + 1, 1, tzinfo=timezone.utc) if m < 12 else datetime(y + 1, 1, 1, tzinfo=timezone.utc)
+        pipeline = [
+            {"$match": {"seller_id": seller_id, "created_at": {"$gte": s.isoformat(), "$lt": e.isoformat()}}},
+            {"$group": {"_id": None, "volume": {"$sum": "$volume"}, "revenue": {"$sum": "$revenue"}, "deals": {"$sum": 1}}}
+        ]
+        stats = {"volume": 0, "revenue": 0, "deals": 0}
+        async for doc in db.commercial_deals.aggregate(pipeline):
+            stats = {"volume": doc.get("volume", 0), "revenue": doc.get("revenue", 0), "deals": doc.get("deals", 0)}
+        month_names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+        timeline.append({"month": f"{month_names[m-1]} {y}", **stats})
+
+    # --- Recent deals ---
+    recent_deals = []
+    async for d in db.commercial_deals.find({"seller_id": seller_id}, {"_id": 0}).sort("created_at", -1).limit(20):
+        recent_deals.append(d)
+
+    # --- Goals ---
+    goals = []
+    async for g in db.commercial_goals.find({"seller_id": seller_id}, {"_id": 0}).sort("start_date", -1):
+        goals.append(g)
+
+    # --- Commissions ---
+    commissions = []
+    async for c in db.commercial_commissions.find({"seller_id": seller_id}, {"_id": 0}).sort("created_at", -1).limit(20):
+        commissions.append(c)
+
+    # --- Product breakdown ---
+    product_pipeline = [
+        {"$match": {"seller_id": seller_id}},
+        {"$group": {"_id": "$product_type", "volume": {"$sum": "$volume"}, "revenue": {"$sum": "$revenue"}, "deals": {"$sum": 1}}},
+        {"$sort": {"volume": -1}}
+    ]
+    products = []
+    async for doc in db.commercial_deals.aggregate(product_pipeline):
+        products.append({"name": doc["_id"] or "Outros", "volume": doc["volume"], "revenue": doc["revenue"], "deals": doc["deals"]})
+
+    # --- Client breakdown ---
+    client_pipeline = [
+        {"$match": {"seller_id": seller_id}},
+        {"$group": {"_id": "$client_name", "volume": {"$sum": "$volume"}, "revenue": {"$sum": "$revenue"}, "deals": {"$sum": 1}}},
+        {"$sort": {"volume": -1}},
+        {"$limit": 10}
+    ]
+    top_clients = []
+    async for doc in db.commercial_deals.aggregate(client_pipeline):
+        top_clients.append({"name": doc["_id"] or "N/A", "volume": doc["volume"], "revenue": doc["revenue"], "deals": doc["deals"]})
+
+    return {
+        "seller": seller,
+        "kpis": {"month": kpis_month, "year": kpis_year, "lifetime": kpis_all},
+        "timeline": timeline,
+        "recent_deals": recent_deals,
+        "goals": goals,
+        "commissions": commissions,
+        "product_breakdown": products,
+        "top_clients": top_clients,
     }
 
 
