@@ -88,11 +88,9 @@ const Header = () => {
 
       {/* Fixed Header */}
       <header className={`fixed top-0 left-0 w-full z-[100] ${isRTL ? 'rtl' : 'ltr'}`}>
-        {/* Crypto Ticker Bar */}
-        <div className="bg-black/80 backdrop-blur-md border-b border-gold-800/10 py-2">
-          <div className="container mx-auto px-6">
-            <CryptoTicker />
-          </div>
+        {/* TradingView Ticker Bar */}
+        <div className="bg-black/90 backdrop-blur-md border-b border-gold-800/10">
+          <CryptoTicker />
         </div>
 
         {/* Main Header */}

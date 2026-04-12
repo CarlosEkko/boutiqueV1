@@ -30,7 +30,7 @@ const TradingViewWidget = ({ symbol = 'BTCUSDT' }) => {
   // Build the TradingView widget URL
   const widgetConfig = {
     autosize: true,
-    symbol: `BINANCE:${symbol}`,
+    symbol: symbol,
     interval: '60',
     timezone: 'Europe/Lisbon',
     theme: 'dark',
@@ -48,7 +48,7 @@ const TradingViewWidget = ({ symbol = 'BTCUSDT' }) => {
   return (
     <div className="h-full w-full relative" key={key}>
       <iframe
-        src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE:${symbol}&interval=60&hide_top_toolbar=0&hide_legend=0&save_image=0&hide_volume=0&theme=dark&style=1&locale=pt_BR&enable_publishing=0`}
+        src={`https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${symbol}&interval=60&hide_top_toolbar=0&hide_legend=1&save_image=0&hide_volume=0&theme=dark&style=1&locale=pt_BR&enable_publishing=0`}
         style={{
           width: '100%',
           height: '100%',

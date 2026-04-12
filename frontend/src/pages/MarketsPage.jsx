@@ -29,7 +29,7 @@ const MiniChart = ({ symbol, width = '100%', height = 220 }) => {
   return (
     <div className="overflow-hidden rounded-lg" style={{ width, height }}>
       <iframe
-        src={`https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BINANCE:${symbol}USDT&dateRange=1M&trendLineColor=%23D4AF37&underLineColor=rgba(212,175,55,0.07)&underLineBottomColor=rgba(0,0,0,0)&isTransparent=true&autosize=1&largeChartUrl=`}
+        src={`https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=${symbol}USDT&dateRange=1M&trendLineColor=%23D4AF37&underLineColor=rgba(212,175,55,0.07)&underLineBottomColor=rgba(0,0,0,0)&isTransparent=true&autosize=1&largeChartUrl=`}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title={`${symbol} Chart`}
       />
