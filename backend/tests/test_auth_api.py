@@ -1,3 +1,4 @@
+import os
 """
 Backend API Tests for Kryptobox Authentication System
 Tests: Registration, Login, Get Profile (me), Update Profile
@@ -12,7 +13,7 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test data
 TEST_USER_EMAIL = f"test_user_{uuid.uuid4().hex[:8]}@kryptobox.io"
-TEST_USER_PASSWORD = "TestPassword123"
+TEST_USER_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "TestPassword123")
 TEST_USER_NAME = "Test User"
 TEST_USER_PHONE = "+351987654321"
 TEST_USER_COUNTRY = "PT"

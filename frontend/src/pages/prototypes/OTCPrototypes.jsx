@@ -330,7 +330,7 @@ const ComplianceForenseScreen = () => {
               { addr: 'bc1q83z...cdxyf', chain: 'Bitcoin', type: 'Cold', status: 'verified' },
               { addr: '0x8a64...8dbC', chain: 'Ethereum', type: 'Hot', status: 'pending' },
             ].map((w, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+              <div key={w.addr} className="flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
                     <Bitcoin className="text-orange-400" size={16} />
@@ -677,7 +677,7 @@ const CommissionDashboard = () => {
                   {MOCK_COMMISSIONS.map((c, i) => {
                     const cs = COMMISSION_STATUS[c.status];
                     return (
-                      <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                      <tr key={c.dealId} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                         <td className="px-3 py-2.5 text-yellow-400 text-xs font-mono">{c.dealId}</td>
                         <td className="px-3 py-2.5 text-white text-sm">{c.beneficiary}</td>
                         <td className="px-3 py-2.5 text-zinc-400 text-sm">{c.role}</td>
@@ -734,7 +734,7 @@ const WizardSummaryScreen = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           {checks.map((c, i) => (
-            <div key={i} className="flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+            <div key={c.label || i} className="flex items-center justify-between p-3 bg-zinc-950 rounded-lg border border-zinc-800">
               <div className="flex items-center gap-3">
                 {c.status === 'pass' ? (
                   <CheckCircle className="text-emerald-400" size={18} />

@@ -84,7 +84,7 @@ const AdminSettings = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.tier_limits) setTierLimits(res.data.tier_limits);
-    } catch {}
+    } catch (err) { console.error('Failed to load tier limits', err); }
   };
 
   const saveTierLimits = async () => {

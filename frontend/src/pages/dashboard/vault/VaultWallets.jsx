@@ -192,10 +192,10 @@ const VaultWallets = () => {
     try {
       const res = await axios.get(`${API_URL}/api/vault/transactions`, { headers });
       setTransactions(res.data.transactions || []);
-    } catch { setTransactions([]); }
+    } catch (err) { console.error('Failed to fetch transactions', err); setTransactions([]); }
   };
 
-  useEffect(() => { if (activeTab === 'transactions') fetchTransactions(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 'transactions') fetchTransactions(); }, [activeTab, token]);
 
   const totalBalance = useMemo(() => balances.reduce((s, b) => s + (b.usdValue || 0), 0), [balances]);
 
