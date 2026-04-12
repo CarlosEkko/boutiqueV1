@@ -101,6 +101,7 @@ import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
 import AdminLaunchpadPage from "./pages/dashboard/admin/AdminLaunchpadPage";
 const CommercialDashboard = React.lazy(() => import("./pages/dashboard/commercial/CommercialDashboard"));
+const MyPerformance = React.lazy(() => import("./pages/dashboard/commercial/MyPerformance"));
 import StakingPage from "./pages/dashboard/investments/StakingPage";
 import TokenizationPage from "./pages/dashboard/investments/TokenizationPage";
 import TokensListPage from "./pages/dashboard/tokenization/TokensListPage";
@@ -269,6 +270,7 @@ function AppRoutes() {
         <Route path="commercial/goals" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><CommercialDashboard /></React.Suspense>} />
         <Route path="commercial/products" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><CommercialDashboard /></React.Suspense>} />
         <Route path="commercial/deals" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><CommercialDashboard /></React.Suspense>} />
+        <Route path="my-performance" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><MyPerformance /></React.Suspense>} />
 
         {/* CRM Routes */}
         <Route path="crm" element={<CRMDashboard />} />

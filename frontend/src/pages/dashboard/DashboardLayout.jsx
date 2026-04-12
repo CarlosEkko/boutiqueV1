@@ -122,6 +122,7 @@ const departmentConfig = {
   cold_wallet: { icon: Shield, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   launchpad: { icon: Zap, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   commercial: { icon: BarChart3, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
+  my_performance: { icon: BarChart3, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
 };
 
 // Translation mapping for menu labels from backend to frontend i18n keys
@@ -241,6 +242,7 @@ const labelTranslationMap = {
   'Produtos': 'sidebar.produtos',
   'Negócios': 'sidebar.negocios',
   // Team Hub & Multi-Sign
+  'A Minha Performance': 'sidebar.minhaPerformance',
   'Team Hub': 'sidebar.teamHub',
   'Multi-Sign': 'sidebar.multiSign',
   'Dashboard Financeiro': 'sidebar.dashboardFinanceiro',
@@ -669,7 +671,7 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'launchpad'];
+  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'launchpad', 'my_performance'];
   
   // Default menus for clients (Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];
@@ -691,7 +693,8 @@ const DashboardLayout = () => {
         'suporte': 'suporte',
         'tokenizacao': 'tokenizacao',
         'cold_wallet': 'cold_wallet',
-        'launchpad': 'launchpad'
+        'launchpad': 'launchpad',
+        'my_performance': 'my_performance'
       };
       
       clientMenus = clientMenus.filter(m => {

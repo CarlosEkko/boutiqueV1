@@ -215,6 +215,16 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
         except ValueError:
             continue
     
+    # Add "My Performance" menu for all internal users
+    menus.append({
+        "department": "my_performance",
+        "label": "A Minha Performance",
+        "icon": "BarChart3",
+        "items": [
+            {"path": "/dashboard/my-performance", "label": "A Minha Performance", "icon": "BarChart3"},
+        ]
+    })
+
     return {"menus": menus}
 
 

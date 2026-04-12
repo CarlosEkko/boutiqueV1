@@ -1417,11 +1417,12 @@ async def report_performance(
     format: str = "json",
     user_id: str = Depends(get_current_user_id)
 ):
-    """Performance report - by seller, product, or region"""
+    """Performance report - by seller, product, or region. Merges commercial_deals + otc_deals."""
     await require_admin_or_manager(user_id)
 
     group_field = f"${group_by}_id" if group_by == "seller" else f"${group_by}" if group_by in ["region", "product_type"] else "$seller_id"
 
+    # Aggregate from commercial_deals
     pipeline = [
         {"$match": {"created_at": {"$gte": start_date, "$lte": end_date}}},
         {"$group": {
@@ -1434,17 +1435,55 @@ async def report_performance(
         {"$sort": {"total_volume": -1}}
     ]
 
-    rows = []
+    merged = {}
     async for doc in db.commercial_deals.aggregate(pipeline):
-        entry = {
-            "group": doc["_id"],
+        key = doc["_id"] or "N/A"
+        merged[key] = {
             "total_volume": doc.get("total_volume", 0),
             "total_revenue": doc.get("total_revenue", 0),
             "deal_count": doc.get("deal_count", 0),
-            "client_count": len(doc.get("clients", [])),
+            "clients": set(doc.get("clients", [])),
+        }
+
+    # Also aggregate from otc_deals
+    otc_group = "$broker_id" if group_by == "seller" else "$region" if group_by == "region" else None
+    if otc_group:
+        otc_pipeline = [
+            {"$match": {"created_at": {"$gte": start_date, "$lte": end_date}}},
+            {"$group": {
+                "_id": otc_group,
+                "total_volume": {"$sum": {"$multiply": ["$quantity", "$reference_price"]}},
+                "total_revenue": {"$sum": "$commission_total"},
+                "deal_count": {"$sum": 1},
+                "clients": {"$addToSet": "$client_name"},
+            }}
+        ]
+        async for doc in db.otc_deals.aggregate(otc_pipeline):
+            key = doc["_id"] or "N/A"
+            if key in merged:
+                merged[key]["total_volume"] += doc.get("total_volume", 0)
+                merged[key]["total_revenue"] += doc.get("total_revenue", 0)
+                merged[key]["deal_count"] += doc.get("deal_count", 0)
+                merged[key]["clients"].update(doc.get("clients", []))
+            else:
+                merged[key] = {
+                    "total_volume": doc.get("total_volume", 0),
+                    "total_revenue": doc.get("total_revenue", 0),
+                    "deal_count": doc.get("deal_count", 0),
+                    "clients": set(doc.get("clients", [])),
+                }
+
+    rows = []
+    for key, data in sorted(merged.items(), key=lambda x: x[1]["total_volume"], reverse=True):
+        entry = {
+            "group": key,
+            "total_volume": data["total_volume"],
+            "total_revenue": data["total_revenue"],
+            "deal_count": data["deal_count"],
+            "client_count": len(data["clients"]),
         }
         if group_by == "seller":
-            seller = await db.users.find_one({"id": doc["_id"]}, {"_id": 0, "name": 1, "email": 1, "region": 1})
+            seller = await db.users.find_one({"id": key}, {"_id": 0, "name": 1, "email": 1, "region": 1})
             if seller:
                 entry["name"] = seller.get("name")
                 entry["email"] = seller.get("email")
@@ -1545,3 +1584,88 @@ async def _log_audit(user_id: str, action: str, details: dict = None):
         "details": details or {},
         "timestamp": datetime.now(timezone.utc).isoformat(),
     })
+
+
+# ══════════════════════════════════════════════════════════════
+# SELLER SELF-SERVICE (no admin required)
+# ══════════════════════════════════════════════════════════════
+
+@router.get("/my/dashboard")
+async def my_dashboard(user_id: str = Depends(get_current_user_id)):
+    """Seller's own dashboard - performance, goals, commissions"""
+    seller = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    if not seller:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    async def _agg(start_iso):
+        pipeline = [
+            {"$match": {"seller_id": user_id, "created_at": {"$gte": start_iso}}},
+            {"$group": {"_id": None, "volume": {"$sum": "$volume"}, "revenue": {"$sum": "$revenue"}, "deals": {"$sum": 1}, "clients": {"$addToSet": "$client_name"}}}
+        ]
+        async for doc in db.commercial_deals.aggregate(pipeline):
+            return {"volume": doc.get("volume", 0), "revenue": doc.get("revenue", 0), "deals": doc.get("deals", 0), "clients": len(doc.get("clients", []))}
+        return {"volume": 0, "revenue": 0, "deals": 0, "clients": 0}
+
+    kpis_month = await _agg(month_start)
+    kpis_year = await _agg(year_start)
+
+    # Timeline 6 months
+    timeline = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        s = datetime(y, m, 1, tzinfo=timezone.utc)
+        e = datetime(y, m + 1, 1, tzinfo=timezone.utc) if m < 12 else datetime(y + 1, 1, 1, tzinfo=timezone.utc)
+        pipeline = [
+            {"$match": {"seller_id": user_id, "created_at": {"$gte": s.isoformat(), "$lt": e.isoformat()}}},
+            {"$group": {"_id": None, "volume": {"$sum": "$volume"}, "revenue": {"$sum": "$revenue"}, "deals": {"$sum": 1}}}
+        ]
+        stats = {"volume": 0, "revenue": 0, "deals": 0}
+        async for doc in db.commercial_deals.aggregate(pipeline):
+            stats = {"volume": doc.get("volume", 0), "revenue": doc.get("revenue", 0), "deals": doc.get("deals", 0)}
+        month_names = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+        timeline.append({"month": f"{month_names[m-1]} {y}", **stats})
+
+    # Goals
+    goals = []
+    async for g in db.commercial_goals.find({"seller_id": user_id}, {"_id": 0}).sort("start_date", -1):
+        goals.append(g)
+
+    # Commissions
+    commissions = []
+    async for c in db.commercial_commissions.find({"seller_id": user_id}, {"_id": 0}).sort("created_at", -1):
+        commissions.append(c)
+
+    commission_summary = {"pending": 0, "approved": 0, "paid": 0, "total_earned": 0}
+    for c in commissions:
+        amt = c.get("total_commission", 0)
+        status = c.get("status", "pending")
+        if status == "pending":
+            commission_summary["pending"] += amt
+        elif status == "approved":
+            commission_summary["approved"] += amt
+        elif status == "paid":
+            commission_summary["paid"] += amt
+            commission_summary["total_earned"] += amt
+
+    # Recent deals
+    recent_deals = []
+    async for d in db.commercial_deals.find({"seller_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(15):
+        recent_deals.append(d)
+
+    return {
+        "seller": seller,
+        "kpis": {"month": kpis_month, "year": kpis_year},
+        "timeline": timeline,
+        "goals": goals,
+        "commissions": commissions,
+        "commission_summary": commission_summary,
+        "recent_deals": recent_deals,
+    }
