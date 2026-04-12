@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import {
   Rocket,
@@ -6,7 +6,6 @@ import {
   Edit,
   Trash2,
   Users,
-  Eye,
   Loader2,
   X,
   CheckCircle,
@@ -14,7 +13,9 @@ import {
   DollarSign,
   Coins,
   ArrowRight,
-  Ban
+  Ban,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -52,6 +53,51 @@ const AdminLaunchpadPage = () => {
     logo_url: '', banner_url: '',
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const logoInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
+
+  const handleImageUpload = async (file, field) => {
+    if (!file) return;
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('Ficheiro demasiado grande. Máximo 5MB.');
+      return;
+    }
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Tipo de ficheiro não permitido. Use JPG, PNG ou WebP.');
+      return;
+    }
+
+    const setUploading = field === 'logo_url' ? setUploadingLogo : setUploadingBanner;
+    setUploading(true);
+
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await axios.post(`${API_URL}/api/uploads/file-json`, {
+        file_data: base64,
+        filename: file.name,
+        content_type: file.type,
+        category: 'launchpad',
+      }, { headers });
+
+      const fullUrl = `${API_URL}${res.data.url}`;
+      setForm(prev => ({ ...prev, [field]: fullUrl }));
+      toast.success(field === 'logo_url' ? 'Logo carregado' : 'Banner carregado');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro no upload');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const fetchSales = useCallback(async () => {
     try {
@@ -326,8 +372,6 @@ const AdminLaunchpadPage = () => {
                 { key: 'distribution_date', label: 'Data Distribuição', type: 'datetime-local', span: 2 },
                 { key: 'network', label: 'Network', type: 'text', span: 1 },
                 { key: 'token_type', label: 'Token Type', type: 'text', span: 1 },
-                { key: 'logo_url', label: 'Logo URL', type: 'text', span: 1 },
-                { key: 'banner_url', label: 'Banner URL', type: 'text', span: 1 },
                 { key: 'whitepaper_url', label: 'Whitepaper URL', type: 'text', span: 1 },
                 { key: 'website_url', label: 'Website URL', type: 'text', span: 1 },
               ].map(f => (
@@ -342,6 +386,83 @@ const AdminLaunchpadPage = () => {
                   />
                 </div>
               ))}
+
+              {/* Logo Upload */}
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Logo do Token</label>
+                <input
+                  type="file"
+                  ref={logoInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={e => handleImageUpload(e.target.files?.[0], 'logo_url')}
+                />
+                <div
+                  onClick={() => logoInputRef.current?.click()}
+                  className="border border-dashed border-zinc-700 rounded-lg p-3 cursor-pointer hover:border-gold-500/50 transition-colors flex items-center gap-3"
+                  data-testid="upload-logo"
+                >
+                  {form.logo_url ? (
+                    <img src={form.logo_url} alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-zinc-800 flex items-center justify-center">
+                      <ImageIcon size={20} className="text-gray-500" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    {uploadingLogo ? (
+                      <div className="flex items-center gap-2 text-gold-400 text-sm">
+                        <Loader2 size={14} className="animate-spin" /> A carregar...
+                      </div>
+                    ) : form.logo_url ? (
+                      <p className="text-sm text-emerald-400 truncate">Logo carregado</p>
+                    ) : (
+                      <p className="text-sm text-gray-400">Clique para carregar</p>
+                    )}
+                    <p className="text-[10px] text-gray-600">JPG, PNG, WebP - Max 5MB</p>
+                  </div>
+                  <Upload size={16} className="text-gray-500" />
+                </div>
+              </div>
+
+              {/* Banner Upload */}
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Banner</label>
+                <input
+                  type="file"
+                  ref={bannerInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={e => handleImageUpload(e.target.files?.[0], 'banner_url')}
+                />
+                <div
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="border border-dashed border-zinc-700 rounded-lg p-3 cursor-pointer hover:border-gold-500/50 transition-colors flex items-center gap-3"
+                  data-testid="upload-banner"
+                >
+                  {form.banner_url ? (
+                    <img src={form.banner_url} alt="Banner" className="w-16 h-10 rounded object-cover" />
+                  ) : (
+                    <div className="w-16 h-10 rounded bg-zinc-800 flex items-center justify-center">
+                      <ImageIcon size={18} className="text-gray-500" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    {uploadingBanner ? (
+                      <div className="flex items-center gap-2 text-gold-400 text-sm">
+                        <Loader2 size={14} className="animate-spin" /> A carregar...
+                      </div>
+                    ) : form.banner_url ? (
+                      <p className="text-sm text-emerald-400 truncate">Banner carregado</p>
+                    ) : (
+                      <p className="text-sm text-gray-400">Clique para carregar</p>
+                    )}
+                    <p className="text-[10px] text-gray-600">JPG, PNG, WebP - Max 5MB</p>
+                  </div>
+                  <Upload size={16} className="text-gray-500" />
+                </div>
+              </div>
+
               <div className="col-span-2">
                 <label className="text-xs text-gray-400 mb-1 block">Descrição</label>
                 <textarea

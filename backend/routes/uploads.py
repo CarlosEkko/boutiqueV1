@@ -26,7 +26,8 @@ UPLOAD_DIRS = {
     "withdrawals": BASE_UPLOAD_DIR / "withdrawals",
     "documents": BASE_UPLOAD_DIR / "documents",
     "general": BASE_UPLOAD_DIR / "general",
-    "adjustments": BASE_UPLOAD_DIR / "adjustments"
+    "adjustments": BASE_UPLOAD_DIR / "adjustments",
+    "launchpad": BASE_UPLOAD_DIR / "launchpad"
 }
 
 # Create all directories
