@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import axios from 'axios';
+import { useDemoMask } from '../../utils/useDemoData';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { PieChart as RechartsPieChart, ResponsiveContainer, Pie, Cell, Tooltip, Legend } from 'recharts';
@@ -65,6 +66,7 @@ const CHART_COLORS = [
 const DashboardOverview = () => {
   const { user, token } = useAuth();
   const { t } = useLanguage();
+  const { isDemoMode, maskVal } = useDemoMask();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -145,11 +147,12 @@ const DashboardOverview = () => {
   }
 
   const formatCurrency = (value) => {
+    const v = isDemoMode ? maskVal(value) : value;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2
-    }).format(value || 0);
+    }).format(v || 0);
   };
 
   return (
