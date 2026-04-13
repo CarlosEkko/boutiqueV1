@@ -448,7 +448,17 @@ const translations = {
         lastUpdated: 'Last Updated',
         totalReserves: 'Total Reserves',
         viewReport: 'View Report',
-        noReports: 'No reports available'
+        noReports: 'No reports available',
+        committedTitle: 'Committed to Transparency',
+        committedDesc: 'At KBEX, we believe in complete transparency. Our proof of reserves is updated regularly, and all audits are conducted by independent third parties.',
+        publicWallets: 'Public Wallet Addresses',
+        balance: 'Balance',
+        noWallets: 'No public wallets configured.',
+        noReportsPublished: 'Audit and transparency reports will be published here.',
+        date: 'Date',
+        auditor: 'Auditor',
+        reservesTitle: 'Reserves',
+        copySuccess: 'Address copied!'
       },
       // Crypto Operations
       cryptoDeposit: {
@@ -2079,7 +2089,17 @@ const translations = {
         lastUpdated: 'Última Atualização',
         totalReserves: 'Total de Reservas',
         viewReport: 'Ver Relatório',
-        noReports: 'Nenhum relatório disponível'
+        noReports: 'Nenhum relatório disponível',
+        committedTitle: 'Comprometidos com a Transparência',
+        committedDesc: 'Na KBEX, acreditamos na transparência total. A nossa prova de reservas é atualizada regularmente e todas as auditorias são conduzidas por terceiros independentes.',
+        publicWallets: 'Endereços de Carteiras Públicas',
+        balance: 'Saldo',
+        noWallets: 'Nenhuma carteira pública configurada.',
+        noReportsPublished: 'Relatórios de auditoria e transparência serão publicados aqui.',
+        date: 'Data',
+        auditor: 'Auditor',
+        reservesTitle: 'Reservas',
+        copySuccess: 'Endereço copiado!'
       },
       // Crypto Operations
       cryptoDeposit: {
@@ -3694,7 +3714,17 @@ const translations = {
         lastUpdated: 'آخر تحديث',
         totalReserves: 'إجمالي الاحتياطيات',
         viewReport: 'عرض التقرير',
-        noReports: 'لا توجد تقارير متاحة'
+        noReports: 'لا توجد تقارير متاحة',
+        committedTitle: 'ملتزمون بالشفافية',
+        committedDesc: 'في KBEX، نؤمن بالشفافية الكاملة. يتم تحديث إثبات احتياطياتنا بانتظام وجميع عمليات التدقيق تُجرى من قبل أطراف ثالثة مستقلة.',
+        publicWallets: 'عناوين المحافظ العامة',
+        balance: 'الرصيد',
+        noWallets: 'لم يتم تكوين محافظ عامة.',
+        noReportsPublished: 'سيتم نشر تقارير التدقيق والشفافية هنا.',
+        date: 'التاريخ',
+        auditor: 'المدقق',
+        reservesTitle: 'الاحتياطيات',
+        copySuccess: 'تم نسخ العنوان!'
       },
       // Crypto Operations
       cryptoDeposit: {
@@ -5194,7 +5224,17 @@ const translations = {
         lastUpdated: 'Dernière Mise à Jour',
         totalReserves: 'Total des Réserves',
         viewReport: 'Voir le Rapport',
-        noReports: 'Aucun rapport disponible'
+        noReports: 'Aucun rapport disponible',
+        committedTitle: 'Engagés pour la Transparence',
+        committedDesc: 'Chez KBEX, nous croyons en la transparence totale. Notre preuve de réserves est mise à jour régulièrement et tous les audits sont réalisés par des tiers indépendants.',
+        publicWallets: 'Adresses de Portefeuilles Publics',
+        balance: 'Solde',
+        noWallets: 'Aucun portefeuille public configuré.',
+        noReportsPublished: 'Les rapports d\'audit et de transparence seront publiés ici.',
+        date: 'Date',
+        auditor: 'Auditeur',
+        reservesTitle: 'Réserves',
+        copySuccess: 'Adresse copiée!'
       },
       cryptoDeposit: {
         title: 'Dépôt Crypto',
@@ -6605,7 +6645,7 @@ const translations = {
       transactions: { title: 'Historial de Transacciones', subtitle: 'Vea todas sus transacciones', type: 'Tipo', amount: 'Monto', status: 'Estado', date: 'Fecha', deposit: 'Depósito', withdrawal: 'Retiro', transfer: 'Transferencia', completed: 'Completada', pending: 'Pendiente', failed: 'Fallida', noTransactions: 'No se encontraron transacciones' },
       investments: { title: 'Oportunidades de Inversión', subtitle: 'Explore las opciones de inversión disponibles', expectedRoi: 'ROI Esperado', duration: 'Duración', minInvestment: 'Inversión Mínima', maxInvestment: 'Inversión Máxima', riskLevel: 'Nivel de Riesgo', status: 'Estado', open: 'Abierta', closed: 'Cerrada', invest: 'Invertir', days: 'días', noOpportunities: 'No hay oportunidades disponibles' },
       roi: { title: 'Retorno de Inversión', subtitle: 'Seguimiento del rendimiento de sus inversiones', totalInvested: 'Total Invertido', totalReturns: 'Retornos Totales', averageRoi: 'ROI Promedio', activePositions: 'Posiciones Activas', performanceChart: 'Gráfico de Rendimiento', noData: 'No hay datos de inversión disponibles' },
-      transparency: { title: 'Transparencia de Fondos', subtitle: 'Prueba de reservas e informes de auditoría', proofOfReserves: 'Prueba de Reservas', auditReports: 'Informes de Auditoría', lastUpdated: 'Última Actualización', totalReserves: 'Reservas Totales', viewReport: 'Ver Informe', noReports: 'No hay informes disponibles' },
+      transparency: { title: 'Transparencia de Fondos', subtitle: 'Prueba de reservas e informes de auditoría', proofOfReserves: 'Prueba de Reservas', auditReports: 'Informes de Auditoría', lastUpdated: 'Última Actualización', totalReserves: 'Reservas Totales', viewReport: 'Ver Informe', noReports: 'No hay informes disponibles', committedTitle: 'Comprometidos con la Transparencia', committedDesc: 'En KBEX, creemos en la transparencia total. Nuestra prueba de reservas se actualiza regularmente y todas las auditorías son realizadas por terceros independientes.', publicWallets: 'Direcciones de Carteras Públicas', balance: 'Saldo', noWallets: 'No hay carteras públicas configuradas.', noReportsPublished: 'Los informes de auditoría y transparencia se publicarán aquí.', date: 'Fecha', auditor: 'Auditor', reservesTitle: 'Reservas', copySuccess: 'Dirección copiada!' },
       cryptoDeposit: { title: 'Depósito Crypto', subtitle: 'Reciba criptomonedas en su cartera KBEX', initializeWallet: 'Inicialice Su Cartera Crypto', initializeDesc: 'Para recibir criptomonedas, necesita inicializar su cartera primero.', initializing: 'Inicializando...', initializeBtn: 'Inicializar Cartera', selectCurrency: 'Seleccionar Moneda', searchCurrency: 'Buscar moneda...', depositAddress: 'Dirección de Depósito', selectCurrencyToSee: 'Seleccione una moneda para ver la dirección', generatingAddress: 'Generando dirección...', selectNetwork: 'Seleccionar Red', address: 'Dirección', network: 'Red', important: 'Importante', sendOnly: 'Envíe solo {asset} a esta dirección. Enviar otros activos puede resultar en pérdida permanente.', errorGettingAddress: 'Error obteniendo dirección', tryAgain: 'Intentar de Nuevo', popular: 'Popular', copied: '¡Dirección copiada!' },
       cryptoWithdrawal: { title: 'Retiro Crypto', subtitle: 'Envíe criptomonedas a una cartera externa', pendingWithdrawals: 'retiro(s) pendiente(s)', awaitingApproval: 'Esperando aprobación del admin', selectAsset: 'Seleccionar Activo', details: 'Detalles', confirm: 'Confirmar', noBalanceAvailable: 'Sin saldo disponible para retiro', depositFirst: 'Deposite fondos primero', withdraw: 'Retirar', availableBalance: 'Saldo disponible', quantity: 'Cantidad', sendNetwork: 'Red de Envío', ensureAddress: 'Asegúrese de que la dirección de destino soporta esta red', loadingNetworks: 'Cargando redes...', destinationAddress: 'Dirección de Destino', whitelist: 'Whitelist', manualAddress: 'Dirección Manual', verifyAddress: 'Verifique la dirección cuidadosamente. Las transacciones son irreversibles.', noWhitelistAddress: 'No hay dirección whitelist para', useManualAddress: 'Usar dirección manual', addToWhitelist: 'Añadir a whitelist', noteOptional: 'Nota (opcional)', withdrawalDescription: 'Descripción del retiro', platformFee: 'Comisión de plataforma', networkFee: 'Comisión de red (estimada)', youWillReceive: 'Usted recibirá', cancel: 'Cancelar', continue: 'Continuar', confirmWithdrawal: 'Confirmar Retiro', asset: 'Activo', totalFee: 'Comisión total', finalValue: 'Valor final', verifyAddressWarning: 'Verifique la dirección cuidadosamente. Las transacciones blockchain son irreversibles.', back: 'Volver', processing: 'Procesando...', confirmBtn: 'Confirmar Retiro', requestSent: '¡Solicitud de retiro enviada!' },
       fiatDeposit: { title: 'Depósito Fiat', subtitle: 'Deposite monedas fiat vía transferencia bancaria', newDeposit: 'Nuevo Depósito', history: 'Historial', selectCurrency: 'Seleccionar Moneda', depositAmount: 'Monto del Depósito', minimum: 'Mínimo', getBankDetails: 'Obtener Datos Bancarios', creating: 'Creando...', howItWorks: 'Cómo Funciona', step1Title: 'Seleccione moneda y monto', step1Desc: 'Elija EUR, USD, AED o BRL', step2Title: 'Reciba los datos bancarios', step2Desc: 'Con código de referencia único', step3Title: 'Haga la transferencia', step3Desc: 'Incluya el código de referencia', step4Title: 'Envíe el comprobante', step4Desc: 'Acelere la aprobación del depósito', step5Title: 'Saldo acreditado', step5Desc: 'Después de la aprobación del admin', avgProcessingTime: 'Tiempo promedio de procesamiento: 1-2 días hábiles después del envío del comprobante.', depositCreated: 'Depósito Creado con Éxito', nextSteps: 'Próximos Pasos', nextStep1: 'Haga la transferencia a la cuenta indicada', nextStep2: 'Use el código {code} en la descripción', nextStep3: 'Vuelva aquí y envíe el comprobante en el historial', newDepositBtn: 'Nuevo Depósito', viewHistory: 'Ver Historial', depositHistory: 'Historial de Depósitos', noDepositsFound: 'No se encontraron depósitos', makeFirstDeposit: 'Hacer Primer Depósito', sendProof: 'Enviar Comprobante', cancelDeposit: 'Cancelar', proofSent: 'Comprobante enviado. Esperando aprobación.', depositApproved: '¡Depósito aprobado! Saldo acreditado.', depositRejected: 'Depósito rechazado.', contactSupport: 'Contactar soporte.', uploadProof: 'Subir Comprobante', transferProof: 'Comprobante de Transferencia', acceptedFormats: 'Formatos aceptados: PDF, JPEG, PNG (máx. 10MB)', submit: 'Enviar', kbexBankDetails: 'Datos Bancarios KBEX', beneficiary: 'Beneficiario', bank: 'Banco', reference: 'Referencia', amount: 'Monto', includeRefCode: 'Incluya el código de referencia en la descripción de la transferencia.', pending: 'Pendiente', awaitingApproval: 'Esperando Aprobación', approved: 'Aprobado', completed: 'Completado', rejected: 'Rechazado', cancelled: 'Cancelado' },

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { 
@@ -19,6 +20,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const TransparencyPage = () => {
   const { token, user } = useAuth();
+  const { t } = useTranslation();
   const [reports, setReports] = useState([]);
   const [reserves, setReserves] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,8 +77,8 @@ const TransparencyPage = () => {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-light text-white">Transparency</h1>
-        <p className="text-gray-400 mt-1">Prova de reservas e relatórios de auditoria</p>
+        <h1 className="text-3xl font-light text-white">{t('transparency.title')}</h1>
+        <p className="text-gray-400 mt-1">{t('transparency.subtitle')}</p>
       </div>
 
       {/* Trust Banner */}
@@ -87,11 +89,8 @@ const TransparencyPage = () => {
               <Shield className="text-gold-400" size={24} />
             </div>
             <div>
-              <h3 className="text-xl text-white mb-2">Committed to Transparency</h3>
-              <p className="text-gray-300">
-                At KBEX, we believe in complete transparency. Our proof of reserves is updated regularly, 
-                and all our wallets are publicly verifiable on the blockchain.
-              </p>
+              <h3 className="text-xl text-white mb-2">{t('transparency.committedTitle')}</h3>
+              <p className="text-gray-300">{t('transparency.committedDesc')}</p>
             </div>
           </div>
         </CardContent>
@@ -107,7 +106,7 @@ const TransparencyPage = () => {
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          Prova de Reservas
+          {t('transparency.proofOfReserves')}
         </button>
         <button
           onClick={() => setActiveTab('reports')}
@@ -117,7 +116,7 @@ const TransparencyPage = () => {
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          Audit Reports ({reports.length})
+          {t('transparency.auditReports')} ({reports.length})
         </button>
       </div>
 
@@ -141,7 +140,7 @@ const TransparencyPage = () => {
             <CardHeader>
               <CardTitle className="text-white font-light flex items-center gap-2">
                 <Wallet size={20} className="text-gold-400" />
-                Public Wallet Addresses
+                {t('transparency.publicWallets')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -162,7 +161,7 @@ const TransparencyPage = () => {
                             <Badge className="bg-zinc-700 text-gray-300">{wallet.label}</Badge>
                           </div>
                           <p className="text-sm text-gray-400">
-                            Balance: <span className="text-white">{parseFloat(wallet.balance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</span>
+                            {t('transparency.balance')}: <span className="text-white">{parseFloat(wallet.balance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} {wallet.asset_id}</span>
                           </p>
                         </div>
                       </div>
@@ -192,14 +191,14 @@ const TransparencyPage = () => {
               ) : (
                 <div className="text-center py-8 text-gray-400">
                   <Wallet className="mx-auto mb-4" size={48} />
-                  <p>Public wallet addresses will be displayed here</p>
+                  <p>{t('transparency.noWallets')}</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           <p className="text-sm text-gray-500 text-center">
-            Last updated: {formatDate(reserves?.last_updated)}
+            {t('transparency.lastUpdated')}: {formatDate(reserves?.last_updated)}
           </p>
         </div>
       )}
@@ -222,11 +221,11 @@ const TransparencyPage = () => {
                         <div className="flex items-center gap-4 mt-2 text-sm">
                           {report.auditor && (
                             <span className="text-gray-400">
-                              Auditor: <span className="text-white">{report.auditor}</span>
+                              {t('transparency.auditor')}: <span className="text-white">{report.auditor}</span>
                             </span>
                           )}
                           <span className="text-gray-400">
-                            Date: <span className="text-white">{formatDate(report.report_date)}</span>
+                            {t('transparency.date')}: <span className="text-white">{formatDate(report.report_date)}</span>
                           </span>
                         </div>
                       </div>
@@ -249,7 +248,7 @@ const TransparencyPage = () => {
                           data-testid={`view-report-${report.id}`}
                         >
                           <Eye size={16} />
-                          <span>Visualizar</span>
+                          <span>{t('transparency.viewReport')}</span>
                         </button>
                       )}
                     </div>
@@ -261,8 +260,7 @@ const TransparencyPage = () => {
             <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardContent className="p-12 text-center">
                 <FileText className="mx-auto mb-4 text-gray-500" size={48} />
-                <h3 className="text-xl text-white mb-2">No Reports Yet</h3>
-                <p className="text-gray-400">Audit and transparency reports will be published here.</p>
+                <p className="text-gray-400">{t('transparency.noReportsPublished')}</p>
               </CardContent>
             </Card>
           )}
