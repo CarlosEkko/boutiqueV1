@@ -16,6 +16,7 @@ import {
   User, DollarSign, FileText, Upload, Clock, Filter, ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ReconciliationPanel from './ReconciliationPanel';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -114,6 +115,9 @@ const BalanceAdjustmentsPage = () => {
           Novo Ajuste
         </Button>
       </div>
+
+      {/* Reconciliation Panel */}
+      <ReconciliationPanel />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

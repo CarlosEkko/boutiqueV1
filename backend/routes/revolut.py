@@ -5,7 +5,7 @@ OAuth flow, account listing, transaction monitoring, automatic deposit reconcili
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import re
 import uuid
@@ -604,5 +604,93 @@ async def reconcile_deposit(
         "success": True,
         "message": f"Depósito de {currency} {amount:,.2f} creditado a {user.get('name', '')}",
         "new_balance": new_balance if wallet else amount,
+    }
+
+
+
+@router.get("/reconciliation-overview")
+async def reconciliation_overview(admin: dict = Depends(get_admin_user)):
+    """Dashboard overview comparing Revolut deposits vs platform deposits with discrepancy alerts."""
+    now = datetime.now(timezone.utc)
+    
+    # Revolut deposits (last 30 days)
+    thirty_days_ago = (now - timedelta(days=30)).isoformat()
+    revolut_deposits = await get_db().revolut_deposits.find(
+        {"created_at": {"$gte": thirty_days_ago}}, {"_id": 0}
+    ).to_list(500)
+    
+    # Platform fiat deposits (last 30 days)
+    platform_deposits = await get_db().fiat_deposits.find(
+        {"created_at": {"$gte": thirty_days_ago}}, {"_id": 0}
+    ).to_list(500)
+    
+    # Bank transfers (deposits)
+    bank_transfers = await get_db().bank_transfers.find(
+        {"transfer_type": "deposit", "created_at": {"$gte": thirty_days_ago}}, {"_id": 0}
+    ).to_list(500)
+    
+    # Aggregate Revolut totals by currency
+    revolut_by_currency = {}
+    for d in revolut_deposits:
+        cur = d.get("currency", "EUR")
+        revolut_by_currency.setdefault(cur, {"total": 0, "count": 0, "reconciled": 0, "pending": 0})
+        revolut_by_currency[cur]["total"] += d.get("amount", 0)
+        revolut_by_currency[cur]["count"] += 1
+        if d.get("reconciled"):
+            revolut_by_currency[cur]["reconciled"] += 1
+        else:
+            revolut_by_currency[cur]["pending"] += 1
+    
+    # Aggregate platform totals by currency
+    platform_by_currency = {}
+    for d in platform_deposits + bank_transfers:
+        cur = d.get("currency", "EUR")
+        platform_by_currency.setdefault(cur, {"total": 0, "count": 0})
+        platform_by_currency[cur]["total"] += d.get("amount", 0)
+        platform_by_currency[cur]["count"] += 1
+    
+    # Build discrepancies
+    all_currencies = set(list(revolut_by_currency.keys()) + list(platform_by_currency.keys()))
+    discrepancies = []
+    for cur in sorted(all_currencies):
+        rev = revolut_by_currency.get(cur, {"total": 0, "count": 0, "reconciled": 0, "pending": 0})
+        plat = platform_by_currency.get(cur, {"total": 0, "count": 0})
+        diff = rev["total"] - plat["total"]
+        discrepancies.append({
+            "currency": cur,
+            "revolut_total": round(rev["total"], 2),
+            "revolut_count": rev["count"],
+            "revolut_reconciled": rev["reconciled"],
+            "revolut_pending": rev["pending"],
+            "platform_total": round(plat["total"], 2),
+            "platform_count": plat["count"],
+            "difference": round(diff, 2),
+            "status": "match" if abs(diff) < 0.01 else ("over" if diff > 0 else "under"),
+        })
+    
+    # Unreconciled deposits (alerts)
+    unreconciled = await get_db().revolut_deposits.find(
+        {"reconciled": False}, {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+    
+    total_revolut = sum(d.get("amount", 0) for d in revolut_deposits)
+    total_platform = sum(d.get("amount", 0) for d in platform_deposits + bank_transfers)
+    total_reconciled = sum(1 for d in revolut_deposits if d.get("reconciled"))
+    total_pending = sum(1 for d in revolut_deposits if not d.get("reconciled"))
+    
+    return {
+        "period": "30d",
+        "summary": {
+            "revolut_total": round(total_revolut, 2),
+            "platform_total": round(total_platform, 2),
+            "difference": round(total_revolut - total_platform, 2),
+            "revolut_count": len(revolut_deposits),
+            "platform_count": len(platform_deposits) + len(bank_transfers),
+            "reconciled": total_reconciled,
+            "pending": total_pending,
+            "reconciliation_rate": round(total_reconciled / max(len(revolut_deposits), 1) * 100, 1),
+        },
+        "by_currency": discrepancies,
+        "unreconciled_alerts": unreconciled[:10],
     }
 
