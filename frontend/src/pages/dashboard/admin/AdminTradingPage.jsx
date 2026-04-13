@@ -1651,7 +1651,7 @@ const AdminTradingPage = () => {
 
                         {w.fireblocks_tx_id && (
                           <div className="text-sm">
-                            <span className="text-gray-400">Fireblocks TX:</span>
+                            <span className="text-gray-400">TX ID:</span>
                             <code className="text-xs text-emerald-400 ml-2">{w.fireblocks_tx_id}</code>
                           </div>
                         )}

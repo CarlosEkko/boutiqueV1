@@ -87,7 +87,7 @@ const CompliancePage = () => {
       if (res.ok) {
         const data = await res.json();
         const src = data?.satoshi_test?.address_source;
-        toast.success(src === 'fireblocks' ? 'Teste iniciado — Endereço Fireblocks gerado' : 'Teste iniciado');
+        toast.success(src === 'fireblocks' ? 'Teste iniciado — Endereço KBEX gerado' : 'Teste iniciado');
         fetchData();
       }
     } catch (e) { toast.error('Erro ao iniciar teste'); }
@@ -436,7 +436,7 @@ const CompliancePage = () => {
                 <code className="text-zinc-500 text-xs font-mono ml-2">{selectedWallet.address?.substring(0, 10)}...{selectedWallet.address?.slice(-4)}</code>
               )}
               {compliance?.satoshi_test?.address_source === 'fireblocks' && (
-                <Badge className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[10px] ml-auto">Fireblocks</Badge>
+                <Badge className="bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[10px] ml-auto">KBEX Custody</Badge>
               )}
             </CardTitle>
           </CardHeader>
@@ -455,7 +455,7 @@ const CompliancePage = () => {
                     <p className="text-orange-400 font-mono font-bold text-lg">{compliance?.satoshi_test?.test_amount} BTC</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500 text-xs mb-1">Endereço KBEX {compliance?.satoshi_test?.address_source === 'fireblocks' ? '(Fireblocks)' : ''}</p>
+                    <p className="text-zinc-500 text-xs mb-1">Endereço KBEX {compliance?.satoshi_test?.address_source === 'fireblocks' ? '(Custody)' : ''}</p>
                     <div className="flex items-center gap-2">
                       <code className="text-yellow-400 text-xs font-mono bg-zinc-900 px-2 py-1 rounded flex-1 truncate">{compliance?.satoshi_test?.verification_address}</code>
                       <button onClick={() => copyToClipboard(compliance?.satoshi_test?.verification_address)} className="p-1.5 bg-zinc-800 rounded hover:bg-zinc-700">

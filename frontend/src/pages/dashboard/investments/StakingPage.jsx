@@ -657,14 +657,14 @@ const StakingPage = () => {
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
                   Selecionar Provider
                 </h3>
-                <p className="text-sm text-zinc-500 mb-6">Escolha o provider de staking via Fireblocks</p>
+                <p className="text-sm text-zinc-500 mb-6">Escolha o provider de staking</p>
 
                 {providers.length === 0 ? (
                   <div className="space-y-4">
                     <Card className="bg-zinc-900/40 border-zinc-800">
                       <CardContent className="p-8 text-center">
                         <AlertCircle className="mx-auto text-amber-500/50 mb-3" size={32} />
-                        <p className="text-zinc-400">Nenhum provider disponível via Fireblocks para {selectedAsset?.symbol}</p>
+                        <p className="text-zinc-400">Nenhum provider disponível para {selectedAsset?.symbol}</p>
                         <p className="text-xs text-zinc-600 mt-2">Insira manualmente o ID do provider</p>
                       </CardContent>
                     </Card>

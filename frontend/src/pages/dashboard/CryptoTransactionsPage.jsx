@@ -358,7 +358,7 @@ const CryptoTransactionsPage = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Fireblocks aguarda confirmação na blockchain
+                      KBEX aguarda confirmação na blockchain
                     </p>
                   </div>
                 )}
@@ -469,7 +469,7 @@ const CryptoTransactionsPage = () => {
 
                 {/* Fireblocks TX ID */}
                 <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                  <span className="text-gray-400">Fireblocks Transaction ID</span>
+                  <span className="text-gray-400">Transaction ID</span>
                   <div className="flex items-center gap-2">
                     <code className="text-gold-400 text-sm font-mono">{txDetails.fireblocks_tx_id}</code>
                     <Button 

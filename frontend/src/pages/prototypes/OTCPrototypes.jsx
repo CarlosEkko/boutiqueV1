@@ -717,7 +717,7 @@ const WizardSummaryScreen = () => {
     { label: 'Verificação de Carteira', status: 'pass', detail: '2 carteiras verificadas' },
     { label: 'Score KYT', status: 'pass', detail: 'Score 78/100 — Risco Baixo' },
     { label: 'Teste de Satoshi', status: 'pass', detail: 'Verificado em 31/03/2026' },
-    { label: 'Proof of Ownership', status: 'pass', detail: 'Assinatura Fireblocks verificada' },
+    { label: 'Proof of Ownership', status: 'pass', detail: 'Assinatura digital verificada' },
     { label: 'Proof of Reserves', status: 'pending', detail: 'Aguardando verificação — 100 BTC' },
   ];
   const allPass = checks.every(c => c.status === 'pass');
