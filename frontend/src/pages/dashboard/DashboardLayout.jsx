@@ -13,6 +13,7 @@ import {
   History, 
   TrendingUp, 
   PieChart,
+  Rocket,
   Shield,
   LogOut,
   Menu,
@@ -121,6 +122,7 @@ const departmentConfig = {
   escrow: { icon: Lock, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   cold_wallet: { icon: Shield, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   launchpad: { icon: Zap, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
+  launchpad_admin: { icon: Rocket, color: 'text-purple-400', bgColor: 'bg-purple-500/20' },
   commercial: { icon: BarChart3, color: 'text-cyan-400', bgColor: 'bg-cyan-500/20' },
   my_performance: { icon: BarChart3, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
 };

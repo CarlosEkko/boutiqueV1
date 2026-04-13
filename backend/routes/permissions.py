@@ -180,16 +180,27 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
             ]
         })
         
-        # Add Launchpad menu for clients
-        client_menus.append({
-            "department": "launchpad",
-            "label": "Launchpad",
-            "icon": "Rocket",
-            "items": [
-                {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
-                {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
-            ]
-        })
+        # Add Launchpad menu for clients (permission-based)
+        client_perms = await db.user_permissions.find_one({"user_id": user_id}, {"_id": 0})
+        has_launchpad = False
+        if client_perms:
+            has_launchpad = "launchpad" in (client_perms.get("departments") or [])
+        # Also check if user has any launchpad subscriptions
+        if not has_launchpad:
+            sub_count = await db.launchpad_subscriptions.count_documents({"user_id": user_id})
+            if sub_count > 0:
+                has_launchpad = True
+        
+        if has_launchpad:
+            client_menus.append({
+                "department": "launchpad",
+                "label": "Launchpad",
+                "icon": "Rocket",
+                "items": [
+                    {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
+                    {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
+                ]
+            })
         
         return {"menus": client_menus}
     
@@ -229,6 +240,10 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                         "path": "/dashboard/trading"
                     })
                     portfolio_added = True
+                # Add client-facing Launchpad after portfolio section
+                if dept_value == "launchpad":
+                    # Rename to launchpad_admin so it goes to GESTÃO
+                    menus[-1]["department"] = "launchpad_admin"
         except ValueError:
             continue
     

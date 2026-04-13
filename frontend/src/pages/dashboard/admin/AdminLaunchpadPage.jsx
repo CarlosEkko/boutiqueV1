@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Ban,
   Upload,
+  Star,
   Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
@@ -176,6 +177,16 @@ const AdminLaunchpadPage = () => {
     }
   };
 
+  const toggleFeatured = async (saleId) => {
+    try {
+      const res = await axios.put(`${API_URL}/api/launchpad/admin/sales/${saleId}/toggle-featured`, {}, { headers });
+      toast.success(res.data.message);
+      fetchSales();
+    } catch (err) {
+      toast.error('Erro ao alterar destaque');
+    }
+  };
+
   const openEdit = (sale) => {
     setEditSale(sale);
     setForm({
@@ -293,6 +304,7 @@ const AdminLaunchpadPage = () => {
                         <div className="flex items-center gap-2">
                           <h3 className="text-white font-medium">{sale.name}</h3>
                           <Badge className={`${cfg.bg} ${cfg.color} border-0 text-[10px]`}>{cfg.label}</Badge>
+                          {sale.featured && <Badge className="bg-gold-500/15 text-gold-400 border-gold-500/30 border text-[10px]"><Star size={10} fill="currentColor" className="mr-0.5" />Destaque</Badge>}
                         </div>
                         <p className="text-gray-400 text-sm">
                           {sale.symbol} &middot; ${sale.price}/token &middot; {sale.network}
@@ -319,13 +331,19 @@ const AdminLaunchpadPage = () => {
 
                       {/* Actions */}
                       <div className="flex gap-1">
+                        <Button variant="ghost" size="icon"
+                          className={sale.featured ? 'text-gold-400 hover:text-gold-300' : 'text-gray-400 hover:text-gold-400'}
+                          onClick={() => toggleFeatured(sale.id)} title={sale.featured ? 'Remover destaque' : 'Destacar'}
+                          data-testid={`toggle-featured-${sale.id}`}>
+                          <Star size={16} fill={sale.featured ? 'currentColor' : 'none'} />
+                        </Button>
                         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white" onClick={() => viewSubscriptions(sale.id)} data-testid={`view-subs-${sale.id}`}>
                           <Users size={16} />
                         </Button>
                         <Button variant="ghost" size="icon" className="text-gray-400 hover:text-blue-400" onClick={() => openEdit(sale)}>
                           <Edit size={16} />
                         </Button>
-                        {sale.computed_status === 'upcoming' && (
+                        {sale.computed_status !== 'active' && sale.computed_status !== 'completed' && (
                           <Button variant="ghost" size="icon" className="text-gray-400 hover:text-emerald-400" onClick={() => handleStatusChange(sale.id, 'active')} title="Ativar">
                             <CheckCircle size={16} />
                           </Button>

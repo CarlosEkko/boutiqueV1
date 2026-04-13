@@ -6,27 +6,24 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 ## Architecture
 - Frontend: React, Tailwind CSS, Shadcn UI, Recharts, PDF.js, TradingView
 - Backend: FastAPI, Motor (MongoDB), custom RBAC
-- Real-time: Binance WebSocket (order book, trades, ticker)
-- Integrations: Trezor Connect SDK, Fireblocks, TradingView, Binance API, Revolut Business API, Sumsub, Brevo
+- Real-time: Binance WebSocket
 
-## What's Been Implemented (Latest Session - 2026-04-13)
-- Fixed TransparencyPage.jsx translation bug (react-i18next → useLanguage)
-- Fixed LaunchpadPage.jsx token reference error
-- Refactored OTCLeads.jsx (609→178 lines) and AdminTradingPage.jsx (1701→126 lines)
-- **Binance-style Trading Terminal** at `/dashboard/trading`:
-  - Real-time Order Book, Market Trades, TradingView chart
-  - Spot Trading: Limit / Market / Stop-Limit order types
-  - Pairs List with 40+ crypto pairs
-  - Open Orders panel (Open Orders, Order History, Trade History, Holdings tabs)
-  - Cancel order API for users
-  - Public `/trading` page (requires login for orders)
-  - Trading menu as standalone item in sidebar
-- **Reconciliation Dashboard** in Balance Adjustments page:
-  - Real-time Revolut vs Platform deposit comparison
-  - Discrepancy alerts by currency (Deficit/Excesso/OK)
-  - Unreconciled deposits list with details
-  - Sync Revolut button + 30s auto-refresh
-  - API: GET /api/revolut/reconciliation-overview
+## Latest Implementations (2026-04-13)
+- **Launchpad Permissions**: Client Launchpad menu only visible if user has "launchpad" permission or existing subscriptions
+- **Launchpad Admin in GESTÃO**: "Gerir Token Sales" moved to GESTÃO section with dedicated menu
+- **Bug Fix**: Token sale activation now works — `_compute_status()` respects manual "active" status
+- **Featured Token Sales**: Admin can toggle "Destaque" (star icon) per sale; featured sales appear first on public page
+- **My Launchpad Investments**: New page at `/dashboard/launchpad/my-investments` showing client's token sale subscriptions
+- **Trading Terminal**: Binance-style at `/dashboard/trading` with Order Book, Chart, Spot Trading, Open Orders
+- **Reconciliation Dashboard**: Real-time Revolut vs Platform comparison with discrepancy alerts
+
+## Key API Endpoints - Launchpad
+- `GET /api/launchpad/sales` - Public list (featured first)
+- `POST /api/launchpad/sales/{id}/subscribe` - Client subscribe
+- `GET /api/launchpad/my-subscriptions` - Client subscriptions
+- `PUT /api/launchpad/admin/sales/{id}` - Update sale (status, featured)
+- `PUT /api/launchpad/admin/sales/{id}/toggle-featured` - Toggle featured
+- `PUT /api/permissions/user/{id}` - Grant launchpad access to client
 
 ## Pending Issues
 - P1: Safari cursor bug (recurring)

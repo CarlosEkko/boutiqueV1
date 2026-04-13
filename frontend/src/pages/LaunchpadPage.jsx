@@ -212,8 +212,11 @@ const LaunchpadPage = () => {
     ? sales
     : sales.filter(s => s.computed_status === activeFilter);
 
+  // Sort featured first
+  const sortedSales = [...filteredSales].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+
   const activeSales = sales.filter(s => s.computed_status === 'active');
-  const featuredSale = activeSales[0] || sales[0];
+  const featuredSale = sales.find(s => s.featured) || activeSales[0] || sales[0];
 
   const filters = [
     { id: 'all', label: 'Todos', count: sales.length },
@@ -351,7 +354,7 @@ const LaunchpadPage = () => {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
             </div>
-          ) : filteredSales.length === 0 ? (
+          ) : sortedSales.length === 0 ? (
             <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl">
               <Rocket size={48} className="text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg">Nenhum token sale disponível</p>
@@ -359,7 +362,7 @@ const LaunchpadPage = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSales.map(sale => (
+              {sortedSales.map(sale => (
                 <SaleCard key={sale.id} sale={sale} onViewDetails={handleViewDetails} />
               ))}
             </div>

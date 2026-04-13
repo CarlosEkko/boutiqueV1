@@ -77,6 +77,7 @@ class TokenSaleUpdate(BaseModel):
     network: Optional[str] = None
     token_type: Optional[str] = None
     status: Optional[str] = None
+    featured: Optional[bool] = None
     accepted_currencies: Optional[List[str]] = None
 
 
@@ -90,7 +91,7 @@ class SubscriptionCreate(BaseModel):
 def _compute_status(sale: dict) -> str:
     """Compute dynamic status based on dates and manual status."""
     manual = sale.get("status", "")
-    if manual in ("cancelled", "completed"):
+    if manual in ("cancelled", "completed", "active"):
         return manual
     now = datetime.now(timezone.utc).isoformat()
     start = sale.get("start_date", "")
@@ -230,6 +231,7 @@ async def create_token_sale(body: TokenSaleCreate, admin: dict = Depends(get_adm
         "raised_amount": 0,
         "total_participants": 0,
         "status": "upcoming",
+        "featured": False,
         "created_by": admin.get("id", ""),
         "created_at": now_iso,
         "updated_at": now_iso,
@@ -263,6 +265,21 @@ async def delete_token_sale(sale_id: str, admin: dict = Depends(get_admin_user))
     if result.deleted_count == 0:
         raise HTTPException(404, "Token sale not found")
     return {"message": "Token sale deleted"}
+
+
+@router.put("/admin/sales/{sale_id}/toggle-featured")
+async def toggle_featured(sale_id: str, admin: dict = Depends(get_admin_user)):
+    """Toggle featured status of a token sale."""
+    sale = await get_db().token_sales.find_one({"id": sale_id}, {"_id": 0})
+    if not sale:
+        raise HTTPException(404, "Token sale not found")
+    new_featured = not sale.get("featured", False)
+    await get_db().token_sales.update_one(
+        {"id": sale_id},
+        {"$set": {"featured": new_featured, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"featured": new_featured, "message": f"{'Destaque ativado' if new_featured else 'Destaque removido'}"}
+
 
 
 @router.get("/admin/sales/{sale_id}/subscriptions")
