@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import CryptoATMPage from "./pages/CryptoATMPage";
 import MarketsPage from "./pages/MarketsPage";
 import TradingPage from "./pages/TradingPage";
+import PublicTradingPage from "./pages/public/PublicTradingPage";
 import EarnPage from "./pages/EarnPage";
 import InstitutionalPage from "./pages/InstitutionalPage";
 import AuthPage from "./pages/AuthPage";
@@ -162,7 +163,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/crypto-atm" element={<CryptoATMPage />} />
       <Route path="/markets" element={<MarketsPage />} />
-      <Route path="/trading" element={<TradingPage />} />
+      <Route path="/trading" element={<PublicTradingPage />} />
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/launchpad" element={<LaunchpadPage />} />

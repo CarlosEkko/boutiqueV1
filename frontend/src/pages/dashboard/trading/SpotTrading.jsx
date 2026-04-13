@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
+const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced, isLoggedIn }) => {
   const { token } = useAuth();
   const [orderType, setOrderType] = useState('market');
   const [buyPrice, setBuyPrice] = useState('');
@@ -198,14 +198,20 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
 
           <div className="mt-1 text-[10px] text-gray-500 flex justify-between">
             <span>Avbl</span>
-            <span>{balances.fiat.toFixed(2)} USDT</span>
+            <span>{isLoggedIn ? `${balances.fiat.toFixed(2)} USDT` : '--'}</span>
           </div>
 
-          <button onClick={handleBuy} disabled={loading || !buyAmount}
-            className="mt-auto w-full py-2 rounded text-xs font-semibold transition-colors bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            data-testid="buy-btn">
-            {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : `Buy ${symbol}`}
-          </button>
+          {isLoggedIn ? (
+            <button onClick={handleBuy} disabled={loading || !buyAmount}
+              className="mt-auto w-full py-2.5 rounded text-xs font-semibold transition-colors bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              data-testid="buy-btn">
+              {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : `Buy ${symbol}`}
+            </button>
+          ) : (
+            <a href="/login" className="mt-auto w-full py-2.5 rounded text-xs font-semibold text-center transition-colors bg-[#0ecb81] hover:bg-[#0ecb81]/80 text-white block">
+              Log In to Buy {symbol}
+            </a>
+          )}
         </div>
 
         {/* Sell Side */}
@@ -231,14 +237,20 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
 
           <div className="mt-1 text-[10px] text-gray-500 flex justify-between">
             <span>Avbl</span>
-            <span>{balances.crypto.toFixed(6)} {symbol}</span>
+            <span>{isLoggedIn ? `${balances.crypto.toFixed(6)} ${symbol}` : '--'}</span>
           </div>
 
-          <button onClick={handleSell} disabled={loading || !sellAmount}
-            className="mt-auto w-full py-2 rounded text-xs font-semibold transition-colors bg-[#f6465d] hover:bg-[#f6465d]/80 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            data-testid="sell-btn">
-            {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : `Sell ${symbol}`}
-          </button>
+          {isLoggedIn ? (
+            <button onClick={handleSell} disabled={loading || !sellAmount}
+              className="mt-auto w-full py-2.5 rounded text-xs font-semibold transition-colors bg-[#f6465d] hover:bg-[#f6465d]/80 text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              data-testid="sell-btn">
+              {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : `Sell ${symbol}`}
+            </button>
+          ) : (
+            <a href="/login" className="mt-auto w-full py-2.5 rounded text-xs font-semibold text-center transition-colors bg-[#f6465d] hover:bg-[#f6465d]/80 text-white block">
+              Log In to Sell {symbol}
+            </a>
+          )}
         </div>
       </div>
     </div>

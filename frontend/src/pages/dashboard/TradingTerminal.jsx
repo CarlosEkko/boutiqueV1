@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import { useBinanceStream } from './trading/useBinanceStream';
 import OrderBook from './trading/OrderBook';
 import MarketTrades from './trading/MarketTrades';
@@ -20,6 +21,7 @@ const getPricePrecision = (symbol) => {
 };
 
 const TradingTerminal = () => {
+  const { user } = useAuth();
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
   const [markets, setMarkets] = useState([]);
   const [marketsLoading, setMarketsLoading] = useState(true);
@@ -93,32 +95,29 @@ const TradingTerminal = () => {
         )}
       </div>
 
-      {/* Main grid */}
+      {/* Main scrollable area */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* LEFT: Order Book */}
+        {/* LEFT: Order Book (full height) */}
         <div className="w-[220px] border-r border-zinc-800 flex flex-col shrink-0">
           <OrderBook orderBook={orderBook} ticker={ticker} pricePrecision={pricePrecision} />
         </div>
 
-        {/* CENTER: Chart + Bottom row (Spot + Open Orders) */}
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* CENTER: Chart → Spot → Orders (vertically stacked, scrollable) */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
           {/* Chart */}
-          <div className="flex-[3] min-h-0 border-b border-zinc-800">
+          <div className="h-[420px] shrink-0 border-b border-zinc-800">
             <TradingChart symbol={selectedSymbol} />
           </div>
 
-          {/* Bottom row: Spot Trading + Open Orders */}
-          <div className="flex-[2] flex border-t border-zinc-800 min-h-0">
-            {/* Spot Trading */}
-            <div className="w-[480px] shrink-0 border-r border-zinc-800">
-              <SpotTrading selectedSymbol={selectedSymbol} ticker={ticker} onOrderPlaced={handleOrderPlaced} />
-            </div>
+          {/* Spot Trading Form (full width) */}
+          <div className="shrink-0 border-b border-zinc-800">
+            <SpotTrading selectedSymbol={selectedSymbol} ticker={ticker} onOrderPlaced={handleOrderPlaced} isLoggedIn={!!user} />
+          </div>
 
-            {/* Open Orders */}
-            <div className="flex-1 min-w-0">
-              <OpenOrders refreshTrigger={orderRefresh} />
-            </div>
+          {/* Open Orders / History / Trade History / Holdings tabs */}
+          <div className="h-[280px] shrink-0">
+            <OpenOrders refreshTrigger={orderRefresh} isLoggedIn={!!user} />
           </div>
         </div>
 
