@@ -6,7 +6,7 @@ import MarketTrades from './trading/MarketTrades';
 import SpotTrading from './trading/SpotTrading';
 import PairsList from './trading/PairsList';
 import TradingChart from './trading/TradingChart';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import OpenOrders from './trading/OpenOrders';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -23,6 +23,7 @@ const TradingTerminal = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
   const [markets, setMarkets] = useState([]);
   const [marketsLoading, setMarketsLoading] = useState(true);
+  const [orderRefresh, setOrderRefresh] = useState(0);
 
   const { orderBook, trades, ticker } = useBinanceStream(selectedSymbol);
   const pricePrecision = getPricePrecision(selectedSymbol);
@@ -40,7 +41,6 @@ const TradingTerminal = () => {
 
   useEffect(() => { fetchMarkets(); }, [fetchMarkets]);
 
-  // Refresh markets every 15s
   useEffect(() => {
     const interval = setInterval(fetchMarkets, 15000);
     return () => clearInterval(interval);
@@ -50,8 +50,9 @@ const TradingTerminal = () => {
     setSelectedSymbol(`${symbol}USDT`);
   };
 
-  const baseSymbol = selectedSymbol.replace('USDT', '');
-  const selectedMarket = markets.find(m => m.symbol === baseSymbol);
+  const handleOrderPlaced = () => {
+    setOrderRefresh(prev => prev + 1);
+  };
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-[#0b0e11] text-white overflow-hidden" data-testid="trading-terminal">
@@ -100,28 +101,33 @@ const TradingTerminal = () => {
           <OrderBook orderBook={orderBook} ticker={ticker} pricePrecision={pricePrecision} />
         </div>
 
-        {/* CENTER: Chart + Spot Trading */}
+        {/* CENTER: Chart + Bottom row (Spot + Open Orders) */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Chart */}
-          <div className="flex-1 min-h-0 border-b border-zinc-800">
+          <div className="flex-[3] min-h-0 border-b border-zinc-800">
             <TradingChart symbol={selectedSymbol} />
           </div>
 
-          {/* Spot Trading Form */}
-          <div className="h-[260px] shrink-0">
-            <SpotTrading selectedSymbol={selectedSymbol} ticker={ticker} />
+          {/* Bottom row: Spot Trading + Open Orders */}
+          <div className="flex-[2] flex border-t border-zinc-800 min-h-0">
+            {/* Spot Trading */}
+            <div className="w-[480px] shrink-0 border-r border-zinc-800">
+              <SpotTrading selectedSymbol={selectedSymbol} ticker={ticker} onOrderPlaced={handleOrderPlaced} />
+            </div>
+
+            {/* Open Orders */}
+            <div className="flex-1 min-w-0">
+              <OpenOrders refreshTrigger={orderRefresh} />
+            </div>
           </div>
         </div>
 
         {/* RIGHT: Pairs + Market Trades */}
         <div className="w-[260px] border-l border-zinc-800 flex flex-col shrink-0">
-          {/* Pairs List */}
           <div className="h-[45%] border-b border-zinc-800">
             <PairsList markets={markets} selectedSymbol={selectedSymbol}
               onSelectPair={handleSelectPair} loading={marketsLoading} />
           </div>
-
-          {/* Market Trades */}
           <div className="flex-1">
             <MarketTrades trades={trades} pricePrecision={pricePrecision} />
           </div>

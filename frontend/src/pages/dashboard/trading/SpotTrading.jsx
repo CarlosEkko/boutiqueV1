@@ -9,11 +9,12 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
   const { token } = useAuth();
   const [orderType, setOrderType] = useState('market');
-  const [side, setSide] = useState(null); // null = show both
   const [buyPrice, setBuyPrice] = useState('');
   const [buyAmount, setBuyAmount] = useState('');
+  const [buyStopPrice, setBuyStopPrice] = useState('');
   const [sellPrice, setSellPrice] = useState('');
   const [sellAmount, setSellAmount] = useState('');
+  const [sellStopPrice, setSellStopPrice] = useState('');
   const [buySlider, setBuySlider] = useState(0);
   const [sellSlider, setSellSlider] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -159,10 +160,14 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
 
       {/* Order type tabs */}
       <div className="px-3 pt-2 flex items-center gap-2 text-[11px]">
-        {['limit', 'market'].map(t => (
-          <button key={t} onClick={() => setOrderType(t)}
-            className={`px-2 py-0.5 rounded capitalize transition-colors ${orderType === t ? 'text-gold-400 bg-gold-500/10' : 'text-gray-500 hover:text-white'}`}>
-            {t}
+        {[
+          { key: 'limit', label: 'Limit' },
+          { key: 'market', label: 'Market' },
+          { key: 'stop-limit', label: 'Stop-Limit' },
+        ].map(t => (
+          <button key={t.key} onClick={() => setOrderType(t.key)}
+            className={`px-2 py-0.5 rounded transition-colors ${orderType === t.key ? 'text-gold-400 bg-gold-500/10' : 'text-gray-500 hover:text-white'}`}>
+            {t.label}
           </button>
         ))}
       </div>
@@ -171,6 +176,15 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
       <div className="flex-1 flex gap-3 p-3 overflow-hidden">
         {/* Buy Side */}
         <div className="flex-1 flex flex-col gap-1.5">
+          {orderType === 'stop-limit' && (
+            <div className="flex items-center bg-zinc-800/80 border border-zinc-700/50 rounded">
+              <span className="text-[10px] text-gray-500 pl-2">Stop</span>
+              <input type="text" value={buyStopPrice} onChange={e => setBuyStopPrice(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 bg-transparent text-right text-xs text-white px-2 py-1.5 focus:outline-none placeholder-gray-600" />
+              <span className="text-[10px] text-gray-400 pr-2">USDT</span>
+            </div>
+          )}
           <PriceInput value={buyPrice} onChange={setBuyPrice} disabled={orderType === 'market'} />
           <AmountInput value={buyAmount} onChange={setBuyAmount} unit={symbol} />
           <SliderBar value={buySlider} onChange={(pct) => {
@@ -196,6 +210,15 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
 
         {/* Sell Side */}
         <div className="flex-1 flex flex-col gap-1.5">
+          {orderType === 'stop-limit' && (
+            <div className="flex items-center bg-zinc-800/80 border border-zinc-700/50 rounded">
+              <span className="text-[10px] text-gray-500 pl-2">Stop</span>
+              <input type="text" value={sellStopPrice} onChange={e => setSellStopPrice(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 bg-transparent text-right text-xs text-white px-2 py-1.5 focus:outline-none placeholder-gray-600" />
+              <span className="text-[10px] text-gray-400 pr-2">USDT</span>
+            </div>
+          )}
           <PriceInput value={sellPrice} onChange={setSellPrice} disabled={orderType === 'market'} />
           <AmountInput value={sellAmount} onChange={setSellAmount} unit={symbol} />
           <SliderBar value={sellSlider} onChange={(pct) => {

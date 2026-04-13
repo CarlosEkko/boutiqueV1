@@ -2120,6 +2120,32 @@ async def get_my_orders(
     return orders
 
 
+@router.post("/orders/{order_id}/cancel", response_model=dict)
+async def cancel_my_order(
+    order_id: str,
+    user: dict = Depends(get_current_user)
+):
+    """Cancel a pending order (user-facing)"""
+    order = await db.trading_orders.find_one({
+        "id": order_id,
+        "user_id": user["id"]
+    }, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    cancelable = ["pending", "awaiting_payment", "awaiting_admin_approval"]
+    if order.get("status") not in cancelable:
+        raise HTTPException(status_code=400, detail="Order cannot be cancelled")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    await db.trading_orders.update_one(
+        {"id": order_id},
+        {"$set": {"status": "cancelled", "rejection_reason": "Cancelled by user", "updated_at": now}}
+    )
+    return {"success": True, "message": "Order cancelled"}
+
+
+
 @router.get("/orders/{order_id}", response_model=dict)
 async def get_order_details(
     order_id: str,
