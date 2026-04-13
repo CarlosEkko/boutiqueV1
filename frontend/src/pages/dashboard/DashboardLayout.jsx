@@ -6,7 +6,6 @@ import { useLanguage } from '../../i18n';
 import CurrencySelector from '../../components/CurrencySelector';
 import LanguageSelector from '../../components/LanguageSelector';
 import NotificationBell from '../../components/dashboard/NotificationBell';
-import DemoToggle from '../../components/dashboard/DemoToggle';
 import { useDemo } from '../../context/DemoContext';
 import { 
   LayoutDashboard, 
@@ -896,7 +895,6 @@ const DashboardLayout = () => {
         )}
         {/* Top Bar with Notifications and Currency Selector */}
         <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4">
-          <DemoToggle />
           <ThemeToggle />
           <NotificationBell />
           <LanguageSelector />

@@ -14,10 +14,13 @@ import axios from 'axios';
 import { 
   User, Mail, Phone, Globe, Edit2, Save, X, Shield, Calendar,
   CreditCard, Bitcoin, ArrowUpCircle, ArrowDownCircle, 
-  FileText, MapPin, Hash, Copy, RefreshCw
+  FileText, MapPin, Hash, Copy, RefreshCw, Monitor
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Lazy import DemoToggle
+const DemoToggle = React.lazy(() => import('../components/dashboard/DemoToggle'));
 
 const COUNTRIES = [
   { code: 'PT', name: 'Portugal' },
@@ -410,6 +413,21 @@ const ProfilePage = () => {
                 <p className="text-white">{displayUser.phone || '-'}</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Demo Mode Section */}
+        <Card className="bg-zinc-900 border-zinc-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-sm flex items-center gap-2">
+              <Monitor size={16} className="text-amber-400" /> Modo Demo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between">
+            <p className="text-gray-400 text-sm">Ativar dados simulados para demonstracao</p>
+            <React.Suspense fallback={null}>
+              <DemoToggle />
+            </React.Suspense>
           </CardContent>
         </Card>
       </div>
