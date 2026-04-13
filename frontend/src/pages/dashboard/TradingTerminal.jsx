@@ -103,10 +103,10 @@ const TradingTerminal = () => {
           <OrderBook orderBook={orderBook} ticker={ticker} pricePrecision={pricePrecision} />
         </div>
 
-        {/* CENTER: Chart → Spot → Orders (vertically stacked, scrollable) */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {/* Chart */}
-          <div className="h-[420px] shrink-0 border-b border-zinc-800">
+        {/* CENTER: Chart → Spot → Orders (vertically stacked, fills height) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Chart - takes remaining space */}
+          <div className="flex-1 min-h-0 border-b border-zinc-800">
             <TradingChart symbol={selectedSymbol} />
           </div>
 
@@ -116,7 +116,7 @@ const TradingTerminal = () => {
           </div>
 
           {/* Open Orders / History / Trade History / Holdings tabs */}
-          <div className="h-[280px] shrink-0">
+          <div className="h-[180px] shrink-0">
             <OpenOrders refreshTrigger={orderRefresh} isLoggedIn={!!user} />
           </div>
         </div>
