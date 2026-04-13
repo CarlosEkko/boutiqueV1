@@ -364,7 +364,6 @@ DEPARTMENT_MENUS = {
         "icon": "Rocket",
         "items": [
             {"path": "/dashboard/admin/launchpad", "label": "Gerir Token Sales", "icon": "Rocket"},
-            {"path": "/dashboard/admin/launchpad/subscriptions", "label": "Subscricoes", "icon": "Users"},
         ]
     },
     Department.COMMERCIAL: {
