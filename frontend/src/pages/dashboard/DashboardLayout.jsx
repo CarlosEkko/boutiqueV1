@@ -894,13 +894,15 @@ const DashboardLayout = () => {
           </div>
         )}
         {/* Top Bar with Notifications and Currency Selector */}
+        {location.pathname !== '/dashboard/trading' && (
         <div className="hidden md:flex justify-end items-center gap-4 px-8 py-4">
           <ThemeToggle />
           <NotificationBell />
           <LanguageSelector />
           <CurrencySelector />
         </div>
-        <div className="md:p-8 p-4 pt-20 md:pt-4">
+        )}
+        <div className={location.pathname === '/dashboard/trading' ? '' : 'md:p-8 p-4 pt-20 md:pt-4'}>
           <Outlet />
         </div>
       </main>

@@ -102,6 +102,7 @@ import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
 import AdminLaunchpadPage from "./pages/dashboard/admin/AdminLaunchpadPage";
 const CommercialDashboard = React.lazy(() => import("./pages/dashboard/commercial/CommercialDashboard"));
 const MyPerformance = React.lazy(() => import("./pages/dashboard/commercial/MyPerformance"));
+const TradingTerminal = React.lazy(() => import("./pages/dashboard/TradingTerminal"));
 import StakingPage from "./pages/dashboard/investments/StakingPage";
 import TokensListPage from "./pages/dashboard/tokenization/TokensListPage";
 import IssueTokenPage from "./pages/dashboard/tokenization/IssueTokenPage";
@@ -218,6 +219,7 @@ function AppRoutes() {
         
         {/* Exchange */}
         <Route path="exchange" element={<ExchangePage />} />
+        <Route path="trading" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><TradingTerminal /></React.Suspense>} />
         <Route path="fiat-deposit" element={<FiatDepositPage />} />
         <Route path="fiat-withdrawal" element={<FiatWithdrawalPage />} />
         <Route path="fiat-withdraw" element={<FiatWithdrawalPage />} />
