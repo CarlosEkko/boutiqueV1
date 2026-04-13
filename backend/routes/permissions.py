@@ -186,7 +186,8 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
             "label": "Launchpad",
             "icon": "Rocket",
             "items": [
-                {"path": "/dashboard/launchpad", "label": "Token Sales", "icon": "Rocket"},
+                {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
+                {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
             ]
         })
         

@@ -101,6 +101,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
 import AdminLaunchpadPage from "./pages/dashboard/admin/AdminLaunchpadPage";
+import MyLaunchpadInvestments from "./pages/dashboard/launchpad/MyLaunchpadInvestments";
 const CommercialDashboard = React.lazy(() => import("./pages/dashboard/commercial/CommercialDashboard"));
 const MyPerformance = React.lazy(() => import("./pages/dashboard/commercial/MyPerformance"));
 const TradingTerminal = React.lazy(() => import("./pages/dashboard/TradingTerminal"));
@@ -198,6 +199,7 @@ function AppRoutes() {
         <Route path="investments" element={<InvestmentsPage />} />
         <Route path="staking" element={<StakingPage />} />
         <Route path="launchpad" element={<ClientLaunchpadPage />} />
+        <Route path="launchpad/my-investments" element={<MyLaunchpadInvestments />} />
         <Route path="tokenization" element={<TokensListPage />} />
         <Route path="tokenization/issue" element={<IssueTokenPage />} />
         <Route path="tokenization/mint-burn" element={<MintBurnPage />} />

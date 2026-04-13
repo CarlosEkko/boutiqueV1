@@ -363,7 +363,9 @@ DEPARTMENT_MENUS = {
         "label": "Launchpad",
         "icon": "Rocket",
         "items": [
-            {"path": "/dashboard/admin/launchpad", "label": "Gerir Token Sales", "icon": "Rocket"},
+            {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
+            {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
+            {"path": "/dashboard/admin/launchpad", "label": "Gerir Token Sales", "icon": "Settings", "admin_only": True},
         ]
     },
     Department.COMMERCIAL: {
