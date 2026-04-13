@@ -98,6 +98,7 @@ const departmentConfig = {
   transparencia: { icon: Shield, color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' },
   account: { icon: UserCircle, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   otc_trading: { icon: Briefcase, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
+  trading: { icon: TrendingUp, color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
   suporte: { icon: Headphones, color: 'text-gold-400', bgColor: 'bg-gold-500/20' },
   tokenizacao: { icon: Gem, color: 'text-[#D4AF37]', bgColor: 'bg-[#D4AF37]/20' },
   // Submenu colors
@@ -562,6 +563,43 @@ const DashboardLayout = () => {
 
     const hasSubmenus = menu.submenus && menu.submenus.length > 0;
     const hasItems = menu.items && menu.items.length > 0;
+    const isDirectLink = menu.path && !hasSubmenus && !hasItems;
+
+    // Standalone direct link (e.g., Trading)
+    if (isDirectLink) {
+      return (
+        <div className="space-y-1">
+          {sidebarOpen || isMobile ? (
+            <NavLink
+              to={menu.path}
+              className={({ isActive: linkActive }) =>
+                `w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                  linkActive
+                    ? `${config.bgColor} ${config.color}`
+                    : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+                }`
+              }
+            >
+              <DeptIcon size={18} className="shrink-0" />
+              <span className="font-medium text-sm truncate">{translateLabel(menu.label)}</span>
+            </NavLink>
+          ) : (
+            <NavLink
+              to={menu.path}
+              className={({ isActive: linkActive }) =>
+                `w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                  linkActive
+                    ? `${config.bgColor} ${config.color}`
+                    : 'text-gray-400 hover:text-white hover:bg-zinc-800/50'
+                }`
+              }
+            >
+              <DeptIcon size={18} />
+            </NavLink>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-1">
@@ -670,7 +708,7 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'launchpad', 'my_performance'];
+  const clientMenuDepts = ['portfolio', 'trading', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'launchpad', 'my_performance'];
   
   // Default menus for clients (Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];

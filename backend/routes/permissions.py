@@ -100,6 +100,12 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                 "submenus": portfolio_data.get("submenus", [])
             },
             {
+                "department": "trading",
+                "label": "Trading",
+                "icon": "TrendingUp",
+                "path": "/dashboard/trading"
+            },
+            {
                 "department": "multi_sign",
                 "label": "Multi-Sign",
                 "icon": "ShieldCheck",
@@ -196,6 +202,7 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     
     # Build menu structure for staff
     menus = []
+    portfolio_added = False
     for dept_value in accessible_depts:
         try:
             dept = Department(dept_value)
@@ -212,6 +219,15 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                 if "items" in dept_info:
                     menu_item["items"] = dept_info["items"]
                 menus.append(menu_item)
+                # Add Trading as standalone item right after portfolio
+                if dept_value == "portfolio" and not portfolio_added:
+                    menus.append({
+                        "department": "trading",
+                        "label": "Trading",
+                        "icon": "TrendingUp",
+                        "path": "/dashboard/trading"
+                    })
+                    portfolio_added = True
         except ValueError:
             continue
     

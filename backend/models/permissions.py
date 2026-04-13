@@ -163,7 +163,6 @@ DEPARTMENT_MENUS = {
                 "label": "Ativos",
                 "icon": "Wallet",
                 "items": [
-                    {"path": "/dashboard/trading", "label": "Trading", "icon": "TrendingUp"},
                     {"path": "/dashboard/exchange", "label": "Exchange", "icon": "ArrowDownUp"},
                     {"path": "/dashboard/wallets", "label": "Carteiras", "icon": "Wallet"},
                     {"path": "/dashboard/whitelist", "label": "Whitelist", "icon": "Shield"},
