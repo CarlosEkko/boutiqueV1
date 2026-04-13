@@ -11,51 +11,42 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for High-Net-Worth (HNW
 - Hardware wallet integration (Trezor)
 
 ## Architecture
-- Frontend: React, Tailwind CSS, Shadcn UI, Recharts, PDF.js
+- Frontend: React, Tailwind CSS, Shadcn UI, Recharts, PDF.js, TradingView
 - Backend: FastAPI, Motor (MongoDB), custom RBAC
-- Integrations: Trezor Connect SDK, Fireblocks, TradingView, Binance WebSockets, Sumsub, Brevo
+- Real-time: Binance WebSocket (order book, trades, ticker)
+- Integrations: Trezor Connect SDK, Fireblocks, TradingView, Binance API, Sumsub, Brevo
 
 ## What's Been Implemented
-- OTC CRM, Trezor integration (auto-sync), Sumsub KYC/KYB, Launchpad
+- Full OTC CRM, Trezor integration (auto-sync), Sumsub KYC/KYB, Launchpad
 - Real-time WebSocket crypto prices
 - Full 5-language translations
-- Commercial Dashboard with CRUD, Recharts analytics, seller details
-- "A Minha Performance" self-service page for sales members
+- Commercial Dashboard with analytics, seller details, "A Minha Performance"
 - ProtectedDocViewer (anti-screenshot, anti-print PDF viewer)
 - Cold Wallet UI (Trezor Suite style)
-- Audit Report Date custom selection
-- Code Quality cleanup (circular imports, hook dependencies, secure storage)
-- Demo Mode toggle moved to Profile Page
-- Fireblocks references removed from UI
-- TransparencyPage.jsx fully translated (bug fix: react-i18next → useLanguage, 2026-04-13)
-- **Refactored OTCLeads.jsx**: 609 → 178 lines. Extracted LeadDetailDialog, PreQualDialog, SetupDialog, NewDealDialog (2026-04-13)
-- **Refactored AdminTradingPage.jsx**: 1701 → 126 lines. Extracted useAdminTrading hook + 7 tab components (CryptoFeesTab, FiatFeesTab, LimitsTab, OrdersTab, TransfersTab, FiatWithdrawalsTab, CryptoWithdrawalsTab) (2026-04-13)
+- Code Quality cleanup (circular imports, hook dependencies)
+- TransparencyPage.jsx fully translated (2026-04-13)
+- Refactored OTCLeads.jsx (609→178 lines) and AdminTradingPage.jsx (1701→126 lines) (2026-04-13)
+- Fixed LaunchpadPage.jsx token reference error (2026-04-13)
+- **NEW: Binance-style Trading Terminal** at `/dashboard/trading` (2026-04-13):
+  - Real-time Order Book via Binance WebSocket
+  - Real-time Market Trades stream
+  - TradingView candlestick chart
+  - Spot Trading (Buy/Sell) with Limit/Market order types
+  - Pairs List with 40+ crypto pairs
+  - Top ticker bar with price, 24h change, high, low, volume
+  - Full-width layout within dashboard
 
-## Refactored File Structure
+## File Structure - Trading Terminal
 ```
-otc/
-  OTCLeads.jsx (178 lines)
-  components/
-    LeadCard.jsx
-    CreateLeadDialog.jsx
-    LeadDetailDialog.jsx (NEW)
-    PreQualDialog.jsx (NEW)
-    SetupDialog.jsx (NEW)
-    NewDealDialog.jsx (NEW)
-  hooks/
-    useOTCLeads.js
-
-admin/
-  AdminTradingPage.jsx (126 lines)
-  trading/ (NEW)
-    useAdminTrading.js
-    CryptoFeesTab.jsx
-    FiatFeesTab.jsx
-    LimitsTab.jsx
-    OrdersTab.jsx
-    TransfersTab.jsx
-    FiatWithdrawalsTab.jsx
-    CryptoWithdrawalsTab.jsx
+dashboard/
+  TradingTerminal.jsx (main page)
+  trading/
+    useBinanceStream.js (WebSocket hook)
+    OrderBook.jsx
+    MarketTrades.jsx
+    SpotTrading.jsx
+    PairsList.jsx
+    TradingChart.jsx
 ```
 
 ## Pending Issues
@@ -63,9 +54,6 @@ admin/
 
 ## Backlog / Future Tasks
 - None specified by user
-
-## 3rd Party Integrations
-- TradingView Widgets, Binance WebSockets, Revolut Business API (requires User API Key), Trezor Connect SDK, Sumsub, Brevo, Fireblocks
 
 ## Credentials
 - Admin: carlos@kbex.io / senha123

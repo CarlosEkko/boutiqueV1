@@ -28,6 +28,7 @@ const SpotTrading = ({ selectedSymbol, ticker, onOrderPlaced }) => {
       fetchFees();
       fetchBalances();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol]);
 
   useEffect(() => {
