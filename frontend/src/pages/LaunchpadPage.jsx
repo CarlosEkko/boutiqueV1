@@ -204,7 +204,7 @@ const LaunchpadPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchSales(); }, [fetchSales]);
 
