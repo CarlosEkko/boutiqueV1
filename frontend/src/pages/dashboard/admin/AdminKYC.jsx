@@ -34,7 +34,7 @@ const AdminKYC = () => {
 
   useEffect(() => {
     fetchPendingVerifications();
-  }, [token]);
+  }, []);
 
   const fetchPendingVerifications = async () => {
     try {

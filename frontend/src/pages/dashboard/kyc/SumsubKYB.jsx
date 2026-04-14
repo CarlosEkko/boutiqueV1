@@ -60,7 +60,7 @@ const SumsubKYB = () => {
     abortRef.current = controller;
     checkInitialStatus(controller.signal);
     return () => controller.abort();
-  }, [token]);
+  }, []);
 
   const checkInitialStatus = async (signal) => {
     try {
