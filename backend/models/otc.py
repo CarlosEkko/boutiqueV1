@@ -112,29 +112,55 @@ class RedFlagType(str, Enum):
     OTHER = "other"
 
 
-# FATF High-Risk Jurisdictions List (Updated 2025)
-FATF_HIGH_RISK_COUNTRIES = [
-    "AF",  # Afghanistan
-    "MM",  # Myanmar
-    "KP",  # North Korea
+# FATF High-Risk Jurisdictions (Black List) - Updated February 2026
+FATF_BLACK_LIST = [
+    "KP",  # North Korea (DPRK)
     "IR",  # Iran
-    "YE",  # Yemen
-    "SY",  # Syria
-    "ML",  # Mali
-    "BF",  # Burkina Faso
-    "CF",  # Central African Republic
-    "CD",  # Democratic Republic of Congo
-    "LY",  # Libya
-    "SS",  # South Sudan
-    "SO",  # Somalia
-    "VU",  # Vanuatu
-    "HT",  # Haiti
-    "PH",  # Philippines (Grey List)
-    "ZA",  # South Africa (Grey List)
-    "TZ",  # Tanzania (Grey List)
-    "NG",  # Nigeria (Grey List)
-    "VN",  # Vietnam (Grey List)
+    "MM",  # Myanmar
 ]
+
+# FATF Grey List (Jurisdictions Under Increased Monitoring) - Updated February 2026
+FATF_GREY_LIST = [
+    "DZ",  # Algeria
+    "AO",  # Angola
+    "BO",  # Bolivia
+    "BG",  # Bulgaria
+    "CM",  # Cameroon
+    "CI",  # Côte d'Ivoire
+    "CD",  # Democratic Republic of the Congo
+    "HT",  # Haiti
+    "KE",  # Kenya
+    "KW",  # Kuwait
+    "LA",  # Laos
+    "LB",  # Lebanon
+    "MC",  # Monaco
+    "NA",  # Namibia
+    "NP",  # Nepal
+    "PG",  # Papua New Guinea
+    "SN",  # Senegal
+    "SS",  # South Sudan
+    "SY",  # Syria
+    "VE",  # Venezuela
+    "VN",  # Vietnam
+    "VG",  # British Virgin Islands
+    "YE",  # Yemen
+]
+
+# Combined high-risk countries (both lists)
+FATF_HIGH_RISK_COUNTRIES = FATF_BLACK_LIST + FATF_GREY_LIST
+
+# Additional high-risk jurisdictions (EU list, sanctions)
+ADDITIONAL_HIGH_RISK = [
+    "AF",  # Afghanistan
+    "LY",  # Libya
+    "SO",  # Somalia
+    "CF",  # Central African Republic
+    "RU",  # Russia (sanctions)
+    "BY",  # Belarus (sanctions)
+    "CU",  # Cuba (sanctions)
+]
+
+ALL_HIGH_RISK_COUNTRIES = list(set(FATF_HIGH_RISK_COUNTRIES + ADDITIONAL_HIGH_RISK))
 
 
 class PotentialTier(str, Enum):

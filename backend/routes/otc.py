@@ -21,7 +21,7 @@ from models.otc import (
     CreateOTCLeadRequest, UpdateOTCLeadRequest, CreateOTCDealRequest, CreateQuoteRequest,
     FundingType, TradingFrequency, PreQualificationRequest, OperationalSetupRequest,
     ClientType, OperationObjective, FundSource, SettlementChannel, RedFlagType,
-    FATF_HIGH_RISK_COUNTRIES
+    FATF_HIGH_RISK_COUNTRIES, FATF_BLACK_LIST, FATF_GREY_LIST, ALL_HIGH_RISK_COUNTRIES
 )
 from utils.i18n import t, I18n
 from services.trustfull_service import score_lead as trustfull_score_lead
@@ -37,6 +37,47 @@ def set_db(database):
 
 def get_db():
     return db
+
+
+# Country names mapping for FATF display
+COUNTRY_NAMES = {
+    "KP": "Coreia do Norte", "IR": "Irão", "MM": "Myanmar",
+    "DZ": "Argélia", "AO": "Angola", "BO": "Bolívia", "BG": "Bulgária",
+    "CM": "Camarões", "CI": "Costa do Marfim", "CD": "Rep. Dem. Congo",
+    "HT": "Haiti", "KE": "Quénia", "KW": "Kuwait", "LA": "Laos",
+    "LB": "Líbano", "MC": "Mónaco", "NA": "Namíbia", "NP": "Nepal",
+    "PG": "Papua Nova Guiné", "SN": "Senegal", "SS": "Sudão do Sul",
+    "SY": "Síria", "VE": "Venezuela", "VN": "Vietname", "VG": "Ilhas Virgens Britânicas",
+    "YE": "Iémen", "AF": "Afeganistão", "LY": "Líbia", "SO": "Somália",
+    "CF": "Rep. Centro-Africana", "RU": "Rússia", "BY": "Bielorrússia", "CU": "Cuba",
+}
+
+@router.get("/fatf-check/{country_code}")
+async def fatf_country_check(country_code: str):
+    """Check if a country is on FATF Black/Grey list"""
+    code = country_code.upper().strip()
+    is_black = code in FATF_BLACK_LIST
+    is_grey = code in FATF_GREY_LIST
+    is_additional = code in ALL_HIGH_RISK_COUNTRIES and not is_black and not is_grey
+    risk_level = "black_list" if is_black else ("grey_list" if is_grey else ("high_risk" if is_additional else "normal"))
+    return {
+        "country_code": code,
+        "country_name": COUNTRY_NAMES.get(code, code),
+        "is_high_risk": code in ALL_HIGH_RISK_COUNTRIES,
+        "risk_level": risk_level,
+        "fatf_black_list": is_black,
+        "fatf_grey_list": is_grey,
+        "additional_sanctions": is_additional,
+    }
+
+@router.get("/fatf-countries")
+async def get_fatf_countries():
+    """Get all FATF high-risk countries"""
+    return {
+        "black_list": [{"code": c, "name": COUNTRY_NAMES.get(c, c)} for c in FATF_BLACK_LIST],
+        "grey_list": [{"code": c, "name": COUNTRY_NAMES.get(c, c)} for c in FATF_GREY_LIST],
+        "additional": [{"code": c, "name": COUNTRY_NAMES.get(c, c)} for c in ALL_HIGH_RISK_COUNTRIES if c not in FATF_BLACK_LIST and c not in FATF_GREY_LIST],
+    }
 
 def get_lang(accept_language: Optional[str] = Header(None, alias="Accept-Language")) -> str:
     return I18n.get_language_from_header(accept_language)
