@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { formatNumber, getErrorMessage, formatDate} from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -46,7 +47,78 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ClientOTCPortal = () => {
   const { token, user } = useAuth();
+  const { language } = useLanguage();
   const [clientData, setClientData] = useState(null);
+
+  const tx = {
+    title: { pt: 'OTC Trading', en: 'OTC Trading', ar: 'تداول OTC', fr: 'Trading OTC', es: 'Trading OTC' },
+    subtitle: { pt: 'Operações de grande volume com atendimento personalizado', en: 'Large volume operations with personalized service', ar: 'عمليات كبيرة الحجم مع خدمة مخصصة', fr: 'Opérations à grand volume avec service personnalisé', es: 'Operaciones de gran volumen con servicio personalizado' },
+    welcome: { pt: 'Bem-vindo', en: 'Welcome', ar: 'مرحبا', fr: 'Bienvenue', es: 'Bienvenido' },
+    welcomeOtc: { pt: 'Bem-vindo ao OTC Desk', en: 'Welcome to OTC Desk', ar: 'مرحبا بك في مكتب OTC', fr: 'Bienvenue au OTC Desk', es: 'Bienvenido al OTC Desk' },
+    otcDescription: { pt: 'O nosso serviço OTC é destinado a operações de grande volume (mínimo $50,000). Se pretende negociar volumes significativos com atendimento personalizado, contacte-nos para se tornar um cliente OTC.', en: 'Our OTC service is for large volume operations (minimum $50,000). If you wish to trade significant volumes with personalized service, contact us to become an OTC client.', ar: 'خدمة OTC لدينا مخصصة لعمليات الحجم الكبير. اتصل بنا لتصبح عميل OTC.', fr: 'Notre service OTC est destiné aux opérations de grand volume (minimum 50 000$). Contactez-nous pour devenir client OTC.', es: 'Nuestro servicio OTC es para operaciones de gran volumen (mínimo $50,000). Contáctenos para convertirse en cliente OTC.' },
+    contactOtc: { pt: 'Contactar OTC Desk', en: 'Contact OTC Desk', ar: 'اتصل بمكتب OTC', fr: 'Contacter OTC Desk', es: 'Contactar OTC Desk' },
+    refresh: { pt: 'Atualizar', en: 'Refresh', ar: 'تحديث', fr: 'Actualiser', es: 'Actualizar' },
+    newRfq: { pt: 'Novo Pedido de Cotação', en: 'New Quote Request', ar: 'طلب عرض أسعار جديد', fr: 'Nouvelle demande de cotation', es: 'Nueva solicitud de cotización' },
+    activeDeals: { pt: 'Deals Ativos', en: 'Active Deals', ar: 'صفقات نشطة', fr: 'Deals actifs', es: 'Deals activos' },
+    pendingQuotes: { pt: 'Cotações Pendentes', en: 'Pending Quotes', ar: 'عروض أسعار معلقة', fr: 'Cotations en attente', es: 'Cotizaciones pendientes' },
+    completed: { pt: 'Concluídos', en: 'Completed', ar: 'مكتمل', fr: 'Terminés', es: 'Completados' },
+    dailyLimit: { pt: 'Limite Diário', en: 'Daily Limit', ar: 'الحد اليومي', fr: 'Limite journalière', es: 'Límite diario' },
+    hasPending: { pt: 'cotação(ões) pendente(s)', en: 'pending quote(s)', ar: 'عرض أسعار معلق', fr: 'cotation(s) en attente', es: 'cotización(es) pendiente(s)' },
+    checkQuotes: { pt: 'Verifique as cotações e aceite ou rejeite antes que expirem.', en: 'Review quotes and accept or reject before they expire.', ar: 'راجع العروض قبل انتهاء صلاحيتها.', fr: 'Vérifiez et acceptez ou refusez avant expiration.', es: 'Revise y acepte o rechace antes de que expiren.' },
+    viewQuotes: { pt: 'Ver Cotações', en: 'View Quotes', ar: 'عرض الأسعار', fr: 'Voir cotations', es: 'Ver cotizaciones' },
+    myDeals: { pt: 'Meus Deals', en: 'My Deals', ar: 'صفقاتي', fr: 'Mes deals', es: 'Mis deals' },
+    quotes: { pt: 'Cotações', en: 'Quotes', ar: 'عروض الأسعار', fr: 'Cotations', es: 'Cotizaciones' },
+    history: { pt: 'Histórico', en: 'History', ar: 'التاريخ', fr: 'Historique', es: 'Historial' },
+    pending: { pt: 'pendentes', en: 'pending', ar: 'معلق', fr: 'en attente', es: 'pendientes' },
+    deal: { pt: 'Deal', en: 'Deal', ar: 'صفقة', fr: 'Deal', es: 'Deal' },
+    operation: { pt: 'Operação', en: 'Operation', ar: 'عملية', fr: 'Opération', es: 'Operación' },
+    quantity: { pt: 'Quantidade', en: 'Quantity', ar: 'الكمية', fr: 'Quantité', es: 'Cantidad' },
+    value: { pt: 'Valor', en: 'Value', ar: 'القيمة', fr: 'Valeur', es: 'Valor' },
+    phase: { pt: 'Fase', en: 'Phase', ar: 'مرحلة', fr: 'Phase', es: 'Fase' },
+    date: { pt: 'Data', en: 'Date', ar: 'تاريخ', fr: 'Date', es: 'Fecha' },
+    pair: { pt: 'Par', en: 'Pair', ar: 'زوج', fr: 'Paire', es: 'Par' },
+    price: { pt: 'Preço', en: 'Price', ar: 'سعر', fr: 'Prix', es: 'Precio' },
+    total: { pt: 'Total', en: 'Total', ar: 'المجموع', fr: 'Total', es: 'Total' },
+    expires: { pt: 'Expira', en: 'Expires', ar: 'ينتهي', fr: 'Expire', es: 'Expira' },
+    status: { pt: 'Status', en: 'Status', ar: 'الحالة', fr: 'Statut', es: 'Estado' },
+    actions: { pt: 'Ações', en: 'Actions', ar: 'إجراءات', fr: 'Actions', es: 'Acciones' },
+    accept: { pt: 'Aceitar', en: 'Accept', ar: 'قبول', fr: 'Accepter', es: 'Aceptar' },
+    noActiveDeals: { pt: 'Sem Deals Ativos', en: 'No Active Deals', ar: 'لا صفقات نشطة', fr: 'Aucun deal actif', es: 'Sin deals activos' },
+    createRfq: { pt: 'Crie um pedido de cotação para começar.', en: 'Create a quote request to get started.', ar: 'أنشئ طلب عرض أسعار للبدء.', fr: 'Créez une demande de cotation.', es: 'Cree una solicitud de cotización.' },
+    noQuotes: { pt: 'Sem Cotações', en: 'No Quotes', ar: 'لا عروض أسعار', fr: 'Aucune cotation', es: 'Sin cotizaciones' },
+    quotesAppear: { pt: 'Cotações recebidas aparecerão aqui.', en: 'Received quotes will appear here.', ar: 'ستظهر عروض الأسعار هنا.', fr: 'Les cotations apparaîtront ici.', es: 'Las cotizaciones aparecerán aquí.' },
+    noHistory: { pt: 'Sem Histórico', en: 'No History', ar: 'لا تاريخ', fr: 'Aucun historique', es: 'Sin historial' },
+    dealsAppear: { pt: 'Deals concluídos aparecerão aqui.', en: 'Completed deals will appear here.', ar: 'ستظهر الصفقات المكتملة هنا.', fr: 'Les deals terminés apparaîtront ici.', es: 'Los deals completados aparecerán aquí.' },
+    finalValue: { pt: 'Valor Final', en: 'Final Value', ar: 'القيمة النهائية', fr: 'Valeur finale', es: 'Valor final' },
+    rfqTitle: { pt: 'Novo Pedido de Cotação (RFQ)', en: 'New Quote Request (RFQ)', ar: 'طلب عرض أسعار جديد', fr: 'Nouvelle demande de cotation', es: 'Nueva solicitud de cotización' },
+    rfqDesc: { pt: 'Preencha os detalhes da operação.', en: 'Fill in the operation details.', ar: 'املأ تفاصيل العملية.', fr: 'Remplissez les détails de l\'opération.', es: 'Complete los detalles de la operación.' },
+    opType: { pt: 'Tipo de Operação', en: 'Operation Type', ar: 'نوع العملية', fr: 'Type d\'opération', es: 'Tipo de operación' },
+    buy: { pt: 'Comprar', en: 'Buy', ar: 'شراء', fr: 'Acheter', es: 'Comprar' },
+    sell: { pt: 'Vender', en: 'Sell', ar: 'بيع', fr: 'Vendre', es: 'Vender' },
+    asset: { pt: 'Ativo', en: 'Asset', ar: 'أصل', fr: 'Actif', es: 'Activo' },
+    payCurrency: { pt: 'Moeda de Pagamento', en: 'Payment Currency', ar: 'عملة الدفع', fr: 'Devise de paiement', es: 'Moneda de pago' },
+    notes: { pt: 'Notas (opcional)', en: 'Notes (optional)', ar: 'ملاحظات', fr: 'Notes (optionnel)', es: 'Notas (opcional)' },
+    notesPlaceholder: { pt: 'Informações adicionais...', en: 'Additional information...', ar: 'معلومات إضافية...', fr: 'Informations supplémentaires...', es: 'Información adicional...' },
+    orderSummary: { pt: 'Resumo do Pedido', en: 'Order Summary', ar: 'ملخص الطلب', fr: 'Résumé', es: 'Resumen' },
+    teamWillQuote: { pt: 'A equipa OTC irá enviar uma cotação em breve.', en: 'The OTC team will send a quote shortly.', ar: 'سيرسل فريق OTC عرض أسعار قريبا.', fr: 'L\'équipe OTC enverra une cotation.', es: 'El equipo OTC enviará una cotización.' },
+    cancel: { pt: 'Cancelar', en: 'Cancel', ar: 'إلغاء', fr: 'Annuler', es: 'Cancelar' },
+    sendRequest: { pt: 'Enviar Pedido', en: 'Send Request', ar: 'إرسال', fr: 'Envoyer', es: 'Enviar solicitud' },
+    inWord: { pt: 'em', en: 'in', ar: 'في', fr: 'en', es: 'en' },
+    loading: { pt: 'Carregando...', en: 'Loading...', ar: 'جار التحميل...', fr: 'Chargement...', es: 'Cargando...' },
+    buyLabel: { pt: 'COMPRA', en: 'BUY', ar: 'شراء', fr: 'ACHAT', es: 'COMPRA' },
+    sellLabel: { pt: 'VENDA', en: 'SELL', ar: 'بيع', fr: 'VENTE', es: 'VENTA' },
+    awaitQuote: { pt: 'Aguarda Cotação', en: 'Awaiting Quote', ar: 'في انتظار العرض', fr: 'En attente', es: 'Esperando cotización' },
+    quoteSent: { pt: 'Cotação Enviada', en: 'Quote Sent', ar: 'تم إرسال العرض', fr: 'Cotation envoyée', es: 'Cotización enviada' },
+    accepted: { pt: 'Aceite', en: 'Accepted', ar: 'مقبول', fr: 'Accepté', es: 'Aceptado' },
+    executing: { pt: 'Em Execução', en: 'Executing', ar: 'قيد التنفيذ', fr: 'En exécution', es: 'Ejecutando' },
+    settlement: { pt: 'Liquidação', en: 'Settlement', ar: 'تسوية', fr: 'Règlement', es: 'Liquidación' },
+    invoicing: { pt: 'Faturação', en: 'Invoicing', ar: 'فوترة', fr: 'Facturation', es: 'Facturación' },
+    completedLabel: { pt: 'Concluído', en: 'Completed', ar: 'مكتمل', fr: 'Terminé', es: 'Completado' },
+    pendingLabel: { pt: 'Pendente', en: 'Pending', ar: 'معلق', fr: 'En attente', es: 'Pendiente' },
+    rejected: { pt: 'Rejeitada', en: 'Rejected', ar: 'مرفوض', fr: 'Refusée', es: 'Rechazada' },
+    expired: { pt: 'Expirada', en: 'Expired', ar: 'منتهي', fr: 'Expirée', es: 'Expirada' },
+  };
+  const l = (key) => (tx[key] || {})[language] || (tx[key] || {}).pt || key;
   const [deals, setDeals] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -168,13 +240,13 @@ const ClientOTCPortal = () => {
       completed: 'bg-green-900/30 text-green-400'
     };
     const labels = {
-      rfq: 'Aguarda Cotação',
-      quote: 'Cotação Enviada',
-      acceptance: 'Aceite',
-      execution: 'Em Execução',
-      settlement: 'Liquidação',
-      invoice: 'Faturação',
-      completed: 'Concluído'
+      rfq: l('awaitQuote'),
+      quote: l('quoteSent'),
+      acceptance: l('accepted'),
+      execution: l('executing'),
+      settlement: l('settlement'),
+      invoice: l('invoicing'),
+      completed: l('completedLabel')
     };
     return <Badge className={styles[stage]}>{labels[stage] || stage}</Badge>;
   };
@@ -206,15 +278,15 @@ const ClientOTCPortal = () => {
         <div className="flex items-center gap-3">
           <Briefcase className="text-gold-400" size={32} />
           <div>
-            <h1 className="text-3xl font-light text-white">OTC Trading</h1>
-            <p className="text-gray-400">Operações de grande volume com atendimento personalizado</p>
+            <h1 className="text-3xl font-light text-white">{l('title')}</h1>
+            <p className="text-gray-400">{l('subtitle')}</p>
           </div>
         </div>
         
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardContent className="p-12 text-center">
             <Briefcase className="mx-auto mb-4 text-gold-400" size={64} />
-            <h2 className="text-2xl text-white mb-4">Bem-vindo ao OTC Desk</h2>
+            <h2 className="text-2xl text-white mb-4">{l('welcomeOtc')}</h2>
             <p className="text-gray-400 max-w-lg mx-auto mb-6">
               O nosso serviço OTC é destinado a operações de grande volume (mínimo $50,000). 
               Se pretende negociar volumes significativos com atendimento personalizado, 
@@ -226,7 +298,7 @@ const ClientOTCPortal = () => {
                 onClick={() => window.open('mailto:otc@kbex.io', '_blank')}
               >
                 <Send size={16} className="mr-2" />
-                Contactar OTC Desk
+                {l('contactOtc')}
               </Button>
             </div>
           </CardContent>
@@ -246,8 +318,8 @@ const ClientOTCPortal = () => {
         <div className="flex items-center gap-3">
           <Briefcase className="text-gold-400" size={32} />
           <div>
-            <h1 className="text-3xl font-light text-white">OTC Trading</h1>
-            <p className="text-gray-400">Bem-vindo, {clientData?.entity_name}</p>
+            <h1 className="text-3xl font-light text-white">{l('title')}</h1>
+            <p className="text-gray-400">{l('welcome')}, {clientData?.entity_name}</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -264,7 +336,7 @@ const ClientOTCPortal = () => {
             className="bg-gold-500 hover:bg-gold-400 text-black"
           >
             <Plus size={16} className="mr-2" />
-            Novo Pedido de Cotação
+            {l('newRfq')}
           </Button>
         </div>
       </div>
@@ -275,7 +347,7 @@ const ClientOTCPortal = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Deals Ativos</p>
+                <p className="text-gray-400 text-sm">{l('activeDeals')}</p>
                 <p className="text-2xl font-light text-white">{activeDeals.length}</p>
               </div>
               <div className="p-3 bg-blue-500/20 rounded-lg">
@@ -289,7 +361,7 @@ const ClientOTCPortal = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Cotações Pendentes</p>
+                <p className="text-gray-400 text-sm">{l('pendingQuotes')}</p>
                 <p className="text-2xl font-light text-white">{pendingQuotes.length}</p>
               </div>
               <div className="p-3 bg-yellow-500/20 rounded-lg">
@@ -303,7 +375,7 @@ const ClientOTCPortal = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Concluídos</p>
+                <p className="text-gray-400 text-sm">{l('completed')}</p>
                 <p className="text-2xl font-light text-white">{completedDeals.length}</p>
               </div>
               <div className="p-3 bg-green-500/20 rounded-lg">
@@ -317,7 +389,7 @@ const ClientOTCPortal = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Limite Diário</p>
+                <p className="text-gray-400 text-sm">{l('dailyLimit')}</p>
                 <p className="text-2xl font-light text-gold-400">${formatNumber(clientData?.daily_limit_usd || 0)}</p>
               </div>
               <div className="p-3 bg-gold-500/20 rounded-lg">
@@ -335,15 +407,15 @@ const ClientOTCPortal = () => {
             <div className="flex items-center gap-3">
               <AlertTriangle className="text-yellow-400" size={24} />
               <div className="flex-1">
-                <p className="text-yellow-400 font-medium">Tem {pendingQuotes.length} cotação(ões) pendente(s)</p>
-                <p className="text-gray-400 text-sm">Verifique as cotações e aceite ou rejeite antes que expirem.</p>
+                <p className="text-yellow-400 font-medium">{pendingQuotes.length} {l('hasPending')}</p>
+                <p className="text-gray-400 text-sm">{l('checkQuotes')}</p>
               </div>
               <Button
                 onClick={() => setActiveTab('quotes')}
                 variant="outline"
                 className="border-yellow-500/30 text-yellow-400"
               >
-                Ver Cotações
+                {l('viewQuotes')}
               </Button>
             </div>
           </CardContent>
@@ -354,13 +426,13 @@ const ClientOTCPortal = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-zinc-900/50 border border-gold-800/20">
           <TabsTrigger value="deals" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
-            Meus Deals ({deals.length})
+            {l('myDeals')} ({deals.length})
           </TabsTrigger>
           <TabsTrigger value="quotes" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
-            Cotações ({pendingQuotes.length} pendentes)
+            {l('quotes')} ({pendingQuotes.length} {l('pending')})
           </TabsTrigger>
           <TabsTrigger value="history" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
-            Histórico
+            {l('history')}
           </TabsTrigger>
         </TabsList>
 
@@ -370,7 +442,7 @@ const ClientOTCPortal = () => {
             <CardContent className="p-0">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="text-gold-400">Carregando...</div>
+                  <div className="text-gold-400">{l('loading')}</div>
                 </div>
               ) : activeDeals.length > 0 ? (
                 <div className="overflow-x-auto">
@@ -379,7 +451,7 @@ const ClientOTCPortal = () => {
                       <tr className="border-b border-gold-800/20">
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Deal</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Operação</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Quantidade</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('quantity')}</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Valor</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Fase</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Data</th>
@@ -422,14 +494,14 @@ const ClientOTCPortal = () => {
               ) : (
                 <div className="p-12 text-center">
                   <Briefcase className="mx-auto mb-4 text-gray-500" size={48} />
-                  <h3 className="text-xl text-white mb-2">Sem Deals Ativos</h3>
-                  <p className="text-gray-400 mb-4">Crie um pedido de cotação para começar.</p>
+                  <h3 className="text-xl text-white mb-2">{l('noActiveDeals')}</h3>
+                  <p className="text-gray-400 mb-4">{l('createRfq')}</p>
                   <Button
                     onClick={() => setShowRFQDialog(true)}
                     className="bg-gold-500 hover:bg-gold-400 text-black"
                   >
                     <Plus size={16} className="mr-2" />
-                    Novo Pedido de Cotação
+                    {l('newRfq')}
                   </Button>
                 </div>
               )}
@@ -506,8 +578,8 @@ const ClientOTCPortal = () => {
               ) : (
                 <div className="p-12 text-center">
                   <FileText className="mx-auto mb-4 text-gray-500" size={48} />
-                  <h3 className="text-xl text-white mb-2">Sem Cotações</h3>
-                  <p className="text-gray-400">Cotações recebidas aparecerão aqui.</p>
+                  <h3 className="text-xl text-white mb-2">{l('noQuotes')}</h3>
+                  <p className="text-gray-400">{l('quotesAppear')}</p>
                 </div>
               )}
             </CardContent>
@@ -525,8 +597,8 @@ const ClientOTCPortal = () => {
                       <tr className="border-b border-gold-800/20">
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Deal</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Operação</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Quantidade</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Valor Final</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('quantity')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('finalValue')}</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">Concluído</th>
                       </tr>
                     </thead>
@@ -538,7 +610,7 @@ const ClientOTCPortal = () => {
                           </td>
                           <td className="p-4">
                             <Badge className={deal.transaction_type === 'buy' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}>
-                              {deal.transaction_type === 'buy' ? 'COMPRA' : 'VENDA'}
+                              {deal.transaction_type === 'buy' ? l('buyLabel') : l('sellLabel')}
                             </Badge>
                           </td>
                           <td className="p-4">
@@ -558,8 +630,8 @@ const ClientOTCPortal = () => {
               ) : (
                 <div className="p-12 text-center">
                   <CheckCircle className="mx-auto mb-4 text-gray-500" size={48} />
-                  <h3 className="text-xl text-white mb-2">Sem Histórico</h3>
-                  <p className="text-gray-400">Deals concluídos aparecerão aqui.</p>
+                  <h3 className="text-xl text-white mb-2">{l('noHistory')}</h3>
+                  <p className="text-gray-400">{l('dealsAppear')}</p>
                 </div>
               )}
             </CardContent>
@@ -573,17 +645,17 @@ const ClientOTCPortal = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <Plus size={20} />
-              Novo Pedido de Cotação (RFQ)
+              {l('rfqTitle')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Preencha os detalhes da operação que pretende realizar.
+              {l('rfqDesc')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tipo de Operação</Label>
+                <Label>{l('opType')}</Label>
                 <Select 
                   value={rfqForm.transaction_type} 
                   onValueChange={(v) => setRfqForm({...rfqForm, transaction_type: v})}
@@ -594,19 +666,19 @@ const ClientOTCPortal = () => {
                   <SelectContent className="bg-zinc-800 border-gold-500/30 text-white">
                     <SelectItem value="buy" className="text-white hover:bg-zinc-700">
                       <span className="flex items-center gap-2">
-                        <TrendingUp size={14} className="text-green-400" /> Comprar
+                        <TrendingUp size={14} className="text-green-400" /> {l('buy')}
                       </span>
                     </SelectItem>
                     <SelectItem value="sell" className="text-white hover:bg-zinc-700">
                       <span className="flex items-center gap-2">
-                        <TrendingDown size={14} className="text-red-400" /> Vender
+                        <TrendingDown size={14} className="text-red-400" /> {l('sell')}
                       </span>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Ativo</Label>
+                <Label>{l('asset')}</Label>
                 <Select 
                   value={rfqForm.base_asset} 
                   onValueChange={(v) => setRfqForm({...rfqForm, base_asset: v})}
@@ -626,7 +698,7 @@ const ClientOTCPortal = () => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Quantidade</Label>
+                <Label>{l('quantity')}</Label>
                 <Input
                   type="number" step="any"
                   step="0.00000001"
@@ -637,7 +709,7 @@ const ClientOTCPortal = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Moeda de Pagamento</Label>
+                <Label>{l('payCurrency')}</Label>
                 <Select 
                   value={rfqForm.quote_asset} 
                   onValueChange={(v) => setRfqForm({...rfqForm, quote_asset: v})}
@@ -656,11 +728,11 @@ const ClientOTCPortal = () => {
             </div>
             
             <div className="space-y-2">
-              <Label>Notas (opcional)</Label>
+              <Label>{l('notes')}</Label>
               <Textarea
                 value={rfqForm.notes}
                 onChange={(e) => setRfqForm({...rfqForm, notes: e.target.value})}
-                placeholder="Informações adicionais sobre o pedido..."
+                placeholder={l('notesPlaceholder')}
                 className="bg-zinc-800 border-gold-500/30"
                 rows={3}
               />
@@ -669,14 +741,14 @@ const ClientOTCPortal = () => {
             {/* Summary */}
             {rfqForm.amount && (
               <div className="p-4 bg-gold-900/20 rounded-lg border border-gold-500/30">
-                <h4 className="text-gold-400 font-medium mb-2">Resumo do Pedido</h4>
+                <h4 className="text-gold-400 font-medium mb-2">{l('orderSummary')}</h4>
                 <p className="text-white">
-                  {rfqForm.transaction_type === 'buy' ? 'Comprar' : 'Vender'}{' '}
+                  {rfqForm.transaction_type === 'buy' ? l('buy') : l('sell')}{' '}
                   <span className="font-mono text-gold-400">{rfqForm.amount} {rfqForm.base_asset}</span>
                   {' '}em {rfqForm.quote_asset}
                 </p>
                 <p className="text-gray-400 text-sm mt-2">
-                  A equipa OTC irá enviar uma cotação em breve.
+                  {l('teamWillQuote')}
                 </p>
               </div>
             )}
@@ -684,7 +756,7 @@ const ClientOTCPortal = () => {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRFQDialog(false)} className="border-zinc-600">
-              Cancelar
+              {l('cancel')}
             </Button>
             <Button 
               onClick={handleCreateRFQ} 
@@ -692,7 +764,7 @@ const ClientOTCPortal = () => {
               disabled={!rfqForm.amount}
             >
               <Send size={16} className="mr-2" />
-              Enviar Pedido
+              {l('sendRequest')}
             </Button>
           </DialogFooter>
         </DialogContent>
