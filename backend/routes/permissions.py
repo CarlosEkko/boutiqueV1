@@ -87,25 +87,30 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     
     # Clients see the new hierarchical menu structure
     if not is_admin and user_type != "internal" and not internal_role:
+        # Check if client has custom menu settings from admin
+        menu_settings = await db.client_menu_settings.find_one({"user_id": user_id}, {"_id": 0})
+        allowed_menus = set(menu_settings.get("menus", [])) if menu_settings else None
+        
         portfolio_data = DEPARTMENT_MENUS[Department.PORTFOLIO]
         investimentos_data = DEPARTMENT_MENUS[Department.INVESTIMENTOS]
         transparencia_data = DEPARTMENT_MENUS[Department.TRANSPARENCIA]
         account_data = DEPARTMENT_MENUS[Department.ACCOUNT]
         
-        client_menus = [
-            {
+        # All possible client menus
+        all_client_menus = {
+            "portfolio": {
                 "department": "portfolio",
                 "label": portfolio_data["label"],
                 "icon": portfolio_data["icon"],
                 "submenus": portfolio_data.get("submenus", [])
             },
-            {
+            "trading": {
                 "department": "trading",
                 "label": "Trading",
                 "icon": "TrendingUp",
                 "path": "/dashboard/trading"
             },
-            {
+            "multi_sign": {
                 "department": "multi_sign",
                 "label": "Multi-Sign",
                 "icon": "ShieldCheck",
@@ -115,92 +120,96 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
                     {"path": "/dashboard/vault/signatories", "label": "Signatários", "icon": "Users"},
                 ]
             },
-            {
+            "investimentos": {
                 "department": "investimentos",
                 "label": investimentos_data["label"],
                 "icon": investimentos_data["icon"],
                 "items": investimentos_data.get("items", [])
             },
-            {
+            "transparencia": {
                 "department": "transparencia",
                 "label": transparencia_data["label"],
                 "icon": transparencia_data["icon"],
                 "items": transparencia_data.get("items", [])
             },
-            {
+            "account": {
                 "department": "account",
                 "label": account_data["label"],
                 "icon": account_data["icon"],
                 "items": account_data.get("items", [])
-            }
-        ]
-        
-        # Add OTC Trading menu if user is an OTC client
-        if is_otc_client:
-            client_menus.append({
+            },
+            "otc_trading": {
                 "department": "otc_trading",
                 "label": "OTC Trading",
                 "icon": "Briefcase",
                 "items": [
                     {"path": "/dashboard/otc-trading", "label": "OTC Desk", "icon": "Briefcase"}
                 ]
-            })
+            },
+            "suporte": {
+                "department": "suporte",
+                "label": "Suporte",
+                "icon": "Headphones",
+                "items": [
+                    {"path": "/dashboard/support", "label": "Tickets de Suporte", "icon": "HelpCircle"},
+                ]
+            },
+            "tokenizacao": {
+                "department": "tokenizacao",
+                "label": "Tokenização",
+                "icon": "Gem",
+                "items": [
+                    {"path": "/dashboard/tokenization", "label": "Tokens", "icon": "Gem"},
+                    {"path": "/dashboard/tokenization/issue", "label": "Emitir Token", "icon": "FilePlus2"},
+                    {"path": "/dashboard/tokenization/mint-burn", "label": "Mint & Burn", "icon": "Flame"},
+                    {"path": "/dashboard/tokenization/pricing", "label": "Definir Preço", "icon": "DollarSign"},
+                ]
+            },
+            "cold_wallet": {
+                "department": "cold_wallet",
+                "label": "Cold Wallet",
+                "icon": "Shield",
+                "items": [
+                    {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
+                ]
+            },
+            "escrow": {
+                "department": "escrow",
+                "label": "Escrow",
+                "icon": "Lock",
+                "items": [
+                    {"path": "/dashboard/escrow", "label": "Dashboard", "icon": "LayoutDashboard"},
+                    {"path": "/dashboard/escrow/deals", "label": "Operacoes", "icon": "FileText"},
+                ]
+            },
+            "launchpad": {
+                "department": "launchpad",
+                "label": "Launchpad",
+                "icon": "Rocket",
+                "items": [
+                    {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
+                    {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
+                ]
+            },
+        }
         
-        # Add Suporte menu for clients
-        client_menus.append({
-            "department": "suporte",
-            "label": "Suporte",
-            "icon": "Headphones",
-            "items": [
-                {"path": "/dashboard/support", "label": "Tickets de Suporte", "icon": "HelpCircle"},
-            ]
-        })
+        # Menu display order
+        menu_order = ["portfolio", "trading", "multi_sign", "investimentos", "transparencia", "escrow", "cold_wallet", "launchpad", "tokenizacao", "otc_trading", "suporte", "account"]
         
-        # Add Tokenização menu for clients
-        tokenization_data = DEPARTMENT_MENUS[Department.TOKENIZATION]
-        client_menus.append({
-            "department": "tokenizacao",
-            "label": "Tokenização",
-            "icon": "Gem",
-            "items": [
-                {"path": "/dashboard/tokenization", "label": "Tokens", "icon": "Gem"},
-                {"path": "/dashboard/tokenization/issue", "label": "Emitir Token", "icon": "FilePlus2"},
-                {"path": "/dashboard/tokenization/mint-burn", "label": "Mint & Burn", "icon": "Flame"},
-                {"path": "/dashboard/tokenization/pricing", "label": "Definir Preço", "icon": "DollarSign"},
-            ]
-        })
-        
-        # Add Cold Wallet menu for clients
-        client_menus.append({
-            "department": "cold_wallet",
-            "label": "Cold Wallet",
-            "icon": "Shield",
-            "items": [
-                {"path": "/dashboard/cold-wallet", "label": "Cold Wallet", "icon": "Shield"},
-            ]
-        })
-        
-        # Add Escrow menu for clients
-        client_menus.append({
-            "department": "escrow",
-            "label": "Escrow",
-            "icon": "Lock",
-            "items": [
-                {"path": "/dashboard/escrow", "label": "Dashboard", "icon": "LayoutDashboard"},
-                {"path": "/dashboard/escrow/deals", "label": "Operacoes", "icon": "FileText"},
-            ]
-        })
-        
-        # Add Launchpad menu for clients
-        client_menus.append({
-            "department": "launchpad",
-            "label": "Launchpad",
-            "icon": "Rocket",
-            "items": [
-                {"path": "/dashboard/launchpad", "label": "Projetos", "icon": "Rocket"},
-                {"path": "/dashboard/launchpad/my-investments", "label": "Meus Investimentos", "icon": "Coins"},
-            ]
-        })
+        client_menus = []
+        for key in menu_order:
+            # Always include portfolio, trading, account
+            if key in ("portfolio", "trading", "account"):
+                client_menus.append(all_client_menus[key])
+                continue
+            # OTC only if client is OTC
+            if key == "otc_trading" and not is_otc_client:
+                continue
+            # If admin configured custom menus, respect that
+            if allowed_menus is not None and key not in allowed_menus:
+                continue
+            if key in all_client_menus:
+                client_menus.append(all_client_menus[key])
         
         return {"menus": client_menus}
     

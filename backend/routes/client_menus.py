@@ -28,6 +28,9 @@ AVAILABLE_MENUS = [
     {"value": "multi_sign", "label": "Multi-Sign"},
     {"value": "suporte", "label": "Suporte"},
     {"value": "tokenizacao", "label": "Tokenização"},
+    {"value": "cold_wallet", "label": "Cold Wallet"},
+    {"value": "escrow", "label": "Escrow"},
+    {"value": "launchpad", "label": "Launchpad"},
 ]
 
 # Default menus (all menus)
