@@ -9,6 +9,9 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Real-time: Binance WebSocket
 - Languages: PT, EN, AR, FR, ES (i18n translations system)
 
+## Supported Fiat Currencies
+EUR, USD, AED, BRL, GBP, CHF, QAR, SAR, HKD — all with emoji flags and flagcdn.com images
+
 ## Completed Features
 - Full Binance-Style Trading Terminal with real-time WebSockets
 - OTC CRM with Lead pipeline, Pre-Qualification, Setup, KYC flow
@@ -21,15 +24,17 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Dynamic client menu permissions from DB
 - ProtectedDocViewer (anti-screenshot PDF canvas)
 - 5-language translations system (PT, EN, AR, FR, ES)
+- PreQualDialog fully translated with i18n system
+- Fiat currency flags for all 9 currencies across all pages
 
-## Latest - PreQualDialog Translation (2026-04-15)
-- **Full i18n integration**: PreQualDialog.jsx now uses `useLanguage()` hook with `t()` function
-- **All labels translated**: Client type, operation fields, FATF checklist items, notes, buttons
-- **Nested redFlagLabels**: All 5 languages have `otc.redFlagLabels.{flag_id}` translation keys
-- **New translation keys added**: redFlagsCompliance, alertCount, autoDetected, selectClientType, fatfBlackList/GreyList, retail/hnwi/companyType, trading/treasury/arbitrage, income/cryptoHoldings, stablecoins/onChain/offChain, bankJurisdictionPlaceholder, generalNotes, submit
+## Latest Changes (2026-04-15)
+- **PreQualDialog i18n**: All labels, placeholders, select options, FATF checklist translated via `useLanguage()` + `t()`
+- **Fiat currency flags fix**: Added GBP, CHF, QAR, SAR, HKD flags to WalletsPage, DashboardOverview, FiatWithdrawalPage, AdminFiatDeposits, AdminFiatWithdrawals, useAdminTrading
 
 ## Key Files
-- `/app/frontend/src/pages/dashboard/otc/components/PreQualDialog.jsx` - Pre-Qualification modal (translated)
+- `/app/frontend/src/pages/dashboard/WalletsPage.jsx` - Wallets page with fiatFlags
+- `/app/frontend/src/pages/dashboard/DashboardOverview.jsx` - Dashboard with fiatFlags (flagcdn URLs)
+- `/app/frontend/src/pages/dashboard/otc/components/PreQualDialog.jsx` - Pre-Qualification modal
 - `/app/frontend/src/i18n/translations.js` - All 5 language translations
 - `/app/frontend/src/utils/demoMask.js` - Demo mode masking utilities
 - `/app/frontend/src/context/DemoContext.jsx` - Provider with axios/fetch interceptor

@@ -5,10 +5,15 @@ import { useAuth } from '../../../../context/AuthContext';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const SUPPORTED_CURRENCIES = [
-  { code: 'EUR', name: 'Euro', symbol: '\u20ac', flag: '\ud83c\uddea\ud83c\uddfa' },
-  { code: 'USD', name: 'US Dollar', symbol: '$', flag: '\ud83c\uddfa\ud83c\uddf8' },
-  { code: 'AED', name: 'UAE Dirham', symbol: '\u062f.\u0625', flag: '\ud83c\udde6\ud83c\uddea' },
-  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '\ud83c\udde7\ud83c\uddf7' },
+  { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+  { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+  { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QAR', flag: '🇶🇦' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SAR', flag: '🇸🇦' },
+  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', flag: '🇭🇰' },
 ];
 
 export const useAdminTrading = () => {

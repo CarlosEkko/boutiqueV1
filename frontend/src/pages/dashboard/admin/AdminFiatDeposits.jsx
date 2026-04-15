@@ -26,6 +26,11 @@ const SUPPORTED_CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
   { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
   { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+  { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QAR', flag: '🇶🇦' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SAR', flag: '🇸🇦' },
+  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', flag: '🇭🇰' },
 ];
 
 const AdminFiatDeposits = () => {

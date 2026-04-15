@@ -46,7 +46,12 @@ const fiatFlags = {
   'EUR': 'https://flagcdn.com/w40/eu.png',
   'USD': 'https://flagcdn.com/w40/us.png',
   'AED': 'https://flagcdn.com/w40/ae.png',
-  'BRL': 'https://flagcdn.com/w40/br.png'
+  'BRL': 'https://flagcdn.com/w40/br.png',
+  'GBP': 'https://flagcdn.com/w40/gb.png',
+  'CHF': 'https://flagcdn.com/w40/ch.png',
+  'QAR': 'https://flagcdn.com/w40/qa.png',
+  'SAR': 'https://flagcdn.com/w40/sa.png',
+  'HKD': 'https://flagcdn.com/w40/hk.png'
 };
 
 // Colors for pie chart
@@ -306,7 +311,7 @@ const DashboardOverview = () => {
                 {/* Asset List with Logos */}
                 <div className="space-y-3 border-t border-gold-800/20 pt-4">
                   {overview.wallet_allocation.map((asset, index) => {
-                    const isFiat = ['EUR', 'USD', 'AED', 'BRL'].includes(asset.asset);
+                    const isFiat = ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'].includes(asset.asset);
                     const logo = !isFiat ? getCryptoLogo(asset.asset) : null;
                     const percentage = ((asset.value_usd / overview.total_portfolio_value) * 100).toFixed(1);
                     

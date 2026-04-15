@@ -236,7 +236,12 @@ const WalletsPage = () => {
     EUR: '🇪🇺',
     USD: '🇺🇸',
     AED: '🇦🇪',
-    BRL: '🇧🇷'
+    BRL: '🇧🇷',
+    GBP: '🇬🇧',
+    CHF: '🇨🇭',
+    QAR: '🇶🇦',
+    SAR: '🇸🇦',
+    HKD: '🇭🇰'
   };
 
   const isFiat = (assetId) => ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'].includes(assetId);
