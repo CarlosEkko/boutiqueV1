@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBEX - Manutenção</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #09090b;
+            color: #fafafa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .bg-glow {
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+        }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 200;
+            letter-spacing: 0.3em;
+            color: #f59e0b;
+            margin-bottom: 3rem;
+        }
+        .logo span {
+            color: #71717a;
+            font-weight: 100;
+        }
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #f59e0b40, transparent);
+            margin: 0 auto 2rem;
+        }
+        h1 {
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: #a1a1aa;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+        p {
+            font-size: 0.9rem;
+            color: #52525b;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+        .spinner {
+            width: 24px; height: 24px;
+            border: 1.5px solid #27272a;
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            margin: 2.5rem auto 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #3f3f46;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="container">
+        <div class="logo">KBEX<span>.io</span></div>
+        <div class="divider"></div>
+        <h1>Em Manutenção</h1>
+        <p>
+            Estamos a atualizar a plataforma para melhorar a sua experiência.
+            <br>Voltamos em breve.
+        </p>
+        <div class="spinner"></div>
+        <div class="status">ATUALIZANDO SISTEMAS</div>
+    </div>
+</body>
+</html>

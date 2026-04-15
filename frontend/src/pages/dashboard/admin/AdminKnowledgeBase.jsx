@@ -1,0 +1,1014 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../../../context/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Badge } from '../../../components/ui/badge';
+import { Textarea } from '../../../components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../../components/ui/dialog';
+import { 
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  FileText,
+  Folder,
+  Eye,
+  EyeOff,
+  Save,
+  X,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  Book,
+  Star,
+  Upload,
+  Image as ImageIcon,
+  Loader2
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { formatDate } from '../../../utils/formatters';
+
+// Lazy load the rich text editor
+import RichTextEditor from '../../../components/RichTextEditor';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const AdminKnowledgeBase = () => {
+  const { token } = useAuth();
+  const [activeTab, setActiveTab] = useState('articles');
+  const [loading, setLoading] = useState(false);
+  
+  // Modal states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [editorKey, setEditorKey] = useState(0);
+  
+  // Categories state
+  const [categories, setCategories] = useState([]);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '', parent_id: ''
+  });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Articles state
+  const [articles, setArticles] = useState([]);
+  const [editingArticle, setEditingArticle] = useState(null);
+  const [articleForm, setArticleForm] = useState({
+    title: '', slug: '', summary: '', content: '', category_id: '', subcategory_id: '',
+    tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
+  });
+  const [articleFilter, setArticleFilter] = useState({ status: '', category_id: '', search: '' });
+  const [tagInput, setTagInput] = useState('');
+  const [selectedMainCategory, setSelectedMainCategory] = useState('');
+
+  // Reset category form
+  const resetCategoryForm = () => {
+    setCategoryForm({
+      name: '', slug: '', description: '', icon: '', color: '#10b981', order: 0, is_active: true, image_url: '', parent_id: ''
+    });
+    setEditingCategory(null);
+  };
+
+  // Reset article form
+  const resetArticleForm = () => {
+    setArticleForm({
+      title: '', slug: '', summary: '', content: '', category_id: '', subcategory_id: '',
+      tags: [], status: 'draft', is_featured: false, order: 0, cover_image: ''
+    });
+    setSelectedMainCategory('');
+    setEditingArticle(null);
+    setTagInput('');
+  };
+
+  // Open category modal for new
+  const openNewCategoryModal = () => {
+    resetCategoryForm();
+    setShowCategoryModal(true);
+  };
+
+  // Open category modal for edit
+  const openEditCategoryModal = (cat) => {
+    editCategory(cat);
+    setShowCategoryModal(true);
+  };
+
+  // Open article modal for new
+  const openNewArticleModal = () => {
+    resetArticleForm();
+    setEditorKey(prev => prev + 1);
+    setShowArticleModal(true);
+  };
+
+  // Open article modal for edit
+  const openEditArticleModal = (article) => {
+    setEditorKey(prev => prev + 1);
+    loadArticle(article.id);
+    setShowArticleModal(true);
+  };
+
+  // Handle main category change in article form
+  const handleMainCategoryChange = (categoryId) => {
+    setSelectedMainCategory(categoryId);
+    // Check if this category has subcategories
+    const hasSubcategories = categories.some(c => c.parent_id === categoryId);
+    if (!hasSubcategories && categoryId) {
+      // No subcategories - use main category directly
+      setArticleForm({ ...articleForm, category_id: categoryId });
+    } else {
+      // Has subcategories - clear category_id until user selects subcategory
+      setArticleForm({ ...articleForm, category_id: '' });
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+    if (activeTab === 'articles') fetchArticles();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'articles') fetchArticles();
+  }, [articleFilter]);
+
+  // ==================== CATEGORIES ====================
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/kb/admin/categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(response.data);
+    } catch (err) {
+      console.error('Error fetching categories', err);
+      if (err.response?.status === 403) {
+        toast.error('Sem permissão para aceder às categorias. Contacte o administrador.');
+      }
+    }
+  };
+
+  const saveCategory = async () => {
+    try {
+      // Clean up parent_id if empty
+      const dataToSend = { ...categoryForm };
+      if (!dataToSend.parent_id) {
+        dataToSend.parent_id = null;
+      }
+      
+      if (editingCategory) {
+        await axios.put(`${API_URL}/api/kb/admin/categories/${editingCategory}`, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Categoria atualizada!');
+      } else {
+        await axios.post(`${API_URL}/api/kb/admin/categories`, dataToSend, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Categoria criada!');
+      }
+      setShowCategoryModal(false);
+      resetCategoryForm();
+      fetchCategories();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao guardar categoria');
+    }
+  };
+
+  const uploadCategoryImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Tipo de ficheiro não suportado. Use JPEG, PNG, GIF ou WebP.');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ficheiro muito grande. Máximo 5MB.');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const response = await axios.post(`${API_URL}/api/uploads/file-json`, {
+          file_data: base64,
+          filename: file.name,
+          content_type: file.type,
+          category: 'general'
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCategoryForm({ ...categoryForm, image_url: response.data.url });
+        toast.success('Imagem carregada!');
+        setUploadingImage(false);
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao ler ficheiro');
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error('Erro ao carregar imagem');
+      setUploadingImage(false);
+    }
+  };
+
+  const uploadArticleImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Tipo de ficheiro não suportado.');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ficheiro muito grande. Máximo 5MB.');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result.split(',')[1];
+          const response = await axios.post(`${API_URL}/api/uploads/file-json`, {
+            file_data: base64,
+            filename: file.name,
+            content_type: file.type,
+            category: 'general'
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setArticleForm({ ...articleForm, cover_image: response.data.url });
+          toast.success('Imagem carregada!');
+        } catch (err) {
+          toast.error('Erro ao carregar imagem');
+        } finally {
+          setUploadingImage(false);
+        }
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao ler ficheiro');
+        setUploadingImage(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error('Erro ao carregar imagem');
+      setUploadingImage(false);
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    if (!window.confirm('Tem a certeza que quer eliminar esta categoria?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/kb/admin/categories/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Categoria eliminada!');
+      fetchCategories();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar categoria');
+    }
+  };
+
+  const editCategory = (cat) => {
+    setEditingCategory(cat.id);
+    setCategoryForm({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      icon: cat.icon || '',
+      color: cat.color || '#10b981',
+      order: cat.order || 0,
+      is_active: cat.is_active !== false,
+      image_url: cat.image_url || '',
+      parent_id: cat.parent_id || ''
+    });
+  };
+
+  // ==================== ARTICLES ====================
+
+  const fetchArticles = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (articleFilter.status) params.append('status', articleFilter.status);
+      if (articleFilter.category_id) params.append('category_id', articleFilter.category_id);
+      if (articleFilter.search) params.append('search', articleFilter.search);
+
+      const response = await axios.get(`${API_URL}/api/kb/admin/articles?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setArticles(response.data);
+    } catch (err) {
+      console.error('Error fetching articles', err);
+      if (err.response?.status === 403) {
+        toast.error('Sem permissão para aceder aos artigos. Contacte o administrador.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadArticle = async (id) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/kb/admin/articles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const article = response.data;
+      setEditingArticle(id);
+      
+      // Find the main category for this article
+      const articleCat = categories.find(c => c.id === article.category_id);
+      if (articleCat) {
+        // If it's a subcategory, find its parent
+        if (articleCat.parent_id) {
+          setSelectedMainCategory(articleCat.parent_id);
+          setArticleForm({
+            title: article.title,
+            slug: article.slug,
+            summary: article.summary || '',
+            content: article.content,
+            category_id: article.category_id,
+            subcategory_id: article.category_id,
+            tags: article.tags || [],
+            status: article.status,
+            is_featured: article.is_featured || false,
+            order: article.order || 0,
+            cover_image: article.cover_image || ''
+          });
+        } else {
+          // It's a main category
+          setSelectedMainCategory(article.category_id);
+          setArticleForm({
+            title: article.title,
+            slug: article.slug,
+            summary: article.summary || '',
+            content: article.content,
+            category_id: article.category_id,
+            subcategory_id: '',
+            tags: article.tags || [],
+            status: article.status,
+            is_featured: article.is_featured || false,
+            order: article.order || 0,
+            cover_image: article.cover_image || ''
+          });
+        }
+      } else {
+        setArticleForm({
+          title: article.title,
+          slug: article.slug,
+          summary: article.summary || '',
+          content: article.content,
+          category_id: article.category_id,
+          subcategory_id: '',
+          tags: article.tags || [],
+          status: article.status,
+          is_featured: article.is_featured || false,
+          order: article.order || 0,
+          cover_image: article.cover_image || ''
+        });
+      }
+    } catch (err) {
+      toast.error('Erro ao carregar artigo');
+    }
+  };
+
+  const saveArticle = async () => {
+    try {
+      if (editingArticle) {
+        await axios.put(`${API_URL}/api/kb/admin/articles/${editingArticle}`, articleForm, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Artigo atualizado!');
+      } else {
+        await axios.post(`${API_URL}/api/kb/admin/articles`, articleForm, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Artigo criado!');
+      }
+      setShowArticleModal(false);
+      resetArticleForm();
+      fetchArticles();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao guardar artigo');
+    }
+  };
+
+  const deleteArticle = async (id) => {
+    if (!window.confirm('Tem a certeza que quer eliminar este artigo?')) return;
+    try {
+      await axios.delete(`${API_URL}/api/kb/admin/articles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Artigo eliminado!');
+      fetchArticles();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao eliminar artigo');
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !articleForm.tags.includes(tagInput.trim())) {
+      setArticleForm({ ...articleForm, tags: [...articleForm.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setArticleForm({ ...articleForm, tags: articleForm.tags.filter(t => t !== tag) });
+  };
+
+  const generateSlug = (title) => {
+    return title.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[-\s]+/g, '-')
+      .trim();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Centro de Ajuda</h1>
+          <p className="text-gray-400">Gerir categorias e artigos</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => window.open('/help', '_blank')}
+            variant="outline"
+            className="border-zinc-700"
+          >
+            <Eye size={16} className="mr-2" />
+            Ver Público
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabs with Add buttons */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button
+            variant={activeTab === 'articles' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('articles')}
+            className={activeTab === 'articles' ? 'bg-emerald-500' : 'border-zinc-700'}
+          >
+            <FileText size={16} className="mr-2" />
+            Artigos ({articles.length})
+          </Button>
+          <Button
+            variant={activeTab === 'categories' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('categories')}
+            className={activeTab === 'categories' ? 'bg-emerald-500' : 'border-zinc-700'}
+          >
+            <Folder size={16} className="mr-2" />
+            Categorias ({categories.length})
+          </Button>
+        </div>
+        
+        {/* Add buttons */}
+        <Button
+          onClick={activeTab === 'categories' ? openNewCategoryModal : openNewArticleModal}
+          className="bg-gold-500 hover:bg-gold-400 text-black"
+        >
+          <Plus size={16} className="mr-2" />
+          {activeTab === 'categories' ? 'Nova Categoria' : 'Novo Artigo'}
+        </Button>
+      </div>
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-white">Categorias Existentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {/* Root categories (without parent) */}
+              {categories.filter(cat => !cat.parent_id).map(cat => (
+                <div key={cat.id}>
+                  {/* Parent Category */}
+                  <div
+                    className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg border border-zinc-700"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded flex items-center justify-center"
+                        style={{ backgroundColor: `${cat.color}30` }}
+                      >
+                        <Folder size={16} style={{ color: cat.color }} />
+                      </div>
+                      <div>
+                        <div className="text-white font-medium">{cat.name}</div>
+                        <div className="text-xs text-gray-400">
+                          /{cat.slug} • {cat.article_count || 0} artigos
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!cat.is_active && (
+                        <Badge className="bg-red-500/20 text-red-400 border-0">Inactiva</Badge>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditCategoryModal(cat)}
+                        className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
+                      >
+                        <Edit size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteCategory(cat.id)}
+                        className="border-red-600/50 text-red-400 hover:bg-red-900/30"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Subcategories */}
+                  {categories.filter(sub => sub.parent_id === cat.id).map(subcat => (
+                    <div
+                      key={subcat.id}
+                      className="flex items-center justify-between p-3 ml-8 mt-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-1 h-6 bg-zinc-600 rounded-full mr-1"></div>
+                        <div
+                          className="w-7 h-7 rounded flex items-center justify-center"
+                          style={{ backgroundColor: `${subcat.color}30` }}
+                        >
+                          <Folder size={14} style={{ color: subcat.color }} />
+                        </div>
+                        <div>
+                          <div className="text-white text-sm">{subcat.name}</div>
+                          <div className="text-xs text-gray-500">
+                            /{subcat.slug} • {subcat.article_count || 0} artigos
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!subcat.is_active && (
+                          <Badge className="bg-red-500/20 text-red-400 border-0 text-xs">Inactiva</Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditCategoryModal(subcat)}
+                          className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30 h-7 w-7 p-0"
+                        >
+                          <Edit size={12} />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteCategory(subcat.id)}
+                          className="border-red-600/50 text-red-400 hover:bg-red-900/30 h-7 w-7 p-0"
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              
+              {categories.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Folder size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>Nenhuma categoria criada ainda.</p>
+                  <Button 
+                    onClick={openNewCategoryModal}
+                    className="mt-4 bg-gold-500 hover:bg-gold-400 text-black"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Criar Primeira Categoria
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Articles Tab */}
+      {activeTab === 'articles' && (
+        <Card className="bg-zinc-900/50 border-zinc-800">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <CardTitle className="text-white">Artigos</CardTitle>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Pesquisar..."
+                  value={articleFilter.search}
+                  onChange={(e) => setArticleFilter({ ...articleFilter, search: e.target.value })}
+                  className="bg-zinc-800 border-zinc-700 text-white w-48"
+                />
+                <select
+                  value={articleFilter.status}
+                  onChange={(e) => setArticleFilter({ ...articleFilter, status: e.target.value })}
+                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Todos Status</option>
+                  <option value="draft">Rascunho</option>
+                  <option value="published">Publicado</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+                <select
+                  value={articleFilter.category_id}
+                  onChange={(e) => setArticleFilter({ ...articleFilter, category_id: e.target.value })}
+                  className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                >
+                  <option value="">Todas Categorias</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <Button variant="outline" size="sm" className="border-zinc-700" onClick={fetchArticles}>
+                  <RefreshCw size={14} />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8 text-gray-400">A carregar...</div>
+            ) : articles.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Book size={48} className="mx-auto mb-4 opacity-50" />
+                <p>Nenhum artigo encontrado</p>
+                <Button 
+                  onClick={openNewArticleModal}
+                  className="mt-4 bg-gold-500 hover:bg-gold-400 text-black"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Criar Primeiro Artigo
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {articles.map(article => (
+                  <div
+                    key={article.id}
+                    className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg border border-zinc-700"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-medium truncate">{article.title}</span>
+                        {article.is_featured && (
+                          <Star size={14} className="text-gold-400 shrink-0" fill="currentColor" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                        <span>{article.category_name}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={12} />
+                          {article.view_count}
+                        </span>
+                        <span>•</span>
+                        <span>{formatDate(article.updated_at)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <Badge className={`border-0 ${
+                        article.status === 'published' ? 'bg-emerald-500/20 text-emerald-400' :
+                        article.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {article.status === 'published' ? 'Publicado' :
+                         article.status === 'draft' ? 'Rascunho' : 'Arquivado'}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditArticleModal(article)}
+                        className="border-gold-600/50 text-gold-400 hover:bg-gold-900/30"
+                      >
+                        <Edit size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteArticle(article.id)}
+                        className="border-red-600/50 text-red-400 hover:bg-red-900/30"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      {/* Category Modal */}
+      <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Nome</label>
+              <Input
+                value={categoryForm.name}
+                onChange={(e) => {
+                  setCategoryForm({ 
+                    ...categoryForm, 
+                    name: e.target.value,
+                    slug: editingCategory ? categoryForm.slug : generateSlug(e.target.value)
+                  });
+                }}
+                placeholder="Nome da categoria"
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Slug (URL)</label>
+              <Input
+                value={categoryForm.slug}
+                onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
+                placeholder="categoria-url"
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Descrição</label>
+              <Textarea
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                placeholder="Descrição breve"
+                className="bg-zinc-800 border-zinc-700 text-white"
+                rows={2}
+              />
+            </div>
+
+            {/* Parent Category */}
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Categoria Pai (opcional)</label>
+              <select
+                value={categoryForm.parent_id}
+                onChange={(e) => setCategoryForm({ ...categoryForm, parent_id: e.target.value })}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+              >
+                <option value="">Nenhuma (categoria principal)</option>
+                {categories
+                  .filter(cat => !cat.parent_id && cat.id !== editingCategory)
+                  .map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))
+                }
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Ícone</label>
+                <Input
+                  value={categoryForm.icon}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                  placeholder="blog, faqs, learn..."
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Cor</label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={categoryForm.color}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                    className="w-10 h-10 rounded cursor-pointer"
+                  />
+                  <Input
+                    value={categoryForm.color}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, color: e.target.value })}
+                    className="bg-zinc-800 border-zinc-700 text-white flex-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Ordem</label>
+                <Input
+                  type="number"
+                  value={categoryForm.order}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, order: parseInt(e.target.value) || 0 })}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 text-white cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={categoryForm.is_active}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, is_active: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  Activa
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCategoryModal(false)}
+              className="border-zinc-700"
+            >
+              Cancelar
+            </Button>
+            <Button onClick={saveCategory} className="bg-emerald-500 hover:bg-emerald-600">
+              <Save size={16} className="mr-2" />
+              {editingCategory ? 'Atualizar' : 'Criar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Article Modal - Custom overlay (no Radix focus trap, compatible with TinyMCE) */}
+      {showArticleModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 bg-black/80" onClick={() => setShowArticleModal(false)} />
+          <div className="fixed inset-0 flex items-center justify-center p-4" style={{ pointerEvents: 'none' }}>
+            <div className="bg-zinc-900 border border-zinc-800 text-white w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl p-6 relative"
+              style={{ pointerEvents: 'auto' }}
+              onClick={(e) => e.stopPropagation()}>
+              
+              {/* Close button */}
+              <button onClick={() => setShowArticleModal(false)}
+                className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity text-zinc-400 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold">{editingArticle ? 'Editar Artigo' : 'Novo Artigo'}</h2>
+              </div>
+          
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Título</label>
+                <Input
+                  value={articleForm.title}
+                  onChange={(e) => {
+                    setArticleForm({ 
+                      ...articleForm, 
+                      title: e.target.value,
+                      slug: editingArticle ? articleForm.slug : generateSlug(e.target.value)
+                    });
+                  }}
+                  placeholder="Título do artigo"
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Slug (URL)</label>
+                <Input
+                  value={articleForm.slug}
+                  onChange={(e) => setArticleForm({ ...articleForm, slug: e.target.value })}
+                  placeholder="titulo-do-artigo"
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Categoria</label>
+                <select
+                  value={selectedMainCategory}
+                  onChange={(e) => handleMainCategoryChange(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                >
+                  <option value="">Selecionar categoria...</option>
+                  {categories.filter(cat => !cat.parent_id).map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Subcategoria</label>
+                <select
+                  value={articleForm.category_id}
+                  onChange={(e) => setArticleForm({ ...articleForm, category_id: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                  disabled={!selectedMainCategory}
+                >
+                  <option value="">Selecionar subcategoria...</option>
+                  {categories
+                    .filter(cat => cat.parent_id === selectedMainCategory)
+                    .map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Resumo</label>
+              <Textarea
+                value={articleForm.summary}
+                onChange={(e) => setArticleForm({ ...articleForm, summary: e.target.value })}
+                placeholder="Resumo breve do artigo"
+                className="bg-zinc-800 border-zinc-700 text-white"
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Conteúdo</label>
+              <RichTextEditor
+                key={editorKey}
+                value={articleForm.content}
+                onChange={(content) => setArticleForm({ ...articleForm, content })}
+                placeholder="Escreva o conteúdo do artigo aqui..."
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Estado</label>
+                <select
+                  value={articleForm.status}
+                  onChange={(e) => setArticleForm({ ...articleForm, status: e.target.value })}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+                >
+                  <option value="draft">Rascunho</option>
+                  <option value="published">Publicado</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-gray-400 mb-1 block">Ordem</label>
+                <Input
+                  type="number"
+                  value={articleForm.order}
+                  onChange={(e) => setArticleForm({ ...articleForm, order: parseInt(e.target.value) || 0 })}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 text-white cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={articleForm.is_featured}
+                    onChange={(e) => setArticleForm({ ...articleForm, is_featured: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <Star size={16} className="text-gold-400" />
+                  Destaque
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-zinc-800">
+            <Button
+              variant="outline"
+              onClick={() => setShowArticleModal(false)}
+              className="border-zinc-700"
+            >
+              Cancelar
+            </Button>
+            <Button onClick={saveArticle} className="bg-emerald-500 hover:bg-emerald-600">
+              <Save size={16} className="mr-2" />
+              {editingArticle ? 'Atualizar' : 'Criar'}
+            </Button>
+          </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminKnowledgeBase;

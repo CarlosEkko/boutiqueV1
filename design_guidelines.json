@@ -1,0 +1,129 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Jewel & Luxury)",
+  "design_philosophy": "Quiet Luxury. High-contrast, stripped-down visuals that prioritize data clarity. A cinematic, moody aesthetic that signals trust and exclusivity for HNW/UHNW clientele.",
+  "typography": {
+    "heading_font": "Playfair Display",
+    "body_font": "Manrope",
+    "rules": [
+      "Headings must use Playfair Display for a boutique, premium feel.",
+      "Body text and data tables must use Manrope for crisp legibility.",
+      "Overlines MUST be uppercase, text-xs, with wide tracking (tracking-[0.2em]).",
+      "Heading sizes capped at text-4xl."
+    ]
+  },
+  "colors": {
+    "background": {
+      "page": "bg-zinc-950",
+      "surface": "bg-zinc-900",
+      "modal_overlay": "bg-black/70 backdrop-blur-2xl"
+    },
+    "text": {
+      "primary": "text-zinc-50",
+      "secondary": "text-zinc-400",
+      "muted": "text-zinc-500"
+    },
+    "accents": {
+      "primary": "text-amber-500",
+      "primary_bg": "bg-amber-500",
+      "primary_hover": "hover:bg-amber-400 hover:text-zinc-950",
+      "subtle_gold_bg": "bg-amber-500/10",
+      "subtle_gold_border": "border-amber-500/20"
+    },
+    "borders": {
+      "default": "border-zinc-800",
+      "focus": "focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50"
+    },
+    "status": {
+      "success": "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+      "warning": "text-amber-400 bg-amber-400/10 border-amber-400/20",
+      "error": "text-rose-400 bg-rose-400/10 border-rose-400/20"
+    }
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-6 md:p-8",
+    "gap": "gap-6",
+    "borders": "Flat solid surfaces with 1px subtle borders (border-zinc-800). No heavy shadows."
+  },
+  "components": {
+    "lead_card": {
+      "layout": "Horizontal flex/grid container. Grid Mode B.",
+      "style": "bg-zinc-900 border border-zinc-800 rounded-lg p-6 hover:border-zinc-700 transition-colors",
+      "avatar": "Square or slightly rounded (rounded-md) avatar, NOT fully circular.",
+      "badges": "Thin borders (border-amber-500/30), small text (text-xs), padding (px-2 py-1)."
+    },
+    "wizard_modal": {
+      "overlay": "Crystal Glassmorphism. bg-black/70 backdrop-blur-2xl.",
+      "container": "bg-zinc-950 border border-zinc-800 shadow-2xl rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar",
+      "header": "Sticky top, bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 p-8.",
+      "progress_indicator": "Text-based overline (e.g. '01 / 03 • VERIFICAÇÃO') + thin 1px gold progress bar."
+    },
+    "forms": {
+      "inputs": "bg-zinc-900 border border-zinc-800 rounded-md p-3 text-zinc-100 focus:outline-none focus:border-amber-500/50",
+      "labels": "text-sm text-zinc-400 mb-2 block font-medium"
+    },
+    "buttons": {
+      "primary": "bg-amber-500 text-zinc-950 font-medium px-6 py-2 rounded-md hover:bg-amber-400 hover:text-zinc-950 transition-colors",
+      "secondary": "bg-transparent border border-zinc-700 text-zinc-300 px-6 py-2 rounded-md hover:bg-zinc-800 hover:text-white transition-colors"
+    }
+  },
+  "views": {
+    "lead_listing_page": {
+      "header": "Title 'OTC Leads' (Playfair Display, text-3xl). 'New Lead' primary button.",
+      "filters": "Search bar, Status dropdown, Tier dropdown.",
+      "list": "Vertical stack of horizontal Lead Cards."
+    },
+    "wizard_step_1_verificacao": {
+      "title": "Verificação de Entidade",
+      "elements": [
+        "Search Input (Entity Name or Tax ID)",
+        "Result Card (if found): KYC Status, Trading Limits, Compliance Checklist",
+        "New Lead Form (if not found): Entity Name, Country, Source, Tier, Contact Info"
+      ]
+    },
+    "wizard_step_2_pre_qualificacao": {
+      "title": "Pré-Qualificação",
+      "elements": [
+        "Client Type Select: Retalho, HNWI, Empresa, Fundo",
+        "Operation Objective: Trading, Tesouraria, Arbitragem",
+        "First Operation Value",
+        "Monthly Volume Estimates",
+        "Fund Source",
+        "Settlement Channel & Bank Jurisdiction",
+        "Red Flags Notes (Textarea)"
+      ]
+    },
+    "wizard_step_3_setup_operacional": {
+      "title": "Setup Operacional",
+      "elements": [
+        "Daily/Monthly Limits",
+        "Settlement Method Toggle: SEPA, SWIFT, PIX, Crypto",
+        "Account Manager Assignment",
+        "Communication Channel"
+      ]
+    }
+  },
+  "testing": {
+    "rules": "All interactive elements MUST have data-testid attributes (e.g., data-testid='new-lead-button')."
+  },
+  "media": {
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1769636929231-3cd7f853d038?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0JTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzc1NTk4Mjk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "HNWI Male Profile 1",
+        "category": "lead_avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1765776830139-72b2184dae5a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0JTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzc1NTk4Mjk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "HNWI Male Profile 2",
+        "category": "lead_avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1764545973653-94c40d993495?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0JTIwZGFyayUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzc1NTk4Mjk5fDA&ixlib=rb-4.1.0&q=85",
+        "description": "HNWI Male Profile 3",
+        "category": "lead_avatar"
+      }
+    ]
+  },
+  "instructions_to_main_agent": "Implement using .js files (no TypeScript). Strictly follow the dark/gold luxury theme. Ensure Shadcn UI elements are heavily customized to fit this boutique brand feel (no standard blue focus rings). Ensure all requested fields for the 3 steps are present in the code. Create the required flow in App.js or modularize it."
+}
