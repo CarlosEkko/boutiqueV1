@@ -102,7 +102,7 @@ const DashboardOverview = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Loading...</div>
+        <div className="text-gold-400">{t('dashboard.overview.loadingText')}</div>
       </div>
     );
   }
@@ -115,24 +115,24 @@ const DashboardOverview = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gold-500/20 flex items-center justify-center">
               <Clock className="text-gold-400" size={32} />
             </div>
-            <h2 className="text-2xl font-light text-white mb-2">Account Pending Approval</h2>
+            <h2 className="text-2xl font-light text-white mb-2">{t('dashboard.overview.accountPendingApproval')}</h2>
             <p className="text-gray-400 mb-6">
-              Your account is currently under review. Our team will verify your information and approve your access shortly.
+              {t('dashboard.overview.accountUnderReview')}
             </p>
             <div className="space-y-3 text-left bg-zinc-800/50 rounded-lg p-4">
-              <h3 className="text-gold-400 font-medium">What's next?</h3>
+              <h3 className="text-gold-400 font-medium">{t('dashboard.overview.whatsNext')}</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li className="flex items-start gap-2">
                   <CheckCircle size={16} className="text-green-500 mt-0.5" />
-                  Account created successfully
+                  {t('dashboard.overview.accountCreated')}
                 </li>
                 <li className="flex items-start gap-2">
                   <Clock size={16} className="text-gold-400 mt-0.5" />
-                  Pending admin approval (24-48 hours)
+                  {t('dashboard.overview.pendingAdminApproval')}
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertCircle size={16} className="text-gray-500 mt-0.5" />
-                  KYC verification (after approval)
+                  {t('dashboard.overview.kycVerificationAfter')}
                 </li>
               </ul>
             </div>
@@ -176,7 +176,7 @@ const DashboardOverview = () => {
               ? 'bg-green-900/30 text-green-400' 
               : 'bg-gold-800/30 text-gold-400'
           }`}>
-            KYC: {overview?.kyc_status || 'Not Started'}
+            {t('dashboard.overview.kycLabel')}: {overview?.kyc_status === 'approved' ? t('dashboard.overview.kycApproved') : overview?.kyc_status === 'pending' ? t('dashboard.overview.kycPending') : t('dashboard.overview.kycNotStarted')}
           </Badge>
           <Badge className="bg-gold-500/20 text-gold-400">
             {overview?.membership_level || 'Standard'}
@@ -362,7 +362,7 @@ const DashboardOverview = () => {
             ) : (
               <div className="text-center py-8 text-gray-400">
                 <Wallet className="mx-auto mb-2" size={32} />
-                <p>No assets in wallet yet</p>
+                <p>{t('dashboard.overview.noAssetsYet')}</p>
               </div>
             )}
           </CardContent>

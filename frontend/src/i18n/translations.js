@@ -326,7 +326,19 @@ const translations = {
         viewAll: 'View All',
         totalInvested: 'Total Invested',
         expectedReturns: 'Expected Returns',
-        heresYourPortfolio: "Here's your portfolio overview"
+        heresYourPortfolio: "Here's your portfolio overview",
+        noAssetsYet: 'No assets in wallet yet',
+        kycLabel: 'KYC',
+        kycApproved: 'Approved',
+        kycNotStarted: 'Not Started',
+        kycPending: 'Pending',
+        accountPendingApproval: 'Account Pending Approval',
+        accountUnderReview: 'Your account is currently under review. Our team will verify your information and approve your access shortly.',
+        whatsNext: "What's next?",
+        accountCreated: 'Account created successfully',
+        pendingAdminApproval: 'Pending admin approval (24-48 hours)',
+        kycVerificationAfter: 'KYC verification (after approval)',
+        loadingText: 'Loading...'
       },
       // Wallets
       wallets: {
@@ -2012,7 +2024,19 @@ const translations = {
         viewAll: 'Ver Tudo',
         totalInvested: 'Total Investido',
         expectedReturns: 'Retornos Esperados',
-        heresYourPortfolio: 'Aqui está a visão geral do seu portfólio'
+        heresYourPortfolio: 'Aqui está a visão geral do seu portfólio',
+        noAssetsYet: 'Ainda sem ativos na carteira',
+        kycLabel: 'KYC',
+        kycApproved: 'Aprovado',
+        kycNotStarted: 'Não Iniciado',
+        kycPending: 'Pendente',
+        accountPendingApproval: 'Conta Pendente de Aprovação',
+        accountUnderReview: 'A sua conta está a ser analisada. A nossa equipa irá verificar as suas informações e aprovar o seu acesso brevemente.',
+        whatsNext: 'Próximos passos?',
+        accountCreated: 'Conta criada com sucesso',
+        pendingAdminApproval: 'Aprovação do administrador pendente (24-48 horas)',
+        kycVerificationAfter: 'Verificação KYC (após aprovação)',
+        loadingText: 'A carregar...'
       },
       // Wallets
       wallets: {
@@ -3640,7 +3664,19 @@ const translations = {
         viewAll: 'عرض الكل',
         totalInvested: 'إجمالي المستثمر',
         expectedReturns: 'العوائد المتوقعة',
-        heresYourPortfolio: 'إليك نظرة عامة على محفظتك'
+        heresYourPortfolio: 'إليك نظرة عامة على محفظتك',
+        noAssetsYet: 'لا توجد أصول في المحفظة بعد',
+        kycLabel: 'KYC',
+        kycApproved: 'معتمد',
+        kycNotStarted: 'لم يبدأ',
+        kycPending: 'قيد الانتظار',
+        accountPendingApproval: 'الحساب بانتظار الموافقة',
+        accountUnderReview: 'حسابك قيد المراجعة. سيقوم فريقنا بالتحقق من معلوماتك والموافقة على وصولك قريباً.',
+        whatsNext: 'ما التالي؟',
+        accountCreated: 'تم إنشاء الحساب بنجاح',
+        pendingAdminApproval: 'بانتظار موافقة المسؤول (24-48 ساعة)',
+        kycVerificationAfter: 'التحقق من KYC (بعد الموافقة)',
+        loadingText: 'جاري التحميل...'
       },
       wallets: {
         title: 'محافظك',
@@ -5194,7 +5230,19 @@ const translations = {
         viewAll: 'Voir Tout',
         totalInvested: 'Total Investi',
         expectedReturns: 'Rendements Attendus',
-        heresYourPortfolio: 'Voici l\'aperçu de votre portefeuille'
+        heresYourPortfolio: 'Voici l\'aperçu de votre portefeuille',
+        noAssetsYet: 'Aucun actif dans le portefeuille',
+        kycLabel: 'KYC',
+        kycApproved: 'Approuvé',
+        kycNotStarted: 'Non commencé',
+        kycPending: 'En attente',
+        accountPendingApproval: 'Compte en attente d\'approbation',
+        accountUnderReview: 'Votre compte est en cours de vérification. Notre équipe vérifiera vos informations et approuvera votre accès prochainement.',
+        whatsNext: 'Prochaines étapes ?',
+        accountCreated: 'Compte créé avec succès',
+        pendingAdminApproval: 'Approbation de l\'administrateur en attente (24-48 heures)',
+        kycVerificationAfter: 'Vérification KYC (après approbation)',
+        loadingText: 'Chargement...'
       },
       wallets: {
         title: 'Mes Portefeuilles',
@@ -6770,7 +6818,20 @@ const translations = {
     dashboard: {
       layout: { portfolio: 'Portafolio', admin: 'Admin', loggedInAs: 'Conectado como', logout: 'Cerrar Sesión' },
       nav: { overview: 'Resumen', wallets: 'Carteras', transactions: 'Transacciones', investments: 'Inversiones', roi: 'ROI', transparency: 'Transparencia', kycVerification: 'Verificación KYC', adminOverview: 'Resumen Admin', users: 'Usuarios', kycKyb: 'KYC/KYB', opportunities: 'Oportunidades', inviteCodes: 'Códigos de Invitación' },
-      overview: { welcome: 'Bienvenido de nuevo', portfolioValue: 'Valor del Portafolio', totalPortfolio: 'Portafolio Total', walletBalance: 'Saldo de Cartera', totalAssets: 'Activos Totales', activeInvestments: 'Inversiones Activas', pendingTransactions: 'Pendientes', recentActivity: 'Actividad Reciente', recentTransactions: 'Transacciones Recientes', portfolioAllocation: 'Asignación del Portafolio', noActivity: 'Sin actividad reciente', noTransactionsYet: 'Sin transacciones aún', viewAll: 'Ver Todo', totalInvested: 'Total Invertido', expectedReturns: 'Retornos Esperados', heresYourPortfolio: 'Aquí está el resumen de su portafolio' },
+      overview: { welcome: 'Bienvenido de nuevo', portfolioValue: 'Valor del Portafolio', totalPortfolio: 'Portafolio Total', walletBalance: 'Saldo de Cartera', totalAssets: 'Activos Totales', activeInvestments: 'Inversiones Activas', pendingTransactions: 'Pendientes', recentActivity: 'Actividad Reciente', recentTransactions: 'Transacciones Recientes', portfolioAllocation: 'Asignación del Portafolio', noActivity: 'Sin actividad reciente', noTransactionsYet: 'Sin transacciones aún', viewAll: 'Ver Todo', totalInvested: 'Total Invertido', expectedReturns: 'Retornos Esperados', heresYourPortfolio: 'Aquí está el resumen de su portafolio',
+        noAssetsYet: 'Aún sin activos en la cartera',
+        kycLabel: 'KYC',
+        kycApproved: 'Aprobado',
+        kycNotStarted: 'No iniciado',
+        kycPending: 'Pendiente',
+        accountPendingApproval: 'Cuenta pendiente de aprobación',
+        accountUnderReview: 'Su cuenta está siendo revisada. Nuestro equipo verificará su información y aprobará su acceso en breve.',
+        whatsNext: '¿Qué sigue?',
+        accountCreated: 'Cuenta creada con éxito',
+        pendingAdminApproval: 'Aprobación del administrador pendiente (24-48 horas)',
+        kycVerificationAfter: 'Verificación KYC (después de la aprobación)',
+        loadingText: 'Cargando...'
+      },
       wallets: { title: 'Mis Carteras', subtitle: 'Administre sus carteras de criptomonedas y fiat', balance: 'Saldo', available: 'Disponible', pending: 'Pendiente', address: 'Dirección', copyAddress: 'Copiar Dirección', deposit: 'Depositar', withdraw: 'Retirar', noWallets: 'No se encontraron carteras', all: 'Todas', fiat: 'Fiat', crypto: 'Crypto', watchlist: 'Favoritos', fiatWallets: 'Carteras Fiat', cryptoWallets: 'Carteras Crypto', depositViaBank: 'Depositar vía transferencia bancaria', depositFiat: 'Depositar Fiat', refresh: 'Actualizar', add: 'Añadir', price: 'Precio', depositAddress: 'Dirección de Depósito', showQR: 'Mostrar QR', hideQR: 'Ocultar QR' },
       exchange: { title: 'Exchange', subtitle: 'Compre, venda y convierta criptomonedas', viewMyOrders: 'Ver Mis Órdenes', buy: 'Comprar', sell: 'Vender', convert: 'Convertir', cryptocurrency: 'Criptomoneda', amount: 'Monto', valueIn: 'Valor en', limit: 'Límite', paymentMethod: 'Método de Pago', card: 'Tarjeta', bankTransfer: 'Transferencia Bancaria', walletBalance: 'Saldo de Cartera', yourLimits: 'Sus Límites', tier: 'Nivel', dailyBuyLimit: 'Límite Diario de Compra', usedToday: 'Usado Hoy', fees: 'Comisiones', buyFee: 'Compra', sellFee: 'Venta', convertFee: 'Conversión', selectCrypto: 'Seleccionar Criptomoneda', enterAmount: 'Ingrese el monto', estimatedCrypto: 'Crypto estimado', totalWithFees: 'Total con comisiones', confirmOrder: 'Confirmar Orden', orderSuccess: '¡Orden realizada con éxito!', insufficientBalance: 'Saldo insuficiente', minAmount: 'Monto mínimo', maxAmount: 'Monto máximo', feeLabel: 'Comisión KBEX', feeTooltipTitle: 'Comisión', feeTooltipText: 'Además de la comisión mostrada, puede incluirse un spread en el precio. El spread se calcula antes de enviar la transacción.', grossAmount: 'Monto Bruto', youReceive: 'Usted recibe', sellProcessedNote: 'Las ventas se procesan vía transferencia bancaria después de la aprobación.', quantity: 'Cantidad' },
       transactions: { title: 'Historial de Transacciones', subtitle: 'Vea todas sus transacciones', type: 'Tipo', amount: 'Monto', status: 'Estado', date: 'Fecha', deposit: 'Depósito', withdrawal: 'Retiro', transfer: 'Transferencia', completed: 'Completada', pending: 'Pendiente', failed: 'Fallida', noTransactions: 'No se encontraron transacciones' },
