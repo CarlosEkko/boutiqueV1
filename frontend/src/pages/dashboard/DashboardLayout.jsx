@@ -71,7 +71,8 @@ import {
   FilePlus2,
   Flame,
   Coins,
-  Monitor
+  Monitor,
+  Building2
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -273,6 +274,8 @@ const DashboardLayout = () => {
   };
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeEntity, setActiveEntity] = useState({ type: 'personal' });
+  const [businessAccounts, setBusinessAccounts] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuStructure, setMenuStructure] = useState([]);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -329,6 +332,32 @@ const DashboardLayout = () => {
   }, [token, user?.is_admin]);
 
   // Fetch menu structure from API
+  useEffect(() => {
+    // Fetch business accounts & active entity
+    const fetchEntities = async () => {
+      if (!token) return;
+      try {
+        const res = await axios.get(`${API_URL}/api/business-accounts`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setBusinessAccounts(res.data.accounts || []);
+        setActiveEntity(res.data.active_entity || { type: 'personal' });
+      } catch {}
+    };
+    fetchEntities();
+  }, [token]);
+
+  const switchEntity = async (entityType, businessAccountId) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/business-accounts/switch`, 
+        { entity_type: entityType, business_account_id: businessAccountId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setActiveEntity(res.data.active_entity);
+      window.location.reload();
+    } catch {}
+  };
+
   useEffect(() => {
     const fetchMenus = async () => {
       if (!token) return;
@@ -837,6 +866,40 @@ const DashboardLayout = () => {
             </div>
           )}
         </nav>
+
+        {/* Entity Switcher */}
+        {sidebarOpen && businessAccounts.length > 0 && (
+          <div className={`px-4 py-3 border-t ${resolvedTheme === 'light' ? 'border-gold-200' : 'border-gold-800/20'}`}>
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 px-1">{t('sidebar.entity', 'Entidade Ativa')}</p>
+            <button
+              onClick={() => switchEntity('personal')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+                activeEntity.type === 'personal'
+                  ? 'bg-gold-500/15 text-gold-400 border border-gold-500/30'
+                  : resolvedTheme === 'light' ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-400 hover:bg-zinc-800'
+              }`}
+              data-testid="switch-personal"
+            >
+              <User size={16} />
+              <span className="truncate">{user?.name || 'Pessoal'}</span>
+            </button>
+            {businessAccounts.map(acc => (
+              <button
+                key={acc.id}
+                onClick={() => switchEntity('business', acc.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors mb-1 ${
+                  activeEntity.type === 'business' && activeEntity.business_account_id === acc.id
+                    ? 'bg-gold-500/15 text-gold-400 border border-gold-500/30'
+                    : resolvedTheme === 'light' ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-400 hover:bg-zinc-800'
+                }`}
+                data-testid={`switch-business-${acc.id}`}
+              >
+                <Building2 size={16} />
+                <span className="truncate">{acc.company_name}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* User & Logout */}
         <div className={`p-4 border-t ${resolvedTheme === 'light' ? 'border-gold-200' : 'border-gold-800/20'}`}>

@@ -14,7 +14,8 @@ import axios from 'axios';
 import { 
   User, Mail, Phone, Globe, Edit2, Save, X, Shield, Calendar,
   CreditCard, Bitcoin, ArrowUpCircle, ArrowDownCircle, 
-  FileText, MapPin, Hash, Copy, RefreshCw, Monitor
+  FileText, MapPin, Hash, Copy, RefreshCw, Monitor,
+  Building2, ChevronRight, Plus, Briefcase, Check
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -46,6 +47,13 @@ const ProfilePage = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [demoProfile, setDemoProfile] = useState(null);
+  const [businessAccounts, setBusinessAccounts] = useState([]);
+  const [showCreateBusiness, setShowCreateBusiness] = useState(false);
+  const [businessForm, setBusinessForm] = useState({
+    company_name: '', registration_number: '', tax_id: '', 
+    company_type: 'llc', incorporation_country: ''
+  });
+  const [creatingBusiness, setCreatingBusiness] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -127,6 +135,43 @@ const ProfilePage = () => {
 
   const handleCountryChange = (value) => {
     setFormData(prev => ({ ...prev, country: value }));
+  };
+
+  // Business Accounts
+  const fetchBusinessAccounts = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/business-accounts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBusinessAccounts(res.data.accounts || []);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (token) fetchBusinessAccounts();
+  }, [token]);
+
+  const handleCreateBusiness = async (e) => {
+    e.preventDefault();
+    if (!businessForm.company_name) return;
+    setCreatingBusiness(true);
+    try {
+      await axios.post(`${API_URL}/api/business-accounts`, businessForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(t('profile.business.created', 'Conta empresarial criada com sucesso'));
+      setShowCreateBusiness(false);
+      setBusinessForm({ company_name: '', registration_number: '', tax_id: '', company_type: 'llc', incorporation_country: '' });
+      fetchBusinessAccounts();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao criar conta');
+    } finally {
+      setCreatingBusiness(false);
+    }
+  };
+
+  const startKYB = (accountId) => {
+    navigate(`/dashboard/kyc/kyb?business_id=${accountId}`);
   };
 
   const handleSave = async () => {
@@ -431,6 +476,145 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Business Accounts Section */}
+      <Card className="bg-zinc-900/50 border-gold-800/20 mt-6" data-testid="business-accounts-section">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Building2 className="text-gold-400" size={20} />
+            {t('profile.business.title', 'Contas Empresariais')}
+          </CardTitle>
+          {!showCreateBusiness && (
+            <Button onClick={() => setShowCreateBusiness(true)} size="sm" className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="add-business-btn">
+              <Plus size={14} className="mr-1" /> {t('profile.business.addAccount', 'Abrir Conta Business')}
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-gray-400 text-sm">
+            {t('profile.business.description', 'Abra uma conta empresarial para operar em nome da sua empresa. Cada conta tem carteiras e limites independentes.')}
+          </p>
+
+          {/* Create Form */}
+          {showCreateBusiness && (
+            <form onSubmit={handleCreateBusiness} className="bg-zinc-800/50 rounded-xl p-5 space-y-4 border border-gold-500/20" data-testid="create-business-form">
+              <h3 className="text-white font-medium flex items-center gap-2">
+                <Briefcase size={16} className="text-gold-400" />
+                {t('profile.business.newAccount', 'Nova Conta Empresarial')}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-300 text-sm">{t('profile.business.companyName', 'Nome da Empresa')} *</Label>
+                  <Input value={businessForm.company_name} onChange={e => setBusinessForm({...businessForm, company_name: e.target.value})}
+                    placeholder="Ex: EKKO Technologies, S.A." className="bg-zinc-700 border-zinc-600 text-white mt-1" required data-testid="business-company-name" />
+                </div>
+                <div>
+                  <Label className="text-gray-300 text-sm">{t('profile.business.registrationNumber', 'NIPC / Registo Comercial')}</Label>
+                  <Input value={businessForm.registration_number} onChange={e => setBusinessForm({...businessForm, registration_number: e.target.value})}
+                    placeholder="PT 516 123 456" className="bg-zinc-700 border-zinc-600 text-white mt-1" data-testid="business-reg-number" />
+                </div>
+                <div>
+                  <Label className="text-gray-300 text-sm">{t('profile.business.taxId', 'NIF Fiscal')}</Label>
+                  <Input value={businessForm.tax_id} onChange={e => setBusinessForm({...businessForm, tax_id: e.target.value})}
+                    placeholder="516123456" className="bg-zinc-700 border-zinc-600 text-white mt-1" data-testid="business-tax-id" />
+                </div>
+                <div>
+                  <Label className="text-gray-300 text-sm">{t('profile.business.country', 'País de Incorporação')}</Label>
+                  <Select value={businessForm.incorporation_country} onValueChange={v => setBusinessForm({...businessForm, incorporation_country: v})}>
+                    <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white mt-1" data-testid="business-country">
+                      <SelectValue placeholder={t('common.select', 'Selecionar')} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      {COUNTRIES.map(c => (
+                        <SelectItem key={c.code} value={c.code} className="text-white">{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-gray-300 text-sm">{t('profile.business.companyType', 'Tipo de Sociedade')}</Label>
+                  <Select value={businessForm.company_type} onValueChange={v => setBusinessForm({...businessForm, company_type: v})}>
+                    <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white mt-1" data-testid="business-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-800 border-zinc-700">
+                      <SelectItem value="llc" className="text-white">LLC / Lda.</SelectItem>
+                      <SelectItem value="sa" className="text-white">S.A.</SelectItem>
+                      <SelectItem value="partnership" className="text-white">Partnership</SelectItem>
+                      <SelectItem value="sole_proprietor" className="text-white">Empresário Individual</SelectItem>
+                      <SelectItem value="trust" className="text-white">Trust</SelectItem>
+                      <SelectItem value="fund" className="text-white">Fund</SelectItem>
+                      <SelectItem value="other" className="text-white">{t('common.other', 'Outro')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowCreateBusiness(false)} className="border-zinc-700">
+                  {t('common.cancel', 'Cancelar')}
+                </Button>
+                <Button type="submit" className="bg-gold-500 hover:bg-gold-400 text-black" disabled={creatingBusiness} data-testid="submit-business">
+                  {creatingBusiness ? '...' : t('profile.business.create', 'Criar Conta Empresarial')}
+                  <ChevronRight size={16} className="ml-1" />
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Existing Business Accounts */}
+          {businessAccounts.length > 0 ? (
+            <div className="space-y-3">
+              {businessAccounts.map(account => (
+                <div key={account.id} className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700/50 hover:border-gold-500/30 transition-colors" data-testid={`business-account-${account.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
+                        <Building2 size={20} className="text-gold-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-medium">{account.company_name}</h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {account.registration_number && (
+                            <span className="text-gray-500 text-xs font-mono">{account.registration_number}</span>
+                          )}
+                          {account.incorporation_country && (
+                            <Badge className="bg-zinc-700 text-gray-300 text-[10px] px-1.5 py-0 border-0">{account.incorporation_country}</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className={`border-0 text-xs ${
+                        account.kyb_status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                        account.kyb_status === 'pending_review' ? 'bg-gold-400/20 text-gold-400' :
+                        account.kyb_status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {account.kyb_status === 'approved' && <Check size={12} className="mr-1" />}
+                        {account.kyb_status === 'approved' ? t('kyc.status.approved', 'Verificado') :
+                         account.kyb_status === 'pending_review' ? t('kyc.status.pendingReview', 'Em Análise') :
+                         account.kyb_status === 'in_progress' ? t('kyc.status.inProgress', 'Em Curso') :
+                         t('kyc.status.notStarted', 'KYB Pendente')}
+                      </Badge>
+                      {account.kyb_status !== 'approved' && (
+                        <Button size="sm" onClick={() => startKYB(account.id)} className="bg-gold-500/20 text-gold-400 hover:bg-gold-500/30 border border-gold-500/30" data-testid={`start-kyb-${account.id}`}>
+                          {account.kyb_status === 'not_started' ? t('profile.business.startKYB', 'Iniciar KYB') : t('profile.business.continueKYB', 'Continuar')}
+                          <ChevronRight size={14} className="ml-1" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !showCreateBusiness && (
+            <div className="text-center py-6 bg-zinc-800/30 rounded-xl border border-dashed border-zinc-700">
+              <Building2 className="mx-auto text-gray-600 mb-3" size={36} />
+              <p className="text-gray-500 text-sm">{t('profile.business.noAccounts', 'Ainda não tem contas empresariais')}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
