@@ -1,43 +1,43 @@
-// Mock data for Crypto ATM Network page
+// Mock data for Crypto ATM Network page — i18n-ready with translation keys
 
 export const atmHeroData = {
-  title: "Premium Crypto ATM Network",
-  subtitle: "Access Digital Assets in Exclusive Locations",
-  description: "Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs, strategically placed in premium locations across Europe, Middle East, and Brazil.",
+  titleKey: 'cryptoAtm.heroTitle',
+  subtitleKey: 'cryptoAtm.heroSubtitle',
+  descriptionKey: 'cryptoAtm.heroDescription',
   stats: [
-    { value: "50+", label: "Premium Locations" },
-    { value: "15+", label: "Supported Currencies" },
-    { value: "24/7", label: "Available Access" },
-    { value: "99.9%", label: "Uptime Guarantee" }
+    { value: "50+", labelKey: "cryptoAtm.statPremiumLocations" },
+    { value: "15+", labelKey: "cryptoAtm.statSupportedCurrencies" },
+    { value: "24/7", labelKey: "cryptoAtm.statAvailableAccess" },
+    { value: "99.9%", labelKey: "cryptoAtm.statUptimeGuarantee" }
   ]
 };
 
 export const atmFeatures = [
   {
     id: 1,
-    title: "Prime Locations",
-    description: "ATMs placed in exclusive high-end shopping districts, luxury hotels, and private banking centers. Curated environments that match the sophistication of our clientele.",
+    titleKey: "cryptoAtm.feature1Title",
+    descriptionKey: "cryptoAtm.feature1Desc",
     icon: "map-pin",
     image: "/images/atm-dubai.jpg"
   },
   {
     id: 2,
-    title: "Enhanced Privacy",
-    description: "Discreet transaction booths with biometric verification. Advanced encryption and privacy protocols ensure your transactions remain confidential.",
+    titleKey: "cryptoAtm.feature2Title",
+    descriptionKey: "cryptoAtm.feature2Desc",
     icon: "shield",
     image: "/images/product-custody.jpg"
   },
   {
     id: 3,
-    title: "Multi-Currency Support",
-    description: "Buy and sell Bitcoin, Ethereum, and other major cryptocurrencies. Support for multiple fiat currencies including EUR, USD, GBP, AED, and BRL.",
+    titleKey: "cryptoAtm.feature3Title",
+    descriptionKey: "cryptoAtm.feature3Desc",
     icon: "coins",
     image: "/images/atm-zurich.jpg"
   },
   {
     id: 4,
-    title: "White-Glove Service",
-    description: "Dedicated concierge support available at select locations. VIP transaction assistance for large-volume conversions.",
+    titleKey: "cryptoAtm.feature4Title",
+    descriptionKey: "cryptoAtm.feature4Desc",
     icon: "headset",
     image: "/images/atm-saopaulo.jpg"
   }
@@ -46,29 +46,29 @@ export const atmFeatures = [
 export const howItWorks = [
   {
     step: 1,
-    title: "Verify Identity",
-    description: "Quick biometric verification or VIP card authentication for seamless access"
+    titleKey: "cryptoAtm.step1Title",
+    descriptionKey: "cryptoAtm.step1Desc"
   },
   {
     step: 2,
-    title: "Select Currency",
-    description: "Choose your preferred cryptocurrency and fiat currency for conversion"
+    titleKey: "cryptoAtm.step2Title",
+    descriptionKey: "cryptoAtm.step2Desc"
   },
   {
     step: 3,
-    title: "Complete Transaction",
-    description: "Insert cash or card, confirm transaction, and receive instant digital assets"
+    titleKey: "cryptoAtm.step3Title",
+    descriptionKey: "cryptoAtm.step3Desc"
   },
   {
     step: 4,
-    title: "Secure Transfer",
-    description: "Funds transferred directly to your verified wallet with instant confirmation"
+    titleKey: "cryptoAtm.step4Title",
+    descriptionKey: "cryptoAtm.step4Desc"
   }
 ];
 
 export const atmLocations = [
   {
-    region: "Europe",
+    regionKey: "cryptoAtm.regionEurope",
     cities: [
       { name: "Zurich", country: "Switzerland", count: 8, vip: true },
       { name: "London", country: "United Kingdom", count: 12, vip: true },
@@ -78,7 +78,7 @@ export const atmLocations = [
     ]
   },
   {
-    region: "Middle East",
+    regionKey: "cryptoAtm.regionMiddleEast",
     cities: [
       { name: "Dubai", country: "UAE", count: 10, vip: true },
       { name: "Abu Dhabi", country: "UAE", count: 6, vip: true },
@@ -86,7 +86,7 @@ export const atmLocations = [
     ]
   },
   {
-    region: "Brazil",
+    regionKey: "cryptoAtm.regionBrazil",
     cities: [
       { name: "São Paulo", country: "Brazil", count: 8, vip: true },
       { name: "Rio de Janeiro", country: "Brazil", count: 5, vip: false },
@@ -97,33 +97,33 @@ export const atmLocations = [
 
 export const atmBenefits = [
   {
-    title: "Instant Transactions",
-    description: "Real-time conversion with immediate wallet crediting",
+    titleKey: "cryptoAtm.benefit1Title",
+    descriptionKey: "cryptoAtm.benefit1Desc",
     icon: "zap"
   },
   {
-    title: "Competitive Rates",
-    description: "Institutional-grade pricing with transparent fee structure",
+    titleKey: "cryptoAtm.benefit2Title",
+    descriptionKey: "cryptoAtm.benefit2Desc",
     icon: "trending-up"
   },
   {
-    title: "Maximum Limits",
-    description: "Higher transaction limits for verified VIP members",
+    titleKey: "cryptoAtm.benefit3Title",
+    descriptionKey: "cryptoAtm.benefit3Desc",
     icon: "bar-chart"
   },
   {
-    title: "Bank-Level Security",
-    description: "Military-grade encryption and physical security measures",
+    titleKey: "cryptoAtm.benefit4Title",
+    descriptionKey: "cryptoAtm.benefit4Desc",
     icon: "lock"
   },
   {
-    title: "Multi-Language Support",
-    description: "Interface available in 12+ languages including Arabic",
+    titleKey: "cryptoAtm.benefit5Title",
+    descriptionKey: "cryptoAtm.benefit5Desc",
     icon: "globe"
   },
   {
-    title: "24/7 Support",
-    description: "Dedicated phone support for all ATM-related queries",
+    titleKey: "cryptoAtm.benefit6Title",
+    descriptionKey: "cryptoAtm.benefit6Desc",
     icon: "phone"
   }
 ];

@@ -9,16 +9,17 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Real-time: Binance WebSocket
 - Languages: PT, EN, AR, FR, ES (i18n)
 
-## Pages Fully Translated (i18n) — 2026-04-16
-- EarnPage, MarketsPage, LaunchpadPage, InstitutionalPage, CryptoATMPage
-- DashboardOverview, ExchangePage, WhitelistPage, FiatDepositPage
-- PreQualDialog, OTCLeads, KYCStatus
+## Fully Translated Pages (i18n)
+- **Public**: EarnPage, MarketsPage, LaunchpadPage, InstitutionalPage, CryptoATMPage, Header, Footer
+- **Dashboard**: DashboardOverview, ExchangePage, WhitelistPage, FiatDepositPage, KYCStatus
+- **OTC**: PreQualDialog, OTCLeads (inline helper)
 
 ## Business Accounts System
 - Users create business accounts from Profile page
-- Independent wallets per entity (filtered by entity_id)
-- Entity Switcher in sidebar
+- Independent wallets per entity (filtered by entity_id in dashboard.py)
+- Entity Switcher in sidebar (DashboardLayout.jsx)
 - Sumsub KYB verification per business account
+- Backend: `/api/business-accounts` CRUD + switch
 
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD

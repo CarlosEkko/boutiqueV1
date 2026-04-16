@@ -493,15 +493,15 @@ const CryptoATMPage = () => {
           </Badge>
           
           <h1 className="text-5xl md:text-7xl font-extralight text-white mb-4 tracking-wide">
-            {atmHeroData.title}
+            {t(atmHeroData.titleKey, 'Premium Crypto ATM Network')}
           </h1>
           
           <p className="hero-text text-xl md:text-2xl bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mb-6 font-light">
-            {atmHeroData.subtitle}
+            {t(atmHeroData.subtitleKey, 'Access Digital Assets in Exclusive Locations')}
           </p>
           
           <p className="hero-text text-lg text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
-            {atmHeroData.description}
+            {t(atmHeroData.descriptionKey, 'Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs.')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -531,7 +531,7 @@ const CryptoATMPage = () => {
                 className="bg-zinc-900/50 backdrop-blur-sm border border-gold-800/20 rounded-lg p-4"
               >
                 <div className="stat-number text-3xl font-light text-gold-400 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-400">{stat.label}</div>
+                <div className="text-sm text-gray-400">{t(stat.labelKey, stat.value)}</div>
               </div>
             ))}
           </div>
@@ -572,8 +572,8 @@ const CryptoATMPage = () => {
                     <div className="feature-icon inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 mb-6">
                       <IconComponent className="text-gold-400" size={32} />
                     </div>
-                    <h3 className="text-3xl font-light text-white mb-4">{feature.title}</h3>
-                    <p className="text-gray-400 text-lg leading-relaxed">{feature.description}</p>
+                    <h3 className="text-3xl font-light text-white mb-4">{t(feature.titleKey, '')}</h3>
+                    <p className="text-gray-400 text-lg leading-relaxed">{t(feature.descriptionKey, '')}</p>
                   </div>
                 </div>
               );
@@ -605,8 +605,8 @@ const CryptoATMPage = () => {
                   <div className="step-number w-12 h-12 rounded-full bg-gold-500/90 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4">
                     {item.step}
                   </div>
-                  <h4 className="text-xl font-light text-white mb-3">{item.title}</h4>
-                  <p className="text-gray-400 text-sm leading-relaxed">{item.description}</p>
+                  <h4 className="text-xl font-light text-white mb-3">{t(item.titleKey, '')}</h4>
+                  <p className="text-gray-400 text-sm leading-relaxed">{t(item.descriptionKey, '')}</p>
                 </CardContent>
               </Card>
             ))}
@@ -634,7 +634,7 @@ const CryptoATMPage = () => {
                 className="bg-gradient-to-br from-zinc-900/80 to-black/80 border-gold-800/20"
               >
                 <CardContent className="p-6">
-                  <h3 className="text-2xl font-light text-gold-400 mb-6">{location.region}</h3>
+                  <h3 className="text-2xl font-light text-gold-400 mb-6">{t(location.regionKey, '')}</h3>
                   <div className="space-y-4">
                     {location.cities.map((city) => (
                       <div key={city.name} className="flex items-center justify-between">
@@ -683,8 +683,8 @@ const CryptoATMPage = () => {
                     <div className="benefit-icon inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gold-500/20 to-gold-600/20 border border-gold-600/30 mb-4">
                       <IconComponent className="text-gold-400" size={24} />
                     </div>
-                    <h4 className="text-lg font-light text-white mb-2">{benefit.title}</h4>
-                    <p className="text-gray-400 text-sm">{benefit.description}</p>
+                    <h4 className="text-lg font-light text-white mb-2">{t(benefit.titleKey, '')}</h4>
+                    <p className="text-gray-400 text-sm">{t(benefit.descriptionKey, '')}</p>
                   </CardContent>
                 </Card>
               );

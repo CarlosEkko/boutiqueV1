@@ -1784,61 +1784,36 @@ const translations = {
       upcoming: 'Upcoming',
       completed: 'Completed'
     },
-    cryptoAtm: {
+        cryptoAtm: {
       heroTitle: 'Premium Crypto ATM Network',
       heroSubtitle: 'Access Digital Assets in Exclusive Locations',
-      heroDescription: 'Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs.',
-      premiumLocations: 'Premium Locations',
-      supportedCurrencies: 'Supported Currencies',
-      availableAccess: 'Available Access',
-      uptimeGuarantee: 'Uptime Guarantee',
-      features: 'Features',
-      howItWorks: 'How It Works',
-      locations: 'Our Locations',
-      benefits: 'Benefits',
-      getStarted: 'Get Started',
-      contactUs: 'Contact Us',
-      primeLocations: 'Prime Locations',
-      primeLocationsDesc: 'ATMs placed in exclusive high-end districts, luxury hotels, and private banking centers.',
-      enhancedPrivacy: 'Enhanced Privacy',
-      enhancedPrivacyDesc: 'Discreet transaction booths with biometric verification.',
-      instantConversion: 'Instant Conversion',
-      instantConversionDesc: 'Convert fiat to crypto and back in seconds.',
-      premiumSupport: 'Premium Support',
-      premiumSupportDesc: 'Dedicated concierge service available at all locations.'
+      heroDescription: 'Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs, strategically placed in premium locations across Europe, Middle East, and Brazil.',
+      statPremiumLocations: 'Premium Locations', statSupportedCurrencies: 'Supported Currencies', statAvailableAccess: 'Available Access', statUptimeGuarantee: 'Uptime Guarantee',
+      feature1Title: 'Prime Locations', feature1Desc: 'ATMs placed in exclusive high-end shopping districts, luxury hotels, and private banking centers. Curated environments that match the sophistication of our clientele.',
+      feature2Title: 'Enhanced Privacy', feature2Desc: 'Discreet transaction booths with biometric verification. Advanced encryption and privacy protocols ensure your transactions remain confidential.',
+      feature3Title: 'Multi-Currency Support', feature3Desc: 'Buy and sell Bitcoin, Ethereum, and other major cryptocurrencies. Support for multiple fiat currencies including EUR, USD, GBP, AED, and BRL.',
+      feature4Title: 'White-Glove Service', feature4Desc: 'Dedicated concierge support available at select locations. VIP transaction assistance for large-volume conversions.',
+      step1Title: 'Verify Identity', step1Desc: 'Quick biometric verification or VIP card authentication for seamless access',
+      step2Title: 'Select Currency', step2Desc: 'Choose your preferred cryptocurrency and fiat currency for conversion',
+      step3Title: 'Complete Transaction', step3Desc: 'Insert cash or card, confirm transaction, and receive instant digital assets',
+      step4Title: 'Secure Transfer', step4Desc: 'Funds transferred directly to your verified wallet with instant confirmation',
+      regionEurope: 'Europe', regionMiddleEast: 'Middle East', regionBrazil: 'Brazil',
+      benefit1Title: 'Instant Transactions', benefit1Desc: 'Real-time conversion with immediate wallet crediting',
+      benefit2Title: 'Competitive Rates', benefit2Desc: 'Institutional-grade pricing with transparent fee structure',
+      benefit3Title: 'Maximum Limits', benefit3Desc: 'Higher transaction limits for verified VIP members',
+      benefit4Title: 'Bank-Level Security', benefit4Desc: 'Military-grade encryption and physical security measures',
+      benefit5Title: 'Multi-Language Support', benefit5Desc: 'Interface available in 12+ languages including Arabic',
+      benefit6Title: '24/7 Support', benefit6Desc: 'Dedicated phone support for all ATM-related queries',
+      findNearest: 'Find Nearest ATM', requestVip: 'Request VIP Access', applyVip: 'Apply for VIP Access',
+      exclusiveFeatures: 'Exclusive Features', premiumExperience: 'Premium Experience',
+      howItWorks: 'How It Works', simpleSecure: 'Simple & Secure',
+      globalNetwork: 'Global Network', premiumLocations: 'Premium Locations',
+      whyChoose: 'Why Choose Our ATMs',
+      readyToExperience: 'Ready to Experience', premiumCryptoAccess: 'Premium Crypto Access?',
+      joinExclusive: 'Join our exclusive network and enjoy institutional-grade crypto services at your fingertips'
     },
-    // Trading Page
-    trading: {
-      title: 'Trading',
-      searchPair: 'Search pair...',
-      favorites: 'Favorites',
-      allPairs: 'All Pairs',
-      price: 'Price',
-      change24h: '24h Change',
-      volume24h: 'Volume 24h',
-      marketCap: 'Market Cap',
-      buySell: 'Buy/Sell',
-      change1h: '1h Change',
-      change7d: '7d Change',
-      globalRank: 'Global Rank',
-      viewOnCMC: 'View on CoinMarketCap'
     },
-    // Fiat Deposit
-   // Fiat Withdrawal
-    fiatWithdrawal: {
-      title: 'Fiat Withdrawal',
-      subtitle: 'Withdraw to your bank account',
-      amount: 'Amount',
-      bankAccount: 'Bank Account',
-      iban: 'IBAN',
-      swift: 'SWIFT/BIC',
-      accountHolder: 'Account Holder',
-      requestWithdrawal: 'Request Withdrawal',
-      myWithdrawals: 'My Withdrawals',
-      processingTime: 'Processing time: 1-3 business days'
-    }
-  },
-  
+
   PT: {
     // Sidebar Menu Labels (maps backend labels to translations)
     sidebar: {
@@ -3620,58 +3595,36 @@ const translations = {
       upcoming: 'Próximo',
       completed: 'Concluído'
     },
-    cryptoAtm: {
+        cryptoAtm: {
       heroTitle: 'Rede Premium de ATMs Crypto',
       heroSubtitle: 'Aceda a Ativos Digitais em Localizações Exclusivas',
-      heroDescription: 'Experiencie conversões fiat-crypto sem fricção na nossa rede curada de ATMs de alta segurança.',
-      premiumLocations: 'Localizações Premium',
-      supportedCurrencies: 'Moedas Suportadas',
-      availableAccess: 'Acesso Disponível',
-      uptimeGuarantee: 'Garantia de Uptime',
-      features: 'Funcionalidades',
-      howItWorks: 'Como Funciona',
-      locations: 'Nossas Localizações',
-      benefits: 'Benefícios',
-      getStarted: 'Começar',
-      contactUs: 'Contacte-nos',
-      primeLocations: 'Localizações Premium',
-      primeLocationsDesc: 'ATMs localizados em distritos exclusivos, hotéis de luxo e centros de banca privada.',
-      enhancedPrivacy: 'Privacidade Avançada',
-      enhancedPrivacyDesc: 'Cabines discretas com verificação biométrica.',
-      instantConversion: 'Conversão Instantânea',
-      instantConversionDesc: 'Converta fiat em crypto e vice-versa em segundos.',
-      premiumSupport: 'Suporte Premium',
-      premiumSupportDesc: 'Serviço de concierge dedicado em todas as localizações.'
+      heroDescription: 'Experiencie conversões fiat-crypto sem fricção na nossa rede curada de ATMs de alta segurança, estrategicamente localizados em localizações premium na Europa, Médio Oriente e Brasil.',
+      statPremiumLocations: 'Localizações Premium', statSupportedCurrencies: 'Moedas Suportadas', statAvailableAccess: 'Acesso Disponível', statUptimeGuarantee: 'Garantia de Uptime',
+      feature1Title: 'Localizações Premium', feature1Desc: 'ATMs localizados em distritos comerciais exclusivos, hotéis de luxo e centros de banca privada. Ambientes curados que correspondem à sofisticação da nossa clientela.',
+      feature2Title: 'Privacidade Avançada', feature2Desc: 'Cabines de transação discretas com verificação biométrica. Protocolos avançados de encriptação e privacidade.',
+      feature3Title: 'Suporte Multi-Moeda', feature3Desc: 'Compre e venda Bitcoin, Ethereum e outras criptomoedas. Suporte para múltiplas moedas fiat incluindo EUR, USD, GBP, AED e BRL.',
+      feature4Title: 'Serviço Premium', feature4Desc: 'Suporte concierge dedicado disponível em localizações selecionadas. Assistência VIP para conversões de grande volume.',
+      step1Title: 'Verificar Identidade', step1Desc: 'Verificação biométrica rápida ou autenticação por cartão VIP',
+      step2Title: 'Selecionar Moeda', step2Desc: 'Escolha a criptomoeda e moeda fiat preferida para conversão',
+      step3Title: 'Completar Transação', step3Desc: 'Insira dinheiro ou cartão, confirme a transação e receba ativos digitais instantâneos',
+      step4Title: 'Transferência Segura', step4Desc: 'Fundos transferidos diretamente para a sua carteira verificada com confirmação instantânea',
+      regionEurope: 'Europa', regionMiddleEast: 'Médio Oriente', regionBrazil: 'Brasil',
+      benefit1Title: 'Transações Instantâneas', benefit1Desc: 'Conversão em tempo real com crédito imediato na carteira',
+      benefit2Title: 'Taxas Competitivas', benefit2Desc: 'Preços de nível institucional com estrutura de taxas transparente',
+      benefit3Title: 'Limites Máximos', benefit3Desc: 'Limites de transação superiores para membros VIP verificados',
+      benefit4Title: 'Segurança Bancária', benefit4Desc: 'Encriptação de grau militar e medidas de segurança física',
+      benefit5Title: 'Suporte Multi-Idioma', benefit5Desc: 'Interface disponível em 12+ idiomas incluindo Árabe',
+      benefit6Title: 'Suporte 24/7', benefit6Desc: 'Suporte telefónico dedicado para todas as questões relacionadas com ATMs',
+      findNearest: 'Encontrar ATM Mais Próximo', requestVip: 'Solicitar Acesso VIP', applyVip: 'Solicitar Acesso VIP',
+      exclusiveFeatures: 'Funcionalidades Exclusivas', premiumExperience: 'Experiência Premium',
+      howItWorks: 'Como Funciona', simpleSecure: 'Simples e Seguro',
+      globalNetwork: 'Rede Global', premiumLocations: 'Localizações Premium',
+      whyChoose: 'Porquê Escolher os Nossos ATMs',
+      readyToExperience: 'Pronto para Experienciar', premiumCryptoAccess: 'Acesso Crypto Premium?',
+      joinExclusive: 'Junte-se à nossa rede exclusiva e desfrute de serviços crypto de nível institucional'
     },
-    trading: {
-      title: 'Trading',
-      searchPair: 'Pesquisar par...',
-      favorites: 'Favoritos',
-      allPairs: 'Todos os Pares',
-      price: 'Preço',
-      change24h: 'Var. 24h',
-      volume24h: 'Volume 24h',
-      marketCap: 'Market Cap',
-      buySell: 'Comprar/Vender',
-      change1h: 'Variação 1h',
-      change7d: 'Variação 7d',
-      globalRank: 'Rank Global',
-      viewOnCMC: 'Ver no CoinMarketCap'
     },
-   fiatWithdrawal: {
-      title: 'Levantamento Fiat',
-      subtitle: 'Levantar para a sua conta bancária',
-      amount: 'Montante',
-      bankAccount: 'Conta Bancária',
-      iban: 'IBAN',
-      swift: 'SWIFT/BIC',
-      accountHolder: 'Titular da Conta',
-      requestWithdrawal: 'Solicitar Levantamento',
-      myWithdrawals: 'Meus Levantamentos',
-      processingTime: 'Tempo de processamento: 1-3 dias úteis'
-    }
-  },
-  
+
   AR: {
     // Sidebar Menu Labels (maps backend labels to translations)
     sidebar: {
@@ -5216,45 +5169,36 @@ const translations = {
       noSales: 'لا توجد مبيعات',
       invest: 'استثمر'
     },
-    cryptoAtm: {
+        cryptoAtm: {
       heroTitle: 'شبكة صرافات كريبتو مميزة',
-      heroSubtitle: 'وصول إلى الأصول الرقمية',
-      premiumLocations: 'مواقع مميزة',
-      features: 'الميزات',
-      howItWorks: 'كيف يعمل',
-      locations: 'مواقعنا',
-      getStarted: 'ابدأ',
-      contactUs: 'اتصل بنا'
+      heroSubtitle: 'وصول إلى الأصول الرقمية في مواقع حصرية',
+      heroDescription: 'تحويلات سلسة من العملات التقليدية إلى الرقمية.',
+      statPremiumLocations: 'مواقع مميزة', statSupportedCurrencies: 'عملات مدعومة', statAvailableAccess: 'وصول متاح', statUptimeGuarantee: 'ضمان التشغيل',
+      feature1Title: 'مواقع رئيسية', feature1Desc: 'صرافات في مناطق تسوق فاخرة وفنادق.',
+      feature2Title: 'خصوصية معززة', feature2Desc: 'كبائن معاملات سرية مع تحقق بيومتري.',
+      feature3Title: 'دعم متعدد العملات', feature3Desc: 'شراء وبيع العملات الرقمية الرئيسية.',
+      feature4Title: 'خدمة مميزة', feature4Desc: 'دعم كونسيرج مخصص في مواقع مختارة.',
+      step1Title: 'تحقق من الهوية', step1Desc: 'تحقق بيومتري سريع',
+      step2Title: 'اختيار العملة', step2Desc: 'اختر العملة المفضلة',
+      step3Title: 'إتمام المعاملة', step3Desc: 'أدخل النقد وأكد المعاملة',
+      step4Title: 'تحويل آمن', step4Desc: 'تحويل فوري إلى محفظتك',
+      regionEurope: 'أوروبا', regionMiddleEast: 'الشرق الأوسط', regionBrazil: 'البرازيل',
+      benefit1Title: 'معاملات فورية', benefit1Desc: 'تحويل فوري مع إيداع مباشر',
+      benefit2Title: 'أسعار تنافسية', benefit2Desc: 'تسعير مؤسسي شفاف',
+      benefit3Title: 'حدود قصوى', benefit3Desc: 'حدود أعلى لأعضاء VIP',
+      benefit4Title: 'أمان بنكي', benefit4Desc: 'تشفير عسكري',
+      benefit5Title: 'دعم متعدد اللغات', benefit5Desc: 'واجهة بـ 12+ لغة',
+      benefit6Title: 'دعم 24/7', benefit6Desc: 'دعم هاتفي مخصص',
+      findNearest: 'ابحث عن أقرب ATM', requestVip: 'طلب وصول VIP', applyVip: 'تقدم لوصول VIP',
+      exclusiveFeatures: 'ميزات حصرية', premiumExperience: 'تجربة مميزة',
+      howItWorks: 'كيف يعمل', simpleSecure: 'بسيط وآمن',
+      globalNetwork: 'شبكة عالمية', premiumLocations: 'مواقع مميزة',
+      whyChoose: 'لماذا تختار صرافاتنا',
+      readyToExperience: 'مستعد للتجربة', premiumCryptoAccess: 'وصول كريبتو مميز؟',
+      joinExclusive: 'انضم إلى شبكتنا الحصرية'
     },
-    trading: {
-      title: 'التداول',
-      searchPair: 'البحث عن زوج...',
-      favorites: 'المفضلة',
-      allPairs: 'جميع الأزواج',
-      price: 'السعر',
-      change24h: 'التغير 24 ساعة',
-      volume24h: 'الحجم 24 ساعة',
-      marketCap: 'القيمة السوقية',
-      buySell: 'شراء/بيع',
-      change1h: 'التغير ساعة',
-      change7d: 'التغير 7 أيام',
-      globalRank: 'الترتيب العالمي',
-      viewOnCMC: 'عرض في CoinMarketCap'
     },
-   fiatWithdrawal: {
-      title: 'سحب نقدي',
-      subtitle: 'السحب إلى حسابك البنكي',
-      amount: 'المبلغ',
-      bankAccount: 'الحساب البنكي',
-      iban: 'IBAN',
-      swift: 'SWIFT/BIC',
-      accountHolder: 'صاحب الحساب',
-      requestWithdrawal: 'طلب سحب',
-      myWithdrawals: 'عمليات السحب',
-      processingTime: 'وقت المعالجة: 1-3 أيام عمل'
-    }
-  },
-  
+
   FR: {
     // Sidebar Menu Labels
     sidebar: {
@@ -6815,43 +6759,34 @@ const translations = {
       noSales: 'Aucune vente de tokens disponible',
       invest: 'Investir'
     },
-    cryptoAtm: {
+        cryptoAtm: {
       heroTitle: 'Réseau Premium de DAB Crypto',
       heroSubtitle: 'Accédez aux Actifs Numériques dans des Emplacements Exclusifs',
-      premiumLocations: 'Emplacements Premium',
-      features: 'Fonctionnalités',
-      howItWorks: 'Comment ça Marche',
-      locations: 'Nos Emplacements',
-      getStarted: 'Commencer',
-      contactUs: 'Contactez-nous'
+      heroDescription: 'Des conversions fiat-crypto fluides dans notre réseau de DAB haute sécurité, stratégiquement placés en Europe, Moyen-Orient et Brésil.',
+      statPremiumLocations: 'Emplacements Premium', statSupportedCurrencies: 'Devises Supportées', statAvailableAccess: 'Accès Disponible', statUptimeGuarantee: 'Garantie de Disponibilité',
+      feature1Title: 'Emplacements de Prestige', feature1Desc: 'DAB placés dans des quartiers commerçants exclusifs, hôtels de luxe et centres bancaires privés.',
+      feature2Title: 'Confidentialité Renforcée', feature2Desc: 'Cabines discrètes avec vérification biométrique.',
+      feature3Title: 'Support Multi-Devises', feature3Desc: 'Achetez et vendez les principales cryptomonnaies.',
+      feature4Title: 'Service Premium', feature4Desc: 'Support concierge dédié dans certains emplacements.',
+      step1Title: 'Vérifier l\'Identité', step1Desc: 'Vérification biométrique rapide',
+      step2Title: 'Sélectionner la Devise', step2Desc: 'Choisissez votre cryptomonnaie préférée',
+      step3Title: 'Compléter la Transaction', step3Desc: 'Insérez des espèces et recevez des actifs numériques',
+      step4Title: 'Transfert Sécurisé', step4Desc: 'Fonds transférés directement à votre portefeuille',
+      regionEurope: 'Europe', regionMiddleEast: 'Moyen-Orient', regionBrazil: 'Brésil',
+      benefit1Title: 'Transactions Instantanées', benefit1Desc: 'Conversion en temps réel',
+      benefit2Title: 'Tarifs Compétitifs', benefit2Desc: 'Tarification institutionnelle transparente',
+      benefit3Title: 'Limites Maximales', benefit3Desc: 'Limites supérieures pour membres VIP',
+      benefit4Title: 'Sécurité Bancaire', benefit4Desc: 'Cryptage de niveau militaire',
+      benefit5Title: 'Support Multilingue', benefit5Desc: 'Interface en 12+ langues',
+      benefit6Title: 'Support 24/7', benefit6Desc: 'Support téléphonique dédié',
+      findNearest: 'Trouver le DAB le Plus Proche', requestVip: 'Demander un Accès VIP', applyVip: 'Demander un Accès VIP',
+      exclusiveFeatures: 'Fonctionnalités Exclusives', premiumExperience: 'Expérience Premium',
+      howItWorks: 'Comment ça Marche', simpleSecure: 'Simple et Sécurisé',
+      globalNetwork: 'Réseau Global', premiumLocations: 'Emplacements Premium',
+      whyChoose: 'Pourquoi Choisir nos DAB',
+      readyToExperience: 'Prêt à Découvrir', premiumCryptoAccess: 'L\'Accès Crypto Premium ?',
+      joinExclusive: 'Rejoignez notre réseau exclusif et profitez de services crypto de niveau institutionnel'
     },
-    trading: {
-      title: 'Trading',
-      searchPair: 'Rechercher une paire...',
-      favorites: 'Favoris',
-      allPairs: 'Toutes les Paires',
-      price: 'Prix',
-      change24h: 'Var. 24h',
-      volume24h: 'Volume 24h',
-      marketCap: 'Cap. Marché',
-      buySell: 'Acheter/Vendre',
-      change1h: 'Variation 1h',
-      change7d: 'Variation 7j',
-      globalRank: 'Rang Mondial',
-      viewOnCMC: 'Voir sur CoinMarketCap'
-    },
-   fiatWithdrawal: {
-      title: 'Retrait Fiat',
-      subtitle: 'Retirer vers votre compte bancaire',
-      amount: 'Montant',
-      bankAccount: 'Compte Bancaire',
-      iban: 'IBAN',
-      swift: 'SWIFT/BIC',
-      accountHolder: 'Titulaire du Compte',
-      requestWithdrawal: 'Demander un Retrait',
-      myWithdrawals: 'Mes Retraits',
-      processingTime: 'Délai de traitement : 1-3 jours ouvrables'
-    }
   },
 
   ES: {
@@ -7706,43 +7641,35 @@ const translations = {
       noSales: 'No hay ventas de tokens disponibles',
       invest: 'Invertir'
     },
-    cryptoAtm: {
+        cryptoAtm: {
       heroTitle: 'Red Premium de Cajeros Crypto',
       heroSubtitle: 'Acceda a Activos Digitales en Ubicaciones Exclusivas',
-      premiumLocations: 'Ubicaciones Premium',
-      features: 'Características',
-      howItWorks: 'Cómo Funciona',
-      locations: 'Nuestras Ubicaciones',
-      getStarted: 'Comenzar',
-      contactUs: 'Contáctenos'
+      heroDescription: 'Conversiones fiat-crypto fluidas en nuestra red curada de cajeros de alta seguridad en Europa, Medio Oriente y Brasil.',
+      statPremiumLocations: 'Ubicaciones Premium', statSupportedCurrencies: 'Monedas Soportadas', statAvailableAccess: 'Acceso Disponible', statUptimeGuarantee: 'Garantía de Uptime',
+      feature1Title: 'Ubicaciones Premium', feature1Desc: 'Cajeros en distritos comerciales exclusivos, hoteles de lujo y centros de banca privada.',
+      feature2Title: 'Privacidad Mejorada', feature2Desc: 'Cabinas discretas con verificación biométrica.',
+      feature3Title: 'Soporte Multi-Moneda', feature3Desc: 'Compre y venda las principales criptomonedas.',
+      feature4Title: 'Servicio Premium', feature4Desc: 'Soporte concierge dedicado en ubicaciones selectas.',
+      step1Title: 'Verificar Identidad', step1Desc: 'Verificación biométrica rápida',
+      step2Title: 'Seleccionar Moneda', step2Desc: 'Elija su criptomoneda preferida',
+      step3Title: 'Completar Transacción', step3Desc: 'Inserte efectivo y reciba activos digitales',
+      step4Title: 'Transferencia Segura', step4Desc: 'Fondos transferidos directamente a su billetera',
+      regionEurope: 'Europa', regionMiddleEast: 'Medio Oriente', regionBrazil: 'Brasil',
+      benefit1Title: 'Transacciones Instantáneas', benefit1Desc: 'Conversión en tiempo real',
+      benefit2Title: 'Tarifas Competitivas', benefit2Desc: 'Precios institucionales transparentes',
+      benefit3Title: 'Límites Máximos', benefit3Desc: 'Límites superiores para miembros VIP',
+      benefit4Title: 'Seguridad Bancaria', benefit4Desc: 'Encriptación de grado militar',
+      benefit5Title: 'Soporte Multi-Idioma', benefit5Desc: 'Interfaz en 12+ idiomas',
+      benefit6Title: 'Soporte 24/7', benefit6Desc: 'Soporte telefónico dedicado',
+      findNearest: 'Encontrar Cajero Más Cercano', requestVip: 'Solicitar Acceso VIP', applyVip: 'Solicitar Acceso VIP',
+      exclusiveFeatures: 'Características Exclusivas', premiumExperience: 'Experiencia Premium',
+      howItWorks: 'Cómo Funciona', simpleSecure: 'Simple y Seguro',
+      globalNetwork: 'Red Global', premiumLocations: 'Ubicaciones Premium',
+      whyChoose: 'Por Qué Elegir Nuestros Cajeros',
+      readyToExperience: 'Listo para Experimentar', premiumCryptoAccess: '¿Acceso Crypto Premium?',
+      joinExclusive: 'Únase a nuestra red exclusiva y disfrute de servicios crypto de nivel institucional'
+            
     },
-    trading: {
-      title: 'Trading',
-      searchPair: 'Buscar par...',
-      favorites: 'Favoritos',
-      allPairs: 'Todos los Pares',
-      price: 'Precio',
-      change24h: 'Var. 24h',
-      volume24h: 'Volumen 24h',
-      marketCap: 'Cap. Mercado',
-      buySell: 'Comprar/Vender',
-      change1h: 'Variación 1h',
-      change7d: 'Variación 7d',
-      globalRank: 'Ranking Global',
-      viewOnCMC: 'Ver en CoinMarketCap'
-    },
-   fiatWithdrawal: {
-      title: 'Retiro Fiat',
-      subtitle: 'Retirar a su cuenta bancaria',
-      amount: 'Monto',
-      bankAccount: 'Cuenta Bancaria',
-      iban: 'IBAN',
-      swift: 'SWIFT/BIC',
-      accountHolder: 'Titular de la Cuenta',
-      requestWithdrawal: 'Solicitar Retiro',
-      myWithdrawals: 'Mis Retiros',
-      processingTime: 'Tiempo de procesamiento: 1-3 días hábiles'
-    }
   }
 };
 
