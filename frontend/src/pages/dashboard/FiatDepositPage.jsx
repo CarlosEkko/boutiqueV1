@@ -260,7 +260,7 @@ const FiatDepositPage = () => {
                   <div>
                     <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.fiatDeposit.amountToDeposit')}</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-lg">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-lg pointer-events-none z-10">
                         {selectedCurrency.symbol}
                       </span>
                       <Input
@@ -269,7 +269,8 @@ const FiatDepositPage = () => {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0,00"
-                        className="bg-zinc-800 border-zinc-700 text-white pl-12 text-xl h-14"
+                        className="bg-zinc-800 border-zinc-700 text-white text-xl h-14"
+                        style={{ paddingLeft: `${Math.max(48, selectedCurrency.symbol.length * 16 + 24)}px` }}
                         data-testid="deposit-amount-input"
                         autoFocus
                       />
@@ -314,13 +315,13 @@ const FiatDepositPage = () => {
                           )}
                           {bd.beneficiary && (
                             <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-400 text-sm">Beneficiário</span>
+                              <span className="text-gray-400 text-sm">{t('dashboard.fiatDeposit.beneficiary')}</span>
                               <span className="text-white text-sm">{bd.beneficiary}</span>
                             </div>
                           )}
                           {bd.schemes && (
                             <div className="flex justify-between items-center py-1">
-                              <span className="text-gray-400 text-sm">Métodos</span>
+                              <span className="text-gray-400 text-sm">{t('dashboard.fiatDeposit.methods')}</span>
                               <div className="flex gap-1">
                                 {bd.schemes.map(s => (
                                   <Badge key={s} className="bg-zinc-700 text-gray-300 border-0 text-[10px] uppercase">{s}</Badge>
@@ -428,13 +429,13 @@ const FiatDepositPage = () => {
                     )}
                     {depositResult.bank_details?.account_holder && (
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-gray-400 text-sm">Beneficiário</span>
+                        <span className="text-gray-400 text-sm">{t('dashboard.fiatDeposit.beneficiary')}</span>
                         <span className="text-white text-sm">{depositResult.bank_details.account_holder}</span>
                       </div>
                     )}
                     {depositResult.bank_details?.bank_name && (
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-gray-400 text-sm">Banco</span>
+                        <span className="text-gray-400 text-sm">{t('dashboard.fiatDeposit.bank', 'Banco')}</span>
                         <span className="text-white text-sm">{depositResult.bank_details.bank_name}</span>
                       </div>
                     )}
