@@ -98,6 +98,7 @@ const statusConfig = {
 
 // Token sale card
 const SaleCard = ({ sale, onViewDetails }) => {
+  const { t } = useLanguage();
   const cfg = statusConfig[sale.computed_status] || statusConfig.upcoming;
   const isActive = sale.computed_status === 'active';
   const isUpcoming = sale.computed_status === 'upcoming';
@@ -152,15 +153,15 @@ const SaleCard = ({ sale, onViewDetails }) => {
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
           <div className="text-center">
-            <p className="text-xs text-gray-500">Supply</p>
+            <p className="text-xs text-gray-500">{t('launchpadPage.supply', 'Supply')}</p>
             <p className="text-sm font-medium text-white">{sale.total_supply?.toLocaleString()}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500">Hard Cap</p>
+            <p className="text-xs text-gray-500">{t('launchpadPage.hardCap', 'Hard Cap')}</p>
             <p className="text-sm font-medium text-white">${sale.hard_cap?.toLocaleString()}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500">Participants</p>
+            <p className="text-xs text-gray-500">{t('launchpadPage.participants', 'Participantes')}</p>
             <p className="text-sm font-medium text-white">{sale.total_participants || 0}</p>
           </div>
         </div>
@@ -179,7 +180,7 @@ const SaleCard = ({ sale, onViewDetails }) => {
           className={`w-full mt-4 ${isActive ? 'bg-gold-500 hover:bg-gold-400 text-black' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
           data-testid={`view-sale-${sale.id}`}
         >
-          {isActive ? 'Participar' : 'Ver Detalhes'}
+          {isActive ? t('launchpadPage.invest', 'Participar') : t('launchpadPage.viewDetails', 'Ver Detalhes')}
           <ArrowRight size={16} className="ml-2" />
         </Button>
       </div>
@@ -219,10 +220,10 @@ const LaunchpadPage = () => {
   const featuredSale = sales.find(s => s.featured) || activeSales[0] || sales[0];
 
   const filters = [
-    { id: 'all', label: 'Todos', count: sales.length },
-    { id: 'active', label: 'Ativos', count: sales.filter(s => s.computed_status === 'active').length },
-    { id: 'upcoming', label: 'Em Breve', count: sales.filter(s => s.computed_status === 'upcoming').length },
-    { id: 'completed', label: 'Concluídos', count: sales.filter(s => s.computed_status === 'completed').length },
+    { id: 'all', label: t('launchpadPage.all', 'Todos'), count: sales.length },
+    { id: 'active', label: t('launchpadPage.active', 'Ativos'), count: sales.filter(s => s.computed_status === 'active').length },
+    { id: 'upcoming', label: t('launchpadPage.upcoming', 'Em Breve'), count: sales.filter(s => s.computed_status === 'upcoming').length },
+    { id: 'completed', label: t('launchpadPage.completed', 'Concluídos'), count: sales.filter(s => s.computed_status === 'completed').length },
   ];
 
   const handleViewDetails = (saleId) => {
@@ -253,10 +254,10 @@ const LaunchpadPage = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-12">
             {[
-              { icon: Rocket, label: 'Projetos Listados', value: sales.length },
-              { icon: Users, label: 'Participantes', value: sales.reduce((a, s) => a + (s.total_participants || 0), 0) },
-              { icon: Target, label: 'Capital Levantado', value: `$${(sales.reduce((a, s) => a + (s.raised_amount || 0), 0) / 1000).toFixed(0)}K` },
-              { icon: Zap, label: 'Sales Ativos', value: activeSales.length },
+              { icon: Rocket, label: t('launchpadPage.listedProjects', 'Projetos Listados'), value: sales.length },
+              { icon: Users, label: t('launchpadPage.participants', 'Participantes'), value: sales.reduce((a, s) => a + (s.total_participants || 0), 0) },
+              { icon: Target, label: t('launchpadPage.capitalRaised', 'Capital Levantado'), value: `$${(sales.reduce((a, s) => a + (s.raised_amount || 0), 0) / 1000).toFixed(0)}K` },
+              { icon: Zap, label: t('launchpadPage.activeSales', 'Sales Ativos'), value: activeSales.length },
             ].map((stat, i) => (
               <div key={i} className="bg-zinc-900/30 border border-zinc-800/50 rounded-xl p-4 text-center">
                 <stat.icon size={20} className="text-gold-400 mx-auto mb-2" />
@@ -310,15 +311,15 @@ const LaunchpadPage = () => {
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-gray-500">Token Price</p>
+                      <p className="text-xs text-gray-500">{t('launchpadPage.tokenPrice', 'Token Price')}</p>
                       <p className="text-lg font-bold text-white">${featuredSale.price}</p>
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-gray-500">Hard Cap</p>
+                      <p className="text-xs text-gray-500">{t('launchpadPage.hardCap', 'Hard Cap')}</p>
                       <p className="text-lg font-bold text-white">${featuredSale.hard_cap?.toLocaleString()}</p>
                     </div>
                     <div className="bg-zinc-800/50 rounded-lg p-3 text-center">
-                      <p className="text-xs text-gray-500">Network</p>
+                      <p className="text-xs text-gray-500">{t('launchpadPage.network', 'Network')}</p>
                       <p className="text-lg font-bold text-white">{featuredSale.network}</p>
                     </div>
                   </div>
@@ -333,7 +334,7 @@ const LaunchpadPage = () => {
       <section className="pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-light text-white">Token Sales</h2>
+            <h2 className="text-2xl font-light text-white">{t('launchpadPage.tokenSales', 'Token Sales')}</h2>
             <div className="flex gap-1 bg-zinc-900/50 p-1 rounded-lg">
               {filters.map(f => (
                 <button
@@ -357,8 +358,8 @@ const LaunchpadPage = () => {
           ) : sortedSales.length === 0 ? (
             <div className="text-center py-20 bg-zinc-900/20 border border-zinc-800/50 rounded-2xl">
               <Rocket size={48} className="text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">Nenhum token sale disponível</p>
-              <p className="text-gray-500 text-sm mt-1">Novas oportunidades serão publicadas em breve</p>
+              <p className="text-gray-400 text-lg">{t('launchpadPage.noSales', 'Nenhum token sale disponível')}</p>
+              <p className="text-gray-500 text-sm mt-1">{t('launchpadPage.comingSoon', 'Novas oportunidades serão publicadas em breve')}</p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -47,6 +48,7 @@ const iconMap = {
 
 const CryptoATMPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const heroRef = useRef(null);
   const heroImageRef = useRef(null);
   const statsRef = useRef([]);
@@ -507,7 +509,7 @@ const CryptoATMPage = () => {
               size="lg"
               className="hero-button bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white px-8 py-6 text-lg group"
             >
-              Find Nearest ATM
+              {t('cryptoAtm.findNearest', 'Find Nearest ATM')}
               <MapPin className="ml-2 group-hover:scale-110 transition-transform" size={20} />
             </Button>
             <Button
@@ -516,7 +518,7 @@ const CryptoATMPage = () => {
               onClick={() => navigate('/#contact')}
               className="hero-button border-2 border-gold-500/50 text-gold-200 hover:bg-gold-950/30 backdrop-blur-sm px-8 py-6 text-lg"
             >
-              Request VIP Access
+              {t('cryptoAtm.requestVip', 'Request VIP Access')}
             </Button>
           </div>
 
@@ -541,9 +543,9 @@ const CryptoATMPage = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-              Exclusive Features
+              {t('cryptoAtm.exclusiveFeatures', 'Exclusive Features')}
               <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
-                Premium Experience
+                {t('cryptoAtm.premiumExperience', 'Premium Experience')}
               </span>
             </h2>
           </div>
@@ -585,9 +587,9 @@ const CryptoATMPage = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-              How It Works
+              {t('cryptoAtm.howItWorks', 'How It Works')}
               <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
-                Simple & Secure
+                {t('cryptoAtm.simpleSecure', 'Simple & Secure')}
               </span>
             </h2>
           </div>
@@ -617,9 +619,9 @@ const CryptoATMPage = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-              Global Network
+              {t('cryptoAtm.globalNetwork', 'Global Network')}
               <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
-                Premium Locations
+                {t('cryptoAtm.premiumLocations', 'Premium Locations')}
               </span>
             </h2>
           </div>
@@ -702,14 +704,14 @@ const CryptoATMPage = () => {
               </span>
             </h2>
             <p className="text-gray-400 text-lg mb-8">
-              Join our exclusive network and enjoy institutional-grade crypto services at your fingertips
+              {t('cryptoAtm.joinExclusive', 'Join our exclusive network and enjoy institutional-grade crypto services at your fingertips')}
             </p>
             <Button
               size="lg"
               onClick={() => navigate('/#contact')}
               className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white px-10 py-6 text-lg group"
             >
-              Apply for VIP Access
+              {t('cryptoAtm.applyVip', 'Apply for VIP Access')}
               <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
             </Button>
           </div>
@@ -722,4 +724,3 @@ const CryptoATMPage = () => {
 };
 
 export default CryptoATMPage;
-
