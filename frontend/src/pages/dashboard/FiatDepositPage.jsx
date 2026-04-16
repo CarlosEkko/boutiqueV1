@@ -150,8 +150,8 @@ const FiatDepositPage = () => {
           <ArrowLeft size={24} />
         </button>
         <div>
-          <h1 className="text-3xl font-light text-white">Depósito Fiat</h1>
-          <p className="text-gray-400 mt-1">Adicione fundos à sua conta via transferência bancária</p>
+          <h1 className="text-3xl font-light text-white">{t('dashboard.fiatDeposit.title')}</h1>
+          <p className="text-gray-400 mt-1">{t('dashboard.fiatDeposit.subtitle')}</p>
         </div>
       </div>
 
@@ -166,7 +166,7 @@ const FiatDepositPage = () => {
           onClick={() => { setActiveView('new'); }}
           data-testid="tab-new-deposit"
         >
-          Novo Depósito
+          {t('dashboard.fiatDeposit.newDeposit')}
         </button>
         <button
           className={`px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -177,7 +177,7 @@ const FiatDepositPage = () => {
           onClick={() => setActiveView('history')}
           data-testid="tab-history"
         >
-          Histórico ({deposits.length})
+          {t('dashboard.fiatDeposit.history')} ({deposits.length})
         </button>
       </div>
 
@@ -253,12 +253,12 @@ const FiatDepositPage = () => {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <span className="text-2xl">{selectedCurrency.flag}</span>
-                    Depósito em {selectedCurrency.code}
+                    {t('dashboard.fiatDeposit.depositIn')} {selectedCurrency.code}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Valor a depositar</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.fiatDeposit.amountToDeposit')}</label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-bold text-lg">
                         {selectedCurrency.symbol}
@@ -275,7 +275,7 @@ const FiatDepositPage = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Mínimo: {selectedCurrency.symbol} 100,00
+                      {t('dashboard.fiatDeposit.minimum')}: {selectedCurrency.symbol} 100,00
                     </p>
                   </div>
 
@@ -287,7 +287,7 @@ const FiatDepositPage = () => {
                       <div className="bg-zinc-800/50 rounded-xl p-5 space-y-3 border border-zinc-700/50">
                         <h4 className="text-white font-medium flex items-center gap-2 text-sm">
                           <Landmark size={16} className="text-emerald-400" />
-                          Dados Bancários para Transferência
+                          {t('dashboard.fiatDeposit.bankDetailsForTransfer')}
                         </h4>
                         <div className="grid grid-cols-1 gap-2">
                           {bd.iban && (
@@ -339,7 +339,7 @@ const FiatDepositPage = () => {
                       className="border-zinc-700 text-gray-300"
                       onClick={() => { setStep(1); setSelectedCurrency(null); setAmount(''); }}
                     >
-                      <ArrowLeft size={16} className="mr-2" /> Voltar
+                      <ArrowLeft size={16} className="mr-2" /> {t('dashboard.fiatDeposit.back')}
                     </Button>
                     <Button
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white h-12"
@@ -352,7 +352,7 @@ const FiatDepositPage = () => {
                       ) : (
                         <ArrowRight size={18} className="mr-2" />
                       )}
-                      {loading ? 'A processar...' : 'Gerar Referência'}
+                      {loading ? t('dashboard.fiatDeposit.processing') : t('dashboard.fiatDeposit.generateReference')}
                     </Button>
                   </div>
                 </CardContent>
@@ -365,7 +365,7 @@ const FiatDepositPage = () => {
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <CheckCircle size={20} className="text-emerald-400" />
-                    Dados para Transferência
+                    {t('dashboard.fiatDeposit.dataForTransfer')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -457,7 +457,7 @@ const FiatDepositPage = () => {
                       className="border-zinc-700 text-gray-300"
                       onClick={resetFlow}
                     >
-                      Novo Depósito
+                      {t('dashboard.fiatDeposit.newDepositBtn', 'Novo Depósito')}
                     </Button>
                     <Button
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white h-12 text-base"
@@ -479,7 +479,7 @@ const FiatDepositPage = () => {
                   <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} className="text-emerald-400" />
                   </div>
-                  <h3 className="text-xl text-white mb-2">Depósito Registado</h3>
+                  <h3 className="text-xl text-white mb-2">{t('dashboard.fiatDeposit.depositRegistered')}</h3>
                   <p className="text-gray-400 mb-6 max-w-md mx-auto">
                     A sua solicitação de depósito foi registada. Assim que a transferência for confirmada pelo banco, o valor será creditado automaticamente na sua conta.
                   </p>
@@ -489,20 +489,20 @@ const FiatDepositPage = () => {
                       className="border-zinc-700 text-gray-300"
                       onClick={resetFlow}
                     >
-                      Novo Depósito
+                      {t('dashboard.fiatDeposit.newDepositBtn', 'Novo Depósito')}
                     </Button>
                     <Button
                       className="bg-emerald-500 hover:bg-emerald-600 text-white"
                       onClick={() => setActiveView('history')}
                     >
-                      Ver Histórico
+                      {t('dashboard.fiatDeposit.viewHistory')}
                     </Button>
                     <Button
                       variant="outline"
                       className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
                       onClick={() => navigate('/dashboard/wallets')}
                     >
-                      Voltar às Carteiras
+                      {t('dashboard.fiatDeposit.backToWallets')}
                     </Button>
                   </div>
                 </CardContent>
@@ -514,14 +514,14 @@ const FiatDepositPage = () => {
           <div className="space-y-4">
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader>
-                <CardTitle className="text-white text-base">Como funciona</CardTitle>
+                <CardTitle className="text-white text-base">{t('dashboard.fiatDeposit.howItWorks')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { n: '1', title: 'Selecionar moeda', desc: 'Escolha a moeda que pretende depositar' },
-                  { n: '2', title: 'Introduzir valor', desc: 'Indique o montante do depósito' },
-                  { n: '3', title: 'Transferência', desc: 'Efetue a transferência com o código de referência' },
-                  { n: '4', title: 'Confirmação', desc: 'O saldo é creditado automaticamente' },
+                  { n: '1', title: t('dashboard.fiatDeposit.step1Title'), desc: t('dashboard.fiatDeposit.step1Desc', 'Escolha a moeda que pretende depositar') },
+                  { n: '2', title: t('dashboard.fiatDeposit.step2Title'), desc: t('dashboard.fiatDeposit.step2Desc', 'Indique o montante do depósito') },
+                  { n: '3', title: t('dashboard.fiatDeposit.step3Title'), desc: t('dashboard.fiatDeposit.step3Desc', 'Efetue a transferência com o código de referência') },
+                  { n: '4', title: t('dashboard.fiatDeposit.step4Title'), desc: t('dashboard.fiatDeposit.step4Desc', 'O saldo é creditado automaticamente') },
                 ].map((item) => (
                   <div key={item.n} className="flex gap-3">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -542,7 +542,7 @@ const FiatDepositPage = () => {
               <CardContent className="p-4">
                 <p className="text-blue-400 text-sm flex items-start gap-2">
                   <Clock size={16} className="flex-shrink-0 mt-0.5" />
-                  <span>Tempo estimado: 1-3 dias úteis para transferências SEPA. Transferências SWIFT podem demorar até 5 dias.</span>
+                  <span>{t('dashboard.fiatDeposit.estimatedTime')}</span>
                 </p>
               </CardContent>
             </Card>
@@ -557,7 +557,7 @@ const FiatDepositPage = () => {
             <CardTitle className="text-white flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Clock size={20} className="text-emerald-400" />
-                Histórico de Depósitos
+                {t('dashboard.fiatDeposit.depositHistory')}
               </span>
               <Button variant="ghost" size="sm" onClick={fetchDeposits} data-testid="refresh-history">
                 <RefreshCw size={16} />
@@ -568,12 +568,12 @@ const FiatDepositPage = () => {
             {deposits.length === 0 ? (
               <div className="text-center py-12">
                 <Banknote className="mx-auto mb-4 text-gray-500" size={48} />
-                <p className="text-gray-400 mb-4">Nenhum depósito encontrado</p>
+                <p className="text-gray-400 mb-4">{t('dashboard.fiatDeposit.noDeposits', 'Nenhum depósito encontrado')}</p>
                 <Button
                   className="bg-emerald-500 hover:bg-emerald-600"
                   onClick={() => { setActiveView('new'); resetFlow(); }}
                 >
-                  Efetuar Depósito
+                  {t('dashboard.fiatDeposit.makeDeposit')}
                 </Button>
               </div>
             ) : (
