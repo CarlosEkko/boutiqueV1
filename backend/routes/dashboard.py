@@ -49,6 +49,17 @@ async def get_approved_user(user_id: str = Depends(get_current_user_id)):
     return user
 
 
+async def get_wallet_filter(user_id: str):
+    """Build MongoDB filter for wallets based on active entity."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "active_entity": 1})
+    active_entity = user.get("active_entity", {}) if user else {}
+    
+    if active_entity.get("type") == "business" and active_entity.get("business_account_id"):
+        return {"user_id": user_id, "entity_id": active_entity["business_account_id"]}
+    else:
+        return {"user_id": user_id, "$or": [{"entity_id": {"$exists": False}}, {"entity_id": None}, {"entity_type": {"$exists": False}}]}
+
+
 # ==================== PORTFOLIO OVERVIEW ====================
 
 @router.get("/overview")
@@ -56,8 +67,11 @@ async def get_portfolio_overview(user: dict = Depends(get_approved_user)):
     """Get portfolio overview with total value and allocation"""
     user_id = user["id"]
     
+    # Get wallet filter based on active entity
+    wallet_filter = await get_wallet_filter(user_id)
+    
     # Get user's wallets
-    wallets = await db.wallets.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    wallets = await db.wallets.find(wallet_filter, {"_id": 0}).to_list(100)
     
     # Check and create fiat wallets if missing
     fiat_currencies = [
@@ -159,9 +173,12 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
     """Get all wallets for the user - creates missing wallets for approved users"""
     user_id = user["id"]
     
+    # Get wallet filter based on active entity
+    wallet_filter = await get_wallet_filter(user_id)
+    
     # Get existing wallets
     wallets = await db.wallets.find(
-        {"user_id": user_id},
+        wallet_filter,
         {"_id": 0}
     ).to_list(100)
     
@@ -237,6 +254,15 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
         for asset in fireblocks_vault.get("assets", []):
             fireblocks_assets[asset.get("symbol")] = asset.get("deposit_address")
     
+    # Determine active entity for new wallet creation
+    active_entity = user.get("active_entity", {})
+    entity_fields = {}
+    if active_entity.get("type") == "business" and active_entity.get("business_account_id"):
+        entity_fields = {
+            "entity_id": active_entity["business_account_id"],
+            "entity_type": "business"
+        }
+
     # Create missing wallets
     for asset in all_assets:
         if asset["asset_id"] not in existing_asset_ids:
@@ -248,6 +274,7 @@ async def get_user_wallets(user: dict = Depends(get_approved_user)):
             new_wallet = {
                 "id": str(uuid.uuid4()),
                 "user_id": user_id,
+                **entity_fields,
                 "asset_id": asset["asset_id"],
                 "asset_name": asset["asset_name"],
                 "asset_type": asset.get("asset_type", "crypto"),
