@@ -17,6 +17,7 @@ import {
   UserCheck, RefreshCw, Shield, Video, Save, Edit,
 } from 'lucide-react';
 import { formatNumber, formatDate } from '../../../../utils/formatters';
+import TrustScoreGauge from './TrustScoreGauge';
 
 const LeadDetailDialog = ({
   open, onOpenChange, selectedLead, setSelectedLead, t,
@@ -78,7 +79,7 @@ const LeadDetailDialog = ({
               <span className="text-gray-500 text-sm">{t('otc.created')}: {formatDate(selectedLead.created_at)}</span>
             </div>
 
-            {/* Risk Intelligence */}
+            {/* Risk Intelligence - Trust Score Gauge */}
             {selectedLead.trustfull_data && (
               <Card className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="p-4">
@@ -87,39 +88,7 @@ const LeadDetailDialog = ({
                     <button onClick={async () => { const d = await onTrustfullScan(selectedLead.id); if (d) setSelectedLead({...selectedLead, trustfull_data: d}); }}
                       className="text-xs text-gray-500 hover:text-blue-400 flex items-center gap-1" data-testid="rescan-risk"><RefreshCw size={12} /> Re-scan</button>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <p className="text-gray-500 text-[10px] uppercase mb-1">{t('otc.globalScore')}</p>
-                      <p className={`text-2xl font-mono font-bold ${(selectedLead.trustfull_data.combined_score||0) >= 700 ? 'text-green-400' : (selectedLead.trustfull_data.combined_score||0) >= 500 ? 'text-emerald-400' : (selectedLead.trustfull_data.combined_score||0) >= 300 ? 'text-yellow-400' : (selectedLead.trustfull_data.combined_score||0) >= 150 ? 'text-orange-400' : 'text-red-400'}`}>{selectedLead.trustfull_data.combined_score ?? '\u2014'}</p>
-                      <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.risk_level || ''}</p>
-                    </div>
-                    <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <p className="text-gray-500 text-[10px] uppercase mb-1">Email</p>
-                      <p className="text-xl font-mono text-white">{selectedLead.trustfull_data.email_risk?.score ?? '\u2014'}</p>
-                      <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.email_risk?.score_cluster || ''}</p>
-                    </div>
-                    <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
-                      <p className="text-gray-500 text-[10px] uppercase mb-1">Telefone</p>
-                      <p className="text-xl font-mono text-white">{selectedLead.trustfull_data.phone_risk?.score ?? '\u2014'}</p>
-                      <p className="text-gray-500 text-[10px] capitalize">{selectedLead.trustfull_data.phone_risk?.score_cluster || ''}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                    {selectedLead.trustfull_data.email_risk?.status && <div className="flex justify-between"><span className="text-gray-500">Email Status:</span><span className="text-white capitalize">{selectedLead.trustfull_data.email_risk.status}</span></div>}
-                    {selectedLead.trustfull_data.email_risk?.is_disposable != null && <div className="flex justify-between"><span className="text-gray-500">{t('otc.disposable')}:</span><span className={selectedLead.trustfull_data.email_risk.is_disposable ? 'text-red-400' : 'text-green-400'}>{selectedLead.trustfull_data.email_risk.is_disposable ? t('otc.yes') : t('otc.no')}</span></div>}
-                    {selectedLead.trustfull_data.email_risk?.has_linkedin != null && <div className="flex justify-between"><span className="text-gray-500">LinkedIn:</span><span className={selectedLead.trustfull_data.email_risk.has_linkedin ? 'text-green-400' : 'text-gray-500'}>{selectedLead.trustfull_data.email_risk.has_linkedin ? t('otc.yes') : t('otc.no')}</span></div>}
-                    {selectedLead.trustfull_data.email_risk?.company_name && <div className="flex justify-between"><span className="text-gray-500">{t('otc.company')}:</span><span className="text-white">{selectedLead.trustfull_data.email_risk.company_name}</span></div>}
-                    {selectedLead.trustfull_data.email_risk?.data_breaches_count != null && <div className="flex justify-between"><span className="text-gray-500">Data Breaches:</span><span className={selectedLead.trustfull_data.email_risk.data_breaches_count > 3 ? 'text-orange-400' : 'text-white'}>{selectedLead.trustfull_data.email_risk.data_breaches_count}</span></div>}
-                    {selectedLead.trustfull_data.phone_risk?.has_whatsapp != null && <div className="flex justify-between"><span className="text-gray-500">WhatsApp:</span><span className={selectedLead.trustfull_data.phone_risk.has_whatsapp ? 'text-green-400' : 'text-gray-500'}>{selectedLead.trustfull_data.phone_risk.has_whatsapp ? t('otc.yes') : t('otc.no')}</span></div>}
-                    {selectedLead.trustfull_data.phone_risk?.number_type && <div className="flex justify-between"><span className="text-gray-500">{t('otc.phoneType')}:</span><span className={selectedLead.trustfull_data.phone_risk.number_type === 'VOIP' ? 'text-orange-400' : 'text-white'}>{selectedLead.trustfull_data.phone_risk.number_type}</span></div>}
-                    {selectedLead.trustfull_data.phone_risk?.current_network && <div className="flex justify-between"><span className="text-gray-500">{t('otc.carrier')}:</span><span className="text-white">{selectedLead.trustfull_data.phone_risk.current_network}</span></div>}
-                  </div>
-                  {selectedLead.trustfull_data.red_flags?.length > 0 && (
-                    <div className="mt-3 p-2 bg-red-950/30 border border-red-900/30 rounded-lg">
-                      <p className="text-red-400 text-xs font-medium mb-1">Red Flags:</p>
-                      <div className="flex flex-wrap gap-1">{selectedLead.trustfull_data.red_flags.map((f, i) => <Badge key={`flag-${f}-${i}`} className="bg-red-900/40 text-red-400 text-[10px]">{f}</Badge>)}</div>
-                    </div>
-                  )}
+                  <TrustScoreGauge data={selectedLead.trustfull_data} />
                 </CardContent>
               </Card>
             )}

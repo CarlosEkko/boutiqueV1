@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { COUNTRIES } from '../../../utils/countries';
 import {
   ChevronLeft, ChevronRight, Shield, Building2, CheckCircle, XCircle,
-  Loader2, RefreshCw, AlertTriangle, FileText, Users, MapPin
+  Loader2, RefreshCw, AlertTriangle, FileText, Users, MapPin, Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,7 +27,7 @@ const STEPS = [
 const SumsubKYB = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, changeLanguage } = useLanguage();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [accessToken, setAccessToken] = useState(null);
@@ -35,6 +35,7 @@ const SumsubKYB = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [sdkLang, setSdkLang] = useState(language.toLowerCase());
 
   const [companyInfo, setCompanyInfo] = useState({
     company_name: '',
@@ -221,7 +222,7 @@ const SumsubKYB = () => {
     console.error('Sumsub KYB WebSDK error:', error);
   }, []);
 
-  const sdkConfig = { lang: 'pt', theme: 'dark' };
+  const sdkConfig = { lang: sdkLang, theme: 'dark' };
   const sdkOptions = { addViewportTag: false, adaptIframeHeight: true };
 
   const updateField = (field, value) => {
@@ -459,6 +460,22 @@ const SumsubKYB = () => {
               <p className="text-sm text-gray-400">
                 Siga as instruções para carregar os documentos da empresa e identificar os beneficiários efetivos
               </p>
+            </div>
+            {/* Language Selector */}
+            <div className="flex items-center justify-end gap-2 mb-4">
+              <Globe size={14} className="text-gray-500" />
+              {[
+                { code: 'pt', label: 'PT' },
+                { code: 'en', label: 'EN' },
+                { code: 'ar', label: 'AR' },
+                { code: 'fr', label: 'FR' },
+                { code: 'es', label: 'ES' },
+              ].map(lng => (
+                <button key={lng.code} onClick={() => { setSdkLang(lng.code); changeLanguage(lng.label); }}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    sdkLang === lng.code ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'text-gray-500 hover:text-white'
+                  }`} data-testid={`kyb-lang-${lng.code}`}>{lng.label}</button>
+              ))}
             </div>
             <div
               className="min-h-[600px]"

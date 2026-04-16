@@ -8,7 +8,7 @@ import { Button } from '../../../components/ui/button';
 import { Card, CardContent } from '../../../components/ui/card';
 import { 
   ChevronLeft, Shield, CheckCircle, XCircle, Loader2,
-  RefreshCw, AlertTriangle
+  RefreshCw, AlertTriangle, Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,7 +17,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const SumsubKYC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, changeLanguage } = useLanguage();
   
   const [step, setStep] = useState('loading');
   const [accessToken, setAccessToken] = useState(null);
@@ -25,6 +25,7 @@ const SumsubKYC = () => {
   const [verificationStatus, setVerificationStatus] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sdkLang, setSdkLang] = useState(language.toLowerCase());
 
   const abortRef = useRef(null);
 
@@ -150,7 +151,7 @@ const SumsubKYC = () => {
   }, []);
 
   const sdkConfig = {
-    lang: 'pt',
+    lang: sdkLang,
     theme: 'dark',
   };
 
@@ -232,6 +233,23 @@ const SumsubKYC = () => {
                 Siga as instrucoes no ecra para completar a verificacao
               </p>
             </div>
+            {/* Language Selector */}
+            <div className="flex items-center justify-end gap-2 mb-4">
+              <Globe size={14} className="text-gray-500" />
+              {[
+                { code: 'pt', label: 'PT' },
+                { code: 'en', label: 'EN' },
+                { code: 'ar', label: 'AR' },
+                { code: 'fr', label: 'FR' },
+                { code: 'es', label: 'ES' },
+              ].map(lng => (
+                <button key={lng.code} onClick={() => { setSdkLang(lng.code); changeLanguage(lng.label); }}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    sdkLang === lng.code ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30' : 'text-gray-500 hover:text-white'
+                  }`} data-testid={`kyc-lang-${lng.code}`}>{lng.label}</button>
+              ))}
+            </div>
+
             <div 
               className="min-h-[600px]" 
               data-testid="sumsub-sdk-container"
