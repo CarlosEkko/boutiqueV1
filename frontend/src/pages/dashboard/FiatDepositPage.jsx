@@ -19,7 +19,6 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CURRENCY_CONFIG = [
   { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
   { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
-  { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
   { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
   { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
   { code: 'QAR', name: 'Qatari Riyal', symbol: 'QAR', flag: '🇶🇦' },

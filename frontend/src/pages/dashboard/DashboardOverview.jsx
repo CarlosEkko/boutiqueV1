@@ -311,7 +311,7 @@ const DashboardOverview = () => {
                 {/* Asset List with Logos */}
                 <div className="space-y-3 border-t border-gold-800/20 pt-4">
                   {overview.wallet_allocation.map((asset, index) => {
-                    const isFiat = ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'].includes(asset.asset);
+                    const isFiat = ['EUR', 'USD', 'AED', 'CHF', 'QAR', 'SAR', 'HKD'].includes(asset.asset);
                     const logo = !isFiat ? getCryptoLogo(asset.asset) : null;
                     const percentage = ((asset.value_usd / overview.total_portfolio_value) * 100).toFixed(1);
                     

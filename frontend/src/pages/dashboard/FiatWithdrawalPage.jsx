@@ -29,8 +29,6 @@ const CURRENCIES = [
   { code: 'EUR', name: 'Euro', flag: '🇪🇺', symbol: '€' },
   { code: 'USD', name: 'US Dollar', flag: '🇺🇸', symbol: '$' },
   { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪', symbol: 'د.إ' },
-  { code: 'BRL', name: 'Real Brasileiro', flag: '🇧🇷', symbol: 'R$' },
-  { code: 'GBP', name: 'British Pound', flag: '🇬🇧', symbol: '£' },
   { code: 'CHF', name: 'Swiss Franc', flag: '🇨🇭', symbol: 'CHF' },
   { code: 'QAR', name: 'Qatari Riyal', flag: '🇶🇦', symbol: 'QAR' },
   { code: 'SAR', name: 'Saudi Riyal', flag: '🇸🇦', symbol: 'SAR' },
@@ -87,7 +85,7 @@ const FiatWithdrawalPage = () => {
       });
       // Filter only fiat wallets
       const fiatWallets = response.data.filter(w => 
-        ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'].includes(w.asset_id)
+        ['EUR', 'USD', 'AED', 'CHF', 'QAR', 'SAR', 'HKD'].includes(w.asset_id)
       );
       setWallets(fiatWallets);
     } catch (err) {

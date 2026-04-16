@@ -217,7 +217,7 @@ const WalletsPage = () => {
   };
 
   const formatBalance = (balance, asset) => {
-    const fiatAssets = ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'];
+    const fiatAssets = ['EUR', 'USD', 'AED', 'CHF', 'QAR', 'SAR', 'HKD'];
     if (fiatAssets.includes(asset)) {
       return parseFloat(balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -244,7 +244,7 @@ const WalletsPage = () => {
     HKD: '🇭🇰'
   };
 
-  const isFiat = (assetId) => ['EUR', 'USD', 'AED', 'BRL', 'GBP', 'CHF', 'QAR', 'SAR', 'HKD'].includes(assetId);
+  const isFiat = (assetId) => ['EUR', 'USD', 'AED', 'CHF', 'QAR', 'SAR', 'HKD'].includes(assetId);
 
   // Get crypto value in selected currency
   const getCryptoValue = (assetId, balance) => {
