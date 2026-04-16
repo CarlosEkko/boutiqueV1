@@ -406,7 +406,16 @@ const translations = {
         grossAmount: 'Gross Amount',
         youReceive: 'You receive',
         sellProcessedNote: 'Sales are processed via bank transfer after approval.',
-        quantity: 'Quantity'
+        quantity: 'Quantity',
+        from: 'From',
+        to: 'To',
+        processing: 'Processing...',
+        exchangeRate: 'Exchange Rate',
+        statusCompleted: 'Completed',
+        statusPending: 'Pending',
+        statusAwaitingPayment: 'Awaiting Payment',
+        statusAwaitingApproval: 'Awaiting Approval',
+        statusCancelled: 'Cancelled'
       },
       // Transactions
       transactions: {
@@ -2104,7 +2113,16 @@ const translations = {
         grossAmount: 'Valor Bruto',
         youReceive: 'Você recebe',
         sellProcessedNote: 'Vendas são processadas via transferência bancária após aprovação.',
-        quantity: 'Quantidade'
+        quantity: 'Quantidade',
+        from: 'De',
+        to: 'Para',
+        processing: 'A processar...',
+        exchangeRate: 'Taxa de Câmbio',
+        statusCompleted: 'Completo',
+        statusPending: 'Pendente',
+        statusAwaitingPayment: 'Aguardando Pagamento',
+        statusAwaitingApproval: 'Aguardando Aprovação',
+        statusCancelled: 'Cancelado'
       },
       // Transactions
       transactions: {
@@ -3742,7 +3760,11 @@ const translations = {
         grossAmount: 'المبلغ الإجمالي',
         youReceive: 'تتلقى',
         sellProcessedNote: 'تتم معالجة المبيعات عبر التحويل البنكي بعد الموافقة.',
-        quantity: 'الكمية'
+        quantity: 'الكمية',
+        from: 'من',
+        to: 'إلى',
+        processing: 'جاري المعالجة...',
+        exchangeRate: 'سعر الصرف'
       },
       transactions: {
         subtitle: 'عرض جميع معاملاتك',
@@ -5308,7 +5330,11 @@ const translations = {
         grossAmount: 'Montant Brut',
         youReceive: 'Vous recevez',
         sellProcessedNote: 'Les ventes sont traitées par virement bancaire après approbation.',
-        quantity: 'Quantité'
+        quantity: 'Quantité',
+        from: 'De',
+        to: 'Vers',
+        processing: 'Traitement...',
+        exchangeRate: 'Taux de change'
       },
       transactions: {
         title: 'Historique des Transactions',
@@ -6833,7 +6859,12 @@ const translations = {
         loadingText: 'Cargando...'
       },
       wallets: { title: 'Mis Carteras', subtitle: 'Administre sus carteras de criptomonedas y fiat', balance: 'Saldo', available: 'Disponible', pending: 'Pendiente', address: 'Dirección', copyAddress: 'Copiar Dirección', deposit: 'Depositar', withdraw: 'Retirar', noWallets: 'No se encontraron carteras', all: 'Todas', fiat: 'Fiat', crypto: 'Crypto', watchlist: 'Favoritos', fiatWallets: 'Carteras Fiat', cryptoWallets: 'Carteras Crypto', depositViaBank: 'Depositar vía transferencia bancaria', depositFiat: 'Depositar Fiat', refresh: 'Actualizar', add: 'Añadir', price: 'Precio', depositAddress: 'Dirección de Depósito', showQR: 'Mostrar QR', hideQR: 'Ocultar QR' },
-      exchange: { title: 'Exchange', subtitle: 'Compre, venda y convierta criptomonedas', viewMyOrders: 'Ver Mis Órdenes', buy: 'Comprar', sell: 'Vender', convert: 'Convertir', cryptocurrency: 'Criptomoneda', amount: 'Monto', valueIn: 'Valor en', limit: 'Límite', paymentMethod: 'Método de Pago', card: 'Tarjeta', bankTransfer: 'Transferencia Bancaria', walletBalance: 'Saldo de Cartera', yourLimits: 'Sus Límites', tier: 'Nivel', dailyBuyLimit: 'Límite Diario de Compra', usedToday: 'Usado Hoy', fees: 'Comisiones', buyFee: 'Compra', sellFee: 'Venta', convertFee: 'Conversión', selectCrypto: 'Seleccionar Criptomoneda', enterAmount: 'Ingrese el monto', estimatedCrypto: 'Crypto estimado', totalWithFees: 'Total con comisiones', confirmOrder: 'Confirmar Orden', orderSuccess: '¡Orden realizada con éxito!', insufficientBalance: 'Saldo insuficiente', minAmount: 'Monto mínimo', maxAmount: 'Monto máximo', feeLabel: 'Comisión KBEX', feeTooltipTitle: 'Comisión', feeTooltipText: 'Además de la comisión mostrada, puede incluirse un spread en el precio. El spread se calcula antes de enviar la transacción.', grossAmount: 'Monto Bruto', youReceive: 'Usted recibe', sellProcessedNote: 'Las ventas se procesan vía transferencia bancaria después de la aprobación.', quantity: 'Cantidad' },
+      exchange: { title: 'Exchange', subtitle: 'Compre, venda y convierta criptomonedas', viewMyOrders: 'Ver Mis Órdenes', buy: 'Comprar', sell: 'Vender', convert: 'Convertir', cryptocurrency: 'Criptomoneda', amount: 'Monto', valueIn: 'Valor en', limit: 'Límite', paymentMethod: 'Método de Pago', card: 'Tarjeta', bankTransfer: 'Transferencia Bancaria', walletBalance: 'Saldo de Cartera', yourLimits: 'Sus Límites', tier: 'Nivel', dailyBuyLimit: 'Límite Diario de Compra', usedToday: 'Usado Hoy', fees: 'Comisiones', buyFee: 'Compra', sellFee: 'Venta', convertFee: 'Conversión', selectCrypto: 'Seleccionar Criptomoneda', enterAmount: 'Ingrese el monto', estimatedCrypto: 'Crypto estimado', totalWithFees: 'Total con comisiones', confirmOrder: 'Confirmar Orden', orderSuccess: '¡Orden realizada con éxito!', insufficientBalance: 'Saldo insuficiente', minAmount: 'Monto mínimo', maxAmount: 'Monto máximo', feeLabel: 'Comisión KBEX', feeTooltipTitle: 'Comisión', feeTooltipText: 'Además de la comisión mostrada, puede incluirse un spread en el precio. El spread se calcula antes de enviar la transacción.', grossAmount: 'Monto Bruto', youReceive: 'Usted recibe', sellProcessedNote: 'Las ventas se procesan vía transferencia bancaria después de la aprobación.', quantity: 'Cantidad',
+        from: 'De',
+        to: 'A',
+        processing: 'Procesando...',
+        exchangeRate: 'Tipo de cambio'
+      },
       transactions: { title: 'Historial de Transacciones', subtitle: 'Vea todas sus transacciones', type: 'Tipo', amount: 'Monto', status: 'Estado', date: 'Fecha', deposit: 'Depósito', withdrawal: 'Retiro', transfer: 'Transferencia', completed: 'Completada', pending: 'Pendiente', failed: 'Fallida', noTransactions: 'No se encontraron transacciones' },
       investments: { title: 'Oportunidades de Inversión', subtitle: 'Explore las opciones de inversión disponibles', expectedRoi: 'ROI Esperado', duration: 'Duración', minInvestment: 'Inversión Mínima', maxInvestment: 'Inversión Máxima', riskLevel: 'Nivel de Riesgo', status: 'Estado', open: 'Abierta', closed: 'Cerrada', invest: 'Invertir', days: 'días', noOpportunities: 'No hay oportunidades disponibles' },
       roi: { title: 'Retorno de Inversión', subtitle: 'Seguimiento del rendimiento de sus inversiones', totalInvested: 'Total Invertido', totalReturns: 'Retornos Totales', averageRoi: 'ROI Promedio', activePositions: 'Posiciones Activas', performanceChart: 'Gráfico de Rendimiento', noData: 'No hay datos de inversión disponibles' },

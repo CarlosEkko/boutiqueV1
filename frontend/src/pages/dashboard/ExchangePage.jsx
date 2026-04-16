@@ -587,12 +587,12 @@ const ExchangePage = () => {
                         order.status === 'cancelled' || order.status === 'failed' ? 'bg-red-500/20 text-red-400' :
                         'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {order.status === 'completed' ? 'Completo' :
-                         order.status === 'pending' ? 'Pendente' :
-                         order.status === 'awaiting_payment' ? 'Aguardando Pagamento' :
-                         order.status === 'awaiting_admin_approval' ? 'Aguardando Aprovação' :
-                         order.status === 'processing' ? 'Processando' :
-                         order.status === 'cancelled' ? 'Cancelado' : order.status}
+                        {order.status === 'completed' ? t('dashboard.exchange.statusCompleted', 'Completo') :
+                         order.status === 'pending' ? t('dashboard.exchange.statusPending', 'Pendente') :
+                         order.status === 'awaiting_payment' ? t('dashboard.exchange.statusAwaitingPayment', 'Aguardando Pagamento') :
+                         order.status === 'awaiting_admin_approval' ? t('dashboard.exchange.statusAwaitingApproval', 'Aguardando Aprovação') :
+                         order.status === 'processing' ? t('dashboard.exchange.processing') :
+                         order.status === 'cancelled' ? t('dashboard.exchange.statusCancelled', 'Cancelado') : order.status}
                       </span>
                       <p className="text-sm text-gray-400 mt-1">
                         ${order.fiat_amount?.toFixed(2)}
@@ -911,7 +911,7 @@ const ExchangePage = () => {
                     ) : (
                       <TrendingDown className="mr-2" size={18} />
                     )}
-                    {loading ? 'Processando...' : 'Vender'}
+                    {loading ? t('dashboard.exchange.processing') : t('dashboard.exchange.sell')}
                   </Button>
                 </div>
               )}
@@ -920,7 +920,7 @@ const ExchangePage = () => {
               {activeTab === 'swap' && (
                 <div className="space-y-6">
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">De</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.from')}</label>
                     <CryptoSelector 
                       value={fromCrypto} 
                       onChange={setFromCrypto} 
@@ -962,7 +962,7 @@ const ExchangePage = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Para</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.to')}</label>
                     <CryptoSelector 
                       value={toCrypto} 
                       onChange={setToCrypto} 
@@ -976,25 +976,23 @@ const ExchangePage = () => {
                   {swapPreview && fromAmount && (
                     <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Taxa de Câmbio</span>
+                        <span className="text-gray-400">{t('dashboard.exchange.exchangeRate')}</span>
                         <span className="text-white">
                           1 {fromCrypto?.symbol} = {swapPreview.rate.toFixed(6)} {toCrypto?.symbol}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400 flex items-center gap-1">
-                          Taxa KBEX
+                          {t('dashboard.exchange.feeLabel')}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Info size={13} className="text-zinc-500 hover:text-gold-400 cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
-                                <p className="text-gold-400 font-semibold text-xs mb-1">Taxa</p>
+                                <p className="text-gold-400 font-semibold text-xs mb-1">{t('dashboard.exchange.feeTooltipTitle')}</p>
                                 <p className="text-zinc-300 text-xs leading-relaxed">
-                                  Além da taxa exibida, um spread pode estar incluído no preço. 
-                                  Qualquer spread é calculado antes de a transação ser submetida 
-                                  e pode diferir para transações semelhantes.
+                                  {t('dashboard.exchange.feeTooltipText')}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -1004,7 +1002,7 @@ const ExchangePage = () => {
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Você recebe</span>
+                          <span className="text-gray-400">{t('dashboard.exchange.youReceive')}</span>
                           <span className="text-gold-400 font-semibold">
                             {swapPreview.toAmount.toFixed(6)} {toCrypto?.symbol}
                           </span>
@@ -1024,7 +1022,7 @@ const ExchangePage = () => {
                     ) : (
                       <ArrowDownUp className="mr-2" size={18} />
                     )}
-                    {loading ? 'Processando...' : 'Converter'}
+                    {loading ? t('dashboard.exchange.processing') : t('dashboard.exchange.convert')}
                   </Button>
                 </div>
               )}
@@ -1093,13 +1091,13 @@ const ExchangePage = () => {
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             {orderResult.summary.crypto_amount && (
                               <div>
-                                <span className="text-gray-400">Quantidade: </span>
+                                <span className="text-gray-400">{t('dashboard.exchange.quantity')}: </span>
                                 <span className="text-white">{orderResult.summary.crypto_amount.toFixed(6)} {orderResult.summary.crypto_symbol}</span>
                               </div>
                             )}
                             {orderResult.summary.to_amount && (
                               <div>
-                                <span className="text-gray-400">Recebido: </span>
+                                <span className="text-gray-400">{t('dashboard.exchange.youReceive')}: </span>
                                 <span className="text-white">{orderResult.summary.to_amount.toFixed(6)} {orderResult.summary.to_crypto}</span>
                               </div>
                             )}
@@ -1149,19 +1147,19 @@ const ExchangePage = () => {
           {limits && (
             <Card className="bg-zinc-900/50 border-gold-800/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-white">Seus Limites</CardTitle>
+                <CardTitle className="text-lg text-white">{t('dashboard.exchange.yourLimits')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Tier</span>
+                  <span className="text-gray-400">{t('dashboard.exchange.tier')}</span>
                   <span className="text-gold-400 capitalize">{limits.tier}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Limite Diário Compra</span>
+                  <span className="text-gray-400">{t('dashboard.exchange.dailyBuyLimit')}</span>
                   <span className="text-white">{formatCurrency(convertFromUSD(limits.limits?.daily_buy_limit))}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Usado Hoje</span>
+                  <span className="text-gray-400">{t('dashboard.exchange.usedToday')}</span>
                   <span className="text-white">{formatCurrency(convertFromUSD(limits.usage?.daily_buy_used || 0))}</span>
                 </div>
                 <div className="w-full bg-zinc-800 rounded-full h-2 mt-1">
