@@ -82,6 +82,7 @@ from routes.cold_wallet import router as cold_wallet_router, set_db as set_cold_
 from routes.launchpad import router as launchpad_router, set_db as set_launchpad_db
 from routes.commercial import router as commercial_router, set_db as set_commercial_db
 from routes.business_accounts import router as business_accounts_router, set_db as set_business_accounts_db
+from routes.client_tiers import router as client_tiers_router, set_db as set_client_tiers_db
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -122,6 +123,7 @@ set_cold_wallet_db(db)
 set_launchpad_db(db)
 set_commercial_db(db)
 set_business_accounts_db(db)
+set_client_tiers_db(db)
 set_crm_db(db)
 set_tokenization_db(db)
 
@@ -167,6 +169,7 @@ api_router.include_router(cold_wallet_router)
 api_router.include_router(launchpad_router)
 api_router.include_router(commercial_router)
 api_router.include_router(business_accounts_router)
+api_router.include_router(client_tiers_router)
 
 
 # Define Models

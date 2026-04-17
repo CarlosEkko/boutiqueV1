@@ -222,6 +222,7 @@ DEPARTMENT_MENUS = {
         "icon": "UserCircle",
         "items": [
             {"path": "/dashboard/profile", "label": "Meu Perfil", "icon": "User"},
+            {"path": "/dashboard/tiers", "label": "Níveis & Benefícios", "icon": "Crown"},
             {"path": "/dashboard/bank-accounts", "label": "Dados Bancários", "icon": "Landmark"},
             {"path": "/dashboard/security", "label": "Segurança", "icon": "Shield"},
             {"path": "/dashboard/kyc", "label": "Verificação KYC", "icon": "UserCheck"},
@@ -248,6 +249,7 @@ DEPARTMENT_MENUS = {
         "items": [
             {"path": "/dashboard/admin/permissions", "label": "Permissões", "icon": "Lock"},
             {"path": "/dashboard/admin/client-menus", "label": "Menus de Clientes", "icon": "Menu"},
+            {"path": "/dashboard/admin/tiers", "label": "Níveis de Cliente", "icon": "Crown"},
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/approvals/settings", "label": "Multi-Sign", "icon": "ShieldCheck"},

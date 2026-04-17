@@ -97,6 +97,8 @@ import AdminCompanyAccounts from "./pages/dashboard/admin/AdminCompanyAccounts";
 import FinancialDashboard from "./pages/dashboard/admin/FinancialDashboard";
 import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustmentsPage";
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
+import ClientTiersPage from "./pages/dashboard/ClientTiersPage";
+import AdminClientTiers from "./pages/dashboard/admin/AdminClientTiers";
 import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
@@ -207,6 +209,7 @@ function AppRoutes() {
         <Route path="tokenization/management" element={<TokenManagementPage />} />
         <Route path="roi" element={<ROIPage />} />
         <Route path="transparency" element={<TransparencyPage />} />
+        <Route path="tiers" element={<ClientTiersPage />} />
         
         {/* Profile Route - inside dashboard layout */}
         <Route path="profile" element={<ProfilePage />} />
@@ -265,6 +268,7 @@ function AppRoutes() {
         <Route path="admin/finance" element={<FinancialDashboard />} />
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
         <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
+        <Route path="admin/tiers" element={<AdminClientTiers />} />
         <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
         
         {/* Commercial Management Routes */}

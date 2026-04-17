@@ -72,7 +72,8 @@ import {
   Flame,
   Coins,
   Monitor,
-  Building2
+  Building2,
+  Crown
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -89,7 +90,7 @@ const iconMap = {
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
   Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle,
   ArrowLeftRight, FileSearch,
-  ShieldAlert, Gem, FilePlus2, Flame, Coins
+  ShieldAlert, Gem, FilePlus2, Flame, Coins, Crown
 };
 
 // Department icon and color mapping
@@ -158,6 +159,8 @@ const labelTranslationMap = {
   'Levantamento Fiat': 'sidebar.levantamentoFiat',
   // Items - Account
   'Meu Perfil': 'sidebar.meuPerfil',
+  'Níveis & Benefícios': 'sidebar.tiersBenefits',
+  'Níveis de Cliente': 'sidebar.tiersAdmin',
   'Dados Bancários': 'sidebar.dadosBancarios',
   'Segurança': 'sidebar.seguranca',
   'Verificação KYC': 'sidebar.verificacaoKyc',
