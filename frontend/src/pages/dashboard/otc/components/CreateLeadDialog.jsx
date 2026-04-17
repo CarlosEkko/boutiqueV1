@@ -7,7 +7,7 @@ import { Label } from '../../../../components/ui/label';
 import { Textarea } from '../../../../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { FormattedNumberInput } from '../../../../components/FormattedNumberInput';
-import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2, Search, Shield, AlertTriangle } from 'lucide-react';
+import { UserPlus, ChevronRight, Building, User, Eye, DollarSign, CheckCircle, Plus, TrendingUp, Loader2, Search, Shield, AlertTriangle, Phone } from 'lucide-react';
 import { COUNTRIES } from '../../../../utils/countries';
 import { useLanguage } from '../../../../i18n';
 
@@ -259,7 +259,19 @@ export const CreateLeadDialog = ({
                 </div>
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">País *</Label>
-                  <Select value={formData.country} onValueChange={v => setFormData({...formData, country: v})}>
+                  <Select value={formData.country} onValueChange={v => {
+                    const country = COUNTRIES.find(c => c.code === v);
+                    const updates = { country: v };
+                    if (country?.dialCode && !formData.contact_phone) {
+                      updates.contact_phone = country.dialCode;
+                    } else if (country?.dialCode && formData.contact_phone) {
+                      const prevCountry = COUNTRIES.find(c => c.code === formData.country);
+                      if (!formData.contact_phone || formData.contact_phone === prevCountry?.dialCode) {
+                        updates.contact_phone = country.dialCode;
+                      }
+                    }
+                    setFormData({...formData, ...updates});
+                  }}>
                     <SelectTrigger className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-1 focus:ring-amber-500/30" data-testid="lead-country"><SelectValue placeholder="Selecionar" /></SelectTrigger>
                     <SelectContent className="bg-zinc-900 border-zinc-800 max-h-60">{COUNTRIES.map(c => <SelectItem key={c.code} value={c.name} className="text-zinc-100 hover:bg-zinc-800">{c.name}</SelectItem>)}</SelectContent>
                   </Select>
@@ -302,7 +314,27 @@ export const CreateLeadDialog = ({
                 </div>
                 <div>
                   <Label className="text-sm text-zinc-400 mb-2 block font-medium">Telefone *</Label>
-                  <Input value={formData.contact_phone} onChange={e => setFormData({...formData, contact_phone: e.target.value})} className={getFieldClass(formData.contact_phone)} placeholder="+351..." data-testid="lead-contact-phone" />
+                  <div className="relative">
+                    {formData.country && (() => {
+                      const c = COUNTRIES.find(x => x.code === formData.country);
+                      return c?.dialCode ? (
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none z-10 flex items-center gap-1">
+                          <Phone size={12} />
+                          <span className="font-mono">{c.dialCode}</span>
+                        </span>
+                      ) : null;
+                    })()}
+                    <Input 
+                      value={formData.contact_phone} 
+                      onChange={e => setFormData({...formData, contact_phone: e.target.value})} 
+                      className={getFieldClass(formData.contact_phone)} 
+                      style={formData.country && COUNTRIES.find(x => x.code === formData.country)?.dialCode 
+                        ? { paddingLeft: `${Math.max(60, (COUNTRIES.find(x => x.code === formData.country)?.dialCode?.length || 3) * 10 + 40)}px` }
+                        : {}}
+                      placeholder={formData.country ? '' : '+351...'} 
+                      data-testid="lead-contact-phone" 
+                    />
+                  </div>
                   {showValidation && !formData.contact_phone && <p className="text-red-400 text-xs mt-1">Campo obrigatório</p>}
                 </div>
               </div>
