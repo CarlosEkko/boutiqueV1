@@ -4,7 +4,7 @@ import {
   Shield, AlertTriangle, Mail, Phone, 
   Globe, Linkedin, MessageCircle, Building2,
   ExternalLink, Database, CheckCircle, XCircle,
-  ChevronDown, ChevronUp, Search
+  ChevronDown, ChevronUp, Search, Music, ShoppingBag
 } from 'lucide-react';
 
 const LEVEL_CFG = {
@@ -37,7 +37,15 @@ const MiniGauge = ({ score = 0, size = 90 }) => {
   );
 };
 
-const Dot = ({ ok }) => ok ? <CheckCircle size={10} className="text-green-400" /> : <XCircle size={10} className="text-zinc-700" />;
+const AccountRow = ({ icon: Icon, name, available, color }) => (
+  <div className="flex items-center justify-between py-1">
+    <div className="flex items-center gap-2">
+      <Icon size={13} className={color} />
+      <span className="text-gray-400 text-xs">{name}</span>
+    </div>
+    <span className={`text-xs font-medium ${available ? 'text-green-400' : 'text-gray-600'}`}>{available ? 'Yes' : 'No'}</span>
+  </div>
+);
 
 const TrustScoreGauge = ({ data }) => {
   const [showFindings, setShowFindings] = useState(false);
@@ -70,7 +78,6 @@ const TrustScoreGauge = ({ data }) => {
             <div className="flex items-center gap-1"><span className="text-[10px] text-gray-600">TRUST</span><span className={`font-bold ${score >= 500 ? 'text-green-400' : 'text-yellow-400'}`}>{score >= 700 ? 5 : score >= 500 ? 4 : score >= 300 ? 3 : score >= 150 ? 2 : 1}/5</span></div>
           </div>
 
-          {/* Red Flags inline */}
           {data.red_flags?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {data.red_flags.map((f, i) => (
@@ -81,7 +88,7 @@ const TrustScoreGauge = ({ data }) => {
         </div>
       </div>
 
-      {/* Collapsible Findings Button */}
+      {/* Collapsible Findings */}
       <button 
         onClick={() => setShowFindings(!showFindings)}
         className={`flex items-center gap-1.5 w-full mt-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -96,82 +103,80 @@ const TrustScoreGauge = ({ data }) => {
         {showFindings ? <ChevronUp size={12} className="ml-auto" /> : <ChevronDown size={12} className="ml-auto" />}
       </button>
 
-      {/* Findings Panel */}
       {showFindings && (
         <div className="mt-2 rounded-lg border border-gold-800/20 bg-zinc-900/50 overflow-hidden" data-testid="trustfull-findings-panel">
-          {/* Findings Header */}
           <div className="px-3 py-2 bg-gold-500/5 border-b border-gold-800/20 flex items-center gap-2">
             <Shield size={12} className="text-gold-400" />
             <span className="text-[10px] font-semibold text-gold-400 uppercase tracking-wider">Trustfull Findings</span>
             <span className={`ml-auto text-[10px] font-bold ${cfg.text}`}>{score}/1000</span>
           </div>
 
-          <div className="p-3">
-            <div className="grid grid-cols-2 gap-3">
-              {/* Summary */}
-              <div>
-                <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Mail size={10} className="text-blue-400" /> Summary
-                </h5>
-                <div className="space-y-1.5 text-[11px]">
-                  {data.email_risk?.status && (
-                    <div className="flex justify-between"><span className="text-gray-500">Status</span><span className="text-white capitalize">{data.email_risk.status}</span></div>
-                  )}
-                  {data.email_risk?.is_disposable != null && (
-                    <div className="flex justify-between"><span className="text-gray-500">Disposable</span><span className={data.email_risk.is_disposable ? 'text-red-400' : 'text-green-400'}>{data.email_risk.is_disposable ? 'Yes' : 'No'}</span></div>
-                  )}
-                  {data.email_risk?.is_free != null && (
-                    <div className="flex justify-between"><span className="text-gray-500">Free Provider</span><span className={data.email_risk.is_free ? 'text-yellow-400' : 'text-green-400'}>{data.email_risk.is_free ? 'Yes' : 'No'}</span></div>
-                  )}
-                  {data.email_risk?.domain && (
-                    <div className="flex justify-between"><span className="text-gray-500">Domain</span><span className="text-white">{data.email_risk.domain}</span></div>
-                  )}
-                  {data.email_risk?.company_name && (
-                    <div className="flex justify-between"><span className="text-gray-500">Company</span><span className="text-white truncate ml-2">{data.email_risk.company_name}</span></div>
-                  )}
-                  {data.email_risk?.company_industry && (
-                    <div className="flex justify-between"><span className="text-gray-500">Industry</span><span className="text-white truncate ml-2">{data.email_risk.company_industry}</span></div>
-                  )}
-                  {data.email_risk?.first_seen_days != null && (
-                    <div className="flex justify-between"><span className="text-gray-500">Email Age</span><span className="text-white">{data.email_risk.first_seen_days} days</span></div>
-                  )}
-                  {data.email_risk?.data_breaches_count != null && (
-                    <div className="flex justify-between"><span className="text-gray-500">Data Breaches</span><span className={data.email_risk.data_breaches_count > 3 ? 'text-orange-400' : 'text-white'}>{data.email_risk.data_breaches_count}</span></div>
-                  )}
-                  {data.phone_risk?.number_type && (
-                    <div className="flex justify-between"><span className="text-gray-500">Phone Type</span><span className={data.phone_risk.number_type === 'VOIP' ? 'text-orange-400' : 'text-white'}>{data.phone_risk.number_type}</span></div>
-                  )}
-                  {data.phone_risk?.current_network && (
-                    <div className="flex justify-between"><span className="text-gray-500">Carrier</span><span className="text-white truncate ml-2">{data.phone_risk.current_network}</span></div>
-                  )}
-                  {data.phone_risk?.country_code && (
-                    <div className="flex justify-between"><span className="text-gray-500">Phone Country</span><span className="text-white">{data.phone_risk.country_code}</span></div>
-                  )}
-                </div>
-              </div>
-
-              {/* Connected Accounts */}
-              <div>
-                <h5 className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                  <Globe size={10} className="text-gold-400" /> Connected Accounts
-                </h5>
-                <div className="space-y-1.5 text-[11px]">
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><Linkedin size={11} className="text-blue-500" /><span className="text-gray-400">LinkedIn</span></div><Dot ok={data.email_risk?.has_linkedin} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><ExternalLink size={11} className="text-red-400" /><span className="text-gray-400">Google</span></div><Dot ok={data.email_risk?.has_google} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><Building2 size={11} className="text-blue-400" /><span className="text-gray-400">Office 365</span></div><Dot ok={data.email_risk?.has_office365} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><ExternalLink size={11} className="text-gray-400" /><span className="text-gray-400">Twitter/X</span></div><Dot ok={data.email_risk?.has_twitter} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><Database size={11} className="text-yellow-500" /><span className="text-gray-400">Binance</span></div><Dot ok={data.email_risk?.has_binance} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><MessageCircle size={11} className="text-green-500" /><span className="text-gray-400">WhatsApp</span></div><Dot ok={data.phone_risk?.has_whatsapp} /></div>
-                  <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><MessageCircle size={11} className="text-blue-400" /><span className="text-gray-400">Telegram</span></div><Dot ok={data.phone_risk?.has_telegram} /></div>
-                </div>
+          <div className="p-3 space-y-3">
+            {/* Summary */}
+            <div className="bg-zinc-800/30 rounded-lg p-3 border border-zinc-800/50">
+              <h5 className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Shield size={11} className="text-gold-400" /> Summary
+              </h5>
+              <div className="space-y-1.5 text-xs">
+                {data.email_risk?.status && (
+                  <div className="flex justify-between"><span className="text-gray-500">Email Status</span><span className="text-white capitalize">{data.email_risk.status}</span></div>
+                )}
+                {data.email_risk?.is_disposable != null && (
+                  <div className="flex justify-between"><span className="text-gray-500">Disposable</span><span className={data.email_risk.is_disposable ? 'text-red-400' : 'text-green-400'}>{data.email_risk.is_disposable ? 'Yes' : 'No'}</span></div>
+                )}
+                {data.email_risk?.is_free != null && (
+                  <div className="flex justify-between"><span className="text-gray-500">Free Provider</span><span className={data.email_risk.is_free ? 'text-yellow-400' : 'text-green-400'}>{data.email_risk.is_free ? 'Yes' : 'No'}</span></div>
+                )}
+                {data.email_risk?.domain && (
+                  <div className="flex justify-between"><span className="text-gray-500">Domain</span><span className="text-white">{data.email_risk.domain}</span></div>
+                )}
+                {data.email_risk?.company_name && (
+                  <div className="flex justify-between"><span className="text-gray-500">Company</span><span className="text-white">{data.email_risk.company_name}</span></div>
+                )}
+                {data.email_risk?.company_industry && (
+                  <div className="flex justify-between"><span className="text-gray-500">Industry</span><span className="text-white">{data.email_risk.company_industry}</span></div>
+                )}
+                {data.email_risk?.first_seen_days != null && (
+                  <div className="flex justify-between"><span className="text-gray-500">Email Age</span><span className="text-white">{data.email_risk.first_seen_days} days</span></div>
+                )}
+                {data.email_risk?.data_breaches_count != null && (
+                  <div className="flex justify-between"><span className="text-gray-500">Data Breaches</span><span className={data.email_risk.data_breaches_count > 3 ? 'text-orange-400' : 'text-white'}>{data.email_risk.data_breaches_count}</span></div>
+                )}
+                {data.phone_risk?.number_type && (
+                  <div className="flex justify-between"><span className="text-gray-500">Phone Type</span><span className={data.phone_risk.number_type === 'VOIP' ? 'text-orange-400' : 'text-white'}>{data.phone_risk.number_type}</span></div>
+                )}
+                {data.phone_risk?.current_network && (
+                  <div className="flex justify-between"><span className="text-gray-500">Carrier</span><span className="text-white">{data.phone_risk.current_network}</span></div>
+                )}
+                {data.phone_risk?.country_code && (
+                  <div className="flex justify-between"><span className="text-gray-500">Phone Country</span><span className="text-white">{data.phone_risk.country_code}</span></div>
+                )}
               </div>
             </div>
 
-            {/* Red Flags Detail */}
+            {/* Connected Accounts */}
+            <div className="bg-zinc-800/30 rounded-lg p-3 border border-zinc-800/50">
+              <h5 className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Globe size={11} className="text-gold-400" /> Connected Accounts
+              </h5>
+              <div className="space-y-0.5">
+                <AccountRow icon={Linkedin} name="LinkedIn" available={data.email_risk?.has_linkedin} color="text-blue-500" />
+                <AccountRow icon={ExternalLink} name="Google" available={data.email_risk?.has_google} color="text-red-400" />
+                <AccountRow icon={Building2} name="Office 365" available={data.email_risk?.has_office365} color="text-blue-400" />
+                <AccountRow icon={ExternalLink} name="Twitter/X" available={data.email_risk?.has_twitter} color="text-gray-400" />
+                <AccountRow icon={Database} name="PayPal" available={data.email_risk?.has_paypal} color="text-blue-600" />
+                <AccountRow icon={Music} name="Spotify" available={data.email_risk?.has_spotify} color="text-green-500" />
+                <AccountRow icon={ShoppingBag} name="Amazon" available={data.email_risk?.has_amazon} color="text-orange-400" />
+                <AccountRow icon={MessageCircle} name="WhatsApp" available={data.phone_risk?.has_whatsapp} color="text-green-500" />
+                <AccountRow icon={MessageCircle} name="Telegram" available={data.phone_risk?.has_telegram} color="text-blue-400" />
+              </div>
+            </div>
+
+            {/* Red Flags */}
             {data.red_flags?.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-zinc-800/50">
+              <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/20">
                 <h5 className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <AlertTriangle size={10} /> Red Flags ({data.red_flags.length})
+                  <AlertTriangle size={11} /> Red Flags ({data.red_flags.length})
                 </h5>
                 <div className="flex flex-wrap gap-1">
                   {data.red_flags.map((f, i) => (
