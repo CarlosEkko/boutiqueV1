@@ -10,6 +10,7 @@ import { Label } from '../../../components/ui/label';
 import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
   Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
+  Shield, Vault, Copy, Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -53,21 +54,26 @@ const AdminBillingPage = () => {
   const [runningCycle, setRunningCycle] = useState(false);
   const [activeTab, setActiveTab] = useState('upcoming');
   const [historyDialog, setHistoryDialog] = useState({ open: false, user: null, data: null, loading: false });
+  const [vault, setVault] = useState(null);
+  const [vaultBusy, setVaultBusy] = useState(false);
+  const [copiedAddr, setCopiedAddr] = useState(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [cfg, ren, pay, cyc] = await Promise.all([
+      const [cfg, ren, pay, cyc, v] = await Promise.all([
         axios.get(`${API_URL}/api/billing/config`, { headers }),
         axios.get(`${API_URL}/api/billing/renewals`, { headers }),
         axios.get(`${API_URL}/api/billing/payouts`, { headers }),
         axios.get(`${API_URL}/api/billing/cycle-status`, { headers }).catch(() => ({ data: null })),
+        axios.get(`${API_URL}/api/billing/vault`, { headers }).catch(() => ({ data: null })),
       ]);
       setConfig(cfg.data);
       setAnnualFee(cfg.data.annual_fee);
       setRenewals(ren.data);
       setPayouts(pay.data);
       setCycleStatus(cyc.data);
+      setVault(v.data);
     } catch (err) {
       toast.error('Falha ao carregar configuração');
     } finally {
@@ -105,6 +111,40 @@ const AdminBillingPage = () => {
     } finally {
       setRunningCycle(false);
     }
+  };
+
+  const setupVault = async () => {
+    if (!window.confirm('Criar vault "KBEX OnBoarding" no Fireblocks? Esta operação é idempotente.')) return;
+    setVaultBusy(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/billing/vault/setup`, {}, { headers });
+      toast.success(res.data.already_existed ? 'Vault existente — endereços sincronizados' : 'Vault KBEX OnBoarding criado no Fireblocks');
+      await fetchAll();
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Falha ao criar vault');
+    } finally {
+      setVaultBusy(false);
+    }
+  };
+
+  const refreshVault = async () => {
+    setVaultBusy(true);
+    try {
+      await axios.post(`${API_URL}/api/billing/vault/refresh-addresses`, {}, { headers });
+      toast.success('Endereços re-sincronizados do Fireblocks');
+      await fetchAll();
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Falha ao sincronizar');
+    } finally {
+      setVaultBusy(false);
+    }
+  };
+
+  const copyAddr = (addr, label) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddr(label);
+    setTimeout(() => setCopiedAddr(null), 1500);
+    toast.success('Copiado');
   };
 
   const openHistory = async (user) => {
@@ -291,6 +331,84 @@ const AdminBillingPage = () => {
               </tbody>
             </table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Fireblocks Billing Vault */}
+      <Card className="bg-zinc-900/50 border-zinc-800" data-testid="billing-vault-card">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gold-950/40 ring-1 ring-gold-500/30 flex items-center justify-center">
+                <Vault size={18} className="text-gold-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-medium flex items-center gap-2">
+                  KBEX OnBoarding Vault
+                  <Shield size={12} className="text-emerald-400" />
+                </h2>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Custódia Fireblocks para Taxa de Admissão + Renovações Anuais (BTC / ETH / USDT / USDC)
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {vault?.configured ? (
+                <Button size="sm" variant="outline" onClick={refreshVault} disabled={vaultBusy} className="border-zinc-700 text-zinc-300" data-testid="vault-refresh-btn">
+                  {vaultBusy ? <Loader2 className="animate-spin mr-1.5" size={12} /> : <RefreshCw size={12} className="mr-1.5" />}
+                  Sincronizar
+                </Button>
+              ) : (
+                <Button size="sm" onClick={setupVault} disabled={vaultBusy} className="bg-gold-500 hover:bg-gold-600 text-black" data-testid="vault-setup-btn">
+                  {vaultBusy ? <Loader2 className="animate-spin mr-1.5" size={12} /> : <Vault size={12} className="mr-1.5" />}
+                  Criar Vault
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {!vault?.configured ? (
+            <div className="rounded-md border border-amber-800/40 bg-amber-950/20 p-3 flex gap-2 text-xs text-amber-200/80">
+              <Info size={14} className="text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                Vault não configurado. Os endereços de checkout estão a usar o fallback manual em
+                <code className="mx-1 text-amber-300">platform_settings.crypto_wallets</code>.
+                Clique em <span className="text-gold-400">Criar Vault</span> para provisionar no Fireblocks.
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3">
+                <span>Vault ID: <span className="text-white font-mono">{vault.vault_id}</span></span>
+                {vault.addresses_refreshed_at && (
+                  <span>· Sincronizado: {fmtDate(vault.addresses_refreshed_at)}</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {Object.entries(vault.addresses || {}).map(([label, info]) => (
+                  <div key={label} className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3" data-testid={`vault-addr-${label}`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wider text-gold-400 font-semibold">{label}</span>
+                        <span className="text-[9px] text-zinc-500">{info.asset_id}</span>
+                      </div>
+                      {vault.balances?.[info.asset_id] && (
+                        <span className="text-[11px] text-zinc-400 tabular-nums">
+                          Saldo: {vault.balances[info.asset_id].total}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5">
+                      <code className="flex-1 text-[11px] text-zinc-300 break-all font-mono">{info.address}</code>
+                      <button onClick={() => copyAddr(info.address, label)} className="text-zinc-400 hover:text-gold-400 transition-colors shrink-0">
+                        {copiedAddr === label ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

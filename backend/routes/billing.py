@@ -831,8 +831,18 @@ async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)
 
 
 import httpx  # noqa: E402
+from services.fireblocks_service import FireblocksService  # noqa: E402
 
 BINANCE_API_URL = "https://api.binance.com/api/v3"
+
+# Fireblocks asset IDs for the billing vault
+BILLING_VAULT_ASSETS = {
+    "BTC": "BTC",
+    "ETH": "ETH",
+    "USDT": "USDT_ERC20",
+    "USDC": "USDC",
+}
+BILLING_VAULT_NAME = "KBEX OnBoarding"
 
 
 async def _crypto_amounts_for_eur(eur_amount: float) -> dict:
@@ -867,6 +877,60 @@ async def _crypto_amounts_for_eur(eur_amount: float) -> dict:
     return crypto_amounts
 
 
+async def _get_billing_vault_config() -> Optional[dict]:
+    """Return the stored KBEX OnBoarding vault config ({vault_id, vault_name, addresses})."""
+    doc = await db.platform_settings.find_one({"type": "billing_fireblocks_vault"}, {"_id": 0})
+    return doc if doc else None
+
+
+async def _refresh_billing_vault_addresses(vault_id: str) -> dict:
+    """Re-fetch deposit addresses from Fireblocks and update cached settings."""
+    now = datetime.now(timezone.utc).isoformat()
+    addresses = {}
+    for label, fb_asset_id in BILLING_VAULT_ASSETS.items():
+        try:
+            info = await FireblocksService.get_deposit_address(vault_id=vault_id, asset_id=fb_asset_id)
+            if info.get("address"):
+                addresses[label] = {
+                    "address": info.get("address"),
+                    "tag": info.get("tag", ""),
+                    "asset_id": fb_asset_id,
+                }
+        except Exception as e:
+            logger.warning(f"Fireblocks: failed to fetch {fb_asset_id} for vault {vault_id}: {e}")
+    await db.platform_settings.update_one(
+        {"type": "billing_fireblocks_vault"},
+        {"$set": {"addresses": addresses, "addresses_refreshed_at": now}},
+    )
+    return addresses
+
+
+async def _get_billing_wallets() -> dict:
+    """
+    Return receiving wallet addresses for the billing checkout.
+    Priority: Fireblocks KBEX OnBoarding vault → platform_settings.crypto_wallets → hardcoded fallback.
+    Output shape: {"BTC": "addr", "ETH": "addr", "USDT": "addr", "USDC": "addr"}
+    """
+    vault = await _get_billing_vault_config()
+    if vault and vault.get("addresses"):
+        out = {k: v.get("address", "") for k, v in vault["addresses"].items() if v.get("address")}
+        if out:
+            return out
+
+    # Fallback — legacy manual settings
+    settings = await db.platform_settings.find_one({"type": "general"}, {"_id": 0, "crypto_wallets": 1})
+    wallets = (settings or {}).get("crypto_wallets") or {}
+    default_wallets = {
+        "BTC": "bc1q83zcsh5kmtac53kwjjn2yh6wpujgnac79cdxyf",
+        "ETH": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+        "USDT": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+        "USDC": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+    }
+    for k, v in default_wallets.items():
+        wallets.setdefault(k, v)
+    return wallets
+
+
 @router.get("/payments/{payment_id}")
 async def get_payment_checkout(payment_id: str, user_id: str = Depends(get_current_user_id)):
     """Load a pending payment with fresh crypto amounts + receiving wallets — for client checkout."""
@@ -878,18 +942,7 @@ async def get_payment_checkout(payment_id: str, user_id: str = Depends(get_curre
 
     amount_eur = float(payment.get("amount", 0))
     crypto_amounts = await _crypto_amounts_for_eur(amount_eur)
-
-    # Get receiving wallets (admin-configured in platform_settings, with safe fallback)
-    settings = await db.platform_settings.find_one({"type": "general"}, {"_id": 0, "crypto_wallets": 1})
-    wallets = (settings or {}).get("crypto_wallets") or {}
-    default_wallets = {
-        "BTC": "bc1q83zcsh5kmtac53kwjjn2yh6wpujgnac79cdxyf",
-        "ETH": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
-        "USDT": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
-        "USDC": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
-    }
-    for k, v in default_wallets.items():
-        wallets.setdefault(k, v)
+    wallets = await _get_billing_wallets()
 
     # Get fiat bank accounts (EUR)
     bank_accounts = await db.bank_accounts.find(
@@ -897,11 +950,13 @@ async def get_payment_checkout(payment_id: str, user_id: str = Depends(get_curre
         {"_id": 0, "id": 1, "bank_name": 1, "account_holder": 1, "iban": 1, "bic": 1, "currency": 1},
     ).to_list(20)
 
+    vault = await _get_billing_vault_config()
     return {
         "payment": payment,
         "crypto_amounts": crypto_amounts,
         "crypto_wallets": wallets,
         "bank_accounts": bank_accounts,
+        "vault_source": "fireblocks" if (vault and vault.get("vault_id")) else "fallback",
     }
 
 
@@ -958,3 +1013,115 @@ async def submit_payment_method(
 
     logger.info(f"Payment {payment_id} method submitted: {payload.payment_method} / {payload.crypto_currency}")
     return {"success": True, "payment_id": payment_id, "status": "awaiting_confirmation"}
+
+
+# ==================== ADMIN: FIREBLOCKS BILLING VAULT ====================
+
+
+@router.get("/vault")
+async def get_billing_vault(admin: dict = Depends(get_internal_user)):
+    """Return KBEX OnBoarding vault info + live balance summary."""
+    vault = await _get_billing_vault_config()
+    if not vault or not vault.get("vault_id"):
+        return {"configured": False, "vault_name": BILLING_VAULT_NAME}
+
+    out = {
+        "configured": True,
+        "vault_id": vault["vault_id"],
+        "vault_name": vault.get("vault_name", BILLING_VAULT_NAME),
+        "addresses": vault.get("addresses", {}),
+        "created_at": vault.get("created_at"),
+        "addresses_refreshed_at": vault.get("addresses_refreshed_at"),
+    }
+
+    # Try to fetch live balances (best-effort)
+    try:
+        acct = await FireblocksService.get_vault_account(vault["vault_id"])
+        balances = {}
+        for asset in (acct.get("assets") or []):
+            balances[asset.get("id")] = {
+                "total": asset.get("total", "0"),
+                "available": asset.get("available", "0"),
+            }
+        out["balances"] = balances
+    except Exception as e:
+        out["balances_error"] = str(e)[:200]
+
+    return out
+
+
+@router.post("/vault/setup")
+async def setup_billing_vault(admin: dict = Depends(get_admin_user)):
+    """
+    Create the 'KBEX OnBoarding' Fireblocks vault with BTC/ETH/USDT/USDC wallets.
+    Idempotent: if vault already exists in settings, it re-syncs addresses instead of recreating.
+    """
+    existing = await _get_billing_vault_config()
+    if existing and existing.get("vault_id"):
+        # Already exists — just refresh addresses
+        addresses = await _refresh_billing_vault_addresses(existing["vault_id"])
+        return {
+            "success": True,
+            "already_existed": True,
+            "vault_id": existing["vault_id"],
+            "addresses": addresses,
+        }
+
+    try:
+        result = await FireblocksService.create_vault_with_assets(
+            name=BILLING_VAULT_NAME,
+            asset_ids=list(BILLING_VAULT_ASSETS.values()),
+            hidden=False,
+        )
+    except Exception as e:
+        logger.exception(f"Failed to create billing vault: {e}")
+        raise HTTPException(status_code=500, detail=f"Falha ao criar vault Fireblocks: {str(e)[:200]}")
+
+    vault_id = result.get("vault_id")
+    if not vault_id:
+        raise HTTPException(status_code=500, detail="Fireblocks não retornou vault_id")
+
+    # Map Fireblocks assets → our labels
+    addresses = {}
+    label_by_fb_id = {v: k for k, v in BILLING_VAULT_ASSETS.items()}
+    for a in (result.get("assets") or []):
+        label = label_by_fb_id.get(a.get("asset_id"))
+        if label and a.get("address"):
+            addresses[label] = {
+                "address": a["address"],
+                "tag": a.get("tag", ""),
+                "asset_id": a["asset_id"],
+            }
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.platform_settings.update_one(
+        {"type": "billing_fireblocks_vault"},
+        {"$set": {
+            "type": "billing_fireblocks_vault",
+            "vault_id": vault_id,
+            "vault_name": BILLING_VAULT_NAME,
+            "addresses": addresses,
+            "created_at": now,
+            "created_by": admin.get("email"),
+            "addresses_refreshed_at": now,
+        }},
+        upsert=True,
+    )
+
+    logger.info(f"Billing vault created by {admin.get('email')}: id={vault_id}")
+    return {
+        "success": True,
+        "already_existed": False,
+        "vault_id": vault_id,
+        "addresses": addresses,
+    }
+
+
+@router.post("/vault/refresh-addresses")
+async def refresh_billing_vault_addresses(admin: dict = Depends(get_admin_user)):
+    """Re-fetch deposit addresses from Fireblocks (useful after manual asset additions in FB UI)."""
+    vault = await _get_billing_vault_config()
+    if not vault or not vault.get("vault_id"):
+        raise HTTPException(status_code=400, detail="Vault KBEX OnBoarding não configurado")
+    addresses = await _refresh_billing_vault_addresses(vault["vault_id"])
+    return {"success": True, "addresses": addresses}

@@ -64,6 +64,28 @@ Verified end-to-end: manual cycle trigger created 1 pending payment, notified cl
 - Translations in 5 languages (PT/EN/AR/FR/ES): `tierTracker.*` namespace
 - Fix: `/my-cofres` now returns `cofres_max` even when user has 0 cofres
 
+## Fireblocks KBEX OnBoarding Vault (2026-04-20)
+
+**Institutional-grade custody for all onboarding & annual fee payments.**
+
+Backend:
+- New endpoints in `billing.py`:
+  - `POST /api/billing/vault/setup` — idempotent create (or sync) of Fireblocks vault named **"KBEX OnBoarding"** with 4 assets: BTC · ETH · USDT_ERC20 · USDC
+  - `GET /api/billing/vault` — returns vault config, deposit addresses, live balances
+  - `POST /api/billing/vault/refresh-addresses` — re-fetches addresses from Fireblocks
+- Checkout endpoint `/billing/payments/{id}` now prioritises Fireblocks addresses (returns `vault_source: "fireblocks"`), falls back to `platform_settings.crypto_wallets` if vault not configured
+- Vault info stored in `platform_settings.billing_fireblocks_vault` (`vault_id`, addresses by asset, refreshed_at)
+
+Reused existing `FireblocksService` (SDK v2.17.0 already in project for Omnibus vault)
+
+Frontend:
+- New Vault card in `AdminBillingPage`: shows vault_id, last sync date, 2×2 grid of addresses with asset labels (BTC/ETH/USDT_ERC20/USDC), copy-to-clipboard, live balance per asset, Setup/Sync button
+
+**Verified in production (sandbox Fireblocks):**
+- Vault 78 created with real addresses: `bc1qtnfwejle94k9dt0equmteeayf26tlsu5vcqycd` (BTC), `0x3242b02F3F8949A1aD21694EFd4dE83c8e2275a5` (ETH/USDT/USDC)
+- Client checkout now pulls these exact addresses (`vault_source: fireblocks`)
+- Fallback still works if admin never creates the vault
+
 ## Billing Checkout — Pagar Agora (2026-04-20)
 
 **End-to-end payment flow for annual & upgrade invoices:**
