@@ -115,6 +115,8 @@ const translations = {
       escrowFees: 'Fee Revenue',
       // Section headers
       gestaoLabel: 'Management',
+      entity: 'Active Entity',
+      minhaPerformance: 'My Performance',
       loading: 'Loading...',
     },
 
@@ -2017,6 +2019,8 @@ const translations = {
       escrowFees: 'Fee Revenue',
       // Section headers
       gestaoLabel: 'Gestão',
+      entity: 'Entidade Ativa',
+      minhaPerformance: 'A Minha Performance',
       loading: 'A carregar...',
     },
 
@@ -3905,7 +3909,12 @@ const translations = {
       definirPreco: 'تحديد السعر',
       staking: 'التخزين',
       // Team Hub & Multi-Sign
-      teamHub: 'مركز الفر�عل؟',
+      teamHub: 'مركز الفريق',
+      // Section headers
+      gestaoLabel: 'الإدارة',
+      entity: 'الكيان النشط',
+      minhaPerformance: 'أدائي',
+      loading: 'جاري التحميل...',
       backToHome: 'العودة للرئيسية',
       loginSuccess: 'تم تسجيل الدخول بنجاح!',
       registerSuccess: 'تم إنشاء الحساب بنجاح!',
@@ -5571,6 +5580,8 @@ const translations = {
       escrowDeals: 'Deals',
       escrowFees: 'Fee Revenue',
       gestaoLabel: 'Gestion',
+      entity: 'Entité Active',
+      minhaPerformance: 'Ma Performance',
       loading: 'Chargement...',
     },
 
@@ -7248,6 +7259,8 @@ const translations = {
       escrowDeals: 'Deals',
       escrowFees: 'Fee Revenue',
       gestaoLabel: 'Gestión',
+      entity: 'Entidad Activa',
+      minhaPerformance: 'Mi Rendimiento',
       loading: 'Cargando...',
     },
     nav: {
