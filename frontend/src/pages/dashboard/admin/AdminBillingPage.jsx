@@ -9,9 +9,12 @@ import { Switch } from '../../../components/ui/switch';
 import { Label } from '../../../components/ui/label';
 import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
-  Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info,
+  Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '../../../components/ui/dialog';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -49,6 +52,7 @@ const AdminBillingPage = () => {
   const [savingFee, setSavingFee] = useState(false);
   const [runningCycle, setRunningCycle] = useState(false);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [historyDialog, setHistoryDialog] = useState({ open: false, user: null, data: null, loading: false });
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -100,6 +104,17 @@ const AdminBillingPage = () => {
       toast.error('Falha ao correr ciclo');
     } finally {
       setRunningCycle(false);
+    }
+  };
+
+  const openHistory = async (user) => {
+    setHistoryDialog({ open: true, user, data: null, loading: true });
+    try {
+      const res = await axios.get(`${API_URL}/api/billing/users/${user.id}/history`, { headers });
+      setHistoryDialog({ open: true, user, data: res.data, loading: false });
+    } catch {
+      toast.error('Falha ao carregar histórico');
+      setHistoryDialog({ open: true, user, data: null, loading: false });
     }
   };
 
@@ -251,17 +266,24 @@ const AdminBillingPage = () => {
                         }
                       </td>
                       <td className="p-3 text-right">
-                        {activeTab === 'suspended' ? (
-                          <Button size="sm" variant="outline" onClick={() => toggleSuspension(r.id, true)} className="border-emerald-700/40 text-emerald-400 hover:bg-emerald-900/20" data-testid={`unsuspend-btn-${idx}`}>
-                            <UserCheck size={12} className="mr-1" /> Reativar
-                          </Button>
-                        ) : activeTab !== 'pending' ? (
-                          <Button size="sm" variant="ghost" onClick={() => toggleSuspension(r.id, false)} className="text-red-400 hover:bg-red-900/20" data-testid={`suspend-btn-${idx}`}>
-                            <UserX size={12} className="mr-1" /> Suspender
-                          </Button>
-                        ) : (
-                          <span className="text-zinc-600 text-xs">aguarda aprovação</span>
-                        )}
+                        <div className="flex items-center justify-end gap-1">
+                          {activeTab !== 'pending' && r.id && (
+                            <Button size="sm" variant="ghost" onClick={() => openHistory(r)} className="text-zinc-400 hover:bg-zinc-800 hover:text-white" data-testid={`history-btn-${idx}`}>
+                              <History size={12} className="mr-1" /> Histórico
+                            </Button>
+                          )}
+                          {activeTab === 'suspended' ? (
+                            <Button size="sm" variant="outline" onClick={() => toggleSuspension(r.id, true)} className="border-emerald-700/40 text-emerald-400 hover:bg-emerald-900/20" data-testid={`unsuspend-btn-${idx}`}>
+                              <UserCheck size={12} className="mr-1" /> Reativar
+                            </Button>
+                          ) : activeTab !== 'pending' ? (
+                            <Button size="sm" variant="ghost" onClick={() => toggleSuspension(r.id, false)} className="text-red-400 hover:bg-red-900/20" data-testid={`suspend-btn-${idx}`}>
+                              <UserX size={12} className="mr-1" /> Suspender
+                            </Button>
+                          ) : (
+                            <span className="text-zinc-600 text-xs">aguarda aprovação</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -372,9 +394,74 @@ const AdminBillingPage = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* History dialog */}
+      <Dialog open={historyDialog.open} onOpenChange={(open) => !open && setHistoryDialog({ open: false, user: null, data: null, loading: false })}>
+        <DialogContent className="bg-zinc-950 border-gold-800/30 text-white max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-gold-400">
+              <History size={18} />
+              Histórico: {historyDialog.user?.name || historyDialog.user?.email}
+            </DialogTitle>
+          </DialogHeader>
+          {historyDialog.loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-gold-400" /></div>
+          ) : historyDialog.data ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Mini label="Pagamentos" value={historyDialog.data.summary?.total_payments || 0} />
+                <Mini label="Renovações" value={historyDialog.data.summary?.annual_count || 0} />
+                <Mini label="Upgrades" value={historyDialog.data.summary?.upgrade_count || 0} />
+                <Mini label="Total pago" value={`€${(historyDialog.data.summary?.total_paid_eur || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}`} />
+              </div>
+              {(historyDialog.data.payments || []).length === 0 ? (
+                <div className="text-center text-zinc-500 py-6">Sem histórico de pagamentos.</div>
+              ) : (
+                <div className="rounded-lg border border-zinc-800 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-zinc-900 border-b border-zinc-800">
+                      <tr className="text-zinc-500 text-[10px] uppercase tracking-wider">
+                        <th className="p-2.5 text-left">Tipo</th>
+                        <th className="p-2.5 text-left">Tier</th>
+                        <th className="p-2.5 text-right">Montante</th>
+                        <th className="p-2.5 text-left">Data</th>
+                        <th className="p-2.5 text-left">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...historyDialog.data.payments].reverse().map((p, i) => (
+                        <tr key={i} className="border-t border-zinc-800/60">
+                          <td className="p-2.5 capitalize">{p.fee_type || 'admission'}</td>
+                          <td className="p-2.5 text-zinc-300 capitalize">
+                            {p.target_tier ? `${p.membership_level} → ${p.target_tier}` : p.membership_level}
+                          </td>
+                          <td className="p-2.5 text-right tabular-nums">€{(p.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</td>
+                          <td className="p-2.5 text-zinc-400">{fmtDate(p.paid_at || p.created_at)}</td>
+                          <td className="p-2.5">
+                            {p.status === 'paid'
+                              ? <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Pago</Badge>
+                              : <Badge className="bg-amber-500/15 text-amber-300 border border-amber-500/30">Pendente</Badge>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
+const Mini = ({ label, value }) => (
+  <div className="rounded-md border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+    <div className="text-[10px] uppercase tracking-wider text-zinc-500">{label}</div>
+    <div className="text-white font-semibold tabular-nums mt-0.5">{value}</div>
+  </div>
+);
 
 const KpiCard = ({ icon, label, value, accent, onClick, active }) => {
   const colors = {

@@ -66,6 +66,15 @@ class SuspensionToggleRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class UpgradeRequest(BaseModel):
+    target_tier: str  # broker | standard | premium | vip | institucional
+
+
+class UpgradeApprovalRequest(BaseModel):
+    target_tier: str
+    force_amount_eur: Optional[float] = None  # Admin override
+
+
 # ==================== HELPERS ====================
 
 
@@ -79,9 +88,15 @@ async def _get_settings() -> dict:
         settings["annual_fee"] = AnnualFeeConfig().model_dump()
         changed = True
     ref = settings.get("referral_fees", {}) or {}
+    changed_ref = False
     if "annual_commission_percent" not in ref:
-        # Default: half of admission commission (conservative for renewals)
         ref["annual_commission_percent"] = round(float(ref.get("admission_fee_percent", 0.0)) / 2, 2)
+        changed_ref = True
+    if "upgrade_commission_percent" not in ref:
+        # Default: same as admission % for upgrades (incentive for team to drive upgrades)
+        ref["upgrade_commission_percent"] = float(ref.get("admission_fee_percent", 0.0))
+        changed_ref = True
+    if changed_ref:
         settings["referral_fees"] = ref
         changed = True
     if changed:
@@ -587,3 +602,218 @@ async def my_billing_status(user_id: str = Depends(get_current_user_id)):
         "billing_status": user.get("billing_status", "active"),
         "pending_payment": pending,
     }
+
+
+# ==================== HISTORY ====================
+
+
+TIER_RANK = {"broker": 0, "standard": 1, "premium": 2, "vip": 3, "institucional": 4}
+
+
+async def _payment_history(user_id: str) -> dict:
+    """Return a structured history of ALL billing payments for a user."""
+    payments = await db.admission_payments.find(
+        {"user_id": user_id},
+        {"_id": 0},
+    ).sort("created_at", 1).to_list(500)
+
+    summary = {
+        "total_payments": len(payments),
+        "admission_count": sum(1 for p in payments if p.get("fee_type", "admission") == "admission"),
+        "annual_count": sum(1 for p in payments if p.get("fee_type") == "annual"),
+        "upgrade_count": sum(1 for p in payments if p.get("fee_type") == "upgrade"),
+        "total_paid_eur": round(sum(
+            float(p.get("amount", 0)) for p in payments
+            if p.get("status") == "paid" and (p.get("currency") or "EUR") == "EUR"
+        ), 2),
+    }
+
+    # Account age (oldest paid payment)
+    first_paid = next((p for p in payments if p.get("status") == "paid"), None)
+    if first_paid and first_paid.get("paid_at"):
+        try:
+            dt = datetime.fromisoformat(first_paid["paid_at"].replace("Z", "+00:00"))
+            summary["account_age_days"] = (datetime.now(timezone.utc) - dt).days
+        except Exception:
+            summary["account_age_days"] = None
+    else:
+        summary["account_age_days"] = None
+
+    return {"payments": payments, "summary": summary}
+
+
+@router.get("/my-history")
+async def my_history(user_id: str = Depends(get_current_user_id)):
+    """Client-facing: their own renewal history."""
+    return await _payment_history(user_id)
+
+
+@router.get("/users/{user_id}/history")
+async def user_history(user_id: str, admin: dict = Depends(get_internal_user)):
+    """Admin: any client's billing history."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "id": 1, "name": 1, "email": 1, "membership_level": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    data = await _payment_history(user_id)
+    data["user"] = user
+    return data
+
+
+# ==================== TIER UPGRADE (PRO-RATA) ====================
+
+
+async def _compute_prorata_upgrade(user_id: str, target_tier: str) -> dict:
+    """
+    Policy: **pro-rata differential** (option (a)).
+    Charges only the price difference for the remaining period until next renewal.
+    Preserves anniversary date.
+    """
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    current_tier = (user.get("membership_level") or "standard").lower()
+    target_tier = target_tier.lower()
+
+    if target_tier not in TIER_RANK:
+        raise HTTPException(status_code=400, detail="Tier alvo inválido")
+    if TIER_RANK[target_tier] <= TIER_RANK.get(current_tier, 0):
+        raise HTTPException(status_code=400, detail="Só é possível fazer upgrade para tier superior")
+
+    current_annual = await _annual_fee_eur_for(current_tier)
+    target_annual = await _annual_fee_eur_for(target_tier)
+    delta_annual = max(0.0, target_annual - current_annual)
+
+    now = datetime.now(timezone.utc)
+    next_due_iso = user.get("annual_fee_next_due")
+    days_remaining = 365
+    if next_due_iso:
+        try:
+            next_due = datetime.fromisoformat(next_due_iso.replace("Z", "+00:00"))
+            days_remaining = max(0, (next_due - now).days)
+        except Exception:
+            pass
+
+    # Pro-rata: delta * (days_remaining / 365), rounded to 2dp
+    prorata_amount = round(delta_annual * (days_remaining / 365.0), 2)
+
+    return {
+        "user_id": user_id,
+        "current_tier": current_tier,
+        "target_tier": target_tier,
+        "current_annual_eur": current_annual,
+        "target_annual_eur": target_annual,
+        "annual_delta_eur": round(delta_annual, 2),
+        "days_remaining": days_remaining,
+        "prorata_amount_eur": prorata_amount,
+        "current_next_due": next_due_iso,
+        "policy": "prorata_delta",
+    }
+
+
+@router.post("/upgrade/quote")
+async def upgrade_quote(payload: UpgradeRequest, user_id: str = Depends(get_current_user_id)):
+    """Client-facing: preview exact amount to pay for an upgrade before confirming."""
+    return await _compute_prorata_upgrade(user_id, payload.target_tier)
+
+
+@router.post("/upgrade/request")
+async def request_upgrade_payment(payload: UpgradeRequest, user_id: str = Depends(get_current_user_id)):
+    """Client-facing: confirm upgrade and create pending upgrade payment."""
+    quote = await _compute_prorata_upgrade(user_id, payload.target_tier)
+
+    # Prevent duplicate pending upgrade
+    existing = await db.admission_payments.find_one(
+        {"user_id": user_id, "fee_type": "upgrade", "status": "pending"},
+        {"_id": 0, "id": 1},
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Já existe um upgrade pendente")
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "name": 1, "email": 1})
+    now = datetime.now(timezone.utc)
+
+    amount = quote["prorata_amount_eur"]
+    payment = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "user_email": (user or {}).get("email"),
+        "user_name": (user or {}).get("name"),
+        "fee_type": "upgrade",
+        "membership_level": quote["current_tier"],
+        "target_tier": quote["target_tier"],
+        "amount": amount,
+        "currency": "EUR",
+        "status": "pending" if amount > 0 else "paid",
+        "prorata_details": quote,
+        "created_at": _iso(now),
+    }
+    # Edge case: if amount is 0 (same tier or zero delta), auto-apply upgrade instantly.
+    if amount <= 0:
+        payment["paid_at"] = _iso(now)
+        payment["approved_by"] = "auto_zero_amount"
+        await db.users.update_one({"id": user_id}, {"$set": {"membership_level": quote["target_tier"]}})
+
+    await db.admission_payments.insert_one(payment)
+    return {"success": True, "payment_id": payment["id"], "amount": amount, "quote": quote}
+
+
+@router.post("/upgrade/{payment_id}/approve")
+async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)):
+    """Admin approves upgrade payment → applies new tier, pays commission to referrer."""
+    payment = await db.admission_payments.find_one({"id": payment_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    if payment.get("fee_type") != "upgrade":
+        raise HTTPException(status_code=400, detail="Pagamento não é um upgrade")
+    if payment.get("status") == "paid":
+        raise HTTPException(status_code=400, detail="Upgrade já foi aprovado")
+
+    now = datetime.now(timezone.utc)
+    target_tier = payment.get("target_tier") or (payment.get("prorata_details") or {}).get("target_tier")
+    if not target_tier:
+        raise HTTPException(status_code=400, detail="Target tier em falta")
+
+    user_id = payment.get("user_id")
+
+    # Mark payment paid
+    await db.admission_payments.update_one(
+        {"id": payment_id},
+        {"$set": {
+            "status": "paid",
+            "paid_at": _iso(now),
+            "approved_by": admin.get("email"),
+        }},
+    )
+
+    # Apply tier change. Preserve existing annual_fee_next_due (anniversary stays).
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"membership_level": target_tier, "billing_status": "active"}},
+    )
+
+    # Referrer commission on the upgrade differential
+    try:
+        from routes.referrals import calculate_referrer_commission
+        referral = await db.referrals.find_one({"client_id": user_id, "status": "active"})
+        if referral and payment.get("amount", 0) > 0:
+            com = await calculate_referrer_commission("upgrade", payment["amount"], "EUR")
+            if com["commission_amount"] > 0:
+                await db.referral_commissions.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "referral_id": referral.get("id"),
+                    "referrer_id": referral.get("referrer_id"),
+                    "client_id": user_id,
+                    "transaction_type": "upgrade",
+                    "original_amount": payment["amount"],
+                    "commission_amount": com["commission_amount"],
+                    "commission_percent": com["commission_percent"],
+                    "currency": "EUR",
+                    "status": "pending",
+                    "created_at": _iso(now),
+                })
+    except Exception as e:
+        logger.warning(f"Failed to calculate upgrade commission: {e}")
+
+    logger.info(f"Upgrade {payment_id} approved by {admin.get('email')}: user {user_id} → {target_tier}")
+    return {"success": True, "target_tier": target_tier}

@@ -64,6 +64,31 @@ Verified end-to-end: manual cycle trigger created 1 pending payment, notified cl
 - Translations in 5 languages (PT/EN/AR/FR/ES): `tierTracker.*` namespace
 - Fix: `/my-cofres` now returns `cofres_max` even when user has 0 cofres
 
+## Billing Phase 2 — Upgrade Pro-Rata + History + Client UI (2026-04-20)
+
+**New capabilities (on top of Phase 1 billing):**
+
+Backend:
+- `POST /api/billing/upgrade/quote` — pro-rata calculator (delta × days_remaining/365)
+- `POST /api/billing/upgrade/request` — client submits upgrade, auto-creates pending payment (or instantly applies if delta=0)
+- `POST /api/billing/upgrade/{id}/approve` — admin approves upgrade, applies new tier, preserves anniversary, pays `upgrade_commission_percent` to referrer
+- `GET /api/billing/my-history` — client's own payments chronologically with summary (total paid, renewals, upgrades, account age)
+- `GET /api/billing/users/{id}/history` — admin view
+- `referral_fees.upgrade_commission_percent` added (seed defaults to admission %)
+
+Frontend:
+- `ClientTiersPage` upgrade dialog now shows **live pro-rata breakdown** (current/target/delta/days/amount)
+- New `AnnualFeeBanner` component on dashboard (imminent/overdue/pending/suspended states, dismissible)
+- New `BillingSection` on ProfilePage: tier info + taxa anual + próxima renovação + pending payment banner + history table with type badges (Admissão/Renovação/Upgrade)
+- `AdminBillingPage` got History drawer (per-client timeline with summary tiles)
+- `AdminSettings` adds "Comissão Upgrade (%)" field
+- **Menu moved:** "Cobrança & Renovações" migrated from Gestão → Financeiro
+
+Verified end-to-end:
+- Pro-rata Standard→Premium with 183 days remaining returns €373.97 (✓ €750 × 183/365)
+- Upgrade delta=0 auto-applies without payment
+- Commission on upgrade uses `upgrade_commission_percent`
+
 ## Cofre / Vault Limits Unified (2026-04-20)
 - **Single source of truth:** `client_tiers_config` → feature `otc_vaults` (renamed to "Cofres (Omnibus)")
 - **Backend:** `_get_max_cofres()` in `omnibus.py` reads from `client_tiers_config`; legacy `omnibus_tier_limits` endpoints marked `deprecated=True` and write-through to canonical source

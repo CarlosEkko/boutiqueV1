@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AnnualFeeBanner from '../../components/billing/AnnualFeeBanner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../i18n';
 import axios from 'axios';
@@ -162,6 +163,9 @@ const DashboardOverview = () => {
 
   return (
     <div className="space-y-6">
+      {/* Billing banner */}
+      <AnnualFeeBanner />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

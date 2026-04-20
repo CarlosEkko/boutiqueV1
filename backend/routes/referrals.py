@@ -34,6 +34,7 @@ class ReferralFeeConfig(BaseModel):
     withdrawal_fee_percent: float = Field(default=5.0, ge=0, le=100, description="% of withdrawal fee given to referrer")
     admission_fee_percent: float = Field(default=0.0, ge=0, le=100, description="% of INITIAL admission fee given to referrer")
     annual_commission_percent: float = Field(default=0.0, ge=0, le=100, description="% of ANNUAL renewal fee given to referrer")
+    upgrade_commission_percent: float = Field(default=0.0, ge=0, le=100, description="% of UPGRADE differential fee given to referrer")
     min_payout_amount: float = Field(default=50.0, ge=0, description="Minimum amount for commission payout")
     payout_currency: str = Field(default="EUR", description="Currency for commission payouts")
 
@@ -101,6 +102,8 @@ async def calculate_referrer_commission(transaction_type: str, fee_amount: float
         percent = referral_fees.get("admission_fee_percent", 0.0)
     elif transaction_type == "annual":
         percent = referral_fees.get("annual_commission_percent", 0.0)
+    elif transaction_type == "upgrade":
+        percent = referral_fees.get("upgrade_commission_percent", 0.0)
     else:
         percent = 0
     

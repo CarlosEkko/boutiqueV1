@@ -35,6 +35,7 @@ const AdminSettings = () => {
     withdrawal_fee_percent: 5,
     admission_fee_percent: 0,
     annual_commission_percent: 0,
+    upgrade_commission_percent: 0,
     min_payout_amount: 50,
     payout_currency: 'EUR'
   });
@@ -264,6 +265,28 @@ const AdminSettings = () => {
                 <span className="text-gray-500 text-sm w-24">recorrente</span>
               </div>
               <p className="text-xs text-gray-500">% da taxa anual paga ao referenciador nas renovações</p>
+            </div>
+
+            {/* Upgrade Commission */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Comissão Upgrade (%)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number" step="any"
+                  value={referralFees.upgrade_commission_percent ?? 0}
+                  onChange={(e) => setReferralFees({
+                    ...referralFees,
+                    upgrade_commission_percent: parseFloat(e.target.value) || 0
+                  })}
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                  data-testid="upgrade-commission-percent-input"
+                />
+                <span className="text-gray-500 text-sm w-24">pro-rata</span>
+              </div>
+              <p className="text-xs text-gray-500">% do diferencial pro-rata pago ao referenciador em upgrades</p>
             </div>
 
             {/* Min Payout */}

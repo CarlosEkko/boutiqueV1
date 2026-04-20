@@ -124,6 +124,8 @@ const ClientTiersPage = () => {
   const [upgradeDialog, setUpgradeDialog] = useState({ open: false, targetTier: null });
   const [upgradeMessage, setUpgradeMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [quote, setQuote] = useState(null);
+  const [loadingQuote, setLoadingQuote] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -145,23 +147,53 @@ const ClientTiersPage = () => {
   const currentTier = config?.current_tier || 'standard';
   const currentRank = RANK[currentTier] ?? 1;
 
-  const openUpgrade = (targetTier) => {
+  const openUpgrade = async (targetTier) => {
     setUpgradeDialog({ open: true, targetTier });
     setUpgradeMessage('');
+    setQuote(null);
+    setLoadingQuote(true);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/billing/upgrade/quote`,
+        { target_tier: targetTier },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setQuote(res.data);
+    } catch (err) {
+      // Silent — the dialog still works for informational upgrade requests
+    } finally {
+      setLoadingQuote(false);
+    }
   };
 
   const submitUpgrade = async () => {
     if (!upgradeDialog.targetTier) return;
     setSubmitting(true);
     try {
-      await axios.post(
-        `${API_URL}/api/client-tiers/upgrade-request`,
-        { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(t('tiers.upgrade.success'));
+      // If we have a valid quote with pro-rata amount, use the billing upgrade flow
+      if (quote && typeof quote.prorata_amount_eur === 'number') {
+        const res = await axios.post(
+          `${API_URL}/api/billing/upgrade/request`,
+          { target_tier: upgradeDialog.targetTier },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(
+          res.data.amount > 0
+            ? t('tiers.upgrade.successPayment', `Pagamento de €${res.data.amount.toFixed(2)} criado. Aguarda aprovação.`)
+            : t('tiers.upgrade.success')
+        );
+      } else {
+        // Fallback: informational request only
+        await axios.post(
+          `${API_URL}/api/client-tiers/upgrade-request`,
+          { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(t('tiers.upgrade.success'));
+      }
       setUpgradeDialog({ open: false, targetTier: null });
       setUpgradeMessage('');
+      setQuote(null);
     } catch (err) {
       toast.error(err?.response?.data?.detail || t('tiers.upgrade.error'));
     } finally {
@@ -346,6 +378,48 @@ const ClientTiersPage = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
+            {/* Pro-rata quote (if available) */}
+            {loadingQuote && (
+              <div className="flex items-center justify-center py-6 text-zinc-500">
+                <Loader2 className="animate-spin mr-2" size={14} />
+                <span className="text-sm">A calcular pro-rata...</span>
+              </div>
+            )}
+            {!loadingQuote && quote && (
+              <div className="rounded-lg border border-gold-800/40 bg-gold-950/20 p-4 space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-gold-400/80 mb-1">
+                  Quote · Pro-rata do diferencial
+                </div>
+                <div className="flex justify-between text-xs text-zinc-400">
+                  <span>Valor anual {quote.current_tier.toUpperCase()}</span>
+                  <span className="tabular-nums">€{quote.current_annual_eur.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-xs text-zinc-400">
+                  <span>Valor anual {quote.target_tier.toUpperCase()}</span>
+                  <span className="tabular-nums">€{quote.target_annual_eur.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-xs text-zinc-400 border-t border-zinc-800 pt-2">
+                  <span>Diferencial anual</span>
+                  <span className="tabular-nums">€{quote.annual_delta_eur.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-xs text-zinc-400">
+                  <span>Dias restantes no ciclo</span>
+                  <span className="tabular-nums">{quote.days_remaining} / 365</span>
+                </div>
+                <div className="flex justify-between text-sm text-white font-semibold border-t border-gold-700/40 pt-2">
+                  <span>A pagar agora</span>
+                  <span className="tabular-nums text-gold-400 text-base">
+                    €{quote.prorata_amount_eur.toLocaleString('pt-PT', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                {quote.current_next_due && (
+                  <div className="text-[10px] text-zinc-500">
+                    Data de renovação mantém-se: {new Date(quote.current_next_due).toLocaleDateString('pt-PT')}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="text-xs text-zinc-500 uppercase tracking-wider">
               {t('tiers.upgrade.messageLabel')}
             </div>
@@ -353,7 +427,7 @@ const ClientTiersPage = () => {
               placeholder={t('tiers.upgrade.messagePlaceholder')}
               value={upgradeMessage}
               onChange={(e) => setUpgradeMessage(e.target.value)}
-              className="bg-zinc-900 border-zinc-800 text-white min-h-[120px]"
+              className="bg-zinc-900 border-zinc-800 text-white min-h-[80px]"
               data-testid="upgrade-message-textarea"
               maxLength={2000}
             />

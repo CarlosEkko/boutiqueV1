@@ -22,6 +22,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Lazy import DemoToggle
 const DemoToggle = React.lazy(() => import('../components/dashboard/DemoToggle'));
+const BillingSection = React.lazy(() => import('../components/billing/BillingSection'));
 
 const COUNTRIES = [
   { code: 'PT', name: 'Portugal' },
@@ -478,6 +479,10 @@ const ProfilePage = () => {
       </div>
 
       {/* Business Accounts Section */}
+      <React.Suspense fallback={null}>
+        <BillingSection />
+      </React.Suspense>
+
       <Card className="bg-zinc-900/50 border-gold-800/20 mt-6" data-testid="business-accounts-section">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
