@@ -21,24 +21,51 @@ class FireblocksService:
     
     @classmethod
     def get_client(cls) -> FireblocksSDK:
-        """Get or create Fireblocks SDK client"""
+        """Get or create Fireblocks SDK client.
+
+        Secret key resolution order:
+          1. FIREBLOCKS_SECRET_KEY env var (direct PEM content — recommended for Docker)
+          2. FIREBLOCKS_SECRET_KEY_PATH env var (path to PEM file — for dev)
+        """
         if cls._instance is not None:
             return cls._instance
-        
+
         api_key = os.environ.get("FIREBLOCKS_API_KEY")
+        secret_key_inline = os.environ.get("FIREBLOCKS_SECRET_KEY")
         secret_key_path = os.environ.get("FIREBLOCKS_SECRET_KEY_PATH")
         base_url = os.environ.get("FIREBLOCKS_BASE_PATH", "https://sandbox-api.fireblocks.io")
-        
+
         if not api_key:
             raise ValueError("FIREBLOCKS_API_KEY not configured")
-        
-        if not secret_key_path or not os.path.exists(secret_key_path):
-            raise ValueError(f"Fireblocks secret key file not found: {secret_key_path}")
-        
-        try:
+
+        secret_key: Optional[str] = None
+
+        # Option 1: inline PEM content (supports literal \n escapes in env files)
+        if secret_key_inline and secret_key_inline.strip():
+            secret_key = secret_key_inline.replace("\\n", "\n").strip()
+
+        # Option 2: file path (fallback to inline if file is actually a directory)
+        elif secret_key_path:
+            if not os.path.exists(secret_key_path):
+                raise ValueError(f"Fireblocks secret key file not found: {secret_key_path}")
+            if os.path.isdir(secret_key_path):
+                raise ValueError(
+                    f"FIREBLOCKS_SECRET_KEY_PATH points to a DIRECTORY, not a file: {secret_key_path}. "
+                    "This is usually caused by a Docker volume mount. Fix: set FIREBLOCKS_SECRET_KEY "
+                    "(inline PEM content) in the container environment instead of mounting a file."
+                )
             with open(secret_key_path, 'r') as f:
-                secret_key = f.read()
-            
+                secret_key = f.read().strip()
+        else:
+            raise ValueError(
+                "Fireblocks secret not configured. Set either FIREBLOCKS_SECRET_KEY (inline PEM) "
+                "or FIREBLOCKS_SECRET_KEY_PATH (file path)."
+            )
+
+        if not secret_key or "PRIVATE KEY" not in secret_key:
+            raise ValueError("Fireblocks secret key appears invalid (no PEM header found).")
+
+        try:
             cls._instance = FireblocksSDK(
                 private_key=secret_key,
                 api_key=api_key,
@@ -46,7 +73,7 @@ class FireblocksService:
             )
             logger.info("Fireblocks client initialized successfully")
             return cls._instance
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Fireblocks client: {e}")
             raise

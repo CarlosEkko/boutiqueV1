@@ -40,7 +40,8 @@ services:
       - BINANCE_API_KEY=${BINANCE_API_KEY}
       - BINANCE_SECRET_KEY=${BINANCE_SECRET_KEY}
       - FIREBLOCKS_API_KEY=${FIREBLOCKS_API_KEY:-}
-      - FIREBLOCKS_SECRET_KEY_PATH=/app/fireblocks_secret.key
+      - FIREBLOCKS_SECRET_KEY=${FIREBLOCKS_SECRET_KEY:-}
+      - FIREBLOCKS_SECRET_KEY_PATH=${FIREBLOCKS_SECRET_KEY_PATH:-}
       - FIREBLOCKS_BASE_PATH=${FIREBLOCKS_BASE_PATH:-https://api.fireblocks.io}
       - SUMSUB_APP_TOKEN=${SUMSUB_APP_TOKEN}
       - SUMSUB_SECRET_KEY=${SUMSUB_SECRET_KEY}
@@ -61,7 +62,6 @@ services:
       - REVOLUT_ENV=${REVOLUT_ENV:-production}
     volumes:
       - backend_uploads:/app/uploads
-      - ./backend/fireblocks_secret.key:/app/fireblocks_secret.key:ro
       - ./backend/certs:/app/certs:ro
     networks:
       - kbex-network
