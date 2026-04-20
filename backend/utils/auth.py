@@ -1,8 +1,9 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Optional
 import os
 
 # Password hashing
@@ -63,3 +64,19 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user_id
+
+
+async def get_optional_user_id(authorization: Optional[str] = Header(None)) -> Optional[str]:
+    """Extract user ID from Authorization header if present — returns None for anonymous callers.
+    Used by endpoints that serve both public and authenticated users (e.g. price feeds with tier-aware spread).
+    """
+    if not authorization:
+        return None
+    try:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            return None
+        payload = decode_token(token)
+        return payload.get("sub")
+    except Exception:
+        return None

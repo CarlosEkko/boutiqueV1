@@ -24,7 +24,7 @@ async def get_current_user_id(current_user=Depends(get_current_user)):
         return current_user.id
     return current_user.get("id", current_user.get("user_id"))
 
-PRODUCTS = ["otc", "exchange", "escrow", "spot"]
+PRODUCTS = ["otc", "exchange", "escrow", "spot", "multisign"]
 TIERS = ["broker", "standard", "premium", "vip", "institucional"]
 
 
@@ -162,6 +162,26 @@ async def resolve_spread(product: str, tier: str, asset: str) -> dict:
         return rate
 
     return {"buy_spread_pct": 0, "sell_spread_pct": 0}
+
+
+@router.get("/my-spreads")
+async def my_spreads(user_id: str = Depends(get_current_user_id)):
+    """Unified view: all KBEX Spread values resolved for the current user's tier.
+    Returns one entry per product (otc, exchange, spot, escrow, multisign).
+    Use this from dashboard UIs to display 'your fees per product'.
+    """
+    db = get_db()
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "membership_level": 1})
+    tier = ((user or {}).get("membership_level") or "standard").lower()
+
+    out = {}
+    for product in PRODUCTS:
+        s = await resolve_spread(product, tier, "*")
+        out[product] = {
+            "buy_spread_pct": float(s.get("buy_spread_pct", 0) or 0),
+            "sell_spread_pct": float(s.get("sell_spread_pct", 0) or 0),
+        }
+    return {"tier": tier, "spreads": out}
 
 
 @router.get("/resolve")

@@ -10,7 +10,12 @@ const API = process.env.REACT_APP_BACKEND_URL;
 const getHeaders = () => ({ Authorization: `Bearer ${sessionStorage.getItem('kryptobox_token')}`, 'Content-Type': 'application/json' });
 
 const TIER_LABELS = { broker: 'Broker', standard: 'Standard', premium: 'Premium', vip: 'VIP', institucional: 'Institucional' };
-const PRODUCT_LABELS = { otc: 'OTC Desk', exchange: 'Exchange', escrow: 'Escrow', spot: 'Spot Market' };
+const PRODUCT_LABELS = { otc: 'OTC Desk', exchange: 'Exchange', escrow: 'Escrow', spot: 'Trading / Spot Market', multisign: 'Multi-Sign (Custódia)' };
+const PRODUCT_COL_LABELS = {
+  default: { buy: 'Spread Compra (%)', sell: 'Spread Venda (%)' },
+  escrow: { buy: 'Fee de Serviço (%)', sell: 'Min Fee (%)' },
+  multisign: { buy: 'Custódia Anual (%)', sell: 'Setup Fee (%)' },
+};
 const TIER_COLORS = { broker: 'bg-blue-500/20 text-blue-400', standard: 'bg-zinc-500/20 text-zinc-300', premium: 'bg-amber-500/20 text-amber-400', vip: 'bg-purple-500/20 text-purple-400', institucional: 'bg-emerald-500/20 text-emerald-400' };
 
 export default function AdminKBEXRates() {
@@ -94,14 +99,14 @@ export default function AdminKBEXRates() {
   const hasEdits = Object.keys(edited).length > 0;
 
   return (
-    <div className="space-y-6" data-testid="admin-kbex-rates">
+    <div className="space-y-6" data-testid="admin-kbex-spread">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Settings size={24} className="text-gold-500" /> Configuração KBEX Rates
+            <Settings size={24} className="text-gold-500" /> KBEX Spread
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">Spreads por produto, tier e ativo</p>
+          <p className="text-zinc-400 text-sm mt-1">Arquitectura de spreads & fees por produto, tier e activo. Aplica-se a Markets, Trading, Exchange, OTC, Escrow e Multi-Sign.</p>
         </div>
         <div className="flex gap-2">
           {rates.length === 0 && (
@@ -139,12 +144,13 @@ export default function AdminKBEXRates() {
       {/* Rate Tables by Product */}
       {products.map(product => {
         const isExpanded = expandedProduct === product;
+        const cols = PRODUCT_COL_LABELS[product] || PRODUCT_COL_LABELS.default;
         return (
           <Card key={product} className="bg-zinc-900/50 border-zinc-800">
             <CardHeader className="pb-3 cursor-pointer" onClick={() => setExpandedProduct(isExpanded ? null : product)} data-testid={`product-section-${product}`}>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base text-white flex items-center gap-2">
-                  <TrendingUp size={16} className="text-gold-500" /> {PRODUCT_LABELS[product]}
+                  <TrendingUp size={16} className="text-gold-500" /> {PRODUCT_LABELS[product] || product}
                   <Badge variant="outline" className="border-zinc-700 text-zinc-400 text-xs ml-2">{tiers.length} tiers</Badge>
                 </CardTitle>
                 {isExpanded ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
@@ -157,8 +163,8 @@ export default function AdminKBEXRates() {
                     <thead>
                       <tr className="border-b border-zinc-800">
                         <th className="text-left text-zinc-500 py-2 px-3 w-40">Tier</th>
-                        <th className="text-center text-emerald-500 py-2 px-3">Spread Compra (%)</th>
-                        <th className="text-center text-red-400 py-2 px-3">Spread Venda (%)</th>
+                        <th className="text-center text-emerald-500 py-2 px-3">{cols.buy}</th>
+                        <th className="text-center text-red-400 py-2 px-3">{cols.sell}</th>
                         <th className="text-right text-zinc-500 py-2 px-3">Última Atualização</th>
                       </tr>
                     </thead>

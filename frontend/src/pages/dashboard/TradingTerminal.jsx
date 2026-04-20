@@ -32,7 +32,7 @@ const TradingTerminal = () => {
 
   const fetchMarkets = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/trading/markets?currency=USD`);
+      const res = await axios.get(`${API_URL}/api/trading/markets?currency=USD&product=spot`);
       setMarkets(res.data.markets || []);
     } catch (err) {
       console.error('Failed to fetch markets', err);

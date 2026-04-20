@@ -89,7 +89,7 @@ const TradingPage = () => {
   const fetchMarkets = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/trading/markets`, {
-        params: { currency: selectedCurrency }
+        params: { currency: selectedCurrency, product: 'spot' }
       });
       setMarkets(response.data.markets || []);
       

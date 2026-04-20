@@ -345,8 +345,9 @@ const ExchangePage = () => {
 
   const calculateBuyPreview = () => {
     if (!selectedCrypto || !fees) return null;
-    
-    const price = selectedCrypto.price || selectedCrypto.price_usd || 0;
+
+    // Apply KBEX Spread: buy side uses price_buy (higher than mid)
+    const price = selectedCrypto.price_buy || selectedCrypto.price || selectedCrypto.price_usd || 0;
     const feePercent = fees.buy_fee_percent || 2;
     const networkFee = convertFromUSD(fees.network_fees?.ethereum || 5);
     
@@ -386,9 +387,10 @@ const ExchangePage = () => {
 
   const calculateSellPreview = () => {
     if (!selectedCrypto || !sellAmount || !fees) return null;
-    
+
     const cryptoAmount = parseFloat(sellAmount);
-    const price = selectedCrypto.price || selectedCrypto.price_usd || 0;
+    // Apply KBEX Spread: sell side uses price_sell (lower than mid)
+    const price = selectedCrypto.price_sell || selectedCrypto.price || selectedCrypto.price_usd || 0;
     const feePercent = fees.sell_fee_percent || 2;
     
     const grossAmount = cryptoAmount * price;
@@ -405,10 +407,11 @@ const ExchangePage = () => {
 
   const calculateSwapPreview = () => {
     if (!fromCrypto || !toCrypto || !fromAmount || !fees) return null;
-    
+
     const amount = parseFloat(fromAmount);
-    const fromPrice = fromCrypto.price || fromCrypto.price_usd || 0;
-    const toPrice = toCrypto.price || toCrypto.price_usd || 0;
+    // Swap: cliente VENDE from (price_sell) e COMPRA to (price_buy)
+    const fromPrice = fromCrypto.price_sell || fromCrypto.price || fromCrypto.price_usd || 0;
+    const toPrice = toCrypto.price_buy || toCrypto.price || toCrypto.price_usd || 0;
     const feePercent = fees.swap_fee_percent || 1.5;
     
     const fromValue = amount * fromPrice;
@@ -1133,6 +1136,28 @@ const ExchangePage = () => {
                       {selectedCrypto.change_24h >= 0 ? '+' : ''}{selectedCrypto.change_24h?.toFixed(2)}%
                     </span>
                   </div>
+                  {(selectedCrypto.price_buy || selectedCrypto.price_sell) && (
+                    <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/60 pt-2" data-testid="exchange-spread-row">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          {t('dashboard.exchange.buy') || 'Comprar'}
+                          {selectedCrypto.buy_spread_pct ? ` (+${selectedCrypto.buy_spread_pct}%)` : ''}
+                        </span>
+                        <span className="text-emerald-400 text-sm font-medium tabular-nums" data-testid="exchange-price-buy">
+                          {formatCurrency(selectedCrypto.price_buy)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                          {t('dashboard.exchange.sell') || 'Vender'}
+                          {selectedCrypto.sell_spread_pct ? ` (-${selectedCrypto.sell_spread_pct}%)` : ''}
+                        </span>
+                        <span className="text-red-400 text-sm font-medium tabular-nums" data-testid="exchange-price-sell">
+                          {formatCurrency(selectedCrypto.price_sell)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {selectedCrypto.market_cap && (
                     <div className="text-sm text-gray-400">
                       Market Cap: {formatCurrency(selectedCrypto.market_cap / 1e9)}B

@@ -20,7 +20,7 @@ from models.trading import (
     KBEXBankAccount, KBEXBankAccountCreate, KBEXBankAccountUpdate,
     FiatWithdrawal, FiatWithdrawalRequest, WithdrawalStatus
 )
-from utils.auth import get_current_user_id
+from utils.auth import get_current_user_id, get_optional_user_id
 from utils.i18n import t, I18n
 from routes.admin import get_admin_user, get_internal_user
 
@@ -1528,66 +1528,106 @@ async def get_fiat_exchange_rates():
 
 
 @router.get("/cryptos", response_model=List[dict])
-async def get_available_cryptos(currency: str = "USD"):
-    """Get list of available cryptocurrencies with prices in specified currency"""
+async def get_available_cryptos(
+    currency: str = "USD",
+    product: str = "exchange",
+    user_id: Optional[str] = Depends(get_optional_user_id),
+):
+    """Get list of available cryptocurrencies with prices in specified currency.
+    Applies KBEX Spread (product × tier × asset) to each price.
+
+    Returned per crypto:
+      - price     : mid price (base)  ← kept for backward compat
+      - price_buy : what client pays to buy  (price × (1+buy_spread%))
+      - price_sell: what client receives when selling (price × (1-sell_spread%))
+      - buy_spread_pct / sell_spread_pct : applied rates
+    """
+    from services import pricing_service
+
     currency = currency.upper()
     if currency not in SUPPORTED_FIAT:
         currency = "USD"
-    
+
+    # Resolve tier for authenticated caller; anonymous → "standard"
+    tier = "standard"
+    if user_id:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "membership_level": 1})
+        tier = ((user or {}).get("membership_level") or "standard").lower()
+
     # Get exchange rates
     rates = await get_exchange_rates()
-    
+
     cryptos = await db.supported_cryptos.find(
         {"is_active": True},
         {"_id": 0}
     ).to_list(100)
-    
+
     if not cryptos or len(cryptos) < 50:
-        # Use the full list of 50 default cryptos
         cryptos = [c.copy() for c in DEFAULT_CRYPTOS]
-    
-    # Get all symbols to fetch prices for
+
     symbols = [crypto["symbol"] for crypto in cryptos]
-    
-    # Fetch all prices in one API call (optimized)
     all_prices = await get_bulk_crypto_prices(symbols)
-    
-    # Apply prices to cryptos
+
     for crypto in cryptos:
         price_info = all_prices.get(crypto["symbol"], {})
         price_usd = price_info.get("price_usd") or 0
         market_cap_usd = price_info.get("market_cap")
-        
+
         crypto["price_usd"] = price_usd
-        crypto["price"] = convert_price(price_usd, currency, rates) if price_usd else 0
+        base_price = convert_price(price_usd, currency, rates) if price_usd else 0
+        crypto["price"] = base_price
         crypto["currency"] = currency
         crypto["change_24h"] = price_info.get("change_24h") or 0
         crypto["market_cap"] = convert_price(market_cap_usd, currency, rates) if market_cap_usd else None
-        
-        # Add logo URL
+
+        # Apply KBEX Spread
+        spread = await pricing_service.apply_spread(base_price, product, tier, crypto["symbol"])
+        crypto["price_buy"] = spread["buy"]
+        crypto["price_sell"] = spread["sell"]
+        crypto["buy_spread_pct"] = spread["buy_spread_pct"]
+        crypto["sell_spread_pct"] = spread["sell_spread_pct"]
+
         if crypto.get("cmc_id"):
             crypto["logo"] = get_crypto_logo_url(crypto["cmc_id"])
-    
+
     return cryptos
 
 
 @router.get("/price/{symbol}", response_model=dict)
-async def get_single_crypto_price(symbol: str, currency: str = "USD"):
-    """Get price for a single cryptocurrency in specified currency"""
+async def get_single_crypto_price(
+    symbol: str,
+    currency: str = "USD",
+    product: str = "exchange",
+    user_id: Optional[str] = Depends(get_optional_user_id),
+):
+    """Get price for a single cryptocurrency in specified currency, with KBEX Spread applied."""
+    from services import pricing_service
+
     currency = currency.upper()
     if currency not in SUPPORTED_FIAT:
         currency = "USD"
-    
+
+    tier = "standard"
+    if user_id:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "membership_level": 1})
+        tier = ((user or {}).get("membership_level") or "standard").lower()
+
     rates = await get_exchange_rates()
     price_info = await get_crypto_price(symbol.upper())
-    
     price_usd = price_info.get("price_usd", 0)
-    
+    base_price = convert_price(price_usd, currency, rates)
+
+    sp = await pricing_service.apply_spread(base_price, product, tier, symbol.upper())
+
     return {
         **price_info,
-        "price": convert_price(price_usd, currency, rates),
+        "price": base_price,
+        "price_buy": sp["buy"],
+        "price_sell": sp["sell"],
+        "buy_spread_pct": sp["buy_spread_pct"],
+        "sell_spread_pct": sp["sell_spread_pct"],
         "currency": currency,
-        "exchange_rate": rates.get(currency, 1.0)
+        "exchange_rate": rates.get(currency, 1.0),
     }
 
 
@@ -2684,8 +2724,11 @@ MARKETS_CACHE = {
 }
 
 @router.get("/markets")
-async def get_markets_data(currency: str = "USD"):
-    """Get market data for all supported cryptocurrencies using Binance API"""
+async def get_markets_data(currency: str = "USD", product: str = "exchange"):
+    """Get market data for all supported cryptocurrencies using Binance API.
+    Applies public KBEX Spread (tier=standard). `product` selects which spread profile
+    to use: exchange (default), spot (Trading page), otc, escrow, multisign.
+    """
     global MARKETS_CACHE
     
     now = datetime.now(timezone.utc)
@@ -2695,7 +2738,7 @@ async def get_markets_data(currency: str = "USD"):
         cache_age = (now - MARKETS_CACHE["updated_at"]).total_seconds()
         if cache_age < 60:
             # Return cached data converted to requested currency
-            return await convert_markets_to_currency(MARKETS_CACHE["data"], currency)
+            return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product)
     
     # Fetch fresh data from Binance
     try:
@@ -2753,40 +2796,46 @@ async def get_markets_data(currency: str = "USD"):
                 MARKETS_CACHE["data"] = markets
                 MARKETS_CACHE["updated_at"] = now
                 
-                return await convert_markets_to_currency(markets, currency)
+                return await convert_markets_to_currency(markets, currency, product)
     
     except Exception as e:
         print(f"Failed to fetch market data from Binance: {e}")
     
     # Return cached or fallback data
     if MARKETS_CACHE["data"]:
-        return await convert_markets_to_currency(MARKETS_CACHE["data"], currency)
+        return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product)
     
     # Return default/fallback data
     return await get_fallback_markets(currency)
 
 
-async def convert_markets_to_currency(markets: list, currency: str) -> dict:
-    """Convert market data to target currency"""
+async def convert_markets_to_currency(markets: list, currency: str, product: str = "exchange") -> dict:
+    """Convert market data to target currency and apply public KBEX spread (product × standard)."""
+    from services import pricing_service
+
     if currency == "USD":
-        return {
-            "currency": currency,
-            "markets": markets,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-    
-    rates = await get_exchange_rates()
-    rate = rates.get(currency, 1.0)
-    
-    converted = []
-    for m in markets:
-        converted.append({
-            **m,
-            "price": (m.get("price") or 0) * rate,
-            "volume_24h": (m.get("volume_24h") or 0) * rate,
-            "market_cap": (m.get("market_cap") or 0) * rate,
-        })
-    
+        converted = markets
+    else:
+        rates = await get_exchange_rates()
+        rate = rates.get(currency, 1.0)
+        converted = [
+            {
+                **m,
+                "price": (m.get("price") or 0) * rate,
+                "volume_24h": (m.get("volume_24h") or 0) * rate,
+                "market_cap": (m.get("market_cap") or 0) * rate,
+            }
+            for m in markets
+        ]
+
+    # Apply KBEX spread (public → tier="standard")
+    for m in converted:
+        sp = await pricing_service.apply_spread(m.get("price") or 0, product, "standard", m.get("symbol"))
+        m["price_buy"] = sp["buy"]
+        m["price_sell"] = sp["sell"]
+        m["buy_spread_pct"] = sp["buy_spread_pct"]
+        m["sell_spread_pct"] = sp["sell_spread_pct"]
+
     return {
         "currency": currency,
         "markets": converted,
