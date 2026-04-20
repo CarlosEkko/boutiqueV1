@@ -6,8 +6,13 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+import asyncio
+import hashlib
+import hmac
 import logging
+import os
 import re
+import time
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -17,6 +22,9 @@ router = APIRouter(prefix="/revolut", tags=["Revolut"])
 # Pattern to match reference codes in transfer descriptions
 # DEP + 8 hex chars (fiat deposit) or KB + 8 hex chars (trading order deposit)
 REF_CODE_PATTERN = re.compile(r'(DEP[0-9A-Fa-f]{8}|KB[0-9A-Fa-f]{8})', re.IGNORECASE)
+
+# Webhook signature — tolerance window (5 min) protects against replay attacks
+WEBHOOK_TIMESTAMP_TOLERANCE_S = 300
 
 db = None
 def set_db(database):
@@ -141,6 +149,18 @@ async def _auto_reconcile_deposit(deposit_doc: dict) -> dict | None:
         f"ref={ref_code}, tx={deposit_doc.get('transaction_id')}"
     )
 
+    # Audit log for compliance
+    await _write_audit_log("auto_reconcile", {
+        "transaction_id": deposit_doc.get("transaction_id"),
+        "reference_code": ref_code,
+        "user_id": user_id,
+        "user_email": user.get("email"),
+        "amount": amount,
+        "currency": currency,
+        "new_balance": new_balance,
+        "bank_transfer_id": bank_transfer.get("id"),
+    }, actor="system")
+
     return {
         "user_id": user_id,
         "user_name": user.get("name", ""),
@@ -150,6 +170,66 @@ async def _auto_reconcile_deposit(deposit_doc: dict) -> dict | None:
         "reference_code": ref_code,
         "new_balance": new_balance,
     }
+
+
+async def _write_audit_log(event: str, details: dict, actor: str = "system") -> None:
+    """Append a compliance audit record for Revolut operations."""
+    try:
+        await get_db().revolut_audit_log.insert_one({
+            "id": str(uuid.uuid4()),
+            "event": event,
+            "actor": actor,
+            "details": details,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception as e:
+        logger.warning(f"Audit log write failed: {e}")
+
+
+async def _get_webhook_signing_secret() -> Optional[str]:
+    """Retrieve stored webhook signing secret (returns None if not configured)."""
+    if get_db() is None:
+        return None
+    wh = await get_db().revolut_tokens.find_one({"type": "webhook_config"}, {"_id": 0})
+    if not wh:
+        return None
+    return wh.get("signing_secret") or None
+
+
+def _verify_revolut_signature(signing_secret: str, timestamp: str, raw_body: bytes, signature_header: str) -> bool:
+    """
+    Verify Revolut webhook signature.
+
+    Revolut signs `v1.{timestamp}.{body}` with HMAC-SHA256 using the signing_secret
+    and sends the digest in the header as `v1=<hex>` (comma-separated list supported).
+    """
+    if not signing_secret or not signature_header or not timestamp:
+        return False
+
+    # Replay-attack protection: reject if timestamp too old
+    try:
+        ts = int(timestamp)
+        now = int(time.time())
+        if abs(now - ts) > WEBHOOK_TIMESTAMP_TOLERANCE_S:
+            return False
+    except (ValueError, TypeError):
+        return False
+
+    payload = f"v1.{timestamp}.{raw_body.decode('utf-8', errors='replace')}"
+    expected = hmac.new(
+        signing_secret.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    # Header may contain "v1=abc,v2=xyz" — accept any matching scheme
+    for piece in signature_header.split(","):
+        piece = piece.strip()
+        if piece.startswith("v1="):
+            candidate = piece[3:]
+            if hmac.compare_digest(candidate.lower(), expected.lower()):
+                return True
+    return False
 
 
 # ---- OAuth Flow ----
@@ -271,13 +351,43 @@ async def delete_webhook(webhook_id: str, admin: dict = Depends(get_admin_user))
 
 @router.post("/webhook")
 async def revolut_webhook(request: Request):
-    """Handle Revolut webhook notifications for real-time deposit detection and auto-reconciliation."""
-    body = await request.json()
+    """Handle Revolut webhook notifications for real-time deposit detection and auto-reconciliation.
+
+    Security: validates HMAC-SHA256 signature using the signing_secret stored when the webhook
+    was registered. Rejects requests with invalid or expired signatures (replay protection 5 min).
+    """
+    raw_body = await request.body()
+
+    # --- Signature verification ---
+    # Allow a bypass ONLY for local dev when signing_secret is not yet configured
+    # (first-time setup before /webhooks/setup is called).
+    signing_secret = await _get_webhook_signing_secret()
+    signature = request.headers.get("Revolut-Signature") or request.headers.get("revolut-signature")
+    timestamp = request.headers.get("Revolut-Request-Timestamp") or request.headers.get("revolut-request-timestamp")
+
+    if signing_secret:
+        if not _verify_revolut_signature(signing_secret, timestamp or "", raw_body, signature or ""):
+            logger.warning(f"Revolut webhook REJECTED: invalid signature (ts={timestamp})")
+            await _write_audit_log("webhook_rejected", {
+                "reason": "invalid_signature",
+                "timestamp": timestamp,
+                "ip": request.client.host if request.client else None,
+            }, actor="system")
+            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    else:
+        logger.warning("Revolut webhook accepted WITHOUT signature verification (signing_secret not configured)")
+
+    try:
+        import json
+        body = json.loads(raw_body or b"{}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
     event = body.get("event", "")
     data = body.get("data", {})
-    
-    logger.info(f"Revolut webhook: {event}")
-    
+
+    logger.info(f"Revolut webhook verified: {event}")
+
     if event in ("TransactionCreated", "TransactionStateChanged"):
         legs = data.get("legs", [])
         for leg in legs:
@@ -287,7 +397,7 @@ async def revolut_webhook(request: Request):
                 existing = await get_db().revolut_deposits.find_one(
                     {"transaction_id": tx_id}, {"_id": 0}
                 )
-                
+
                 deposit_doc = {
                     "transaction_id": tx_id,
                     "amount": amount / 100,
@@ -302,25 +412,23 @@ async def revolut_webhook(request: Request):
                     "reconciled_to": None,
                     "reconciled_at": None,
                 }
-                
+
                 if not existing:
                     await get_db().revolut_deposits.insert_one(deposit_doc)
                     logger.info(f"Webhook: New deposit stored, tx={tx_id}")
                 else:
-                    # Update state if changed
                     await get_db().revolut_deposits.update_one(
                         {"transaction_id": tx_id},
                         {"$set": {"state": data.get("state", "")}}
                     )
                     deposit_doc = existing
-                
-                # Attempt auto-reconciliation for completed transactions
+
                 if data.get("state") == "completed" and not deposit_doc.get("reconciled"):
                     deposit_doc["transaction_id"] = tx_id
                     result = await _auto_reconcile_deposit(deposit_doc)
                     if result:
                         logger.info(f"Webhook auto-reconcile: {result['currency']} {result['amount']} → {result['user_name']}")
-    
+
     return {"ok": True}
 
 
@@ -599,12 +707,236 @@ async def reconcile_deposit(
         "revolut_tx_id": transaction_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
-    
+
+    await _write_audit_log("manual_reconcile", {
+        "transaction_id": transaction_id,
+        "user_id": user_id,
+        "user_email": user.get("email"),
+        "amount": amount,
+        "currency": currency,
+        "reference": deposit.get("reference", ""),
+        "new_balance": new_balance if wallet else amount,
+    }, actor=admin.get("email") or admin.get("name") or "admin")
+
     return {
         "success": True,
         "message": f"Depósito de {currency} {amount:,.2f} creditado a {user.get('name', '')}",
         "new_balance": new_balance if wallet else amount,
     }
+
+
+@router.get("/audit-log")
+async def get_audit_log(
+    limit: int = 200,
+    event: Optional[str] = None,
+    admin: dict = Depends(get_admin_user),
+):
+    """Return compliance audit log entries for Revolut operations."""
+    query = {}
+    if event:
+        query["event"] = event
+    entries = await get_db().revolut_audit_log.find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).limit(min(limit, 1000)).to_list(min(limit, 1000))
+    return {"entries": entries, "count": len(entries)}
+
+
+@router.get("/health")
+async def revolut_health(admin: dict = Depends(get_admin_user)):
+    """Health monitor: connection, last sync, last webhook event, last reconciliation."""
+    from services.revolut_service import revolut_service
+    now = datetime.now(timezone.utc)
+
+    status = await revolut_service.get_connection_status()
+
+    # Last sync timestamp (from audit + deposits)
+    last_deposit = await get_db().revolut_deposits.find_one(
+        {}, {"_id": 0}, sort=[("created_at", -1)]
+    )
+    last_reconcile = await get_db().revolut_audit_log.find_one(
+        {"event": {"$in": ["auto_reconcile", "manual_reconcile"]}},
+        {"_id": 0},
+        sort=[("created_at", -1)],
+    )
+    last_rejection = await get_db().revolut_audit_log.find_one(
+        {"event": "webhook_rejected"}, {"_id": 0}, sort=[("created_at", -1)]
+    )
+
+    pending_unreconciled = await get_db().revolut_deposits.count_documents({"reconciled": False})
+    total_deposits = await get_db().revolut_deposits.count_documents({})
+
+    # Token age
+    tokens = await get_db().revolut_tokens.find_one({"type": "oauth_tokens"}, {"_id": 0})
+    token_age_s = None
+    if tokens and tokens.get("saved_at"):
+        token_age_s = int(time.time() - tokens["saved_at"])
+
+    def _iso_age(iso_str: Optional[str]) -> Optional[int]:
+        if not iso_str:
+            return None
+        try:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            return int((now - dt).total_seconds())
+        except Exception:
+            return None
+
+    return {
+        "connected": status.get("connected", False),
+        "connection_status": status.get("status"),
+        "webhook_configured": bool(status.get("webhook")),
+        "webhook_signed": bool(await _get_webhook_signing_secret()),
+        "token_age_seconds": token_age_s,
+        "last_deposit": {
+            "transaction_id": last_deposit.get("transaction_id") if last_deposit else None,
+            "amount": last_deposit.get("amount") if last_deposit else None,
+            "currency": last_deposit.get("currency") if last_deposit else None,
+            "age_seconds": _iso_age(last_deposit.get("created_at")) if last_deposit else None,
+        },
+        "last_reconciliation": {
+            "event": last_reconcile.get("event") if last_reconcile else None,
+            "age_seconds": _iso_age(last_reconcile.get("created_at")) if last_reconcile else None,
+        },
+        "last_webhook_rejection": {
+            "reason": (last_rejection or {}).get("details", {}).get("reason"),
+            "age_seconds": _iso_age(last_rejection.get("created_at")) if last_rejection else None,
+        },
+        "counts": {
+            "total_deposits": total_deposits,
+            "pending_unreconciled": pending_unreconciled,
+        },
+        "background_sync": _bg_sync_state(),
+        "checked_at": now.isoformat(),
+    }
+
+
+# ==================== BACKGROUND SYNC ====================
+
+# Module-level state
+_bg_sync_status = {
+    "running": False,
+    "last_run_at": None,
+    "last_result": None,
+    "last_error": None,
+    "runs": 0,
+    "interval_s": int(os.environ.get("REVOLUT_SYNC_INTERVAL_S", "300")),  # default 5 min
+    "task": None,
+}
+
+
+def _bg_sync_state() -> dict:
+    """Return serialisable background sync state."""
+    return {
+        "running": _bg_sync_status["running"],
+        "last_run_at": _bg_sync_status["last_run_at"],
+        "last_result": _bg_sync_status["last_result"],
+        "last_error": _bg_sync_status["last_error"],
+        "runs": _bg_sync_status["runs"],
+        "interval_s": _bg_sync_status["interval_s"],
+    }
+
+
+async def _background_sync_loop():
+    """Periodic deposit sync + auto-reconciliation — resilient against transient errors."""
+    from services.revolut_service import revolut_service
+
+    logger.info(f"Revolut background sync started (every {_bg_sync_status['interval_s']}s)")
+    # Initial delay — let app fully start
+    await asyncio.sleep(20)
+
+    while True:
+        try:
+            tokens = await get_db().revolut_tokens.find_one({"type": "oauth_tokens"}, {"_id": 0})
+            if not tokens:
+                # Not authorised yet — back off
+                await asyncio.sleep(_bg_sync_status["interval_s"])
+                continue
+
+            txs = await revolut_service.get_transactions(count=200)
+            if isinstance(txs, dict) and txs.get("error"):
+                _bg_sync_status["last_error"] = str(txs.get("error"))[:200]
+                logger.warning(f"Background sync error: {_bg_sync_status['last_error']}")
+                await asyncio.sleep(_bg_sync_status["interval_s"])
+                continue
+
+            new_count = 0
+            auto_reconciled = 0
+            if isinstance(txs, list):
+                for tx in txs:
+                    for leg in tx.get("legs", []):
+                        amount = leg.get("amount", 0)
+                        if amount > 0 and tx.get("state") == "completed":
+                            existing = await get_db().revolut_deposits.find_one(
+                                {"transaction_id": tx["id"]}, {"_id": 0}
+                            )
+                            if not existing:
+                                counterparty = leg.get("counterparty", {})
+                                deposit_doc = {
+                                    "transaction_id": tx["id"],
+                                    "amount": amount / 100,
+                                    "currency": leg.get("currency", "EUR"),
+                                    "reference": tx.get("reference", ""),
+                                    "counterparty_name": counterparty.get("account_name", ""),
+                                    "counterparty_id": counterparty.get("id", ""),
+                                    "state": tx.get("state", ""),
+                                    "created_at": tx.get("created_at", ""),
+                                    "completed_at": tx.get("completed_at", ""),
+                                    "reconciled": False,
+                                    "reconciled_to": None,
+                                    "reconciled_at": None,
+                                }
+                                await get_db().revolut_deposits.insert_one(deposit_doc)
+                                new_count += 1
+                                if await _auto_reconcile_deposit(deposit_doc):
+                                    auto_reconciled += 1
+
+            # Retry unreconciled (in case the bank_transfer was created after deposit arrived)
+            unreconciled = await get_db().revolut_deposits.find(
+                {"reconciled": False, "reference": {"$ne": ""}},
+                {"_id": 0}
+            ).to_list(200)
+            for dep in unreconciled:
+                if await _auto_reconcile_deposit(dep):
+                    auto_reconciled += 1
+
+            _bg_sync_status["last_run_at"] = datetime.now(timezone.utc).isoformat()
+            _bg_sync_status["last_result"] = {
+                "synced": len(txs) if isinstance(txs, list) else 0,
+                "new_deposits": new_count,
+                "auto_reconciled": auto_reconciled,
+            }
+            _bg_sync_status["last_error"] = None
+            _bg_sync_status["runs"] += 1
+
+            if new_count or auto_reconciled:
+                logger.info(
+                    f"Background sync run {_bg_sync_status['runs']}: "
+                    f"new={new_count} reconciled={auto_reconciled}"
+                )
+        except asyncio.CancelledError:
+            logger.info("Revolut background sync cancelled")
+            raise
+        except Exception as e:
+            _bg_sync_status["last_error"] = str(e)[:200]
+            logger.exception(f"Background sync unexpected error: {e}")
+
+        await asyncio.sleep(_bg_sync_status["interval_s"])
+
+
+def start_background_sync():
+    """Start the periodic sync loop. Idempotent."""
+    if _bg_sync_status["task"] and not _bg_sync_status["task"].done():
+        return
+    loop = asyncio.get_event_loop()
+    _bg_sync_status["task"] = loop.create_task(_background_sync_loop())
+    _bg_sync_status["running"] = True
+
+
+def stop_background_sync():
+    """Cancel the periodic sync loop."""
+    task = _bg_sync_status.get("task")
+    if task and not task.done():
+        task.cancel()
+    _bg_sync_status["running"] = False
 
 
 

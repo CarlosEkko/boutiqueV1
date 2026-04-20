@@ -465,4 +465,19 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    try:
+        from routes.revolut import stop_background_sync
+        stop_background_sync()
+    except Exception:
+        pass
     client.close()
+
+
+@app.on_event("startup")
+async def startup_background_tasks():
+    """Launch background jobs: Revolut periodic sync."""
+    try:
+        from routes.revolut import start_background_sync
+        start_background_sync()
+    except Exception as e:
+        logger.warning(f"Failed to start Revolut background sync: {e}")

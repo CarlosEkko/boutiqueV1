@@ -31,11 +31,36 @@ const fmtAmount = (val, cur) => {
   return n.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+const fmtAgeSec = (seconds) => {
+  if (seconds == null) return '—';
+  const s = Math.max(0, Math.floor(seconds));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+};
+
+const fmtAge = (isoOrSec) => {
+  if (!isoOrSec) return '—';
+  let ts;
+  if (typeof isoOrSec === 'string' && isoOrSec.includes('T')) {
+    ts = Date.parse(isoOrSec);
+  } else {
+    ts = Number(isoOrSec) * 1000;
+  }
+  if (!ts || Number.isNaN(ts)) return '—';
+  const diff = (Date.now() - ts) / 1000;
+  return `${fmtAgeSec(diff)} atrás`;
+};
+
 const AdminRevolutPage = () => {
   const { token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
 
   const [status, setStatus] = useState(null);
+  const [health, setHealth] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [deposits, setDeposits] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -62,6 +87,13 @@ const AdminRevolutPage = () => {
     } catch { setStatus({ connected: false, status: 'error' }); }
   }, [token]);
 
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/api/revolut/health`, { headers });
+      setHealth(res.data);
+    } catch { /* ignore */ }
+  }, [token]);
+
   const fetchAccounts = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/api/revolut/accounts`, { headers });
@@ -82,9 +114,9 @@ const AdminRevolutPage = () => {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchStatus(), fetchAccounts(), fetchDeposits()]);
+    await Promise.all([fetchStatus(), fetchAccounts(), fetchDeposits(), fetchHealth()]);
     setLoading(false);
-  }, [fetchStatus, fetchAccounts, fetchDeposits]);
+  }, [fetchStatus, fetchAccounts, fetchDeposits, fetchHealth]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
   useEffect(() => { fetchDeposits(depositFilter); }, [depositFilter]);
@@ -207,11 +239,77 @@ const AdminRevolutPage = () => {
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-emerald-400" />
             <span className="text-emerald-400 text-xs">Webhook ativo</span>
+            {health?.webhook_signed && (
+              <span className="text-emerald-400/80 text-[10px] border border-emerald-800/40 rounded px-1.5 py-0.5 ml-1">
+                HMAC
+              </span>
+            )}
           </div>
         ) : status?.connected ? (
           <span className="text-amber-400 text-xs">Webhook não configurado</span>
         ) : null}
       </div>
+
+      {/* Health Monitor */}
+      {health && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Auto-Sync</div>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${health.background_sync?.running ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
+              <span className="text-sm text-white">
+                {health.background_sync?.running ? `A cada ${Math.round((health.background_sync?.interval_s || 0) / 60)}min` : 'Parado'}
+              </span>
+            </div>
+            {health.background_sync?.last_run_at && (
+              <div className="text-[11px] text-zinc-500 mt-1">
+                Última: {fmtAge(health.background_sync.last_run_at)}
+              </div>
+            )}
+            {health.background_sync?.last_error && (
+              <div className="text-[11px] text-red-400 mt-1 truncate" title={health.background_sync.last_error}>
+                Erro: {health.background_sync.last_error}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Webhook Signed</div>
+            <div className="flex items-center gap-2">
+              {health.webhook_signed ? (
+                <><CheckCircle size={14} className="text-emerald-400" /><span className="text-sm text-emerald-400">Ativo (HMAC-SHA256)</span></>
+              ) : (
+                <><Link2Off size={14} className="text-amber-400" /><span className="text-sm text-amber-400">Sem signing_secret</span></>
+              )}
+            </div>
+            {health.last_webhook_rejection?.reason && (
+              <div className="text-[11px] text-amber-400 mt-1">
+                Última rejeição: {fmtAge(`${Date.now() / 1000 - (health.last_webhook_rejection.age_seconds || 0)}`)}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Último Depósito</div>
+            <div className="text-sm text-white">
+              {health.last_deposit?.amount != null ? `${health.last_deposit.currency} ${health.last_deposit.amount.toLocaleString('pt-PT')}` : '—'}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-1">
+              {health.last_deposit?.age_seconds != null ? `${fmtAgeSec(health.last_deposit.age_seconds)} atrás` : 'Sem dados'}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Última Reconciliação</div>
+            <div className="text-sm text-white capitalize">
+              {health.last_reconciliation?.event ? health.last_reconciliation.event.replace('_', ' ') : 'Nenhuma'}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-1">
+              {health.last_reconciliation?.age_seconds != null ? `${fmtAgeSec(health.last_reconciliation.age_seconds)} atrás` : '—'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
