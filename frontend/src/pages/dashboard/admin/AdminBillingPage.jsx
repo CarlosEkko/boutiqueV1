@@ -378,11 +378,33 @@ const AdminBillingPage = () => {
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3">
+              <div className="flex items-center gap-3 text-xs text-zinc-500 mb-3 flex-wrap">
                 <span>Vault ID: <span className="text-white font-mono">{vault.vault_id}</span></span>
                 {vault.addresses_refreshed_at && (
                   <span>· Sincronizado: {fmtDate(vault.addresses_refreshed_at)}</span>
                 )}
+              </div>
+
+              {/* Webhook URL for admin to configure in Fireblocks console */}
+              <div className="rounded-md border border-blue-900/30 bg-blue-950/20 p-3 mb-3">
+                <div className="text-[10px] uppercase tracking-wider text-blue-400 mb-1 font-semibold">
+                  URL do Webhook (para configurar na consola Fireblocks)
+                </div>
+                <div className="flex items-center gap-2 rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5">
+                  <code className="flex-1 text-[11px] text-zinc-300 break-all font-mono">
+                    {`${window.location.origin}/api/billing/fireblocks-webhook`}
+                  </code>
+                  <button
+                    onClick={() => copyAddr(`${window.location.origin}/api/billing/fireblocks-webhook`, 'webhook')}
+                    className="text-zinc-400 hover:text-blue-400 shrink-0 transition-colors"
+                    data-testid="copy-webhook-btn"
+                  >
+                    {copiedAddr === 'webhook' ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-blue-300/70 mt-1.5">
+                  Depósitos confirmados neste vault vão auto-aprovar o pagamento pendente correspondente (tolerância ±3%).
+                </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {Object.entries(vault.addresses || {}).map(([label, info]) => (

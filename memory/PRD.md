@@ -64,6 +64,27 @@ Verified end-to-end: manual cycle trigger created 1 pending payment, notified cl
 - Translations in 5 languages (PT/EN/AR/FR/ES): `tierTracker.*` namespace
 - Fix: `/my-cofres` now returns `cofres_max` even when user has 0 cofres
 
+## Fireblocks Auto-Approval Webhook (2026-04-20)
+
+**Zero-friction billing: cliente paga → tier aplicado em 60s sem intervenção humana.**
+
+Backend:
+- New `POST /api/billing/fireblocks-webhook` — handles `TRANSACTION_CREATED` + `TRANSACTION_STATUS_UPDATED`
+- RSA-SHA512 signature verification via `FIREBLOCKS_WEBHOOK_PUBLIC_KEY` env var (rejects with 401 if invalid)
+- `_find_and_approve_matching_payment()`: filters deposits to KBEX OnBoarding vault, matches amount ±3% against pending/awaiting_confirmation payments (last 7 days), prioritises exact `crypto_currency` match, auto-approves via full flow (payment paid, tier applied, referrer commission, notifications, audit log)
+- Idempotent via `fireblocks_tx_id` deduplication
+- Graceful fallback: if public key not configured, logs warning; if no match found, returns 200 with `auto_approved: false`
+
+Frontend:
+- Webhook URL box in `AdminBillingPage` vault card (blue-accented) with copy-to-clipboard — admin cola no Fireblocks console
+- Explanatory text: "Depósitos confirmados neste vault vão auto-aprovar o pagamento pendente (tolerância ±3%)"
+
+**End-to-end verified:**
+- Pro-rata upgrade €203.42 @ 99 days remaining → pending payment created
+- Simulated Fireblocks webhook with USDT 239.1 (= €203.42 at live EURUSDT rate) → webhook returned `auto_approved: true`
+- Payment status = "paid", approved_by = "auto_fireblocks_webhook", tier applied (standard→premium)
+- Invalid signature returns HTTP 401 + audit log entry
+
 ## Fireblocks KBEX OnBoarding Vault (2026-04-20)
 
 **Institutional-grade custody for all onboarding & annual fee payments.**

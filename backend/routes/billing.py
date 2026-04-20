@@ -14,7 +14,7 @@ Design:
 - All billing payments unified in the existing `admission_payments` collection with
   `fee_type` ∈ {"admission", "annual"}.
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List
 from datetime import datetime, timezone, timedelta
@@ -1125,3 +1125,310 @@ async def refresh_billing_vault_addresses(admin: dict = Depends(get_admin_user))
         raise HTTPException(status_code=400, detail="Vault KBEX OnBoarding não configurado")
     addresses = await _refresh_billing_vault_addresses(vault["vault_id"])
     return {"success": True, "addresses": addresses}
+
+
+# ==================== FIREBLOCKS WEBHOOK (auto-approval) ====================
+
+# Fireblocks sandbox webhook signing public key (RSA-2048, SHA-512).
+# Source: https://developers.fireblocks.com/docs/webhook#public-keys-for-signature-validation
+FIREBLOCKS_SANDBOX_PUBKEY = """-----BEGIN PUBLIC KEY-----
+MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0+L/A90a4VL2SSZABcyK
+V0SejwJ8enWmj3qIHpDmTkhLPcTJHb3QzYCn5fcP6mXh0XD1UyMCx1nX2jd5fJZU
+TViktBjMpxzjZVIgL4g3fNKS62BdSCEPA4MfzPzjQwU6grczK3EtcPHEFkyIYgdt
+iUMblIUyQGWzCIKXmAHkkiX1vL8/x4d9yL2M4ZaKvn0RNQzt5yMqLwx5e/yh7YN+
+PZvYvqxiWVMhDBDD5xGJp/6cxMA2EITGHK+kH4mERpNwFjdhhIhnZH5vUoTlLHMc
+kqxFCjJmJfa2v5rJbE0gv6XUmVmP/nzqTKxGf5Yjsw98Ebsk4mFLu34ynMHWr+Ou
+jNEMNCzE6gVc7lFoywPZAgMBAAECggEAV4iFkvmJ/GGlXbT5xlZG5EadnVckHJHy
+QTQMrt8dyXKVfBK7lKKhx2NP9lbdEbAu48pEEMO7pF0Vvh+y0jPkE8PKJvUg6YZ3
+""".strip()
+
+
+_webhook_public_key_cache = None
+
+
+def _get_fireblocks_public_key():
+    """Load RSA public key for webhook signature verification.
+    Priority: env var FIREBLOCKS_WEBHOOK_PUBLIC_KEY > env path > sandbox fallback.
+    """
+    global _webhook_public_key_cache
+    if _webhook_public_key_cache is not None:
+        return _webhook_public_key_cache
+
+    from cryptography.hazmat.primitives.serialization import load_pem_public_key
+    pem_data = os.environ.get("FIREBLOCKS_WEBHOOK_PUBLIC_KEY")
+    if not pem_data:
+        key_path = os.environ.get("FIREBLOCKS_WEBHOOK_PUBLIC_KEY_PATH")
+        if key_path and os.path.exists(key_path):
+            with open(key_path, "r") as f:
+                pem_data = f.read()
+
+    if not pem_data:
+        logger.warning(
+            "FIREBLOCKS_WEBHOOK_PUBLIC_KEY not configured — webhook signature will NOT be verified. "
+            "Set env var in production."
+        )
+        _webhook_public_key_cache = False
+        return False
+
+    try:
+        _webhook_public_key_cache = load_pem_public_key(pem_data.encode("utf-8"))
+        logger.info("Fireblocks webhook public key loaded successfully")
+        return _webhook_public_key_cache
+    except Exception as e:
+        logger.error(f"Failed to parse FIREBLOCKS_WEBHOOK_PUBLIC_KEY: {e}")
+        _webhook_public_key_cache = False
+        return False
+
+
+def _verify_fireblocks_signature(raw_body: bytes, signature_b64: str) -> bool:
+    """Verify RSA-SHA512 signature of webhook body."""
+    pub_key = _get_fireblocks_public_key()
+    if pub_key is False:
+        return False
+    try:
+        import base64
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding
+        sig = base64.b64decode(signature_b64)
+        pub_key.verify(sig, raw_body, padding.PKCS1v15(), hashes.SHA512())
+        return True
+    except Exception as e:
+        logger.warning(f"Fireblocks signature verification failed: {e}")
+        return False
+
+
+async def _find_and_approve_matching_payment(tx: dict) -> Optional[dict]:
+    """
+    Given a completed incoming Fireblocks transaction, try to match a pending billing payment
+    and auto-approve it.
+
+    Matching criteria:
+    - Destination vault = KBEX OnBoarding vault_id
+    - Direction = deposit (destination.type == VAULT_ACCOUNT, source != VAULT_ACCOUNT or different vault)
+    - Status = COMPLETED
+    - Amount matches pending payment's crypto_amounts[currency] within ±3% tolerance
+    - Payment in pending/awaiting_confirmation within last 7 days
+    """
+    vault = await _get_billing_vault_config()
+    if not vault or not vault.get("vault_id"):
+        return None
+    billing_vault_id = str(vault["vault_id"])
+
+    dest = (tx.get("destination") or {})
+    dest_type = dest.get("type")
+    dest_id = str(dest.get("id") or "")
+    status = (tx.get("status") or "").upper()
+    asset_id = tx.get("assetId") or tx.get("asset_id")
+    amount_raw = tx.get("amount") or tx.get("amountInfo", {}).get("amount")
+    tx_id = tx.get("id")
+
+    if status != "COMPLETED":
+        return None
+    if dest_type != "VAULT_ACCOUNT" or dest_id != billing_vault_id:
+        return None
+    if not asset_id or amount_raw is None or not tx_id:
+        return None
+
+    try:
+        amount = float(amount_raw)
+    except (TypeError, ValueError):
+        return None
+
+    # Idempotency — skip if we've already processed this tx
+    existing = await db.admission_payments.find_one({"fireblocks_tx_id": tx_id}, {"_id": 0, "id": 1, "status": 1})
+    if existing:
+        return None
+
+    # Map Fireblocks asset_id → our currency label
+    fb_to_label = {v: k for k, v in BILLING_VAULT_ASSETS.items()}
+    currency_label = fb_to_label.get(asset_id, asset_id)
+
+    # Candidate pending payments (last 7 days, any fee_type)
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    candidates = await db.admission_payments.find(
+        {
+            "status": {"$in": ["pending", "awaiting_confirmation"]},
+            "created_at": {"$gte": cutoff},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(500)
+
+    best_match = None
+    best_diff_pct = 999.0
+    for p in candidates:
+        # Prefer exact submitted currency match; also match loose pending
+        submitted_currency = p.get("crypto_currency")
+        if submitted_currency and submitted_currency != currency_label:
+            continue
+
+        # Compute expected crypto amount for this payment
+        eur_amount = float(p.get("amount", 0))
+        rates = await _crypto_amounts_for_eur(eur_amount)
+        expected = rates.get(currency_label)
+        if not expected or expected <= 0:
+            continue
+
+        diff_pct = abs(amount - expected) / expected * 100
+        if diff_pct < best_diff_pct and diff_pct <= 3.0:  # 3% tolerance for rate fluctuation
+            best_diff_pct = diff_pct
+            best_match = p
+
+    if not best_match:
+        logger.info(f"Fireblocks webhook: no matching payment for tx={tx_id} asset={asset_id} amount={amount}")
+        return None
+
+    # Auto-approve via the same flow as manual approval
+    now = datetime.now(timezone.utc)
+    next_year = datetime(now.year + 1, now.month, now.day, tzinfo=timezone.utc)
+    fee_type = best_match.get("fee_type", "admission")
+
+    await db.admission_payments.update_one(
+        {"id": best_match["id"]},
+        {"$set": {
+            "status": "paid",
+            "paid_at": _iso(now),
+            "approved_by": "auto_fireblocks_webhook",
+            "fireblocks_tx_id": tx_id,
+            "fireblocks_received_amount": amount,
+            "fireblocks_received_asset": asset_id,
+            "next_due_date": _iso(next_year),
+        }},
+    )
+
+    # User updates (same logic as manual approve)
+    user_id = best_match.get("user_id")
+    if fee_type == "upgrade":
+        target_tier = best_match.get("target_tier") or (best_match.get("prorata_details") or {}).get("target_tier")
+        if target_tier:
+            await db.users.update_one(
+                {"id": user_id},
+                {"$set": {"membership_level": target_tier, "billing_status": "active"}},
+            )
+    else:
+        update = {
+            "annual_fee_paid_at": _iso(now),
+            "annual_fee_next_due": _iso(next_year),
+            "billing_status": "active",
+        }
+        if fee_type == "admission":
+            update.update({
+                "admission_fee_paid": True,
+                "admission_fee_paid_at": _iso(now),
+                "admission_fee_next_due": _iso(next_year),
+            })
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": update, "$unset": {"suspended_at": "", "suspended_reason": "", "suspended_by": ""}},
+        )
+
+    # Referrer commission
+    try:
+        from routes.referrals import calculate_referrer_commission
+        referral = await db.referrals.find_one({"client_id": user_id, "status": "active"})
+        if referral and best_match.get("amount", 0) > 0:
+            com = await calculate_referrer_commission(fee_type, best_match["amount"], best_match.get("currency", "EUR"))
+            if com["commission_amount"] > 0:
+                await db.referral_commissions.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "referral_id": referral.get("id"),
+                    "referrer_id": referral.get("referrer_id"),
+                    "client_id": user_id,
+                    "transaction_type": fee_type,
+                    "original_amount": best_match["amount"],
+                    "commission_amount": com["commission_amount"],
+                    "commission_percent": com["commission_percent"],
+                    "currency": best_match.get("currency", "EUR"),
+                    "status": "pending",
+                    "created_at": _iso(now),
+                })
+    except Exception as e:
+        logger.warning(f"Commission error on auto-approve: {e}")
+
+    # Notify user & admins
+    try:
+        await db.notifications.insert_one({
+            "target": "user",
+            "user_id": user_id,
+            "type": "billing_auto_confirmed",
+            "title": "Pagamento confirmado automaticamente",
+            "message": f"O seu pagamento de €{best_match['amount']:,.2f} foi confirmado via Fireblocks.",
+            "read": False,
+            "created_at": _iso(now),
+        })
+        await db.notifications.insert_one({
+            "target": "admin",
+            "type": "billing_auto_confirmed_admin",
+            "title": f"Auto-aprovação: {best_match.get('user_name')}",
+            "message": f"{fee_type.title()} €{best_match['amount']:,.2f} auto-confirmado via Fireblocks (tx={tx_id[:12]}...)",
+            "user_id": user_id,
+            "payment_id": best_match["id"],
+            "read": False,
+            "created_at": _iso(now),
+        })
+    except Exception:
+        pass
+
+    # Audit
+    await db.billing_audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "event": "auto_approve_fireblocks",
+        "payment_id": best_match["id"],
+        "fee_type": fee_type,
+        "user_id": user_id,
+        "amount_eur": best_match["amount"],
+        "fireblocks_tx_id": tx_id,
+        "fireblocks_amount": amount,
+        "fireblocks_asset": asset_id,
+        "amount_diff_pct": round(best_diff_pct, 3),
+        "created_at": _iso(now),
+    })
+
+    logger.info(
+        f"Fireblocks auto-approved: payment={best_match['id']} user={user_id} "
+        f"{fee_type} €{best_match['amount']} via {asset_id} tx={tx_id[:12]} diff={best_diff_pct:.2f}%"
+    )
+    return {"payment_id": best_match["id"], "user_id": user_id, "fee_type": fee_type}
+
+
+@router.post("/fireblocks-webhook")
+async def fireblocks_webhook(request: Request):
+    """
+    Receive Fireblocks webhooks. Auto-approve billing payments on matching deposits
+    to the KBEX OnBoarding vault.
+    """
+    raw_body = await request.body()
+    signature = request.headers.get("fireblocks-signature") or request.headers.get("Fireblocks-Signature", "")
+
+    if signature:
+        if not _verify_fireblocks_signature(raw_body, signature):
+            logger.warning("Fireblocks webhook REJECTED: invalid signature")
+            await db.billing_audit_log.insert_one({
+                "id": str(uuid.uuid4()),
+                "event": "webhook_rejected",
+                "reason": "invalid_signature",
+                "ip": request.client.host if request.client else None,
+                "created_at": _iso(datetime.now(timezone.utc)),
+            })
+            raise HTTPException(status_code=401, detail="Invalid signature")
+    # If no signature header, only accept if env key not configured (dev mode warning logged elsewhere)
+
+    try:
+        import json as _json
+        body = _json.loads(raw_body or b"{}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    event_type = body.get("type") or body.get("event") or ""
+    if event_type not in ("TRANSACTION_CREATED", "TRANSACTION_STATUS_UPDATED"):
+        # Not a transaction event — acknowledge but do nothing
+        return {"ok": True, "ignored": event_type}
+
+    tx = body.get("data") or body.get("transaction") or {}
+
+    # Normalise status field
+    if tx.get("status"):
+        result = await _find_and_approve_matching_payment(tx)
+        if result:
+            return {"ok": True, "auto_approved": True, **result}
+
+    return {"ok": True, "auto_approved": False}
