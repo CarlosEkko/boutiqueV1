@@ -10,7 +10,7 @@ import { Label } from '../../../components/ui/label';
 import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
   Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
-  Shield, Vault, Copy, Check,
+  Shield, Vault, Copy, Check, Activity, Percent, Bitcoin, Landmark,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -57,16 +57,18 @@ const AdminBillingPage = () => {
   const [vault, setVault] = useState(null);
   const [vaultBusy, setVaultBusy] = useState(false);
   const [copiedAddr, setCopiedAddr] = useState(null);
+  const [health, setHealth] = useState(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [cfg, ren, pay, cyc, v] = await Promise.all([
+      const [cfg, ren, pay, cyc, v, hlt] = await Promise.all([
         axios.get(`${API_URL}/api/billing/config`, { headers }),
         axios.get(`${API_URL}/api/billing/renewals`, { headers }),
         axios.get(`${API_URL}/api/billing/payouts`, { headers }),
         axios.get(`${API_URL}/api/billing/cycle-status`, { headers }).catch(() => ({ data: null })),
         axios.get(`${API_URL}/api/billing/vault`, { headers }).catch(() => ({ data: null })),
+        axios.get(`${API_URL}/api/billing/renewals-health`, { headers }).catch(() => ({ data: null })),
       ]);
       setConfig(cfg.data);
       setAnnualFee(cfg.data.annual_fee);
@@ -74,6 +76,7 @@ const AdminBillingPage = () => {
       setPayouts(pay.data);
       setCycleStatus(cyc.data);
       setVault(v.data);
+      setHealth(hlt.data);
     } catch (err) {
       toast.error('Falha ao carregar configuração');
     } finally {
@@ -245,6 +248,9 @@ const AdminBillingPage = () => {
           )}
         </div>
       )}
+
+      {/* Renewals Health — KPI panel */}
+      {health && <RenewalsHealthPanel health={health} />}
 
       {/* KPI tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -636,6 +642,206 @@ const NumberField = ({ label, value, onChange, dataTestId }) => (
       className="bg-zinc-900 border-zinc-800 text-white mt-1.5"
       data-testid={dataTestId}
     />
+  </div>
+);
+
+// ==================== Renewals Health Panel ====================
+
+const fmtEur = (n) => {
+  if (n == null || Number.isNaN(Number(n))) return '€0';
+  return `€${Number(n).toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
+const TIER_ACCENTS = {
+  broker: 'text-zinc-300',
+  standard: 'text-sky-300',
+  premium: 'text-emerald-300',
+  vip: 'text-gold-400',
+  institucional: 'text-fuchsia-300',
+};
+
+const RenewalsHealthPanel = ({ health }) => {
+  const {
+    projected_annual_revenue_eur = 0,
+    active_clients_total = 0,
+    active_clients_by_tier = {},
+    collected_12m_eur = 0,
+    collected_12m_by_type = {},
+    auto_approval_rate_12m_pct = 0,
+    auto_approval_count_12m = 0,
+    payment_method_breakdown_12m = {},
+    renewal_rate_12m_pct = 0,
+    annual_paid_12m = 0,
+    annual_invoices_12m = 0,
+    pending_revenue_eur = 0,
+    pending_count = 0,
+  } = health || {};
+
+  // Method breakdown bar (crypto vs bank_transfer vs manual)
+  const methodTotal = Object.values(payment_method_breakdown_12m).reduce(
+    (s, m) => s + (m?.count || 0), 0
+  );
+  const cryptoPct = methodTotal ? Math.round(((payment_method_breakdown_12m.crypto?.count || 0) / methodTotal) * 100) : 0;
+  const bankPct = methodTotal ? Math.round(((payment_method_breakdown_12m.bank_transfer?.count || 0) / methodTotal) * 100) : 0;
+  const manualPct = Math.max(0, 100 - cryptoPct - bankPct);
+
+  // Tier rows (sorted by tier rank)
+  const tierOrder = ['broker', 'standard', 'premium', 'vip', 'institucional'];
+  const tiers = tierOrder
+    .filter((t) => (active_clients_by_tier[t] || 0) > 0)
+    .map((t) => ({ tier: t, count: active_clients_by_tier[t] || 0 }));
+
+  return (
+    <Card className="bg-zinc-900/50 border-zinc-800" data-testid="renewals-health-panel">
+      <CardContent className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold-400/80">
+            <Activity size={14} />
+            <span>Renewals Health</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-r from-gold-400/30 to-transparent" />
+        </div>
+
+        {/* Top KPIs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <HealthKpi
+            icon={<Euro size={14} />}
+            label="Receita Anual Projectada"
+            value={fmtEur(projected_annual_revenue_eur)}
+            sub={`${active_clients_total} clientes activos`}
+            accent="gold"
+            testId="health-projected-revenue"
+          />
+          <HealthKpi
+            icon={<TrendingUp size={14} />}
+            label="Cobrado (12m)"
+            value={fmtEur(collected_12m_eur)}
+            sub={`Admissão ${fmtEur(collected_12m_by_type.admission)} · Anual ${fmtEur(collected_12m_by_type.annual)} · Upgrade ${fmtEur(collected_12m_by_type.upgrade)}`}
+            accent="emerald"
+            testId="health-collected-12m"
+          />
+          <HealthKpi
+            icon={<Percent size={14} />}
+            label="Taxa de Renovação (12m)"
+            value={`${renewal_rate_12m_pct}%`}
+            sub={`${annual_paid_12m} / ${annual_invoices_12m} renovações pagas`}
+            accent={renewal_rate_12m_pct >= 90 ? 'emerald' : renewal_rate_12m_pct >= 70 ? 'gold' : 'red'}
+            testId="health-renewal-rate"
+          />
+          <HealthKpi
+            icon={<Bitcoin size={14} />}
+            label="Auto-aprovação (Fireblocks)"
+            value={`${auto_approval_rate_12m_pct}%`}
+            sub={`${auto_approval_count_12m} pagamentos em 12m`}
+            accent="gold"
+            testId="health-auto-approval"
+          />
+        </div>
+
+        {/* Secondary KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tier breakdown */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
+            <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-1.5">
+              <UserCheck size={12} />
+              Clientes Activos por Tier
+            </div>
+            {tiers.length === 0 ? (
+              <div className="text-zinc-600 text-xs">Sem clientes activos.</div>
+            ) : (
+              <div className="space-y-2">
+                {tiers.map(({ tier, count }) => {
+                  const pct = active_clients_total ? (count / active_clients_total) * 100 : 0;
+                  return (
+                    <div key={tier} className="flex items-center gap-3">
+                      <div className={`text-xs w-24 uppercase tracking-wider ${TIER_ACCENTS[tier] || 'text-zinc-300'}`}>
+                        {tier}
+                      </div>
+                      <div className="flex-1 h-1.5 bg-zinc-800/60 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-gold-500/80 to-gold-400 rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="text-xs tabular-nums text-zinc-300 w-12 text-right">{count}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Payment methods */}
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
+            <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-1.5">
+              <Landmark size={12} />
+              Métodos de Pagamento (12m)
+            </div>
+            {methodTotal === 0 ? (
+              <div className="text-zinc-600 text-xs">Ainda sem pagamentos registados.</div>
+            ) : (
+              <>
+                <div className="flex h-2.5 rounded-full overflow-hidden bg-zinc-800/40 mb-3">
+                  {cryptoPct > 0 && <div className="bg-gold-400" style={{ width: `${cryptoPct}%` }} title={`Crypto ${cryptoPct}%`} />}
+                  {bankPct > 0 && <div className="bg-sky-400" style={{ width: `${bankPct}%` }} title={`Banco ${bankPct}%`} />}
+                  {manualPct > 0 && <div className="bg-zinc-600" style={{ width: `${manualPct}%` }} title={`Manual ${manualPct}%`} />}
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <MethodLegend color="bg-gold-400" label="Crypto" pct={cryptoPct} eur={payment_method_breakdown_12m.crypto?.total_eur || 0} />
+                  <MethodLegend color="bg-sky-400" label="Banco" pct={bankPct} eur={payment_method_breakdown_12m.bank_transfer?.total_eur || 0} />
+                  <MethodLegend color="bg-zinc-600" label="Manual" pct={manualPct} eur={
+                    (payment_method_breakdown_12m.manual?.total_eur || 0)
+                    + Object.entries(payment_method_breakdown_12m)
+                      .filter(([k]) => !['crypto', 'bank_transfer', 'manual'].includes(k))
+                      .reduce((s, [, v]) => s + (v?.total_eur || 0), 0)
+                  } />
+                </div>
+                {pending_count > 0 && (
+                  <div className="mt-4 pt-3 border-t border-zinc-800 text-xs text-zinc-400 flex items-center justify-between">
+                    <span>Pipeline pendente</span>
+                    <span className="tabular-nums text-amber-300">
+                      {fmtEur(pending_revenue_eur)} <span className="text-zinc-500">· {pending_count} facturas</span>
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const HealthKpi = ({ icon, label, value, sub, accent = 'gold', testId }) => {
+  const accents = {
+    gold: 'text-gold-400',
+    emerald: 'text-emerald-300',
+    red: 'text-red-300',
+  };
+  return (
+    <div
+      className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 hover:border-zinc-700 transition-colors"
+      data-testid={testId}
+    >
+      <div className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider ${accents[accent] || accents.gold}`}>
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="text-2xl font-light text-white mt-1.5 tabular-nums">{value}</div>
+      {sub && <div className="text-[11px] text-zinc-500 mt-1 truncate" title={sub}>{sub}</div>}
+    </div>
+  );
+};
+
+const MethodLegend = ({ color, label, pct, eur }) => (
+  <div className="flex flex-col gap-0.5">
+    <div className="flex items-center gap-1.5">
+      <div className={`w-2 h-2 rounded-sm ${color}`} />
+      <span className="text-zinc-400">{label}</span>
+      <span className="ml-auto text-zinc-300 tabular-nums">{pct}%</span>
+    </div>
+    <div className="text-[10px] text-zinc-600 pl-3.5 tabular-nums">{fmtEur(eur)}</div>
   </div>
 );
 

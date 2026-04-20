@@ -281,6 +281,151 @@ async def list_renewals(
     return result
 
 
+@router.get("/renewals-health")
+async def renewals_health(admin: dict = Depends(get_internal_user)):
+    """
+    Renewals Health KPI dashboard:
+    - projected_annual_revenue_eur (MRR × 12, based on active clients per tier)
+    - active_clients_by_tier
+    - collected_12m (EUR paid in last 365 days, split by fee_type)
+    - auto_approval_rate_12m (% auto-approved via Fireblocks webhook)
+    - payment_method_breakdown_12m (crypto vs bank_transfer on paid invoices)
+    - renewal_rate_12m (% of annual invoices in last 12m that were paid)
+    - pending_revenue_eur, overdue_count, suspended_count
+    """
+    settings = await _get_settings()
+    annual_cfg = settings.get("annual_fee") or AnnualFeeConfig().model_dump()
+
+    now = datetime.now(timezone.utc)
+    cutoff_12m = _iso(now - timedelta(days=365))
+
+    # --- 1. Active clients by tier + projected annual revenue ---
+    tier_pipeline = [
+        {"$match": {
+            "user_type": "client",
+            "billing_status": {"$nin": ["suspended"]},
+        }},
+        {"$group": {"_id": "$membership_level", "count": {"$sum": 1}}},
+    ]
+    tier_rows = await db.users.aggregate(tier_pipeline).to_list(50)
+    active_by_tier = {}
+    projected_revenue = 0.0
+    for row in tier_rows:
+        tier = (row.get("_id") or "standard").lower()
+        count = int(row.get("count", 0))
+        active_by_tier[tier] = count
+        fee = float(annual_cfg.get(_tier_field(tier), 0.0))
+        projected_revenue += fee * count
+
+    # --- 2. Revenue collected in last 12 months (by fee_type) ---
+    collected_pipeline = [
+        {"$match": {
+            "status": "paid",
+            "paid_at": {"$gte": cutoff_12m},
+            "currency": "EUR",
+        }},
+        {"$group": {
+            "_id": "$fee_type",
+            "total": {"$sum": "$amount"},
+            "count": {"$sum": 1},
+        }},
+    ]
+    collected_rows = await db.admission_payments.aggregate(collected_pipeline).to_list(50)
+    collected_by_type = {"admission": 0.0, "annual": 0.0, "upgrade": 0.0}
+    collected_count_by_type = {"admission": 0, "annual": 0, "upgrade": 0}
+    total_collected = 0.0
+    for row in collected_rows:
+        ft = row.get("_id") or "admission"
+        amt = round(float(row.get("total", 0)), 2)
+        collected_by_type[ft] = amt
+        collected_count_by_type[ft] = int(row.get("count", 0))
+        total_collected += amt
+
+    # --- 3. Auto-approval rate (12m) ---
+    paid_12m_total = sum(collected_count_by_type.values())
+    auto_count = await db.admission_payments.count_documents({
+        "status": "paid",
+        "paid_at": {"$gte": cutoff_12m},
+        "approved_by": "auto_fireblocks_webhook",
+    })
+    auto_rate = round((auto_count / paid_12m_total * 100), 1) if paid_12m_total > 0 else 0.0
+
+    # --- 4. Payment method breakdown (12m) ---
+    method_pipeline = [
+        {"$match": {
+            "status": "paid",
+            "paid_at": {"$gte": cutoff_12m},
+        }},
+        {"$group": {
+            "_id": {
+                "$cond": [
+                    {"$eq": ["$approved_by", "auto_fireblocks_webhook"]},
+                    "crypto",
+                    {"$ifNull": ["$payment_method", "manual"]},
+                ]
+            },
+            "count": {"$sum": 1},
+            "total": {"$sum": "$amount"},
+        }},
+    ]
+    method_rows = await db.admission_payments.aggregate(method_pipeline).to_list(20)
+    methods = {}
+    for row in method_rows:
+        k = row.get("_id") or "manual"
+        methods[k] = {"count": int(row.get("count", 0)), "total_eur": round(float(row.get("total", 0)), 2)}
+
+    # --- 5. Renewal rate 12m: annual invoices due in last 12m — % paid ---
+    annual_invoices_12m = await db.admission_payments.count_documents({
+        "fee_type": "annual",
+        "created_at": {"$gte": cutoff_12m},
+    })
+    annual_paid_12m = await db.admission_payments.count_documents({
+        "fee_type": "annual",
+        "created_at": {"$gte": cutoff_12m},
+        "status": "paid",
+    })
+    renewal_rate = round((annual_paid_12m / annual_invoices_12m * 100), 1) if annual_invoices_12m > 0 else 0.0
+
+    # --- 6. Pending revenue + overdue/suspended client counts ---
+    pending_agg = await db.admission_payments.aggregate([
+        {"$match": {"status": {"$in": ["pending", "awaiting_confirmation"]}}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}, "count": {"$sum": 1}}},
+    ]).to_list(1)
+    pending_revenue = round(float(pending_agg[0]["total"]), 2) if pending_agg else 0.0
+    pending_count = int(pending_agg[0]["count"]) if pending_agg else 0
+
+    overdue_count = await db.users.count_documents({
+        "user_type": "client",
+        "billing_status": "overdue",
+    })
+    suspended_count = await db.users.count_documents({
+        "user_type": "client",
+        "billing_status": "suspended",
+    })
+
+    total_active_clients = sum(active_by_tier.values())
+
+    return {
+        "projected_annual_revenue_eur": round(projected_revenue, 2),
+        "active_clients_total": total_active_clients,
+        "active_clients_by_tier": active_by_tier,
+        "collected_12m_eur": round(total_collected, 2),
+        "collected_12m_by_type": collected_by_type,
+        "collected_12m_count_by_type": collected_count_by_type,
+        "auto_approval_rate_12m_pct": auto_rate,
+        "auto_approval_count_12m": auto_count,
+        "payment_method_breakdown_12m": methods,
+        "renewal_rate_12m_pct": renewal_rate,
+        "annual_invoices_12m": annual_invoices_12m,
+        "annual_paid_12m": annual_paid_12m,
+        "pending_revenue_eur": pending_revenue,
+        "pending_count": pending_count,
+        "overdue_count": overdue_count,
+        "suspended_count": suspended_count,
+        "computed_at": _iso(now),
+    }
+
+
 @router.post("/users/{user_id}/suspend")
 async def suspend_user(user_id: str, payload: SuspensionToggleRequest, admin: dict = Depends(get_admin_user)):
     user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1})

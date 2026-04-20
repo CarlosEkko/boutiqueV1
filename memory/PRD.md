@@ -166,6 +166,11 @@ Verified end-to-end:
 - **Admin UI**: 4-card Health Monitor panel in `/dashboard/admin/contas-bancarias` (auto-sync, webhook signed, last deposit, last reconciliation)
 - Verified: 3 webhook signature scenarios (none/bogus/valid) return correct HTTP 401/401/200
 
+## Renewals Health Dashboard (2026-04-20)
+- **Backend:** `GET /api/billing/renewals-health` — projected annual MRR, active clients by tier, collected 12m (split by admission/annual/upgrade), renewal rate, auto-approval % via Fireblocks, payment method breakdown (crypto/bank/manual), pending pipeline.
+- **Frontend:** `RenewalsHealthPanel` on `/dashboard/admin/billing` — 4 headline KPI tiles (receita projectada, cobrado 12m, taxa de renovação, auto-aprovação Fireblocks) + tier distribution bars + payment method stacked legend. Quiet-luxury palette (gold/emerald/sky), hover lifts, gradient dividers.
+- Live metrics: €17,750 projected MRR, 100% renewal rate, 11 active clients.
+
 ## Brevo Billing Emails — Wired (2026-04-20)
 - 4 templates added to `email_service.py`: `send_billing_renewal_upcoming`, `send_billing_overdue`, `send_billing_suspended`, `send_billing_payment_confirmed` (quiet-luxury HTML shell: gold/amber/red/emerald accents).
 - Triggered automatically in billing lifecycle:

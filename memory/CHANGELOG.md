@@ -1,5 +1,10 @@
 # KBEX.io - Changelog
 
+## 2026-04-20 (afternoon) - Renewals Health Dashboard
+- Backend: new `GET /api/billing/renewals-health` — aggregates projected annual revenue, active clients by tier, 12m collected revenue (by fee_type), auto-approval rate via Fireblocks, payment method breakdown (crypto/bank/manual), renewal rate, and pipeline metrics.
+- Frontend: added `RenewalsHealthPanel` inside `AdminBillingPage.jsx` (/dashboard/admin/billing) — 4 headline KPIs + tier distribution bars + payment method stacked bar with legend.
+- Data verified live: €17,750 MRR projected, 100% renewal rate (1/1), 11 active clients (7 Standard, 3 VIP, 1 Premium).
+
 ## 2026-04-20 - Brevo Billing Emails Wired into Billing & Renewals
 - Added 4 new transactional email templates in `services/email_service.py` (quiet-luxury gold/amber/red/emerald accents):
   - `send_billing_renewal_upcoming` — 30 days before annual fee due
