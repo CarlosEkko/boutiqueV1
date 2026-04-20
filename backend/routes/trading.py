@@ -2425,6 +2425,25 @@ async def create_fiat_deposit(
     }
 
 
+@router.get("/fiat/balances", response_model=List[dict])
+async def get_my_fiat_balances(user: dict = Depends(get_current_user)):
+    """Get all fiat wallet balances for current user."""
+    wallets = await db.fiat_wallets.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("currency", 1).to_list(50)
+    return wallets
+
+
+@router.get("/fiat/balance/{currency}", response_model=dict)
+async def get_my_fiat_balance(currency: str, user: dict = Depends(get_current_user)):
+    """Get fiat wallet balance for a specific currency."""
+    cur = currency.upper()
+    wallet = await db.fiat_wallets.find_one(
+        {"user_id": user["id"], "currency": cur}, {"_id": 0}
+    )
+    return wallet or {"user_id": user["id"], "currency": cur, "balance": 0.0}
+
+
 @router.get("/fiat/deposits", response_model=List[dict])
 async def get_my_fiat_deposits(
     status: Optional[str] = None,

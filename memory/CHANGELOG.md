@@ -1,5 +1,12 @@
 # KBEX.io - Changelog
 
+## 2026-04-20 (v5) - Exchange UX Refinement
+- **Hidden spread %** everywhere: removed `COMPRAR · +X%`, `VENDER · −X%`, `BTC · +X%` labels from price card, dropdown items and Converter tab. Only the absolute price (with spread already baked in) is shown, color-coded by side (emerald buy / red sell).
+- **Transferência → Saldo Fiat:** Buy tab payment method replaced bank transfer option. New button shows user's current fiat balance inline.
+- **New endpoints:** `GET /api/trading/fiat/balances` (all currencies) and `GET /api/trading/fiat/balance/{currency}` (single).
+- **Sell tab redesigned** to match Buy layout: Criptomoeda selector + Montante with EUR/BTC toggle + fixed Destino card "Saldo Fiat · {currency}" with live balance + preview + red Vender button. `handleSell` now posts with `payment_method: 'fiat_balance'` and `destination_currency: currency` so sell proceeds auto-credit the user's fiat wallet.
+- `calculateSellPreview` now accepts both fiat and crypto input modes (work-backwards from net target if in fiat mode).
+
 ## 2026-04-20 (v4) - KBEX Spread: Unified Pricing Architecture
 - **Renamed:** "KBEX Rates" → "KBEX Spread" everywhere (sidebar, page title, subtitle).
 - **5th product added:** `multisign` (Custódia Anual % por tier).

@@ -22,7 +22,8 @@ import {
   Copy,
   ArrowRight,
   ChevronDown,
-  Info
+  Info,
+  Wallet
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import { formatDate } from '../../utils/formatters';
@@ -45,6 +46,9 @@ const ExchangePage = () => {
   const [limits, setLimits] = useState(null);
   const [orders, setOrders] = useState([]);
   const [showOrders, setShowOrders] = useState(false);
+
+  // Fiat balance (for "Saldo Fiat" payment method)
+  const [fiatBalance, setFiatBalance] = useState(0);
   
   // For swap
   const [fromCrypto, setFromCrypto] = useState(null);
@@ -92,7 +96,21 @@ const ExchangePage = () => {
   // Refetch cryptos when currency changes
   useEffect(() => {
     fetchCryptos();
+    if (token) {
+      fetchFiatBalance();
+    }
   }, [currency]);
+
+  const fetchFiatBalance = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/trading/fiat/balance/${currency}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFiatBalance(res.data?.balance || 0);
+    } catch (e) {
+      setFiatBalance(0);
+    }
+  };
 
   // Auto-refresh prices every second for real-time updates
   useEffect(() => {
@@ -286,24 +304,27 @@ const ExchangePage = () => {
   };
 
   const handleSell = async () => {
-    if (!selectedCrypto || !sellAmount) return;
-    
+    const preview = calculateSellPreview();
+    if (!selectedCrypto || !preview) return;
+
     setLoading(true);
     setOrderResult(null);
-    
+
     try {
       const response = await axios.post(
         `${API_URL}/api/trading/sell`,
         {
           crypto_symbol: selectedCrypto.symbol,
-          crypto_amount: parseFloat(sellAmount),
-          payment_method: 'bank_transfer'
+          crypto_amount: preview.cryptoQty,
+          payment_method: 'fiat_balance',
+          destination_currency: currency,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       setOrderResult(response.data);
       fetchOrders();
+      fetchFiatBalance();
     } catch (err) {
       setOrderResult({
         success: false,
@@ -386,22 +407,37 @@ const ExchangePage = () => {
   };
 
   const calculateSellPreview = () => {
-    if (!selectedCrypto || !sellAmount || !fees) return null;
+    if (!selectedCrypto || !fees) return null;
 
-    const cryptoAmount = parseFloat(sellAmount);
-    // Apply KBEX Spread: sell side uses price_sell (lower than mid)
     const price = selectedCrypto.price_sell || selectedCrypto.price || selectedCrypto.price_usd || 0;
+    if (!price) return null;
     const feePercent = fees.sell_fee_percent || 2;
-    
-    const grossAmount = cryptoAmount * price;
+
+    let cryptoQty, grossAmount;
+
+    if (inputMode === 'fiat') {
+      if (!amount) return null;
+      const fiatTarget = parseFloat(amount);
+      if (!fiatTarget || fiatTarget <= 0) return null;
+      grossAmount = fiatTarget / (1 - feePercent / 100);
+      cryptoQty = grossAmount / price;
+    } else {
+      if (!sellAmount) return null;
+      const cryptoInput = parseFloat(sellAmount);
+      if (!cryptoInput || cryptoInput <= 0) return null;
+      cryptoQty = cryptoInput;
+      grossAmount = cryptoQty * price;
+    }
+
     const feeAmount = Math.max(grossAmount * (feePercent / 100), convertFromUSD(5));
     const netAmount = grossAmount - feeAmount;
-    
+
     return {
+      cryptoQty,
       grossAmount,
       fee: feeAmount,
       netAmount: netAmount > 0 ? netAmount : 0,
-      price
+      price,
     };
   };
 
@@ -767,19 +803,22 @@ const ExchangePage = () => {
                         data-testid="payment-card-btn"
                       >
                         <CreditCard className="mx-auto mb-2" size={24} />
-                        <span className="text-sm">{t('dashboard.exchange.card')}</span>
+                        <span className="text-sm block">{t('dashboard.exchange.card')}</span>
                       </button>
                       <button
                         className={`p-4 rounded-lg border transition-all ${
-                          paymentMethod === 'bank_transfer'
+                          paymentMethod === 'fiat_balance'
                             ? 'border-gold-500 bg-gold-500/10 text-gold-400'
                             : 'border-zinc-700 text-gray-400 hover:border-zinc-600'
                         }`}
-                        onClick={() => setPaymentMethod('bank_transfer')}
-                        data-testid="payment-bank-btn"
+                        onClick={() => setPaymentMethod('fiat_balance')}
+                        data-testid="payment-fiat-balance-btn"
                       >
-                        <Building2 className="mx-auto mb-2" size={24} />
-                        <span className="text-sm">{t('dashboard.exchange.bankTransfer')}</span>
+                        <Wallet className="mx-auto mb-2" size={24} />
+                        <span className="text-sm block">Saldo Fiat</span>
+                        <span className="text-[11px] text-zinc-500 block mt-0.5 tabular-nums">
+                          {formatCurrency(fiatBalance)}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -853,30 +892,81 @@ const ExchangePage = () => {
                       setDropdownOpen={setCryptoDropdownOpen}
                     />
                   </div>
-                  
+
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.quantity') || 'Quantidade'}</label>
-                    <div className="relative">
-                      <Input
-                        type="number" step="any"
-                        value={sellAmount}
-                        onChange={(e) => setSellAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="bg-zinc-800 border-zinc-700 text-white"
-                        data-testid="sell-amount-input"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                        {selectedCrypto?.symbol}
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm text-gray-400">{t('dashboard.exchange.amount') || 'Montante'}</label>
+                      <div className="flex items-center gap-1 bg-zinc-800 rounded-md p-0.5" data-testid="sell-input-mode-toggle">
+                        <button
+                          type="button"
+                          onClick={() => setInputMode('fiat')}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                            inputMode === 'fiat' ? 'bg-gold-500/20 text-gold-400' : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                        >
+                          {currency}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInputMode('crypto')}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                            inputMode === 'crypto' ? 'bg-gold-500/20 text-gold-400' : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                        >
+                          {selectedCrypto?.symbol || 'CRYPTO'}
+                        </button>
+                      </div>
+                    </div>
+                    {inputMode === 'fiat' ? (
+                      <div className="relative">
+                        <FormattedNumberInput
+                          value={amount}
+                          onChange={setAmount}
+                          placeholder="0.00"
+                          prefix={currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : ''}
+                          data-testid="sell-amount-fiat-input"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Input
+                          type="number" step="any"
+                          value={sellAmount}
+                          onChange={(e) => setSellAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="bg-zinc-800 border-zinc-700 text-white"
+                          data-testid="sell-amount-crypto-input"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          {selectedCrypto?.symbol}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-gray-400 mb-2 block">Destino</label>
+                    <div className="p-4 rounded-lg border border-gold-500 bg-gold-500/10 text-gold-400 flex items-center gap-3" data-testid="sell-destination-fiat-balance">
+                      <Wallet size={22} />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">Saldo Fiat · {currency}</div>
+                        <div className="text-[11px] text-zinc-500 tabular-nums">
+                          Saldo actual: {formatCurrency(fiatBalance)}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Preview */}
-                  {sellPreview && sellAmount && (
+                  {sellPreview && (
                     <div className="p-4 bg-zinc-800/50 rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">{t('dashboard.exchange.grossAmount') || 'Valor Bruto'}</span>
-                        <span className="text-white">{formatCurrency(sellPreview.grossAmount)}</span>
+                        <span className="text-gray-400">{inputMode === 'fiat' ? (t('dashboard.exchange.youSell') || 'Vai vender') : (t('dashboard.exchange.grossAmount') || 'Valor Bruto')}</span>
+                        <span className="text-white font-medium">
+                          {inputMode === 'fiat'
+                            ? `${sellPreview.cryptoQty.toFixed(6)} ${selectedCrypto?.symbol}`
+                            : formatCurrency(sellPreview.grossAmount)}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400 flex items-center gap-1">
@@ -889,7 +979,7 @@ const ExchangePage = () => {
                               <TooltipContent side="top" className="bg-zinc-900 border-zinc-700 text-white max-w-[280px] p-3">
                                 <p className="text-gold-400 font-semibold text-xs mb-1">{t('dashboard.exchange.feeTooltipTitle') || 'Taxa'}</p>
                                 <p className="text-zinc-300 text-xs leading-relaxed">
-                                  {t('dashboard.exchange.feeTooltipText') || 'Além da taxa exibida, um spread pode estar incluído no preço. Qualquer spread é calculado antes de a transação ser submetida e pode diferir para transações semelhantes.'}
+                                  {t('dashboard.exchange.feeTooltipText') || 'Além da taxa exibida, um spread pode estar incluído no preço.'}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
@@ -899,24 +989,17 @@ const ExchangePage = () => {
                       </div>
                       <div className="border-t border-zinc-700 pt-2 mt-2">
                         <div className="flex justify-between">
-                          <span className="text-gray-400">{t('dashboard.exchange.youReceive') || 'Você recebe'}</span>
+                          <span className="text-gray-400">{t('dashboard.exchange.youReceive') || 'Receberá no Saldo Fiat'}</span>
                           <span className="text-gold-400 font-semibold">{formatCurrency(sellPreview.netAmount)}</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <p className="text-blue-400 text-sm flex items-center gap-2">
-                      <AlertCircle size={16} />
-                      {t('dashboard.exchange.sellProcessedNote') || 'Vendas são processadas via transferência bancária após aprovação.'}
-                    </p>
-                  </div>
-
                   <Button
                     className="w-full bg-red-500 hover:bg-red-600 text-white py-3"
                     onClick={handleSell}
-                    disabled={loading || !sellAmount || !selectedCrypto}
+                    disabled={loading || !sellPreview || !selectedCrypto}
                     data-testid="sell-submit-btn"
                   >
                     {loading ? (
@@ -1141,13 +1224,10 @@ const ExchangePage = () => {
               <CardContent>
                 <div className="space-y-3">
                   {activeTab === 'swap' ? (
-                    // Swap: show both from (sell side) & to (buy side)
                     <div className="space-y-2" data-testid="exchange-price-swap">
                       {fromCrypto && (
                         <div className="flex items-end justify-between">
-                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                            {fromCrypto.symbol} {selectedCrypto.sell_spread_pct ? `· −${selectedCrypto.sell_spread_pct}%` : ''}
-                          </span>
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">{fromCrypto.symbol}</span>
                           <span className="text-xl font-light text-red-400 tabular-nums">
                             {formatCurrency(fromCrypto.price_sell || fromCrypto.price)}
                           </span>
@@ -1155,9 +1235,7 @@ const ExchangePage = () => {
                       )}
                       {toCrypto && (
                         <div className="flex items-end justify-between">
-                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                            {toCrypto.symbol} {selectedCrypto.buy_spread_pct ? `· +${selectedCrypto.buy_spread_pct}%` : ''}
-                          </span>
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">{toCrypto.symbol}</span>
                           <span className="text-xl font-light text-emerald-400 tabular-nums">
                             {formatCurrency(toCrypto.price_buy || toCrypto.price)}
                           </span>
@@ -1173,11 +1251,6 @@ const ExchangePage = () => {
                         {activeTab === 'sell'
                           ? formatCurrency(selectedCrypto.price_sell || selectedCrypto.price)
                           : formatCurrency(selectedCrypto.price_buy || selectedCrypto.price)}
-                      </span>
-                      <span className="text-xs text-zinc-500 pb-1.5 uppercase tracking-wider">
-                        {activeTab === 'sell'
-                          ? `${t('dashboard.exchange.sell') || 'Vender'}${selectedCrypto.sell_spread_pct ? ` · −${selectedCrypto.sell_spread_pct}%` : ''}`
-                          : `${t('dashboard.exchange.buy') || 'Comprar'}${selectedCrypto.buy_spread_pct ? ` · +${selectedCrypto.buy_spread_pct}%` : ''}`}
                       </span>
                       <span className={`text-sm ml-auto pb-1.5 ${selectedCrypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {selectedCrypto.change_24h >= 0 ? '+' : ''}{selectedCrypto.change_24h?.toFixed(2)}%
