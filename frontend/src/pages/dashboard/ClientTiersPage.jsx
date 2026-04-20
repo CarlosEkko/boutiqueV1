@@ -79,7 +79,7 @@ const formatAllocation = (value, currency = 'EUR') => {
 };
 
 // Render a cell value (bool/number/string)
-const ValueCell = ({ value, tierId }) => {
+const ValueCell = ({ value, tierId, translate }) => {
   const style = TIER_STYLES[tierId] || TIER_STYLES.standard;
 
   if (value === true) {
@@ -105,11 +105,12 @@ const ValueCell = ({ value, tierId }) => {
       </div>
     );
   }
-  // string
+  // string — try to translate known tokens ("ilimitado", "limitado", "até 12h" etc.)
+  const display = translate ? translate(value) : value;
   return (
     <div className="flex items-center justify-center">
       <span className={`text-[11px] px-2 py-0.5 rounded-full border ${style.border} ${style.text} font-medium tracking-wide`}>
-        {value}
+        {display}
       </span>
     </div>
   );
@@ -133,7 +134,7 @@ const ClientTiersPage = () => {
         setConfig(res.data);
       } catch (err) {
         console.error('Failed to load tiers', err);
-        toast.error(t('tiers.errors.loadFailed', 'Falha ao carregar tiers'));
+        toast.error(t('tiers.errors.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -158,17 +159,29 @@ const ClientTiersPage = () => {
         { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(t('tiers.upgrade.success', 'Pedido enviado. O seu Account Manager entrará em contacto.'));
+      toast.success(t('tiers.upgrade.success'));
       setUpgradeDialog({ open: false, targetTier: null });
       setUpgradeMessage('');
     } catch (err) {
-      toast.error(err?.response?.data?.detail || t('tiers.upgrade.error', 'Falha ao enviar pedido'));
+      toast.error(err?.response?.data?.detail || t('tiers.upgrade.error'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const tierLabel = (id) => config?.tiers?.find((t2) => t2.id === id)?.label || id;
+
+  // Translate value strings from backend defaults ("ilimitado", "limitado", "até 12h", "até 8h", "24h", "1h")
+  const translateValue = (raw) => {
+    if (typeof raw !== 'string') return raw;
+    const s = raw.trim().toLowerCase();
+    if (s === 'ilimitado') return t('tiers.valueBadges.unlimited');
+    if (s === 'limitado') return t('tiers.valueBadges.limited');
+    // "até 12h" / "até 8h" pattern
+    const m = s.match(/^at[ée]\s+(\d+h)$/);
+    if (m) return `${t('tiers.valueBadges.upTo')} ${m[1]}`;
+    return raw;
+  };
 
   if (loading) {
     return (
@@ -189,21 +202,18 @@ const ClientTiersPage = () => {
         <div>
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold-400/80 mb-2">
             <Crown size={14} />
-            <span>{t('tiers.eyebrow', 'Programa de Alocação')}</span>
+            <span>{t('tiers.eyebrow')}</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-light text-white">
-            {t('tiers.title', 'Níveis de Cliente')} <span className="text-gold-400">&amp; Benefícios</span>
+            {t('tiers.title')} <span className="text-gold-400">{t('tiers.titleAccent')}</span>
           </h1>
           <p className="text-zinc-400 mt-3 max-w-2xl">
-            {t(
-              'tiers.subtitle',
-              'Cada tier desbloqueia alocações, ferramentas e serviços dedicados. O seu nível cresce consigo.'
-            )}
+            {t('tiers.subtitle')}
           </p>
         </div>
         <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-gold-800/40 bg-gold-950/20">
           <Sparkles size={14} className="text-gold-400" />
-          <span className="text-xs uppercase tracking-widest text-zinc-400">{t('tiers.yourTier', 'O seu tier')}</span>
+          <span className="text-xs uppercase tracking-widest text-zinc-400">{t('tiers.yourTier')}</span>
           <span className="text-gold-400 font-semibold">{tierLabel(currentTier)}</span>
         </div>
       </div>
@@ -228,14 +238,14 @@ const ClientTiersPage = () => {
                   <div className={`w-2 h-2 rounded-full ${style.dot}`} />
                   {isCurrent && (
                     <Badge className="bg-gold-500/15 text-gold-300 border border-gold-500/30 text-[10px] tracking-widest">
-                      {t('tiers.currentBadge', 'ATUAL')}
+                      {t('tiers.currentBadge')}
                     </Badge>
                   )}
                 </div>
                 <div className={`text-xs uppercase tracking-[0.18em] ${style.text}`}>{tier.label}</div>
                 <div className="mt-3">
                   <div className="text-[10px] uppercase tracking-wider text-zinc-500">
-                    {t('tiers.minAllocation', 'Alocação Mínima')}
+                    {t('tiers.minAllocation')}
                   </div>
                   <div className="text-2xl font-light text-white mt-1 tabular-nums">
                     {formatAllocation(tier.min_allocation, tier.currency)}
@@ -251,11 +261,11 @@ const ClientTiersPage = () => {
                     data-testid={`tier-upgrade-btn-${tier.id}`}
                   >
                     <ArrowUpRight size={14} className="mr-1.5" />
-                    {t('tiers.upgradeTo', 'Fazer Upgrade')}
+                    {t('tiers.upgradeTo')}
                   </Button>
                 ) : (
                   <div className="h-9 mt-4 flex items-center justify-center text-[11px] text-zinc-500 tracking-wider">
-                    {isCurrent ? t('tiers.activePlan', '— Plano Ativo —') : '\u00A0'}
+                    {isCurrent ? t('tiers.activePlan') : '\u00A0'}
                   </div>
                 )}
               </div>
@@ -269,7 +279,7 @@ const ClientTiersPage = () => {
         {/* Sticky column header */}
         <div className="sticky top-0 z-10 grid grid-cols-[minmax(180px,1.3fr)_repeat(5,minmax(100px,1fr))] bg-zinc-900/95 border-b border-zinc-800/80 backdrop-blur">
           <div className="p-4 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-            {t('tiers.feature', 'Característica')}
+            {t('tiers.feature')}
           </div>
           {tiers.map((tier) => {
             const style = TIER_STYLES[tier.id] || TIER_STYLES.standard;
@@ -287,7 +297,7 @@ const ClientTiersPage = () => {
             <div className="px-4 py-2.5 bg-zinc-900/40 border-y border-zinc-800/60">
               <div className="text-[10px] uppercase tracking-[0.22em] text-gold-400/70 font-semibold flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-gold-400" />
-                {section.label}
+                {t(`tiers.sections.${section.id}`, section.label)}
               </div>
             </div>
             {section.features.map((feat, idx) => (
@@ -298,7 +308,7 @@ const ClientTiersPage = () => {
                 } hover:bg-zinc-800/30 transition-colors`}
                 data-testid={`feature-row-${feat.id}`}
               >
-                <div className="p-3.5 text-sm text-zinc-200 font-light">{feat.label}</div>
+                <div className="p-3.5 text-sm text-zinc-200 font-light">{t(`tiers.features.${feat.id}`, feat.label)}</div>
                 {tiers.map((tier) => (
                   <div
                     key={tier.id}
@@ -306,7 +316,7 @@ const ClientTiersPage = () => {
                       tier.id === currentTier ? 'bg-gold-500/[0.03]' : ''
                     }`}
                   >
-                    <ValueCell value={feat.values[tier.id]} tierId={tier.id} />
+                    <ValueCell value={feat.values[tier.id]} tierId={tier.id} translate={translateValue} />
                   </div>
                 ))}
               </div>
@@ -319,10 +329,7 @@ const ClientTiersPage = () => {
       <div className="flex items-start gap-3 text-xs text-zinc-500 px-1">
         <ShieldCheck size={14} className="mt-0.5 shrink-0 text-gold-500/60" />
         <p>
-          {t(
-            'tiers.footerNote',
-            'Alocações e benefícios podem ser personalizados para clientes institucionais. Contacte o seu Account Manager para uma proposta dedicada.'
-          )}
+          {t('tiers.footerNote')}
         </p>
       </div>
 
@@ -332,24 +339,18 @@ const ClientTiersPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-gold-400">
               <Crown size={18} />
-              {t('tiers.upgrade.title', 'Upgrade para')} {tierLabel(upgradeDialog.targetTier)}
+              {t('tiers.upgrade.title')} {tierLabel(upgradeDialog.targetTier)}
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
-              {t(
-                'tiers.upgrade.description',
-                'O seu Account Manager vai analisar o pedido e entrar em contacto para alinhar a transição.'
-              )}
+              {t('tiers.upgrade.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="text-xs text-zinc-500 uppercase tracking-wider">
-              {t('tiers.upgrade.messageLabel', 'Mensagem opcional')}
+              {t('tiers.upgrade.messageLabel')}
             </div>
             <Textarea
-              placeholder={t(
-                'tiers.upgrade.messagePlaceholder',
-                'Partilhe objectivos, expectativas de alocação ou perguntas...'
-              )}
+              placeholder={t('tiers.upgrade.messagePlaceholder')}
               value={upgradeMessage}
               onChange={(e) => setUpgradeMessage(e.target.value)}
               className="bg-zinc-900 border-zinc-800 text-white min-h-[120px]"
@@ -365,7 +366,7 @@ const ClientTiersPage = () => {
               className="text-zinc-400 hover:text-white"
               data-testid="upgrade-cancel-btn"
             >
-              {t('common.cancel', 'Cancelar')}
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={submitUpgrade}
@@ -374,7 +375,7 @@ const ClientTiersPage = () => {
               data-testid="upgrade-submit-btn"
             >
               {submitting ? <Loader2 className="animate-spin" size={14} /> : <ArrowUpRight size={14} className="mr-1.5" />}
-              {t('tiers.upgrade.submit', 'Enviar Pedido')}
+              {t('tiers.upgrade.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
