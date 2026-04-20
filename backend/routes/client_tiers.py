@@ -117,7 +117,7 @@ DEFAULT_SECTIONS = [
         "features": [
             {"id": "otc_desk", "label": "OTC Desk", "values": {"broker": False, "standard": False, "premium": True, "vip": True, "institucional": True}},
             {"id": "otc_desk_premium", "label": "OTC Desk Premium", "values": {"broker": False, "standard": False, "premium": False, "vip": True, "institucional": True}},
-            {"id": "otc_vaults", "label": "Cofres p/ OTC", "values": {"broker": 0, "standard": 0, "premium": 4, "vip": 8, "institucional": 12}},
+            {"id": "otc_vaults", "label": "Cofres (Omnibus)", "values": {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}},
         ],
     },
     {
@@ -146,7 +146,6 @@ DEFAULT_SECTIONS = [
         "id": "multi_sign",
         "label": "Multi-Sign",
         "features": [
-            {"id": "vaults", "label": "Cofres", "values": {"broker": 0, "standard": 0, "premium": 0, "vip": 5, "institucional": 15}},
             {"id": "signatories", "label": "Signatários", "values": {"broker": 0, "standard": 0, "premium": 0, "vip": 5, "institucional": 10}},
         ],
     },

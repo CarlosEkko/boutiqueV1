@@ -31,6 +31,14 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Sidebar: Perfil → "Níveis & Benefícios" (client); Gestão → "Níveis de Cliente" (admin)
 - All tests pass: 19/19 backend, 100% frontend (iteration_51)
 
+## Cofre / Vault Limits Unified (2026-04-20)
+- **Single source of truth:** `client_tiers_config` → feature `otc_vaults` (renamed to "Cofres (Omnibus)")
+- **Backend:** `_get_max_cofres()` in `omnibus.py` reads from `client_tiers_config`; legacy `omnibus_tier_limits` endpoints marked `deprecated=True` and write-through to canonical source
+- **AdminSettings card:** converted to read-only display with link to `/admin/tiers`
+- **Multi-Sign:** removed duplicate "vaults" row — Multi-Sign = 1 signing structure per client; additional addresses/cofres are Omnibus sub-accounts counted under `otc_vaults`
+- **Translations updated** (5 languages): "Vaults (Omnibus)" / "Cofres (Omnibus)" / "خزائن (Omnibus)" / "Coffres (Omnibus)" / "Bóvedas (Omnibus)"
+- **Existing cofres preserved:** only affects limit on future creation (omnibus_ledger untouched)
+
 ## Revolut Business API — P2 Complete (2026-04-20)
 - **Webhook HMAC-SHA256 signature verification** (`Revolut-Signature` + `Revolut-Request-Timestamp`, 5-min replay tolerance)
 - **Background auto-sync** every 5 min (configurable via `REVOLUT_SYNC_INTERVAL_S`), launched on app startup

@@ -98,21 +98,47 @@ async def set_omnibus_config(data: OmnibusConfigRequest, admin: dict = Depends(g
     return {"success": True, "message": "Configuração Omnibus atualizada"}
 
 
-# ==================== ADMIN: TIER LIMITS ====================
+# ==================== ADMIN: TIER LIMITS (DEPRECATED) ====================
+# Tier limits are now managed in `client_tiers_config` (feature `otc_vaults`).
+# These endpoints are kept as read-only aliases and auto-sync writes to tiers config.
 
-@router.get("/tier-limits")
+@router.get("/tier-limits", deprecated=True)
 async def get_tier_limits(admin: dict = Depends(get_internal_user)):
-    """Get cofre limits per membership tier"""
-    doc = await db.omnibus_tier_limits.find_one({}, {"_id": 0})
-    if not doc:
-        return {"tier_limits": {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}}
-    return {"tier_limits": doc.get("tier_limits", {})}
+    """[DEPRECATED] Use /api/client-tiers instead. Returns limits sourced from client_tiers_config."""
+    defaults = {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}
+    cfg = await db.client_tiers_config.find_one({"id": "main"}, {"_id": 0, "sections": 1})
+    out = dict(defaults)
+    if cfg:
+        for section in cfg.get("sections", []):
+            for feat in section.get("features", []):
+                if feat.get("id") == "otc_vaults":
+                    for tier_id, val in (feat.get("values") or {}).items():
+                        if isinstance(val, (int, float)):
+                            out[tier_id] = int(val)
+    return {"tier_limits": out, "source": "client_tiers_config", "deprecated": True}
 
 
-@router.put("/tier-limits")
+@router.put("/tier-limits", deprecated=True)
 async def set_tier_limits(data: TierLimitsRequest, admin: dict = Depends(get_admin_user)):
-    """Configure max cofres per tier (admin only)"""
+    """[DEPRECATED] Writes are mirrored to client_tiers_config (feature `otc_vaults`)."""
     now = datetime.now(timezone.utc).isoformat()
+
+    # Mirror to canonical source
+    cfg = await db.client_tiers_config.find_one({"id": "main"}, {"_id": 0})
+    if cfg:
+        updated = False
+        for section in cfg.get("sections", []):
+            for feat in section.get("features", []):
+                if feat.get("id") == "otc_vaults":
+                    feat["values"] = {**feat.get("values", {}), **{k: int(v) for k, v in data.tier_limits.items()}}
+                    updated = True
+        if updated:
+            await db.client_tiers_config.update_one(
+                {"id": "main"},
+                {"$set": {"sections": cfg["sections"], "updated_at": now}},
+            )
+
+    # Keep legacy doc in sync (for any external consumer)
     await db.omnibus_tier_limits.update_one(
         {},
         {"$set": {
@@ -122,8 +148,8 @@ async def set_tier_limits(data: TierLimitsRequest, admin: dict = Depends(get_adm
         }},
         upsert=True
     )
-    logger.info(f"Tier limits updated by {admin.get('email')}: {data.tier_limits}")
-    return {"success": True, "message": "Limites de cofres atualizados"}
+    logger.info(f"Tier limits updated (via legacy endpoint) by {admin.get('email')}: {data.tier_limits}")
+    return {"success": True, "message": "Limites sincronizados em client_tiers_config", "deprecated": True}
 
 
 # ==================== HELPERS ====================
@@ -134,10 +160,33 @@ async def _get_user_tier(user_id: str) -> str:
 
 
 async def _get_max_cofres(tier: str) -> int:
-    doc = await db.omnibus_tier_limits.find_one({}, {"_id": 0})
+    """
+    Return max cofres allowed for a given tier.
+
+    Source of truth: `client_tiers_config` → feature `otc_vaults`.
+    Falls back to legacy `omnibus_tier_limits` collection then to hard defaults.
+    Covers BOTH OTC cofres and Multi-Sign derived addresses (all Omnibus sub-accounts).
+    """
     defaults = {"broker": 1, "standard": 3, "premium": 10, "vip": 20, "institucional": 50}
-    limits = doc.get("tier_limits", defaults) if doc else defaults
-    return limits.get(tier, limits.get("standard", 3))
+
+    # Primary source: client_tiers_config
+    cfg = await db.client_tiers_config.find_one({"id": "main"}, {"_id": 0, "sections": 1})
+    if cfg:
+        for section in cfg.get("sections", []):
+            for feat in section.get("features", []):
+                if feat.get("id") == "otc_vaults":
+                    raw = feat.get("values", {}).get(tier)
+                    if isinstance(raw, (int, float)) and raw >= 0:
+                        return int(raw)
+
+    # Legacy fallback
+    legacy = await db.omnibus_tier_limits.find_one({}, {"_id": 0})
+    if legacy:
+        limits = legacy.get("tier_limits", defaults)
+        if tier in limits:
+            return limits[tier]
+
+    return defaults.get(tier, defaults["standard"])
 
 
 async def _count_user_cofres(user_id: str) -> int:

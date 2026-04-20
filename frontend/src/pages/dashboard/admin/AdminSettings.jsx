@@ -48,11 +48,10 @@ const AdminSettings = () => {
     is_active: true
   });
 
-  // Tier Limits State
+  // Tier Limits State (read-only, sourced from client_tiers_config)
   const [tierLimits, setTierLimits] = useState({
     broker: 1, standard: 3, premium: 10, vip: 20, institucional: 50
   });
-  const [savingTier, setSavingTier] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -85,20 +84,6 @@ const AdminSettings = () => {
       });
       if (res.data.tier_limits) setTierLimits(res.data.tier_limits);
     } catch (err) { console.error('Failed to load tier limits', err); }
-  };
-
-  const saveTierLimits = async () => {
-    setSavingTier(true);
-    try {
-      await axios.put(`${API_URL}/api/omnibus/tier-limits`, { tier_limits: tierLimits }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Limites de cofres atualizados');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Falha ao atualizar limites');
-    } finally {
-      setSavingTier(false);
-    }
   };
 
   const saveReferralFees = async () => {
@@ -375,43 +360,36 @@ const AdminSettings = () => {
         </Card>
       </div>
 
-      {/* Tier Limits - Cofres */}
+      {/* Tier Limits - moved to /admin/tiers */}
       <Card className="bg-zinc-900 border-zinc-800/50" data-testid="tier-limits-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Vault className="text-amber-400" size={20} />
             <span className="text-white">Limites de Cofres por Tier</span>
+            <Badge className="ml-2 bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] tracking-wider">Movido</Badge>
           </CardTitle>
           <CardDescription className="text-zinc-500">
-            Número máximo de cofres que cada nível de cliente pode criar
+            Esta configuração foi unificada em <span className="text-gold-400">Gestão → Níveis de Cliente</span>.
+            Os limites aplicam-se a todos os cofres (OTC e endereços Multi-Sign adicionais) que ficam armazenados na estrutura Omnibus.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {Object.entries(tierLimits).map(([tier, limit]) => (
-              <div key={tier} className="space-y-2">
-                <Label className="text-zinc-400 text-sm capitalize">{tier}</Label>
-                <Input
-                  type="number" step="any"
-                  min="1"
-                  max="999"
-                  value={limit}
-                  onChange={e => setTierLimits(prev => ({ ...prev, [tier]: parseInt(e.target.value) || 1 }))}
-                  className="bg-zinc-800/50 border-zinc-700 text-white h-10"
-                  data-testid={`tier-limit-${tier}`}
-                />
+              <div key={tier} className="rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500">{tier}</div>
+                <div className="text-lg font-semibold text-white tabular-nums">{limit}</div>
               </div>
             ))}
           </div>
           <div className="flex justify-end">
             <Button
-              onClick={saveTierLimits}
-              disabled={savingTier}
-              className="bg-amber-500 text-zinc-950 hover:bg-amber-400"
-              data-testid="save-tier-limits-btn"
+              variant="outline"
+              onClick={() => window.location.assign('/dashboard/admin/tiers')}
+              className="border-gold-600/40 text-gold-300 hover:bg-gold-500/10"
+              data-testid="goto-tiers-admin-btn"
             >
-              <Save size={16} className="mr-2" />
-              {savingTier ? 'A guardar...' : 'Guardar Limites'}
+              <Vault size={14} className="mr-2" /> Editar em Níveis de Cliente
             </Button>
           </div>
         </CardContent>
