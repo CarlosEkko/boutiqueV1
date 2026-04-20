@@ -166,6 +166,15 @@ Verified end-to-end:
 - **Admin UI**: 4-card Health Monitor panel in `/dashboard/admin/contas-bancarias` (auto-sync, webhook signed, last deposit, last reconciliation)
 - Verified: 3 webhook signature scenarios (none/bogus/valid) return correct HTTP 401/401/200
 
+## KBEX Spread — Unified Pricing Architecture (2026-04-20, v4)
+- **Renamed** "KBEX Rates" → "KBEX Spread" (admin sidebar label, page title, subtitle). Backend routes remain `/api/kbex-rates/*` (URL compatibility).
+- **5 products** now in KBEX Spread: `otc`, `exchange`, `spot`, `escrow`, `multisign`. Each has 5 tiers (broker/standard/premium/vip/institucional) × configurable asset spreads.
+- **Single Source of Truth** for all prices: `/app/backend/services/pricing_service.py` → `apply_spread(base_price, product, tier, asset)`.
+- **All price feeds** now consume KBEX Spread: `/api/trading/cryptos`, `/api/trading/markets`, `/api/trading/price/{symbol}`, OTC Desk (unchanged). Returns `price_buy`, `price_sell`, `buy_spread_pct`, `sell_spread_pct` alongside mid price.
+- **Tier-aware pricing:** authenticated users get spread based on their `membership_level`. Anonymous callers → standard tier.
+- **Exchange UI (tab-aware):** Comprar tab shows only buy price (emerald +X%), Vender shows only sell (red −X%), Converter shows both. Mid price no longer displayed.
+- **Trading page** uses `product=spot`, Exchange uses `product=exchange`, Markets public uses `product=exchange` (standard tier).
+
 ## Annual Fee Consolidation — Single Source of Truth (2026-04-20, v3)
 - **Canonical source:** `platform_settings.annual_fee` (read via `GET /api/billing/config`, written via `PUT /api/billing/annual-fee`).
 - **Platform Configurations page** (`AdminSettings`) is the only editor for tier amounts:

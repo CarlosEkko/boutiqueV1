@@ -431,8 +431,18 @@ const ExchangePage = () => {
   const sellPreview = calculateSellPreview();
   const swapPreview = calculateSwapPreview();
 
-  const CryptoSelector = ({ value, onChange, exclude = null, dropdownOpen, setDropdownOpen }) => {
+  const CryptoSelector = ({ value, onChange, exclude = null, dropdownOpen, setDropdownOpen, side = 'buy' }) => {
     const filteredCryptos = cryptos.filter(c => !exclude || c.symbol !== exclude.symbol);
+    // Which price to display depends on the active tab and the selector role:
+    //   buy tab → buy price; sell tab → sell price; swap tab → side prop (from=sell, to=buy)
+    const displayPriceFor = (c) => {
+      if (!c) return null;
+      const tab = activeTab === 'swap' ? (side === 'sell' ? 'sell' : 'buy') : activeTab;
+      if (tab === 'sell') return c.price_sell || c.price || c.price_usd;
+      return c.price_buy || c.price || c.price_usd;
+    };
+    const isSellSide = (activeTab === 'sell') || (activeTab === 'swap' && side === 'sell');
+    const priceColor = isSellSide ? 'text-red-400' : 'text-emerald-400';
     
     return (
       <div className="relative">
@@ -456,8 +466,8 @@ const ExchangePage = () => {
             <span className="text-gray-400 text-sm">{value?.name}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">
-              {value && formatCurrency(value.price || value.price_usd)}
+            <span className={`text-sm ${priceColor}`}>
+              {value && formatCurrency(displayPriceFor(value))}
             </span>
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
           </div>
@@ -491,7 +501,7 @@ const ExchangePage = () => {
                   <span className="text-gray-400 text-sm">{crypto.name}</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-white">{formatCurrency(crypto.price || crypto.price_usd)}</div>
+                  <div className={`text-sm ${priceColor}`}>{formatCurrency(displayPriceFor(crypto))}</div>
                   <div className={`text-xs ${crypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {crypto.change_24h >= 0 ? '+' : ''}{crypto.change_24h?.toFixed(2)}%
                   </div>
@@ -930,6 +940,7 @@ const ExchangePage = () => {
                       exclude={toCrypto}
                       dropdownOpen={fromCryptoDropdownOpen}
                       setDropdownOpen={setFromCryptoDropdownOpen}
+                      side="sell"
                     />
                   </div>
                   
@@ -972,6 +983,7 @@ const ExchangePage = () => {
                       exclude={fromCrypto}
                       dropdownOpen={toCryptoDropdownOpen}
                       setDropdownOpen={setToCryptoDropdownOpen}
+                      side="buy"
                     />
                   </div>
 
@@ -1128,34 +1140,48 @@ const ExchangePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-end gap-2">
-                    <span className="text-3xl font-light text-white">
-                      {formatCurrency(selectedCrypto.price || selectedCrypto.price_usd)}
-                    </span>
-                    <span className={`text-sm ${selectedCrypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {selectedCrypto.change_24h >= 0 ? '+' : ''}{selectedCrypto.change_24h?.toFixed(2)}%
-                    </span>
-                  </div>
-                  {(selectedCrypto.price_buy || selectedCrypto.price_sell) && (
-                    <div className="flex items-center gap-4 pt-1 border-t border-zinc-800/60 pt-2" data-testid="exchange-spread-row">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                          {t('dashboard.exchange.buy') || 'Comprar'}
-                          {selectedCrypto.buy_spread_pct ? ` (+${selectedCrypto.buy_spread_pct}%)` : ''}
-                        </span>
-                        <span className="text-emerald-400 text-sm font-medium tabular-nums" data-testid="exchange-price-buy">
-                          {formatCurrency(selectedCrypto.price_buy)}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                          {t('dashboard.exchange.sell') || 'Vender'}
-                          {selectedCrypto.sell_spread_pct ? ` (-${selectedCrypto.sell_spread_pct}%)` : ''}
-                        </span>
-                        <span className="text-red-400 text-sm font-medium tabular-nums" data-testid="exchange-price-sell">
-                          {formatCurrency(selectedCrypto.price_sell)}
-                        </span>
-                      </div>
+                  {activeTab === 'swap' ? (
+                    // Swap: show both from (sell side) & to (buy side)
+                    <div className="space-y-2" data-testid="exchange-price-swap">
+                      {fromCrypto && (
+                        <div className="flex items-end justify-between">
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                            {fromCrypto.symbol} {selectedCrypto.sell_spread_pct ? `· −${selectedCrypto.sell_spread_pct}%` : ''}
+                          </span>
+                          <span className="text-xl font-light text-red-400 tabular-nums">
+                            {formatCurrency(fromCrypto.price_sell || fromCrypto.price)}
+                          </span>
+                        </div>
+                      )}
+                      {toCrypto && (
+                        <div className="flex items-end justify-between">
+                          <span className="text-[10px] uppercase tracking-wider text-zinc-500">
+                            {toCrypto.symbol} {selectedCrypto.buy_spread_pct ? `· +${selectedCrypto.buy_spread_pct}%` : ''}
+                          </span>
+                          <span className="text-xl font-light text-emerald-400 tabular-nums">
+                            {formatCurrency(toCrypto.price_buy || toCrypto.price)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-end gap-2">
+                      <span
+                        className={`text-3xl font-light tabular-nums ${activeTab === 'sell' ? 'text-red-400' : 'text-emerald-400'}`}
+                        data-testid={activeTab === 'sell' ? 'exchange-price-sell' : 'exchange-price-buy'}
+                      >
+                        {activeTab === 'sell'
+                          ? formatCurrency(selectedCrypto.price_sell || selectedCrypto.price)
+                          : formatCurrency(selectedCrypto.price_buy || selectedCrypto.price)}
+                      </span>
+                      <span className="text-xs text-zinc-500 pb-1.5 uppercase tracking-wider">
+                        {activeTab === 'sell'
+                          ? `${t('dashboard.exchange.sell') || 'Vender'}${selectedCrypto.sell_spread_pct ? ` · −${selectedCrypto.sell_spread_pct}%` : ''}`
+                          : `${t('dashboard.exchange.buy') || 'Comprar'}${selectedCrypto.buy_spread_pct ? ` · +${selectedCrypto.buy_spread_pct}%` : ''}`}
+                      </span>
+                      <span className={`text-sm ml-auto pb-1.5 ${selectedCrypto.change_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {selectedCrypto.change_24h >= 0 ? '+' : ''}{selectedCrypto.change_24h?.toFixed(2)}%
+                      </span>
                     </div>
                   )}
                   {selectedCrypto.market_cap && (

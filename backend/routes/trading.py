@@ -2724,11 +2724,19 @@ MARKETS_CACHE = {
 }
 
 @router.get("/markets")
-async def get_markets_data(currency: str = "USD", product: str = "exchange"):
+async def get_markets_data(
+    currency: str = "USD",
+    product: str = "exchange",
+    user_id: Optional[str] = Depends(get_optional_user_id),
+):
     """Get market data for all supported cryptocurrencies using Binance API.
-    Applies public KBEX Spread (tier=standard). `product` selects which spread profile
-    to use: exchange (default), spot (Trading page), otc, escrow, multisign.
+    Applies KBEX Spread. If caller is authenticated, uses their membership tier;
+    otherwise falls back to standard tier.
     """
+    tier = "standard"
+    if user_id:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "membership_level": 1})
+        tier = ((user or {}).get("membership_level") or "standard").lower()
     global MARKETS_CACHE
     
     now = datetime.now(timezone.utc)
@@ -2738,7 +2746,7 @@ async def get_markets_data(currency: str = "USD", product: str = "exchange"):
         cache_age = (now - MARKETS_CACHE["updated_at"]).total_seconds()
         if cache_age < 60:
             # Return cached data converted to requested currency
-            return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product)
+            return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product, tier)
     
     # Fetch fresh data from Binance
     try:
@@ -2796,21 +2804,21 @@ async def get_markets_data(currency: str = "USD", product: str = "exchange"):
                 MARKETS_CACHE["data"] = markets
                 MARKETS_CACHE["updated_at"] = now
                 
-                return await convert_markets_to_currency(markets, currency, product)
+                return await convert_markets_to_currency(markets, currency, product, tier)
     
     except Exception as e:
         print(f"Failed to fetch market data from Binance: {e}")
     
     # Return cached or fallback data
     if MARKETS_CACHE["data"]:
-        return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product)
+        return await convert_markets_to_currency(MARKETS_CACHE["data"], currency, product, tier)
     
     # Return default/fallback data
     return await get_fallback_markets(currency)
 
 
-async def convert_markets_to_currency(markets: list, currency: str, product: str = "exchange") -> dict:
-    """Convert market data to target currency and apply public KBEX spread (product × standard)."""
+async def convert_markets_to_currency(markets: list, currency: str, product: str = "exchange", tier: str = "standard") -> dict:
+    """Convert market data to target currency and apply KBEX spread (product × tier)."""
     from services import pricing_service
 
     if currency == "USD":
@@ -2828,9 +2836,8 @@ async def convert_markets_to_currency(markets: list, currency: str, product: str
             for m in markets
         ]
 
-    # Apply KBEX spread (public → tier="standard")
     for m in converted:
-        sp = await pricing_service.apply_spread(m.get("price") or 0, product, "standard", m.get("symbol"))
+        sp = await pricing_service.apply_spread(m.get("price") or 0, product, tier, m.get("symbol"))
         m["price_buy"] = sp["buy"]
         m["price_sell"] = sp["sell"]
         m["buy_spread_pct"] = sp["buy_spread_pct"]

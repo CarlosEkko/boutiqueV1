@@ -1,5 +1,24 @@
 # KBEX.io - Changelog
 
+## 2026-04-20 (v4) - KBEX Spread: Unified Pricing Architecture
+- **Renamed:** "KBEX Rates" → "KBEX Spread" everywhere (sidebar, page title, subtitle).
+- **5th product added:** `multisign` (Custódia Anual % por tier).
+- **New backend service:** `/app/backend/services/pricing_service.py` with `apply_spread(base, product, tier, asset)` — central helper for all price endpoints.
+- **New auth helper:** `get_optional_user_id` in `utils/auth.py` — lets endpoints serve both anonymous (→ standard tier) and authenticated (→ user tier) callers.
+- **New endpoint:** `GET /api/kbex-rates/my-spreads` — returns all resolved spreads across 5 products for current user.
+- **Price endpoints wired:**
+  - `GET /api/trading/cryptos?product=exchange|spot` — now returns price_buy / price_sell / buy_spread_pct / sell_spread_pct per asset (tier from JWT or standard).
+  - `GET /api/trading/markets?product=exchange|spot` — same.
+  - `GET /api/trading/price/{symbol}?product=...` — same.
+  - OTC Desk already used resolve_spread (unchanged).
+- **Frontend — ExchangePage tab-aware display:**
+  - Comprar tab: price_buy in emerald + `COMPRAR · +X%` label
+  - Vender tab: price_sell in red + `VENDER · −X%` label
+  - Converter tab: both sides shown with color coding + percent labels
+  - Crypto dropdown items also reflect active tab (and swap `side` prop).
+  - Mid price is completely hidden — user sees only the price they will actually pay/receive.
+- **Trading page** now fetches `product=spot` → gets spot tier spreads.
+
 ## 2026-04-20 (v3) - Annual Fee Consolidation (Single Source of Truth)
 - **Problem:** Annual tier fees were duplicated across 3 admin pages with divergent values:
   - `/dashboard/admin/kbex-rates` (kbex_settings.tier_fees)
