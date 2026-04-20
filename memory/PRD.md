@@ -166,6 +166,16 @@ Verified end-to-end:
 - **Admin UI**: 4-card Health Monitor panel in `/dashboard/admin/contas-bancarias` (auto-sync, webhook signed, last deposit, last reconciliation)
 - Verified: 3 webhook signature scenarios (none/bogus/valid) return correct HTTP 401/401/200
 
+## Annual Fee Consolidation — Single Source of Truth (2026-04-20, v3)
+- **Canonical source:** `platform_settings.annual_fee` (read via `GET /api/billing/config`, written via `PUT /api/billing/annual-fee`).
+- **Platform Configurations page** (`AdminSettings`) is the only editor for tier amounts:
+  - Taxa de Admissão Inicial (ONE-TIME) — 5 tiers, saves to `platform_settings.admission_fee`
+  - Taxa Anual (Recorrente) (ANUAL) — 5 tiers, saves to `platform_settings.annual_fee`
+  - Taxas de Referência — commission % for referrers
+- **Billing page** (`AdminBillingPage`) now operational-only: read-only tier summary + cycle params (is_active / grace_days / notify_days / suspend_after_days).
+- **KBEX Rates page**: "Fees Anuais por Tier" card removed. `get_tier_fees()` reads from canonical source; `PUT /api/kbex-rates/tier-fees` removed (404). Old collection `kbex_settings.tier_fees` dropped.
+- **Zero regressions** — run-cycle, renewals-health, my-status, referrals all continue to work.
+
 ## Renewals Health Dashboard (2026-04-20, v2 with sparkline + alerts)
 - **Backend:** `GET /api/billing/renewals-health` — projected annual MRR, active clients by tier, collected 12m (split by admission/annual/upgrade), `monthly_revenue_12m` series (12-month sparkline), renewal rate, auto-approval % via Fireblocks, payment method breakdown, pending pipeline, proactive `alerts[]` (severity: critical/warning/info).
 - **Frontend:** `RenewalsHealthPanel` on `/dashboard/admin/billing` — 4 headline KPIs (including emerald SVG sparkline in "Cobrado 12m"), alert banners (red/amber/sky), tier distribution bars, payment method stacked bar.

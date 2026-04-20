@@ -1,5 +1,22 @@
 # KBEX.io - Changelog
 
+## 2026-04-20 (v3) - Annual Fee Consolidation (Single Source of Truth)
+- **Problem:** Annual tier fees were duplicated across 3 admin pages with divergent values:
+  - `/dashboard/admin/kbex-rates` (kbex_settings.tier_fees)
+  - `/dashboard/admin/settings` (platform_settings.admission_fee)
+  - `/dashboard/admin/billing` (platform_settings.annual_fee)
+- **Resolution:** Platform Configurations (AdminSettings) is now the canonical editor:
+  - New card "Taxa Anual (Recorrente)" with badge ANUAL — saves via PUT /api/billing/annual-fee
+  - Existing "Taxa de Admissão Anual" renamed → "Taxa de Admissão Inicial" with badge ONE-TIME
+  - Grid expanded to 3 columns (Referral Fees + Admission + Annual)
+- **Billing page:** tier amount inputs replaced with read-only summary + "Editar em Configurações" button. Cycle operational settings (grace/notify/suspend/is_active) remain editable in Billing.
+- **KBEX Rates page:** "Fees Anuais por Tier" card completely removed; page now only manages spreads.
+- **Backend:**
+  - `get_tier_fees()` in kbex_rates.py now reads from platform_settings.annual_fee (converts _eur suffix)
+  - PUT /api/kbex-rates/tier-fees removed (returns 404)
+  - Old collection `kbex_settings.tier_fees` dropped
+- **Tested (iteration 53): 27/27 backend tests passed.**
+
 ## 2026-04-20 (v2) - Renewals Health: Sparkline + Proactive Alerts
 - Backend `/api/billing/renewals-health` extended with:
   - `monthly_revenue_12m` — array of 12 months with EUR totals (sparkline data)
