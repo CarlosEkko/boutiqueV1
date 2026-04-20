@@ -744,6 +744,98 @@ class BrevoEmailService:
 
         return await self.send_email(to_email, to_name, subject, html_content)
 
+    # ==================== BILLING / RENEWALS ====================
+
+    def _billing_shell(self, accent: str, headline: str, body_html: str, cta_text: Optional[str] = None, cta_url: Optional[str] = None) -> str:
+        """Consistent HTML shell for billing emails."""
+        accent_colors = {
+            "gold": {"bg": "#d4af3720", "border": "#d4af37", "text": "#d4af37"},
+            "amber": {"bg": "#d9770620", "border": "#d97706", "text": "#fbbf24"},
+            "red": {"bg": "#dc262620", "border": "#dc2626", "text": "#f87171"},
+            "emerald": {"bg": "#05966920", "border": "#059669", "text": "#34d399"},
+        }
+        c = accent_colors.get(accent, accent_colors["gold"])
+        cta_block = ""
+        if cta_text and cta_url:
+            cta_block = f"""
+                <div style="text-align: center; margin: 28px 0 8px 0;">
+                    <a href="{cta_url}" style="display: inline-block; background-color: #d4af37; color: #000; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; letter-spacing: 0.5px;">{cta_text}</a>
+                </div>
+            """
+        return f"""
+        <!DOCTYPE html>
+        <html><head><meta charset="UTF-8"></head>
+        <body style="font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.6; background-color: #0a0a0a; margin: 0; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background: #18181b; border-radius: 12px; padding: 40px; border: 1px solid #d4af3720;">
+            <div style="text-align: center; margin-bottom: 24px; border-bottom: 2px solid #d4af37; padding-bottom: 18px;">
+              <h1 style="color: #d4af37; margin: 0; font-size: 26px; font-weight: 300;">KBEX.io</h1>
+              <p style="color: #a1a1aa; margin: 6px 0 0 0; font-size: 12px; letter-spacing: 1px;">BOUTIQUE DIGITAL ASSETS EXCHANGE</p>
+            </div>
+            <div style="background-color: {c['bg']}; border-left: 3px solid {c['border']}; padding: 14px 18px; margin-bottom: 24px;">
+              <p style="margin: 0; color: {c['text']}; font-weight: 600; font-size: 15px; letter-spacing: 0.3px;">{headline}</p>
+            </div>
+            <div style="color: #e4e4e7; font-size: 14px;">{body_html}</div>
+            {cta_block}
+            <div style="margin-top: 30px; border-top: 1px solid #27272a; padding-top: 14px; color: #71717a; font-size: 11px; line-height: 1.5;">
+              <p style="margin: 0 0 4px 0;">Esta mensagem foi enviada automaticamente pela plataforma KBEX.io — por favor, não responda directamente.</p>
+              <p style="margin: 0; color: #d4af37;">KBEX.io — Boutique Digital Assets Exchange</p>
+            </div>
+          </div>
+        </body></html>"""
+
+    async def send_billing_renewal_upcoming(self, to_email, to_name, tier, amount_eur, due_date, days_remaining, portal_url):
+        subject = f"KBEX.io — Renovação anual em {days_remaining} dias"
+        body = f"""
+          <p>Olá <strong>{to_name}</strong>,</p>
+          <p>A sua taxa anual <strong>{str(tier).upper()}</strong> de <strong style="color: #d4af37;">€{amount_eur:,.2f}</strong> vence em <strong>{days_remaining} dias</strong> ({due_date}).</p>
+          <p>Pode proceder ao pagamento a qualquer momento através do portal — aceitamos criptomoeda (BTC/ETH/USDT/USDC) via Fireblocks ou transferência bancária SEPA.</p>
+          <p style="color: #a1a1aa; font-size: 13px;">Clientes premium têm auto-confirmação via Fireblocks: o seu tier é reativado em segundos após a transferência.</p>
+        """
+        html = self._billing_shell("gold", "Renovação anual próxima", body, "Pagar Renovação", portal_url)
+        return await self.send_email(to_email, to_name, subject, html)
+
+    async def send_billing_overdue(self, to_email, to_name, tier, amount_eur, days_overdue, suspend_in_days, portal_url):
+        subject = "KBEX.io — Taxa anual em atraso — acção necessária"
+        body = f"""
+          <p>Olá <strong>{to_name}</strong>,</p>
+          <p>A sua taxa anual <strong>{str(tier).upper()}</strong> de <strong>€{amount_eur:,.2f}</strong> encontra-se em atraso há <strong style="color: #f87171;">{days_overdue} dias</strong>.</p>
+          <p>Para evitar a suspensão da sua conta em <strong>{suspend_in_days} dias</strong>, regularize o pagamento no seu portal.</p>
+          <p style="color: #a1a1aa; font-size: 13px;">Em caso de dúvida ou necessidade de apoio, contacte o seu Account Manager.</p>
+        """
+        html = self._billing_shell("amber", "Pagamento em atraso", body, "Regularizar Agora", portal_url)
+        return await self.send_email(to_email, to_name, subject, html)
+
+    async def send_billing_suspended(self, to_email, to_name, tier, amount_eur, portal_url):
+        subject = "KBEX.io — Conta suspensa por taxa em atraso"
+        body = f"""
+          <p>Olá <strong>{to_name}</strong>,</p>
+          <p>A sua conta KBEX foi <strong style="color: #f87171;">suspensa automaticamente</strong> por não pagamento da taxa anual <strong>{str(tier).upper()}</strong> (€{amount_eur:,.2f}).</p>
+          <p>Os serviços de trading, OTC e operações de saque estão temporariamente indisponíveis. Após regularização, a sua conta é <strong>reativada imediatamente</strong>.</p>
+        """
+        html = self._billing_shell("red", "Conta suspensa", body, "Reativar Conta", portal_url)
+        return await self.send_email(to_email, to_name, subject, html)
+
+    async def send_billing_payment_confirmed(self, to_email, to_name, fee_type, amount_eur, tier_label, tx_id, next_due=None, portal_url=None):
+        type_label = {"admission": "Taxa de Admissão", "annual": "Renovação Anual", "upgrade": "Upgrade de Tier"}.get(fee_type, "Pagamento")
+        subject = f"KBEX.io — {type_label} confirmada — €{amount_eur:,.2f}"
+        next_due_html = f"<p style='margin: 8px 0; color: #a1a1aa;'>Próxima renovação: <strong style='color: #e4e4e7;'>{next_due}</strong></p>" if next_due else ""
+        body = f"""
+          <p>Olá <strong>{to_name}</strong>,</p>
+          <p>O seu pagamento foi confirmado automaticamente via Fireblocks.</p>
+          <div style="background: #0a0a0a; border: 1px solid #27272a; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr><td style="padding: 4px 0; color: #71717a;">Tipo</td><td style="padding: 4px 0; color: #d4af37; text-align: right; font-weight: 600;">{type_label}</td></tr>
+              <tr><td style="padding: 4px 0; color: #71717a;">Tier</td><td style="padding: 4px 0; color: #e4e4e7; text-align: right;">{str(tier_label).upper()}</td></tr>
+              <tr><td style="padding: 4px 0; color: #71717a;">Montante</td><td style="padding: 4px 0; color: #e4e4e7; text-align: right; font-weight: 600;">€{amount_eur:,.2f}</td></tr>
+              <tr><td style="padding: 4px 0; color: #71717a;">TX Fireblocks</td><td style="padding: 4px 0; color: #a1a1aa; text-align: right; font-family: monospace; font-size: 11px;">{str(tx_id)[:20]}…</td></tr>
+            </table>
+          </div>
+          {next_due_html}
+          <p style="color: #a1a1aa; font-size: 13px;">Obrigado pela sua confiança na KBEX.</p>
+        """
+        html = self._billing_shell("emerald", "Pagamento confirmado", body, "Ver Recibo", portal_url or "https://kbex.io/dashboard/profile#billing")
+        return await self.send_email(to_email, to_name, subject, html)
+
 
 # Global instance
 email_service = BrevoEmailService()
