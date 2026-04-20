@@ -17,6 +17,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../../i18n';
+import TierProgressTracker from '../../../components/tiers/TierProgressTracker';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -333,10 +334,10 @@ const VaultWallets = () => {
           /* === VISÃO GERAL === */
           <div className="p-6">
             <h1 className="text-2xl font-light text-white mb-2" data-testid="overview-title">Visão Geral</h1>
-            <p className="text-sm text-zinc-500 mb-8">
+            <p className="text-sm text-zinc-500 mb-4">
               {cofres.length} cofre{cofres.length !== 1 ? 's' : ''} activo{cofres.length !== 1 ? 's' : ''}
-              {isOmnibus && <span className="ml-2 text-zinc-600">({tier} • máx. {cofresMax})</span>}
             </p>
+            {isOmnibus && <TierProgressTracker className="mb-6" />}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {cofres.map(c => {
                 const hasBalance = c.balances?.some(b => b.balance > 0);

@@ -493,11 +493,17 @@ async def get_my_cofres(current_user=Depends(get_current_user)):
     ]
     cofres = await db.omnibus_ledger.aggregate(pipeline).to_list(100)
 
-    if not cofres:
-        return {"has_cofres": False, "cofres": [], "cofres_count": 0, "cofres_max": 0}
-
     tier = await _get_user_tier(user_id)
     max_cofres = await _get_max_cofres(tier)
+
+    if not cofres:
+        return {
+            "has_cofres": False,
+            "cofres": [],
+            "cofres_count": 0,
+            "cofres_max": max_cofres,
+            "tier": tier,
+        }
 
     return {
         "has_cofres": True,

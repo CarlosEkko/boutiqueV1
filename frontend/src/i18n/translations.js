@@ -176,6 +176,15 @@ const translations = {
     },
     
     // Common
+    tierTracker: {
+      title: 'Active Vaults',
+      upgradeCta: 'View',
+      atLimit: 'You have reached your tier limit.',
+      remaining: 'Remaining',
+      available: 'Available',
+      cofres: 'vaults',
+      learnMore: 'View benefits'
+    },
     tiers: {
       eyebrow: 'Allocation Program',
       title: 'Client Tiers',
@@ -2068,6 +2077,15 @@ const translations = {
     },
     
     // Common
+    tierTracker: {
+      title: 'Cofres Ativos',
+      upgradeCta: 'Ver',
+      atLimit: 'Atingiu o limite do seu tier.',
+      remaining: 'Restam',
+      available: 'Disponíveis',
+      cofres: 'cofres',
+      learnMore: 'Ver benefícios'
+    },
     tiers: {
       eyebrow: 'Programa de Alocação',
       title: 'Níveis de Cliente',
@@ -3909,6 +3927,15 @@ const translations = {
     },
     
     // Common
+    tierTracker: {
+      title: 'الخزائن النشطة',
+      upgradeCta: 'عرض',
+      atLimit: 'لقد وصلت إلى حد المستوى الخاص بك.',
+      remaining: 'المتبقي',
+      available: 'المتاح',
+      cofres: 'خزائن',
+      learnMore: 'عرض المزايا'
+    },
     tiers: {
       eyebrow: 'برنامج التخصيص',
       title: 'مستويات العملاء',
@@ -5602,6 +5629,15 @@ const translations = {
       save: 'Enregistrer',
       saving: 'Enregistrement...',
       cancel: 'Annuler'
+    },
+    tierTracker: {
+      title: 'Coffres Actifs',
+      upgradeCta: 'Voir',
+      atLimit: 'Vous avez atteint la limite de votre niveau.',
+      remaining: 'Restants',
+      available: 'Disponibles',
+      cofres: 'coffres',
+      learnMore: 'Voir les avantages'
     },
     tiers: {
       eyebrow: 'Programme d\'Allocation',
@@ -7392,6 +7428,15 @@ const translations = {
       save: 'Guardar',
       saving: 'Guardando...',
       cancel: 'Cancelar'
+    },
+    tierTracker: {
+      title: 'Bóvedas Activas',
+      upgradeCta: 'Ver',
+      atLimit: 'Has alcanzado el límite de tu nivel.',
+      remaining: 'Restan',
+      available: 'Disponibles',
+      cofres: 'bóvedas',
+      learnMore: 'Ver beneficios'
     },
     tiers: {
       eyebrow: 'Programa de Asignación',

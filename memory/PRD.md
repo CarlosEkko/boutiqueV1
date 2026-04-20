@@ -31,6 +31,17 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Sidebar: Perfil → "Níveis & Benefícios" (client); Gestão → "Níveis de Cliente" (admin)
 - All tests pass: 19/19 backend, 100% frontend (iteration_51)
 
+## Tier Progress Tracker (2026-04-20)
+- New reusable component `/components/tiers/TierProgressTracker.jsx` (full + compact modes)
+- Reads `/api/omnibus/my-cofres` → `{used, max, tier}` with dynamic color accent:
+  - **Gold/Safe**: below 80%
+  - **Amber/Near**: 80-99%
+  - **Red/At Limit**: 100% with AlertTriangle icon
+- Contextual CTA button "Ver {NextTier}" → navigates to `/dashboard/tiers`
+- Integrated into `VaultWallets` "Visão Geral" overview
+- Translations in 5 languages (PT/EN/AR/FR/ES): `tierTracker.*` namespace
+- Fix: `/my-cofres` now returns `cofres_max` even when user has 0 cofres
+
 ## Cofre / Vault Limits Unified (2026-04-20)
 - **Single source of truth:** `client_tiers_config` → feature `otc_vaults` (renamed to "Cofres (Omnibus)")
 - **Backend:** `_get_max_cofres()` in `omnibus.py` reads from `client_tiers_config`; legacy `omnibus_tier_limits` endpoints marked `deprecated=True` and write-through to canonical source
