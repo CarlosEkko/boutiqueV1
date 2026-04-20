@@ -75,6 +75,12 @@ class UpgradeApprovalRequest(BaseModel):
     force_amount_eur: Optional[float] = None  # Admin override
 
 
+class SubmitPaymentMethodRequest(BaseModel):
+    payment_method: str  # "crypto" or "bank_transfer"
+    crypto_currency: Optional[str] = None  # BTC/ETH/USDT/USDC
+    bank_account_id: Optional[str] = None
+
+
 # ==================== HELPERS ====================
 
 
@@ -230,14 +236,16 @@ async def list_renewals(
         # Filter out those who already have pending annual payment
         pending_ids = {
             p["user_id"] async for p in db.admission_payments.find(
-                {"status": "pending", "fee_type": "annual"}, {"_id": 0, "user_id": 1}
+                {"status": {"$in": ["pending", "awaiting_confirmation"]}, "fee_type": "annual"},
+                {"_id": 0, "user_id": 1},
             )
         }
         result["upcoming"] = [u for u in upcoming if u["id"] not in pending_ids]
 
     if _want("pending"):
         pending_payments = await db.admission_payments.find(
-            {"status": "pending", "fee_type": "annual"}, {"_id": 0}
+            {"status": {"$in": ["pending", "awaiting_confirmation"]}, "fee_type": "annual"},
+            {"_id": 0},
         ).sort("created_at", -1).to_list(500)
         result["pending"] = pending_payments
 
@@ -581,7 +589,7 @@ async def my_billing_status(user_id: str = Depends(get_current_user_id)):
     annual_amount = await _annual_fee_eur_for(tier)
 
     pending = await db.admission_payments.find_one(
-        {"user_id": user_id, "status": "pending", "fee_type": "annual"},
+        {"user_id": user_id, "status": {"$in": ["pending", "awaiting_confirmation"]}, "fee_type": "annual"},
         {"_id": 0},
     )
 
@@ -724,7 +732,7 @@ async def request_upgrade_payment(payload: UpgradeRequest, user_id: str = Depend
 
     # Prevent duplicate pending upgrade
     existing = await db.admission_payments.find_one(
-        {"user_id": user_id, "fee_type": "upgrade", "status": "pending"},
+        {"user_id": user_id, "fee_type": "upgrade", "status": {"$in": ["pending", "awaiting_confirmation"]}},
         {"_id": 0, "id": 1},
     )
     if existing:
@@ -817,3 +825,136 @@ async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)
 
     logger.info(f"Upgrade {payment_id} approved by {admin.get('email')}: user {user_id} → {target_tier}")
     return {"success": True, "target_tier": target_tier}
+
+
+# ==================== CHECKOUT (generic, for annual & upgrade payments) ====================
+
+
+import httpx  # noqa: E402
+
+BINANCE_API_URL = "https://api.binance.com/api/v3"
+
+
+async def _crypto_amounts_for_eur(eur_amount: float) -> dict:
+    """Fetch live crypto equivalents for an EUR amount (BTC/ETH/USDT/USDC)."""
+    crypto_amounts = {}
+    if eur_amount <= 0:
+        return crypto_amounts
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as c:
+            # EUR → USD
+            eur_usd = 1.08
+            try:
+                r = await c.get(f"{BINANCE_API_URL}/ticker/price", params={"symbol": "EURUSDT"})
+                if r.status_code == 200:
+                    eur_usd = float(r.json().get("price", 1.08))
+            except Exception:
+                pass
+            usd_amount = eur_amount * eur_usd
+            for sym in ("BTC", "ETH"):
+                try:
+                    r = await c.get(f"{BINANCE_API_URL}/ticker/price", params={"symbol": f"{sym}USDT"})
+                    if r.status_code == 200:
+                        price_usd = float(r.json().get("price", 0))
+                        if price_usd > 0:
+                            crypto_amounts[sym] = round(usd_amount / price_usd, 8)
+                except Exception:
+                    pass
+            crypto_amounts["USDT"] = round(usd_amount, 2)
+            crypto_amounts["USDC"] = round(usd_amount, 2)
+    except Exception as e:
+        logger.warning(f"Crypto rate fetch failed: {e}")
+    return crypto_amounts
+
+
+@router.get("/payments/{payment_id}")
+async def get_payment_checkout(payment_id: str, user_id: str = Depends(get_current_user_id)):
+    """Load a pending payment with fresh crypto amounts + receiving wallets — for client checkout."""
+    payment = await db.admission_payments.find_one({"id": payment_id, "user_id": user_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    if payment.get("status") == "paid":
+        raise HTTPException(status_code=400, detail="Este pagamento já foi confirmado")
+
+    amount_eur = float(payment.get("amount", 0))
+    crypto_amounts = await _crypto_amounts_for_eur(amount_eur)
+
+    # Get receiving wallets (admin-configured in platform_settings, with safe fallback)
+    settings = await db.platform_settings.find_one({"type": "general"}, {"_id": 0, "crypto_wallets": 1})
+    wallets = (settings or {}).get("crypto_wallets") or {}
+    default_wallets = {
+        "BTC": "bc1q83zcsh5kmtac53kwjjn2yh6wpujgnac79cdxyf",
+        "ETH": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+        "USDT": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+        "USDC": "0x8a64196045B2E213e9cC0ab93865639CE93c8dbC",
+    }
+    for k, v in default_wallets.items():
+        wallets.setdefault(k, v)
+
+    # Get fiat bank accounts (EUR)
+    bank_accounts = await db.bank_accounts.find(
+        {"is_active": True, "currency": "EUR"},
+        {"_id": 0, "id": 1, "bank_name": 1, "account_holder": 1, "iban": 1, "bic": 1, "currency": 1},
+    ).to_list(20)
+
+    return {
+        "payment": payment,
+        "crypto_amounts": crypto_amounts,
+        "crypto_wallets": wallets,
+        "bank_accounts": bank_accounts,
+    }
+
+
+@router.post("/payments/{payment_id}/submit")
+async def submit_payment_method(
+    payment_id: str,
+    payload: SubmitPaymentMethodRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Client confirms chosen payment method for a pending annual/upgrade payment.
+    Records method + awaits admin approval.
+    """
+    payment = await db.admission_payments.find_one({"id": payment_id, "user_id": user_id}, {"_id": 0})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado")
+    if payment.get("status") == "paid":
+        raise HTTPException(status_code=400, detail="Este pagamento já foi confirmado")
+
+    if payload.payment_method not in ("crypto", "bank_transfer"):
+        raise HTTPException(status_code=400, detail="Método inválido")
+    if payload.payment_method == "crypto" and not payload.crypto_currency:
+        raise HTTPException(status_code=400, detail="Crypto currency obrigatório")
+
+    now = datetime.now(timezone.utc).isoformat()
+    update = {
+        "payment_method": payload.payment_method,
+        "crypto_currency": payload.crypto_currency,
+        "bank_account_id": payload.bank_account_id,
+        "method_submitted_at": now,
+        "status": "awaiting_confirmation",
+    }
+    await db.admission_payments.update_one({"id": payment_id}, {"$set": update})
+
+    # Notify admin to review & approve
+    try:
+        await db.notifications.insert_one({
+            "target": "admin",
+            "type": "billing_payment_submitted",
+            "title": f"Pagamento {payment.get('fee_type', 'billing')} submetido",
+            "message": (
+                f"{payment.get('user_name') or payment.get('user_email')} submeteu "
+                f"{payload.payment_method}"
+                + (f" ({payload.crypto_currency})" if payload.crypto_currency else "")
+                + f" para €{float(payment.get('amount', 0)):,.2f}"
+            ),
+            "user_id": user_id,
+            "payment_id": payment_id,
+            "read": False,
+            "created_at": now,
+        })
+    except Exception:
+        pass
+
+    logger.info(f"Payment {payment_id} method submitted: {payload.payment_method} / {payload.crypto_currency}")
+    return {"success": True, "payment_id": payment_id, "status": "awaiting_confirmation"}

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { CalendarClock, Receipt, CheckCircle2, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import BillingCheckoutDialog from './BillingCheckoutDialog';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -24,6 +25,18 @@ const BillingSection = () => {
   const [status, setStatus] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [checkoutPaymentId, setCheckoutPaymentId] = useState(null);
+
+  const reload = async () => {
+    try {
+      const [s, h] = await Promise.all([
+        axios.get(`${API_URL}/api/billing/my-status`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/billing/my-history`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setStatus(s.data);
+      setHistory(h.data);
+    } catch { /* silent */ }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +116,7 @@ const BillingSection = () => {
               </div>
               <div className="text-[11px] text-zinc-400 mt-0.5">Criado em {fmtDate(pending.created_at)}</div>
             </div>
-            <Button size="sm" className="bg-gold-500 hover:bg-gold-600 text-black font-medium" data-testid="pay-pending-btn">
+            <Button size="sm" className="bg-gold-500 hover:bg-gold-600 text-black font-medium" data-testid="pay-pending-btn" onClick={() => setCheckoutPaymentId(pending.id)}>
               Pagar Agora
             </Button>
           </div>
@@ -171,6 +184,13 @@ const BillingSection = () => {
           </div>
         )}
       </CardContent>
+
+      <BillingCheckoutDialog
+        open={!!checkoutPaymentId}
+        onClose={() => setCheckoutPaymentId(null)}
+        paymentId={checkoutPaymentId}
+        onSubmitted={reload}
+      />
     </Card>
   );
 };

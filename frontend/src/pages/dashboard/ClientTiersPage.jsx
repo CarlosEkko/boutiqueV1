@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
+import BillingCheckoutDialog from '../../components/billing/BillingCheckoutDialog';
 import {
   Check,
   Minus,
@@ -126,6 +127,7 @@ const ClientTiersPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [quote, setQuote] = useState(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
+  const [checkoutPaymentId, setCheckoutPaymentId] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -177,20 +179,24 @@ const ClientTiersPage = () => {
           { target_tier: upgradeDialog.targetTier },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        toast.success(
-          res.data.amount > 0
-            ? t('tiers.upgrade.successPayment', `Pagamento de €${res.data.amount.toFixed(2)} criado. Aguarda aprovação.`)
-            : t('tiers.upgrade.success')
-        );
-      } else {
-        // Fallback: informational request only
-        await axios.post(
-          `${API_URL}/api/client-tiers/upgrade-request`,
-          { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success(t('tiers.upgrade.success'));
+        setUpgradeDialog({ open: false, targetTier: null });
+        setUpgradeMessage('');
+        setQuote(null);
+        if (res.data.amount > 0 && res.data.payment_id) {
+          // Open checkout dialog for payment
+          setCheckoutPaymentId(res.data.payment_id);
+        } else {
+          toast.success(t('tiers.upgrade.success'));
+        }
+        return;
       }
+      // Fallback: informational request only
+      await axios.post(
+        `${API_URL}/api/client-tiers/upgrade-request`,
+        { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(t('tiers.upgrade.success'));
       setUpgradeDialog({ open: false, targetTier: null });
       setUpgradeMessage('');
       setQuote(null);
@@ -454,6 +460,13 @@ const ClientTiersPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BillingCheckoutDialog
+        open={!!checkoutPaymentId}
+        onClose={() => setCheckoutPaymentId(null)}
+        paymentId={checkoutPaymentId}
+        onSubmitted={() => toast.success(t('tiers.upgrade.success'))}
+      />
     </div>
   );
 };

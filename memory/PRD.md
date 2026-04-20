@@ -64,6 +64,24 @@ Verified end-to-end: manual cycle trigger created 1 pending payment, notified cl
 - Translations in 5 languages (PT/EN/AR/FR/ES): `tierTracker.*` namespace
 - Fix: `/my-cofres` now returns `cofres_max` even when user has 0 cofres
 
+## Billing Checkout — Pagar Agora (2026-04-20)
+
+**End-to-end payment flow for annual & upgrade invoices:**
+
+Backend:
+- New `status="awaiting_confirmation"` for method-submitted payments
+- `GET /api/billing/payments/{id}` returns payment + live crypto amounts (Binance EURUSDT + BTCUSDT + ETHUSDT) + receiving wallet addresses + EUR bank accounts
+- `POST /api/billing/payments/{id}/submit` records method choice (crypto/bank_transfer + currency/IBAN) + notifies admins
+- Pending queries extended to include `awaiting_confirmation` status
+
+Frontend:
+- New reusable `BillingCheckoutDialog` (`/components/billing/`): crypto/bank toggle, live crypto price display with network info (ERC-20/Bitcoin), copy-to-clipboard wallet address, bank transfer with dynamic reference code `KBEX-UPGRADE-xxxxxxxx`
+- Wired into `ClientTiersPage`: upgrade submit → auto-opens checkout dialog with the new payment_id
+- Wired into `BillingSection`: "Pagar Agora" button on pending annual/upgrade payments opens same dialog
+
+Verified E2E:
+- Upgrade Std→Premium mid-year → €750 (or €373.97 @ 183 days) quote → payment created → checkout shows 4 cryptos with live amounts (USDT=882.3, BTC=0.0058, etc) + wallet address → submit records method → status=awaiting_confirmation → admin receives notification
+
 ## Billing Phase 2 — Upgrade Pro-Rata + History + Client UI (2026-04-20)
 
 **New capabilities (on top of Phase 1 billing):**
