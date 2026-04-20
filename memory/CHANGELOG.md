@@ -1,5 +1,16 @@
 # KBEX.io - Changelog
 
+## 2026-04-20 (v2) - Renewals Health: Sparkline + Proactive Alerts
+- Backend `/api/billing/renewals-health` extended with:
+  - `monthly_revenue_12m` — array of 12 months with EUR totals (sparkline data)
+  - `alerts[]` — proactive alerts with severity (critical/warning/info):
+    - `renewal_rate_low` (renewal < 85% with ≥3 invoices)
+    - `suspended_high` (≥3 suspended accounts)
+    - `overdue_high` (≥3 overdue clients)
+    - `pending_pipeline` (≥5 pending invoices)
+- Frontend: emerald SVG sparkline inside "Cobrado 12m" tile; colored alert banners at top of RenewalsHealthPanel (red/amber/sky by severity).
+- Verified with seeded data: critical + info alerts render correctly; sparkline shows real monthly distribution.
+
 ## 2026-04-20 (afternoon) - Renewals Health Dashboard
 - Backend: new `GET /api/billing/renewals-health` — aggregates projected annual revenue, active clients by tier, 12m collected revenue (by fee_type), auto-approval rate via Fireblocks, payment method breakdown (crypto/bank/manual), renewal rate, and pipeline metrics.
 - Frontend: added `RenewalsHealthPanel` inside `AdminBillingPage.jsx` (/dashboard/admin/billing) — 4 headline KPIs + tier distribution bars + payment method stacked bar with legend.

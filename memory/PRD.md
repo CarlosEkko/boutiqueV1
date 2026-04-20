@@ -166,10 +166,11 @@ Verified end-to-end:
 - **Admin UI**: 4-card Health Monitor panel in `/dashboard/admin/contas-bancarias` (auto-sync, webhook signed, last deposit, last reconciliation)
 - Verified: 3 webhook signature scenarios (none/bogus/valid) return correct HTTP 401/401/200
 
-## Renewals Health Dashboard (2026-04-20)
-- **Backend:** `GET /api/billing/renewals-health` — projected annual MRR, active clients by tier, collected 12m (split by admission/annual/upgrade), renewal rate, auto-approval % via Fireblocks, payment method breakdown (crypto/bank/manual), pending pipeline.
-- **Frontend:** `RenewalsHealthPanel` on `/dashboard/admin/billing` — 4 headline KPI tiles (receita projectada, cobrado 12m, taxa de renovação, auto-aprovação Fireblocks) + tier distribution bars + payment method stacked legend. Quiet-luxury palette (gold/emerald/sky), hover lifts, gradient dividers.
-- Live metrics: €17,750 projected MRR, 100% renewal rate, 11 active clients.
+## Renewals Health Dashboard (2026-04-20, v2 with sparkline + alerts)
+- **Backend:** `GET /api/billing/renewals-health` — projected annual MRR, active clients by tier, collected 12m (split by admission/annual/upgrade), `monthly_revenue_12m` series (12-month sparkline), renewal rate, auto-approval % via Fireblocks, payment method breakdown, pending pipeline, proactive `alerts[]` (severity: critical/warning/info).
+- **Frontend:** `RenewalsHealthPanel` on `/dashboard/admin/billing` — 4 headline KPIs (including emerald SVG sparkline in "Cobrado 12m"), alert banners (red/amber/sky), tier distribution bars, payment method stacked bar.
+- **Proactive alerts:** renewal rate < 85% (critical), ≥3 suspended (critical), ≥3 overdue (warning), ≥5 pending invoices (info).
+- Validated live: dataset with 6 pending + 1 paid of 7 annual invoices triggered both critical + info alerts correctly.
 
 ## Brevo Billing Emails — Wired (2026-04-20)
 - 4 templates added to `email_service.py`: `send_billing_renewal_upcoming`, `send_billing_overdue`, `send_billing_suspended`, `send_billing_payment_confirmed` (quiet-luxury HTML shell: gold/amber/red/emerald accents).

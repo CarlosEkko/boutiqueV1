@@ -11,6 +11,7 @@ import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
   Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
   Shield, Vault, Copy, Check, Activity, Percent, Bitcoin, Landmark,
+  AlertTriangle, ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -667,6 +668,7 @@ const RenewalsHealthPanel = ({ health }) => {
     active_clients_by_tier = {},
     collected_12m_eur = 0,
     collected_12m_by_type = {},
+    monthly_revenue_12m = [],
     auto_approval_rate_12m_pct = 0,
     auto_approval_count_12m = 0,
     payment_method_breakdown_12m = {},
@@ -675,6 +677,7 @@ const RenewalsHealthPanel = ({ health }) => {
     annual_invoices_12m = 0,
     pending_revenue_eur = 0,
     pending_count = 0,
+    alerts = [],
   } = health || {};
 
   // Method breakdown bar (crypto vs bank_transfer vs manual)
@@ -702,6 +705,13 @@ const RenewalsHealthPanel = ({ health }) => {
           <div className="flex-1 h-px bg-gradient-to-r from-gold-400/30 to-transparent" />
         </div>
 
+        {/* Proactive alerts */}
+        {alerts.length > 0 && (
+          <div className="space-y-2 mb-5" data-testid="health-alerts">
+            {alerts.map((a) => <HealthAlert key={a.key} alert={a} />)}
+          </div>
+        )}
+
         {/* Top KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           <HealthKpi
@@ -719,6 +729,7 @@ const RenewalsHealthPanel = ({ health }) => {
             sub={`Admissão ${fmtEur(collected_12m_by_type.admission)} · Anual ${fmtEur(collected_12m_by_type.annual)} · Upgrade ${fmtEur(collected_12m_by_type.upgrade)}`}
             accent="emerald"
             testId="health-collected-12m"
+            extra={<Sparkline series={monthly_revenue_12m} />}
           />
           <HealthKpi
             icon={<Percent size={14} />}
@@ -813,7 +824,7 @@ const RenewalsHealthPanel = ({ health }) => {
   );
 };
 
-const HealthKpi = ({ icon, label, value, sub, accent = 'gold', testId }) => {
+const HealthKpi = ({ icon, label, value, sub, accent = 'gold', testId, extra }) => {
   const accents = {
     gold: 'text-gold-400',
     emerald: 'text-emerald-300',
@@ -830,6 +841,80 @@ const HealthKpi = ({ icon, label, value, sub, accent = 'gold', testId }) => {
       </div>
       <div className="text-2xl font-light text-white mt-1.5 tabular-nums">{value}</div>
       {sub && <div className="text-[11px] text-zinc-500 mt-1 truncate" title={sub}>{sub}</div>}
+      {extra}
+    </div>
+  );
+};
+
+const ALERT_STYLES = {
+  critical: {
+    border: 'border-red-800/60',
+    bg: 'bg-red-950/30',
+    text: 'text-red-300',
+    icon: <ShieldAlert size={14} />,
+  },
+  warning: {
+    border: 'border-amber-800/60',
+    bg: 'bg-amber-950/30',
+    text: 'text-amber-300',
+    icon: <AlertTriangle size={14} />,
+  },
+  info: {
+    border: 'border-sky-800/60',
+    bg: 'bg-sky-950/30',
+    text: 'text-sky-300',
+    icon: <Info size={14} />,
+  },
+};
+
+const HealthAlert = ({ alert }) => {
+  const s = ALERT_STYLES[alert.severity] || ALERT_STYLES.info;
+  return (
+    <div
+      className={`rounded-lg border ${s.border} ${s.bg} px-4 py-3 flex items-start gap-3`}
+      data-testid={`health-alert-${alert.key}`}
+    >
+      <div className={`${s.text} mt-0.5`}>{s.icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className={`${s.text} text-xs font-semibold uppercase tracking-wider`}>{alert.title}</div>
+        <div className="text-zinc-300 text-xs mt-0.5 leading-relaxed">{alert.message}</div>
+      </div>
+    </div>
+  );
+};
+
+const Sparkline = ({ series = [], height = 30 }) => {
+  if (!series || series.length < 2) return null;
+  const values = series.map((p) => Number(p.eur) || 0);
+  const max = Math.max(...values, 1);
+  const width = 140;
+  const step = width / (values.length - 1);
+  const points = values.map((v, i) => {
+    const x = (i * step).toFixed(1);
+    const y = (height - (v / max) * (height - 4) - 2).toFixed(1);
+    return `${x},${y}`;
+  }).join(' ');
+
+  // Area path
+  const areaPath = `M 0,${height} L ${points.split(' ').join(' L ')} L ${width},${height} Z`;
+  const lastVal = values[values.length - 1];
+  const lastX = (values.length - 1) * step;
+  const lastY = height - (lastVal / max) * (height - 4) - 2;
+
+  return (
+    <div className="mt-2 flex items-center gap-2" title={`Últimos 12 meses: ${series.map(p => p.month + ' €' + Math.round(p.eur)).join(' · ')}`}>
+      <svg width={width} height={height} className="overflow-visible flex-shrink-0">
+        <defs>
+          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#34d399" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill="url(#sparkGrad)" />
+        <polyline points={points} fill="none" stroke="#34d399" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={lastX} cy={lastY} r="2.2" fill="#34d399" />
+      </svg>
+      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">12m</span>
     </div>
   );
 };

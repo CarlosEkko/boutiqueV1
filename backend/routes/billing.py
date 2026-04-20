@@ -341,6 +341,43 @@ async def renewals_health(admin: dict = Depends(get_internal_user)):
         collected_count_by_type[ft] = int(row.get("count", 0))
         total_collected += amt
 
+    # --- 2b. Monthly revenue for last 12 months (sparkline) ---
+    monthly_pipeline = [
+        {"$match": {
+            "status": "paid",
+            "paid_at": {"$gte": cutoff_12m},
+            "currency": "EUR",
+        }},
+        {"$addFields": {
+            "paid_dt": {"$dateFromString": {"dateString": "$paid_at", "onError": None}},
+        }},
+        {"$match": {"paid_dt": {"$ne": None}}},
+        {"$group": {
+            "_id": {"y": {"$year": "$paid_dt"}, "m": {"$month": "$paid_dt"}},
+            "total": {"$sum": "$amount"},
+        }},
+    ]
+    try:
+        monthly_rows = await db.admission_payments.aggregate(monthly_pipeline).to_list(50)
+    except Exception:
+        monthly_rows = []
+    monthly_map = {f"{r['_id']['y']:04d}-{r['_id']['m']:02d}": round(float(r.get("total", 0)), 2) for r in monthly_rows}
+    # Fill contiguous 12-month window ending this month
+    monthly_series = []
+    y, m = now.year, now.month
+    # walk back 11 months
+    window = []
+    for _ in range(12):
+        window.append((y, m))
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+    window.reverse()
+    for (yy, mm) in window:
+        key = f"{yy:04d}-{mm:02d}"
+        monthly_series.append({"month": key, "eur": monthly_map.get(key, 0.0)})
+
     # --- 3. Auto-approval rate (12m) ---
     paid_12m_total = sum(collected_count_by_type.values())
     auto_count = await db.admission_payments.count_documents({
@@ -405,6 +442,38 @@ async def renewals_health(admin: dict = Depends(get_internal_user)):
 
     total_active_clients = sum(active_by_tier.values())
 
+    # --- 7. Proactive alerts ---
+    alerts = []
+    # Severity ranks: "critical" > "warning" > "info"
+    if annual_invoices_12m >= 3 and renewal_rate < 85.0:
+        alerts.append({
+            "severity": "critical",
+            "key": "renewal_rate_low",
+            "title": "Taxa de renovação abaixo de 85%",
+            "message": f"Apenas {renewal_rate}% das {annual_invoices_12m} facturas anuais dos últimos 12 meses foram pagas. Reveja o pipeline pendente e contacte clientes em atraso.",
+        })
+    if suspended_count >= 3:
+        alerts.append({
+            "severity": "critical",
+            "key": "suspended_high",
+            "title": f"{suspended_count} contas suspensas",
+            "message": "Múltiplas contas foram auto-suspensas por taxa anual em atraso. Acção manual pode ser necessária para reactivar clientes de valor.",
+        })
+    if overdue_count >= 3:
+        alerts.append({
+            "severity": "warning",
+            "key": "overdue_high",
+            "title": f"{overdue_count} clientes em atraso",
+            "message": "Estes clientes passaram o período de graça. Serão auto-suspensos em breve se não regularizarem.",
+        })
+    if pending_count >= 5:
+        alerts.append({
+            "severity": "info",
+            "key": "pending_pipeline",
+            "title": f"Pipeline pendente com {pending_count} facturas",
+            "message": f"€{pending_revenue:,.0f} em facturas pendentes aguardam confirmação de pagamento.",
+        })
+
     return {
         "projected_annual_revenue_eur": round(projected_revenue, 2),
         "active_clients_total": total_active_clients,
@@ -412,6 +481,7 @@ async def renewals_health(admin: dict = Depends(get_internal_user)):
         "collected_12m_eur": round(total_collected, 2),
         "collected_12m_by_type": collected_by_type,
         "collected_12m_count_by_type": collected_count_by_type,
+        "monthly_revenue_12m": monthly_series,
         "auto_approval_rate_12m_pct": auto_rate,
         "auto_approval_count_12m": auto_count,
         "payment_method_breakdown_12m": methods,
@@ -422,6 +492,7 @@ async def renewals_health(admin: dict = Depends(get_internal_user)):
         "pending_count": pending_count,
         "overdue_count": overdue_count,
         "suspended_count": suspended_count,
+        "alerts": alerts,
         "computed_at": _iso(now),
     }
 
