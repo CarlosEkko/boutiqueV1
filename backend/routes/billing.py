@@ -25,8 +25,22 @@ import uuid
 
 from utils.auth import get_current_user_id
 from routes.admin import get_admin_user, get_internal_user
+from services.email_service import email_service
 
 logger = logging.getLogger(__name__)
+
+
+def _portal_url() -> str:
+    base = os.environ.get("FRONTEND_URL", "https://kbex.io").rstrip("/")
+    return f"{base}/dashboard/profile#billing"
+
+
+async def _safe_send_email(coro_factory, context: str):
+    """Fire-and-forget email send with logging; never raise."""
+    try:
+        await coro_factory()
+    except Exception as e:
+        logger.warning(f"Billing email failed ({context}): {e}")
 router = APIRouter(prefix="/billing", tags=["Billing & Renewals"])
 
 db = None
@@ -433,6 +447,27 @@ async def _run_renewal_cycle() -> dict:
         await db.admission_payments.insert_one(payment)
         created_payments += 1
 
+        # Transactional email (Brevo) — renewal upcoming
+        if user.get("email"):
+            due_str = (user.get("annual_fee_next_due") or "")[:10]
+            try:
+                due_dt = datetime.fromisoformat((user.get("annual_fee_next_due") or "").replace("Z", "+00:00"))
+                days_remaining = max(0, (due_dt - now).days)
+            except Exception:
+                days_remaining = notify_days
+            await _safe_send_email(
+                lambda: email_service.send_billing_renewal_upcoming(
+                    to_email=user["email"],
+                    to_name=user.get("name") or user["email"],
+                    tier=tier,
+                    amount_eur=amount_eur,
+                    due_date=due_str,
+                    days_remaining=days_remaining,
+                    portal_url=_portal_url(),
+                ),
+                f"renewal_upcoming user={user['id']}",
+            )
+
         # Notify client
         try:
             await db.notifications.insert_one({
@@ -486,6 +521,24 @@ async def _run_renewal_cycle() -> dict:
             }},
         )
         suspended += 1
+
+        # Transactional email (Brevo) — account suspended
+        if user.get("email"):
+            full_user = await db.users.find_one(
+                {"id": user["id"]}, {"_id": 0, "name": 1, "membership_level": 1}
+            ) or {}
+            tier_u = full_user.get("membership_level", "standard")
+            amount_u = await _annual_fee_eur_for(tier_u)
+            await _safe_send_email(
+                lambda u=user, t=tier_u, a=amount_u, n=full_user.get("name"): email_service.send_billing_suspended(
+                    to_email=u["email"],
+                    to_name=n or u["email"],
+                    tier=t,
+                    amount_eur=a,
+                    portal_url=_portal_url(),
+                ),
+                f"suspended user={user['id']}",
+            )
         try:
             await db.notifications.insert_one({
                 "target": "admin",
@@ -500,20 +553,53 @@ async def _run_renewal_cycle() -> dict:
             pass
 
     # --- 3. Flag overdue (past grace but not suspended yet) ---
-    flagged = await db.users.update_many(
+    overdue_users = await db.users.find(
         {
             "user_type": "client",
             "annual_fee_next_due": {"$lt": grace_threshold, "$gte": suspend_threshold},
             "billing_status": {"$nin": ["suspended", "overdue"]},
         },
-        {"$set": {"billing_status": "overdue"}},
-    )
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "membership_level": 1, "annual_fee_next_due": 1},
+    ).to_list(500)
+
+    overdue_ids = [u["id"] for u in overdue_users]
+    flagged_count = 0
+    if overdue_ids:
+        flagged_res = await db.users.update_many(
+            {"id": {"$in": overdue_ids}},
+            {"$set": {"billing_status": "overdue"}},
+        )
+        flagged_count = flagged_res.modified_count
+
+        for u in overdue_users:
+            if not u.get("email"):
+                continue
+            tier_o = u.get("membership_level", "standard")
+            amount_o = await _annual_fee_eur_for(tier_o)
+            try:
+                due_dt = datetime.fromisoformat((u.get("annual_fee_next_due") or "").replace("Z", "+00:00"))
+                days_overdue = max(0, (now - due_dt).days)
+            except Exception:
+                days_overdue = grace_days + 1
+            suspend_in_days = max(0, suspend_days - days_overdue)
+            await _safe_send_email(
+                lambda ue=u, t=tier_o, a=amount_o, d=days_overdue, s=suspend_in_days: email_service.send_billing_overdue(
+                    to_email=ue["email"],
+                    to_name=ue.get("name") or ue["email"],
+                    tier=t,
+                    amount_eur=a,
+                    days_overdue=d,
+                    suspend_in_days=s,
+                    portal_url=_portal_url(),
+                ),
+                f"overdue user={u['id']}",
+            )
 
     return {
         "created_payments": created_payments,
         "notified_clients": notified,
         "suspended": suspended,
-        "flagged_overdue": flagged.modified_count,
+        "flagged_overdue": flagged_count,
     }
 
 
@@ -824,6 +910,24 @@ async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)
         logger.warning(f"Failed to calculate upgrade commission: {e}")
 
     logger.info(f"Upgrade {payment_id} approved by {admin.get('email')}: user {user_id} → {target_tier}")
+
+    # Transactional email (Brevo) — upgrade confirmed
+    recipient_email = payment.get("user_email")
+    if recipient_email:
+        await _safe_send_email(
+            lambda: email_service.send_billing_payment_confirmed(
+                to_email=recipient_email,
+                to_name=payment.get("user_name") or recipient_email,
+                fee_type="upgrade",
+                amount_eur=float(payment.get("amount", 0)),
+                tier_label=target_tier,
+                tx_id=payment_id,
+                next_due=None,
+                portal_url=_portal_url(),
+            ),
+            f"upgrade_confirmed payment={payment_id}",
+        )
+
     return {"success": True, "target_tier": target_tier}
 
 
@@ -1367,6 +1471,25 @@ async def _find_and_approve_matching_payment(tx: dict) -> Optional[dict]:
         })
     except Exception:
         pass
+
+    # Transactional email (Brevo) — payment confirmed
+    recipient_email = best_match.get("user_email")
+    recipient_name = best_match.get("user_name") or recipient_email
+    tier_label = best_match.get("target_tier") or best_match.get("membership_level") or ""
+    if recipient_email:
+        await _safe_send_email(
+            lambda: email_service.send_billing_payment_confirmed(
+                to_email=recipient_email,
+                to_name=recipient_name,
+                fee_type=fee_type,
+                amount_eur=float(best_match.get("amount", 0)),
+                tier_label=tier_label,
+                tx_id=tx_id,
+                next_due=_iso(next_year)[:10] if fee_type != "upgrade" else None,
+                portal_url=_portal_url(),
+            ),
+            f"payment_confirmed webhook payment={best_match['id']}",
+        )
 
     # Audit
     await db.billing_audit_log.insert_one({

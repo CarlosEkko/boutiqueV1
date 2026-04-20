@@ -12,6 +12,7 @@ import logging
 from utils.auth import get_current_user_id
 from utils.i18n import t, I18n
 from routes.admin import get_admin_user, get_internal_user, get_manager_or_admin
+from services.email_service import email_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/referrals", tags=["Referrals"])
@@ -861,6 +862,27 @@ async def approve_admission_payment(
                 logger.info(f"{fee_type.title()} commission {commission_data['commission_amount']} {payment.get('currency', 'EUR')} credited to referrer {referral.get('referrer_id')}")
     except Exception as e:
         logger.warning(f"Failed to calculate referrer commission: {e}")
+
+    # Transactional email (Brevo) — payment confirmed (manual admin approval)
+    try:
+        recipient_email = payment.get("user_email") or (await db.users.find_one({"id": payment.get("user_id")}, {"_id": 0, "email": 1}) or {}).get("email")
+        recipient_name = payment.get("user_name") or recipient_email
+        tier_label = payment.get("membership_level") or ""
+        if recipient_email:
+            import os as _os
+            portal_url = f"{_os.environ.get('FRONTEND_URL', 'https://kbex.io').rstrip('/')}/dashboard/profile#billing"
+            await email_service.send_billing_payment_confirmed(
+                to_email=recipient_email,
+                to_name=recipient_name,
+                fee_type=fee_type,
+                amount_eur=float(payment.get("amount", 0)),
+                tier_label=tier_label,
+                tx_id=payment_id,
+                next_due=next_year.isoformat()[:10],
+                portal_url=portal_url,
+            )
+    except Exception as e:
+        logger.warning(f"Billing email failed (manual approve payment={payment_id}): {e}")
 
     return {"success": True, "message": "Pagamento aprovado com sucesso", "fee_type": fee_type}
 
