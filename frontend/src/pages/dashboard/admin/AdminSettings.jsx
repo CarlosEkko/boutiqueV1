@@ -50,6 +50,19 @@ const AdminSettings = () => {
     is_active: true
   });
 
+  // Annual (Recurring) Fee State - NEW: single source of truth for recurring yearly fee
+  const [annualFee, setAnnualFee] = useState({
+    broker_eur: 0,
+    standard_eur: 250,
+    premium_eur: 1000,
+    vip_eur: 5000,
+    institucional_eur: 15000,
+    is_active: true,
+    grace_days: 15,
+    suspend_after_days: 30,
+    notify_days_before: 30,
+  });
+
   // Tier Limits State (read-only, sourced from client_tiers_config)
   const [tierLimits, setTierLimits] = useState({
     broker: 1, standard: 3, premium: 10, vip: 20, institucional: 50
@@ -72,6 +85,15 @@ const AdminSettings = () => {
       if (response.data.admission_fee) {
         setAdmissionFee(response.data.admission_fee);
       }
+      // Load annual_fee from billing config (single source of truth)
+      try {
+        const billingRes = await axios.get(`${API_URL}/api/billing/config`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (billingRes.data?.annual_fee) {
+          setAnnualFee((prev) => ({ ...prev, ...billingRes.data.annual_fee }));
+        }
+      } catch (e) { /* non-critical */ }
     } catch (err) {
       toast.error('Falha ao carregar configurações');
     } finally {
@@ -120,6 +142,22 @@ const AdminSettings = () => {
     }
   };
 
+  const saveAnnualFee = async () => {
+    setSaving(true);
+    try {
+      await axios.put(
+        `${API_URL}/api/billing/annual-fee`,
+        { config: annualFee },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Taxa anual atualizada');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Falha ao atualizar taxa anual');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -137,7 +175,7 @@ const AdminSettings = () => {
             <Settings className="text-gold-400" />
             Configurações da Plataforma
           </h1>
-          <p className="text-gray-400 mt-1">Gerir taxas de referência e admissão</p>
+          <p className="text-gray-400 mt-1">Gerir taxas de referência, admissão inicial e renovação anual</p>
         </div>
         <Button 
           variant="outline" 
@@ -149,7 +187,7 @@ const AdminSettings = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Referral Fees Card */}
         <Card className="bg-zinc-900/50 border-gold-800/20">
           <CardHeader>
@@ -336,15 +374,16 @@ const AdminSettings = () => {
           </CardContent>
         </Card>
 
-        {/* Admission Fee Card */}
+        {/* Admission Fee Card (one-time) */}
         <Card className="bg-zinc-900/50 border-emerald-800/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <DollarSign className="text-emerald-400" size={20} />
-              Taxa de Admissão Anual
+              Taxa de Admissão Inicial
+              <Badge className="bg-emerald-500/10 text-emerald-300 border border-emerald-700/30 text-[10px] tracking-wider ml-1">ONE-TIME</Badge>
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Valor de referência em EUR por perfil de cliente. Outras moedas calculadas automaticamente.
+              Cobrada uma única vez no onboarding. Valor de referência em EUR por perfil de cliente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -401,6 +440,66 @@ const AdminSettings = () => {
                 <Save size={16} className="mr-2" />
               )}
               Guardar Taxa de Admissão
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Annual (Recurring) Fee Card — Single Source of Truth */}
+        <Card className="bg-zinc-900/50 border-gold-800/20" data-testid="annual-fee-card">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <DollarSign className="text-gold-400" size={20} />
+              Taxa Anual (Recorrente)
+              <Badge className="bg-gold-500/10 text-gold-300 border border-gold-700/30 text-[10px] tracking-wider ml-1">ANUAL</Badge>
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Cobrada todos os anos no aniversário da activação. Fonte única usada pelo ciclo automático (Financeiro → Cobrança) e alertas de renovação.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { key: 'broker', label: 'Broker', color: 'bg-sky-500/20 text-sky-400', border: 'border-sky-700/30' },
+              { key: 'standard', label: 'Standard', color: 'bg-gray-500/20 text-gray-300', border: 'border-zinc-700' },
+              { key: 'premium', label: 'Premium', color: 'bg-amber-500/20 text-amber-400', border: 'border-amber-700/30' },
+              { key: 'vip', label: 'VIP', color: 'bg-purple-500/20 text-purple-400', border: 'border-purple-700/30' },
+              { key: 'institucional', label: 'Institucional', color: 'bg-emerald-500/20 text-emerald-400', border: 'border-emerald-700/30' },
+            ].map(tier => (
+              <div key={tier.key} className={`flex items-center justify-between p-3 bg-zinc-800/30 rounded-lg border ${tier.border}`}>
+                <Badge className={`${tier.color} text-xs`}>{tier.label}</Badge>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number" step="any"
+                    value={annualFee[`${tier.key}_eur`] ?? 0}
+                    onChange={(e) => setAnnualFee({
+                      ...annualFee,
+                      [`${tier.key}_eur`]: parseFloat(e.target.value) || 0
+                    })}
+                    min={0}
+                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm w-32"
+                    data-testid={`annual-fee-${tier.key}`}
+                  />
+                  <span className="text-zinc-500 text-sm font-medium">EUR / ano</span>
+                </div>
+              </div>
+            ))}
+
+            <div className="text-xs text-zinc-500 bg-zinc-800/30 rounded-md p-3 border border-zinc-800">
+              <Info size={12} className="inline mr-1 text-zinc-400" />
+              Períodos de aviso, graça e suspensão são geridos em <span className="text-gold-400">Financeiro → Cobrança</span> (configuração operacional do ciclo).
+            </div>
+
+            <Button
+              onClick={saveAnnualFee}
+              disabled={saving}
+              className="w-full bg-gold-500 hover:bg-gold-400 text-black mt-4"
+              data-testid="save-annual-fee-btn"
+            >
+              {saving ? (
+                <RefreshCw className="animate-spin mr-2" size={16} />
+              ) : (
+                <Save size={16} className="mr-2" />
+              )}
+              Guardar Taxa Anual
             </Button>
           </CardContent>
         </Card>

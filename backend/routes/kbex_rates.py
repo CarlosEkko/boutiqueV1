@@ -26,22 +26,17 @@ async def get_current_user_id(current_user=Depends(get_current_user)):
 
 PRODUCTS = ["otc", "exchange", "escrow", "spot"]
 TIERS = ["broker", "standard", "premium", "vip", "institucional"]
-DEFAULT_TIER_FEES = {
-    "broker": 0,
-    "standard": 2500,
-    "premium": 5000,
-    "vip": 15000,
-    "institucional": 50000,
-}
 
 
 async def get_tier_fees() -> dict:
-    """Get tier fees from DB, or defaults if not configured."""
+    """Get annual tier fees from canonical source: platform_settings.annual_fee.
+    Returns a dict {tier: eur_amount} for backward compatibility with existing consumers
+    (renewal alerts, tier upgrade deduction).
+    """
     db = get_db()
-    doc = await db.kbex_settings.find_one({"type": "tier_fees"}, {"_id": 0})
-    if doc and "fees" in doc:
-        return doc["fees"]
-    return DEFAULT_TIER_FEES
+    settings = await db.platform_settings.find_one({"type": "general"}, {"_id": 0, "annual_fee": 1})
+    annual = (settings or {}).get("annual_fee") or {}
+    return {t: float(annual.get(f"{t}_eur", 0)) for t in TIERS}
 
 
 class RateConfig(BaseModel):
@@ -134,37 +129,9 @@ async def delete_rate_config(product: str, tier: str, asset: str = "*", admin_id
     return {"success": True, "deleted": result.deleted_count}
 
 
-# ==================== TIER FEES MANAGEMENT ====================
-
-class TierFeesUpdate(BaseModel):
-    fees: dict
-
-
-@router.put("/tier-fees")
-async def update_tier_fees(payload: TierFeesUpdate, admin_id: str = Depends(get_current_user_id)):
-    db = get_db()
-    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
-    if not admin or not admin.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Admin access required")
-
-    current = await get_tier_fees()
-    updated_fees = {**current, **{k: float(v) for k, v in payload.fees.items() if k in TIERS}}
-    now = datetime.now(timezone.utc).isoformat()
-
-    await db.kbex_settings.update_one(
-        {"type": "tier_fees"},
-        {"$set": {"type": "tier_fees", "fees": updated_fees, "updated_by": admin_id, "updated_at": now}},
-        upsert=True,
-    )
-
-    await db.kbex_rates_audit.insert_one({
-        "action": "tier_fees_update",
-        "updated_by": admin_id,
-        "fees": updated_fees,
-        "updated_at": now,
-    })
-
-    return {"success": True, "fees": updated_fees}
+# ==================== TIER FEES MANAGEMENT (DEPRECATED) ====================
+# Tier fees are now managed exclusively in /api/billing/annual-fee.
+# See AdminSettings → "Taxa Anual (Recorrente)" card for the single source of truth.
 
 
 # ==================== RESOLVE: Get KBEX Rate ====================

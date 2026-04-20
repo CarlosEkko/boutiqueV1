@@ -11,7 +11,7 @@ import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
   Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
   Shield, Vault, Copy, Check, Activity, Percent, Bitcoin, Landmark,
-  AlertTriangle, ShieldAlert,
+  AlertTriangle, ShieldAlert, Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -441,19 +441,19 @@ const AdminBillingPage = () => {
         </CardContent>
       </Card>
 
-      {/* Annual Fee config */}
+      {/* Annual Fee — Cycle (operational) */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-white font-medium flex items-center gap-2">
                 <TrendingUp size={16} className="text-gold-400" />
-                Taxa Anual (recorrente)
+                Ciclo de Renovação Anual
               </h2>
-              <p className="text-xs text-zinc-500 mt-1">Distinta da Taxa de Admissão. Cobrada todos os anos no aniversário.</p>
+              <p className="text-xs text-zinc-500 mt-1">Parâmetros operacionais do ciclo automático. Os montantes por tier são geridos em Configurações da Plataforma.</p>
             </div>
             <div className="flex items-center gap-2">
-              <Label className="text-zinc-400 text-sm">Ativa</Label>
+              <Label className="text-zinc-400 text-sm">Ciclo Activo</Label>
               <Switch
                 checked={annualFee?.is_active ?? true}
                 onCheckedChange={(v) => setAnnualFee({ ...annualFee, is_active: v })}
@@ -462,19 +462,13 @@ const AdminBillingPage = () => {
             </div>
           </div>
 
+          {/* Read-only tier summary */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
             {TIERS.map((t) => (
-              <div key={t.id} className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-wider text-zinc-500">{t.label}</Label>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-zinc-500 text-sm">€</span>
-                  <Input
-                    type="number"
-                    value={annualFee?.[`${t.id}_eur`] ?? 0}
-                    onChange={(e) => setAnnualFee({ ...annualFee, [`${t.id}_eur`]: parseFloat(e.target.value) || 0 })}
-                    className="bg-zinc-900 border-zinc-800 text-white h-9"
-                    data-testid={`annual-fee-${t.id}`}
-                  />
+              <div key={t.id} className="rounded-md border border-zinc-800 bg-zinc-950/40 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500">{t.label}</div>
+                <div className="text-lg font-light text-white tabular-nums">
+                  €{Number(annualFee?.[`${t.id}_eur`] ?? 0).toLocaleString('pt-PT')}
                 </div>
               </div>
             ))}
@@ -501,19 +495,20 @@ const AdminBillingPage = () => {
             />
           </div>
 
-          <div className="mt-5 flex justify-end">
+          <div className="mt-5 flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.assign('/dashboard/admin/settings')}
+              className="border-gold-600/40 text-gold-300 hover:bg-gold-500/10"
+              data-testid="goto-settings-from-billing-btn"
+            >
+              <Settings size={14} className="mr-1.5" /> Editar Montantes em Configurações
+            </Button>
             <Button onClick={saveAnnualFee} disabled={savingFee} className="bg-gold-500 hover:bg-gold-600 text-black" data-testid="save-annual-fee-btn">
               {savingFee ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} className="mr-1.5" />}
-              Guardar Taxa Anual
+              Guardar Ciclo
             </Button>
-          </div>
-
-          <div className="mt-4 rounded-md border border-blue-900/30 bg-blue-950/20 p-3 flex gap-2">
-            <Info size={14} className="text-blue-400 shrink-0 mt-0.5" />
-            <div className="text-xs text-blue-300/80">
-              Taxa de Admissão (entrada única) é configurada em <span className="text-gold-400">Configurações da Plataforma</span>.
-              As comissões da equipa (admissão inicial + anual) estão na mesma página.
-            </div>
           </div>
         </CardContent>
       </Card>
