@@ -31,6 +31,28 @@ Building **KBEX.io**, a premium Crypto Boutique Exchange for HNW/UHNW individual
 - Sidebar: Perfil → "Níveis & Benefícios" (client); Gestão → "Níveis de Cliente" (admin)
 - All tests pass: 19/19 backend, 100% frontend (iteration_51)
 
+## Billing & Annual Fee Management (2026-04-20)
+**Business model: Admission (one-time) ≠ Annual Fee (recurring).**
+
+Backend (`/app/backend/routes/billing.py`):
+- Model split: `admission_fee` (existing, onboarding) + new `annual_fee` (recurring) in `platform_settings`
+- New commissions: `admission_fee_percent` (initial) + `annual_commission_percent` (renewals) — auto-seeded at half of admission
+- `admission_payments.fee_type` ∈ {"admission", "annual"} distinguishes invoices
+- New endpoints: `GET /api/billing/config|my-status|cycle-status|renewals|payouts` · `PUT /api/billing/annual-fee|commissions` · `POST /api/billing/run-cycle` · `POST /api/billing/users/{id}/suspend|unsuspend`
+- **Daily automated renewal cycle** (background task, configurable via `BILLING_CYCLE_INTERVAL_S`):
+  1. Clients due within `notify_days_before` (default 30) → auto-create pending annual_payment + notify client + notify admins
+  2. Clients past `grace_days` → flag `billing_status: "overdue"`
+  3. Clients past `suspend_after_days` → auto-suspend
+- Commission splits: approval flow reads `fee_type` and applies correct %; renewals respect `annual_commission_percent`
+- Fixed bug: `/kbex-rates/renewal-alerts` now reads `annual_fee_next_due` (was looking at wrong field)
+
+Frontend:
+- New admin page `/dashboard/admin/billing` (`AdminBillingPage.jsx`): KPIs (Próximas/Pendentes/Em Atraso/Suspensos) + clickable tabs, annual fee config, cycle controls, payouts summary
+- AdminSettings: added `Comissão Renovação Anual (%)` alongside existing admission %
+- Sidebar: new item "Cobrança & Renovações" translated in 5 languages
+
+Verified end-to-end: manual cycle trigger created 1 pending payment, notified client, past-due client auto-suspended after forcing +35 days, approval of `fee_type="annual"` payment correctly sets `annual_fee_next_due=+1y` and preserves admission fields.
+
 ## Tier Progress Tracker (2026-04-20)
 - New reusable component `/components/tiers/TierProgressTracker.jsx` (full + compact modes)
 - Reads `/api/omnibus/my-cofres` → `{used, max, tier}` with dynamic color accent:

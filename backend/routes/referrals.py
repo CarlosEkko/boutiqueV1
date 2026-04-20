@@ -32,7 +32,8 @@ class ReferralFeeConfig(BaseModel):
     trading_fee_percent: float = Field(default=10.0, ge=0, le=100, description="% of trading fee given to referrer")
     deposit_fee_percent: float = Field(default=5.0, ge=0, le=100, description="% of deposit fee given to referrer")
     withdrawal_fee_percent: float = Field(default=5.0, ge=0, le=100, description="% of withdrawal fee given to referrer")
-    admission_fee_percent: float = Field(default=0.0, ge=0, le=100, description="% of admission fee given to referrer")
+    admission_fee_percent: float = Field(default=0.0, ge=0, le=100, description="% of INITIAL admission fee given to referrer")
+    annual_commission_percent: float = Field(default=0.0, ge=0, le=100, description="% of ANNUAL renewal fee given to referrer")
     min_payout_amount: float = Field(default=50.0, ge=0, description="Minimum amount for commission payout")
     payout_currency: str = Field(default="EUR", description="Currency for commission payouts")
 
@@ -98,6 +99,8 @@ async def calculate_referrer_commission(transaction_type: str, fee_amount: float
         percent = referral_fees.get("withdrawal_fee_percent", 5.0)
     elif transaction_type == "admission":
         percent = referral_fees.get("admission_fee_percent", 0.0)
+    elif transaction_type == "annual":
+        percent = referral_fees.get("annual_commission_percent", 0.0)
     else:
         percent = 0
     
@@ -756,6 +759,7 @@ async def request_admission_fee_payment(
         "user_id": user_id,
         "user_email": user.get("email") if user else None,
         "user_name": user.get("name") if user else None,
+        "fee_type": "admission",  # initial onboarding
         "membership_level": membership_level,
         "amount": eur_amount,
         "currency": "EUR",
@@ -790,8 +794,11 @@ async def approve_admission_payment(
         raise HTTPException(status_code=400, detail="Pagamento já foi aprovado")
     
     now = datetime.now(timezone.utc)
+    # Anniversary = +1 year from today (independent of initial admission date)
     next_year = datetime(now.year + 1, now.month, now.day, tzinfo=timezone.utc)
-    
+
+    fee_type = payment.get("fee_type", "admission")  # legacy payments default to admission
+
     await db.admission_payments.update_one(
         {"id": payment_id},
         {
@@ -803,28 +810,35 @@ async def approve_admission_payment(
             }
         }
     )
-    
-    # Update user status
+
+    # Update user status — differentiate admission vs annual
+    user_update = {
+        "annual_fee_paid_at": now.isoformat(),
+        "annual_fee_next_due": next_year.isoformat(),
+        "billing_status": "active",
+    }
+    if fee_type == "admission":
+        # First-time admission: also stamp admission fields (kept for backward compat)
+        user_update.update({
+            "admission_fee_paid": True,
+            "admission_fee_paid_at": now.isoformat(),
+            "admission_fee_next_due": next_year.isoformat(),
+        })
+
     await db.users.update_one(
         {"id": payment.get("user_id")},
-        {
-            "$set": {
-                "admission_fee_paid": True,
-                "admission_fee_paid_at": now.isoformat(),
-                "admission_fee_next_due": next_year.isoformat()
-            }
-        }
+        {"$set": user_update, "$unset": {"suspended_at": "", "suspended_reason": "", "suspended_by": ""}},
     )
-    
-    logger.info(f"Admission fee payment {payment_id} approved by {admin.get('email')}")
-    
+
+    logger.info(f"{fee_type.title()} payment {payment_id} approved by {admin.get('email')}")
+
     # Calculate referrer commission if client was referred
     try:
         user_id = payment.get("user_id")
         referral = await db.referrals.find_one({"client_id": user_id, "status": "active"})
         if referral:
             commission_data = await calculate_referrer_commission(
-                "admission", payment.get("amount", 0), payment.get("currency", "EUR")
+                fee_type, payment.get("amount", 0), payment.get("currency", "EUR")
             )
             if commission_data["commission_amount"] > 0:
                 commission_record = {
@@ -832,7 +846,7 @@ async def approve_admission_payment(
                     "referral_id": referral.get("id"),
                     "referrer_id": referral.get("referrer_id"),
                     "client_id": user_id,
-                    "transaction_type": "admission",
+                    "transaction_type": fee_type,
                     "original_amount": payment.get("amount", 0),
                     "commission_amount": commission_data["commission_amount"],
                     "commission_percent": commission_data["commission_percent"],
@@ -841,11 +855,11 @@ async def approve_admission_payment(
                     "created_at": now.isoformat()
                 }
                 await db.referral_commissions.insert_one(commission_record)
-                logger.info(f"Admission commission {commission_data['commission_amount']} {payment.get('currency', 'EUR')} credited to referrer {referral.get('referrer_id')}")
+                logger.info(f"{fee_type.title()} commission {commission_data['commission_amount']} {payment.get('currency', 'EUR')} credited to referrer {referral.get('referrer_id')}")
     except Exception as e:
-        logger.warning(f"Failed to calculate admission referrer commission: {e}")
-    
-    return {"success": True, "message": "Pagamento aprovado com sucesso"}
+        logger.warning(f"Failed to calculate referrer commission: {e}")
+
+    return {"success": True, "message": "Pagamento aprovado com sucesso", "fee_type": fee_type}
 
 
 @router.post("/admission-fee/{payment_id}/reject")

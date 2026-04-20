@@ -83,6 +83,7 @@ from routes.launchpad import router as launchpad_router, set_db as set_launchpad
 from routes.commercial import router as commercial_router, set_db as set_commercial_db
 from routes.business_accounts import router as business_accounts_router, set_db as set_business_accounts_db
 from routes.client_tiers import router as client_tiers_router, set_db as set_client_tiers_db
+from routes.billing import router as billing_router, set_db as set_billing_db
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -124,6 +125,7 @@ set_launchpad_db(db)
 set_commercial_db(db)
 set_business_accounts_db(db)
 set_client_tiers_db(db)
+set_billing_db(db)
 set_crm_db(db)
 set_tokenization_db(db)
 
@@ -170,6 +172,7 @@ api_router.include_router(launchpad_router)
 api_router.include_router(commercial_router)
 api_router.include_router(business_accounts_router)
 api_router.include_router(client_tiers_router)
+api_router.include_router(billing_router)
 
 
 # Define Models
@@ -475,9 +478,14 @@ async def shutdown_db_client():
 
 @app.on_event("startup")
 async def startup_background_tasks():
-    """Launch background jobs: Revolut periodic sync."""
+    """Launch background jobs: Revolut periodic sync + Billing renewal cycle."""
     try:
         from routes.revolut import start_background_sync
         start_background_sync()
     except Exception as e:
         logger.warning(f"Failed to start Revolut background sync: {e}")
+    try:
+        from routes.billing import start_cycle
+        start_cycle()
+    except Exception as e:
+        logger.warning(f"Failed to start Billing renewal cycle: {e}")

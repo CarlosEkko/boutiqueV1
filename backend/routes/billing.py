@@ -1,0 +1,589 @@
+"""
+Billing & Renewals — Annual fee management, referral commission tracking, renewal automation.
+
+Design:
+- Admission Fee (one-time): charged once at onboarding. Existing module (`referrals.py`).
+- Annual Fee (recurring): charged every year on the anniversary of activation. NEW.
+- Commission split:
+    - `admission_commission_percent` — paid to referrer on the initial admission payment
+    - `annual_commission_percent` — paid to referrer on each annual renewal payment
+- Automation:
+    - Daily background job creates pending annual payments ~30 days before due date
+    - Notifies client + admin
+    - Flags / suspends clients who are past their grace period
+- All billing payments unified in the existing `admission_payments` collection with
+  `fee_type` ∈ {"admission", "annual"}.
+"""
+from fastapi import APIRouter, HTTPException, Depends, Query
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, List
+from datetime import datetime, timezone, timedelta
+import asyncio
+import logging
+import os
+import uuid
+
+from utils.auth import get_current_user_id
+from routes.admin import get_admin_user, get_internal_user
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/billing", tags=["Billing & Renewals"])
+
+db = None
+
+
+def set_db(database):
+    global db
+    db = database
+
+
+# ==================== MODELS ====================
+
+
+class AnnualFeeConfig(BaseModel):
+    """Recurring annual fee (distinct from one-time admission)."""
+    broker_eur: float = Field(default=0.0, ge=0)
+    standard_eur: float = Field(default=250.0, ge=0)
+    premium_eur: float = Field(default=1000.0, ge=0)
+    vip_eur: float = Field(default=5000.0, ge=0)
+    institucional_eur: float = Field(default=15000.0, ge=0)
+    is_active: bool = Field(default=True)
+    grace_days: int = Field(default=15, ge=0, le=365, description="Days after due date before flagging overdue")
+    suspend_after_days: int = Field(default=30, ge=0, le=365, description="Days after due date before suspending access")
+    notify_days_before: int = Field(default=30, ge=1, le=90, description="Days before due to notify client & create pending payment")
+
+
+class UpdateAnnualFeeRequest(BaseModel):
+    config: AnnualFeeConfig
+
+
+class UpdateCommissionsRequest(BaseModel):
+    admission_commission_percent: float = Field(..., ge=0, le=100)
+    annual_commission_percent: float = Field(..., ge=0, le=100)
+
+
+class SuspensionToggleRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+# ==================== HELPERS ====================
+
+
+async def _get_settings() -> dict:
+    """Fetch platform settings, seed annual_fee if missing."""
+    settings = await db.platform_settings.find_one({"type": "general"}, {"_id": 0})
+    if not settings:
+        return {}
+    changed = False
+    if "annual_fee" not in settings:
+        settings["annual_fee"] = AnnualFeeConfig().model_dump()
+        changed = True
+    ref = settings.get("referral_fees", {}) or {}
+    if "annual_commission_percent" not in ref:
+        # Default: half of admission commission (conservative for renewals)
+        ref["annual_commission_percent"] = round(float(ref.get("admission_fee_percent", 0.0)) / 2, 2)
+        settings["referral_fees"] = ref
+        changed = True
+    if changed:
+        await db.platform_settings.update_one(
+            {"type": "general"},
+            {"$set": {
+                "annual_fee": settings["annual_fee"],
+                "referral_fees": settings["referral_fees"],
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }},
+        )
+    return settings
+
+
+def _tier_field(tier: str) -> str:
+    t = (tier or "standard").lower()
+    return f"{t}_eur"
+
+
+async def _annual_fee_eur_for(tier: str) -> float:
+    settings = await _get_settings()
+    cfg = settings.get("annual_fee") or AnnualFeeConfig().model_dump()
+    return float(cfg.get(_tier_field(tier), cfg.get("standard_eur", 0.0)))
+
+
+async def _commission_percent(fee_type: str) -> float:
+    """Return referrer commission % for the given fee_type ("admission" | "annual")."""
+    settings = await _get_settings()
+    ref = settings.get("referral_fees") or {}
+    if fee_type == "annual":
+        return float(ref.get("annual_commission_percent", 0.0))
+    if fee_type == "admission":
+        return float(ref.get("admission_fee_percent", 0.0))
+    return 0.0
+
+
+def _iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).isoformat()
+
+
+# ==================== CONFIG ENDPOINTS ====================
+
+
+@router.get("/config")
+async def get_billing_config(admin: dict = Depends(get_internal_user)):
+    """Return admission + annual fee + commission configuration."""
+    settings = await _get_settings()
+    return {
+        "admission_fee": settings.get("admission_fee", {}),
+        "annual_fee": settings.get("annual_fee", {}),
+        "referral_fees": settings.get("referral_fees", {}),
+        "updated_at": settings.get("updated_at"),
+    }
+
+
+@router.put("/annual-fee")
+async def update_annual_fee(payload: UpdateAnnualFeeRequest, admin: dict = Depends(get_admin_user)):
+    """Update annual (recurring) fee config — admin only."""
+    now = datetime.now(timezone.utc).isoformat()
+    await db.platform_settings.update_one(
+        {"type": "general"},
+        {"$set": {"annual_fee": payload.config.model_dump(), "updated_at": now}},
+        upsert=True,
+    )
+    logger.info(f"Annual fee config updated by {admin.get('email')}")
+    return {"success": True, "annual_fee": payload.config.model_dump()}
+
+
+@router.put("/commissions")
+async def update_commissions(payload: UpdateCommissionsRequest, admin: dict = Depends(get_admin_user)):
+    """Update referrer commission percentages (admission & annual) — admin only."""
+    now = datetime.now(timezone.utc).isoformat()
+    await db.platform_settings.update_one(
+        {"type": "general"},
+        {"$set": {
+            "referral_fees.admission_fee_percent": payload.admission_commission_percent,
+            "referral_fees.annual_commission_percent": payload.annual_commission_percent,
+            "updated_at": now,
+        }},
+    )
+    logger.info(
+        f"Commissions updated by {admin.get('email')}: "
+        f"admission={payload.admission_commission_percent}%, annual={payload.annual_commission_percent}%"
+    )
+    return {"success": True}
+
+
+# ==================== RENEWALS DASHBOARD ====================
+
+
+@router.get("/renewals")
+async def list_renewals(
+    status: Optional[str] = Query(None, regex="^(upcoming|pending|overdue|suspended|all)$"),
+    admin: dict = Depends(get_internal_user),
+):
+    """
+    Consolidated renewals dashboard.
+    - upcoming: due within `notify_days_before` days, no pending payment yet
+    - pending: pending annual payment awaiting confirmation
+    - overdue: past due date (beyond grace_days)
+    - suspended: accounts flagged as suspended for non-payment
+    """
+    settings = await _get_settings()
+    cfg = settings.get("annual_fee") or AnnualFeeConfig().model_dump()
+    notify_days = int(cfg.get("notify_days_before", 30))
+    grace_days = int(cfg.get("grace_days", 15))
+
+    now = datetime.now(timezone.utc)
+    notify_threshold = _iso(now + timedelta(days=notify_days))
+    now_iso = _iso(now)
+    grace_threshold = _iso(now - timedelta(days=grace_days))
+
+    async def _fetch(criteria, project_fields=None):
+        proj = project_fields or {
+            "_id": 0, "id": 1, "name": 1, "email": 1, "membership_level": 1,
+            "annual_fee_next_due": 1, "annual_fee_paid_at": 1,
+            "billing_status": 1, "suspended_at": 1,
+        }
+        return await db.users.find(criteria, proj).sort("annual_fee_next_due", 1).to_list(500)
+
+    result = {"upcoming": [], "pending": [], "overdue": [], "suspended": [], "counts": {}}
+
+    def _want(s): return status in (None, "all", s)
+
+    if _want("upcoming"):
+        upcoming = await _fetch({
+            "user_type": "client",
+            "annual_fee_next_due": {"$lte": notify_threshold, "$gt": now_iso},
+            "billing_status": {"$ne": "suspended"},
+        })
+        # Filter out those who already have pending annual payment
+        pending_ids = {
+            p["user_id"] async for p in db.admission_payments.find(
+                {"status": "pending", "fee_type": "annual"}, {"_id": 0, "user_id": 1}
+            )
+        }
+        result["upcoming"] = [u for u in upcoming if u["id"] not in pending_ids]
+
+    if _want("pending"):
+        pending_payments = await db.admission_payments.find(
+            {"status": "pending", "fee_type": "annual"}, {"_id": 0}
+        ).sort("created_at", -1).to_list(500)
+        result["pending"] = pending_payments
+
+    if _want("overdue"):
+        result["overdue"] = await _fetch({
+            "user_type": "client",
+            "annual_fee_next_due": {"$lt": grace_threshold},
+            "billing_status": {"$ne": "suspended"},
+        })
+
+    if _want("suspended"):
+        result["suspended"] = await _fetch({
+            "user_type": "client",
+            "billing_status": "suspended",
+        })
+
+    result["counts"] = {k: len(v) for k, v in result.items() if isinstance(v, list)}
+    result["config"] = cfg
+    return result
+
+
+@router.post("/users/{user_id}/suspend")
+async def suspend_user(user_id: str, payload: SuspensionToggleRequest, admin: dict = Depends(get_admin_user)):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "billing_status": "suspended",
+            "suspended_at": now,
+            "suspended_reason": (payload.reason or "non_payment")[:200],
+            "suspended_by": admin.get("email"),
+        }},
+    )
+    logger.info(f"User {user.get('email')} suspended by {admin.get('email')} ({payload.reason})")
+    return {"success": True}
+
+
+@router.post("/users/{user_id}/unsuspend")
+async def unsuspend_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"billing_status": "active"}, "$unset": {"suspended_at": "", "suspended_reason": "", "suspended_by": ""}},
+    )
+    return {"success": True}
+
+
+# ==================== PAYOUTS DASHBOARD ====================
+
+
+@router.get("/payouts")
+async def list_payouts(
+    referrer_id: Optional[str] = None,
+    status: Optional[str] = None,
+    admin: dict = Depends(get_internal_user),
+):
+    """Aggregated commission ledger for staff referrers."""
+    # Pending (unpaid) commissions grouped by referrer
+    pending_pipeline = [
+        {"$match": {"status": "pending", **({"referrer_id": referrer_id} if referrer_id else {})}},
+        {"$group": {
+            "_id": "$referrer_id",
+            "total": {"$sum": "$commission_amount"},
+            "count": {"$sum": 1},
+            "currency": {"$first": "$currency"},
+        }},
+    ]
+    pending_by_referrer = await db.referral_commissions.aggregate(pending_pipeline).to_list(500)
+
+    referrer_ids = [r["_id"] for r in pending_by_referrer if r.get("_id")]
+    referrers = {
+        u["id"]: u for u in await db.users.find(
+            {"id": {"$in": referrer_ids}}, {"_id": 0, "id": 1, "name": 1, "email": 1}
+        ).to_list(500)
+    }
+
+    pending_summary = [
+        {
+            "referrer_id": r["_id"],
+            "referrer_name": (referrers.get(r["_id"]) or {}).get("name"),
+            "referrer_email": (referrers.get(r["_id"]) or {}).get("email"),
+            "total_pending": round(r["total"], 2),
+            "currency": r.get("currency", "EUR"),
+            "count": r["count"],
+        }
+        for r in pending_by_referrer if r.get("_id")
+    ]
+
+    payouts_query = {}
+    if referrer_id:
+        payouts_query["referrer_id"] = referrer_id
+    if status:
+        payouts_query["status"] = status
+    recent_payouts = await db.referral_payouts.find(
+        payouts_query, {"_id": 0}
+    ).sort("created_at", -1).limit(200).to_list(200)
+
+    return {
+        "pending_summary": pending_summary,
+        "recent_payouts": recent_payouts,
+    }
+
+
+# ==================== AUTOMATION JOB ====================
+
+
+_bg_state = {
+    "running": False,
+    "last_run_at": None,
+    "last_result": None,
+    "last_error": None,
+    "runs": 0,
+    "interval_s": int(os.environ.get("BILLING_CYCLE_INTERVAL_S", "86400")),  # daily
+    "task": None,
+}
+
+
+def _bg_public_state() -> dict:
+    return {k: v for k, v in _bg_state.items() if k != "task"}
+
+
+async def _run_renewal_cycle() -> dict:
+    """
+    Core daily cycle:
+    - Upcoming (≤ notify_days_before): create pending annual_payment + notify client + admin
+    - Past-due (> grace_days): warn
+    - Past-due (> suspend_after_days): auto-suspend
+    """
+    settings = await _get_settings()
+    cfg = settings.get("annual_fee") or AnnualFeeConfig().model_dump()
+    if not cfg.get("is_active", True):
+        return {"skipped": True, "reason": "annual_fee_disabled"}
+
+    notify_days = int(cfg.get("notify_days_before", 30))
+    grace_days = int(cfg.get("grace_days", 15))
+    suspend_days = int(cfg.get("suspend_after_days", 30))
+
+    now = datetime.now(timezone.utc)
+    notify_threshold = _iso(now + timedelta(days=notify_days))
+    grace_threshold = _iso(now - timedelta(days=grace_days))
+    suspend_threshold = _iso(now - timedelta(days=suspend_days))
+
+    created_payments = 0
+    notified = 0
+    suspended = 0
+
+    # --- 1. Upcoming renewals ---
+    upcoming = await db.users.find(
+        {
+            "user_type": "client",
+            "annual_fee_next_due": {"$lte": notify_threshold, "$gt": _iso(now)},
+            "billing_status": {"$ne": "suspended"},
+        },
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "membership_level": 1, "annual_fee_next_due": 1},
+    ).to_list(500)
+
+    for user in upcoming:
+        existing_pending = await db.admission_payments.find_one(
+            {"user_id": user["id"], "status": "pending", "fee_type": "annual"}, {"_id": 0, "id": 1}
+        )
+        if existing_pending:
+            continue
+
+        tier = user.get("membership_level", "standard")
+        amount_eur = await _annual_fee_eur_for(tier)
+        if amount_eur <= 0:
+            continue
+
+        payment = {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "user_email": user.get("email"),
+            "user_name": user.get("name"),
+            "fee_type": "annual",
+            "membership_level": tier,
+            "amount": amount_eur,
+            "currency": "EUR",
+            "status": "pending",
+            "due_date": user.get("annual_fee_next_due"),
+            "created_at": _iso(now),
+            "created_by": "auto_renewal_cycle",
+        }
+        await db.admission_payments.insert_one(payment)
+        created_payments += 1
+
+        # Notify client
+        try:
+            await db.notifications.insert_one({
+                "target": "user",
+                "user_id": user["id"],
+                "type": "annual_fee_upcoming",
+                "title": "Renovação anual a vencer",
+                "message": (
+                    f"A sua taxa anual de €{amount_eur:,.2f} ({tier.upper()}) vence em "
+                    f"{user.get('annual_fee_next_due', '')[:10]}. Pode regularizar a qualquer momento no seu perfil."
+                ),
+                "read": False,
+                "created_at": _iso(now),
+            })
+            notified += 1
+        except Exception as e:
+            logger.warning(f"Failed to notify user {user['id']}: {e}")
+
+        # Notify admins
+        try:
+            await db.notifications.insert_one({
+                "target": "admin",
+                "type": "annual_fee_upcoming_admin",
+                "title": f"Pendente: renovação de {user.get('name')}",
+                "message": f"Tier {tier.upper()}: €{amount_eur:,.2f}",
+                "user_id": user["id"],
+                "read": False,
+                "created_at": _iso(now),
+            })
+        except Exception:
+            pass
+
+    # --- 2. Auto-suspend clients past grace period ---
+    to_suspend = await db.users.find(
+        {
+            "user_type": "client",
+            "annual_fee_next_due": {"$lt": suspend_threshold},
+            "billing_status": {"$ne": "suspended"},
+        },
+        {"_id": 0, "id": 1, "email": 1},
+    ).to_list(500)
+
+    for user in to_suspend:
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {
+                "billing_status": "suspended",
+                "suspended_at": _iso(now),
+                "suspended_reason": "annual_fee_overdue",
+                "suspended_by": "auto_renewal_cycle",
+            }},
+        )
+        suspended += 1
+        try:
+            await db.notifications.insert_one({
+                "target": "admin",
+                "type": "annual_fee_auto_suspended",
+                "title": f"Conta suspensa: {user.get('email')}",
+                "message": f"Suspensa automaticamente por taxa anual em atraso > {suspend_days} dias.",
+                "user_id": user["id"],
+                "read": False,
+                "created_at": _iso(now),
+            })
+        except Exception:
+            pass
+
+    # --- 3. Flag overdue (past grace but not suspended yet) ---
+    flagged = await db.users.update_many(
+        {
+            "user_type": "client",
+            "annual_fee_next_due": {"$lt": grace_threshold, "$gte": suspend_threshold},
+            "billing_status": {"$nin": ["suspended", "overdue"]},
+        },
+        {"$set": {"billing_status": "overdue"}},
+    )
+
+    return {
+        "created_payments": created_payments,
+        "notified_clients": notified,
+        "suspended": suspended,
+        "flagged_overdue": flagged.modified_count,
+    }
+
+
+@router.post("/run-cycle")
+async def run_cycle_now(admin: dict = Depends(get_admin_user)):
+    """Manually trigger the daily renewal cycle (admin)."""
+    result = await _run_renewal_cycle()
+    now = _iso(datetime.now(timezone.utc))
+    _bg_state["last_run_at"] = now
+    _bg_state["last_result"] = result
+    _bg_state["runs"] += 1
+    return {"success": True, "result": result, "timestamp": now}
+
+
+@router.get("/cycle-status")
+async def cycle_status(admin: dict = Depends(get_internal_user)):
+    return _bg_public_state()
+
+
+async def _cycle_loop():
+    logger.info(f"Billing renewal cycle started (every {_bg_state['interval_s']}s)")
+    # Initial delay — allow app to fully boot
+    await asyncio.sleep(60)
+    while True:
+        try:
+            result = await _run_renewal_cycle()
+            _bg_state["last_run_at"] = _iso(datetime.now(timezone.utc))
+            _bg_state["last_result"] = result
+            _bg_state["last_error"] = None
+            _bg_state["runs"] += 1
+            if any(v for k, v in result.items() if k != "skipped"):
+                logger.info(f"Billing cycle run #{_bg_state['runs']}: {result}")
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            _bg_state["last_error"] = str(e)[:200]
+            logger.exception(f"Billing cycle error: {e}")
+        await asyncio.sleep(_bg_state["interval_s"])
+
+
+def start_cycle():
+    if _bg_state["task"] and not _bg_state["task"].done():
+        return
+    loop = asyncio.get_event_loop()
+    _bg_state["task"] = loop.create_task(_cycle_loop())
+    _bg_state["running"] = True
+
+
+def stop_cycle():
+    task = _bg_state.get("task")
+    if task and not task.done():
+        task.cancel()
+    _bg_state["running"] = False
+
+
+# ==================== CLIENT: MY BILLING STATUS ====================
+
+
+@router.get("/my-status")
+async def my_billing_status(user_id: str = Depends(get_current_user_id)):
+    """Client-facing: upcoming renewals, billing state, pending annual payment."""
+    user = await db.users.find_one(
+        {"id": user_id},
+        {"_id": 0, "id": 1, "membership_level": 1,
+         "annual_fee_next_due": 1, "annual_fee_paid_at": 1,
+         "admission_fee_next_due": 1, "admission_fee_paid_at": 1,
+         "billing_status": 1, "suspended_reason": 1},
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    tier = user.get("membership_level", "standard")
+    annual_amount = await _annual_fee_eur_for(tier)
+
+    pending = await db.admission_payments.find_one(
+        {"user_id": user_id, "status": "pending", "fee_type": "annual"},
+        {"_id": 0},
+    )
+
+    days_until_due = None
+    if user.get("annual_fee_next_due"):
+        try:
+            dt = datetime.fromisoformat(user["annual_fee_next_due"].replace("Z", "+00:00"))
+            days_until_due = (dt - datetime.now(timezone.utc)).days
+        except Exception:
+            pass
+
+    return {
+        "tier": tier,
+        "annual_fee_amount_eur": annual_amount,
+        "annual_fee_next_due": user.get("annual_fee_next_due"),
+        "annual_fee_paid_at": user.get("annual_fee_paid_at"),
+        "days_until_due": days_until_due,
+        "billing_status": user.get("billing_status", "active"),
+        "pending_payment": pending,
+    }

@@ -250,6 +250,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/permissions", "label": "Permissões", "icon": "Lock"},
             {"path": "/dashboard/admin/client-menus", "label": "Menus de Clientes", "icon": "Menu"},
             {"path": "/dashboard/admin/tiers", "label": "Níveis de Cliente", "icon": "Crown"},
+            {"path": "/dashboard/admin/billing", "label": "Cobrança & Renovações", "icon": "CalendarClock"},
             {"path": "/dashboard/admin/trading", "label": "Taxas & Limites", "icon": "Sliders"},
             {"path": "/dashboard/admin/settings", "label": "Configurações", "icon": "Settings"},
             {"path": "/dashboard/approvals/settings", "label": "Multi-Sign", "icon": "ShieldCheck"},

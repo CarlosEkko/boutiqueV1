@@ -34,6 +34,7 @@ const AdminSettings = () => {
     deposit_fee_percent: 5,
     withdrawal_fee_percent: 5,
     admission_fee_percent: 0,
+    annual_commission_percent: 0,
     min_payout_amount: 50,
     payout_currency: 'EUR'
   });
@@ -223,7 +224,7 @@ const AdminSettings = () => {
 
             {/* Admission Fee Commission */}
             <div className="space-y-2">
-              <Label className="text-gray-300">Taxa de Admissão (%)</Label>
+              <Label className="text-gray-300">Comissão Admissão Inicial (%)</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number" step="any"
@@ -238,9 +239,31 @@ const AdminSettings = () => {
                   className="bg-zinc-800 border-zinc-700 text-white"
                   data-testid="admission-fee-percent-input"
                 />
-                <span className="text-gray-500 text-sm w-24">da taxa</span>
+                <span className="text-gray-500 text-sm w-24">1ª entrada</span>
               </div>
-              <p className="text-xs text-gray-500">% da taxa de admissão que vai para o referenciador quando o cliente paga</p>
+              <p className="text-xs text-gray-500">% da taxa de admissão paga ao referenciador no onboarding inicial</p>
+            </div>
+
+            {/* Annual Commission */}
+            <div className="space-y-2">
+              <Label className="text-gray-300">Comissão Renovação Anual (%)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number" step="any"
+                  value={referralFees.annual_commission_percent ?? 0}
+                  onChange={(e) => setReferralFees({
+                    ...referralFees,
+                    annual_commission_percent: parseFloat(e.target.value) || 0
+                  })}
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                  data-testid="annual-commission-percent-input"
+                />
+                <span className="text-gray-500 text-sm w-24">recorrente</span>
+              </div>
+              <p className="text-xs text-gray-500">% da taxa anual paga ao referenciador nas renovações</p>
             </div>
 
             {/* Min Payout */}

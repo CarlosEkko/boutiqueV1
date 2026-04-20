@@ -99,6 +99,7 @@ import BalanceAdjustmentsPage from "./pages/dashboard/finance/BalanceAdjustments
 import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients";
 import ClientTiersPage from "./pages/dashboard/ClientTiersPage";
 import AdminClientTiers from "./pages/dashboard/admin/AdminClientTiers";
+import AdminBillingPage from "./pages/dashboard/admin/AdminBillingPage";
 import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
@@ -269,6 +270,7 @@ function AppRoutes() {
         <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
         <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
         <Route path="admin/tiers" element={<AdminClientTiers />} />
+        <Route path="admin/billing" element={<AdminBillingPage />} />
         <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
         
         {/* Commercial Management Routes */}

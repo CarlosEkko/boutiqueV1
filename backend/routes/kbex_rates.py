@@ -325,10 +325,16 @@ async def get_renewal_alerts(admin_id: str = Depends(get_current_user_id)):
     expiring = await db.users.find(
         {
             "user_type": "client",
-            "membership_expires_at": {"$lte": threshold, "$ne": None},
+            "$or": [
+                {"annual_fee_next_due": {"$lte": threshold, "$ne": None}},
+                {"admission_fee_next_due": {"$lte": threshold, "$ne": None}},
+                {"membership_expires_at": {"$lte": threshold, "$ne": None}},
+            ],
         },
         {"_id": 0, "id": 1, "name": 1, "email": 1, "membership_level": 1,
-         "membership_expires_at": 1, "membership_fee_paid_at": 1},
+         "annual_fee_next_due": 1, "annual_fee_paid_at": 1,
+         "admission_fee_next_due": 1, "membership_expires_at": 1,
+         "membership_fee_paid_at": 1, "billing_status": 1},
     ).to_list(100)
 
     return {"alerts": expiring, "threshold_days": 30}
