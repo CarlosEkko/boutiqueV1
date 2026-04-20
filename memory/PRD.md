@@ -166,6 +166,17 @@ Verified end-to-end:
 - **Admin UI**: 4-card Health Monitor panel in `/dashboard/admin/contas-bancarias` (auto-sync, webhook signed, last deposit, last reconciliation)
 - Verified: 3 webhook signature scenarios (none/bogus/valid) return correct HTTP 401/401/200
 
+## Brevo Billing Emails — Wired (2026-04-20)
+- 4 templates added to `email_service.py`: `send_billing_renewal_upcoming`, `send_billing_overdue`, `send_billing_suspended`, `send_billing_payment_confirmed` (quiet-luxury HTML shell: gold/amber/red/emerald accents).
+- Triggered automatically in billing lifecycle:
+  - `_run_renewal_cycle` (daily background) → upcoming / overdue / suspended
+  - `/api/billing/fireblocks-webhook` auto-approval → payment confirmed
+  - `/api/billing/upgrade/{id}/approve` (admin manual) → upgrade confirmed
+  - `/api/referrals/admission-fee/{id}/approve` (admin manual) → payment confirmed
+- `_safe_send_email` wrapper in `billing.py` + try/except in `referrals.py` isolate email failures — billing never breaks.
+- Portal deep-link: `{FRONTEND_URL}/dashboard/profile#billing`.
+- **Testing (iteration_52): 27/27 backend tests PASSED.**
+
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
