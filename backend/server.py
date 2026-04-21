@@ -85,6 +85,7 @@ from routes.business_accounts import router as business_accounts_router, set_db 
 from routes.client_tiers import router as client_tiers_router, set_db as set_client_tiers_db
 from routes.billing import router as billing_router, set_db as set_billing_db
 from routes.tenants import router as tenants_router
+from routes.stripe_payments import router as stripe_router, set_db as set_stripe_db, _stripe_webhook_handler
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -127,6 +128,7 @@ set_commercial_db(db)
 set_business_accounts_db(db)
 set_client_tiers_db(db)
 set_billing_db(db)
+set_stripe_db(db)
 set_crm_db(db)
 set_tokenization_db(db)
 
@@ -361,16 +363,13 @@ async def get_crypto_prices():
 # Include the router in the main app
 app.include_router(api_router)
 app.include_router(tenants_router)
+app.include_router(stripe_router)
 
-# Stripe webhook alias at /api/webhook/stripe
-from routes.trading import router as trading_router_direct
-@api_router.post("/webhook/stripe")
-async def stripe_webhook_alias(request: Request):
-    """Alias for Stripe webhook - redirects to trading webhook"""
-    from routes.trading import stripe_webhook, set_db as set_trading_db_direct
-    # Ensure db is set
-    set_trading_db_direct(db)
-    return await stripe_webhook(request)
+# Stripe webhook endpoint — Stripe POSTs to /api/webhook/stripe on checkout
+# events. Must be signature-verified; delegates to the stripe_payments module.
+@app.post("/api/webhook/stripe")
+async def stripe_webhook_entry(request: Request):
+    return await _stripe_webhook_handler(request)
 
 app.add_middleware(
     CORSMiddleware,

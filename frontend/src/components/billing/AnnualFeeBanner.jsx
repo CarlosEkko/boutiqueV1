@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 import { CalendarClock, AlertCircle, CheckCircle2, X, Ban } from 'lucide-react';
+import StripeCheckoutButton from './StripeCheckoutButton';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const DISMISS_KEY = 'kbex_annual_banner_dismissed';
@@ -89,13 +90,21 @@ const AnnualFeeBanner = () => {
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
+        {(isPending || isSuspended || isOverdue) && (
+          <StripeCheckoutButton
+            paymentType="annual_renewal"
+            label={isSuspended ? 'Regularizar com Cartão' : 'Pagar com Cartão'}
+            data-testid="banner-stripe-pay-btn"
+          />
+        )}
         <Button
           size="sm"
+          variant="outline"
           onClick={() => navigate('/dashboard/profile#billing')}
-          className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
+          className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
           data-testid="banner-pay-btn"
         >
-          {isPending ? 'Pagar Agora' : isSuspended ? 'Regularizar' : 'Ver Detalhes'}
+          Ver Detalhes
         </Button>
         {!isSuspended && !isOverdue && (
           <button

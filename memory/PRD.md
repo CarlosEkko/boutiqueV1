@@ -224,6 +224,24 @@ Verified end-to-end:
 - **Tests:** `/app/backend/tests/test_multi_currency_display.py` — 3/3 PASSED (rate coverage, price conversion tolerance ≤1%, stats endpoint for all 7 currencies).
 - **Known limitation:** `CryptoTicker` component uses TradingView widget with hardcoded BTC/USD pairs; crypto is universally USD-quoted on public exchanges so this is acceptable.
 
+## Stripe Checkout Integration — Card Payments (2026-04-21)
+- **Three flows via Stripe Hosted Checkout** (zero PCI scope for KBEX):
+  1. **Admission Fee** (one-time, tier-based, amount from `platform_settings.admission_fee`)
+  2. **Annual Renewal** (yearly, tier-based, amount from `platform_settings.annual_fee`)
+  3. **Fiat Deposit** (variable amount €50–€50,000 server-validated, credits `fiat_wallets`)
+- **Backend:** `/app/backend/routes/stripe_payments.py` — uses `emergentintegrations.payments.stripe.checkout`. Endpoints:
+  - `POST /api/stripe/create-checkout-session` (auth required; amount resolved server-side, never trusted from frontend)
+  - `GET /api/stripe/checkout-status/{session_id}` (polling; applies business logic exactly once via atomic `processed` flag)
+  - `POST /api/webhook/stripe` (signature-verified; fulfills same logic on webhook event as polling race-safe)
+- **`payment_transactions` collection** — idempotent record of every session (session_id, user_id, amount, currency, payment_type, status, payment_status, processed, metadata). Atomic CAS on `processed` prevents double fulfillment even under polling+webhook race.
+- **Multi-currency**: EUR, USD, AED, CHF, QAR, SAR, HKD (cliente paga na moeda selecionada no seletor global).
+- **Frontend:**
+  - `StripeCheckoutButton.jsx` — componente reutilizável, 3 flows via prop `paymentType`.
+  - `PaymentSuccess.jsx` em `/payment/return` — polling com 10 tentativas × 3s, 5 estados (polling/success/timeout/expired/cancelled/error).
+  - `AnnualFeeBanner.jsx` — botão "Pagar com Cartão" visível quando isPending/isSuspended/isOverdue.
+- **Key em uso:** `STRIPE_API_KEY=sk_test_emergent` (sandbox Emergent). Para produção, substituir por key live do cliente.
+- **Validação E2E:** curl cria sessão EUR €500 para tier standard, retorna URL Stripe válida; polling retorna status `unpaid→paid`; validação deposit rejeita valores fora do intervalo.
+
 ## Zero-Downtime Deploy Fix (2026-04-21)
 - **Bug:** `zero_downtime_deploy.sh` was rebuilding images but NOT recreating containers when compose config hadn't changed. Symptom: `docker compose ps` showed IMAGE column as bare SHA instead of `boutiquev1-frontend:latest`, meaning containers ran outdated images silently.
 - **Fix:** Added `--force-recreate` to `docker compose up -d --no-deps {backend,frontend}` calls. Added post-deploy sanity check that auto-retries if frontend container age > 5 min.

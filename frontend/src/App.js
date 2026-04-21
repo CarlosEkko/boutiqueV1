@@ -10,6 +10,7 @@ import EarnPage from "./pages/EarnPage";
 import InstitutionalPage from "./pages/InstitutionalPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import {
   DashboardLayout,
   DashboardOverview,
@@ -174,6 +175,7 @@ function AppRoutes() {
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/launchpad" element={<LaunchpadPage />} />
       <Route path="/auth" element={<AuthPage />} />
+      <Route path="/payment/return" element={<PaymentSuccess />} />
       <Route path="/auth/o365/callback" element={<O365Callback />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/prototypes/otc" element={<OTCPrototypes />} />
