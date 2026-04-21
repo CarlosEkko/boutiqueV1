@@ -1730,10 +1730,12 @@ async def _find_and_approve_matching_payment(tx: dict) -> Optional[dict]:
 
 
 @router.post("/fireblocks-webhook")
+@router.post("/vault-webhook")
 async def fireblocks_webhook(request: Request):
     """
-    Receive Fireblocks webhooks. Auto-approve billing payments on matching deposits
-    to the KBEX OnBoarding vault.
+    Receive custody provider webhooks. Auto-approve billing payments on matching deposits
+    to the KBEX OnBoarding vault. Accessible via /vault-webhook (public-facing URL) or
+    /fireblocks-webhook (legacy alias — do not advertise externally).
     """
     raw_body = await request.body()
     signature = request.headers.get("fireblocks-signature") or request.headers.get("Fireblocks-Signature", "")

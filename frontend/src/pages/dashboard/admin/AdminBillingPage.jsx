@@ -118,11 +118,11 @@ const AdminBillingPage = () => {
   };
 
   const setupVault = async () => {
-    if (!window.confirm('Criar vault "KBEX OnBoarding" no Fireblocks? Esta operação é idempotente.')) return;
+    if (!window.confirm('Criar vault "KBEX OnBoarding" de custódia institucional? Esta operação é idempotente.')) return;
     setVaultBusy(true);
     try {
       const res = await axios.post(`${API_URL}/api/billing/vault/setup`, {}, { headers });
-      toast.success(res.data.already_existed ? 'Vault existente — endereços sincronizados' : 'Vault KBEX OnBoarding criado no Fireblocks');
+      toast.success(res.data.already_existed ? 'Vault existente — endereços sincronizados' : 'Vault KBEX OnBoarding criado');
       await fetchAll();
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Falha ao criar vault');
@@ -135,7 +135,7 @@ const AdminBillingPage = () => {
     setVaultBusy(true);
     try {
       await axios.post(`${API_URL}/api/billing/vault/refresh-addresses`, {}, { headers });
-      toast.success('Endereços re-sincronizados do Fireblocks');
+      toast.success('Endereços re-sincronizados');
       await fetchAll();
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Falha ao sincronizar');
@@ -341,7 +341,7 @@ const AdminBillingPage = () => {
         </CardContent>
       </Card>
 
-      {/* Fireblocks Billing Vault */}
+      {/* Institutional Custody Vault */}
       <Card className="bg-zinc-900/50 border-zinc-800" data-testid="billing-vault-card">
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
@@ -355,7 +355,7 @@ const AdminBillingPage = () => {
                   <Shield size={12} className="text-emerald-400" />
                 </h2>
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  Custódia Fireblocks para Taxa de Admissão + Renovações Anuais (BTC / ETH / USDT / USDC)
+                  Custódia institucional para Taxa de Admissão + Renovações Anuais (BTC / ETH / USDT / USDC)
                 </p>
               </div>
             </div>
@@ -380,7 +380,7 @@ const AdminBillingPage = () => {
               <div>
                 Vault não configurado. Os endereços de checkout estão a usar o fallback manual em
                 <code className="mx-1 text-amber-300">platform_settings.crypto_wallets</code>.
-                Clique em <span className="text-gold-400">Criar Vault</span> para provisionar no Fireblocks.
+                Clique em <span className="text-gold-400">Criar Vault</span> para provisionar na custódia institucional.
               </div>
             </div>
           ) : (
@@ -392,17 +392,17 @@ const AdminBillingPage = () => {
                 )}
               </div>
 
-              {/* Webhook URL for admin to configure in Fireblocks console */}
+              {/* Webhook URL for admin to configure in custody console */}
               <div className="rounded-md border border-blue-900/30 bg-blue-950/20 p-3 mb-3">
                 <div className="text-[10px] uppercase tracking-wider text-blue-400 mb-1 font-semibold">
-                  URL do Webhook (para configurar na consola Fireblocks)
+                  URL do Webhook (para configurar na consola de custódia)
                 </div>
                 <div className="flex items-center gap-2 rounded bg-zinc-950 border border-zinc-800 px-2 py-1.5">
                   <code className="flex-1 text-[11px] text-zinc-300 break-all font-mono">
-                    {`${window.location.origin}/api/billing/fireblocks-webhook`}
+                    {`${window.location.origin}/api/billing/vault-webhook`}
                   </code>
                   <button
-                    onClick={() => copyAddr(`${window.location.origin}/api/billing/fireblocks-webhook`, 'webhook')}
+                    onClick={() => copyAddr(`${window.location.origin}/api/billing/vault-webhook`, 'webhook')}
                     className="text-zinc-400 hover:text-blue-400 shrink-0 transition-colors"
                     data-testid="copy-webhook-btn"
                   >
@@ -736,7 +736,7 @@ const RenewalsHealthPanel = ({ health }) => {
           />
           <HealthKpi
             icon={<Bitcoin size={14} />}
-            label="Auto-aprovação (Fireblocks)"
+            label="Auto-aprovação (Webhook)"
             value={`${auto_approval_rate_12m_pct}%`}
             sub={`${auto_approval_count_12m} pagamentos em 12m`}
             accent="gold"
