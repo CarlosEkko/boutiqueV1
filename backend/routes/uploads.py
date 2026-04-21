@@ -27,7 +27,8 @@ UPLOAD_DIRS = {
     "documents": BASE_UPLOAD_DIR / "documents",
     "general": BASE_UPLOAD_DIR / "general",
     "adjustments": BASE_UPLOAD_DIR / "adjustments",
-    "launchpad": BASE_UPLOAD_DIR / "launchpad"
+    "launchpad": BASE_UPLOAD_DIR / "launchpad",
+    "branding": BASE_UPLOAD_DIR / "branding",  # tenant logos + favicons
 }
 
 # Create all directories
@@ -37,6 +38,10 @@ for dir_path in UPLOAD_DIRS.values():
 # Allowed file types
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 ALLOWED_DOCUMENT_TYPES = {"application/pdf", "image/jpeg", "image/png"}
+# Branding accepts SVG + ICO in addition to raster images (logos/favicons).
+ALLOWED_BRANDING_TYPES = ALLOWED_IMAGE_TYPES | {
+    "image/svg+xml", "image/vnd.microsoft.icon", "image/x-icon",
+}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
@@ -72,15 +77,18 @@ async def upload_file(
     """
     Upload a file to the server (authenticated).
     
-    Categories: kyc, deposits, withdrawals, documents, general
+    Categories: kyc, deposits, withdrawals, documents, general, branding
     """
     # Validate category
     if category not in UPLOAD_DIRS:
         category = "general"
     
-    # Validate file type
+    # Validate file type (branding accepts SVG + ICO; others images+PDF only)
     content_type = file.content_type or "application/octet-stream"
-    allowed_types = ALLOWED_IMAGE_TYPES | ALLOWED_DOCUMENT_TYPES
+    if category == "branding":
+        allowed_types = ALLOWED_BRANDING_TYPES
+    else:
+        allowed_types = ALLOWED_IMAGE_TYPES | ALLOWED_DOCUMENT_TYPES
     
     if content_type not in allowed_types:
         raise HTTPException(

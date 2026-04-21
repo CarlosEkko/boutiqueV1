@@ -13,6 +13,7 @@ import {
 import {
   Globe, Plus, Trash2, Edit, Save, Loader2, Shield, Palette, Mail, Users, Briefcase, Wallet,
 } from 'lucide-react';
+import BrandingImageUpload from '../../../components/admin/BrandingImageUpload';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -324,21 +325,21 @@ export default function AdminTenants() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-400">Logo URL</Label>
-                    <Input
+                    <BrandingImageUpload
+                      label="Logo"
                       value={editing.branding.logo_url || ''}
-                      onChange={(e) => setEditing({ ...editing, branding: { ...editing.branding, logo_url: e.target.value } })}
-                      placeholder="https://bancox.com/logo.svg"
-                      className="bg-zinc-800 border-zinc-700 mt-1"
+                      onChange={(url) => setEditing({ ...editing, branding: { ...editing.branding, logo_url: url } })}
+                      aspect="logo"
+                      testId="tenant-logo-upload"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-zinc-400">Favicon URL</Label>
-                    <Input
+                    <BrandingImageUpload
+                      label="Favicon (.ico recomendado, 32×32)"
                       value={editing.branding.favicon_url || ''}
-                      onChange={(e) => setEditing({ ...editing, branding: { ...editing.branding, favicon_url: e.target.value } })}
-                      placeholder="https://bancox.com/favicon.ico"
-                      className="bg-zinc-800 border-zinc-700 mt-1"
+                      onChange={(url) => setEditing({ ...editing, branding: { ...editing.branding, favicon_url: url } })}
+                      aspect="square"
+                      testId="tenant-favicon-upload"
                     />
                   </div>
                   <div>
