@@ -95,7 +95,17 @@ docker compose exec -T nginx nginx -s reload
 ok "Nginx reloaded"
 
 # -----------------------------------------------------------------------------
-# 6. Limpar imagens Docker órfãs (opcional — libera disco)
+# 6. Verificar que o frontend novo responde com novos hashes
+# -----------------------------------------------------------------------------
+log "Verifying deployed assets…"
+NEW_INDEX=$(docker compose exec -T frontend sh -c 'md5sum /usr/share/nginx/html/index.html 2>/dev/null | cut -d" " -f1' || echo "unknown")
+ok "Deployed index.html md5: $NEW_INDEX"
+
+MAIN_JS=$(docker compose exec -T frontend sh -c 'ls /usr/share/nginx/html/static/js/main.*.js 2>/dev/null | head -1 | xargs -n1 basename' || echo "unknown")
+ok "Deployed main bundle: $MAIN_JS"
+
+# -----------------------------------------------------------------------------
+# 7. Limpar imagens Docker órfãs (opcional — libera disco)
 # -----------------------------------------------------------------------------
 log "Cleaning up dangling images…"
 docker image prune -f > /dev/null
@@ -105,5 +115,11 @@ echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}  🚀 Zero-downtime deploy complete${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${YELLOW}⚠  Se não vir as alterações no browser:${NC}"
+echo "   1. Hard refresh: Cmd+Shift+R (Mac) / Ctrl+Shift+R (Windows/Linux)"
+echo "   2. DevTools → Network tab → Disable cache checkbox"
+echo "   3. Modo privado / incógnito"
+echo "   4. Verifique com: curl -s https://kbex.io/ | grep main.*.js"
 echo ""
 docker compose ps
