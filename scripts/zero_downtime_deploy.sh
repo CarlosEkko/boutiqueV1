@@ -46,7 +46,9 @@ ok "Images built"
 # 3. Recriar backend (FastAPI arranca em ~3-5s)
 # -----------------------------------------------------------------------------
 log "Rotating backend…"
-docker compose up -d --no-deps backend
+# --force-recreate garante que o container é substituído mesmo quando
+# só a imagem (conteúdo) mudou e a config do compose não.
+docker compose up -d --no-deps --force-recreate backend
 
 # Esperar que o novo backend responda
 BACKEND_READY=0
@@ -69,7 +71,10 @@ fi
 # 4. Recriar frontend (nginx proxy passa ainda pelo antigo se não estiver pronto)
 # -----------------------------------------------------------------------------
 log "Rotating frontend…"
-docker compose up -d --no-deps frontend
+# --force-recreate é ESSENCIAL: sem isto, o Compose mantém o container antigo
+# (a correr a imagem antiga) quando apenas o conteúdo da imagem muda.
+# Sintoma: 'docker compose ps' mostrava IMAGE como SHA hash em vez do nome.
+docker compose up -d --no-deps --force-recreate frontend
 
 FRONTEND_READY=0
 for i in $(seq 1 20); do
@@ -103,6 +108,20 @@ ok "Deployed index.html md5: $NEW_INDEX"
 
 MAIN_JS=$(docker compose exec -T frontend sh -c 'ls /usr/share/nginx/html/static/js/main.*.js 2>/dev/null | head -1 | xargs -n1 basename' || echo "unknown")
 ok "Deployed main bundle: $MAIN_JS"
+
+# Sanity check: o container foi REALMENTE recriado? (idade < 5 min)
+FRONTEND_AGE_SEC=$(docker inspect --format='{{.State.StartedAt}}' kbex-frontend 2>/dev/null | xargs -I{} date -d {} +%s 2>/dev/null || echo "0")
+NOW_SEC=$(date +%s)
+AGE_SEC=$((NOW_SEC - FRONTEND_AGE_SEC))
+if [ "$AGE_SEC" -gt 300 ]; then
+    err "Frontend container NOT recreated! Age: ${AGE_SEC}s (deve ser < 300s)."
+    err "Isto significa que está a correr código ANTIGO. A forçar recreate agora…"
+    docker compose up -d --no-deps --force-recreate frontend
+    sleep 3
+    ok "Frontend forçosamente recriado. Re-verifique o browser."
+else
+    ok "Frontend container recriado há ${AGE_SEC}s (OK)"
+fi
 
 # -----------------------------------------------------------------------------
 # 7. Limpar imagens Docker órfãs (opcional — libera disco)
