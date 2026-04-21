@@ -84,6 +84,7 @@ from routes.commercial import router as commercial_router, set_db as set_commerc
 from routes.business_accounts import router as business_accounts_router, set_db as set_business_accounts_db
 from routes.client_tiers import router as client_tiers_router, set_db as set_client_tiers_db
 from routes.billing import router as billing_router, set_db as set_billing_db
+from routes.tenants import router as tenants_router
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
 
 set_auth_db(db)
@@ -173,6 +174,7 @@ api_router.include_router(commercial_router)
 api_router.include_router(business_accounts_router)
 api_router.include_router(client_tiers_router)
 api_router.include_router(billing_router)
+# tenants_router has its own /api prefix, register on app directly (below)
 
 
 # Define Models
@@ -358,6 +360,7 @@ async def get_crypto_prices():
 
 # Include the router in the main app
 app.include_router(api_router)
+app.include_router(tenants_router)
 
 # Stripe webhook alias at /api/webhook/stripe
 from routes.trading import router as trading_router_direct

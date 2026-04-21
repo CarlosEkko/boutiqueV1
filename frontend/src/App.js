@@ -43,7 +43,8 @@ import {
   AdminClientMenus,
   SecurityDashboardPage,
   AdminKBEXRates,
-  AdminEscrowFees
+  AdminEscrowFees,
+  AdminTenants
 } from "./pages/dashboard/admin";
 import ExchangePage from "./pages/dashboard/ExchangePage";
 import FiatDepositPage from "./pages/dashboard/FiatDepositPage";
@@ -130,6 +131,7 @@ import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { TenantProvider } from "./context/TenantContext";
 import { DemoProvider } from "./context/DemoContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -258,6 +260,7 @@ function AppRoutes() {
         <Route path="admin/pipeline" element={<AdminPipeline />} />
         <Route path="admin/settings" element={<AdminSettings />} />
                 <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
+                <Route path="admin/tenants" element={<AdminTenants />} />
                 <Route path="admin/escrow-fees" element={<AdminEscrowFees />} />
         <Route path="admin/referrals" element={<AdminReferrals />} />
         <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
@@ -352,20 +355,22 @@ function AppRoutes() {
 function App() {
   return (
     <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <CurrencyProvider>
-            <DemoProvider>
-              <div className="App">
-                <BrowserRouter>
-                  <AppRoutes />
-                </BrowserRouter>
-                <Toaster />
-              </div>
-            </DemoProvider>
-          </CurrencyProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <TenantProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <CurrencyProvider>
+              <DemoProvider>
+                <div className="App">
+                  <BrowserRouter>
+                    <AppRoutes />
+                  </BrowserRouter>
+                  <Toaster />
+                </div>
+              </DemoProvider>
+            </CurrencyProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </TenantProvider>
     </ThemeProvider>
   );
 }

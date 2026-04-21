@@ -21,4 +21,5 @@ export { default as AdminAdmissionFees } from './AdminAdmissionFees';
 export { default as AdminClientMenus } from './AdminClientMenus';
 export { default as SecurityDashboardPage } from './SecurityDashboardPage';
 export { default as AdminKBEXRates } from './AdminKBEXRates';
+export { default as AdminTenants } from './AdminTenants';
 export { default as AdminEscrowFees } from './AdminEscrowFees';

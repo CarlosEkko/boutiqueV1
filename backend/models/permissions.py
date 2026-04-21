@@ -256,6 +256,7 @@ DEPARTMENT_MENUS = {
             {"path": "/dashboard/admin/multisign-clients", "label": "Clientes Multi-Sign", "icon": "Users"},
             {"path": "/dashboard/admin/referrals", "label": "Referências", "icon": "GitBranch"},
             {"path": "/dashboard/admin/kbex-rates", "label": "KBEX Spread", "icon": "TrendingUp"},
+            {"path": "/dashboard/admin/tenants", "label": "Tenants", "icon": "Globe"},
             {"path": "/dashboard/admin/escrow-fees", "label": "Escrow Fees", "icon": "Shield"},
             {"path": "/dashboard/crm/advanced", "label": "Dashboard Avançado", "icon": "BarChart3"},
         ]

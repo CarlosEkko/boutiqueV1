@@ -1,5 +1,14 @@
 # KBEX.io - Changelog
 
+## 2026-04-21 - White-Label Tenants (Phase 1: Branding)
+- **Backend:** new `/app/backend/routes/tenants.py` with `GET /api/tenants/resolve` (public, called by frontend on boot) + admin CRUD (`GET/POST/PUT/DELETE /api/tenants/*`).
+- **Model:** `tenants` collection with `slug` / `domains[]` / `branding` / `email` / `supported_fiat` / `is_default` / `is_active`.
+- **Default tenant** (`slug: kbex`) auto-seeded on first access; cannot be deleted/deactivated.
+- **Frontend:** `TenantProvider` wraps the whole app; fetches tenant branding on boot from Host header; applies CSS variables (`--tenant-primary`, `--tenant-accent`) + `document.title` + favicon dynamically.
+- **Admin UI:** `/dashboard/admin/tenants` — full CRUD with dialog (slug, domains, platform name, tagline, logo/favicon URLs, primary/accent colors via color picker, sender email, supported fiat).
+- **Nginx:** changed `server_name kbex.io www.kbex.io` → `server_name _; default_server;` so any tenant domain resolves to the same backend.
+- **Docs:** `/app/docs/TENANTS.md` onboarding guide (DNS, SSL via certbot `--expand`, tenant creation flow).
+
 ## 2026-04-20 (v5) - Exchange UX Refinement
 - **Hidden spread %** everywhere: removed `COMPRAR · +X%`, `VENDER · −X%`, `BTC · +X%` labels from price card, dropdown items and Converter tab. Only the absolute price (with spread already baked in) is shown, color-coded by side (emerald buy / red sell).
 - **Transferência → Saldo Fiat:** Buy tab payment method replaced bank transfer option. New button shows user's current fiat balance inline.
