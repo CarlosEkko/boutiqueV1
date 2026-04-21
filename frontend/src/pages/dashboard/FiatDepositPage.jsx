@@ -13,6 +13,7 @@ import {
   Loader2, AlertCircle, RefreshCw, Building2, ArrowRight, Landmark
 } from 'lucide-react';
 import { toast } from 'sonner';
+import StripeCheckoutButton from '../../components/billing/StripeCheckoutButton';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -355,6 +356,25 @@ const FiatDepositPage = () => {
                       {loading ? t('dashboard.fiatDeposit.processing') : t('dashboard.fiatDeposit.generateReference')}
                     </Button>
                   </div>
+
+                  {/* Alternative: Card payment via Stripe */}
+                  <div className="relative flex items-center gap-3 py-2">
+                    <div className="flex-1 h-px bg-zinc-800" />
+                    <span className="text-[11px] uppercase tracking-widest text-zinc-600">ou</span>
+                    <div className="flex-1 h-px bg-zinc-800" />
+                  </div>
+                  <StripeCheckoutButton
+                    paymentType="fiat_deposit"
+                    depositAmount={parseFloat(amount) || 0}
+                    currency={selectedCurrency.code}
+                    label={`Depositar com Cartão${amount && parseFloat(amount) >= 50 ? ` (${selectedCurrency.symbol} ${fmtAmount(amount)})` : ''}`}
+                    disabled={!amount || parseFloat(amount) < 50 || parseFloat(amount) > 50000}
+                    className="w-full h-12"
+                    data-testid="fiat-deposit-stripe-btn"
+                  />
+                  <p className="text-[11px] text-zinc-500 text-center -mt-2">
+                    Pagamento instantâneo via Stripe · €50 a €50 000 · Saldo creditado em segundos
+                  </p>
                 </CardContent>
               </Card>
             )}
