@@ -67,10 +67,14 @@ services:
     networks:
       - kbex-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      # The python:3.11-slim image does NOT include `curl`, so the previous
+      # probe always failed → container reported "unhealthy" despite serving
+      # 200 OK. Use the stdlib `urllib` to avoid installing extra packages.
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8001/api/health',timeout=5).status==200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
 
   # React Frontend
   frontend:

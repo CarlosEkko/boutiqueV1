@@ -58,7 +58,9 @@ docker compose up -d --no-deps --force-recreate backend
 # tráfego via `proxy_next_upstream` no NGINX).
 BACKEND_READY=0
 for i in $(seq 1 90); do
-    if docker compose exec -T backend curl -sf http://localhost:8001/api/health > /dev/null 2>&1; then
+    # Use python stdlib instead of curl — curl is NOT installed in the
+    # python:3.11-slim image, so the previous probe always failed silently.
+    if docker compose exec -T backend python -c "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://localhost:8001/api/health',timeout=3).status==200 else 1)" > /dev/null 2>&1; then
         BACKEND_READY=1
         ok "Backend healthy (after ${i}s)"
         break
