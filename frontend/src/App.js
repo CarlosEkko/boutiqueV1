@@ -260,6 +260,7 @@ function AppRoutes() {
         <Route path="admin/pipeline" element={<AdminPipeline />} />
         <Route path="admin/settings" element={<AdminSettings />} />
                 <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
+                <Route path="admin/institucional" element={<AdminTenants />} />
                 <Route path="admin/tenants" element={<AdminTenants />} />
                 <Route path="admin/escrow-fees" element={<AdminEscrowFees />} />
         <Route path="admin/referrals" element={<AdminReferrals />} />

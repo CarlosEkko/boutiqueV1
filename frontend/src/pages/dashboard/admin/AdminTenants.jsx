@@ -63,7 +63,7 @@ export default function AdminTenants() {
       });
       setStats(statsMap);
     } catch (e) {
-      toast.error('Falha ao carregar tenants');
+      toast.error('Falha ao carregar institucionais');
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ export default function AdminTenants() {
   };
 
   const remove = async (slug) => {
-    if (!window.confirm(`Eliminar tenant '${slug}'? Esta acção é irreversível.`)) return;
+    if (!window.confirm(`Eliminar institucional '${slug}'? Esta acção é irreversível.`)) return;
     try {
       await axios.delete(`${API_URL}/api/tenants/${slug}`, { headers });
       toast.success('Tenant eliminado');
@@ -130,14 +130,14 @@ export default function AdminTenants() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Globe size={24} className="text-gold-500" /> Tenants (White-label)
+            <Globe size={24} className="text-gold-500" /> Institucional
           </h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Gerir deployments white-label por domínio. Cada tenant tem a sua própria identidade visual, email e moedas suportadas.
+            Gerir deployments institucionais por domínio. Cada cliente institucional tem a sua própria identidade visual, email e moedas suportadas.
           </p>
         </div>
         <Button onClick={() => openEdit(null)} className="bg-gold-500 hover:bg-gold-600 text-black" data-testid="new-tenant-btn">
-          <Plus size={14} className="mr-1.5" /> Novo Tenant
+          <Plus size={14} className="mr-1.5" /> Novo Institucional
         </Button>
       </div>
 
@@ -267,7 +267,7 @@ export default function AdminTenants() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe size={18} className="text-gold-400" />
-              {editing?.is_default ? `Editar ${editing.slug}` : editing?.slug ? `Editar ${editing.slug}` : 'Novo Tenant'}
+              {editing?.is_default ? `Editar ${editing.slug}` : editing?.slug ? `Editar ${editing.slug}` : 'Novo Institucional'}
             </DialogTitle>
           </DialogHeader>
 
