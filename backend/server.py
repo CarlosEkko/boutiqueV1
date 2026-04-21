@@ -191,6 +191,14 @@ class StatusCheckCreate(BaseModel):
 async def root():
     return {"message": "Hello World"}
 
+
+@api_router.get("/health")
+async def health_check():
+    """Liveness probe for Docker healthcheck / nginx retry / external monitors.
+    Always returns 200 if the process is alive. Kept intentionally cheap — no DB call.
+    """
+    return {"status": "ok", "service": "kbex-backend"}
+
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.model_dump()
