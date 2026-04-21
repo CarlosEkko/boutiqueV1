@@ -277,7 +277,7 @@ const translations = {
       badge: 'EXCLUSIVE ACCESS • INSTITUTIONAL GRADE',
       title: 'The Boutique Exchange for',
       subtitle: 'Sophisticated Investors',
-      description: 'Exclusive cryptocurrency services tailored for high-net-worth individuals and institutional clients across Europe, Middle East, and Brazil.',
+      description: 'Exclusive cryptocurrency services tailored for high-net-worth individuals and institutional clients across Europe, Middle East, and LATAM.',
       ctaPrimary: 'Request Access',
       ctaSecondary: 'Learn More',
       trustLicensed: 'Licensed & Regulated',
@@ -327,7 +327,7 @@ const translations = {
       exclusive: 'Exclusive Service',
       exclusiveDesc: 'Membership-only platform with dedicated relationship managers. Personalized service for sophisticated clients.',
       global: 'Global Reach',
-      globalDesc: 'Seamless operations across Europe, Middle East, and Brazil. Local presence with global capabilities.',
+      globalDesc: 'Seamless operations across Europe, Middle East, and LATAM. Local presence with global capabilities.',
       stats: {
         auc: '$2.5B+',
         aucLabel: 'Assets Under Custody',
@@ -350,7 +350,7 @@ const translations = {
       europeDesc: 'Headquarters in Switzerland with presence across EU financial hubs',
       middleEast: 'Middle East',
       middleEastDesc: 'Serving UHNW clients in Dubai, Abu Dhabi, and Riyadh',
-      brazil: 'Brazil',
+      brazil: 'LATAM',
       brazilDesc: "Exclusive services for Latin America's growing crypto economy"
     },
     
@@ -1879,7 +1879,7 @@ const translations = {
         cryptoAtm: {
       heroTitle: 'Premium Crypto ATM Network',
       heroSubtitle: 'Access Digital Assets in Exclusive Locations',
-      heroDescription: 'Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs, strategically placed in premium locations across Europe, Middle East, and Brazil.',
+      heroDescription: 'Experience seamless fiat-to-crypto conversions at our curated network of high-security ATMs, strategically placed in premium locations across Europe, Middle East, and LATAM.',
       statPremiumLocations: 'Premium Locations', statSupportedCurrencies: 'Supported Currencies', statAvailableAccess: 'Available Access', statUptimeGuarantee: 'Uptime Guarantee',
       feature1Title: 'Prime Locations', feature1Desc: 'ATMs placed in exclusive high-end shopping districts, luxury hotels, and private banking centers. Curated environments that match the sophistication of our clientele.',
       feature2Title: 'Enhanced Privacy', feature2Desc: 'Discreet transaction booths with biometric verification. Advanced encryption and privacy protocols ensure your transactions remain confidential.',
@@ -1889,7 +1889,7 @@ const translations = {
       step2Title: 'Select Currency', step2Desc: 'Choose your preferred cryptocurrency and fiat currency for conversion',
       step3Title: 'Complete Transaction', step3Desc: 'Insert cash or card, confirm transaction, and receive instant digital assets',
       step4Title: 'Secure Transfer', step4Desc: 'Funds transferred directly to your verified wallet with instant confirmation',
-      regionEurope: 'Europe', regionMiddleEast: 'Middle East', regionBrazil: 'Brazil',
+      regionEurope: 'Europe', regionMiddleEast: 'Middle East', regionBrazil: 'LATAM',
       benefit1Title: 'Instant Transactions', benefit1Desc: 'Real-time conversion with immediate wallet crediting',
       benefit2Title: 'Competitive Rates', benefit2Desc: 'Institutional-grade pricing with transparent fee structure',
       benefit3Title: 'Maximum Limits', benefit3Desc: 'Higher transaction limits for verified VIP members',
@@ -2181,7 +2181,7 @@ const translations = {
       badge: 'ACESSO EXCLUSIVO • NÍVEL INSTITUCIONAL',
       title: 'A Exchange Boutique para',
       subtitle: 'Investidores Sofisticados',
-      description: 'Serviços exclusivos de criptomoedas personalizados para indivíduos de alto património e clientes institucionais na Europa, Médio Oriente e Brasil.',
+      description: 'Serviços exclusivos de criptomoedas personalizados para indivíduos de alto património e clientes institucionais na Europa, Médio Oriente e LATAM.',
       ctaPrimary: 'Solicitar Acesso',
       ctaSecondary: 'Saber Mais',
       trustLicensed: 'Licenciada & Regulada',
@@ -2231,7 +2231,7 @@ const translations = {
       exclusive: 'Serviço Exclusivo',
       exclusiveDesc: 'Plataforma apenas para membros com gestores de relacionamento dedicados. Serviço personalizado para clientes sofisticados.',
       global: 'Alcance Global',
-      globalDesc: 'Operações sem fricção na Europa, Médio Oriente e Brasil. Presença local com capacidades globais.',
+      globalDesc: 'Operações sem fricção na Europa, Médio Oriente e LATAM. Presença local com capacidades globais.',
       stats: {
         auc: '+$2.5B',
         aucLabel: 'Ativos Sob Custódia',
@@ -2254,7 +2254,7 @@ const translations = {
       europeDesc: 'Sede na Suíça com presença nos principais centros financeiros da UE',
       middleEast: 'Médio Oriente',
       middleEastDesc: 'Servindo clientes UHNW no Dubai, Abu Dhabi e Riade',
-      brazil: 'Brasil',
+      brazil: 'LATAM',
       brazilDesc: 'Serviços exclusivos para a crescente economia crypto da América Latina'
     },
     
@@ -3782,7 +3782,7 @@ const translations = {
         cryptoAtm: {
       heroTitle: 'Rede Premium de ATMs Crypto',
       heroSubtitle: 'Aceda a Ativos Digitais em Localizações Exclusivas',
-      heroDescription: 'Experiencie conversões fiat-crypto sem fricção na nossa rede curada de ATMs de alta segurança, estrategicamente localizados em localizações premium na Europa, Médio Oriente e Brasil.',
+      heroDescription: 'Experiencie conversões fiat-crypto sem fricção na nossa rede curada de ATMs de alta segurança, estrategicamente localizados em localizações premium na Europa, Médio Oriente e LATAM.',
       statPremiumLocations: 'Localizações Premium', statSupportedCurrencies: 'Moedas Suportadas', statAvailableAccess: 'Acesso Disponível', statUptimeGuarantee: 'Garantia de Uptime',
       feature1Title: 'Localizações Premium', feature1Desc: 'ATMs localizados em distritos comerciais exclusivos, hotéis de luxo e centros de banca privada. Ambientes curados que correspondem à sofisticação da nossa clientela.',
       feature2Title: 'Privacidade Avançada', feature2Desc: 'Cabines de transação discretas com verificação biométrica. Protocolos avançados de encriptação e privacidade.',
@@ -3792,7 +3792,7 @@ const translations = {
       step2Title: 'Selecionar Moeda', step2Desc: 'Escolha a criptomoeda e moeda fiat preferida para conversão',
       step3Title: 'Completar Transação', step3Desc: 'Insira dinheiro ou cartão, confirme a transação e receba ativos digitais instantâneos',
       step4Title: 'Transferência Segura', step4Desc: 'Fundos transferidos diretamente para a sua carteira verificada com confirmação instantânea',
-      regionEurope: 'Europa', regionMiddleEast: 'Médio Oriente', regionBrazil: 'Brasil',
+      regionEurope: 'Europa', regionMiddleEast: 'Médio Oriente', regionBrazil: 'LATAM',
       benefit1Title: 'Transações Instantâneas', benefit1Desc: 'Conversão em tempo real com crédito imediato na carteira',
       benefit2Title: 'Taxas Competitivas', benefit2Desc: 'Preços de nível institucional com estrutura de taxas transparente',
       benefit3Title: 'Limites Máximos', benefit3Desc: 'Limites de transação superiores para membros VIP verificados',
@@ -4037,7 +4037,7 @@ const translations = {
       badge: 'وصول حصري • درجة مؤسسية',
       title: 'منصة التداول الفاخرة',
       subtitle: 'للمستثمرين المتميزين',
-      description: 'خدمات العملات المشفرة الحصرية المصممة للأفراد ذوي الملاءة المالية العالية والعملاء المؤسسيين في أوروبا والشرق الأوسط والبرازيل.',
+      description: 'خدمات العملات المشفرة الحصرية المصممة للأفراد ذوي الملاءة المالية العالية والعملاء المؤسسيين في أوروبا والشرق الأوسط وأمريكا اللاتينية.',
       ctaPrimary: 'طلب الوصول',
       ctaSecondary: 'معرفة المزيد',
       trustLicensed: 'مرخصة ومنظمة',
@@ -4087,7 +4087,7 @@ const translations = {
       exclusive: 'خدمة حصرية',
       exclusiveDesc: 'منصة للأعضاء فقط مع مديري علاقات مخصصين. خدمة شخصية للعملاء المتميزين.',
       global: 'انتشار عالمي',
-      globalDesc: 'عمليات سلسة عبر أوروبا والشرق الأوسط والبرازيل.',
+      globalDesc: 'عمليات سلسة عبر أوروبا والشرق الأوسط وأمريكا اللاتينية.',
       stats: {
         auc: '+2.5 مليار',
         aucLabel: 'الأصول تحت الحفظ',
@@ -4110,7 +4110,7 @@ const translations = {
       europeDesc: 'المقر الرئيسي في سويسرا مع تواجد في المراكز المالية الأوروبية',
       middleEast: 'الشرق الأوسط',
       middleEastDesc: 'نخدم عملاء UHNW في دبي وأبوظبي والرياض',
-      brazil: 'البرازيل',
+      brazil: 'أمريكا اللاتينية',
       brazilDesc: 'خدمات حصرية لاقتصاد العملات المشفرة المتنامي في أمريكا اللاتينية'
     },
     
@@ -5461,7 +5461,7 @@ const translations = {
       step2Title: 'اختيار العملة', step2Desc: 'اختر العملة المفضلة',
       step3Title: 'إتمام المعاملة', step3Desc: 'أدخل النقد وأكد المعاملة',
       step4Title: 'تحويل آمن', step4Desc: 'تحويل فوري إلى محفظتك',
-      regionEurope: 'أوروبا', regionMiddleEast: 'الشرق الأوسط', regionBrazil: 'البرازيل',
+      regionEurope: 'أوروبا', regionMiddleEast: 'الشرق الأوسط', regionBrazil: 'أمريكا اللاتينية',
       benefit1Title: 'معاملات فورية', benefit1Desc: 'تحويل فوري مع إيداع مباشر',
       benefit2Title: 'أسعار تنافسية', benefit2Desc: 'تسعير مؤسسي شفاف',
       benefit3Title: 'حدود قصوى', benefit3Desc: 'حدود أعلى لأعضاء VIP',
@@ -5737,7 +5737,7 @@ const translations = {
       badge: 'ACCÈS EXCLUSIF • NIVEAU INSTITUTIONNEL',
       title: 'L\'Exchange Boutique pour',
       subtitle: 'Investisseurs Avertis',
-      description: 'Services exclusifs de cryptomonnaies personnalisés pour les particuliers fortunés et les clients institutionnels en Europe, Moyen-Orient et Brésil.',
+      description: 'Services exclusifs de cryptomonnaies personnalisés pour les particuliers fortunés et les clients institutionnels en Europe, Moyen-Orient et LATAM.',
       ctaPrimary: 'Demander l\'Accès',
       ctaSecondary: 'En Savoir Plus',
       trustLicensed: 'Agréée & Régulée',
@@ -5785,7 +5785,7 @@ const translations = {
       exclusive: 'Service Exclusif',
       exclusiveDesc: 'Plateforme réservée aux membres avec gestionnaires de relations dédiés. Service personnalisé pour clients avertis.',
       global: 'Portée Mondiale',
-      globalDesc: 'Opérations fluides en Europe, Moyen-Orient et Brésil. Présence locale avec capacités mondiales.',
+      globalDesc: 'Opérations fluides en Europe, Moyen-Orient et LATAM. Présence locale avec capacités mondiales.',
       stats: {
         auc: '+2,5 Md$',
         aucLabel: 'Actifs Sous Garde',
@@ -5807,7 +5807,7 @@ const translations = {
       europeDesc: 'Siège en Suisse avec présence dans les principaux centres financiers de l\'UE',
       middleEast: 'Moyen-Orient',
       middleEastDesc: 'Au service des clients UHNW à Dubaï, Abu Dhabi et Riyad',
-      brazil: 'Brésil',
+      brazil: 'LATAM',
       brazilDesc: 'Services exclusifs pour l\'économie crypto croissante de l\'Amérique latine'
     },
     
@@ -7133,7 +7133,7 @@ const translations = {
         cryptoAtm: {
       heroTitle: 'Réseau Premium de DAB Crypto',
       heroSubtitle: 'Accédez aux Actifs Numériques dans des Emplacements Exclusifs',
-      heroDescription: 'Des conversions fiat-crypto fluides dans notre réseau de DAB haute sécurité, stratégiquement placés en Europe, Moyen-Orient et Brésil.',
+      heroDescription: 'Des conversions fiat-crypto fluides dans notre réseau de DAB haute sécurité, stratégiquement placés en Europe, Moyen-Orient et LATAM.',
       statPremiumLocations: 'Emplacements Premium', statSupportedCurrencies: 'Devises Supportées', statAvailableAccess: 'Accès Disponible', statUptimeGuarantee: 'Garantie de Disponibilité',
       feature1Title: 'Emplacements de Prestige', feature1Desc: 'DAB placés dans des quartiers commerçants exclusifs, hôtels de luxe et centres bancaires privés.',
       feature2Title: 'Confidentialité Renforcée', feature2Desc: 'Cabines discrètes avec vérification biométrique.',
@@ -7143,7 +7143,7 @@ const translations = {
       step2Title: 'Sélectionner la Devise', step2Desc: 'Choisissez votre cryptomonnaie préférée',
       step3Title: 'Compléter la Transaction', step3Desc: 'Insérez des espèces et recevez des actifs numériques',
       step4Title: 'Transfert Sécurisé', step4Desc: 'Fonds transférés directement à votre portefeuille',
-      regionEurope: 'Europe', regionMiddleEast: 'Moyen-Orient', regionBrazil: 'Brésil',
+      regionEurope: 'Europe', regionMiddleEast: 'Moyen-Orient', regionBrazil: 'LATAM',
       benefit1Title: 'Transactions Instantanées', benefit1Desc: 'Conversion en temps réel',
       benefit2Title: 'Tarifs Compétitifs', benefit2Desc: 'Tarification institutionnelle transparente',
       benefit3Title: 'Limites Maximales', benefit3Desc: 'Limites supérieures pour membres VIP',
@@ -7538,7 +7538,7 @@ const translations = {
       badge: 'ACCESO EXCLUSIVO • GRADO INSTITUCIONAL',
       title: 'El Exchange Boutique para',
       subtitle: 'Inversores Sofisticados',
-      description: 'Servicios exclusivos de criptomonedas diseñados para individuos de alto patrimonio y clientes institucionales en Europa, Medio Oriente y Brasil.',
+      description: 'Servicios exclusivos de criptomonedas diseñados para individuos de alto patrimonio y clientes institucionales en Europa, Medio Oriente y LATAM.',
       ctaPrimary: 'Solicitar Acceso',
       ctaSecondary: 'Saber Más',
       trustLicensed: 'Licenciado y Regulado',
@@ -7568,7 +7568,7 @@ const translations = {
       exclusive: 'Servicio Exclusivo',
       exclusiveDesc: 'Plataforma solo para miembros con gestores de relaciones dedicados. Servicio personalizado para clientes sofisticados.',
       global: 'Alcance Global',
-      globalDesc: 'Operaciones fluidas en Europa, Medio Oriente y Brasil. Presencia local con capacidades globales.',
+      globalDesc: 'Operaciones fluidas en Europa, Medio Oriente y LATAM. Presencia local con capacidades globales.',
       stats: { auc: '$2.5B+', aucLabel: 'Activos en Custodia', clients: '500+', clientsLabel: 'Clientes Institucionales', uptime: '99.9%', uptimeLabel: 'Disponibilidad', support: '24/7', supportLabel: 'Soporte Dedicado' }
     },
     regions: {
@@ -7580,7 +7580,7 @@ const translations = {
       europeDesc: 'Sede en Suiza con presencia en centros financieros de la UE',
       middleEast: 'Medio Oriente',
       middleEastDesc: 'Sirviendo clientes UHNW en Dubái, Abu Dabi y Riad',
-      brazil: 'Brasil',
+      brazil: 'LATAM',
       brazilDesc: 'Servicios exclusivos para la creciente economía crypto de Latinoamérica'
     },
     contact: {
@@ -8107,7 +8107,7 @@ const translations = {
         cryptoAtm: {
       heroTitle: 'Red Premium de Cajeros Crypto',
       heroSubtitle: 'Acceda a Activos Digitales en Ubicaciones Exclusivas',
-      heroDescription: 'Conversiones fiat-crypto fluidas en nuestra red curada de cajeros de alta seguridad en Europa, Medio Oriente y Brasil.',
+      heroDescription: 'Conversiones fiat-crypto fluidas en nuestra red curada de cajeros de alta seguridad en Europa, Medio Oriente y LATAM.',
       statPremiumLocations: 'Ubicaciones Premium', statSupportedCurrencies: 'Monedas Soportadas', statAvailableAccess: 'Acceso Disponible', statUptimeGuarantee: 'Garantía de Uptime',
       feature1Title: 'Ubicaciones Premium', feature1Desc: 'Cajeros en distritos comerciales exclusivos, hoteles de lujo y centros de banca privada.',
       feature2Title: 'Privacidad Mejorada', feature2Desc: 'Cabinas discretas con verificación biométrica.',
@@ -8117,7 +8117,7 @@ const translations = {
       step2Title: 'Seleccionar Moneda', step2Desc: 'Elija su criptomoneda preferida',
       step3Title: 'Completar Transacción', step3Desc: 'Inserte efectivo y reciba activos digitales',
       step4Title: 'Transferencia Segura', step4Desc: 'Fondos transferidos directamente a su billetera',
-      regionEurope: 'Europa', regionMiddleEast: 'Medio Oriente', regionBrazil: 'Brasil',
+      regionEurope: 'Europa', regionMiddleEast: 'Medio Oriente', regionBrazil: 'LATAM',
       benefit1Title: 'Transacciones Instantáneas', benefit1Desc: 'Conversión en tiempo real',
       benefit2Title: 'Tarifas Competitivas', benefit2Desc: 'Precios institucionales transparentes',
       benefit3Title: 'Límites Máximos', benefit3Desc: 'Límites superiores para miembros VIP',

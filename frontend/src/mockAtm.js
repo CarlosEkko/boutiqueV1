@@ -90,7 +90,9 @@ export const atmLocations = [
     cities: [
       { name: "São Paulo", country: "Brazil", count: 8, vip: true },
       { name: "Rio de Janeiro", country: "Brazil", count: 5, vip: false },
-      { name: "Brasília", country: "Brazil", count: 3, vip: false }
+      { name: "Mexico City", country: "Mexico", count: 4, vip: true },
+      { name: "Buenos Aires", country: "Argentina", count: 3, vip: false },
+      { name: "Bogotá", country: "Colombia", count: 2, vip: false }
     ]
   }
 ];

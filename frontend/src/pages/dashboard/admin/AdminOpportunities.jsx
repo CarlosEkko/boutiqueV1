@@ -45,7 +45,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const REGIONS = [
   { value: 'europe', label: 'Europa' },
   { value: 'middle_east', label: 'Médio Oriente' },
-  { value: 'brazil', label: 'Brasil' },
+  { value: 'latam', label: 'LATAM' },
 ];
 
 const TIERS = [
@@ -96,7 +96,7 @@ const AdminOpportunities = () => {
     total_pool: '',
     risk_level: 'medium',
     currency: 'USDT',
-    allowed_regions: ['europe', 'middle_east', 'brazil'],
+    allowed_regions: ['europe', 'middle_east', 'latam'],
     allowed_tiers: ['broker', 'standard', 'premium', 'vip', 'institucional']
   });
 
@@ -214,7 +214,7 @@ const AdminOpportunities = () => {
       total_pool: '',
       risk_level: 'medium',
       currency: 'USDT',
-      allowed_regions: ['europe', 'middle_east', 'brazil'],
+      allowed_regions: ['europe', 'middle_east', 'latam'],
       allowed_tiers: ['broker', 'standard', 'premium', 'vip', 'institucional']
     });
     setShowCreateForm(false);

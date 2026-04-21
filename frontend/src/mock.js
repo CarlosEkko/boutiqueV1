@@ -3,7 +3,7 @@
 export const heroData = {
   title: "The Boutique Exchange for",
   subtitle: "Sophisticated Investors",
-  description: "Exclusive cryptocurrency services tailored for high-net-worth individuals and institutional clients across Europe, Middle East, and Brazil.",
+  description: "Exclusive cryptocurrency services tailored for high-net-worth individuals and institutional clients across Europe, Middle East, and LATAM.",
   cta: {
     primary: "Request Access",
     secondary: "Learn More"
@@ -64,7 +64,7 @@ export const trustFactors = [
   {
     id: 4,
     title: "Global Reach",
-    description: "Seamless operations across Europe, Middle East, and Brazil. Local presence with global capabilities.",
+    description: "Seamless operations across Europe, Middle East, and LATAM. Local presence with global capabilities.",
     icon: "globe"
   }
 ];
@@ -98,7 +98,7 @@ export const regions = [
     description: "Serving UHNW clients in Dubai, Abu Dhabi, and Riyadh"
   },
   {
-    name: "Brazil",
+    name: "LATAM",
     description: "Exclusive services for Latin America's growing crypto economy"
   }
 ];
