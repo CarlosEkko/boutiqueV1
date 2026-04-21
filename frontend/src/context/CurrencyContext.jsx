@@ -23,7 +23,10 @@ export const CurrencyProvider = ({ children }) => {
     USD: 1.0,
     EUR: 0.92,
     AED: 3.67,
-    BRL: 5.90
+    CHF: 0.88,
+    QAR: 3.64,
+    SAR: 3.75,
+    HKD: 7.80,
   });
   
   const [loading, setLoading] = useState(false);
@@ -32,7 +35,10 @@ export const CurrencyProvider = ({ children }) => {
     { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
     { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
     { code: 'AED', name: 'UAE Dirham', symbol: 'AED', flag: '🇦🇪' },
-    { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+    { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+    { code: 'QAR', name: 'Qatari Riyal', symbol: 'QAR', flag: '🇶🇦' },
+    { code: 'SAR', name: 'Saudi Riyal', symbol: 'SAR', flag: '🇸🇦' },
+    { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', flag: '🇭🇰' },
   ];
 
   const getCurrencyInfo = (code) => {
@@ -100,18 +106,17 @@ export const CurrencyProvider = ({ children }) => {
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     const formatted = parts.join('.');
     
-    // Position symbol based on currency
-    if (curr.code === 'EUR') {
-      return `€${formatted}`;
-    } else if (curr.code === 'USD') {
-      return `$${formatted}`;
-    } else if (curr.code === 'BRL') {
-      return `R$${formatted}`;
-    } else if (curr.code === 'AED') {
-      return `${formatted} AED`;
+    // Position symbol based on currency convention
+    switch (curr.code) {
+      case 'EUR': return `€${formatted}`;
+      case 'USD': return `$${formatted}`;
+      case 'HKD': return `HK$${formatted}`;
+      case 'AED': return `${formatted} AED`;
+      case 'CHF': return `${formatted} CHF`;
+      case 'QAR': return `${formatted} QAR`;
+      case 'SAR': return `${formatted} SAR`;
+      default:   return `${curr.symbol}${formatted}`;
     }
-    
-    return `${curr.symbol}${formatted}`;
   };
 
   // Format crypto amount (with space as thousand separator)

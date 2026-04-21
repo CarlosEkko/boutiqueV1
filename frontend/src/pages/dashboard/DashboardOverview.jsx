@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AnnualFeeBanner from '../../components/billing/AnnualFeeBanner';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useLanguage } from '../../i18n';
 import axios from 'axios';
 import { useDemoMask } from '../../utils/useDemoData';
@@ -73,6 +74,7 @@ const DashboardOverview = () => {
   const { user, token } = useAuth();
   const { t } = useLanguage();
   const { isDemoMode, maskVal } = useDemoMask();
+  const { currency, convertFromUSD, formatCurrency: fmtFiat } = useCurrency();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -152,13 +154,13 @@ const DashboardOverview = () => {
     );
   }
 
-  const formatCurrency = (value) => {
-    const v = isDemoMode ? maskVal(value) : value;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(v || 0);
+  const formatCurrency = (valueUSD) => {
+    // Backend returns portfolio values in USD; convert to the user's selected
+    // display currency (EUR, USD, AED, CHF, QAR, SAR, HKD) and format with the
+    // correct symbol/position.
+    const v = isDemoMode ? maskVal(valueUSD) : valueUSD;
+    const converted = convertFromUSD(v || 0);
+    return fmtFiat(converted);
   };
 
   return (

@@ -42,7 +42,7 @@ const Sparkline = ({ data, color = '#D4AF37', width = 120, height = 40 }) => {
 
 const MarketsPage = () => {
   const { t } = useLanguage();
-  const { selectedCurrency } = useCurrency();
+  const { currency, convertFromUSD, formatCurrency } = useCurrency();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('spot');
@@ -64,8 +64,8 @@ const MarketsPage = () => {
   const fetchMarkets = useCallback(async () => {
     try {
       const [marketsRes, statsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/trading/markets`, { params: { currency: selectedCurrency } }),
-        axios.get(`${API_URL}/api/trading/markets/stats`, { params: { currency: selectedCurrency } })
+        axios.get(`${API_URL}/api/trading/markets`, { params: { currency } }),
+        axios.get(`${API_URL}/api/trading/markets/stats`, { params: { currency } })
       ]);
       const mkts = marketsRes.data.markets || [];
       setMarkets(mkts);
@@ -82,7 +82,7 @@ const MarketsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCurrency]);
+  }, [currency]);
 
   useEffect(() => {
     fetchMarkets();
@@ -131,27 +131,44 @@ const MarketsPage = () => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc' }));
   };
 
-  const getPrice = (m) => livePrices[m.symbol]?.price || m.price;
+  const getPrice = (m) => {
+    // WebSocket prices are USDT-quoted (≈ USD); convert to active currency so
+    // they match the API price (which is already converted server-side).
+    const livePriceUSD = livePrices[m.symbol]?.price;
+    if (livePriceUSD != null) return convertFromUSD(livePriceUSD);
+    return m.price; // Already in active currency from backend
+  };
   const getChange = (m) => livePrices[m.symbol]?.change24h ?? m.change_24h;
 
-  const getCurrencySymbol = (c) => ({ USD: '$', EUR: '\u20ac', AED: 'AED ', BRL: 'R$' }[c] || '$');
+  // Backwards-compat symbol helper kept for any inline uses.
+  const getCurrencySymbol = (c) => ({
+    USD: '$', EUR: '€', AED: 'AED ', CHF: 'CHF ', QAR: 'QAR ', SAR: 'SAR ', HKD: 'HK$',
+  }[c] || '$');
 
   const formatPrice = (price) => {
-    if (!price) return `${getCurrencySymbol(selectedCurrency)}0.00`;
-    const s = getCurrencySymbol(selectedCurrency);
-    if (price >= 1000) return `${s}${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (price >= 1) return `${s}${price.toFixed(2)}`;
+    if (!price) return formatCurrency(0);
+    // formatCurrency applies the symbol in the right position.
+    // For large/medium/small prices we tweak decimals for readability.
+    if (price >= 1000) return formatCurrency(price);
+    if (price >= 1) {
+      const formatted = formatCurrency(price);
+      // formatCurrency uses 2 decimals — good for price >=1
+      return formatted;
+    }
+    // For sub-$1 crypto (e.g. SHIB, PEPE) we need more decimals; fall back to
+    // a direct fixed representation with the currency symbol.
+    const s = getCurrencySymbol(currency);
     if (price >= 0.01) return `${s}${price.toFixed(4)}`;
     return `${s}${price.toFixed(6)}`;
   };
 
   const formatVolume = (v) => {
-    if (!v) return `${getCurrencySymbol(selectedCurrency)}0`;
-    const s = getCurrencySymbol(selectedCurrency);
+    if (!v) return formatCurrency(0);
+    const s = getCurrencySymbol(currency);
     if (v >= 1e12) return `${s}${(v / 1e12).toFixed(2)}T`;
     if (v >= 1e9) return `${s}${(v / 1e9).toFixed(2)}B`;
     if (v >= 1e6) return `${s}${(v / 1e6).toFixed(2)}M`;
-    return `${s}${v.toFixed(0)}`;
+    return formatCurrency(v);
   };
 
   const filterAndSort = () => {

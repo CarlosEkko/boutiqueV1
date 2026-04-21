@@ -69,10 +69,17 @@ SUPPORTED_FIAT = ["USD", "EUR", "AED", "BRL", "GBP", "CHF", "QAR", "SAR", "HKD"]
 # Exchange rates cache (updated every 5 minutes)
 EXCHANGE_RATES_CACHE = {
     "rates": {
+        # Client-visible fiat (PRD). Fallbacks are rough mid-market rates;
+        # real rates are refreshed every 5 min from exchangerate-api.com.
         "USD": 1.0,
         "EUR": 0.92,
         "AED": 3.67,
-        "BRL": 5.90
+        "CHF": 0.88,
+        "QAR": 3.64,
+        "SAR": 3.75,
+        "HKD": 7.80,
+        "GBP": 0.79,
+        "BRL": 5.90,
     },
     "updated_at": None
 }
@@ -86,7 +93,7 @@ def set_db(database):
 # ==================== CURRENCY CONVERSION ====================
 
 async def get_exchange_rates() -> dict:
-    """Get current exchange rates from cache or fetch from Binance/exchangerate API"""
+    """Get current exchange rates from cache or fetch from exchangerate-api."""
     global EXCHANGE_RATES_CACHE
     
     now = datetime.now(timezone.utc)
@@ -106,12 +113,16 @@ async def get_exchange_rates() -> dict:
             if response.status_code == 200:
                 data = response.json()
                 rates = data.get("rates", {})
-                EXCHANGE_RATES_CACHE["rates"] = {
-                    "USD": 1.0,
-                    "EUR": rates.get("EUR", 0.92),
-                    "AED": rates.get("AED", 3.67),
-                    "BRL": rates.get("BRL", 5.90)
-                }
+                # Populate ALL supported fiat — missing rates fall back to the
+                # existing cached value so we never silently use 1.0 (which would
+                # make a CHF price display the raw USD number).
+                fresh = dict(EXCHANGE_RATES_CACHE["rates"])
+                for ccy in SUPPORTED_FIAT:
+                    if ccy == "USD":
+                        fresh["USD"] = 1.0
+                    elif ccy in rates:
+                        fresh[ccy] = rates[ccy]
+                EXCHANGE_RATES_CACHE["rates"] = fresh
                 EXCHANGE_RATES_CACHE["updated_at"] = now
     except Exception as e:
         print(f"Failed to fetch exchange rates: {e}")
@@ -2903,7 +2914,11 @@ _coingecko_cache = {"data": None, "ts": 0}
 @router.get("/markets/stats")
 async def get_market_stats(currency: str = "USD"):
     """Get market statistics summary"""
-    markets_response = await get_markets_data(currency)
+    # Call the core function with explicit user_id=None — if we omit it, the
+    # `Depends(get_optional_user_id)` default becomes the literal Depends object
+    # (FastAPI injection only runs at the route boundary), and it later hits
+    # MongoDB causing a BSON InvalidDocument error.
+    markets_response = await get_markets_data(currency=currency, user_id=None)
     markets = markets_response.get("markets", [])
     
     # Fetch global market data from CoinGecko (cached 5min)
@@ -2930,6 +2945,15 @@ async def get_market_stats(currency: str = "USD"):
                 cg_data = _coingecko_cache["data"]
                 global_market_cap = cg_data.get("total_market_cap", {}).get(currency.lower(), 0)
                 global_btc_dominance = cg_data.get("market_cap_percentage", {}).get("btc", 0)
+
+    # Fallback for currencies CoinGecko doesn't report (QAR, SAR in some cases).
+    # Convert the USD market cap (always present) into the target currency
+    # using our FX rates — keeps the "Market Cap" card populated regardless.
+    if not global_market_cap and _coingecko_cache.get("data"):
+        usd_cap = _coingecko_cache["data"].get("total_market_cap", {}).get("usd", 0)
+        if usd_cap and currency != "USD":
+            rates = await get_exchange_rates()
+            global_market_cap = convert_price(usd_cap, currency, rates)
     
     if not markets:
         return {

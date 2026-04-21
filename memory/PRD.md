@@ -214,6 +214,16 @@ Verified end-to-end:
 - **Tests:** `/app/backend/tests/test_tenant_isolation.py` — 7/7 PASSED (includes cross-tenant login rejection simulation).
 - **Docs:** `/app/docs/TENANTS.md` updated with Phase 2 spec + stats endpoint.
 
+## Multi-Currency Display — Dashboard + Markets (2026-04-21)
+- **Backend `EXCHANGE_RATES_CACHE`** now populates rates for all 7 client-visible fiat (EUR, USD, AED, CHF, QAR, SAR, HKD) + GBP + BRL. Previously only 4 were populated, causing CHF/QAR/SAR/HKD to silently fall back to 1.0 (same as USD).
+- **Fixed `/api/trading/markets/stats`** 500 error on non-USD currencies: the internal call was leaking a `Depends()` object as `user_id` parameter into Mongo queries. Now passes `user_id=None` explicitly.
+- **Fallback for CoinGecko gaps** (QAR, SAR): when CoinGecko's global endpoint doesn't report a currency, convert USD market cap via FX rates so the Market Cap card is always populated.
+- **Frontend bug fix `MarketsPage`:** was reading `selectedCurrency` from CurrencyContext which doesn't exist (property is `currency`) → always `undefined` → backend defaulted to USD. Now correctly uses `currency`, `convertFromUSD`, and `formatCurrency`. Live WebSocket prices (USDT-quoted) are converted to the selected currency to match API prices.
+- **Frontend `DashboardOverview`:** previously hardcoded USD. Now integrates `useCurrency` hook — all four top cards (Portfólio Total, Saldo da Carteira, Total Investido, Retornos Esperados) plus pie-chart tooltips and asset allocation list convert USD values to the selected display currency.
+- **`CurrencyContext` supported list** updated to match PRD: EUR, USD, AED, CHF, QAR, SAR, HKD (BRL removed — it was client-visible erroneously). `formatCurrency` now renders correct symbol position for all 7 (e.g. `59 014.41 CHF`, `HK$594 206.95`).
+- **Tests:** `/app/backend/tests/test_multi_currency_display.py` — 3/3 PASSED (rate coverage, price conversion tolerance ≤1%, stats endpoint for all 7 currencies).
+- **Known limitation:** `CryptoTicker` component uses TradingView widget with hardcoded BTC/USD pairs; crypto is universally USD-quoted on public exchanges so this is acceptable.
+
 ## Zero-Downtime Deploy Fix (2026-04-21)
 - **Bug:** `zero_downtime_deploy.sh` was rebuilding images but NOT recreating containers when compose config hadn't changed. Symptom: `docker compose ps` showed IMAGE column as bare SHA instead of `boutiquev1-frontend:latest`, meaning containers ran outdated images silently.
 - **Fix:** Added `--force-recreate` to `docker compose up -d --no-deps {backend,frontend}` calls. Added post-deploy sanity check that auto-retries if frontend container age > 5 min.
