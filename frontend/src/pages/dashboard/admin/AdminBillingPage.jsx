@@ -11,7 +11,7 @@ import {
   Loader2, RefreshCw, CalendarClock, AlertCircle, Ban, Clock,
   Save, Play, Mail, TrendingUp, Euro, UserX, UserCheck, Info, History,
   Shield, Vault, Copy, Check, Activity, Percent, Bitcoin, Landmark,
-  AlertTriangle, ShieldAlert, Settings,
+  AlertTriangle, ShieldAlert, Settings, FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -59,17 +59,19 @@ const AdminBillingPage = () => {
   const [vaultBusy, setVaultBusy] = useState(false);
   const [copiedAddr, setCopiedAddr] = useState(null);
   const [health, setHealth] = useState(null);
+  const [cycleHistory, setCycleHistory] = useState([]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [cfg, ren, pay, cyc, v, hlt] = await Promise.all([
+      const [cfg, ren, pay, cyc, v, hlt, hst] = await Promise.all([
         axios.get(`${API_URL}/api/billing/config`, { headers }),
         axios.get(`${API_URL}/api/billing/renewals`, { headers }),
         axios.get(`${API_URL}/api/billing/payouts`, { headers }),
         axios.get(`${API_URL}/api/billing/cycle-status`, { headers }).catch(() => ({ data: null })),
         axios.get(`${API_URL}/api/billing/vault`, { headers }).catch(() => ({ data: null })),
         axios.get(`${API_URL}/api/billing/renewals-health`, { headers }).catch(() => ({ data: null })),
+        axios.get(`${API_URL}/api/billing/cycle-history`, { headers }).catch(() => ({ data: { runs: [] } })),
       ]);
       setConfig(cfg.data);
       setAnnualFee(cfg.data.annual_fee);
@@ -78,6 +80,7 @@ const AdminBillingPage = () => {
       setCycleStatus(cyc.data);
       setVault(v.data);
       setHealth(hlt.data);
+      setCycleHistory(hst.data?.runs || []);
     } catch (err) {
       toast.error('Falha ao carregar configuração');
     } finally {
@@ -103,15 +106,19 @@ const AdminBillingPage = () => {
     }
   };
 
-  const runCycleNow = async () => {
+  const runCycleNow = async (dryRun = false) => {
     setRunningCycle(true);
     try {
-      const res = await axios.post(`${API_URL}/api/billing/run-cycle`, {}, { headers });
+      const url = `${API_URL}/api/billing/run-cycle${dryRun ? '?dry_run=true' : ''}`;
+      const res = await axios.post(url, {}, { headers });
       const r = res.data.result || {};
-      toast.success(`Ciclo executado: ${r.created_payments || 0} pendentes, ${r.suspended || 0} suspensos`);
+      const prefix = dryRun ? '[Simulação] ' : '';
+      toast.success(
+        `${prefix}Ciclo: ${r.created_payments || 0} pendentes, ${r.notified_clients || 0} notificados, ${r.suspended || 0} suspensos, ${r.flagged_overdue || 0} em atraso (${res.data.duration_ms}ms)`
+      );
       await fetchAll();
     } catch (err) {
-      toast.error('Falha ao correr ciclo');
+      toast.error(err?.response?.data?.detail || 'Falha ao correr ciclo');
     } finally {
       setRunningCycle(false);
     }
@@ -210,7 +217,18 @@ const AdminBillingPage = () => {
             <RefreshCw size={14} className="mr-1.5" /> Atualizar
           </Button>
           <Button
-            onClick={runCycleNow}
+            variant="outline"
+            onClick={() => runCycleNow(true)}
+            disabled={runningCycle}
+            className="border-sky-700/60 text-sky-300 hover:bg-sky-500/10"
+            data-testid="dry-run-cycle-btn"
+            title="Simula o ciclo sem criar pagamentos, enviar emails ou suspender contas. Seguro para validar em produção."
+          >
+            {runningCycle ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <FlaskConical size={14} className="mr-1.5" />}
+            Simular (Dry-Run)
+          </Button>
+          <Button
+            onClick={() => runCycleNow(false)}
             disabled={runningCycle}
             className="bg-gold-500 hover:bg-gold-600 text-black"
             data-testid="run-cycle-btn"
@@ -248,6 +266,78 @@ const AdminBillingPage = () => {
             <div className="text-red-400">Erro: {cycleStatus.last_error}</div>
           )}
         </div>
+      )}
+
+      {/* Cycle execution history — last 30 runs */}
+      {cycleHistory.length > 0 && (
+        <details className="rounded-lg border border-zinc-800 bg-zinc-900/40" data-testid="cycle-history-panel">
+          <summary className="px-4 py-2.5 text-xs flex items-center gap-2 cursor-pointer hover:bg-zinc-800/30 select-none">
+            <History size={13} className="text-zinc-500" />
+            <span className="text-zinc-300 font-medium">Histórico de Execuções</span>
+            <span className="text-zinc-600">({cycleHistory.length})</span>
+            <span className="ml-auto text-zinc-500">Últimas 30 · expandir ▼</span>
+          </summary>
+          <div className="border-t border-zinc-800 max-h-[380px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-900/60 sticky top-0">
+                <tr className="text-left text-zinc-500 uppercase text-[10px] tracking-wider">
+                  <th className="px-3 py-2 font-medium">Quando</th>
+                  <th className="px-3 py-2 font-medium">Origem</th>
+                  <th className="px-3 py-2 font-medium">Modo</th>
+                  <th className="px-3 py-2 font-medium text-right">Criados</th>
+                  <th className="px-3 py-2 font-medium text-right">Notif.</th>
+                  <th className="px-3 py-2 font-medium text-right">Susp.</th>
+                  <th className="px-3 py-2 font-medium text-right">Atraso</th>
+                  <th className="px-3 py-2 font-medium text-right">Dur.</th>
+                  <th className="px-3 py-2 font-medium">Detalhes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {cycleHistory.map((h, idx) => {
+                  const r = h.result || {};
+                  return (
+                    <tr key={idx} className="hover:bg-zinc-800/30" data-testid={`cycle-history-row-${idx}`}>
+                      <td className="px-3 py-2 text-zinc-300 whitespace-nowrap">{fmtDate(h.run_at)}</td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          h.trigger === 'manual'
+                            ? 'bg-gold-500/10 text-gold-300 border border-gold-700/30'
+                            : 'bg-emerald-500/10 text-emerald-300 border border-emerald-700/30'
+                        }`}>
+                          {h.trigger === 'manual' ? 'MANUAL' : 'AUTO'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {h.dry_run ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-sky-500/10 text-sky-300 border border-sky-700/30">
+                            <FlaskConical size={9} /> DRY-RUN
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500">real</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right text-white font-mono">{r.created_payments ?? '—'}</td>
+                      <td className="px-3 py-2 text-right text-white font-mono">{r.notified_clients ?? '—'}</td>
+                      <td className={`px-3 py-2 text-right font-mono ${(r.suspended || 0) > 0 ? 'text-red-400' : 'text-white'}`}>
+                        {r.suspended ?? '—'}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-mono ${(r.flagged_overdue || 0) > 0 ? 'text-amber-400' : 'text-white'}`}>
+                        {r.flagged_overdue ?? '—'}
+                      </td>
+                      <td className="px-3 py-2 text-right text-zinc-500 font-mono">{h.duration_ms}ms</td>
+                      <td className="px-3 py-2 text-zinc-500">
+                        {h.error ? <span className="text-red-400">✗ {h.error.slice(0, 40)}</span>
+                          : h.admin_email ? <span className="text-zinc-400">{h.admin_email}</span>
+                          : r.skipped ? <span className="text-zinc-500">skipped ({r.reason})</span>
+                          : <span className="text-emerald-400">✓ ok</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </details>
       )}
 
       {/* Renewals Health — KPI panel */}

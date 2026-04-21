@@ -229,12 +229,19 @@ Verified end-to-end:
 - **Fix:** Added `--force-recreate` to `docker compose up -d --no-deps {backend,frontend}` calls. Added post-deploy sanity check that auto-retries if frontend container age > 5 min.
 - **Immediate VPS unblock:** `sudo docker compose up -d --no-deps --force-recreate frontend`.
 
+## Billing Auto-Renewal Cycle Validation (2026-04-21)
+- **Background cycle infrastructure** (`_cycle_loop` in `billing.py`) runs daily (86400s); startup log confirms it's running in preview + production.
+- **Dry-run mode added** to `_run_renewal_cycle(dry_run=bool)`: same candidate inspection, ZERO writes (no `admission_payments` inserts, no user suspensions, no notifications, no Brevo emails). Returns `{created_payments, notified_clients, suspended, flagged_overdue, dry_run: true}` so admins can preview safely in production.
+- **New endpoint** `POST /api/billing/run-cycle?dry_run=true` — admin-only; returns `{success, dry_run, result, duration_ms, timestamp}`. Tracked separately from real runs so `last_run_at` always reflects production data.
+- **New endpoint** `GET /api/billing/cycle-history` — returns last 30 runs (manual + scheduled) with `{run_at, duration_ms, trigger, dry_run, result, error, admin_email}`. Useful for audit + troubleshooting.
+- **Admin UI in `AdminBillingPage.jsx`:** new "Simular (Dry-Run)" button (sky-blue) next to "Correr Ciclo Agora" (gold). New collapsible "Histórico de Execuções" panel with sortable table showing last 30 runs (AUTO/MANUAL badge + DRY-RUN/real pill + counters + duration + error/admin audit trail).
+- **Tests:** `/app/backend/tests/test_billing_cycle_validation.py` — 5/5 PASSED. Covers: cycle running on startup, dry-run shape, dry-run ZERO writes (seeded eligible user → detected but NOT inserted), history growth, status metadata.
+
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
 ## Pending
 - P1: Safari cursor bug (18+ recurrences)
-- P1: Verify `auto_renewal_cycle` in production VPS
 - P2: White-Label Tenants Phase 3 — tenant-specific tiers/fees, BYO Sumsub, BYO fiat IBAN
 - P2: LATAM local fiat rails (PIX for Brazil, SPEI for Mexico)
 - P2: Replace Crypto ATM mock data with live feeds

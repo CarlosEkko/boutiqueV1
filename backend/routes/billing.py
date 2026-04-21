@@ -592,24 +592,41 @@ _bg_state = {
     "runs": 0,
     "interval_s": int(os.environ.get("BILLING_CYCLE_INTERVAL_S", "86400")),  # daily
     "task": None,
+    # History of the last 30 runs — appended to by the background loop AND
+    # every admin-triggered run. Each entry: {run_at, duration_ms, result,
+    # error, trigger: "scheduled"|"manual", dry_run: bool}.
+    "history": [],
 }
+
+_HISTORY_LIMIT = 30
 
 
 def _bg_public_state() -> dict:
     return {k: v for k, v in _bg_state.items() if k != "task"}
 
 
-async def _run_renewal_cycle() -> dict:
+def _record_history(entry: dict):
+    """Append to cycle history; keep only last N entries."""
+    _bg_state["history"].append(entry)
+    if len(_bg_state["history"]) > _HISTORY_LIMIT:
+        _bg_state["history"] = _bg_state["history"][-_HISTORY_LIMIT:]
+
+
+async def _run_renewal_cycle(dry_run: bool = False) -> dict:
     """
     Core daily cycle:
     - Upcoming (≤ notify_days_before): create pending annual_payment + notify client + admin
     - Past-due (> grace_days): warn
     - Past-due (> suspend_after_days): auto-suspend
+
+    When `dry_run=True`, inspect the same candidates but make **zero writes**
+    (no insert, no update, no email). Returns the same shape plus a
+    `would_*` breakdown so admins can safely preview what the job would do.
     """
     settings = await _get_settings()
     cfg = settings.get("annual_fee") or AnnualFeeConfig().model_dump()
     if not cfg.get("is_active", True):
-        return {"skipped": True, "reason": "annual_fee_disabled"}
+        return {"skipped": True, "reason": "annual_fee_disabled", "dry_run": dry_run}
 
     notify_days = int(cfg.get("notify_days_before", 30))
     grace_days = int(cfg.get("grace_days", 15))
@@ -660,11 +677,12 @@ async def _run_renewal_cycle() -> dict:
             "created_at": _iso(now),
             "created_by": "auto_renewal_cycle",
         }
-        await db.admission_payments.insert_one(payment)
+        if not dry_run:
+            await db.admission_payments.insert_one(payment)
         created_payments += 1
 
         # Transactional email (Brevo) — renewal upcoming
-        if user.get("email"):
+        if user.get("email") and not dry_run:
             due_str = (user.get("annual_fee_next_due") or "")[:10]
             try:
                 due_dt = datetime.fromisoformat((user.get("annual_fee_next_due") or "").replace("Z", "+00:00"))
@@ -685,36 +703,39 @@ async def _run_renewal_cycle() -> dict:
             )
 
         # Notify client
-        try:
-            await db.notifications.insert_one({
-                "target": "user",
-                "user_id": user["id"],
-                "type": "annual_fee_upcoming",
-                "title": "Renovação anual a vencer",
-                "message": (
-                    f"A sua taxa anual de €{amount_eur:,.2f} ({tier.upper()}) vence em "
-                    f"{user.get('annual_fee_next_due', '')[:10]}. Pode regularizar a qualquer momento no seu perfil."
-                ),
-                "read": False,
-                "created_at": _iso(now),
-            })
-            notified += 1
-        except Exception as e:
-            logger.warning(f"Failed to notify user {user['id']}: {e}")
+        if not dry_run:
+            try:
+                await db.notifications.insert_one({
+                    "target": "user",
+                    "user_id": user["id"],
+                    "type": "annual_fee_upcoming",
+                    "title": "Renovação anual a vencer",
+                    "message": (
+                        f"A sua taxa anual de €{amount_eur:,.2f} ({tier.upper()}) vence em "
+                        f"{user.get('annual_fee_next_due', '')[:10]}. Pode regularizar a qualquer momento no seu perfil."
+                    ),
+                    "read": False,
+                    "created_at": _iso(now),
+                })
+                notified += 1
+            except Exception as e:
+                logger.warning(f"Failed to notify user {user['id']}: {e}")
 
-        # Notify admins
-        try:
-            await db.notifications.insert_one({
-                "target": "admin",
-                "type": "annual_fee_upcoming_admin",
-                "title": f"Pendente: renovação de {user.get('name')}",
-                "message": f"Tier {tier.upper()}: €{amount_eur:,.2f}",
-                "user_id": user["id"],
-                "read": False,
-                "created_at": _iso(now),
-            })
-        except Exception:
-            pass
+            # Notify admins
+            try:
+                await db.notifications.insert_one({
+                    "target": "admin",
+                    "type": "annual_fee_upcoming_admin",
+                    "title": f"Pendente: renovação de {user.get('name')}",
+                    "message": f"Tier {tier.upper()}: €{amount_eur:,.2f}",
+                    "user_id": user["id"],
+                    "read": False,
+                    "created_at": _iso(now),
+                })
+            except Exception:
+                pass
+        else:
+            notified += 1
 
     # --- 2. Auto-suspend clients past grace period ---
     to_suspend = await db.users.find(
@@ -727,19 +748,20 @@ async def _run_renewal_cycle() -> dict:
     ).to_list(500)
 
     for user in to_suspend:
-        await db.users.update_one(
-            {"id": user["id"]},
-            {"$set": {
-                "billing_status": "suspended",
-                "suspended_at": _iso(now),
-                "suspended_reason": "annual_fee_overdue",
-                "suspended_by": "auto_renewal_cycle",
-            }},
-        )
+        if not dry_run:
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {
+                    "billing_status": "suspended",
+                    "suspended_at": _iso(now),
+                    "suspended_reason": "annual_fee_overdue",
+                    "suspended_by": "auto_renewal_cycle",
+                }},
+            )
         suspended += 1
 
         # Transactional email (Brevo) — account suspended
-        if user.get("email"):
+        if user.get("email") and not dry_run:
             full_user = await db.users.find_one(
                 {"id": user["id"]}, {"_id": 0, "name": 1, "membership_level": 1}
             ) or {}
@@ -755,18 +777,19 @@ async def _run_renewal_cycle() -> dict:
                 ),
                 f"suspended user={user['id']}",
             )
-        try:
-            await db.notifications.insert_one({
-                "target": "admin",
-                "type": "annual_fee_auto_suspended",
-                "title": f"Conta suspensa: {user.get('email')}",
-                "message": f"Suspensa automaticamente por taxa anual em atraso > {suspend_days} dias.",
-                "user_id": user["id"],
-                "read": False,
-                "created_at": _iso(now),
-            })
-        except Exception:
-            pass
+        if not dry_run:
+            try:
+                await db.notifications.insert_one({
+                    "target": "admin",
+                    "type": "annual_fee_auto_suspended",
+                    "title": f"Conta suspensa: {user.get('email')}",
+                    "message": f"Suspensa automaticamente por taxa anual em atraso > {suspend_days} dias.",
+                    "user_id": user["id"],
+                    "read": False,
+                    "created_at": _iso(now),
+                })
+            except Exception:
+                pass
 
     # --- 3. Flag overdue (past grace but not suspended yet) ---
     overdue_users = await db.users.find(
@@ -781,53 +804,111 @@ async def _run_renewal_cycle() -> dict:
     overdue_ids = [u["id"] for u in overdue_users]
     flagged_count = 0
     if overdue_ids:
-        flagged_res = await db.users.update_many(
-            {"id": {"$in": overdue_ids}},
-            {"$set": {"billing_status": "overdue"}},
-        )
-        flagged_count = flagged_res.modified_count
-
-        for u in overdue_users:
-            if not u.get("email"):
-                continue
-            tier_o = u.get("membership_level", "standard")
-            amount_o = await _annual_fee_eur_for(tier_o)
-            try:
-                due_dt = datetime.fromisoformat((u.get("annual_fee_next_due") or "").replace("Z", "+00:00"))
-                days_overdue = max(0, (now - due_dt).days)
-            except Exception:
-                days_overdue = grace_days + 1
-            suspend_in_days = max(0, suspend_days - days_overdue)
-            await _safe_send_email(
-                lambda ue=u, t=tier_o, a=amount_o, d=days_overdue, s=suspend_in_days: email_service.send_billing_overdue(
-                    to_email=ue["email"],
-                    to_name=ue.get("name") or ue["email"],
-                    tier=t,
-                    amount_eur=a,
-                    days_overdue=d,
-                    suspend_in_days=s,
-                    portal_url=_portal_url(),
-                ),
-                f"overdue user={u['id']}",
+        if not dry_run:
+            flagged_res = await db.users.update_many(
+                {"id": {"$in": overdue_ids}},
+                {"$set": {"billing_status": "overdue"}},
             )
+            flagged_count = flagged_res.modified_count
+        else:
+            flagged_count = len(overdue_ids)
+
+        if not dry_run:
+            for u in overdue_users:
+                if not u.get("email"):
+                    continue
+                tier_o = u.get("membership_level", "standard")
+                amount_o = await _annual_fee_eur_for(tier_o)
+                try:
+                    due_dt = datetime.fromisoformat((u.get("annual_fee_next_due") or "").replace("Z", "+00:00"))
+                    days_overdue = max(0, (now - due_dt).days)
+                except Exception:
+                    days_overdue = grace_days + 1
+                suspend_in_days = max(0, suspend_days - days_overdue)
+                await _safe_send_email(
+                    lambda ue=u, t=tier_o, a=amount_o, d=days_overdue, s=suspend_in_days: email_service.send_billing_overdue(
+                        to_email=ue["email"],
+                        to_name=ue.get("name") or ue["email"],
+                        tier=t,
+                        amount_eur=a,
+                        days_overdue=d,
+                        suspend_in_days=s,
+                        portal_url=_portal_url(),
+                    ),
+                    f"overdue user={u['id']}",
+                )
 
     return {
         "created_payments": created_payments,
         "notified_clients": notified,
         "suspended": suspended,
         "flagged_overdue": flagged_count,
+        "dry_run": dry_run,
     }
 
 
 @router.post("/run-cycle")
-async def run_cycle_now(admin: dict = Depends(get_admin_user)):
-    """Manually trigger the daily renewal cycle (admin)."""
-    result = await _run_renewal_cycle()
-    now = _iso(datetime.now(timezone.utc))
-    _bg_state["last_run_at"] = now
-    _bg_state["last_result"] = result
-    _bg_state["runs"] += 1
-    return {"success": True, "result": result, "timestamp": now}
+async def run_cycle_now(
+    dry_run: bool = Query(False, description="If true, preview actions without writing to DB or sending emails"),
+    admin: dict = Depends(get_admin_user),
+):
+    """Manually trigger the daily renewal cycle (admin).
+
+    With `?dry_run=true` the job inspects candidates and returns what it WOULD
+    do without creating payments, updating users, or sending emails. Use this
+    in production to verify the cycle is behaving correctly before letting it
+    run live.
+    """
+    started = datetime.now(timezone.utc)
+    error_msg = None
+    result = None
+    try:
+        result = await _run_renewal_cycle(dry_run=dry_run)
+    except Exception as e:
+        error_msg = str(e)[:300]
+        logger.exception(f"Manual billing cycle failed: {e}")
+
+    finished = datetime.now(timezone.utc)
+    duration_ms = int((finished - started).total_seconds() * 1000)
+    now_iso = _iso(finished)
+
+    # Update aggregate state only for non-dry runs so the "last real run"
+    # reflects production, not admin previews.
+    if not dry_run and error_msg is None:
+        _bg_state["last_run_at"] = now_iso
+        _bg_state["last_result"] = result
+        _bg_state["last_error"] = None
+        _bg_state["runs"] += 1
+    elif error_msg:
+        _bg_state["last_error"] = error_msg
+
+    _record_history({
+        "run_at": now_iso,
+        "duration_ms": duration_ms,
+        "trigger": "manual",
+        "dry_run": dry_run,
+        "result": result,
+        "error": error_msg,
+        "admin_email": admin.get("email"),
+    })
+
+    if error_msg:
+        raise HTTPException(status_code=500, detail=error_msg)
+
+    return {
+        "success": True,
+        "dry_run": dry_run,
+        "result": result,
+        "timestamp": now_iso,
+        "duration_ms": duration_ms,
+    }
+
+
+@router.get("/cycle-history")
+async def cycle_history(admin: dict = Depends(get_internal_user)):
+    """Return the last ~30 cycle runs (manual + scheduled) with outcomes."""
+    # Newest first for UI convenience.
+    return {"runs": list(reversed(_bg_state.get("history", [])))}
 
 
 @router.get("/cycle-status")
@@ -840,18 +921,37 @@ async def _cycle_loop():
     # Initial delay — allow app to fully boot
     await asyncio.sleep(60)
     while True:
+        started = datetime.now(timezone.utc)
         try:
             result = await _run_renewal_cycle()
-            _bg_state["last_run_at"] = _iso(datetime.now(timezone.utc))
+            finished = datetime.now(timezone.utc)
+            _bg_state["last_run_at"] = _iso(finished)
             _bg_state["last_result"] = result
             _bg_state["last_error"] = None
             _bg_state["runs"] += 1
+            _record_history({
+                "run_at": _iso(finished),
+                "duration_ms": int((finished - started).total_seconds() * 1000),
+                "trigger": "scheduled",
+                "dry_run": False,
+                "result": result,
+                "error": None,
+            })
             if any(v for k, v in result.items() if k != "skipped"):
                 logger.info(f"Billing cycle run #{_bg_state['runs']}: {result}")
         except asyncio.CancelledError:
             raise
         except Exception as e:
+            finished = datetime.now(timezone.utc)
             _bg_state["last_error"] = str(e)[:200]
+            _record_history({
+                "run_at": _iso(finished),
+                "duration_ms": int((finished - started).total_seconds() * 1000),
+                "trigger": "scheduled",
+                "dry_run": False,
+                "result": None,
+                "error": str(e)[:300],
+            })
             logger.exception(f"Billing cycle error: {e}")
         await asyncio.sleep(_bg_state["interval_s"])
 
