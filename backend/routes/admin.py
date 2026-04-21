@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Header
+from fastapi import APIRouter, HTTPException, status, Depends, Header, Request
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -248,14 +248,23 @@ async def permanently_delete_internal_user(
 
 @router.get("/users", response_model=List[dict])
 async def list_users(
+    request: Request,
     is_approved: Optional[bool] = None,
     kyc_status: Optional[KYCStatus] = None,
     membership_level: Optional[MembershipLevel] = None,
     region: Optional[Region] = None,
     user_type: Optional[UserType] = None,
+    tenant_slug: Optional[str] = None,
     internal_user: dict = Depends(get_internal_user)
 ):
-    """List all users with optional filters"""
+    """List all users with optional filters.
+
+    Tenant scoping (Phase 2):
+      - Requests coming from a sub-tenant (Host != kbex.io) are auto-filtered to
+        only that tenant's users.
+      - Requests coming from the default tenant (kbex.io) see ALL users by
+        default; may narrow with `?tenant_slug=<slug>` or `?tenant_slug=all`.
+    """
     query = {}
     if is_approved is not None:
         query["is_approved"] = is_approved
@@ -265,6 +274,16 @@ async def list_users(
         query["membership_level"] = membership_level
     if user_type:
         query["user_type"] = user_type
+
+    # --- Tenant isolation ---
+    from routes.tenants import get_current_tenant_slug as _resolve_tenant
+    request_tenant = await _resolve_tenant(request)
+    if request_tenant != "kbex":
+        # Sub-tenant admins are always locked to their own tenant.
+        query["tenant_slug"] = request_tenant
+    elif tenant_slug and tenant_slug.lower() != "all":
+        # Default KBEX admin can optionally narrow.
+        query["tenant_slug"] = tenant_slug.lower()
     
     # Region filtering based on internal user's role
     internal_role = internal_user.get("internal_role") or ("admin" if internal_user.get("is_admin") else None)

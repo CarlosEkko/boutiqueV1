@@ -88,23 +88,50 @@ Visit `https://custody.bancox.com/` — you should see:
 
 ## What's inherited from default tenant?
 
-Phase 1 (current) — **only branding is isolated**. All tenants share:
-- Same user database
-- Same transactions, OTC deals, wallets
-- Same integrations (Fireblocks, Sumsub, Revolut, Brevo)
-- Same tiers and fees
+Phase 1 — **branding is isolated** per tenant:
+- Logo, colors, platform name, favicon, tagline
 
-Phase 2 (roadmap) — **full data isolation**:
-- Users have `tenant_id`; all queries filtered automatically
+Phase 2 (✅ DONE — Apr 2026) — **user & data isolation**:
+- Every user carries a `tenant_slug` set at registration based on the Host header.
+- **Login is tenant-scoped**: a user registered via `custody.bancox.com` cannot
+  authenticate from `kbex.io` and vice-versa, even with correct credentials.
+- **Email uniqueness is scoped per tenant**: the same email may exist once per
+  tenant (useful when one person is client of two institutions).
+- **Admin user list** auto-filters by the host calling it. Super-admins on
+  `kbex.io` can narrow with `?tenant_slug=<slug>` or `?tenant_slug=all`.
+- **Data collections** (`otc_deals`, `otc_leads`, `crm_leads`, `fiat_wallets`,
+  `bank_accounts`, `tickets`, `escrow_deals`, `billing_accounts`, `kyc_records`,
+  `crypto_wallets`) are automatically backfilled with `tenant_slug="kbex"` on
+  backend startup. Since they are always accessed via `user_id`, user-level
+  isolation guarantees data-level isolation transparently.
+- **Admin stats endpoint** `GET /api/tenants/{slug}/stats` returns per-tenant
+  counts of users, deals, wallets, leads, and tickets.
+
+Phase 3 (roadmap) — **deep isolation**:
 - Tenant-specific tiers and fees
-- Tenant-specific Sumsub provider (BYO-KYC)
+- Tenant-specific Sumsub provider (BYO-KYC) and webhook routing
 - Tenant-specific fiat wallets (IBAN per tenant)
+- Tenant-specific Fireblocks vaults (multi-custodian)
+- Tenant-specific email sender (Brevo sub-account per tenant)
 
 ## Admin operations
 
 ### List all tenants
 ```bash
 curl -H "Authorization: Bearer $TOKEN" https://kbex.io/api/tenants/
+```
+
+### Per-tenant usage stats (Phase 2)
+```bash
+curl -H "Authorization: Bearer $TOKEN" https://kbex.io/api/tenants/bancox/stats
+# {
+#   "slug": "bancox",
+#   "users": 42,
+#   "otc_deals": 7,
+#   "crypto_wallets": 42,
+#   "otc_leads": 12,
+#   "tickets": 3
+# }
 ```
 
 ### Resolve current tenant (public, used by frontend)

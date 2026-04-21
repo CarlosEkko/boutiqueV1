@@ -7,6 +7,7 @@ from utils.i18n import t, I18n
 from utils.turnstile import verify_turnstile
 from utils.rate_limit import check_rate_limit
 from utils.security_logger import log_security_event
+from routes.tenants import get_current_tenant_slug
 from pydantic import BaseModel
 import pyotp
 import qrcode
@@ -39,7 +40,7 @@ class TwoFAVerifyRequest(BaseModel):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, request: Request, lang: str = Depends(get_lang)):
+async def register(user_data: UserCreate, request: Request, lang: str = Depends(get_lang), tenant_slug: str = Depends(get_current_tenant_slug)):
     """Register a new user."""
     # Rate limit: 5 requests per minute per IP
     check_rate_limit(request, max_requests=5, window_seconds=60)
@@ -50,8 +51,17 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
         if not await verify_turnstile(user_data.turnstile_token, client_ip):
             raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
 
-    # Check if email already exists
-    existing_user = await db.users.find_one({"email": {"$regex": f"^{user_data.email}$", "$options": "i"}}, {"_id": 0})
+    # Check if email already exists IN THIS TENANT
+    # Different white-label tenants share the same users collection but are isolated
+    # by tenant_slug, so the same email may exist across tenants (e.g. employee of
+    # two institutions). `tenant_slug` is NULL-safe: legacy rows have "kbex".
+    existing_user = await db.users.find_one(
+        {
+            "email": {"$regex": f"^{user_data.email}$", "$options": "i"},
+            "tenant_slug": tenant_slug,
+        },
+        {"_id": 0},
+    )
     
     if existing_user:
         # If user was auto-created from OTC lead and hasn't completed onboarding,
@@ -171,7 +181,8 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
         hashed_password=get_password_hash(user_data.password),
         invite_code_used=user_data.invite_code,
         invited_by=invited_by,
-        membership_level=lead_membership
+        membership_level=lead_membership,
+        tenant_slug=tenant_slug,
     )
     
     # Convert to dict for MongoDB
@@ -210,7 +221,7 @@ async def register(user_data: UserCreate, request: Request, lang: str = Depends(
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, request: Request, lang: str = Depends(get_lang)):
+async def login(credentials: UserLogin, request: Request, lang: str = Depends(get_lang), tenant_slug: str = Depends(get_current_tenant_slug)):
     """Login with email and password."""
     # Rate limit: 10 requests per minute per IP
     check_rate_limit(request, max_requests=10, window_seconds=60)
@@ -222,8 +233,15 @@ async def login(credentials: UserLogin, request: Request, lang: str = Depends(ge
             await log_security_event("turnstile_rejected", client_ip, "/api/auth/login", email=credentials.email, severity="high")
             raise HTTPException(status_code=400, detail="Verificação de segurança falhou. Tente novamente.")
 
-    # Find user by email
-    user_doc = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    # Find user by email scoped to the current tenant (Phase 2 isolation).
+    # A user registered on tenant A cannot log in from tenant B's domain even
+    # with the correct password. Internal/admin users (tenant_slug="kbex") are
+    # reachable only from the default KBEX domain — which is the expected
+    # behavior for support staff.
+    user_doc = await db.users.find_one(
+        {"email": credentials.email, "tenant_slug": tenant_slug},
+        {"_id": 0},
+    )
     
     if not user_doc:
         client_ip = getattr(request.state, 'client_ip', request.client.host if request.client else "unknown")

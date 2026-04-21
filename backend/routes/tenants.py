@@ -127,6 +127,74 @@ async def resolve_tenant_by_host(host: Optional[str]) -> dict:
     return await db.tenants.find_one({"is_default": True}, {"_id": 0})
 
 
+# --- Dependencies (Phase 2: Data Isolation) ---
+async def get_current_tenant(request: Request) -> dict:
+    """FastAPI dependency. Resolves the tenant for the current request
+    from the Host/X-Forwarded-Host header. Falls back to default.
+
+    Usage:
+        @router.get("/something")
+        async def handler(tenant: dict = Depends(get_current_tenant)):
+            slug = tenant["slug"]
+    """
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    tenant = await resolve_tenant_by_host(host)
+    if not tenant:
+        # Should be unreachable because _ensure_default_tenant seeds one.
+        raise HTTPException(status_code=500, detail="No tenant configured")
+    return tenant
+
+
+async def get_current_tenant_slug(request: Request) -> str:
+    """Convenience dependency — returns just the slug (e.g. 'kbex', 'bancox')."""
+    tenant = await get_current_tenant(request)
+    return tenant["slug"]
+
+
+# --- Phase 2: Backfill migration ---
+# Collections that carry a user-owned reference and therefore need a
+# tenant_slug so admin queries can filter cross-user data.
+_TENANT_SCOPED_COLLECTIONS = [
+    "users",
+    "otc_deals",
+    "otc_leads",
+    "crm_leads",
+    "crypto_wallets",
+    "fiat_wallets",
+    "bank_accounts",
+    "tickets",
+    "billing_accounts",
+    "kyc_records",
+    "escrow_deals",
+]
+
+
+async def ensure_tenant_scoping():
+    """One-time migration — backfill tenant_slug='kbex' on legacy docs.
+
+    Safe to run on every startup; uses `$exists: false` so documents already
+    migrated are untouched. Logs a single-line summary.
+    """
+    if db is None:
+        return
+    await _ensure_default_tenant()
+    summary = []
+    for coll in _TENANT_SCOPED_COLLECTIONS:
+        try:
+            res = await db[coll].update_many(
+                {"tenant_slug": {"$exists": False}},
+                {"$set": {"tenant_slug": DEFAULT_SLUG}},
+            )
+            if res.modified_count:
+                summary.append(f"{coll}:+{res.modified_count}")
+        except Exception as e:  # Collection may not exist yet — fine.
+            logger.debug(f"tenant_scoping skip {coll}: {e}")
+    if summary:
+        logger.info(f"Tenant scoping backfill → {', '.join(summary)}")
+    else:
+        logger.debug("Tenant scoping backfill: nothing to migrate")
+
+
 # --- Public routes ---
 @router.get("/resolve")
 async def resolve_current_tenant(request: Request):
@@ -152,6 +220,46 @@ async def list_tenants(admin: dict = Depends(get_admin_user)):
     await _ensure_default_tenant()
     rows = await db.tenants.find({}, {"_id": 0}).sort("created_at", 1).to_list(200)
     return rows
+
+
+@router.get("/{slug}/stats")
+async def tenant_stats(slug: str, admin: dict = Depends(get_admin_user)):
+    """Usage stats per tenant (Phase 2). Used by the admin tenants page."""
+    slug_lc = slug.lower().strip()
+    tenant = await db.tenants.find_one({"slug": slug_lc}, {"_id": 0})
+    if not tenant:
+        raise HTTPException(404, "Tenant not found")
+
+    q = {"tenant_slug": slug_lc}
+    try:
+        users = await db.users.count_documents(q)
+    except Exception:
+        users = 0
+    try:
+        deals = await db.otc_deals.count_documents(q)
+    except Exception:
+        deals = 0
+    try:
+        wallets = await db.crypto_wallets.count_documents(q)
+    except Exception:
+        wallets = 0
+    try:
+        leads = await db.otc_leads.count_documents(q)
+    except Exception:
+        leads = 0
+    try:
+        tickets = await db.tickets.count_documents(q)
+    except Exception:
+        tickets = 0
+
+    return {
+        "slug": slug_lc,
+        "users": users,
+        "otc_deals": deals,
+        "crypto_wallets": wallets,
+        "otc_leads": leads,
+        "tickets": tickets,
+    }
 
 
 @router.post("/")

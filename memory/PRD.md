@@ -202,14 +202,35 @@ Verified end-to-end:
 - Portal deep-link: `{FRONTEND_URL}/dashboard/profile#billing`.
 - **Testing (iteration_52): 27/27 backend tests PASSED.**
 
+## White-Label Tenants Phase 2 — Data Isolation (2026-04-21)
+- **UserInDB model** extended with `tenant_slug: str = "kbex"`.
+- **`auth.register`** stores `tenant_slug` from Host header; email uniqueness scoped per-tenant.
+- **`auth.login`** rejects cross-tenant login — user registered on tenant A cannot authenticate from tenant B's domain.
+- **Admin `list_users`** auto-filters by current tenant's Host; default KBEX admins may narrow with `?tenant_slug=<slug>` or see all.
+- **New admin endpoint** `GET /api/tenants/{slug}/stats` — per-tenant counts (users / otc_deals / crypto_wallets / otc_leads / tickets).
+- **Admin Tenants page** (`AdminTenants.jsx`) now shows "Uso" card per tenant with live counters.
+- **Migration on startup** (`ensure_tenant_scoping`): idempotently backfills `tenant_slug="kbex"` to legacy rows in 11 collections (users, otc_deals, otc_leads, crm_leads, crypto_wallets, fiat_wallets, bank_accounts, tickets, billing_accounts, kyc_records, escrow_deals). First run backfilled: users:+19, otc_leads:+28, crm_leads:+25, fiat_wallets:+1, bank_accounts:+1, escrow_deals:+46.
+- **New dependencies** in `routes/tenants.py`: `get_current_tenant(request)`, `get_current_tenant_slug(request)`.
+- **Tests:** `/app/backend/tests/test_tenant_isolation.py` — 7/7 PASSED (includes cross-tenant login rejection simulation).
+- **Docs:** `/app/docs/TENANTS.md` updated with Phase 2 spec + stats endpoint.
+
+## Zero-Downtime Deploy Fix (2026-04-21)
+- **Bug:** `zero_downtime_deploy.sh` was rebuilding images but NOT recreating containers when compose config hadn't changed. Symptom: `docker compose ps` showed IMAGE column as bare SHA instead of `boutiquev1-frontend:latest`, meaning containers ran outdated images silently.
+- **Fix:** Added `--force-recreate` to `docker compose up -d --no-deps {backend,frontend}` calls. Added post-deploy sanity check that auto-retries if frontend container age > 5 min.
+- **Immediate VPS unblock:** `sudo docker compose up -d --no-deps --force-recreate frontend`.
+
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
 ## Pending
-- P1: Safari cursor bug
+- P1: Safari cursor bug (18+ recurrences)
+- P1: Verify `auto_renewal_cycle` in production VPS
+- P2: White-Label Tenants Phase 3 — tenant-specific tiers/fees, BYO Sumsub, BYO fiat IBAN
+- P2: LATAM local fiat rails (PIX for Brazil, SPEI for Mexico)
+- P2: Replace Crypto ATM mock data with live feeds
 
 ## VPS Deployment
-- `cd /opt/boutiqueV1 && git fetch origin && git reset --hard origin/main-v1.1 && sudo docker compose build --no-cache && sudo docker compose up -d`
+- `cd /opt/boutiqueV1 && sudo ./scripts/zero_downtime_deploy.sh` (now uses `--force-recreate` internally)
 
 ## Credentials
 - Admin: carlos@kbex.io / senha123

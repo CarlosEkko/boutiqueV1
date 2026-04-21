@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '../../../components/ui/dialog';
 import {
-  Globe, Plus, Trash2, Edit, Save, Loader2, Shield, Palette, Mail,
+  Globe, Plus, Trash2, Edit, Save, Loader2, Shield, Palette, Mail, Users, Briefcase, Wallet,
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -34,6 +34,7 @@ const emptyTenant = () => ({
 export default function AdminTenants() {
   const { token } = useAuth();
   const [tenants, setTenants] = useState([]);
+  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -46,6 +47,21 @@ export default function AdminTenants() {
     try {
       const res = await axios.get(`${API_URL}/api/tenants/`, { headers });
       setTenants(res.data);
+      // Fetch stats for each tenant in parallel (Phase 2)
+      const statsResults = await Promise.allSettled(
+        res.data.map(t =>
+          axios.get(`${API_URL}/api/tenants/${t.slug}/stats`, { headers })
+            .then(r => [t.slug, r.data])
+        )
+      );
+      const statsMap = {};
+      statsResults.forEach(r => {
+        if (r.status === 'fulfilled') {
+          const [slug, data] = r.value;
+          statsMap[slug] = data;
+        }
+      });
+      setStats(statsMap);
     } catch (e) {
       toast.error('Falha ao carregar tenants');
     } finally {
@@ -207,6 +223,38 @@ export default function AdminTenants() {
                     </div>
                   </div>
                 </div>
+
+                {/* Phase 2: Data isolation stats */}
+                {stats[t.slug] && (
+                  <div className="pt-3 border-t border-zinc-800" data-testid={`tenant-stats-${t.slug}`}>
+                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">
+                      Uso
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded px-2 py-1.5">
+                        <Users size={12} className="text-gold-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-zinc-500 leading-none">Utilizadores</div>
+                          <div className="text-sm text-white font-medium">{stats[t.slug].users}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded px-2 py-1.5">
+                        <Briefcase size={12} className="text-gold-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-zinc-500 leading-none">OTC Deals</div>
+                          <div className="text-sm text-white font-medium">{stats[t.slug].otc_deals}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-zinc-800/50 rounded px-2 py-1.5">
+                        <Wallet size={12} className="text-gold-400 shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-zinc-500 leading-none">Wallets</div>
+                          <div className="text-sm text-white font-medium">{stats[t.slug].crypto_wallets}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

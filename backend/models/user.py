@@ -113,6 +113,11 @@ class UserInDB(UserBase):
     # Region
     region: Region = Region.EUROPE
     
+    # Tenant (white-label isolation — Phase 2)
+    # Users registered via a white-label domain carry that tenant's slug.
+    # Default tenant is "kbex" for backwards-compatibility with existing rows.
+    tenant_slug: str = "kbex"
+    
     # Client fields
     is_approved: bool = False
     kyc_status: KYCStatus = KYCStatus.NOT_STARTED

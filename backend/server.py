@@ -490,6 +490,12 @@ async def shutdown_db_client():
 @app.on_event("startup")
 async def startup_background_tasks():
     """Launch background jobs: Revolut periodic sync + Billing renewal cycle."""
+    # Phase 2: Tenant data isolation backfill (idempotent).
+    try:
+        from routes.tenants import ensure_tenant_scoping
+        await ensure_tenant_scoping()
+    except Exception as e:
+        logger.warning(f"Tenant scoping backfill failed: {e}")
     try:
         from routes.revolut import start_background_sync
         start_background_sync()
