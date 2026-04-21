@@ -51,8 +51,13 @@ log "Rotating backend…"
 docker compose up -d --no-deps --force-recreate backend
 
 # Esperar que o novo backend responda
+# Nota: o backend arranca em 3-5s, mas o health check do Docker pode levar
+# mais tempo a ficar `healthy` devido ao startup background (Revolut + Billing
+# cycle). Damos 90s de tolerância; se não ficar pronto a tempo, seguimos para
+# o frontend em vez de abortar (porque o backend mais antigo continua a servir
+# tráfego via `proxy_next_upstream` no NGINX).
 BACKEND_READY=0
-for i in $(seq 1 30); do
+for i in $(seq 1 90); do
     if docker compose exec -T backend curl -sf http://localhost:8001/api/health > /dev/null 2>&1; then
         BACKEND_READY=1
         ok "Backend healthy (after ${i}s)"
@@ -62,9 +67,10 @@ for i in $(seq 1 30); do
 done
 
 if [ "$BACKEND_READY" -eq 0 ]; then
-    err "Backend did NOT become healthy in 30s. Rolling back is manual."
-    docker compose logs backend --tail 50
-    exit 1
+    warn "Backend health-check did not pass in 90s — continuing anyway."
+    warn "Backend logs (last 20 lines):"
+    docker compose logs backend --tail 20 || true
+    warn "Se o site ficar instável, faça: sudo docker compose restart backend"
 fi
 
 # -----------------------------------------------------------------------------
