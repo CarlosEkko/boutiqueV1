@@ -22,6 +22,8 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Loader2,
+  CreditCard,
+  Bitcoin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -168,23 +170,66 @@ const ClientTiersPage = () => {
     }
   };
 
+  // Ask backend to create the pending upgrade row. Returns the payment_id
+  // which is then used by either the card flow (Stripe) or the crypto flow.
+  const createUpgradeRequest = async () => {
+    const res = await axios.post(
+      `${API_URL}/api/billing/upgrade/request`,
+      { target_tier: upgradeDialog.targetTier },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data; // {success, payment_id, amount, quote}
+  };
+
+  const handleCardUpgrade = async () => {
+    if (!upgradeDialog.targetTier) return;
+    setSubmitting(true);
+    try {
+      // 1) Create the pending upgrade record
+      const reqRes = await createUpgradeRequest();
+      // 2) If amount is 0, it was auto-applied — nothing more to pay.
+      if (!reqRes.payment_id || !(reqRes.amount > 0)) {
+        toast.success(t('tiers.upgrade.success'));
+        setUpgradeDialog({ open: false, targetTier: null });
+        setQuote(null);
+        return;
+      }
+      // 3) Create Stripe checkout for the EXACT amount, linked by payment_id
+      const ck = await axios.post(
+        `${API_URL}/api/stripe/create-checkout-session`,
+        {
+          payment_type: 'upgrade_prorata',
+          origin_url: window.location.origin,
+          currency: 'eur',
+          payment_id: reqRes.payment_id,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (ck.data?.url) {
+        window.location.href = ck.data.url;
+      } else {
+        throw new Error('no_checkout_url');
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.detail || t('tiers.upgrade.error');
+      toast.error(msg);
+      setSubmitting(false);
+    }
+  };
+
   const submitUpgrade = async () => {
     if (!upgradeDialog.targetTier) return;
     setSubmitting(true);
     try {
       // If we have a valid quote with pro-rata amount, use the billing upgrade flow
       if (quote && typeof quote.prorata_amount_eur === 'number') {
-        const res = await axios.post(
-          `${API_URL}/api/billing/upgrade/request`,
-          { target_tier: upgradeDialog.targetTier },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const res = await createUpgradeRequest();
         setUpgradeDialog({ open: false, targetTier: null });
         setUpgradeMessage('');
         setQuote(null);
-        if (res.data.amount > 0 && res.data.payment_id) {
-          // Open checkout dialog for payment
-          setCheckoutPaymentId(res.data.payment_id);
+        if (res.amount > 0 && res.payment_id) {
+          // Open crypto checkout dialog for payment
+          setCheckoutPaymentId(res.payment_id);
         } else {
           toast.success(t('tiers.upgrade.success'));
         }
@@ -439,7 +484,7 @@ const ClientTiersPage = () => {
             />
             <div className="text-[10px] text-zinc-600 text-right">{upgradeMessage.length}/2000</div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 flex-wrap">
             <Button
               variant="ghost"
               onClick={() => setUpgradeDialog({ open: false, targetTier: null })}
@@ -448,15 +493,40 @@ const ClientTiersPage = () => {
             >
               {t('common.cancel')}
             </Button>
-            <Button
-              onClick={submitUpgrade}
-              disabled={submitting}
-              className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
-              data-testid="upgrade-submit-btn"
-            >
-              {submitting ? <Loader2 className="animate-spin" size={14} /> : <ArrowUpRight size={14} className="mr-1.5" />}
-              {t('tiers.upgrade.submit')}
-            </Button>
+            {quote && typeof quote.prorata_amount_eur === 'number' && quote.prorata_amount_eur > 0 ? (
+              <>
+                <Button
+                  onClick={submitUpgrade}
+                  disabled={submitting}
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
+                  data-testid="upgrade-submit-crypto-btn"
+                  title="Pagar por transferência bancária ou cripto com aprovação manual"
+                >
+                  {submitting ? <Loader2 className="animate-spin" size={14} /> : <Bitcoin size={14} className="mr-1.5" />}
+                  Cripto / Transferência
+                </Button>
+                <Button
+                  onClick={handleCardUpgrade}
+                  disabled={submitting}
+                  className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
+                  data-testid="upgrade-submit-card-btn"
+                >
+                  {submitting ? <Loader2 className="animate-spin" size={14} /> : <CreditCard size={14} className="mr-1.5" />}
+                  Pagar Agora com Cartão
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={submitUpgrade}
+                disabled={submitting}
+                className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
+                data-testid="upgrade-submit-btn"
+              >
+                {submitting ? <Loader2 className="animate-spin" size={14} /> : <ArrowUpRight size={14} className="mr-1.5" />}
+                {t('tiers.upgrade.submit')}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

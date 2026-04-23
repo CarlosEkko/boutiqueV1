@@ -53,7 +53,7 @@ SUPPORTED_CURRENCIES = {"eur", "usd", "aed", "chf", "qar", "sar", "hkd"}
 DEPOSIT_MIN_EUR = 50.0
 DEPOSIT_MAX_EUR = 50_000.0
 
-PaymentType = Literal["admission_fee", "annual_renewal", "fiat_deposit"]
+PaymentType = Literal["admission_fee", "annual_renewal", "fiat_deposit", "upgrade_prorata"]
 
 
 # ==================== MODELS ====================
@@ -61,13 +61,21 @@ PaymentType = Literal["admission_fee", "annual_renewal", "fiat_deposit"]
 class CreateCheckoutRequest(BaseModel):
     payment_type: PaymentType
     origin_url: str = Field(..., description="Frontend origin, e.g. https://kbex.io")
-    # Only used when payment_type=fiat_deposit. For admission/renewal, amount
-    # is resolved server-side from the user's tier.
+    # Only used when payment_type=fiat_deposit. For admission/renewal/upgrade,
+    # amount is resolved server-side from the user's tier or the pending
+    # admission_payments row.
     deposit_amount: Optional[float] = Field(None, ge=0)
     currency: str = Field("eur", description="3-letter ISO currency code")
     tier_override: Optional[str] = Field(
         None,
         description="Admin-only override. Ignored for regular clients.",
+    )
+    # Required for upgrade_prorata — the admission_payments row created by
+    # /api/billing/upgrade/request. The amount (and tier transition) is loaded
+    # from that row server-side, never trusted from the client.
+    payment_id: Optional[str] = Field(
+        None,
+        description="admission_payments.id — required for upgrade_prorata",
     )
 
 
@@ -108,6 +116,7 @@ async def _resolve_amount(
     user: dict,
     deposit_amount: Optional[float],
     tier_override: Optional[str],
+    payment_id: Optional[str] = None,
 ) -> float:
     """Server-side amount resolution. Never trust the frontend."""
     if payment_type == "admission_fee":
@@ -125,6 +134,22 @@ async def _resolve_amount(
         amount = await _annual_fee_eur_for(tier)
         if amount <= 0:
             raise HTTPException(400, f"Annual fee not configured for tier '{tier}'")
+        return round(amount, 2)
+
+    if payment_type == "upgrade_prorata":
+        if not payment_id:
+            raise HTTPException(400, "payment_id is required for upgrade_prorata")
+        pending = await db.admission_payments.find_one(
+            {"id": payment_id, "user_id": user["id"], "fee_type": "upgrade"},
+            {"_id": 0},
+        )
+        if not pending:
+            raise HTTPException(404, "Pending upgrade payment not found")
+        if pending.get("status") not in ("pending", "awaiting_confirmation"):
+            raise HTTPException(400, f"Upgrade payment is already {pending.get('status')}")
+        amount = float(pending.get("amount") or 0.0)
+        if amount <= 0:
+            raise HTTPException(400, "Upgrade amount must be > 0")
         return round(amount, 2)
 
     # Fiat deposit — validate user-provided amount against guardrails.
@@ -170,7 +195,8 @@ async def create_checkout_session(
         raise HTTPException(404, "User not found")
 
     amount = await _resolve_amount(
-        payload.payment_type, user, payload.deposit_amount, payload.tier_override
+        payload.payment_type, user, payload.deposit_amount, payload.tier_override,
+        payment_id=payload.payment_id,
     )
 
     origin = payload.origin_url.rstrip("/")
@@ -184,6 +210,8 @@ async def create_checkout_session(
         "tier": (payload.tier_override or user.get("membership_level") or "standard"),
         "tenant_slug": user.get("tenant_slug", "kbex"),
     }
+    if payload.payment_id:
+        metadata["admission_payment_id"] = payload.payment_id
 
     stripe = _stripe_client(request)
     req = CheckoutSessionRequest(
@@ -393,6 +421,35 @@ async def _fulfill_payment(tx: dict) -> None:
                 "paid_at": _iso(now),
                 "payment_method": "stripe",
                 "stripe_session_id": tx["session_id"],
+            }},
+        )
+
+    elif payment_type == "upgrade_prorata":
+        # Mark the pending upgrade row as paid, apply the new tier to the
+        # user, and keep the referrer-commission job (if any) in sync with
+        # the manual-approve flow.
+        payment_id = tx.get("metadata", {}).get("admission_payment_id")
+        if not payment_id:
+            logger.warning(f"upgrade_prorata without payment_id in tx {tx['session_id']}")
+            return
+        pending = await db.admission_payments.find_one({"id": payment_id}, {"_id": 0})
+        if not pending:
+            logger.warning(f"upgrade_prorata: no admission_payments row {payment_id}")
+            return
+        target_tier = pending.get("target_tier") or (pending.get("prorata_details") or {}).get("target_tier")
+        if target_tier:
+            await db.users.update_one(
+                {"id": user_id},
+                {"$set": {"membership_level": target_tier}},
+            )
+        await db.admission_payments.update_one(
+            {"id": payment_id},
+            {"$set": {
+                "status": "paid",
+                "paid_at": _iso(now),
+                "payment_method": "stripe",
+                "stripe_session_id": tx["session_id"],
+                "approved_by": "stripe_auto",
             }},
         )
 
