@@ -277,6 +277,7 @@ const ExchangePage = () => {
         {
           crypto_symbol: selectedCrypto.symbol,
           fiat_amount: fiatAmountToSend,
+          fiat_currency: currency,
           payment_method: paymentMethod,
           network: selectedCrypto.networks?.[0]
         },

@@ -343,6 +343,7 @@ class TradingOrder(BaseModel):
     
     # Payment
     payment_method: PaymentMethod
+    fiat_currency: str = "EUR"  # Currency charged (EUR/USD/AED/CHF/QAR/SAR/HKD)
     stripe_session_id: Optional[str] = None
     bank_transfer_id: Optional[str] = None
     
@@ -363,9 +364,13 @@ class TradingOrder(BaseModel):
 class CreateBuyOrder(BaseModel):
     """Create buy order request"""
     crypto_symbol: str
-    fiat_amount: float  # Amount in USD to spend
+    fiat_amount: float  # Amount to spend (in fiat_currency)
     payment_method: PaymentMethod
     network: Optional[str] = None  # Preferred network for delivery
+    # Fiat currency the user is paying with. Client sends the currency
+    # currently selected in the UI (EUR, USD, AED, CHF, QAR, SAR, HKD).
+    # Defaults to EUR for backwards compatibility with legacy clients.
+    fiat_currency: str = "EUR"
 
 
 class CreateSellOrder(BaseModel):

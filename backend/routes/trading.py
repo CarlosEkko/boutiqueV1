@@ -1772,6 +1772,11 @@ async def create_buy_order(
     
     total_amount = order.fiat_amount
     
+    # Normalise and validate the fiat currency the user is paying with.
+    fiat_currency = (order.fiat_currency or "EUR").upper()
+    if fiat_currency not in {"EUR", "USD", "AED", "CHF", "QAR", "SAR", "HKD"}:
+        raise HTTPException(status_code=400, detail=f"Unsupported fiat currency: {fiat_currency}")
+    
     # Create order
     trading_order = TradingOrder(
         user_id=user["id"],
@@ -1788,11 +1793,19 @@ async def create_buy_order(
         fee_amount=fee_amount,
         network_fee=network_fee,
         total_amount=total_amount,
-        payment_method=order.payment_method
+        payment_method=order.payment_method,
+        fiat_currency=fiat_currency,
     )
     
     if order.payment_method == PaymentMethod.CARD:
         trading_order.status = OrderStatus.AWAITING_PAYMENT
+        
+        # Stripe must be configured or this flow cannot proceed.
+        if not STRIPE_API_KEY:
+            raise HTTPException(
+                status_code=503,
+                detail="Pagamento com cartão não está configurado. Contacte o suporte.",
+            )
         
         # Create Stripe checkout session
         from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
@@ -1802,21 +1815,29 @@ async def create_buy_order(
         
         stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
         
-        # Get frontend URL for redirects
+        # Unified return page — polls status and redirects the user to the
+        # right place based on metadata.payment_type.
         origin = request.headers.get("origin", host_url)
-        success_url = f"{origin}/dashboard/exchange?session_id={{CHECKOUT_SESSION_ID}}&order_id={trading_order.id}"
-        cancel_url = f"{origin}/dashboard/exchange?cancelled=true"
+        success_url = f"{origin}/payment/return?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{origin}/payment/return?stripe_cancelled=1"
+        
+        # Charge in the fiat currency the user actually selected (EUR, USD,
+        # AED, CHF, …). Previously hardcoded to USD which meant a €100 order
+        # was charged as $100 on the card.
+        charge_currency = (order.fiat_currency or "USD").lower()
         
         checkout_request = CheckoutSessionRequest(
             amount=float(total_amount),
-            currency="usd",
+            currency=charge_currency,
             success_url=success_url,
             cancel_url=cancel_url,
             metadata={
                 "order_id": trading_order.id,
                 "user_id": user["id"],
                 "order_type": "buy",
-                "crypto_symbol": order.crypto_symbol.upper()
+                "crypto_symbol": order.crypto_symbol.upper(),
+                "payment_type": "crypto_buy",
+                "tenant_slug": user.get("tenant_slug", "kbex"),
             }
         )
         
@@ -1830,7 +1851,7 @@ async def create_buy_order(
             order_id=trading_order.id,
             stripe_session_id=session.session_id,
             amount=total_amount,
-            currency="usd",
+            currency=charge_currency,
             status="initiated",
             metadata=checkout_request.metadata
         )
