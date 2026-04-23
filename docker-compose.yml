@@ -31,7 +31,14 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    # Load ALL variables from backend/.env directly into the container.
+    # This avoids needing to duplicate every key in the `environment:` block
+    # below or keeping a second .env in the compose root.
+    # Variables listed in `environment:` override env_file when both exist.
+    env_file:
+      - ./backend/.env
     environment:
+      # Container-internal overrides (MUST win over backend/.env values):
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=kbex_production
       - CORS_ORIGINS=${DOMAIN_URL:-*}
@@ -49,8 +56,10 @@ services:
       - BREVO_API_KEY=${BREVO_API_KEY}
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL:-no-reply@kbex.io}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME:-KBEX}
-      - STRIPE_API_KEY=${STRIPE_API_KEY:-}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      # STRIPE_API_KEY and STRIPE_WEBHOOK_SECRET come from env_file (./backend/.env)
+      # so they are NOT listed here — listing them with ${VAR:-} would override
+      # the env_file value with an empty string when the shell's compose .env
+      # doesn't have them, which is exactly the bug we fixed.
       - FRONTEND_URL=${FRONTEND_URL:-https://kbex.io}
       - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
       - AZURE_TENANT_ID=${AZURE_TENANT_ID:-}
