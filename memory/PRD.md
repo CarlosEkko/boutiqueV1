@@ -224,6 +224,12 @@ Verified end-to-end:
 - **Tests:** `/app/backend/tests/test_multi_currency_display.py` — 3/3 PASSED (rate coverage, price conversion tolerance ≤1%, stats endpoint for all 7 currencies).
 - **Known limitation:** `CryptoTicker` component uses TradingView widget with hardcoded BTC/USD pairs; crypto is universally USD-quoted on public exchanges so this is acceptable.
 
+## Tenant Branding: File Upload + Stripe on Admission (2026-04-21)
+- **`BrandingImageUpload.jsx`** — novo componente reutilizável substitui inputs URL por upload de ficheiro. Aceita PNG/JPEG/SVG/WebP/ICO, preview inline com opção "Substituir" ou "Remover", fallback "colar URL" para casos legados. Max 2MB.
+- **Backend upload** — nova categoria `branding` em `/app/backend/routes/uploads.py` com MIME types expandidos (`image/svg+xml`, `image/vnd.microsoft.icon`, `image/x-icon`). Testado via curl — upload PNG retorna URL `/api/uploads/file/branding/{filename}`.
+- **`AdminTenants.jsx`** — Logo e Favicon agora usam `BrandingImageUpload` em vez de `Input`. Preview visual imediato após upload.
+- **Stripe no Admission Fee onboarding** — integrado `StripeCheckoutButton paymentType="admission_fee"` na `OnboardingPage.jsx` step 1, como opção primária (dourado) acima do botão "Transferência Bancária" (outline). Backend já testado: cria sessão com amount €500 (tier standard) via `/api/stripe/create-checkout-session`.
+
 ## Stripe Checkout Integration — Card Payments (2026-04-21)
 - **Three flows via Stripe Hosted Checkout** (zero PCI scope for KBEX):
   1. **Admission Fee** (one-time, tier-based, amount from `platform_settings.admission_fee`)
