@@ -1168,6 +1168,85 @@ async def request_upgrade_payment(payload: UpgradeRequest, user_id: str = Depend
     return {"success": True, "payment_id": payment["id"], "amount": amount, "quote": quote}
 
 
+@router.post("/upgrade/{payment_id}/pay-with-fiat")
+async def pay_upgrade_with_fiat_balance(payment_id: str, user_id: str = Depends(get_current_user_id)):
+    """Pay a pending upgrade by debiting the user's EUR fiat wallet.
+
+    Requires: pending admission_payments row (fee_type=upgrade) + fiat_wallet
+    in EUR with sufficient balance. Debits the exact amount, marks the
+    upgrade as paid, applies the new tier, and logs a fiat_withdrawals-like
+    audit trail.
+    """
+    payment = await db.admission_payments.find_one(
+        {"id": payment_id, "user_id": user_id}, {"_id": 0}
+    )
+    if not payment:
+        raise HTTPException(404, "Pagamento não encontrado")
+    if payment.get("fee_type") != "upgrade":
+        raise HTTPException(400, "Pagamento não é um upgrade")
+    if payment.get("status") == "paid":
+        raise HTTPException(400, "Upgrade já foi pago")
+
+    amount = float(payment.get("amount") or 0.0)
+    if amount <= 0:
+        raise HTTPException(400, "Valor inválido")
+
+    wallet = await db.fiat_wallets.find_one(
+        {"user_id": user_id, "currency": "EUR"}, {"_id": 0}
+    )
+    balance = float(wallet.get("balance", 0.0)) if wallet else 0.0
+    if balance < amount:
+        raise HTTPException(
+            400,
+            f"Saldo fiat EUR insuficiente. Necessário €{amount:.2f}, disponível €{balance:.2f}",
+        )
+
+    now = datetime.now(timezone.utc)
+    target_tier = payment.get("target_tier") or (payment.get("prorata_details") or {}).get("target_tier")
+
+    # Atomic debit — prevents double-spend if user clicks twice quickly.
+    debit = await db.fiat_wallets.find_one_and_update(
+        {"user_id": user_id, "currency": "EUR", "balance": {"$gte": amount}},
+        {"$inc": {"balance": -amount}, "$set": {"updated_at": _iso(now)}},
+    )
+    if not debit:
+        raise HTTPException(409, "Saldo alterou entretanto. Atualize e tente novamente.")
+
+    # Apply the upgrade
+    if target_tier:
+        await db.users.update_one(
+            {"id": user_id}, {"$set": {"membership_level": target_tier}}
+        )
+    await db.admission_payments.update_one(
+        {"id": payment_id},
+        {"$set": {
+            "status": "paid",
+            "paid_at": _iso(now),
+            "payment_method": "fiat_balance",
+            "approved_by": "fiat_balance_auto",
+        }},
+    )
+
+    # Audit trail on fiat_deposits (negative delta for outbound)
+    await db.fiat_deposits.insert_one({
+        "user_id": user_id,
+        "currency": "EUR",
+        "amount": -amount,
+        "method": "fiat_balance_debit",
+        "status": "completed",
+        "reference": f"Upgrade payment {payment_id}",
+        "created_at": _iso(now),
+    })
+
+    return {
+        "success": True,
+        "payment_id": payment_id,
+        "amount": amount,
+        "new_tier": target_tier,
+        "new_balance": balance - amount,
+    }
+
+
 @router.post("/upgrade/{payment_id}/approve")
 async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)):
     """Admin approves upgrade payment → applies new tier, pays commission to referrer."""

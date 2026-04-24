@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import BillingCheckoutDialog from '../../components/billing/BillingCheckoutDialog';
+import UpgradePaymentMethodPicker from '../../components/billing/UpgradePaymentMethodPicker';
 import {
   Check,
   Minus,
@@ -130,6 +131,10 @@ const ClientTiersPage = () => {
   const [quote, setQuote] = useState(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [checkoutPaymentId, setCheckoutPaymentId] = useState(null);
+  // When the user clicks "Continuar para pagamento", we create the upgrade
+  // and then show a single picker with 3 options (Fiat balance / Crypto /
+  // Card). picker holds { paymentId, amount } until the user chooses.
+  const [picker, setPicker] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -181,61 +186,36 @@ const ClientTiersPage = () => {
     return res.data; // {success, payment_id, amount, quote}
   };
 
-  const handleCardUpgrade = async () => {
+  // Create the pending upgrade row server-side and open the unified
+  // 3-option payment picker.
+  const openPaymentPicker = async () => {
     if (!upgradeDialog.targetTier) return;
     setSubmitting(true);
     try {
-      // 1) Create the pending upgrade record
-      const reqRes = await createUpgradeRequest();
-      // 2) If amount is 0, it was auto-applied — nothing more to pay.
-      if (!reqRes.payment_id || !(reqRes.amount > 0)) {
+      const res = await createUpgradeRequest();
+      // Close the quote dialog and push picker forward
+      setUpgradeDialog({ open: false, targetTier: null });
+      setUpgradeMessage('');
+      setQuote(null);
+      if (!res.payment_id || !(res.amount > 0)) {
+        // Zero-amount upgrade — already applied server-side.
         toast.success(t('tiers.upgrade.success'));
-        setUpgradeDialog({ open: false, targetTier: null });
-        setQuote(null);
         return;
       }
-      // 3) Create Stripe checkout for the EXACT amount, linked by payment_id
-      const ck = await axios.post(
-        `${API_URL}/api/stripe/create-checkout-session`,
-        {
-          payment_type: 'upgrade_prorata',
-          origin_url: window.location.origin,
-          currency: 'eur',
-          payment_id: reqRes.payment_id,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (ck.data?.url) {
-        window.location.href = ck.data.url;
-      } else {
-        throw new Error('no_checkout_url');
-      }
+      setPicker({ paymentId: res.payment_id, amount: res.amount });
     } catch (err) {
-      const msg = err?.response?.data?.detail || t('tiers.upgrade.error');
-      toast.error(msg);
+      toast.error(err?.response?.data?.detail || t('tiers.upgrade.error'));
+    } finally {
       setSubmitting(false);
     }
   };
 
+  // Fallback for legacy flow where no pro-rata quote is available — just
+  // sends an informational request via the client-tiers endpoint.
   const submitUpgrade = async () => {
     if (!upgradeDialog.targetTier) return;
     setSubmitting(true);
     try {
-      // If we have a valid quote with pro-rata amount, use the billing upgrade flow
-      if (quote && typeof quote.prorata_amount_eur === 'number') {
-        const res = await createUpgradeRequest();
-        setUpgradeDialog({ open: false, targetTier: null });
-        setUpgradeMessage('');
-        setQuote(null);
-        if (res.amount > 0 && res.payment_id) {
-          // Open crypto checkout dialog for payment
-          setCheckoutPaymentId(res.payment_id);
-        } else {
-          toast.success(t('tiers.upgrade.success'));
-        }
-        return;
-      }
-      // Fallback: informational request only
       await axios.post(
         `${API_URL}/api/client-tiers/upgrade-request`,
         { target_tier: upgradeDialog.targetTier, message: upgradeMessage },
@@ -494,28 +474,15 @@ const ClientTiersPage = () => {
               {t('common.cancel')}
             </Button>
             {quote && typeof quote.prorata_amount_eur === 'number' && quote.prorata_amount_eur > 0 ? (
-              <>
-                <Button
-                  onClick={submitUpgrade}
-                  disabled={submitting}
-                  variant="outline"
-                  className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
-                  data-testid="upgrade-submit-crypto-btn"
-                  title="Pagar por transferência bancária ou cripto com aprovação manual"
-                >
-                  {submitting ? <Loader2 className="animate-spin" size={14} /> : <Bitcoin size={14} className="mr-1.5" />}
-                  Cripto / Transferência
-                </Button>
-                <Button
-                  onClick={handleCardUpgrade}
-                  disabled={submitting}
-                  className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
-                  data-testid="upgrade-submit-card-btn"
-                >
-                  {submitting ? <Loader2 className="animate-spin" size={14} /> : <CreditCard size={14} className="mr-1.5" />}
-                  Pagar Agora com Cartão
-                </Button>
-              </>
+              <Button
+                onClick={openPaymentPicker}
+                disabled={submitting}
+                className="bg-gold-500 hover:bg-gold-600 text-black font-medium"
+                data-testid="upgrade-continue-btn"
+              >
+                {submitting ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <ArrowUpRight size={14} className="mr-1.5" />}
+                Continuar para pagamento
+              </Button>
             ) : (
               <Button
                 onClick={submitUpgrade}
@@ -537,6 +504,36 @@ const ClientTiersPage = () => {
         paymentId={checkoutPaymentId}
         onSubmitted={() => toast.success(t('tiers.upgrade.success'))}
       />
+
+      {/* Unified 3-option payment picker — opens after user clicks
+          "Continuar para pagamento". Hands off to crypto checkout OR
+          redirects to Stripe OR debits the fiat balance directly. */}
+      <Dialog open={!!picker} onOpenChange={(o) => !o && setPicker(null)}>
+        <DialogContent className="bg-black border-zinc-800 max-w-lg" data-testid="upgrade-picker-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Como pretende pagar?
+            </DialogTitle>
+          </DialogHeader>
+          {picker && (
+            <UpgradePaymentMethodPicker
+              amount={picker.amount}
+              paymentId={picker.paymentId}
+              onCryptoSelected={() => {
+                setCheckoutPaymentId(picker.paymentId);
+                setPicker(null);
+              }}
+              onPaid={() => {
+                setPicker(null);
+                // Refresh tier state + banners + balances so the new tier
+                // + debited wallet are reflected immediately.
+                window.location.reload();
+              }}
+              onCancel={() => setPicker(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
