@@ -103,11 +103,22 @@ def can_access_region(user: dict, target_region: str) -> bool:
 @router.post("/internal-users", response_model=dict)
 async def create_internal_user(
     user_data: InternalUserCreate,
-    admin: dict = Depends(get_admin_user)
+    request: Request,
+    admin: dict = Depends(get_admin_user),
 ):
     """Create a new internal user (Admin only)"""
-    # Check if email already exists
-    existing = await db.users.find_one({"email": user_data.email})
+    # Resolve current tenant — internal users must be scoped so login filter
+    # `{email, tenant_slug}` matches. Without this they cannot authenticate.
+    from routes.tenants import get_current_tenant_slug
+    tenant_slug = await get_current_tenant_slug(request)
+
+    # Normalize email (case-insensitive uniqueness)
+    normalized_email = (user_data.email or "").strip().lower()
+
+    # Check if email already exists in any tenant (emails are globally unique
+    # across the platform — same person cannot register twice on different
+    # white-label tenants with the same address).
+    existing = await db.users.find_one({"email": normalized_email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -115,13 +126,14 @@ async def create_internal_user(
     
     new_user = {
         "id": str(uuid.uuid4()),
-        "email": user_data.email,
+        "email": normalized_email,
         "name": user_data.name,
         "phone": user_data.phone,
         "hashed_password": hashed_password,
         "user_type": "internal",
         "internal_role": user_data.internal_role,
         "region": user_data.region,
+        "tenant_slug": tenant_slug,
         "is_active": True,
         "is_admin": user_data.internal_role == "admin",
         "is_approved": True,
@@ -138,21 +150,21 @@ async def create_internal_user(
         from services.email_service import email_service
         frontend_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
         await email_service.send_team_member_welcome(
-            to_email=user_data.email,
+            to_email=normalized_email,
             to_name=user_data.name,
             internal_role=user_data.internal_role,
             region=user_data.region,
             temp_password=user_data.password,
             frontend_url=frontend_url,
         )
-        logger.info(f"Welcome email sent to new team member: {user_data.email}")
+        logger.info(f"Welcome email sent to new team member: {normalized_email}")
     except Exception as e:
-        logger.warning(f"Failed to send welcome email to {user_data.email}: {e}")
+        logger.warning(f"Failed to send welcome email to {normalized_email}: {e}")
     
     return {
         "success": True,
         "user_id": new_user["id"],
-        "message": f"Internal user {user_data.email} created with role {user_data.internal_role}"
+        "message": f"Internal user {normalized_email} created with role {user_data.internal_role}"
     }
 
 

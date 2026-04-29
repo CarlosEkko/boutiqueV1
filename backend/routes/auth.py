@@ -238,8 +238,29 @@ async def login(credentials: UserLogin, request: Request, lang: str = Depends(ge
     # with the correct password. Internal/admin users (tenant_slug="kbex") are
     # reachable only from the default KBEX domain — which is the expected
     # behavior for support staff.
+    #
+    # Robustness:
+    #   - case-insensitive email lookup (some email clients capitalize the
+    #     local-part inconsistently)
+    #   - accept legacy docs that pre-date the tenant_scoping migration and
+    #     still have `tenant_slug` missing — only on the default tenant (kbex)
+    #     to avoid leaking users across white-label domains.
+    import re as _re  # noqa: PLC0415
+    from routes.tenants import DEFAULT_SLUG  # noqa: PLC0415
+    email_lower = (credentials.email or "").strip().lower()
+    email_query = {
+        "$regex": f"^{_re.escape(email_lower)}$",
+        "$options": "i",
+    }
+    if tenant_slug == DEFAULT_SLUG:
+        tenant_filter = {"$or": [
+            {"tenant_slug": tenant_slug},
+            {"tenant_slug": {"$exists": False}},
+        ]}
+    else:
+        tenant_filter = {"tenant_slug": tenant_slug}
     user_doc = await db.users.find_one(
-        {"email": credentials.email, "tenant_slug": tenant_slug},
+        {"email": email_query, **tenant_filter},
         {"_id": 0},
     )
     
