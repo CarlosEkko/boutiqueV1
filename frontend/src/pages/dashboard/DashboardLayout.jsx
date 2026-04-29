@@ -744,7 +744,26 @@ const DashboardLayout = () => {
   }
 
   // Separate client menus from admin menus
-  const clientMenuDepts = ['portfolio', 'trading', 'investimentos', 'transparencia', 'account', 'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet', 'escrow', 'launchpad', 'my_performance'];
+  // The split depends on whether the user is staff/internal:
+  //   - Clients: keep Profile + My Performance in personal section; admin
+  //     menus never appear so the Multi-Sign / Launchpad order is irrelevant.
+  //   - Staff: move Profile (account) + My Performance INTO the MANAGEMENT
+  //     block, and move Multi-Sign (transaction_approval) + Launchpad
+  //     (launchpad_admin) OUT of MANAGEMENT into the personal section.
+  const isStaff = user?.user_type === 'internal' || user?.is_admin;
+  const clientMenuDepts = isStaff
+    ? [
+        'portfolio', 'trading', 'investimentos', 'transparencia',
+        'otc_trading', 'suporte', 'tokenizacao', 'cold_wallet', 'escrow',
+        // moved out of MANAGEMENT into personal section for staff
+        'multi_sign', 'transaction_approval',
+        'launchpad', 'launchpad_admin',
+      ]
+    : [
+        'portfolio', 'trading', 'investimentos', 'transparencia', 'account',
+        'otc_trading', 'multi_sign', 'suporte', 'tokenizacao', 'cold_wallet',
+        'escrow', 'launchpad', 'my_performance',
+      ];
   
   // Default menus for clients (Portfolio and Perfil)
   const defaultClientDepts = ['portfolio', 'account'];
