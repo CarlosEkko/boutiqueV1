@@ -44,14 +44,17 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const REGIONS = [
   { value: 'europe', label: 'Europa' },
-  { value: 'middle_east', label: 'Médio Oriente' },
+  { value: 'mena', label: 'Médio Oriente' },
   { value: 'latam', label: 'LATAM' },
+  { value: 'global', label: 'Global' },
 ];
 
 const TIERS = [
+  { value: 'broker', label: 'Broker' },
   { value: 'standard', label: 'Standard' },
   { value: 'premium', label: 'Premium' },
   { value: 'vip', label: 'VIP' },
+  { value: 'institucional', label: 'Institucional' },
 ];
 
 const STATUSES = [
