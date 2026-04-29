@@ -8,9 +8,10 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import {
   Bitcoin, Loader2, Copy, Check, Building2, AlertCircle, ArrowRight,
-  Banknote,
+  Banknote, ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import PaymentMethodPicker from './PaymentMethodPicker';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -40,6 +41,9 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
   const { token } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  // "picker" = 3-card method selector (default landing).
+  // "crypto" / "bank_transfer" = detailed flow once user picks Cripto/Transferência.
+  const [stage, setStage] = useState('picker');
   const [method, setMethod] = useState('crypto');
   const [selectedCrypto, setSelectedCrypto] = useState('USDT');
   const [selectedBankId, setSelectedBankId] = useState(null);
@@ -50,6 +54,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
     if (!open || !paymentId) return;
     let cancelled = false;
     setLoading(true);
+    setStage('picker');
     (async () => {
       try {
         const res = await axios.get(`${API_URL}/api/billing/payments/${paymentId}`, {
@@ -151,10 +156,43 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
               </div>
             </div>
 
+            {/* Stage 1: 3-card method picker (Saldo Fiat / Cripto / Cartão) */}
+            {stage === 'picker' && (
+              <PaymentMethodPicker
+                amount={Number(payment.amount || 0)}
+                paymentId={payment.id}
+                feeType={payment.fee_type || 'annual'}
+                onCryptoSelected={() => {
+                  // Default to crypto sub-tab; user may switch to bank inside
+                  setMethod('crypto');
+                  setStage('crypto');
+                }}
+                onPaid={() => {
+                  toast.success('Pagamento processado · saldo atualizado');
+                  onSubmitted?.();
+                  onClose?.();
+                }}
+                onCancel={onClose}
+              />
+            )}
+
+            {/* Back to picker */}
+            {stage !== 'picker' && (
+              <button
+                type="button"
+                onClick={() => setStage('picker')}
+                className="text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1"
+                data-testid="back-to-picker-btn"
+              >
+                <ArrowLeft size={12} /> Voltar aos métodos
+              </button>
+            )}
+
             {/* Method toggle */}
+            {stage !== 'picker' && (
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => setMethod('crypto')}
+                onClick={() => { setMethod('crypto'); setStage('crypto'); }}
                 className={`rounded-lg border px-3 py-2.5 transition-all flex items-center gap-2 ${
                   method === 'crypto' ? 'border-gold-500/60 bg-gold-950/30 text-gold-300' : 'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700'
                 }`}
@@ -164,7 +202,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 <span className="text-sm">Crypto</span>
               </button>
               <button
-                onClick={() => setMethod('bank_transfer')}
+                onClick={() => { setMethod('bank_transfer'); setStage('bank_transfer'); }}
                 className={`rounded-lg border px-3 py-2.5 transition-all flex items-center gap-2 ${
                   method === 'bank_transfer' ? 'border-gold-500/60 bg-gold-950/30 text-gold-300' : 'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700'
                 }`}
@@ -174,9 +212,10 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 <span className="text-sm">Transferência</span>
               </button>
             </div>
+            )}
 
             {/* Crypto flow */}
-            {method === 'crypto' && (
+            {stage !== 'picker' && method === 'crypto' && (
               <div className="space-y-3">
                 <div className="grid grid-cols-4 gap-2">
                   {['BTC', 'ETH', 'USDT', 'USDC'].map((c) => (
@@ -232,7 +271,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
             )}
 
             {/* Bank flow */}
-            {method === 'bank_transfer' && (
+            {stage !== 'picker' && method === 'bank_transfer' && (
               <div className="space-y-3">
                 {banks.length === 0 ? (
                   <div className="text-center text-zinc-500 text-sm py-4">
@@ -281,7 +320,8 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit (only on detailed crypto/bank stages) */}
+            {stage !== 'picker' && (
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="checkout-cancel">
                 Cancelar
@@ -296,6 +336,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 Submeter Pagamento
               </Button>
             </div>
+            )}
           </div>
         )}
       </DialogContent>

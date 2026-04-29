@@ -35,6 +35,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import StripeCheckoutButton from '../components/billing/StripeCheckoutButton';
+import PaymentMethodPicker from '../components/billing/PaymentMethodPicker';
+import BillingCheckoutDialog from '../components/billing/BillingCheckoutDialog';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -72,6 +74,37 @@ const OnboardingPage = () => {
   const [twoFASecret, setTwoFASecret] = useState(null);
   const [twoFAQRCode, setTwoFAQRCode] = useState(null);
   const [verificationCode, setVerificationCode] = useState('');
+
+  // Unified 3-option payment picker for the admission fee.
+  // Holds { paymentId, amount } once the admission_payments row exists.
+  const [admissionPicker, setAdmissionPicker] = useState(null);
+  // When user picks "Cripto / Transferência" we show the existing detailed
+  // BillingCheckoutDialog flow on top of the picker.
+  const [admissionCheckoutId, setAdmissionCheckoutId] = useState(null);
+  const [creatingPicker, setCreatingPicker] = useState(false);
+
+  const openAdmissionPicker = async () => {
+    setCreatingPicker(true);
+    try {
+      // Server returns the existing pending row if there is one.
+      const res = await axios.post(
+        `${API_URL}/api/referrals/admission-fee/request`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { currency: 'EUR' },
+        }
+      );
+      const paymentId = res.data?.payment_id;
+      const amount = Number(res.data?.amount || admissionStatus?.eur_amount || 0);
+      if (!paymentId) throw new Error('payment_id em falta');
+      setAdmissionPicker({ paymentId, amount });
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Falha ao iniciar pagamento de admissão');
+    } finally {
+      setCreatingPicker(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -367,28 +400,22 @@ const OnboardingPage = () => {
                     <p className="text-3xl font-bold text-gold-400">{getPaymentAmount()} EUR</p>
                   </div>
 
-                  <StripeCheckoutButton
-                    paymentType="admission_fee"
-                    label="Pagar com Cartão (Stripe)"
-                    className="w-full py-6 text-base"
-                    data-testid="onboarding-stripe-pay-btn"
-                  />
-
-                  <div className="relative flex items-center gap-3 py-1">
-                    <div className="flex-1 h-px bg-zinc-800" />
-                    <span className="text-[10px] uppercase tracking-widest text-zinc-600">ou</span>
-                    <div className="flex-1 h-px bg-zinc-800" />
-                  </div>
-
-                  <Button 
-                    onClick={openPaymentGateway}
-                    disabled={submitting}
-                    variant="outline"
-                    className="w-full border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-medium py-6"
+                  <Button
+                    onClick={openAdmissionPicker}
+                    disabled={creatingPicker || submitting}
+                    className="w-full bg-gold-500 hover:bg-gold-600 text-black font-medium py-6 text-base"
+                    data-testid="onboarding-pay-admission-btn"
                   >
-                    <CreditCard size={20} className="mr-2" />
-                    Transferência Bancária
+                    {creatingPicker ? (
+                      <RefreshCw size={20} className="mr-2 animate-spin" />
+                    ) : (
+                      <CreditCard size={20} className="mr-2" />
+                    )}
+                    Pagar Taxa de Admissão
                   </Button>
+                  <p className="text-center text-zinc-500 text-[11px]">
+                    Escolha entre saldo fiat, cripto/transferência ou cartão de crédito
+                  </p>
                 </>
               )}
 
@@ -950,6 +977,42 @@ const OnboardingPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Unified 3-option payment picker for the Admission Fee */}
+      <Dialog open={!!admissionPicker} onOpenChange={(o) => !o && setAdmissionPicker(null)}>
+        <DialogContent className="bg-black border-zinc-800 max-w-lg" data-testid="admission-picker-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Pagar Taxa de Admissão
+            </DialogTitle>
+          </DialogHeader>
+          {admissionPicker && (
+            <PaymentMethodPicker
+              amount={admissionPicker.amount}
+              paymentId={admissionPicker.paymentId}
+              feeType="admission"
+              onCryptoSelected={() => {
+                setAdmissionCheckoutId(admissionPicker.paymentId);
+                setAdmissionPicker(null);
+              }}
+              onPaid={() => {
+                setAdmissionPicker(null);
+                checkOnboardingStatus();
+              }}
+              onCancel={() => setAdmissionPicker(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <BillingCheckoutDialog
+        open={!!admissionCheckoutId}
+        onClose={() => setAdmissionCheckoutId(null)}
+        paymentId={admissionCheckoutId}
+        onSubmitted={() => {
+          checkOnboardingStatus();
+        }}
+      />
     </div>
   );
 };

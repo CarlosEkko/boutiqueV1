@@ -1247,6 +1247,145 @@ async def pay_upgrade_with_fiat_balance(payment_id: str, user_id: str = Depends(
     }
 
 
+@router.post("/payments/{payment_id}/pay-with-fiat")
+async def pay_payment_with_fiat_balance(payment_id: str, user_id: str = Depends(get_current_user_id)):
+    """Pay any pending billing payment (admission/annual/upgrade) using the
+    user's EUR fiat wallet balance. Generalized version of
+    `/upgrade/{payment_id}/pay-with-fiat`.
+
+    Side effects per fee_type:
+      - admission/annual: marks billing_status active, stamps annual_fee_*
+        fields on the user, calculates referrer commission.
+      - upgrade: applies new tier (and pays referrer commission on the delta).
+    """
+    payment = await db.admission_payments.find_one(
+        {"id": payment_id, "user_id": user_id}, {"_id": 0}
+    )
+    if not payment:
+        raise HTTPException(404, "Pagamento não encontrado")
+    if payment.get("status") == "paid":
+        raise HTTPException(400, "Pagamento já foi processado")
+
+    fee_type = payment.get("fee_type") or "admission"
+    if fee_type not in ("admission", "annual", "upgrade"):
+        raise HTTPException(400, f"Tipo de pagamento inválido: {fee_type}")
+
+    amount = float(payment.get("amount") or 0.0)
+    if amount <= 0:
+        raise HTTPException(400, "Valor inválido")
+
+    wallet = await db.fiat_wallets.find_one(
+        {"user_id": user_id, "currency": "EUR"}, {"_id": 0}
+    )
+    balance = float(wallet.get("balance", 0.0)) if wallet else 0.0
+    if balance < amount:
+        raise HTTPException(
+            400,
+            f"Saldo fiat EUR insuficiente. Necessário €{amount:.2f}, disponível €{balance:.2f}",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    # Atomic debit — guards against double-spend on rapid double-clicks.
+    debit = await db.fiat_wallets.find_one_and_update(
+        {"user_id": user_id, "currency": "EUR", "balance": {"$gte": amount}},
+        {"$inc": {"balance": -amount}, "$set": {"updated_at": _iso(now)}},
+    )
+    if not debit:
+        raise HTTPException(409, "Saldo alterou entretanto. Atualize e tente novamente.")
+
+    target_tier = payment.get("target_tier") or (payment.get("prorata_details") or {}).get("target_tier")
+
+    # Mark payment paid
+    await db.admission_payments.update_one(
+        {"id": payment_id},
+        {"$set": {
+            "status": "paid",
+            "paid_at": _iso(now),
+            "payment_method": "fiat_balance",
+            "approved_by": "fiat_balance_auto",
+        }},
+    )
+
+    # Apply fee-type-specific side effects
+    new_tier = None
+    if fee_type == "upgrade" and target_tier:
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"membership_level": target_tier, "billing_status": "active"}},
+        )
+        new_tier = target_tier
+    elif fee_type in ("admission", "annual"):
+        # Renewal anniversary = +1 year from today
+        next_year = datetime(now.year + 1, now.month, now.day, tzinfo=timezone.utc)
+        user_update = {
+            "annual_fee_paid_at": _iso(now),
+            "annual_fee_next_due": next_year.isoformat(),
+            "billing_status": "active",
+        }
+        if fee_type == "admission":
+            user_update.update({
+                "admission_fee_paid": True,
+                "admission_fee_paid_at": _iso(now),
+                "admission_fee_next_due": next_year.isoformat(),
+            })
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": user_update,
+             "$unset": {"suspended_at": "", "suspended_reason": "", "suspended_by": ""}},
+        )
+        # Stamp next_due_date on the payment as well (matches manual-approve behavior)
+        await db.admission_payments.update_one(
+            {"id": payment_id},
+            {"$set": {"next_due_date": next_year.isoformat()}},
+        )
+
+    # Referrer commission (best-effort)
+    try:
+        from routes.referrals import calculate_referrer_commission
+        referral = await db.referrals.find_one({"client_id": user_id, "status": "active"})
+        if referral and amount > 0:
+            com = await calculate_referrer_commission(fee_type, amount, "EUR")
+            if com.get("commission_amount", 0) > 0:
+                await db.referral_commissions.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "referral_id": referral.get("id"),
+                    "referrer_id": referral.get("referrer_id"),
+                    "client_id": user_id,
+                    "transaction_type": fee_type,
+                    "original_amount": amount,
+                    "commission_amount": com["commission_amount"],
+                    "commission_percent": com["commission_percent"],
+                    "currency": "EUR",
+                    "status": "pending",
+                    "created_at": _iso(now),
+                })
+    except Exception as e:
+        logger.warning(f"Failed to calculate {fee_type} commission via fiat_balance: {e}")
+
+    # Audit trail (negative delta on fiat_deposits)
+    await db.fiat_deposits.insert_one({
+        "user_id": user_id,
+        "currency": "EUR",
+        "amount": -amount,
+        "method": "fiat_balance_debit",
+        "status": "completed",
+        "reference": f"{fee_type.title()} payment {payment_id}",
+        "created_at": _iso(now),
+    })
+
+    logger.info(f"{fee_type.title()} payment {payment_id} paid via fiat_balance by user {user_id}")
+
+    return {
+        "success": True,
+        "payment_id": payment_id,
+        "fee_type": fee_type,
+        "amount": amount,
+        "new_tier": new_tier,
+        "new_balance": balance - amount,
+    }
+
+
 @router.post("/upgrade/{payment_id}/approve")
 async def approve_upgrade(payment_id: str, admin: dict = Depends(get_admin_user)):
     """Admin approves upgrade payment → applies new tier, pays commission to referrer."""
