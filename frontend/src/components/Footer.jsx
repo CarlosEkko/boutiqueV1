@@ -19,7 +19,8 @@ const Footer = () => {
       { label: t('footer.about'), to: '#' },
       { label: t('footer.careers'), to: '#' },
       { label: t('footer.press'), to: '#' },
-      { label: t('footer.legal'), to: '#' }
+      { label: t('footer.legal'), to: '#' },
+      { label: t('footer.cookies', 'Política de Cookies'), to: '/legal/cookies' }
     ],
     [t('footer.support')]: [
       { label: t('footer.helpCenter'), to: '/help' },

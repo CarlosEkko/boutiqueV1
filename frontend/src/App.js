@@ -8,6 +8,7 @@ import TradingPage from "./pages/TradingPage";
 import PublicTradingPage from "./pages/public/PublicTradingPage";
 import EarnPage from "./pages/EarnPage";
 import InstitutionalPage from "./pages/InstitutionalPage";
+import CookiePolicyPage from "./pages/legal/CookiePolicyPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -173,6 +174,8 @@ function AppRoutes() {
       <Route path="/trading" element={<PublicTradingPage />} />
       <Route path="/earn" element={<EarnPage />} />
       <Route path="/institutional" element={<InstitutionalPage />} />
+      <Route path="/legal/cookies" element={<CookiePolicyPage />} />
+      <Route path="/cookies" element={<Navigate to="/legal/cookies" replace />} />
       <Route path="/launchpad" element={<LaunchpadPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/payment/return" element={<PaymentSuccess />} />
