@@ -1,5 +1,27 @@
 # KBEX.io - Changelog
 
+## 2026-02-29 - Unified 3-Option Payment Picker (Phase 2)
+**Goal:** Extend the elegant 3-card payment selector (Saldo Fiat EUR / Cripto-Transferência / Cartão Stripe) — already in production for Tier Upgrades — to also cover Admission Fee (onboarding) and Annual Renewal flows.
+
+**Backend**
+- New `POST /api/billing/payments/{payment_id}/pay-with-fiat` (generic). Handles all fee types (`admission`/`annual`/`upgrade`):
+  - Validates ownership + payment status.
+  - Atomically debits EUR fiat wallet (find_one_and_update with $gte guard).
+  - For upgrade: applies new tier. For admission/annual: stamps `annual_fee_*`, `admission_fee_*`, `billing_status=active`, unsuspends.
+  - Triggers referrer commission. Audit trail in `fiat_deposits`.
+- Old `POST /api/billing/upgrade/{payment_id}/pay-with-fiat` retained.
+
+**Frontend**
+- New generic `PaymentMethodPicker.jsx` accepting `feeType` prop.
+- Old `UpgradePaymentMethodPicker.jsx` is now a shim wrapping the generic picker.
+- `BillingCheckoutDialog.jsx` defaults to picker stage; "Voltar aos métodos" button reveals detailed crypto/bank flow.
+- `OnboardingPage.jsx` admission step now opens unified picker dialog via single "Pagar Taxa de Admissão" button.
+
+**Bug fixed during testing**
+- `PaymentMethodPicker` was calling `/api/fiat-wallets/` (does not exist). Corrected to `/api/trading/fiat/balances`. Same bug existed in old upgrade picker — fix propagates.
+
+**Testing:** Backend 24/25 passed (1 skipped). All testids verified.
+
 ## 2026-04-21 - White-Label Tenants (Phase 1: Branding)
 - **Backend:** new `/app/backend/routes/tenants.py` with `GET /api/tenants/resolve` (public, called by frontend on boot) + admin CRUD (`GET/POST/PUT/DELETE /api/tenants/*`).
 - **Model:** `tenants` collection with `slug` / `domains[]` / `branding` / `email` / `supported_fiat` / `is_default` / `is_active`.
