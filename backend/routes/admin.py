@@ -244,6 +244,63 @@ async def permanently_delete_internal_user(
     return {"success": True, "message": "Internal user permanently deleted"}
 
 
+@router.post("/internal-users/{user_id}/resend-welcome", response_model=dict)
+async def resend_welcome_email(
+    user_id: str,
+    admin: dict = Depends(get_admin_user),
+):
+    """Resend the welcome email (with role + region + new temp password) to
+    an existing internal user. Useful when the original delivery hard-bounced
+    or the recipient was on a suppression list at the time."""
+    user = await db.users.find_one({"id": user_id, "user_type": "internal"}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Internal user not found")
+
+    # Generate a fresh temp password and persist it so the link in the email
+    # remains useful.
+    import string
+    alphabet = string.ascii_letters + string.digits + "!@#$%"
+    temp_password = "".join(secrets.choice(alphabet) for _ in range(14))
+    hashed = pwd_context.hash(temp_password)
+
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "hashed_password": hashed,
+            "must_change_password": True,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    from services.email_service import email_service
+    frontend_url = os.environ.get("FRONTEND_URL", "https://kbex.io")
+    result = await email_service.send_team_member_welcome(
+        to_email=user["email"],
+        to_name=user.get("name") or user["email"],
+        internal_role=user.get("internal_role") or "support",
+        region=user.get("region") or "global",
+        temp_password=temp_password,
+        frontend_url=frontend_url,
+    )
+
+    logger.info(
+        f"Welcome email resent to {user['email']} by {admin.get('email')} — brevo={result}"
+    )
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=502,
+            detail=f"Brevo rejected the send: {result.get('error', 'unknown')}",
+        )
+
+    return {
+        "success": True,
+        "to": user["email"],
+        "message_id": result.get("message_id"),
+        "message": "Welcome email re-sent successfully",
+    }
+
+
 # ==================== CLIENT USER MANAGEMENT ====================
 
 @router.get("/users", response_model=List[dict])
