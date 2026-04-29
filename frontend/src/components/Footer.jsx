@@ -92,6 +92,15 @@ const Footer = () => {
             {t('footer.copyright')}
           </p>
           <div className={`flex items-center ${isRTL ? 'space-x-reverse' : ''} space-x-6 text-xs text-gray-500`}>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('kbex:open-cookie-preferences'))}
+              className="hover:text-gold-400 transition-colors underline-offset-4 hover:underline"
+              data-testid="footer-manage-cookies-btn"
+            >
+              {t('footer.manageCookies', 'Gerir cookies')}
+            </button>
+            <span>•</span>
             <span>{t('hero.trustLicensed')}</span>
             <span>•</span>
             <span>MiCA Compliant</span>

@@ -84,6 +84,7 @@ from routes.commercial import router as commercial_router, set_db as set_commerc
 from routes.business_accounts import router as business_accounts_router, set_db as set_business_accounts_db
 from routes.client_tiers import router as client_tiers_router, set_db as set_client_tiers_db
 from routes.billing import router as billing_router, set_db as set_billing_db
+from routes.cookie_consent import router as cookie_consent_router, set_db as set_cookie_consent_db
 from routes.tenants import router as tenants_router
 from routes.stripe_payments import router as stripe_router, set_db as set_stripe_db, _stripe_webhook_handler
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
@@ -128,6 +129,7 @@ set_commercial_db(db)
 set_business_accounts_db(db)
 set_client_tiers_db(db)
 set_billing_db(db)
+set_cookie_consent_db(db)
 set_stripe_db(db)
 set_crm_db(db)
 set_tokenization_db(db)
@@ -176,6 +178,7 @@ api_router.include_router(commercial_router)
 api_router.include_router(business_accounts_router)
 api_router.include_router(client_tiers_router)
 api_router.include_router(billing_router)
+api_router.include_router(cookie_consent_router)
 # tenants_router has its own /api prefix, register on app directly (below)
 
 

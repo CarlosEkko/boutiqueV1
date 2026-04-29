@@ -9,6 +9,7 @@ import PublicTradingPage from "./pages/public/PublicTradingPage";
 import EarnPage from "./pages/EarnPage";
 import InstitutionalPage from "./pages/InstitutionalPage";
 import CookiePolicyPage from "./pages/legal/CookiePolicyPage";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -103,6 +104,7 @@ import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients
 import ClientTiersPage from "./pages/dashboard/ClientTiersPage";
 import AdminClientTiers from "./pages/dashboard/admin/AdminClientTiers";
 import AdminBillingPage from "./pages/dashboard/admin/AdminBillingPage";
+import AdminCookieConsentPage from "./pages/dashboard/admin/AdminCookieConsentPage";
 import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
@@ -264,6 +266,7 @@ function AppRoutes() {
         <Route path="admin/clients" element={<AdminClients />} />
         <Route path="admin/pipeline" element={<AdminPipeline />} />
         <Route path="admin/settings" element={<AdminSettings />} />
+        <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
                 <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
                 <Route path="admin/institucional" element={<AdminTenants />} />
                 <Route path="admin/tenants" element={<AdminTenants />} />
@@ -369,6 +372,7 @@ function App() {
                 <div className="App">
                   <BrowserRouter>
                     <AppRoutes />
+                    <CookieConsentBanner />
                   </BrowserRouter>
                   <Toaster />
                 </div>
