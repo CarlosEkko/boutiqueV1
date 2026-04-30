@@ -21,14 +21,14 @@ const COOKIE_TABLE = {
     { name: 'kbex_lang', purpose: 'Recordar o idioma selecionado (PT/EN/AR/FR/ES).', duration: '12 meses', type: 'Essencial' },
     { name: 'kbex_theme', purpose: 'Recordar a preferência de tema (claro/escuro).', duration: '12 meses', type: 'Essencial' },
     { name: 'cf_clearance / __cf_bm', purpose: 'Proteção anti-bot e contra ataques (Cloudflare Turnstile).', duration: '30 minutos – 30 dias', type: 'Essencial' },
-    { name: 'kbex_tenant', purpose: 'Identificar o cliente Institucional (kbex / parceiros).', duration: 'Sessão', type: 'Essencial' },
+    { name: 'kbex_tenant', purpose: 'Identificar o cliente Institucional.', duration: 'Sessão', type: 'Essencial' },
   ],
   en: [
     { name: 'kbex_session', purpose: 'Keeps you authenticated after login.', duration: 'Session / 30 days with "remember me"', type: 'Essential' },
     { name: 'kbex_lang', purpose: 'Remembers your selected language (PT/EN/AR/FR/ES).', duration: '12 months', type: 'Essential' },
     { name: 'kbex_theme', purpose: 'Remembers your theme preference (light/dark).', duration: '12 months', type: 'Essential' },
     { name: 'cf_clearance / __cf_bm', purpose: 'Anti-bot and DDoS protection (Cloudflare Turnstile).', duration: '30 minutes – 30 days', type: 'Essential' },
-    { name: 'kbex_tenant', purpose: 'Identifies the active Institutional client (kbex / partners).', duration: 'Session', type: 'Essential' },
+    { name: 'kbex_tenant', purpose: 'Identifies the active Institutional client.', duration: 'Session', type: 'Essential' },
   ],
   fr: [
     { name: 'kbex_session', purpose: 'Maintient la session après connexion.', duration: 'Session / 30 jours avec « se souvenir »', type: 'Essentiel' },
@@ -49,7 +49,7 @@ const COOKIE_TABLE = {
     { name: 'kbex_lang', purpose: 'يتذكر اللغة المختارة (PT/EN/AR/FR/ES).', duration: '12 شهرًا', type: 'ضروري' },
     { name: 'kbex_theme', purpose: 'يتذكر تفضيل السمة (فاتح/داكن).', duration: '12 شهرًا', type: 'ضروري' },
     { name: 'cf_clearance / __cf_bm', purpose: 'حماية ضد الروبوتات وهجمات DDoS (Cloudflare Turnstile).', duration: '30 دقيقة – 30 يومًا', type: 'ضروري' },
-    { name: 'kbex_tenant', purpose: 'يحدد العميل المؤسسي النشط (kbex / الشركاء).', duration: 'جلسة', type: 'ضروري' },
+    { name: 'kbex_tenant', purpose: 'يحدد العميل المؤسسي النشط.', duration: 'جلسة', type: 'ضروري' },
   ],
 };
 
