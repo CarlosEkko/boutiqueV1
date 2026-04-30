@@ -483,7 +483,7 @@ const TRANSLATIONS = {
     verified: 'Membro Verificado',
     notProvided: 'Não fornecido',
     cannotChange: 'Não pode ser alterado',
-    updateSuccess: 'Perfil atualizado com sucesso!'
+    updateSuccess: 'Perfil atualizado com sucesso!',
   },
 
   // Common
@@ -1199,7 +1199,9 @@ const TRANSLATIONS = {
       minutesAgo: 'Há {n} minutos',
       hoursAgo: 'Há {n} horas',
       daysAgo: 'Há {n} dias'
-    }
+    },
+    identityVerification: "Verificação de Identidade",
+    identityVerificationDesc: "Cumpra os requisitos KYC para desbloquear todos os limites de trading.",
   },
 
   // Security Dashboard
@@ -1434,6 +1436,17 @@ const TRANSLATIONS = {
   // KYC
   kyc: {
     // Status Page
+    title: 'Verificação de Identidade',
+    heroTitle: 'Verifique a sua identidade',
+    heroSubtitle: 'Para cumprir requisitos regulatórios da KBEX, precisamos de validar o seu documento de identificação e uma selfie. O processo demora cerca de 2 minutos.',
+    step1: 'Tire foto do documento (BI / Passaporte)',
+    step2: 'Faça uma selfie de prova-de-vida',
+    step3: 'Receba a aprovação por notificação',
+    start: 'Iniciar Verificação',
+    finishedTitle: 'Verificação enviada',
+    finishedMsg: 'A nossa equipa irá rever a sua submissão. Será notificado quando concluída.',
+    statusApproved: 'Aprovado',
+    statusPending: 'Em revisão',
     status: {
       title: 'Verificação de Identidade',
       subtitle: 'Complete a verificação KYC/KYB para desbloquear todas as funcionalidades da plataforma',
@@ -2110,6 +2123,16 @@ const TRANSLATIONS = {
     createdTitle: 'Alerta criado',
     createdMsg: 'Vai receber notificação push assim que {{asset}} atingir o objetivo.',
     openMarkets: 'Explorar Mercados',
+  },
+  otcChat: {
+    title: 'Mesa OTC',
+    subtitle: 'Mensagens diretas com a sua mesa OTC',
+    empty: 'Sem deals OTC ativos',
+    emptyHint: 'Quando a mesa OTC abrir um deal seu, vai aparecer aqui para conversar diretamente.',
+    dealChatTitle: 'Mesa OTC',
+    secureChannel: 'Canal seguro',
+    noMessages: 'Sem mensagens ainda. Envie a primeira para iniciar a conversa.',
+    composerPh: 'Escrever mensagem…',
   },
   wallet: {
     totalBalance: 'Saldo Total',

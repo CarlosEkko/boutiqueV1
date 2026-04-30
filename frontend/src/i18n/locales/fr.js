@@ -469,7 +469,9 @@ const TRANSLATIONS = {
     verified: 'Membre Vérifié',
     notProvided: 'Non fourni',
     cannotChange: 'Ne peut pas être modifié',
-    updateSuccess: 'Profil mis à jour avec succès !'
+    updateSuccess: 'Profil mis à jour avec succès !',
+    identityVerification: 'Vérification d\'Identité',
+    identityVerificationDesc: 'Complétez les exigences KYC pour débloquer toutes les limites de trading.',
   },
 
   common: {
@@ -1143,7 +1145,9 @@ const TRANSLATIONS = {
       minutesAgo: 'Il y a {n} minutes',
       hoursAgo: 'Il y a {n} heures',
       daysAgo: 'Il y a {n} jours'
-    }
+    },
+    identityVerification: "Vérification d'Identité",
+    identityVerificationDesc: "Complétez les exigences KYC pour débloquer toutes les limites de trading.",
   },
 
   // Security Dashboard
@@ -1374,6 +1378,17 @@ const TRANSLATIONS = {
   },
 
   kyc: {
+    title: 'Vérification d\'Identité',
+    heroTitle: 'Vérifiez votre identité',
+    heroSubtitle: 'Pour répondre aux exigences réglementaires de KBEX, nous devons valider votre pièce d\'identité et une selfie. Le processus prend environ 2 minutes.',
+    step1: 'Photographiez votre document (CNI / Passeport)',
+    step2: 'Prenez un selfie de preuve de vie',
+    step3: 'Recevez l\'approbation par notification',
+    start: 'Démarrer la Vérification',
+    finishedTitle: 'Vérification envoyée',
+    finishedMsg: 'Notre équipe examinera votre soumission. Vous serez notifié à la fin.',
+    statusApproved: 'Approuvé',
+    statusPending: 'En cours de révision',
     status: {
       title: 'Vérification d\'Identité',
       subtitle: 'Complétez la vérification KYC/KYB pour débloquer toutes les fonctionnalités de la plateforme',
@@ -1941,6 +1956,16 @@ const TRANSLATIONS = {
     createdTitle: 'Alerte créée',
     createdMsg: 'Vous recevrez une notification push dès que {{asset}} atteindra l\'objectif.',
     openMarkets: 'Explorer les Marchés',
+  },
+  otcChat: {
+    title: 'Bureau OTC',
+    subtitle: 'Messages directs avec votre bureau OTC',
+    empty: 'Aucun deal OTC actif',
+    emptyHint: 'Lorsque le bureau OTC ouvre un deal pour vous, il apparaîtra ici pour discuter directement.',
+    dealChatTitle: 'Bureau OTC',
+    secureChannel: 'Canal sécurisé',
+    noMessages: 'Aucun message pour le moment. Envoyez le premier pour démarrer la conversation.',
+    composerPh: 'Écrire un message…',
   },
   wallet: {
     totalBalance: 'Solde Total',

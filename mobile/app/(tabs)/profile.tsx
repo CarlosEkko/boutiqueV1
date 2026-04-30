@@ -7,7 +7,7 @@ import { Button, Card, Row } from '@/components/ui';
 import { theme } from '@/theme';
 import { changeLanguage, SUPPORTED_LANGUAGES } from '@/i18n';
 import i18n from '@/i18n';
-import { Globe, LogOut, Bell } from 'lucide-react-native';
+import { Globe, LogOut, Bell, ShieldCheck } from 'lucide-react-native';
 import { sendLocalTestNotification } from '@/hooks/usePushNotifications';
 
 export default function ProfileScreen() {
@@ -92,6 +92,24 @@ export default function ProfileScreen() {
             onPress={sendLocalTestNotification}
             variant="ghost"
             testID="test-push-btn"
+          />
+        </Card>
+
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <ShieldCheck color={theme.colors.gold} size={16} />
+            <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '500' }}>
+              {t('profile.identityVerification') || 'Verificação de Identidade'}
+            </Text>
+          </View>
+          <Text style={{ color: theme.colors.textMuted, fontSize: 12, marginBottom: 12 }}>
+            {t('profile.identityVerificationDesc') || 'Cumpra os requisitos KYC para desbloquear todos os limites de trading.'}
+          </Text>
+          <Button
+            label={t('kyc.start') || 'Iniciar Verificação'}
+            onPress={() => (require('expo-router').router.push('/kyc'))}
+            variant="ghost"
+            testID="profile-kyc-btn"
           />
         </Card>
 

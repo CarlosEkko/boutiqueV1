@@ -483,7 +483,7 @@ const TRANSLATIONS = {
     verified: 'Verified Member',
     notProvided: 'Not provided',
     cannotChange: 'Cannot be changed',
-    updateSuccess: 'Profile updated successfully!'
+    updateSuccess: 'Profile updated successfully!',
   },
 
   // Common
@@ -1199,7 +1199,9 @@ const TRANSLATIONS = {
       minutesAgo: '{n} minutes ago',
       hoursAgo: '{n} hours ago',
       daysAgo: '{n} days ago'
-    }
+    },
+    identityVerification: "Identity Verification",
+    identityVerificationDesc: "Complete KYC requirements to unlock all trading limits.",
   },
 
   // Security Dashboard
@@ -1434,6 +1436,17 @@ const TRANSLATIONS = {
   // KYC
   kyc: {
     // Status Page
+    title: 'Identity Verification',
+    heroTitle: 'Verify your identity',
+    heroSubtitle: 'To comply with KBEX regulatory requirements, we need to validate your ID document and a selfie. The process takes about 2 minutes.',
+    step1: 'Take a photo of your ID / Passport',
+    step2: 'Capture a liveness selfie',
+    step3: 'Get approval by notification',
+    start: 'Start Verification',
+    finishedTitle: 'Verification submitted',
+    finishedMsg: 'Our team will review your submission. You will be notified when complete.',
+    statusApproved: 'Approved',
+    statusPending: 'Under review',
     status: {
       title: 'Identity Verification',
       subtitle: 'Complete KYC/KYB verification to unlock all platform features',
@@ -2111,6 +2124,16 @@ const TRANSLATIONS = {
     createdTitle: 'Alert created',
     createdMsg: 'You will receive a push notification when {{asset}} hits the target.',
     openMarkets: 'Explore Markets',
+  },
+  otcChat: {
+    title: 'OTC Desk',
+    subtitle: 'Direct messages with your OTC desk',
+    empty: 'No active OTC deals',
+    emptyHint: 'When the OTC desk opens a deal for you, it will appear here for direct chat.',
+    dealChatTitle: 'OTC Desk',
+    secureChannel: 'Secure channel',
+    noMessages: 'No messages yet. Send the first to start the conversation.',
+    composerPh: 'Write a message…',
   },
   wallet: {
     totalBalance: 'Total Balance',

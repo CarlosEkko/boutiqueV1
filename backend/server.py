@@ -87,6 +87,7 @@ from routes.billing import router as billing_router, set_db as set_billing_db
 from routes.cookie_consent import router as cookie_consent_router, set_db as set_cookie_consent_db
 from routes.public_status import router as public_status_router, set_db as set_public_status_db
 from routes.price_alerts import router as price_alerts_router, set_db as set_price_alerts_db, start_alert_worker
+from routes.otc_chat import router as otc_chat_router, set_db as set_otc_chat_db
 from routes.tenants import router as tenants_router
 from routes.stripe_payments import router as stripe_router, set_db as set_stripe_db, _stripe_webhook_handler
 from utils.security_logger import set_db as set_security_logger_db, is_ip_blacklisted, log_security_event
@@ -134,6 +135,7 @@ set_billing_db(db)
 set_cookie_consent_db(db)
 set_public_status_db(db)
 set_price_alerts_db(db)
+set_otc_chat_db(db)
 set_stripe_db(db)
 set_crm_db(db)
 set_tokenization_db(db)
@@ -185,6 +187,7 @@ api_router.include_router(billing_router)
 api_router.include_router(cookie_consent_router)
 api_router.include_router(public_status_router)
 api_router.include_router(price_alerts_router)
+api_router.include_router(otc_chat_router)
 # tenants_router has its own /api prefix, register on app directly (below)
 
 

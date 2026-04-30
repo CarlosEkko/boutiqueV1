@@ -476,7 +476,7 @@ const TRANSLATIONS = {
     verified: 'عضو موثق',
     notProvided: 'غير متوفر',
     cannotChange: 'لا يمكن تغييره',
-    updateSuccess: 'تم تحديث الملف الشخصي بنجاح!'
+    updateSuccess: 'تم تحديث الملف الشخصي بنجاح!',
   },
 
   // Common
@@ -1166,7 +1166,9 @@ const TRANSLATIONS = {
       minutesAgo: 'منذ {n} دقائق',
       hoursAgo: 'منذ {n} ساعات',
       daysAgo: 'منذ {n} أيام'
-    }
+    },
+    identityVerification: "التحقق من الهوية",
+    identityVerificationDesc: "أكمل متطلبات KYC لفتح جميع حدود التداول.",
   },
 
   // Security Dashboard
@@ -1400,6 +1402,17 @@ const TRANSLATIONS = {
 
   // KYC
   kyc: {
+    title: 'التحقق من الهوية',
+    heroTitle: 'تحقق من هويتك',
+    heroSubtitle: 'للامتثال للمتطلبات التنظيمية لـ KBEX، نحتاج إلى التحقق من وثيقة الهوية والتقاط صورة سيلفي. تستغرق العملية حوالي دقيقتين.',
+    step1: 'التقط صورة لوثيقة الهوية / جواز السفر',
+    step2: 'التقط صورة سيلفي للتحقق من الحياة',
+    step3: 'احصل على الموافقة عبر الإشعار',
+    start: 'بدء التحقق',
+    finishedTitle: 'تم إرسال التحقق',
+    finishedMsg: 'سيقوم فريقنا بمراجعة طلبك. سيتم إعلامك عند الانتهاء.',
+    statusApproved: 'تمت الموافقة',
+    statusPending: 'قيد المراجعة',
     status: {
       title: 'التحقق من الهوية',
       subtitle: 'أكمل التحقق من KYC/KYB لفتح جميع ميزات المنصة',
@@ -1974,6 +1987,16 @@ const TRANSLATIONS = {
     createdTitle: 'تم إنشاء التنبيه',
     createdMsg: 'ستتلقى إشعار push بمجرد وصول {{asset}} إلى الهدف.',
     openMarkets: 'استكشاف الأسواق',
+  },
+  otcChat: {
+    title: 'مكتب OTC',
+    subtitle: 'رسائل مباشرة مع مكتب OTC',
+    empty: 'لا توجد صفقات OTC نشطة',
+    emptyHint: 'عندما يفتح مكتب OTC صفقة لك، ستظهر هنا للدردشة المباشرة.',
+    dealChatTitle: 'مكتب OTC',
+    secureChannel: 'قناة آمنة',
+    noMessages: 'لا توجد رسائل بعد. أرسل الأولى لبدء المحادثة.',
+    composerPh: 'اكتب رسالة…',
   },
   wallet: {
     totalBalance: 'الرصيد الإجمالي',

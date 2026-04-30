@@ -590,7 +590,9 @@ const TRANSLATIONS = {
       minutesAgo: 'Hace {n} minutos',
       hoursAgo: 'Hace {n} horas',
       daysAgo: 'Hace {n} días'
-    }
+    },
+    identityVerification: "Verificación de Identidad",
+    identityVerificationDesc: "Cumpla los requisitos KYC para desbloquear todos los límites de trading.",
   },
   common: {
     save: 'Guardar',
@@ -848,6 +850,17 @@ const TRANSLATIONS = {
     settings: { title: 'Configuración', subtitle: 'Configuración de la plataforma', general: 'General', security: 'Seguridad', notifications: 'Notificaciones', integrations: 'Integraciones', maintenance: 'Mantenimiento', platformName: 'Nombre de Plataforma', supportEmail: 'Email de Soporte', defaultLanguage: 'Idioma Predeterminado', defaultCurrency: 'Moneda Predeterminada', maintenanceMode: 'Modo Mantenimiento', enableRegistration: 'Habilitar Registro' }
   },
   kyc: {
+    title: 'Verificación de Identidad',
+    heroTitle: 'Verifique su identidad',
+    heroSubtitle: 'Para cumplir los requisitos regulatorios de KBEX, necesitamos validar su documento de identidad y una selfie. El proceso dura unos 2 minutos.',
+    step1: 'Fotografíe el documento (DNI / Pasaporte)',
+    step2: 'Tome una selfie de prueba de vida',
+    step3: 'Reciba la aprobación por notificación',
+    start: 'Iniciar Verificación',
+    finishedTitle: 'Verificación enviada',
+    finishedMsg: 'Nuestro equipo revisará su envío. Será notificado al finalizar.',
+    statusApproved: 'Aprobado',
+    statusPending: 'En revisión',
     status: {
       title: 'Verificación de Identidad', subtitle: 'Complete la verificación KYC/KYB para desbloquear todas las funciones', kycIndividual: 'KYC Individual', forIndividuals: 'Para personas', kycDescription: 'Verificación de identidad personal. Requerida para operaciones hasta €15,000/mes.', kybBusiness: 'KYB Empresarial', forBusinesses: 'Para empresas e instituciones', kybDescription: 'Verificación empresarial completa. Requerida para operaciones institucionales.', notStarted: 'No Iniciado', inProgress: 'En Progreso', pendingReview: 'Revisión Pendiente', approved: 'Aprobado', rejected: 'Rechazado', verificationComplete: 'Verificación completa', startKyc: 'Iniciar KYC', startKyb: 'Iniciar KYB', continueVerification: 'Continuar Verificación', tryAgain: 'Intentar de Nuevo', estimatedTime: 'Su verificación está en revisión. Tiempo estimado: 24-48 horas.', estimatedTimeKyb: 'Su verificación está en revisión. Tiempo estimado: 2-5 días hábiles.', whyVerify: '¿Por qué verificar su identidad?',
       benefits: ['Acceso completo a todas las funciones', 'Límites de transacción más altos', 'Protección contra fraude', 'Cumplimiento con regulaciones AML/KYC', 'Soporte prioritario y servicio dedicado'],
@@ -1233,6 +1246,16 @@ const TRANSLATIONS = {
     createdTitle: 'Alerta creada',
     createdMsg: 'Recibirá una notificación push cuando {{asset}} alcance el objetivo.',
     openMarkets: 'Explorar Mercados',
+  },
+  otcChat: {
+    title: 'Mesa OTC',
+    subtitle: 'Mensajes directos con su mesa OTC',
+    empty: 'Sin deals OTC activos',
+    emptyHint: 'Cuando la mesa OTC abra un deal suyo, aparecerá aquí para chatear directamente.',
+    dealChatTitle: 'Mesa OTC',
+    secureChannel: 'Canal seguro',
+    noMessages: 'Sin mensajes aún. Envíe el primero para iniciar la conversación.',
+    composerPh: 'Escribir mensaje…',
   },
   wallet: {
     totalBalance: 'Saldo Total',

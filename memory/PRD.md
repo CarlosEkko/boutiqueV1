@@ -264,6 +264,34 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Phase M4.2 OTC Chat + M4.3 KYC WebView (2026-04-30)
+
+### M4.2 OTC Chat
+- **Backend `/api/otc-chat/*`** — new `routes/otc_chat.py`:
+  - `GET /deals` — list of deals visible to caller (desk sees all in `otc_deals` + `demo_otc_deals`; client sees only deals owned via `client_user_id`/`created_by`/`client_id` mapping). Each row carries `last_message_preview` + `unread_count`.
+  - `GET /deals/{id}/messages` — chronological message list (caller marker `is_self`).
+  - `POST /deals/{id}/messages` — sends a message and pushes Expo notification to the other party (`account_manager_id` for desk, `client_user_id`/`created_by` for client).
+  - `POST /deals/{id}/messages/read` — bulk mark unread inbound messages as read.
+  - Permission gate `_check_can_access_deal` enforces tenant-aware client/desk separation.
+- **Mobile**:
+  - `app/(tabs)/otc.tsx` redesigned — list of deals with last message + unread badge + relative time (replaces "Coming in M4" placeholder).
+  - `app/otc/[dealId].tsx` — chat screen with FlatList, date separators, gold/surface message bubbles, `KeyboardAvoidingView`, composer with circular Send button. Polls every 7s + auto-marks as read on open.
+- **Push integration**: reuses the `push_tokens` collection from M4.1; messages from desk → push to client device, and vice-versa.
+
+### M4.3 KYC com Câmara
+- **Reuses existing `POST /api/sumsub/generate-link`** (Sumsub WebSDK link, 1h TTL, Portuguese locale).
+- **Mobile**:
+  - `app/kyc.tsx` — hero screen with 3-step explainer + status badge (Approved/Pending) read from `/api/sumsub/status`. Calls `generate-link` and opens the URL inside `react-native-webview` with `allowsInlineMediaPlayback` + camera permissions. "Concluído" returns to caller and prompts user that team will review.
+  - Profile screen — new "Verificação de Identidade" card with shield icon + CTA → routes to `/kyc`.
+- **Dependency**: `react-native-webview@13.15.0` (Expo SDK 54 compatible, installed via `npx expo install`).
+
+### i18n
+- New namespaces `otcChat.*` (8 keys) + `kyc.*` mobile flat keys (11 keys: title, heroTitle/Subtitle, step1-3, start, finishedTitle/Msg, statusApproved/Pending) merged into existing `kyc:` block.
+- New `profile.identityVerification` + `profile.identityVerificationDesc` injected into the active `profile:` block (handled duplicate-block edge case where 4/5 locales had two `profile:` definitions).
+
+### E2E verified (curl)
+- Admin lists 3 demo deals via `/otc-chat/deals` → sends message → receives back with `is_self: true` → list returns the message → mark-read returns `marked_read: 0` (already marked since sender = self).
+
 ## Mobile App — Portfolio (Wallet) Redesign + Alert Sheet Keyboard Fix (2026-04-30)
 - **Portfolio screen completely redesigned** (`app/(tabs)/portfolio.tsx`) with Revolut-style hierarchy:
   - Hero "Total Balance" gold display (38pt thin) with **fiat + crypto valued in EUR** (live KBEX-spread mid prices via `/api/trading/cryptos`).
