@@ -143,7 +143,7 @@ export default function PortfolioScreen() {
           <ActionButton
             icon={<ArrowUpFromLine color={theme.colors.gold} size={20} />}
             label={t('wallet.withdraw') || 'Levantar'}
-            onPress={() => router.push('/(tabs)/' as any)}
+            onPress={() => router.push('/withdraw' as any)}
             testID="wallet-action-withdraw"
           />
           <ActionButton

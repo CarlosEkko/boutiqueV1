@@ -264,6 +264,16 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Crypto Withdrawal Flow (2026-04-30)
+- New mobile screen `app/withdraw.tsx` — 3-step flow:
+  1. **Pick** the asset/network (same 9 options as Deposit screen).
+  2. **Form** — destination address (monospace, multiline), amount input with **MAX** shortcut, live EUR equivalent (using `useWallets` prices), red border + error when amount > available balance, optional internal note.
+  3. **Review** — summary card (asset · amount · EUR equiv · destination · note), amber warning ("compliance approval required, on-chain transfers irreversible"), green "you'll be notified" hint, Confirm + Edit buttons.
+- **Reuses backend** `POST /api/crypto-wallets/withdraw` (already existed). Returns `withdrawal_id` after success → modal alert + auto-back to Wallet + refresh.
+- Wallet "Levantar" Quick Action now routes here.
+- i18n: 23 keys `withdraw.*` in PT/EN/AR/FR/ES.
+- E2E verified: `GET /api/crypto-wallets/withdrawals` returns existing pending records correctly.
+
 ## Mobile App — Crypto Deposit Screen with QR Codes (2026-04-30)
 - New mobile screen `app/deposit.tsx` — 2-step flow:
   1. Asset picker (9 networks: BTC, ETH, USDT-ERC20/Polygon/Tron, USDC, SOL, XRP, MATIC) with logos + human-readable network labels.
