@@ -1,6 +1,33 @@
 # KBEX.io - Changelog
 
-## 2026-04-30 - Phases 3+4: Tier-2 & Tier-3 Modal Titles Translated (~29 files)
+## 2026-04-30 - Mobile App Phase M1: Foundation (iOS + Android via Expo)
+**Goal:** Bootstrap a native mobile app for KBEX (iOS + Android) reusing the web backend and i18n locales. Delivers a working scaffold that runs on Expo Go today.
+
+**Stack**
+- **Expo SDK 52** + React Native 0.76 (New Architecture enabled) + Expo Router v4 (file-based routing)
+- **TypeScript** strict
+- **NativeWind 4** (Tailwind for RN) with gold (`#D4AF37`) on near-black premium palette matching web
+- **i18next + expo-localization** with a **symlink** to `/app/frontend/src/i18n/locales/` → all 5 languages (PT/EN/AR/FR/ES) including the Tier 1/2/3 modal translations work out of the box
+- **expo-secure-store** (Keychain / EncryptedSharedPreferences) for JWT · **AsyncStorage** for user profile + language preference
+
+**Delivered (Phase M1)**
+- Project at `/app/mobile` (independent from the web codebase, shares backend & locales)
+- Root layout with auth guard + i18n bootstrap + gesture / safe-area providers
+- Login screen with KBEX branding (serif logotype, gold CTA, gradient-free minimal luxury feel)
+- 5-tab bottom navigator (Home / Markets / OTC / Portfolio / Profile)
+- Home screen: hero balance card + 4-action quick widget + 3-page swipeable section carousel + recent-activity placeholder
+- Profile screen with inline language switcher (`data-testid="lang-{en|pt|ar|fr|es}"`) + logout
+- Axios client with 401 listener → auto-clears session on token expiry
+- `start.sh` helper script for one-command local launch (`./start.sh` on dev machine → scan QR)
+
+**Verification**
+- `yarn install` · 890 packages installed cleanly
+- `yarn type-check` · TypeScript 0 errors
+- Metro Bundler starts successfully (warnings only about two minor version mismatches to align in M2)
+
+**Next (M2):** real wallet balances, transaction list, Expo Notifications (push), pull-to-refresh wired to backend.
+
+
 **Goal:** Extend i18n to all staff (CRM / OTC / Risk) and admin modals. Due to volume, scope is limited to `DialogTitle` + `DialogDescription` + primary action buttons. Body form field labels remain in PT (Phase 5+).
 
 **New namespaces**
