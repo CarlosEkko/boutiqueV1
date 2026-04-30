@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -57,6 +58,7 @@ const getStatusInfo = (status) => {
 
 const CryptoTransactionsPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -294,14 +296,14 @@ const CryptoTransactionsPage = () => {
         <DialogContent className="bg-zinc-900 border-gold-800/30 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
-              Detalhes da Transação
+              {t('cryptoTxModal.title')}
             </DialogTitle>
           </DialogHeader>
           
           {loadingDetails ? (
             <div className="py-8 text-center">
               <Loader2 className="animate-spin mx-auto text-gold-500" size={32} />
-              <p className="text-gray-400 mt-2">Carregando detalhes...</p>
+              <p className="text-gray-400 mt-2">{t('cryptoTxModal.loading')}</p>
             </div>
           ) : txDetails ? (
             <div className="space-y-6 mt-4">
@@ -341,7 +343,7 @@ const CryptoTransactionsPage = () => {
                       </Badge>
                       {txDetails.num_confirmations > 0 && (
                         <span className="text-gray-400 text-sm">
-                          ({txDetails.num_confirmations} confirmações)
+                          ({txDetails.num_confirmations} {t('cryptoTxModal.confirmations')})
                         </span>
                       )}
                     </div>
@@ -358,7 +360,7 @@ const CryptoTransactionsPage = () => {
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      KBEX aguarda confirmação na blockchain
+                      {t('cryptoTxModal.awaitingConfirmation')}
                     </p>
                   </div>
                 )}
@@ -369,7 +371,7 @@ const CryptoTransactionsPage = () => {
                 {/* Transaction Hash */}
                 {txDetails.tx_hash && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Transaction Hash</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.txHash')}</span>
                     <div className="flex items-center gap-2">
                       <code className="text-white text-sm font-mono bg-zinc-800 px-2 py-1 rounded">
                         {truncateHash(txDetails.tx_hash)}
@@ -397,7 +399,7 @@ const CryptoTransactionsPage = () => {
                 {/* Destination Address */}
                 {txDetails.destination_address && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Destination Address</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.destAddress')}</span>
                     <div className="flex items-center gap-2">
                       <code className="text-white text-sm font-mono bg-zinc-800 px-2 py-1 rounded">
                         {truncateHash(txDetails.destination_address)}
@@ -415,7 +417,7 @@ const CryptoTransactionsPage = () => {
 
                 {/* Network Fee */}
                 <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                  <span className="text-gray-400">Network Fee</span>
+                  <span className="text-gray-400">{t('cryptoTxModal.networkFee')}</span>
                   <div className="text-right">
                     <p className="text-white">{txDetails.network_fee?.toFixed(10)} {txDetails.fee_currency || txDetails.asset}</p>
                     {txDetails.network_fee_usd > 0 && (
@@ -427,7 +429,7 @@ const CryptoTransactionsPage = () => {
                 {/* Source */}
                 {txDetails.source?.name && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Source</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.source')}</span>
                     <span className="text-white">{txDetails.source.name}</span>
                   </div>
                 )}
@@ -435,7 +437,7 @@ const CryptoTransactionsPage = () => {
                 {/* Destination Vault */}
                 {txDetails.destination?.name && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Destination</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.destination')}</span>
                     <span className="text-white">{txDetails.destination.name}</span>
                   </div>
                 )}
@@ -443,7 +445,7 @@ const CryptoTransactionsPage = () => {
                 {/* Signed By */}
                 {txDetails.signed_by?.length > 0 && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Signed By</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.signedBy')}</span>
                     <span className="text-white">{txDetails.signed_by.join(', ')}</span>
                   </div>
                 )}
@@ -451,25 +453,25 @@ const CryptoTransactionsPage = () => {
                 {/* Created By */}
                 {txDetails.created_by && (
                   <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                    <span className="text-gray-400">Initiator</span>
+                    <span className="text-gray-400">{t('cryptoTxModal.initiator')}</span>
                     <span className="text-white">{txDetails.created_by}</span>
                   </div>
                 )}
 
                 {/* Dates */}
                 <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                  <span className="text-gray-400">Created</span>
+                  <span className="text-gray-400">{t('cryptoTxModal.created')}</span>
                   <span className="text-white">{formatDate(txDetails.created_at)}</span>
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                  <span className="text-gray-400">Last Updated</span>
+                  <span className="text-gray-400">{t('cryptoTxModal.lastUpdated')}</span>
                   <span className="text-white">{formatDate(txDetails.last_updated)}</span>
                 </div>
 
-                {/* Fireblocks TX ID */}
+                {/* Transaction ID */}
                 <div className="flex items-center justify-between py-3 border-b border-zinc-800">
-                  <span className="text-gray-400">Transaction ID</span>
+                  <span className="text-gray-400">{t('cryptoTxModal.txId')}</span>
                   <div className="flex items-center gap-2">
                     <code className="text-gold-400 text-sm font-mono">{txDetails.fireblocks_tx_id}</code>
                     <Button 
@@ -485,7 +487,7 @@ const CryptoTransactionsPage = () => {
                 {/* Note */}
                 {txDetails.note && (
                   <div className="py-3">
-                    <span className="text-gray-400 block mb-2">Note</span>
+                    <span className="text-gray-400 block mb-2">{t('cryptoTxModal.note')}</span>
                     <p className="text-white bg-zinc-800 rounded-lg p-3">{txDetails.note}</p>
                   </div>
                 )}
@@ -498,12 +500,12 @@ const CryptoTransactionsPage = () => {
                   onClick={() => window.open(txDetails.explorer_url, '_blank')}
                 >
                   <ExternalLink size={16} className="mr-2" />
-                  Ver no Block Explorer
+                  {t('cryptoTxModal.viewExplorer')}
                 </Button>
               )}
             </div>
           ) : (
-            <p className="text-gray-400 text-center py-4">Não foi possível carregar os detalhes</p>
+            <p className="text-gray-400 text-center py-4">{t('cryptoTxModal.loadFailed')}</p>
           )}
         </DialogContent>
       </Dialog>

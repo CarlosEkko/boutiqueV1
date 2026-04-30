@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '../ui/dialog';
@@ -22,33 +23,29 @@ const CRYPTO_META = {
   USDC: { label: 'USD Coin', network: 'ERC-20' },
 };
 
-const FEE_LABEL = {
-  annual: 'Renovação Anual',
-  upgrade: 'Upgrade de Tier',
-  admission: 'Taxa de Admissão',
+const FEE_LABEL_KEYS = {
+  annual: 'feeAnnual',
+  upgrade: 'feeUpgrade',
+  admission: 'feeAdmission',
 };
 
 /**
  * BillingCheckoutDialog
- * Generic checkout for annual / upgrade payments.
- * Props:
- *   - open (bool)
- *   - onClose (fn)
- *   - paymentId (string)
- *   - onSubmitted (fn) — called after successful submission
+ * Generic checkout for annual / upgrade / admission payments.
  */
 const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  // "picker" = 3-card method selector (default landing).
-  // "crypto" / "bank_transfer" = detailed flow once user picks Cripto/Transferência.
   const [stage, setStage] = useState('picker');
   const [method, setMethod] = useState('crypto');
   const [selectedCrypto, setSelectedCrypto] = useState('USDT');
   const [selectedBankId, setSelectedBankId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+
+  const feeLabel = (feeType) => t(`billingCheckout.${FEE_LABEL_KEYS[feeType] || ''}`, feeType || '');
 
   useEffect(() => {
     if (!open || !paymentId) return;
@@ -66,25 +63,25 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
           if (banks.length > 0) setSelectedBankId(banks[0].id);
         }
       } catch (err) {
-        toast.error(err?.response?.data?.detail || 'Falha ao carregar checkout');
+        toast.error(err?.response?.data?.detail || t('billingCheckout.loadError'));
         onClose?.();
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [open, paymentId, token, onClose]);
+  }, [open, paymentId, token, onClose, t]);
 
   const copy = (text, field) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
-    toast.success('Copiado!');
+    toast.success(t('billingCheckout.copied'));
     setTimeout(() => setCopiedField(null), 1500);
   };
 
   const submit = async () => {
     if (method === 'bank_transfer' && !selectedBankId) {
-      toast.error('Selecione uma conta bancária');
+      toast.error(t('billingCheckout.selectBank'));
       return;
     }
     setSubmitting(true);
@@ -98,11 +95,11 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Pagamento submetido. Aguarda confirmação do administrador.');
+      toast.success(t('billingCheckout.submitSuccess'));
       onSubmitted?.();
       onClose?.();
     } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Falha ao submeter');
+      toast.error(err?.response?.data?.detail || t('billingCheckout.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -121,10 +118,10 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-gold-400">
             <Banknote size={18} />
-            {payment ? (FEE_LABEL[payment.fee_type] || 'Pagamento') : 'Checkout'}
+            {payment ? feeLabel(payment.fee_type) || t('billingCheckout.title') : t('billingCheckout.fallbackTitle')}
           </DialogTitle>
           <DialogDescription className="text-zinc-400">
-            Selecione o método de pagamento. O administrador confirma após receber os fundos.
+            {t('billingCheckout.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -135,40 +132,39 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
             {/* Summary */}
             <div className="rounded-lg border border-gold-800/40 bg-gold-950/20 p-4 space-y-1.5">
               <div className="flex justify-between text-xs text-zinc-400">
-                <span>Tipo</span>
+                <span>{t('billingCheckout.type')}</span>
                 <Badge className="bg-gold-500/15 text-gold-300 border border-gold-500/30 text-[10px] tracking-wider">
-                  {FEE_LABEL[payment.fee_type] || payment.fee_type}
+                  {feeLabel(payment.fee_type) || payment.fee_type}
                 </Badge>
               </div>
               {payment.target_tier && (
                 <div className="flex justify-between text-xs text-zinc-400">
-                  <span>Upgrade</span>
+                  <span>{t('billingCheckout.upgrade')}</span>
                   <span className="text-white capitalize">
                     {payment.membership_level} <ArrowRight size={10} className="inline mx-1" /> {payment.target_tier}
                   </span>
                 </div>
               )}
               <div className="flex justify-between items-baseline border-t border-gold-700/40 pt-2">
-                <span className="text-sm text-white">Total</span>
+                <span className="text-sm text-white">{t('billingCheckout.total')}</span>
                 <span className="text-xl font-semibold text-gold-400 tabular-nums">
                   €{(payment.amount || 0).toLocaleString('pt-PT', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
 
-            {/* Stage 1: 3-card method picker (Saldo Fiat / Cripto / Cartão) */}
+            {/* Stage 1: 3-card method picker */}
             {stage === 'picker' && (
               <PaymentMethodPicker
                 amount={Number(payment.amount || 0)}
                 paymentId={payment.id}
                 feeType={payment.fee_type || 'annual'}
                 onCryptoSelected={() => {
-                  // Default to crypto sub-tab; user may switch to bank inside
                   setMethod('crypto');
                   setStage('crypto');
                 }}
                 onPaid={() => {
-                  toast.success('Pagamento processado · saldo atualizado');
+                  toast.success(t('billingCheckout.paidSuccess'));
                   onSubmitted?.();
                   onClose?.();
                 }}
@@ -184,7 +180,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 className="text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1"
                 data-testid="back-to-picker-btn"
               >
-                <ArrowLeft size={12} /> Voltar aos métodos
+                <ArrowLeft size={12} /> {t('billingCheckout.backToMethods')}
               </button>
             )}
 
@@ -199,7 +195,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 data-testid="method-crypto-btn"
               >
                 <Bitcoin size={14} />
-                <span className="text-sm">Crypto</span>
+                <span className="text-sm">{t('billingCheckout.crypto')}</span>
               </button>
               <button
                 onClick={() => { setMethod('bank_transfer'); setStage('bank_transfer'); }}
@@ -209,7 +205,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 data-testid="method-bank-btn"
               >
                 <Building2 size={14} />
-                <span className="text-sm">Transferência</span>
+                <span className="text-sm">{t('billingCheckout.bankTransfer')}</span>
               </button>
             </div>
             )}
@@ -234,7 +230,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
 
                 <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-2.5">
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-zinc-500">Montante ({selectedCrypto})</div>
+                    <div className="text-[10px] uppercase tracking-wider text-zinc-500">{t('billingCheckout.amount')} ({selectedCrypto})</div>
                     <div className="mt-1 flex items-baseline gap-2">
                       <span className="text-2xl font-light text-white tabular-nums">
                         {cryptoAmounts[selectedCrypto] ? cryptoAmounts[selectedCrypto].toLocaleString('pt-PT', { maximumFractionDigits: 8 }) : '—'}
@@ -244,7 +240,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                   </div>
 
                   <div>
-                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Endereço {selectedCrypto}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">{t('billingCheckout.address')} {selectedCrypto}</div>
                     <div className="flex items-center gap-2 rounded-md bg-zinc-950 border border-zinc-800 px-2 py-1.5">
                       <code className="flex-1 text-[11px] text-zinc-300 break-all font-mono">
                         {wallets[selectedCrypto] || '—'}
@@ -262,8 +258,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                   <div className="flex items-start gap-2 rounded-md bg-amber-950/20 border border-amber-800/30 p-2">
                     <AlertCircle size={12} className="text-amber-400 shrink-0 mt-0.5" />
                     <p className="text-[11px] text-amber-200/80">
-                      Envie exactamente este montante para a rede <span className="font-semibold">{CRYPTO_META[selectedCrypto]?.network}</span>.
-                      Após envio, clique em "Submeter" — o admin confirma assim que o depósito for detectado.
+                      {t('billingCheckout.cryptoWarning').replace('{network}', CRYPTO_META[selectedCrypto]?.network || '')}
                     </p>
                   </div>
                 </div>
@@ -275,7 +270,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
               <div className="space-y-3">
                 {banks.length === 0 ? (
                   <div className="text-center text-zinc-500 text-sm py-4">
-                    Nenhuma conta bancária configurada. Contacte o administrador.
+                    {t('billingCheckout.noBankAccounts')}
                   </div>
                 ) : (
                   <>
@@ -296,11 +291,11 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                       if (!bank) return null;
                       return (
                         <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 space-y-2">
-                          <InfoRow label="Beneficiário" value={bank.account_holder} onCopy={(v) => copy(v, 'holder')} copied={copiedField === 'holder'} />
-                          <InfoRow label="IBAN" value={bank.iban} onCopy={(v) => copy(v, 'iban')} copied={copiedField === 'iban'} mono />
-                          <InfoRow label="BIC/SWIFT" value={bank.bic} onCopy={(v) => copy(v, 'bic')} copied={copiedField === 'bic'} mono />
+                          <InfoRow label={t('billingCheckout.beneficiary')} value={bank.account_holder} onCopy={(v) => copy(v, 'holder')} copied={copiedField === 'holder'} />
+                          <InfoRow label={t('billingCheckout.iban')} value={bank.iban} onCopy={(v) => copy(v, 'iban')} copied={copiedField === 'iban'} mono />
+                          <InfoRow label={t('billingCheckout.bic')} value={bank.bic} onCopy={(v) => copy(v, 'bic')} copied={copiedField === 'bic'} mono />
                           <InfoRow
-                            label="Referência"
+                            label={t('billingCheckout.reference')}
                             value={`KBEX-${(payment.fee_type || 'fee').toUpperCase()}-${payment.id.slice(0, 8)}`}
                             onCopy={(v) => copy(v, 'ref')}
                             copied={copiedField === 'ref'}
@@ -312,7 +307,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                     <div className="flex items-start gap-2 rounded-md bg-blue-950/20 border border-blue-800/30 p-2">
                       <AlertCircle size={12} className="text-blue-400 shrink-0 mt-0.5" />
                       <p className="text-[11px] text-blue-200/80">
-                        Inclua obrigatoriamente a referência na sua transferência. As transferências SEPA demoram 1-2 dias úteis.
+                        {t('billingCheckout.bankWarning')}
                       </p>
                     </div>
                   </>
@@ -320,11 +315,11 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
               </div>
             )}
 
-            {/* Submit (only on detailed crypto/bank stages) */}
+            {/* Submit */}
             {stage !== 'picker' && (
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={onClose} className="text-zinc-400 hover:text-white" data-testid="checkout-cancel">
-                Cancelar
+                {t('billingCheckout.cancel')}
               </Button>
               <Button
                 onClick={submit}
@@ -333,7 +328,7 @@ const BillingCheckoutDialog = ({ open, onClose, paymentId, onSubmitted }) => {
                 data-testid="checkout-submit"
               >
                 {submitting ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} className="mr-1.5" />}
-                Submeter Pagamento
+                {t('billingCheckout.submit')}
               </Button>
             </div>
             )}

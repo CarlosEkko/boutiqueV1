@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useDemo } from '../../context/DemoContext';
+import { useLanguage } from '../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -39,6 +40,7 @@ const CURRENCIES = ['EUR', 'USD', 'GBP', 'BRL', 'AED', 'CHF'];
 const BankAccountsPage = () => {
   const { token, user } = useAuth();
   const { demoMode } = useDemo();
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -359,34 +361,34 @@ const BankAccountsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Landmark className="text-gold-400" size={20} />
-              Adicionar Conta Bancária
+              {t('bankAccountModals.add.title')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Introduza os dados da sua conta bancária para verificação.
+              {t('bankAccountModals.add.desc')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Account Holder */}
             <div className="space-y-2">
-              <Label className="text-gray-400">Titular da Conta *</Label>
+              <Label className="text-gray-400">{t('bankAccountModals.add.holder')}</Label>
               <Input
                 name="account_holder"
                 value={formData.account_holder}
                 onChange={handleChange}
-                placeholder="Nome completo conforme conta bancária"
+                placeholder={t('bankAccountModals.add.holderPh')}
                 className="bg-zinc-800 border-zinc-700"
               />
             </div>
 
             {/* Bank Name */}
             <div className="space-y-2">
-              <Label className="text-gray-400">Nome do Banco *</Label>
+              <Label className="text-gray-400">{t('bankAccountModals.add.bankName')}</Label>
               <Input
                 name="bank_name"
                 value={formData.bank_name}
                 onChange={handleChange}
-                placeholder="Ex: Millennium BCP, Santander, etc."
+                placeholder={t('bankAccountModals.add.bankNamePh')}
                 className="bg-zinc-800 border-zinc-700"
               />
             </div>
@@ -394,10 +396,10 @@ const BankAccountsPage = () => {
             {/* Country & Currency */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-gray-400">País *</Label>
+                <Label className="text-gray-400">{t('bankAccountModals.add.country')}</Label>
                 <Select value={formData.country} onValueChange={(v) => handleSelectChange('country', v)}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectValue placeholder="Selecionar país" />
+                    <SelectValue placeholder={t('bankAccountModals.add.selectCountry')} />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-800 border-zinc-700">
                     {COUNTRIES.map(c => (
@@ -409,7 +411,7 @@ const BankAccountsPage = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-400">Moeda</Label>
+                <Label className="text-gray-400">{t('bankAccountModals.add.currency')}</Label>
                 <Select value={formData.currency} onValueChange={(v) => handleSelectChange('currency', v)}>
                   <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                     <SelectValue />
@@ -427,7 +429,7 @@ const BankAccountsPage = () => {
 
             {/* IBAN */}
             <div className="space-y-2">
-              <Label className="text-gray-400">IBAN</Label>
+              <Label className="text-gray-400">{t('bankAccountModals.add.iban')}</Label>
               <Input
                 name="iban"
                 value={formData.iban}
@@ -435,29 +437,29 @@ const BankAccountsPage = () => {
                 placeholder="PT50 0000 0000 0000 0000 0000 0"
                 className="bg-zinc-800 border-zinc-700 font-mono"
               />
-              <p className="text-xs text-gray-500">Para contas europeias, introduza o IBAN completo</p>
+              <p className="text-xs text-gray-500">{t('bankAccountModals.add.ibanHelp')}</p>
             </div>
 
             {/* SWIFT/BIC */}
             <div className="space-y-2">
-              <Label className="text-gray-400">SWIFT/BIC</Label>
+              <Label className="text-gray-400">{t('bankAccountModals.add.swift')}</Label>
               <Input
                 name="swift_bic"
                 value={formData.swift_bic}
                 onChange={handleChange}
-                placeholder="Ex: BCOMPTPL"
+                placeholder={t('bankAccountModals.add.swiftPh')}
                 className="bg-zinc-800 border-zinc-700 font-mono uppercase"
               />
             </div>
 
             {/* Account Number (for non-IBAN countries) */}
             <div className="space-y-2">
-              <Label className="text-gray-400">Número da Conta</Label>
+              <Label className="text-gray-400">{t('bankAccountModals.add.accountNumber')}</Label>
               <Input
                 name="account_number"
                 value={formData.account_number}
                 onChange={handleChange}
-                placeholder="Número da conta (se não tiver IBAN)"
+                placeholder={t('bankAccountModals.add.accountNumberPh')}
                 className="bg-zinc-800 border-zinc-700 font-mono"
               />
             </div>
@@ -466,7 +468,7 @@ const BankAccountsPage = () => {
             {(formData.country === 'UK' || formData.country === 'US') && (
               <div className="space-y-2">
                 <Label className="text-gray-400">
-                  {formData.country === 'UK' ? 'Sort Code' : 'Routing Number'}
+                  {formData.country === 'UK' ? t('bankAccountModals.add.sortCode') : t('bankAccountModals.add.routingNumber')}
                 </Label>
                 <Input
                   name={formData.country === 'UK' ? 'sort_code' : 'routing_number'}
@@ -485,14 +487,14 @@ const BankAccountsPage = () => {
               onClick={() => setShowAddModal(false)}
               className="border-zinc-700"
             >
-              Cancelar
+              {t('bankAccountModals.add.cancel')}
             </Button>
             <Button
               onClick={handleAddAccount}
               className="bg-emerald-500 hover:bg-emerald-600"
               disabled={saving}
             >
-              {saving ? 'A guardar...' : 'Adicionar Conta'}
+              {saving ? t('bankAccountModals.add.saving') : t('bankAccountModals.add.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -504,13 +506,13 @@ const BankAccountsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
               <Trash2 size={20} />
-              Remover Conta Bancária
+              {t('bankAccountModals.delete.title')}
             </DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
             <p className="text-gray-300">
-              Tem a certeza que deseja remover esta conta bancária?
+              {t('bankAccountModals.delete.confirm')}
             </p>
             {accountToDelete && (
               <div className="mt-4 p-3 bg-zinc-800/50 rounded-lg">
@@ -532,14 +534,14 @@ const BankAccountsPage = () => {
               }}
               className="border-zinc-700"
             >
-              Cancelar
+              {t('bankAccountModals.delete.cancel')}
             </Button>
             <Button
               onClick={handleDeleteAccount}
               className="bg-red-600 hover:bg-red-500"
             >
               <Trash2 size={16} className="mr-2" />
-              Remover
+              {t('bankAccountModals.delete.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

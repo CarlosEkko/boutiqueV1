@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -23,6 +24,7 @@ const BLOCKCHAINS = [
 
 const TokenizationPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [collections, setCollections] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -274,22 +276,22 @@ const TokenizationPage = () => {
       {/* Create Collection Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="text-[#D4AF37]" size={20} /> Nova Coleção</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="text-[#D4AF37]" size={20} /> {t('tokenizationModals.create.title')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Nome</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.create.name')}</label>
               <Input value={createForm.name} onChange={e => setCreateForm(p => ({...p, name: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="Ex: KBEX Gold Token" data-testid="create-name-input" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.create.namePh')} data-testid="create-name-input" />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Símbolo</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.create.symbol')}</label>
               <Input value={createForm.symbol} onChange={e => setCreateForm(p => ({...p, symbol: e.target.value.toUpperCase()}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="Ex: KBXG" maxLength={10} data-testid="create-symbol-input" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.create.symbolPh')} maxLength={10} data-testid="create-symbol-input" />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Blockchain</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.create.blockchain')}</label>
               <Select value={createForm.blockchain} onValueChange={v => setCreateForm(p => ({...p, blockchain: v}))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="create-blockchain-select"><SelectValue placeholder="Selecionar blockchain" /></SelectTrigger>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="create-blockchain-select"><SelectValue placeholder={t('tokenizationModals.create.blockchainPh')} /></SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
                   {BLOCKCHAINS.map(b => (<SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>))}
                 </SelectContent>
@@ -297,9 +299,9 @@ const TokenizationPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-zinc-700">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-zinc-700">{t('tokenizationModals.create.cancel')}</Button>
             <Button onClick={handleCreate} disabled={actionLoading} className="bg-[#D4AF37] hover:bg-[#C4A030] text-black" data-testid="create-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Criar Coleção'}
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : t('tokenizationModals.create.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -308,37 +310,37 @@ const TokenizationPage = () => {
       {/* Issue Token Modal */}
       <Dialog open={showIssueModal} onOpenChange={setShowIssueModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><FileCode2 className="text-blue-400" size={20} /> Emitir Token</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><FileCode2 className="text-blue-400" size={20} /> {t('tokenizationModals.issue.title')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Vault Account ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.issue.vaultId')}</label>
               <Input value={issueForm.vault_account_id} onChange={e => setIssueForm(p => ({...p, vault_account_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.issue.vaultIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Asset ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.issue.assetId')}</label>
               <Input value={issueForm.asset_id} onChange={e => setIssueForm(p => ({...p, asset_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="Ex: ETH_TEST" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.issue.assetIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Blockchain</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.issue.blockchain')}</label>
               <Select value={issueForm.blockchain} onValueChange={v => setIssueForm(p => ({...p, blockchain: v}))}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder="Selecionar blockchain" /></SelectTrigger>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700"><SelectValue placeholder={t('tokenizationModals.issue.blockchainPh')} /></SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
                   {BLOCKCHAINS.map(b => (<SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Contract Address</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.issue.contract')}</label>
               <Input value={issueForm.contract_address} onChange={e => setIssueForm(p => ({...p, contract_address: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="0x..." />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.issue.contractPh')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowIssueModal(false)} className="border-zinc-700">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowIssueModal(false)} className="border-zinc-700">{t('tokenizationModals.issue.cancel')}</Button>
             <Button onClick={handleIssue} disabled={actionLoading} className="bg-blue-600 hover:bg-blue-500" data-testid="issue-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Emitir Token'}
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : t('tokenizationModals.issue.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -347,28 +349,28 @@ const TokenizationPage = () => {
       {/* Mint Modal */}
       <Dialog open={showMintModal} onOpenChange={setShowMintModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="text-emerald-400" size={20} /> Mint Tokens</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="text-emerald-400" size={20} /> {t('tokenizationModals.mint.title')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Collection ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.mint.collectionId')}</label>
               <Input value={mintForm.collection_id} onChange={e => setMintForm(p => ({...p, collection_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da coleção" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.mint.collectionIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Vault Account ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.mint.vaultId')}</label>
               <Input value={mintForm.vault_account_id} onChange={e => setMintForm(p => ({...p, vault_account_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.mint.vaultIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Quantidade</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.mint.amount')}</label>
               <Input type="number" value={mintForm.amount} onChange={e => setMintForm(p => ({...p, amount: e.target.value}))}
                 className="bg-zinc-800 border-zinc-700" placeholder="0" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMintModal(false)} className="border-zinc-700">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowMintModal(false)} className="border-zinc-700">{t('tokenizationModals.mint.cancel')}</Button>
             <Button onClick={handleMint} disabled={actionLoading} className="bg-emerald-600 hover:bg-emerald-500" data-testid="mint-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Mint'}
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : t('tokenizationModals.mint.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -377,28 +379,28 @@ const TokenizationPage = () => {
       {/* Burn Modal */}
       <Dialog open={showBurnModal} onOpenChange={setShowBurnModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Flame className="text-red-400" size={20} /> Burn Tokens</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Flame className="text-red-400" size={20} /> {t('tokenizationModals.burn.title')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Collection ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.burn.collectionId')}</label>
               <Input value={burnForm.collection_id} onChange={e => setBurnForm(p => ({...p, collection_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da coleção" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.burn.collectionIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Vault Account ID</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.burn.vaultId')}</label>
               <Input value={burnForm.vault_account_id} onChange={e => setBurnForm(p => ({...p, vault_account_id: e.target.value}))}
-                className="bg-zinc-800 border-zinc-700" placeholder="ID da vault" />
+                className="bg-zinc-800 border-zinc-700" placeholder={t('tokenizationModals.burn.vaultIdPh')} />
             </div>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Quantidade</label>
+              <label className="text-xs text-zinc-400 mb-1 block">{t('tokenizationModals.burn.amount')}</label>
               <Input type="number" value={burnForm.amount} onChange={e => setBurnForm(p => ({...p, amount: e.target.value}))}
                 className="bg-zinc-800 border-zinc-700" placeholder="0" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBurnModal(false)} className="border-zinc-700">Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowBurnModal(false)} className="border-zinc-700">{t('tokenizationModals.burn.cancel')}</Button>
             <Button onClick={handleBurn} disabled={actionLoading} className="bg-red-600 hover:bg-red-500" data-testid="burn-confirm-btn">
-              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : 'Burn'}
+              {actionLoading ? <Loader2 className="animate-spin" size={16} /> : t('tokenizationModals.burn.submit')}
             </Button>
           </DialogFooter>
         </DialogContent>

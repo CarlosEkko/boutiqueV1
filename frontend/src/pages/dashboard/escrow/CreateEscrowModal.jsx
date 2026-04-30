@@ -1,40 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Card } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
 import {
-  X, ArrowRight, ArrowLeft, Lock, DollarSign, Users, Shield,
-  FileText, Check, ArrowLeftRight, Calculator
+  X, ArrowRight, ArrowLeft, Lock, Users,
+  Check, ArrowLeftRight, Calculator
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const DEAL_TYPES = [
-  { value: 'block_trade', label: 'Block Trade', desc: 'Grande volume de um ativo' },
-  { value: 'stablecoin_swap', label: 'Stablecoin Swap', desc: 'Troca entre stablecoins' },
-  { value: 'cross_chain', label: 'Cross-Chain', desc: 'Troca entre blockchains diferentes' },
-  { value: 'crypto_fiat', label: 'Crypto/Fiat', desc: 'Conversão crypto para moeda fiat' },
-  { value: 'crypto_crypto', label: 'Crypto/Crypto', desc: 'Troca entre criptomoedas' },
+const DEAL_TYPE_VALUES = ['block_trade', 'stablecoin_swap', 'cross_chain', 'crypto_fiat', 'crypto_crypto'];
+
+const FEE_SCHEDULE_META = [
+  { value: 'standard', rate: '0.5%', min: '$50' },
+  { value: 'premium', rate: '0.3%', min: '$100' },
+  { value: 'institutional', rate: '0.1%', min: '$250' },
+  { value: 'custom', rate: null, min: null },
 ];
 
-const FEE_SCHEDULES = [
-  { value: 'standard', label: 'Standard', rate: '0.5%', min: '$50' },
-  { value: 'premium', label: 'Premium', rate: '0.3%', min: '$100' },
-  { value: 'institutional', label: 'Institucional', rate: '0.1%', min: '$250' },
-  { value: 'custom', label: 'Custom', rate: 'Personalizado', min: '-' },
-];
-
-const STEPS = ['Tipo & Ativos', 'Contrapartes', 'Fees & Liquidação', 'Revisão'];
+const STRUCTURE_VALUES = ['one_sided', 'two_sided'];
+const FEE_PAYER_VALUES = ['buyer', 'seller', 'split'];
 
 const CreateEscrowModal = ({ onClose, onCreated }) => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [feePreview, setFeePreview] = useState(null);
+
+  const STEPS = useMemo(() => [
+    t('escrowModal.steps.typeAssets'),
+    t('escrowModal.steps.parties'),
+    t('escrowModal.steps.feesSettlement'),
+    t('escrowModal.steps.review'),
+  ], [t]);
 
   const [form, setForm] = useState({
     deal_type: 'crypto_crypto',
@@ -62,7 +65,6 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  // Calculate fee preview when relevant fields change
   useEffect(() => {
     const qty = parseFloat(form.quantity_a);
     const price = parseFloat(form.agreed_price);
@@ -122,7 +124,7 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
       });
       onCreated(res.data.deal);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao criar deal');
+      toast.error(err.response?.data?.detail || t('escrowModal.createError'));
     } finally {
       setSubmitting(false);
     }
@@ -140,8 +142,10 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
               <Lock className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Novo Escrow Deal</h2>
-              <p className="text-xs text-muted-foreground">Passo {step + 1} de {STEPS.length}: {STEPS[step]}</p>
+              <h2 className="text-lg font-semibold">{t('escrowModal.title')}</h2>
+              <p className="text-xs text-muted-foreground">
+                {t('escrowModal.stepOf').replace('{current}', step + 1).replace('{total}', STEPS.length)}: {STEPS[step]}
+              </p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} data-testid="close-create-modal">
@@ -160,77 +164,69 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
         <div className="p-5 overflow-y-auto flex-1">
           {step === 0 && (
             <div className="space-y-5">
-              {/* Deal Type */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Tipo de Operação</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">{t('escrowModal.dealType')}</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {DEAL_TYPES.map(dt => (
+                  {DEAL_TYPE_VALUES.map(v => (
                     <div
-                      key={dt.value}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${form.deal_type === dt.value ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
-                      onClick={() => update('deal_type', dt.value)}
-                      data-testid={`deal-type-${dt.value}`}
+                      key={v}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${form.deal_type === v ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
+                      onClick={() => update('deal_type', v)}
+                      data-testid={`deal-type-${v}`}
                     >
-                      <div className="text-sm font-medium">{dt.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{dt.desc}</div>
+                      <div className="text-sm font-medium">{t(`escrowModal.dealTypes.${v}.label`)}</div>
+                      <div className="text-[10px] text-muted-foreground">{t(`escrowModal.dealTypes.${v}.desc`)}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Structure */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Estrutura Escrow</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">{t('escrowModal.structure')}</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: 'one_sided', label: '1-Sided', desc: 'Apenas uma parte deposita' },
-                    { value: 'two_sided', label: '2-Sided', desc: 'Ambas as partes depositam' },
-                  ].map(s => (
+                  {STRUCTURE_VALUES.map(v => (
                     <div
-                      key={s.value}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${form.structure === s.value ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
-                      onClick={() => update('structure', s.value)}
-                      data-testid={`structure-${s.value}`}
+                      key={v}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${form.structure === v ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
+                      onClick={() => update('structure', v)}
+                      data-testid={`structure-${v}`}
                     >
-                      <div className="text-sm font-medium">{s.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+                      <div className="text-sm font-medium">{t(`escrowModal.structures.${v}.label`)}</div>
+                      <div className="text-[10px] text-muted-foreground">{t(`escrowModal.structures.${v}.desc`)}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Assets */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Asset A (Entrega)</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.assetA')}</label>
                   <Input value={form.asset_a} onChange={(e) => update('asset_a', e.target.value.toUpperCase())} placeholder="BTC" className="bg-white/5 border-white/10" data-testid="asset-a-input" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Asset B (Pagamento)</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.assetB')}</label>
                   <Input value={form.asset_b} onChange={(e) => update('asset_b', e.target.value.toUpperCase())} placeholder="USDT" className="bg-white/5 border-white/10" data-testid="asset-b-input" />
                 </div>
               </div>
 
-              {/* Quantities */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Qtd. {form.asset_a}</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.qty')} {form.asset_a}</label>
                   <Input type="number" value={form.quantity_a} onChange={(e) => update('quantity_a', e.target.value)} placeholder="10.0" className="bg-white/5 border-white/10" data-testid="quantity-a-input" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Preço Acordado (USD)</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.agreedPrice')}</label>
                   <Input type="number" value={form.agreed_price} onChange={(e) => update('agreed_price', e.target.value)} placeholder="65000" className="bg-white/5 border-white/10" data-testid="agreed-price-input" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Qtd. {form.asset_b}</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.qty')} {form.asset_b}</label>
                   <Input type="number" value={form.quantity_b} onChange={(e) => update('quantity_b', e.target.value)} placeholder="650000" className="bg-white/5 border-white/10" data-testid="quantity-b-input" />
                 </div>
               </div>
 
-              {/* Ticket Size Preview */}
               {ticketSize > 0 && (
                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-                  <span className="text-xs text-emerald-400 font-medium">Ticket Size</span>
+                  <span className="text-xs text-emerald-400 font-medium">{t('escrowModal.ticketSize')}</span>
                   <span className="text-lg font-bold text-emerald-400">${ticketSize.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
               )}
@@ -239,17 +235,16 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
 
           {step === 1 && (
             <div className="space-y-5">
-              {/* Buyer */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-blue-400" />
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Comprador (Buyer)</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('escrowModal.buyer')}</label>
                 </div>
-                <div className="space-y-3 pl-6">
-                  <Input value={form.buyer_name} onChange={(e) => update('buyer_name', e.target.value)} placeholder="Nome do comprador *" className="bg-white/5 border-white/10" data-testid="buyer-name-input" />
+                <div className="space-y-3 ps-6">
+                  <Input value={form.buyer_name} onChange={(e) => update('buyer_name', e.target.value)} placeholder={t('escrowModal.nameBuyerPh')} className="bg-white/5 border-white/10" data-testid="buyer-name-input" />
                   <div className="grid grid-cols-2 gap-3">
-                    <Input value={form.buyer_email} onChange={(e) => update('buyer_email', e.target.value)} placeholder="Email" className="bg-white/5 border-white/10" data-testid="buyer-email-input" />
-                    <Input value={form.buyer_phone} onChange={(e) => update('buyer_phone', e.target.value)} placeholder="Telefone" className="bg-white/5 border-white/10" data-testid="buyer-phone-input" />
+                    <Input value={form.buyer_email} onChange={(e) => update('buyer_email', e.target.value)} placeholder={t('escrowModal.email')} className="bg-white/5 border-white/10" data-testid="buyer-email-input" />
+                    <Input value={form.buyer_phone} onChange={(e) => update('buyer_phone', e.target.value)} placeholder={t('escrowModal.phone')} className="bg-white/5 border-white/10" data-testid="buyer-phone-input" />
                   </div>
                 </div>
               </div>
@@ -260,139 +255,131 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
                 <div className="flex-1 h-px bg-white/10" />
               </div>
 
-              {/* Seller */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="w-4 h-4 text-amber-400" />
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Vendedor (Seller)</label>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('escrowModal.seller')}</label>
                 </div>
-                <div className="space-y-3 pl-6">
-                  <Input value={form.seller_name} onChange={(e) => update('seller_name', e.target.value)} placeholder="Nome do vendedor *" className="bg-white/5 border-white/10" data-testid="seller-name-input" />
+                <div className="space-y-3 ps-6">
+                  <Input value={form.seller_name} onChange={(e) => update('seller_name', e.target.value)} placeholder={t('escrowModal.nameSellerPh')} className="bg-white/5 border-white/10" data-testid="seller-name-input" />
                   <div className="grid grid-cols-2 gap-3">
-                    <Input value={form.seller_email} onChange={(e) => update('seller_email', e.target.value)} placeholder="Email" className="bg-white/5 border-white/10" data-testid="seller-email-input" />
-                    <Input value={form.seller_phone} onChange={(e) => update('seller_phone', e.target.value)} placeholder="Telefone" className="bg-white/5 border-white/10" data-testid="seller-phone-input" />
+                    <Input value={form.seller_email} onChange={(e) => update('seller_email', e.target.value)} placeholder={t('escrowModal.email')} className="bg-white/5 border-white/10" data-testid="seller-email-input" />
+                    <Input value={form.seller_phone} onChange={(e) => update('seller_phone', e.target.value)} placeholder={t('escrowModal.phone')} className="bg-white/5 border-white/10" data-testid="seller-phone-input" />
                   </div>
                 </div>
               </div>
 
-              {/* OTC Deal Link */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Link a Deal OTC existente (opcional)</label>
-                <Input value={form.otc_deal_id} onChange={(e) => update('otc_deal_id', e.target.value)} placeholder="ID do deal OTC..." className="bg-white/5 border-white/10" data-testid="otc-deal-id-input" />
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.otcLink')}</label>
+                <Input value={form.otc_deal_id} onChange={(e) => update('otc_deal_id', e.target.value)} placeholder={t('escrowModal.otcLinkPh')} className="bg-white/5 border-white/10" data-testid="otc-deal-id-input" />
               </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-5">
-              {/* Fee Schedule */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Fee Schedule</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">{t('escrowModal.feeSchedule')}</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {FEE_SCHEDULES.map(fs => (
+                  {FEE_SCHEDULE_META.map(fs => (
                     <div
                       key={fs.value}
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${form.fee_schedule === fs.value ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
                       onClick={() => update('fee_schedule', fs.value)}
                       data-testid={`fee-schedule-${fs.value}`}
                     >
-                      <div className="text-sm font-medium">{fs.label}</div>
-                      <div className="text-[10px] text-muted-foreground">Rate: {fs.rate} | Min: {fs.min}</div>
+                      <div className="text-sm font-medium">{t(`escrowModal.feeSchedules.${fs.value}`)}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {fs.value === 'custom'
+                          ? t('escrowModal.custom')
+                          : t('escrowModal.feeRateMin').replace('{rate}', fs.rate).replace('{min}', fs.min)}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Custom Fee */}
               {form.fee_schedule === 'custom' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Fee Rate (%)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('escrowModal.feeRate')}</label>
                     <Input type="number" step="0.001" value={form.custom_fee_rate} onChange={(e) => update('custom_fee_rate', e.target.value)} placeholder="0.002" className="bg-white/5 border-white/10" data-testid="custom-rate-input" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Fee Mínima ($)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">{t('escrowModal.feeMin')}</label>
                     <Input type="number" value={form.custom_fee_min} onChange={(e) => update('custom_fee_min', e.target.value)} placeholder="100" className="bg-white/5 border-white/10" data-testid="custom-min-input" />
                   </div>
                 </div>
               )}
 
-              {/* Fee Payer */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Quem Paga a Fee</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">{t('escrowModal.feePayer')}</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: 'buyer', label: 'Buyer' },
-                    { value: 'seller', label: 'Seller' },
-                    { value: 'split', label: 'Split 50/50' },
-                  ].map(fp => (
+                  {FEE_PAYER_VALUES.map(v => (
                     <div
-                      key={fp.value}
-                      className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${form.fee_payer === fp.value ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
-                      onClick={() => update('fee_payer', fp.value)}
-                      data-testid={`fee-payer-${fp.value}`}
+                      key={v}
+                      className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${form.fee_payer === v ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 hover:border-white/20'}`}
+                      onClick={() => update('fee_payer', v)}
+                      data-testid={`fee-payer-${v}`}
                     >
-                      <div className="text-sm font-medium">{fp.label}</div>
+                      <div className="text-sm font-medium">{t(`escrowModal.feePayers.${v}`)}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Fee Preview */}
               {feePreview && (
                 <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
                   <div className="flex items-center gap-2 mb-2">
                     <Calculator className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-medium text-emerald-400 uppercase">Fee Preview</span>
+                    <span className="text-xs font-medium text-emerald-400 uppercase">{t('escrowModal.feePreview')}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-sm">
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Total Fee</div>
+                      <div className="text-[10px] text-muted-foreground">{t('escrowModal.totalFee')}</div>
                       <div className="font-semibold text-emerald-400">${feePreview.fee_total?.toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Buyer</div>
+                      <div className="text-[10px] text-muted-foreground">{t('escrowModal.buyer')}</div>
                       <div className="font-medium">${feePreview.fee_buyer?.toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Seller</div>
+                      <div className="text-[10px] text-muted-foreground">{t('escrowModal.seller')}</div>
                       <div className="font-medium">${feePreview.fee_seller?.toLocaleString()}</div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Settlement */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Prazo Liquidação (horas)</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.settlementDeadline')}</label>
                   <Input type="number" value={form.settlement_deadline_hours} onChange={(e) => update('settlement_deadline_hours', e.target.value)} className="bg-white/5 border-white/10" data-testid="deadline-input" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Tipo Liquidação</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.settlementType')}</label>
                   <select
                     value={form.settlement_type}
                     onChange={(e) => update('settlement_type', e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm"
                     data-testid="settlement-type-select"
                   >
-                    <option value="crypto_crypto">Crypto &harr; Crypto</option>
-                    <option value="stablecoin_crypto">Stablecoin &harr; Crypto</option>
-                    <option value="cross_chain">Cross-Chain</option>
-                    <option value="crypto_fiat">Crypto &harr; Fiat</option>
+                    <option value="crypto_crypto">{t('escrowModal.settlementTypes.crypto_crypto')}</option>
+                    <option value="stablecoin_crypto">{t('escrowModal.settlementTypes.stablecoin_crypto')}</option>
+                    <option value="cross_chain">{t('escrowModal.settlementTypes.cross_chain')}</option>
+                    <option value="crypto_fiat">{t('escrowModal.settlementTypes.crypto_fiat')}</option>
                   </select>
                 </div>
               </div>
 
-              {/* Notes */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Notas (opcional)</label>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('escrowModal.notes')}</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => update('notes', e.target.value)}
                   rows={2}
                   className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm resize-none"
-                  placeholder="Observações internas..."
+                  placeholder={t('escrowModal.notesPh')}
                   data-testid="notes-textarea"
                 />
               </div>
@@ -401,21 +388,21 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
 
           {step === 3 && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Resumo do Deal</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('escrowModal.summary')}</h3>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] text-muted-foreground mb-1">Tipo</div>
-                  <div className="text-sm font-medium">{DEAL_TYPES.find(d => d.value === form.deal_type)?.label}</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">{t('escrowModal.summaryType')}</div>
+                  <div className="text-sm font-medium">{t(`escrowModal.dealTypes.${form.deal_type}.label`)}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
-                  <div className="text-[10px] text-muted-foreground mb-1">Estrutura</div>
-                  <div className="text-sm font-medium">{form.structure === 'two_sided' ? '2-Sided' : '1-Sided'}</div>
+                  <div className="text-[10px] text-muted-foreground mb-1">{t('escrowModal.summaryStructure')}</div>
+                  <div className="text-sm font-medium">{t(`escrowModal.structures.${form.structure}.label`)}</div>
                 </div>
               </div>
 
               <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
-                <div className="text-[10px] text-muted-foreground mb-2">Operação</div>
+                <div className="text-[10px] text-muted-foreground mb-2">{t('escrowModal.summaryOperation')}</div>
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-lg font-bold">{form.quantity_a} {form.asset_a}</div>
@@ -424,19 +411,19 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
                   <ArrowLeftRight className="w-5 h-5 text-emerald-400" />
                   <div className="text-right">
                     <div className="text-lg font-bold">{form.quantity_b} {form.asset_b}</div>
-                    <div className="text-xs text-muted-foreground">Ticket: ${ticketSize.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">{t('escrowModal.ticketSize')}: ${ticketSize.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
-                  <div className="text-[10px] text-blue-400 mb-1">Buyer</div>
+                  <div className="text-[10px] text-blue-400 mb-1">{t('escrowModal.buyer')}</div>
                   <div className="text-sm font-medium">{form.buyer_name}</div>
                   <div className="text-[10px] text-muted-foreground">{form.buyer_email || 'N/A'}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                  <div className="text-[10px] text-amber-400 mb-1">Seller</div>
+                  <div className="text-[10px] text-amber-400 mb-1">{t('escrowModal.seller')}</div>
                   <div className="text-sm font-medium">{form.seller_name}</div>
                   <div className="text-[10px] text-muted-foreground">{form.seller_email || 'N/A'}</div>
                 </div>
@@ -444,17 +431,17 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
 
               {feePreview && (
                 <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                  <div className="text-[10px] text-emerald-400 mb-2">Fees</div>
+                  <div className="text-[10px] text-emerald-400 mb-2">{t('escrowModal.fees')}</div>
                   <div className="flex items-center justify-between text-sm">
-                    <span>Total: <strong>${feePreview.fee_total?.toLocaleString()}</strong></span>
-                    <span>Buyer: ${feePreview.fee_buyer?.toLocaleString()}</span>
-                    <span>Seller: ${feePreview.fee_seller?.toLocaleString()}</span>
+                    <span>{t('escrowModal.totalFee')}: <strong>${feePreview.fee_total?.toLocaleString()}</strong></span>
+                    <span>{t('escrowModal.buyer')}: ${feePreview.fee_buyer?.toLocaleString()}</span>
+                    <span>{t('escrowModal.seller')}: ${feePreview.fee_seller?.toLocaleString()}</span>
                   </div>
                 </div>
               )}
 
               <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5">
-                <div className="text-[10px] text-muted-foreground mb-1">Prazo de Liquidação</div>
+                <div className="text-[10px] text-muted-foreground mb-1">{t('escrowModal.settlementDeadlineLabel')}</div>
                 <div className="text-sm font-medium">{form.settlement_deadline_hours}h</div>
               </div>
             </div>
@@ -469,7 +456,7 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
             data-testid="modal-back-btn"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            {step === 0 ? 'Cancelar' : 'Voltar'}
+            {step === 0 ? t('escrowModal.cancel') : t('escrowModal.back')}
           </Button>
           {step < STEPS.length - 1 ? (
             <Button
@@ -478,7 +465,7 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
               className="bg-emerald-600 hover:bg-emerald-700"
               data-testid="modal-next-btn"
             >
-              Seguinte <ArrowRight className="w-4 h-4 ml-1" />
+              {t('escrowModal.next')} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
             <Button
@@ -487,7 +474,7 @@ const CreateEscrowModal = ({ onClose, onCreated }) => {
               className="bg-emerald-600 hover:bg-emerald-700"
               data-testid="modal-submit-btn"
             >
-              {submitting ? 'A criar...' : 'Criar Escrow Deal'}
+              {submitting ? t('escrowModal.creating') : t('escrowModal.submit')}
               <Check className="w-4 h-4 ml-1" />
             </Button>
           )}

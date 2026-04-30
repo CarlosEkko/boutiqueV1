@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Card, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
@@ -29,6 +30,7 @@ const ASSET_ICONS = {
 
 const StakingPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   /* ─── state ─── */
@@ -437,11 +439,11 @@ const StakingPage = () => {
           <div className="p-6 pb-4 border-b border-zinc-800">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-amber-500 uppercase tracking-[0.2em] font-medium" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                {step <= 1 && '01 · ATIVO'}
-                {step === 2 && '02 · VALIDADOR'}
-                {step === 3 && (selectedAsset?.validator_types?.length > 0 ? '03 · MONTANTE' : '02 · MONTANTE')}
-                {step === 4 && (selectedAsset?.validator_types?.length > 0 ? '04 · PROVIDER' : '03 · PROVIDER')}
-                {step === 5 && (selectedAsset?.validator_types?.length > 0 ? '05 · CONFIRMAR' : '04 · CONFIRMAR')}
+                {step <= 1 && `01 · ${t('stakingModals.steps.asset')}`}
+                {step === 2 && `02 · ${t('stakingModals.steps.validator')}`}
+                {step === 3 && (selectedAsset?.validator_types?.length > 0 ? `03 · ${t('stakingModals.steps.amount')}` : `02 · ${t('stakingModals.steps.amount')}`)}
+                {step === 4 && (selectedAsset?.validator_types?.length > 0 ? `04 · ${t('stakingModals.steps.provider')}` : `03 · ${t('stakingModals.steps.provider')}`)}
+                {step === 5 && (selectedAsset?.validator_types?.length > 0 ? `05 · ${t('stakingModals.steps.confirm')}` : `04 · ${t('stakingModals.steps.confirm')}`)}
               </p>
               <p className="text-xs text-zinc-600">{Math.min(step, totalSteps)} / {totalSteps}</p>
             </div>
@@ -455,9 +457,9 @@ const StakingPage = () => {
             {step === 1 && (
               <div data-testid="wizard-step-asset">
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Selecionar Ativo
+                  {t('stakingModals.selectAsset')}
                 </h3>
-                <p className="text-sm text-zinc-500 mb-6">Escolha o ativo que pretende fazer staking</p>
+                <p className="text-sm text-zinc-500 mb-6">{t('stakingModals.selectAssetDesc')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {assets.map(asset => {
                     const c = ASSET_COLORS[asset.id] || ASSET_COLORS.ETH;
@@ -479,11 +481,11 @@ const StakingPage = () => {
                           <ChevronRight size={18} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                         </div>
                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-                          <p className="text-xs text-zinc-500">APY</p>
+                          <p className="text-xs text-zinc-500">{t('stakingModals.apy')}</p>
                           <p className={`text-sm font-medium ${c.text}`}>{asset.apy_range}</p>
                         </div>
                         <div className="flex items-center justify-between mt-1">
-                          <p className="text-xs text-zinc-500">Min</p>
+                          <p className="text-xs text-zinc-500">{t('stakingModals.min')}</p>
                           <p className="text-xs text-zinc-400">{asset.min_stake} {asset.symbol}</p>
                         </div>
                       </button>
@@ -497,9 +499,9 @@ const StakingPage = () => {
             {step === 2 && selectedAsset && (
               <div data-testid="wizard-step-validator">
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Tipo de Validador
+                  {t('stakingModals.validatorType')}
                 </h3>
-                <p className="text-sm text-zinc-500 mb-6">Selecione o tipo de validador para {selectedAsset.symbol}</p>
+                <p className="text-sm text-zinc-500 mb-6">{t('stakingModals.validatorTypeDesc')} {selectedAsset.symbol}</p>
                 <div className="space-y-3">
                   {selectedAsset.validator_types.map(vt => (
                     <button
@@ -517,22 +519,22 @@ const StakingPage = () => {
                       </div>
                       <div className="flex gap-6 mt-4 pt-3 border-t border-zinc-800">
                         <div>
-                          <p className="text-xs text-zinc-600">APY</p>
+                          <p className="text-xs text-zinc-600">{t('stakingModals.apy')}</p>
                           <p className="text-sm text-emerald-400 font-medium">{vt.apy}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-zinc-600">Mínimo</p>
+                          <p className="text-xs text-zinc-600">{t('stakingModals.minimum')}</p>
                           <p className="text-sm text-zinc-300">{vt.min_amount} ETH</p>
                         </div>
                         {vt.max_amount && (
                           <div>
-                            <p className="text-xs text-zinc-600">Máximo</p>
+                            <p className="text-xs text-zinc-600">{t('stakingModals.maximum')}</p>
                             <p className="text-sm text-zinc-300">{vt.max_amount} ETH</p>
                           </div>
                         )}
                         {vt.increment && (
                           <div>
-                            <p className="text-xs text-zinc-600">Incremento</p>
+                            <p className="text-xs text-zinc-600">{t('stakingModals.increment')}</p>
                             <p className="text-sm text-zinc-300">{vt.increment} ETH</p>
                           </div>
                         )}
@@ -541,7 +543,7 @@ const StakingPage = () => {
                   ))}
                 </div>
                 <Button variant="ghost" className="mt-4 text-zinc-500 hover:text-white" onClick={() => { setStep(1); setSelectedAsset(null); }}>
-                  <ChevronLeft size={16} className="mr-1" /> Voltar
+                  <ChevronLeft size={16} className="mr-1" /> {t('stakingModals.back')}
                 </Button>
               </div>
             )}
@@ -550,22 +552,22 @@ const StakingPage = () => {
             {step === 3 && selectedAsset && (
               <div data-testid="wizard-step-amount">
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Montante
+                  {t('stakingModals.amount')}
                 </h3>
                 <p className="text-sm text-zinc-500 mb-6">
-                  Insira o montante de {selectedAsset.symbol} para staking
+                  {t('stakingModals.amountDesc')} {selectedAsset.symbol} {t('stakingModals.forStaking')}
                   {selectedValidator && <span className="text-amber-500/80"> ({selectedValidator.name})</span>}
                 </p>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm text-zinc-400 mb-2 block font-medium">Montante ({selectedAsset.symbol})</label>
+                    <label className="text-sm text-zinc-400 mb-2 block font-medium">{t('stakingModals.amount')} ({selectedAsset.symbol})</label>
                     <div className="relative">
                       <Input
                         type="number"
                         value={amount}
                         onChange={(e) => { setAmount(e.target.value); if (e.target.value) validateAmount(e.target.value); }}
-                        placeholder={`Min: ${selectedValidator?.min_amount || selectedAsset.min_stake}`}
+                        placeholder={`${t('stakingModals.min')}: ${selectedValidator?.min_amount || selectedAsset.min_stake}`}
                         className="bg-zinc-900 border-zinc-800 text-white text-lg py-6 pr-16 focus:border-amber-500/50"
                         data-testid="stake-amount-input"
                       />
@@ -602,30 +604,30 @@ const StakingPage = () => {
 
                   {/* Validation hints */}
                   <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-4">
-                    <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Regras</p>
+                    <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">{t('stakingModals.rules')}</p>
                     {selectedValidator ? (
                       <ul className="space-y-1 text-xs text-zinc-400">
                         <li className="flex items-center gap-2">
-                          <Check size={12} className="text-emerald-400" /> Mínimo: {selectedValidator.min_amount} {selectedAsset.symbol}
+                          <Check size={12} className="text-emerald-400" /> {t('stakingModals.minimum')}: {selectedValidator.min_amount} {selectedAsset.symbol}
                         </li>
                         {selectedValidator.max_amount && (
                           <li className="flex items-center gap-2">
-                            <Check size={12} className="text-emerald-400" /> Máximo: {selectedValidator.max_amount} {selectedAsset.symbol}
+                            <Check size={12} className="text-emerald-400" /> {t('stakingModals.maximum')}: {selectedValidator.max_amount} {selectedAsset.symbol}
                           </li>
                         )}
                         {selectedValidator.increment && (
                           <li className="flex items-center gap-2">
-                            <Check size={12} className="text-emerald-400" /> Múltiplos de {selectedValidator.increment} {selectedAsset.symbol}
+                            <Check size={12} className="text-emerald-400" /> {t('stakingModals.multiplesOf')} {selectedValidator.increment} {selectedAsset.symbol}
                           </li>
                         )}
                       </ul>
                     ) : (
                       <ul className="space-y-1 text-xs text-zinc-400">
                         <li className="flex items-center gap-2">
-                          <Check size={12} className="text-emerald-400" /> Mínimo: {selectedAsset.min_stake} {selectedAsset.symbol}
+                          <Check size={12} className="text-emerald-400" /> {t('stakingModals.minimum')}: {selectedAsset.min_stake} {selectedAsset.symbol}
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check size={12} className="text-emerald-400" /> APY estimado: {selectedAsset.apy_range}
+                          <Check size={12} className="text-emerald-400" /> {t('stakingModals.estimatedApy')}: {selectedAsset.apy_range}
                         </li>
                       </ul>
                     )}
@@ -637,7 +639,7 @@ const StakingPage = () => {
                     if (selectedAsset.validator_types?.length > 0) { setStep(2); setSelectedValidator(null); }
                     else { setStep(1); setSelectedAsset(null); }
                   }}>
-                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                    <ChevronLeft size={16} className="mr-1" /> {t('stakingModals.back')}
                   </Button>
                   <Button
                     onClick={goToProvider}
@@ -645,7 +647,7 @@ const StakingPage = () => {
                     className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 disabled:opacity-40"
                     data-testid="amount-next-btn"
                   >
-                    Continuar <ChevronRight size={16} className="ml-1" />
+                    {t('stakingModals.continue')} <ChevronRight size={16} className="ml-1" />
                   </Button>
                 </div>
               </div>
@@ -655,25 +657,25 @@ const StakingPage = () => {
             {step === 4 && (
               <div data-testid="wizard-step-provider">
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Selecionar Provider
+                  {t('stakingModals.selectProvider')}
                 </h3>
-                <p className="text-sm text-zinc-500 mb-6">Escolha o provider de staking</p>
+                <p className="text-sm text-zinc-500 mb-6">{t('stakingModals.selectProviderDesc')}</p>
 
                 {providers.length === 0 ? (
                   <div className="space-y-4">
                     <Card className="bg-zinc-900/40 border-zinc-800">
                       <CardContent className="p-8 text-center">
                         <AlertCircle className="mx-auto text-amber-500/50 mb-3" size={32} />
-                        <p className="text-zinc-400">Nenhum provider disponível para {selectedAsset?.symbol}</p>
-                        <p className="text-xs text-zinc-600 mt-2">Insira manualmente o ID do provider</p>
+                        <p className="text-zinc-400">{t('stakingModals.noProviderAvailable')} {selectedAsset?.symbol}</p>
+                        <p className="text-xs text-zinc-600 mt-2">{t('stakingModals.enterManualId')}</p>
                       </CardContent>
                     </Card>
                     <div>
-                      <label className="text-sm text-zinc-400 mb-2 block font-medium">Provider ID (manual)</label>
+                      <label className="text-sm text-zinc-400 mb-2 block font-medium">{t('stakingModals.providerIdManual')}</label>
                       <Input
                         value={selectedProvider}
                         onChange={e => setSelectedProvider(e.target.value)}
-                        placeholder="ID do provider"
+                        placeholder={t('stakingModals.providerIdPh')}
                         className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
                         data-testid="provider-manual-input"
                       />
@@ -699,13 +701,13 @@ const StakingPage = () => {
                           <div className="flex items-center gap-4">
                             {p.apy && (
                               <div className="text-right">
-                                <p className="text-xs text-zinc-600">APY</p>
+                                <p className="text-xs text-zinc-600">{t('stakingModals.apy')}</p>
                                 <p className="text-sm text-emerald-400 font-medium">{p.apy}%</p>
                               </div>
                             )}
                             {p.fee && (
                               <div className="text-right">
-                                <p className="text-xs text-zinc-600">Fee</p>
+                                <p className="text-xs text-zinc-600">{t('stakingModals.fee')}</p>
                                 <p className="text-sm text-zinc-400">{p.fee}%</p>
                               </div>
                             )}
@@ -723,7 +725,7 @@ const StakingPage = () => {
 
                 <div className="flex items-center justify-between mt-6">
                   <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={() => setStep(3)}>
-                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                    <ChevronLeft size={16} className="mr-1" /> {t('stakingModals.back')}
                   </Button>
                   <Button
                     onClick={goToReview}
@@ -731,7 +733,7 @@ const StakingPage = () => {
                     className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 disabled:opacity-40"
                     data-testid="provider-next-btn"
                   >
-                    Rever <ChevronRight size={16} className="ml-1" />
+                    {t('stakingModals.review')} <ChevronRight size={16} className="ml-1" />
                   </Button>
                 </div>
               </div>
@@ -741,24 +743,24 @@ const StakingPage = () => {
             {step === 5 && (
               <div data-testid="wizard-step-review">
                 <h3 className="text-xl font-light text-white mb-1" style={{ fontFamily: 'Playfair Display, serif' }}>
-                  Confirmar Staking
+                  {t('stakingModals.confirmStaking')}
                 </h3>
-                <p className="text-sm text-zinc-500 mb-6">Reveja os detalhes antes de confirmar</p>
+                <p className="text-sm text-zinc-500 mb-6">{t('stakingModals.confirmStakingDesc')}</p>
 
                 <div className="bg-zinc-900/60 rounded-lg border border-zinc-800 divide-y divide-zinc-800">
-                  <ReviewRow label="Ativo" value={`${selectedAsset?.name} (${selectedAsset?.symbol})`} icon={ASSET_ICONS[selectedAsset?.id]} />
-                  {selectedValidator && <ReviewRow label="Validador" value={selectedValidator.name} />}
-                  <ReviewRow label="Montante" value={`${amount} ${selectedAsset?.symbol}`} highlight />
-                  <ReviewRow label="Provider" value={providers.find(p => p.id === selectedProvider)?.name || selectedProvider} />
-                  <ReviewRow label="APY Estimado" value={selectedValidator?.apy || selectedAsset?.apy_range || '-'} />
+                  <ReviewRow label={t('stakingModals.rowAsset')} value={`${selectedAsset?.name} (${selectedAsset?.symbol})`} icon={ASSET_ICONS[selectedAsset?.id]} />
+                  {selectedValidator && <ReviewRow label={t('stakingModals.rowValidator')} value={selectedValidator.name} />}
+                  <ReviewRow label={t('stakingModals.rowAmount')} value={`${amount} ${selectedAsset?.symbol}`} highlight />
+                  <ReviewRow label={t('stakingModals.rowProvider')} value={providers.find(p => p.id === selectedProvider)?.name || selectedProvider} />
+                  <ReviewRow label={t('stakingModals.rowApy')} value={selectedValidator?.apy || selectedAsset?.apy_range || '-'} />
                 </div>
 
                 <div className="mt-4">
-                  <label className="text-sm text-zinc-400 mb-2 block font-medium">Nota (opcional)</label>
+                  <label className="text-sm text-zinc-400 mb-2 block font-medium">{t('stakingModals.note')}</label>
                   <Input
                     value={note}
                     onChange={e => setNote(e.target.value)}
-                    placeholder="Nota interna..."
+                    placeholder={t('stakingModals.notePh')}
                     className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
                     data-testid="stake-note-input"
                   />
@@ -766,7 +768,7 @@ const StakingPage = () => {
 
                 <div className="flex items-center justify-between mt-6">
                   <Button variant="ghost" className="text-zinc-500 hover:text-white" onClick={() => setStep(4)}>
-                    <ChevronLeft size={16} className="mr-1" /> Voltar
+                    <ChevronLeft size={16} className="mr-1" /> {t('stakingModals.back')}
                   </Button>
                   <Button
                     onClick={handleStake}
@@ -775,7 +777,7 @@ const StakingPage = () => {
                     data-testid="stake-confirm-btn"
                   >
                     {submitting ? <Loader2 className="animate-spin mr-2" size={16} /> : <ArrowUpCircle size={16} className="mr-2" />}
-                    {submitting ? 'A processar...' : 'Confirmar Stake'}
+                    {submitting ? t('stakingModals.processing') : t('stakingModals.confirmStake')}
                   </Button>
                 </div>
               </div>
@@ -789,23 +791,23 @@ const StakingPage = () => {
         <DialogContent className="bg-zinc-950 border border-zinc-800 text-white max-w-md [&>button]:text-zinc-400" data-testid="unstake-modal">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <ArrowDownCircle className="text-rose-400" size={20} /> Unstake
+              <ArrowDownCircle className="text-rose-400" size={20} /> {t('stakingModals.unstake')}
             </DialogTitle>
           </DialogHeader>
           {unstakePos && (
             <div className="space-y-4 py-2">
               <div className="bg-zinc-900/50 rounded-lg p-4 border border-zinc-800">
-                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Posição</p>
+                <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">{t('stakingModals.position')}</p>
                 <p className="text-white font-medium">{unstakePos.asset_name || unstakePos.asset_id}</p>
-                <p className="text-sm text-zinc-400">Staked: {unstakePos.amount} {unstakePos.asset_id}</p>
+                <p className="text-sm text-zinc-400">{t('stakingModals.staked')}: {unstakePos.amount} {unstakePos.asset_id}</p>
               </div>
               <div>
-                <label className="text-sm text-zinc-400 mb-2 block font-medium">Montante a retirar</label>
+                <label className="text-sm text-zinc-400 mb-2 block font-medium">{t('stakingModals.amountToWithdraw')}</label>
                 <Input
                   type="number"
                   value={unstakeAmount}
                   onChange={e => setUnstakeAmount(e.target.value)}
-                  placeholder={`Máx: ${unstakePos.amount}`}
+                  placeholder={`${t('stakingModals.max')}: ${unstakePos.amount}`}
                   className="bg-zinc-900 border-zinc-800 text-white focus:border-amber-500/50"
                   data-testid="unstake-amount-input"
                 />
@@ -813,9 +815,9 @@ const StakingPage = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setUnstakeOpen(false)} className="text-zinc-500">Cancelar</Button>
+            <Button variant="ghost" onClick={() => setUnstakeOpen(false)} className="text-zinc-500">{t('stakingModals.cancel')}</Button>
             <Button onClick={handleUnstake} disabled={unstakeLoading} className="bg-rose-600 hover:bg-rose-500 text-white" data-testid="unstake-confirm-btn">
-              {unstakeLoading ? <Loader2 className="animate-spin" size={16} /> : 'Confirmar Unstake'}
+              {unstakeLoading ? <Loader2 className="animate-spin" size={16} /> : t('stakingModals.confirmUnstake')}
             </Button>
           </DialogFooter>
         </DialogContent>
