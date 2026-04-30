@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, Modal, TouchableOpacity, Alert as RNAlert,
+  KeyboardAvoidingView, Platform, Pressable, ScrollView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { X, ArrowUp, ArrowDown } from 'lucide-react-native';
@@ -61,16 +62,31 @@ export const CreateAlertSheet: React.FC<CreateAlertSheetProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-        <View style={{
-          backgroundColor: theme.colors.bgElevated,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          padding: 24,
-          paddingBottom: 36,
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.gold + '33',
-        }}>
+      <Pressable
+        onPress={onClose}
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }}
+      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{
+          position: 'absolute',
+          left: 0, right: 0, bottom: 0,
+        }}
+      >
+        <Pressable onPress={(e) => e.stopPropagation()}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          contentContainerStyle={{
+            backgroundColor: theme.colors.bgElevated,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            padding: 24,
+            paddingBottom: 28,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.gold + '33',
+          }}
+        >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <Text style={{ color: theme.colors.gold, fontSize: 18, letterSpacing: 1.5, fontWeight: '300' }}>
               {(t('alerts.newTitle') || 'Definir Alerta').toUpperCase()}
@@ -153,8 +169,9 @@ export const CreateAlertSheet: React.FC<CreateAlertSheetProps> = ({
             disabled={!valid || submitting}
             testID="alert-create-submit"
           />
-        </View>
-      </View>
+        </ScrollView>
+        </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
