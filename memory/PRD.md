@@ -264,8 +264,17 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Phase M3 Trading Terminal Bug Fixes (2026-04-30)
+- **Root cause of M3 i18n bugs:** All 5 locale files had **two** top-level `markets:` blocks. ES module evaluation kept the second one (web namespace) and silently discarded the mobile-only keys defined at the top of the file. Symptom: `t('markets.currentPrice')` → `undefined`, button labels rendered the raw key path, etc.
+- **Fix:** Merged the mobile keys (`searchPh`, `empty`, `currentPrice`, `buyPrice`, `sellPrice`, `spread`, `buy`, `sell`, `simulated_trend`, `note_quote`) into the single surviving `markets:` block in each of `pt.js`, `en.js`, `ar.js`, `fr.js`, `es.js`. Removed the top duplicate block. Verified at runtime — every locale now exposes 26 keys under `markets.*`.
+- **Mobile UI fix in `app/(tabs)/markets.tsx`:**
+  - Avatar now renders the asset `logo` (CoinMarketCap PNG) inside the gold-bordered circle; falls back to first 3 letters when missing.
+  - Trend percentage now reads `change_24h_pct ?? change_24h` (backend returns `change_24h` as the % delta).
+- **Backend `POST /api/auth/push-token` + `DELETE /api/auth/push-token`:** new endpoints in `routes/auth.py`. Stores Expo push tokens in dedicated `push_tokens` collection (`{user_id, token, platform, active, created_at, last_seen_at}`). Validates token format (`ExponentPushToken[...]`/`ExpoPushToken[...]`), supports multi-device per user, and reassigns ownership when the same token shows up under a different user (shared device). DELETE soft-deactivates rather than removing, preserving audit trail. E2E tested: invalid format → 400, unauth → 401, valid register → 200 idempotent, delete → marks `active=false` + `deactivated_at`.
+
 ## Pending
 - P1: Safari cursor bug (18+ recurrences)
+- P1: Mobile Phase M4 (OTC chat + KYC with camera + price alerts)
 - P2: White-Label Tenants Phase 3 — tenant-specific tiers/fees, BYO Sumsub, BYO fiat IBAN
 - P2: LATAM local fiat rails (PIX for Brazil, SPEI for Mexico)
 - P2: Replace Crypto ATM mock data with live feeds

@@ -663,3 +663,75 @@ async def complete_onboarding(user_id: str = Depends(get_current_user_id)):
     
     return {"success": True, "message": "Onboarding completo"}
 
+
+
+
+# ============================================================
+# Mobile Push Notifications — Expo Push Tokens
+# ============================================================
+
+class PushTokenRequest(BaseModel):
+    token: str
+    platform: str  # "ios" | "android" | "web"
+
+
+@router.post("/push-token")
+async def register_push_token(
+    payload: PushTokenRequest,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Register or refresh an Expo push token for the authenticated user.
+
+    Stored in the dedicated `push_tokens` collection (not on the user doc) so
+    we can support multiple devices per user and prune stale tokens later.
+    Idempotent: re-registering the same token just bumps `last_seen_at`.
+    """
+    if not payload.token or not payload.token.startswith(("ExponentPushToken[", "ExpoPushToken[")):
+        raise HTTPException(status_code=400, detail="Invalid Expo push token format")
+
+    if payload.platform not in ("ios", "android", "web"):
+        raise HTTPException(status_code=400, detail="Invalid platform")
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Upsert by (user_id, token) — same user re-registering same token bumps last_seen_at.
+    # If the same token appears for a different user (e.g. shared device), the previous
+    # mapping is moved off so the token is owned by the most recent authenticated user.
+    await db.push_tokens.update_many(
+        {"token": payload.token, "user_id": {"$ne": user_id}},
+        {"$set": {"active": False, "deactivated_at": now}},
+    )
+
+    await db.push_tokens.update_one(
+        {"user_id": user_id, "token": payload.token},
+        {
+            "$set": {
+                "platform": payload.platform,
+                "active": True,
+                "last_seen_at": now,
+            },
+            "$setOnInsert": {
+                "user_id": user_id,
+                "token": payload.token,
+                "created_at": now,
+            },
+        },
+        upsert=True,
+    )
+
+    return {"success": True, "registered_at": now}
+
+
+@router.delete("/push-token")
+async def unregister_push_token(
+    payload: PushTokenRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Deactivate a push token (e.g. on logout or notification disable)."""
+    now = datetime.now(timezone.utc).isoformat()
+    result = await db.push_tokens.update_one(
+        {"user_id": user_id, "token": payload.token},
+        {"$set": {"active": False, "deactivated_at": now}},
+    )
+    return {"success": True, "found": result.matched_count > 0}

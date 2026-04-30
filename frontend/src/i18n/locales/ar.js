@@ -1,18 +1,6 @@
 // AR translations for KBEX.io
 
 const TRANSLATIONS = {
-  markets: {
-    searchPh: 'بحث عن أصل…',
-    empty: 'لا توجد أسواق متاحة',
-    currentPrice: 'السعر الحالي',
-    buyPrice: 'الشراء عند',
-    sellPrice: 'البيع عند',
-    spread: 'السبريد',
-    buy: 'شراء',
-    sell: 'بيع',
-    simulated_trend: 'اتجاه 24 ساعة (محاكاة)',
-    note_quote: 'يُحدّث السعر عند فتح الشاشة',
-  },
   trade: {
     buyTitle: 'شراء',
     sellTitle: 'بيع',
@@ -1939,6 +1927,16 @@ const TRANSLATIONS = {
     }
   },
   markets: {
+    searchPh: 'بحث عن أصل…',
+    empty: 'لا توجد أسواق متاحة',
+    currentPrice: 'السعر الحالي',
+    buyPrice: 'الشراء عند',
+    sellPrice: 'البيع عند',
+    spread: 'السبريد',
+    buy: 'شراء',
+    sell: 'بيع',
+    simulated_trend: 'اتجاه 24 ساعة (محاكاة)',
+    note_quote: 'يُحدّث السعر عند فتح الشاشة',
     title: 'الأسواق',
     subtitle: 'أسعار العملات المشفرة الرئيسية في الوقت الفعلي',
     featuredCharts: 'الرسوم البيانية المميزة',

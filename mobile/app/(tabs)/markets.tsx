@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, RefreshControl, ActivityIndicator,
-  TouchableOpacity, TextInput,
+  TouchableOpacity, TextInput, Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -75,7 +75,7 @@ export default function MarketsScreen() {
           </Text>
         ) : (
           filtered.map((m) => {
-            const change = m.change_24h_pct;
+            const change = m.change_24h_pct ?? m.change_24h;
             const isUp = (change ?? 0) >= 0;
             return (
               <TouchableOpacity
@@ -92,11 +92,20 @@ export default function MarketsScreen() {
                   <View style={{
                     width: 36, height: 36, borderRadius: 18,
                     backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center',
-                    borderWidth: 1, borderColor: theme.colors.border,
+                    borderWidth: 1, borderColor: theme.colors.gold,
+                    overflow: 'hidden',
                   }}>
-                    <Text style={{ color: theme.colors.gold, fontSize: 11, fontWeight: '600' }}>
-                      {m.symbol.slice(0, 3)}
-                    </Text>
+                    {m.logo ? (
+                      <Image
+                        source={{ uri: m.logo }}
+                        style={{ width: 28, height: 28, borderRadius: 14 }}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={{ color: theme.colors.gold, fontSize: 11, fontWeight: '600' }}>
+                        {m.symbol.slice(0, 3)}
+                      </Text>
+                    )}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '500' }}>

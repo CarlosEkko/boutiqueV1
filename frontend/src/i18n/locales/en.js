@@ -1,18 +1,6 @@
 // EN translations for KBEX.io
 
 const TRANSLATIONS = {
-  markets: {
-    searchPh: 'Search asset…',
-    empty: 'No markets available',
-    currentPrice: 'Current Price',
-    buyPrice: 'Buy at',
-    sellPrice: 'Sell at',
-    spread: 'Spread',
-    buy: 'Buy',
-    sell: 'Sell',
-    simulated_trend: 'Simulated 24h trend',
-    note_quote: 'Quote refreshes on screen open',
-  },
   trade: {
     buyTitle: 'Buy',
     sellTitle: 'Sell',
@@ -2076,6 +2064,16 @@ const TRANSLATIONS = {
   },
   // Markets Page
   markets: {
+    searchPh: 'Search asset…',
+    empty: 'No markets available',
+    currentPrice: 'Current Price',
+    buyPrice: 'Buy at',
+    sellPrice: 'Sell at',
+    spread: 'Spread',
+    buy: 'Buy',
+    sell: 'Sell',
+    simulated_trend: 'Simulated 24h trend',
+    note_quote: 'Quote refreshes on screen open',
     title: 'Markets',
     subtitle: 'Real-time prices of major cryptocurrencies',
     featuredCharts: 'Featured Charts',
