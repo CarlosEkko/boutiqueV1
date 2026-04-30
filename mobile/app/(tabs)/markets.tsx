@@ -6,7 +6,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Search, TrendingUp, TrendingDown } from 'lucide-react-native';
+import { Search, TrendingUp, TrendingDown, Bell } from 'lucide-react-native';
 import { theme } from '@/theme';
 import { useMarkets } from '@/hooks/useMarkets';
 
@@ -42,8 +42,9 @@ export default function MarketsScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={{ flex: 1, backgroundColor: theme.colors.bg }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
         <View style={{
+          flex: 1,
           flexDirection: 'row', alignItems: 'center', gap: 8,
           backgroundColor: theme.colors.surface,
           borderRadius: theme.radius.lg,
@@ -61,6 +62,21 @@ export default function MarketsScreen() {
             testID="markets-search-input"
           />
         </View>
+        <TouchableOpacity
+          onPress={() => router.push('/alerts' as any)}
+          activeOpacity={0.7}
+          testID="markets-open-alerts-btn"
+          hitSlop={8}
+          style={{
+            width: 42, height: 42,
+            borderRadius: theme.radius.lg,
+            backgroundColor: theme.colors.surface,
+            borderWidth: 1, borderColor: theme.colors.gold + '55',
+            alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <Bell color={theme.colors.gold} size={18} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView

@@ -5,10 +5,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, TrendingUp, TrendingDown, ShoppingCart, ArrowDownToLine } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, TrendingDown, ShoppingCart, ArrowDownToLine, Bell } from 'lucide-react-native';
 import Svg, { Path, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { theme } from '@/theme';
 import { Button, Card, Row } from '@/components/ui';
+import { CreateAlertSheet } from '@/components/CreateAlertSheet';
 import { fetchPriceQuote, type PriceQuote } from '@/api/trading';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -54,6 +55,7 @@ export default function MarketDetailScreen() {
   const { symbol } = useLocalSearchParams<{ symbol: string }>();
   const [quote, setQuote] = useState<PriceQuote | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alertSheetOpen, setAlertSheetOpen] = useState(false);
 
   useEffect(() => {
     if (!symbol) return;
@@ -178,9 +180,42 @@ export default function MarketDetailScreen() {
                 {t('markets.note_quote') || 'Quote refreshes on screen open'}
               </Text>
             </View>
+
+            <TouchableOpacity
+              onPress={() => setAlertSheetOpen(true)}
+              activeOpacity={0.8}
+              testID="open-alert-sheet"
+              style={{
+                marginTop: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                paddingVertical: 14,
+                borderRadius: theme.radius.lg,
+                borderWidth: 1,
+                borderColor: theme.colors.gold + '55',
+                backgroundColor: theme.colors.surface,
+              }}
+            >
+              <Bell color={theme.colors.gold} size={16} />
+              <Text style={{ color: theme.colors.gold, fontWeight: '500', fontSize: 14, letterSpacing: 0.5 }}>
+                {t('alerts.setAlert') || 'Definir Alerta'}
+              </Text>
+            </TouchableOpacity>
           </>
         )}
       </ScrollView>
+
+      {quote && (
+        <CreateAlertSheet
+          visible={alertSheetOpen}
+          onClose={() => setAlertSheetOpen(false)}
+          asset={symbol as string}
+          currentPrice={quote.price}
+          currency="EUR"
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -264,6 +264,15 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Phase M4.1 Price Alerts (2026-04-30)
+- **Backend `/api/price-alerts`** — full CRUD (`POST/GET/DELETE` + `POST /:id/toggle`) backed by new `price_alerts` collection. Per-user soft cap of 50 active alerts.
+- **Background worker** `_alert_loop` runs every `PRICE_ALERT_INTERVAL_S` (default 60s). For every active alert: fetches current price via `/api/trading/cryptos` (same KBEX-spread pricing the user sees in the Markets tab), atomically flips `is_active=false` + records `triggered_at` / `triggered_price` if threshold crossed, then fans out an Expo Push notification (`exp.host/--/api/v2/push/send`) to all active tokens for that user.
+- **Admin debug endpoint** `POST /api/price-alerts/run-once` — triggers a single evaluation pass. E2E verified: BTC alert `above 1 EUR` → `triggered=1` after one pass with `triggered_price=65 375.72`; BTC `below 1 EUR` correctly stayed dormant.
+- **Mobile login** — substituted text "KBEX" by the real `kbex-logo.png` (220x64 contain) at the top of `/app/mobile/app/(auth)/login.tsx`.
+- **Mobile UI**: new screen `/app/mobile/app/alerts.tsx` (lists active + triggered with deltas, swipe-to-delete via Trash icon, gold-bordered cards). New `CreateAlertSheet` modal launched from market detail's gold "Definir Alerta" button — pill toggle Above/Below + target input + live %-from-current diff + creates the alert in one tap. Bell icon next to Markets search bar opens the alerts list.
+- **i18n**: full `alerts.*` namespace (15 keys) added to all 5 locales (PT/EN/AR/FR/ES).
+- **Logs verified at startup**: `Price-alert worker started (interval=60s)` alongside Revolut + Billing cycles.
+
 ## Mobile App — Phase M3 Trading Terminal Bug Fixes (2026-04-30)
 - **Root cause of M3 i18n bugs:** All 5 locale files had **two** top-level `markets:` blocks. ES module evaluation kept the second one (web namespace) and silently discarded the mobile-only keys defined at the top of the file. Symptom: `t('markets.currentPrice')` → `undefined`, button labels rendered the raw key path, etc.
 - **Fix:** Merged the mobile keys (`searchPh`, `empty`, `currentPrice`, `buyPrice`, `sellPrice`, `spread`, `buy`, `sell`, `simulated_trend`, `note_quote`) into the single surviving `markets:` block in each of `pt.js`, `en.js`, `ar.js`, `fr.js`, `es.js`. Removed the top duplicate block. Verified at runtime — every locale now exposes 26 keys under `markets.*`.

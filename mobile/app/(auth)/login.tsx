@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert,
+  View, Text, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert, Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/AuthContext';
 import { Button } from '@/components/ui';
 import { theme } from '@/theme';
-import { APP_NAME, APP_TAGLINE } from '@/config';
+import { APP_TAGLINE } from '@/config';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -37,13 +37,13 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
-            <Text style={{
-              fontSize: 42,
-              color: theme.colors.gold,
-              letterSpacing: 8,
-              fontWeight: '300',
-            }}>{APP_NAME}</Text>
-            <Text style={{ color: theme.colors.textMuted, marginTop: 8, fontSize: 13, letterSpacing: 1 }}>
+            <Image
+              source={require('../../assets/kbex-logo.png')}
+              style={{ width: 220, height: 64 }}
+              resizeMode="contain"
+              testID="login-logo"
+            />
+            <Text style={{ color: theme.colors.textMuted, marginTop: 12, fontSize: 13, letterSpacing: 1 }}>
               {APP_TAGLINE}
             </Text>
           </View>
