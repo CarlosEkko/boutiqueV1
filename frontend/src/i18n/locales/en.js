@@ -441,7 +441,8 @@ const TRANSLATIONS = {
     contact: 'Contact',
     requestAccess: 'Request Access',
     login: 'Login',
-    profile: 'Profile'
+    profile: 'Profile',
+    wallet: 'Wallet',
   },
 
   // Auth
@@ -2110,6 +2111,20 @@ const TRANSLATIONS = {
     createdTitle: 'Alert created',
     createdMsg: 'You will receive a push notification when {{asset}} hits the target.',
     openMarkets: 'Explore Markets',
+  },
+  wallet: {
+    totalBalance: 'Total Balance',
+    deposit: 'Deposit',
+    withdraw: 'Withdraw',
+    buy: 'Buy',
+    transactions: 'History',
+    fiatSection: 'Fiat',
+    cryptoSection: 'Crypto',
+    showZeros: 'Show zeros',
+    hideZeros: 'Hide zeros',
+    allZerosHint: 'All assets are zero. Tap above to show.',
+    empty: 'No assets. Make your first deposit.',
+    liveData: 'Live data · pull to refresh',
   },
   earn: {
     flexible: 'Flexible',

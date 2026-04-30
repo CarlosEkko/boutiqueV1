@@ -264,6 +264,19 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Portfolio (Wallet) Redesign + Alert Sheet Keyboard Fix (2026-04-30)
+- **Portfolio screen completely redesigned** (`app/(tabs)/portfolio.tsx`) with Revolut-style hierarchy:
+  - Hero "Total Balance" gold display (38pt thin) with **fiat + crypto valued in EUR** (live KBEX-spread mid prices via `/api/trading/cryptos`).
+  - **Quick Actions row**: 4 circular gold buttons (Depositar / Levantar / Comprar / Histórico).
+  - **Hide-zero toggle** (eye icon) — defaults to ON to keep the dashboard clean; user can opt-in to see zero balances.
+  - **Fiat section**: flag emoji + currency code + bank name + balance (one-card grouped list).
+  - **Crypto section**: real CoinMarketCap logo per asset + display name + EUR value + native amount + chevron deep-link to market detail. Network suffixes (USDT_POLYGON, ETH-AETH, USDT_ARB, USDT_BSC, MATIC_POLYGON) stripped from display and rendered as small "Polygon"/"Arbitrum"/"BSC" badges.
+  - Empty states for "all zeros hidden" and "truly empty wallet".
+- **Tab label fix**: tab title for Wallet now uses new `nav.wallet` key (previously raw `dashboard.portfolio` was rendered both as tab label AND screen header). `headerShown: false` on the Wallet tab — the screen has its own custom header.
+- **`useWallets` hook** extended: now fetches markets in parallel and exposes `prices` map + EUR-denominated `totalEur` covering both fiat and crypto.
+- **Alert Sheet UX fix** (`CreateAlertSheet.tsx`): wrapped modal in `KeyboardAvoidingView` + `ScrollView` with `keyboardShouldPersistTaps`. Tapping the dimmed backdrop now closes the sheet.
+- **i18n**: new `wallet.*` namespace (12 keys) + `nav.wallet` injected into all 5 locales (PT/EN/AR/FR/ES).
+
 ## Mobile App — Phase M4.1 Price Alerts (2026-04-30)
 - **Backend `/api/price-alerts`** — full CRUD (`POST/GET/DELETE` + `POST /:id/toggle`) backed by new `price_alerts` collection. Per-user soft cap of 50 active alerts.
 - **Background worker** `_alert_loop` runs every `PRICE_ALERT_INTERVAL_S` (default 60s). For every active alert: fetches current price via `/api/trading/cryptos` (same KBEX-spread pricing the user sees in the Markets tab), atomically flips `is_active=false` + records `triggered_at` / `triggered_price` if threshold crossed, then fans out an Expo Push notification (`exp.host/--/api/v2/push/send`) to all active tokens for that user.

@@ -425,7 +425,8 @@ const TRANSLATIONS = {
     contact: 'Contacto',
     requestAccess: 'Solicitar Acceso',
     login: 'Iniciar Sesión',
-    profile: 'Perfil'
+    profile: 'Perfil',
+    wallet: 'Cartera',
   },
   auth: {
     welcomeBack: 'Bienvenido de nuevo',
@@ -1232,6 +1233,20 @@ const TRANSLATIONS = {
     createdTitle: 'Alerta creada',
     createdMsg: 'Recibirá una notificación push cuando {{asset}} alcance el objetivo.',
     openMarkets: 'Explorar Mercados',
+  },
+  wallet: {
+    totalBalance: 'Saldo Total',
+    deposit: 'Depositar',
+    withdraw: 'Retirar',
+    buy: 'Comprar',
+    transactions: 'Historial',
+    fiatSection: 'Fiat',
+    cryptoSection: 'Cripto',
+    showZeros: 'Mostrar ceros',
+    hideZeros: 'Ocultar ceros',
+    allZerosHint: 'Todos los activos están a cero. Toque arriba para mostrar.',
+    empty: 'Sin activos. Haga su primer depósito.',
+    liveData: 'Datos en vivo · tire para actualizar',
   },
   earn: {
     flexible: 'Flexible',

@@ -325,6 +325,7 @@ const TRANSLATIONS = {
     requestAccess: 'طلب الوصول',
     login: 'تسجيل الدخول',
     profile: 'الملف الشخصي',
+    wallet: 'المحفظة',
   },
   // Authentication screens
   auth: {
@@ -1973,6 +1974,20 @@ const TRANSLATIONS = {
     createdTitle: 'تم إنشاء التنبيه',
     createdMsg: 'ستتلقى إشعار push بمجرد وصول {{asset}} إلى الهدف.',
     openMarkets: 'استكشاف الأسواق',
+  },
+  wallet: {
+    totalBalance: 'الرصيد الإجمالي',
+    deposit: 'إيداع',
+    withdraw: 'سحب',
+    buy: 'شراء',
+    transactions: 'السجل',
+    fiatSection: 'عملات ورقية',
+    cryptoSection: 'عملات رقمية',
+    showZeros: 'إظهار الأصفار',
+    hideZeros: 'إخفاء الأصفار',
+    allZerosHint: 'كل الأصول صفر. اضغط للإظهار.',
+    empty: 'لا توجد أصول. قم بإيداعك الأول.',
+    liveData: 'بيانات حية · اسحب للتحديث',
   },
   earn: {
     flexible: 'مرن',

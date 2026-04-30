@@ -51,8 +51,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="portfolio"
         options={{
-          title: t('dashboard.portfolio') || 'Portfolio',
+          title: t('nav.wallet') || 'Carteira',
           tabBarIcon: ({ color, size }) => <Briefcase color={color} size={size - 2} />,
+          headerShown: false,
         }}
       />
       <Tabs.Screen
