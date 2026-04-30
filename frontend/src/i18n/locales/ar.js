@@ -1,6 +1,35 @@
 // AR translations for KBEX.io
 
 const TRANSLATIONS = {
+  markets: {
+    searchPh: 'بحث عن أصل…',
+    empty: 'لا توجد أسواق متاحة',
+    currentPrice: 'السعر الحالي',
+    buyPrice: 'الشراء عند',
+    sellPrice: 'البيع عند',
+    spread: 'السبريد',
+    buy: 'شراء',
+    sell: 'بيع',
+    simulated_trend: 'اتجاه 24 ساعة (محاكاة)',
+    note_quote: 'يُحدّث السعر عند فتح الشاشة',
+  },
+  trade: {
+    buyTitle: 'شراء',
+    sellTitle: 'بيع',
+    buyCta: 'تأكيد الشراء',
+    sellCta: 'تأكيد البيع',
+    amountInEur: 'المبلغ (EUR)',
+    amountInAsset: 'المبلغ',
+    youReceive: 'ستستلم',
+    successTitle: 'تم تقديم الأمر',
+    successMsg: 'تم إرسال طلبك إلى مكتب KBEX.',
+    errorTitle: 'فشل الأمر',
+    disclaimer: 'يُرسل الأمر إلى مكتب KBEX للتأكيد.',
+  },
+  orders: {
+    title: 'الأوامر',
+    empty: 'لا توجد أوامر بعد',
+  },
   home: {
     greeting: 'مرحباً بعودتك',
     portfolio_value: 'الرصيد الإجمالي',

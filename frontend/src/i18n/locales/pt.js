@@ -1,6 +1,35 @@
 // PT translations for KBEX.io
 
 const TRANSLATIONS = {
+  markets: {
+    searchPh: 'Procurar ativo…',
+    empty: 'Sem mercados disponíveis',
+    currentPrice: 'Preço Atual',
+    buyPrice: 'Comprar a',
+    sellPrice: 'Vender a',
+    spread: 'Spread',
+    buy: 'Comprar',
+    sell: 'Vender',
+    simulated_trend: 'Tendência 24h (simulada)',
+    note_quote: 'Cotação atualiza ao abrir',
+  },
+  trade: {
+    buyTitle: 'Comprar',
+    sellTitle: 'Vender',
+    buyCta: 'Confirmar Compra',
+    sellCta: 'Confirmar Venda',
+    amountInEur: 'MONTANTE (EUR)',
+    amountInAsset: 'MONTANTE',
+    youReceive: 'Receberá',
+    successTitle: 'Ordem submetida',
+    successMsg: 'A sua ordem foi enviada à mesa KBEX.',
+    errorTitle: 'Falha na ordem',
+    disclaimer: 'Ordem enviada à mesa KBEX para confirmação.',
+  },
+  orders: {
+    title: 'Ordens',
+    empty: 'Ainda sem ordens',
+  },
   home: {
     greeting: 'Bem-vindo de volta',
     portfolio_value: 'Valor Total',

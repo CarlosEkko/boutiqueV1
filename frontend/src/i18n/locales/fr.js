@@ -1,6 +1,35 @@
 // FR translations for KBEX.io
 
 const TRANSLATIONS = {
+  markets: {
+    searchPh: 'Rechercher actif…',
+    empty: 'Aucun marché disponible',
+    currentPrice: 'Prix Actuel',
+    buyPrice: 'Acheter à',
+    sellPrice: 'Vendre à',
+    spread: 'Spread',
+    buy: 'Acheter',
+    sell: 'Vendre',
+    simulated_trend: 'Tendance 24h (simulée)',
+    note_quote: 'Devis rafraîchi à l\'ouverture',
+  },
+  trade: {
+    buyTitle: 'Acheter',
+    sellTitle: 'Vendre',
+    buyCta: 'Confirmer l\'Achat',
+    sellCta: 'Confirmer la Vente',
+    amountInEur: 'MONTANT (EUR)',
+    amountInAsset: 'MONTANT',
+    youReceive: 'Vous recevrez',
+    successTitle: 'Ordre soumis',
+    successMsg: 'Votre ordre a été envoyé au desk KBEX.',
+    errorTitle: 'Échec de l\'ordre',
+    disclaimer: 'Ordre envoyé au desk KBEX pour confirmation.',
+  },
+  orders: {
+    title: 'Ordres',
+    empty: 'Aucun ordre',
+  },
   home: {
     greeting: 'Bon retour',
     portfolio_value: 'Solde Total',

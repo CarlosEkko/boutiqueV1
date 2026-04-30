@@ -95,6 +95,15 @@ export default function ProfileScreen() {
           />
         </Card>
 
+        <Card>
+          <Button
+            label={t('profile.my_orders') || 'My Orders'}
+            onPress={() => (require('expo-router').router.push('/orders'))}
+            variant="ghost"
+            testID="my-orders-btn"
+          />
+        </Card>
+
         <View style={{ marginTop: 8 }}>
           <Button
             label={t('nav.logout') || 'Logout'}
