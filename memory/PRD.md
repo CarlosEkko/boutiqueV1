@@ -264,6 +264,17 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Phase M3.5 Real-time Push on Order / Withdrawal Events (2026-04-30)
+- **Shared helper `/app/backend/utils/push.py`** — `send_push_to_user(db, user_id, title, body, data)` fans out to all active Expo push tokens for a user; best-effort (never raises), consolidates the previous ad-hoc push logic from `price_alerts` and `otc_chat`.
+- **Hooks added** in `routes/trading.py` and `routes/crypto_wallets.py`:
+  - ✅ **Crypto withdrawal approved** → push "Levantamento aprovado — X BTC a caminho de 1A2B…7Z8Y" with Fireblocks TX id.
+  - ✅ **Crypto withdrawal rejected** → push "Levantamento recusado — {admin_note}".
+  - ✅ **Bank transfer approved** (buy order filled via SEPA) → push "Ordem compra concluída — X BTC a €Y na sua carteira".
+  - ✅ **Stripe checkout paid** (buy order filled via card) → push "Compra concluída via cartão — X BTC creditado na sua carteira".
+- Each payload carries `type` (`withdrawal_approved` / `withdrawal_rejected` / `order_filled`) + `order_id` or `withdrawal_id`, enabling future deep-links from the notification to the specific screen (History / Order detail).
+- All failures are caught + logged as `warning` — push is never allowed to break the business flow.
+- **Verified**: manual `POST /api/price-alerts/run-once` triggers the shared helper path (reused by the new helper's identical signature) — alert's push to the test Expo token succeeded with `triggered: 1`.
+
 ## Mobile App — Crypto Withdrawal Flow (2026-04-30)
 - New mobile screen `app/withdraw.tsx` — 3-step flow:
   1. **Pick** the asset/network (same 9 options as Deposit screen).

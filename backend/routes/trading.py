@@ -986,7 +986,36 @@ async def approve_bank_transfer(
                 {"id": transfer["order_id"]},
                 {"$set": {"status": "completed", "completed_at": now, "updated_at": now}}
             )
-    
+
+        # Mobile push → order owner (fill notification)
+        try:
+            from utils.push import send_push_to_user
+            order_doc = None
+            if transfer.get("order_id"):
+                order_doc = await db.trading_orders.find_one({"id": transfer["order_id"]}, {"_id": 0})
+            crypto_sym = (order_doc or {}).get("crypto_symbol", "").upper() or transfer.get("currency", "")
+            crypto_amt = (order_doc or {}).get("crypto_amount", "")
+            side = (order_doc or {}).get("side", "buy")
+            title = f"KBEX · Ordem {('compra' if side == 'buy' else 'venda')} concluída"
+            body = (
+                f"{crypto_amt} {crypto_sym} a {(order_doc or {}).get('execution_price','')} — na sua carteira"
+                if crypto_amt else
+                f"Transferência de {transfer.get('amount')} {transfer.get('currency','')} creditada"
+            )
+            await send_push_to_user(
+                db,
+                transfer.get("user_id"),
+                title=title,
+                body=body,
+                data={
+                    "type": "order_filled",
+                    "order_id": transfer.get("order_id"),
+                    "transfer_id": transfer_id,
+                },
+            )
+        except Exception as _e:
+            logger.warning(f"push(order_filled) failed: {_e}")
+
     return {"success": True, "message": "Bank transfer approved"}
 
 
@@ -2753,6 +2782,23 @@ async def get_payment_status(
                             "created_at": now
                         }
                         await db.wallets.insert_one(new_wallet)
+
+                    # Mobile push → order owner (Stripe fill)
+                    try:
+                        from utils.push import send_push_to_user
+                        await send_push_to_user(
+                            db,
+                            order["user_id"],
+                            title=f"KBEX · Compra concluída via cartão",
+                            body=f"{order['crypto_amount']} {order['crypto_symbol']} creditado na sua carteira",
+                            data={
+                                "type": "order_filled",
+                                "order_id": order["id"],
+                                "source": "stripe",
+                            },
+                        )
+                    except Exception as _e:
+                        logger.warning(f"push(order_filled/stripe) failed: {_e}")
         
         return {
             "status": status.status,

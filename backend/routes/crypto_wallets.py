@@ -611,6 +611,18 @@ async def admin_approve_withdrawal(
                 }
             }
         )
+        # Mobile push → owner
+        try:
+            from utils.push import send_push_to_user
+            await send_push_to_user(
+                db,
+                withdrawal.get("user_id"),
+                title=f"KBEX · Levantamento recusado",
+                body=f"{withdrawal.get('amount')} {withdrawal.get('asset')} — {request.admin_note or 'contacte o seu gestor'}",
+                data={"type": "withdrawal_rejected", "withdrawal_id": withdrawal_id},
+            )
+        except Exception as _e:
+            logger.warning(f"push(withdrawal_rejected) failed: {_e}")
         return {"success": True, "message": "Withdrawal rejected"}
     
     # Approve and execute on Fireblocks
@@ -725,7 +737,24 @@ async def admin_approve_withdrawal(
         )
         
         logger.info(f"Withdrawal {withdrawal_id} completed: Fireblocks TX {tx.get('id')}")
-        
+
+        # Mobile push → owner
+        try:
+            from utils.push import send_push_to_user
+            await send_push_to_user(
+                db,
+                user_id,
+                title=f"KBEX · Levantamento aprovado",
+                body=f"{withdrawal.get('amount')} {asset_symbol} a caminho de {dest_address[:8]}…{dest_address[-4:]}",
+                data={
+                    "type": "withdrawal_approved",
+                    "withdrawal_id": withdrawal_id,
+                    "fireblocks_tx_id": tx.get("id"),
+                },
+            )
+        except Exception as _e:
+            logger.warning(f"push(withdrawal_approved) failed: {_e}")
+
         return {
             "success": True,
             "message": "Withdrawal approved and executed",
