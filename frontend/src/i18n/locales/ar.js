@@ -1,6 +1,33 @@
 // AR translations for KBEX.io
 
 const TRANSLATIONS = {
+  home: {
+    greeting: 'مرحباً بعودتك',
+    portfolio_value: 'الرصيد الإجمالي',
+    fiat_wallets: 'فيات',
+    no_wallets: 'لا توجد محافظ فيات بعد',
+    no_crypto: 'لا توجد أصول رقمية بعد',
+    overview: 'نظرة عامة',
+    deposit: 'إيداع',
+    withdraw: 'سحب',
+    buy: 'شراء',
+    trade: 'تداول',
+    recent_activity: 'النشاط الأخير',
+    no_activity: 'لا يوجد نشاط حديث',
+    view_all: 'عرض الكل',
+    otc_sub: 'صفقات كبيرة · صفقات خاصة',
+    coming_m4: 'قريبًا',
+  },
+  portfolio: {
+    fiat: 'محافظ الفيات',
+    crypto: 'الأصول الرقمية',
+    holdings: 'الحيازات',
+    live_data: 'بيانات حيّة · اسحب للتحديث',
+  },
+  transactions: {
+    title: 'المعاملات',
+    empty: 'لا توجد معاملات بعد',
+  },
   tier23Modals: {
     otcExec: { start: 'بدء التنفيذ', manage: 'إدارة التنفيذ' },
     otcInvoice: { create: 'إنشاء فاتورة', detail: 'فاتورة' },

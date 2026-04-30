@@ -1,6 +1,33 @@
 // ES translations for KBEX.io
 
 const TRANSLATIONS = {
+  home: {
+    greeting: 'Bienvenido de nuevo',
+    portfolio_value: 'Saldo Total',
+    fiat_wallets: 'fiat',
+    no_wallets: 'Sin carteras fiat aún',
+    no_crypto: 'Sin activos cripto aún',
+    overview: 'Resumen',
+    deposit: 'Depositar',
+    withdraw: 'Retirar',
+    buy: 'Comprar',
+    trade: 'Trade',
+    recent_activity: 'Actividad Reciente',
+    no_activity: 'Sin actividad reciente',
+    view_all: 'Ver todo',
+    otc_sub: 'Block trades · Operaciones privadas',
+    coming_m4: 'Próximamente',
+  },
+  portfolio: {
+    fiat: 'Carteras Fiat',
+    crypto: 'Activos Cripto',
+    holdings: 'Posiciones',
+    live_data: 'Datos en vivo · tira para actualizar',
+  },
+  transactions: {
+    title: 'Transacciones',
+    empty: 'Sin transacciones aún',
+  },
   tier23Modals: {
     otcExec: { start: 'Iniciar Ejecución', manage: 'Gestionar Ejecución' },
     otcInvoice: { create: 'Crear Factura', detail: 'Factura' },
