@@ -1,5 +1,25 @@
 # KBEX.io - Changelog
 
+## 2026-04-30 - i18n Refactor: Split `translations.js` per Language (Phase 1)
+**Goal:** The monolithic `frontend/src/i18n/translations.js` reached 8.142 lines, mixing 5 languages, making maintenance painful and modal translation work risky.
+
+**Changes**
+- Split `translations.js` into 5 locale files under `frontend/src/i18n/locales/`:
+  - `en.js` (1.902 lines), `pt.js` (1.908), `ar.js` (1.674), `fr.js` (1.687), `es.js` (980).
+- New `translations.js` now a 13-line aggregator that imports each locale and exposes `{ EN, PT, AR, FR, ES }` (zero behavior change for `useLanguage()`).
+- Public API (`t()`, `language`, `changeLanguage`, `isRTL`) is unchanged — no consumer code touched.
+
+**Validation**
+- Programmatic `JSON.stringify` equality check on all 5 languages → byte-identical to the pre-refactor object.
+- Frontend webpack recompiled successfully, no new warnings.
+- Smoke screenshots: PT/EN/AR homepage render correctly, language switcher works, RTL preserved on AR.
+
+**Pre-existing issue surfaced (NOT introduced):** AR is missing top-level `nav` and `auth` keys (visible in mobile nav fallback as `nav.login` / `nav.requestAccess`). To be addressed in Phase 2.
+
+**Next**
+- Phase 2: translate the 42 modals/dialogs that currently have hardcoded Portuguese strings (Tier 1: HNW client-facing first).
+
+
 ## 2026-02-29 - Unified 3-Option Payment Picker (Phase 2)
 **Goal:** Extend the elegant 3-card payment selector (Saldo Fiat EUR / Cripto-Transferência / Cartão Stripe) — already in production for Tier Upgrades — to also cover Admission Fee (onboarding) and Annual Renewal flows.
 
