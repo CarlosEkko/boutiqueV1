@@ -1,6 +1,31 @@
 # KBEX.io - Changelog
 
-## 2026-04-30 - Phase 2: Tier-1 Modal Translations (HNW client-facing)
+## 2026-04-30 - Phases 3+4: Tier-2 & Tier-3 Modal Titles Translated (~29 files)
+**Goal:** Extend i18n to all staff (CRM / OTC / Risk) and admin modals. Due to volume, scope is limited to `DialogTitle` + `DialogDescription` + primary action buttons. Body form field labels remain in PT (Phase 5+).
+
+**New namespaces**
+- `commonModal` — shared actions (cancel/save/delete/confirm/close/loading/search/edit/submit/name/email/phone/status/type/date/amount/notes/description/actions/copied/genericError…) across all 5 languages.
+- `tier23Modals` — 26 modal-specific sub-objects (otcExec, otcInvoice, otcSettle, otcClient, otcQuote, crmDeal, crmTask, crmClient, crmContact, crmLead, crmSupplier, kyt, kyc, adminMenus, adminRevolut, adminKb, adminUsers, adminTenants, adminBilling, adminCompany, adminClients, adminPerms, adminOpps, adminBankAccounts, adminAdmission, balanceAdj, schedMeeting) plus 6 root-level keys (clientDetails, approveBank, approveBankConfirm, transferToken, addSignatory, verifDetail).
+
+**Files translated (29 modals):**
+- CRM (6): CRMDeals, CRMTasks, CRMClients, CRMContacts, CRMLeads, CRMSuppliers
+- OTC (5): OTCExecution, OTCInvoices, OTCSettlement, OTCClients, OTCQuotes
+- Risk (2): KYCVerificationsPage, KYTForensicPage
+- Admin (14): AdminClientMenus, AdminRevolutPage, AdminKnowledgeBase, AdminUsers, AdminTenants, AdminBillingPage, AdminCompanyAccounts, AdminClients, AdminPermissions, AdminOpportunities, AdminBankAccounts, AdminAdmissionFees, BalanceAdjustmentsPage, TokenManagementPage
+- Other (2): VaultSignatories, ScheduleMeetingDialog
+
+**Tooling:** Two Python scripts (`/tmp/translate_tier23_titles.py` and `/tmp/translate_tier23_round2.py`) automated: adding `useLanguage` import, inserting the `const { t } = useLanguage();` hook after the auth hook in each component, and surgical replacement of hardcoded titles via `search_replace`.
+
+**Validation (iteration_57)**
+- All 45 unique `t('tier23Modals.*')` keys used in code resolve to strings in all 5 locales (EN/PT/AR/FR/ES). Zero missing keys, zero `[object Object]` leaks, zero raw-key leaks.
+- Live login + dashboard smoke: PT/EN/AR rendered without raw keys.
+- ESLint clean (only pre-existing `react-hooks/exhaustive-deps` warnings on the page data-fetch hooks — not introduced by these changes).
+
+**Known scope limitations**
+- Body form field labels (placeholders like "Nome do comprador", "Telefone", "Montante", etc.) inside these modals remain hardcoded in PT — deliberately deferred to keep the scope of this round tractable.
+- `es.js` is ~700 lines shorter than the other locales (1245 vs ≈1950). Flagged by testing agent — pre-existing gap in ES (unrelated footer/marketing sections missing). Not blocking; to audit in Phase 5.
+
+
 **Goal:** None of the modals were translated. After the locale split, translate all client-facing modals across the 5 supported languages (PT, EN, AR, FR, ES).
 
 **Modals translated (Tier 1 — 6 modals + 9 dialogs):**
