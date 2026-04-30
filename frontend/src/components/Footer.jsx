@@ -25,8 +25,8 @@ const Footer = () => {
     [t('footer.support')]: [
       { label: t('footer.helpCenter'), to: '/help' },
       { label: t('footer.contactUs'), to: '/support' },
-      { label: t('footer.status'), to: '#' },
-      { label: t('footer.security'), to: '/help/seguranca' }
+      { label: t('footer.status'), to: '/system-status' },
+      { label: t('footer.security'), to: '/security' }
     ]
   };
 
