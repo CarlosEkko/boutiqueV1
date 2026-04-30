@@ -7,7 +7,8 @@ import { Button, Card, Row } from '@/components/ui';
 import { theme } from '@/theme';
 import { changeLanguage, SUPPORTED_LANGUAGES } from '@/i18n';
 import i18n from '@/i18n';
-import { Globe, LogOut } from 'lucide-react-native';
+import { Globe, LogOut, Bell } from 'lucide-react-native';
+import { sendLocalTestNotification } from '@/hooks/usePushNotifications';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -77,6 +78,21 @@ export default function ProfileScreen() {
               );
             })}
           </View>
+        </Card>
+
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <Bell color={theme.colors.gold} size={16} />
+            <Text style={{ color: theme.colors.text, fontSize: 14, fontWeight: '500' }}>
+              {t('profile.notifications') || 'Notifications'}
+            </Text>
+          </View>
+          <Button
+            label={t('profile.test_push') || 'Send test notification'}
+            onPress={sendLocalTestNotification}
+            variant="ghost"
+            testID="test-push-btn"
+          />
         </Card>
 
         <View style={{ marginTop: 8 }}>
