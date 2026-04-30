@@ -1,10 +1,10 @@
 """
 Public system status endpoint.
 
-Returns a health snapshot suitable for a public /status page (à la Stripe,
-Fireblocks). Each sub-system is individually probed and classified as
-`operational` / `degraded` / `outage`. The endpoint itself never raises — the
-page is what clients check when things are on fire.
+Returns a health snapshot suitable for a public /status page. Each sub-system
+is individually probed and classified as `operational` / `degraded` /
+`outage`. The endpoint itself never raises — the page is what clients check
+when things are on fire.
 """
 from __future__ import annotations
 import os
@@ -107,19 +107,19 @@ async def public_health():
     # Third-party probes — all fire-and-forget; failure = degraded, not fatal.
     binance = await _probe_url("https://api.binance.com/api/v3/ping")
     stripe = await _probe_stripe()
-    # Digital currencies: CoinGecko ping — the canonical price oracle that
-    # backs the KBEX cross-currency spread engine.
+    # Digital currencies: external price oracle ping — backs the KBEX
+    # cross-currency spread engine.
     digital_currencies = await _probe_url("https://api.coingecko.com/api/v3/ping")
 
     components: Dict[str, Dict] = {
         "api": {"status": "operational", "description": "KBEX REST API"},
         "database": {**mongo, "description": "MongoDB cluster"},
-        "market_data": {**binance, "description": "Binance market feed"},
-        "payments": {**stripe, "description": "Stripe checkout gateway"},
+        "market_data": {**binance, "description": "Real-time market data feed"},
+        "payments": {**stripe, "description": "Fiat payment gateway"},
         "authentication": {"status": "operational", "description": "JWT / session"},
         "trading_engine": {"status": "operational", "description": "Trading & OTC"},
-        "kyc": {"status": "operational", "description": "Sumsub KYC / KYB"},
-        "digital_currencies": {**digital_currencies, "description": "Digital currencies oracle (CoinGecko)"},
+        "kyc": {"status": "operational", "description": "KYC / KYB onboarding"},
+        "digital_currencies": {**digital_currencies, "description": "Digital currencies price oracle"},
     }
 
     # Roll-up: worst-of
