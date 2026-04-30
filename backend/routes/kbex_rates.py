@@ -197,7 +197,7 @@ async def resolve_spread(product: str, tier: str, asset: str) -> dict:
     }
 
 
-@router.get("/resolve")
+@router.get("/resolve-pricing")
 async def resolve_pricing(
     product: str,
     tier: str,
@@ -205,10 +205,10 @@ async def resolve_pricing(
     side: str = "buy",
     user_id: str = Depends(get_current_user_id),
 ):
-    """Public resolver — any authenticated user can query the exact fee/spread
-    that applies to a given product/tier/asset combination. This is the
-    canonical endpoint powering both the client-facing portal and the admin
-    simulator.
+    """Explicit pricing resolver — caller specifies product, tier, asset.
+    Used by the admin simulator and the unified pricing engine. Authenticated
+    users only. For automatic tier detection (uses caller's tier), see
+    `/resolve`.
     """
     if product not in PRODUCTS and product != "*":
         raise HTTPException(400, f"Invalid product. Use one of: {PRODUCTS}")
@@ -373,6 +373,121 @@ async def migrate_from_trading_fees(
         "kbex_rates_writes": writes if not dry_run else len(preview),
         "preview": preview[:20],
         "note": "Set dry_run=false to persist. Migration is idempotent.",
+    }
+
+
+@router.post("/apply-baseline")
+async def apply_baseline(
+    dry_run: bool = True,
+    admin_id: str = Depends(get_current_user_id),
+):
+    """Apply the curated KBEX-HNW baseline pricing — replaces all legacy
+    `migrated_from_trading_fees` rows with a clean cascade:
+
+      • 5 defaults (asset="*") per tier — covers all assets via cascade
+      • 20 stablecoin overrides (USDT, USDC, DAI, BUSD × 5 tiers) — tight spreads
+      • 10 top-coin overrides (BTC, ETH × 5 tiers) — moderate boutique spreads
+
+    Removes 200+ migrated outlier rows (e.g. USDT 100% spread, BTC 10% spread)
+    so the resolver returns commercially sensible values out of the box.
+
+    Idempotent. Default dry_run=true returns a preview.
+    """
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
+
+    # ----- Curated baseline (HNW boutique) -----
+    BASELINE = {
+        "broker":        {"buy_spread_pct": 0.45, "sell_spread_pct": 0.45, "buy_fee_pct": 0.20, "sell_fee_pct": 0.20, "min_fee_usd": 5.0},
+        "standard":      {"buy_spread_pct": 0.35, "sell_spread_pct": 0.35, "buy_fee_pct": 0.15, "sell_fee_pct": 0.15, "min_fee_usd": 5.0},
+        "premium":       {"buy_spread_pct": 0.25, "sell_spread_pct": 0.25, "buy_fee_pct": 0.10, "sell_fee_pct": 0.10, "min_fee_usd": 3.0},
+        "vip":           {"buy_spread_pct": 0.15, "sell_spread_pct": 0.15, "buy_fee_pct": 0.08, "sell_fee_pct": 0.08, "min_fee_usd": 2.0},
+        "institucional": {"buy_spread_pct": 0.08, "sell_spread_pct": 0.08, "buy_fee_pct": 0.05, "sell_fee_pct": 0.05, "min_fee_usd": 0.0},
+    }
+    STABLECOIN_TIGHT = {
+        "broker":        {"buy_spread_pct": 0.20, "sell_spread_pct": 0.20, "buy_fee_pct": 0.10, "sell_fee_pct": 0.10, "min_fee_usd": 2.0},
+        "standard":      {"buy_spread_pct": 0.15, "sell_spread_pct": 0.15, "buy_fee_pct": 0.08, "sell_fee_pct": 0.08, "min_fee_usd": 2.0},
+        "premium":       {"buy_spread_pct": 0.12, "sell_spread_pct": 0.12, "buy_fee_pct": 0.06, "sell_fee_pct": 0.06, "min_fee_usd": 1.0},
+        "vip":           {"buy_spread_pct": 0.08, "sell_spread_pct": 0.08, "buy_fee_pct": 0.05, "sell_fee_pct": 0.05, "min_fee_usd": 1.0},
+        "institucional": {"buy_spread_pct": 0.05, "sell_spread_pct": 0.05, "buy_fee_pct": 0.03, "sell_fee_pct": 0.03, "min_fee_usd": 0.0},
+    }
+    TOPCOIN_MODERATE = {
+        "broker":        {"buy_spread_pct": 0.30, "sell_spread_pct": 0.30, "buy_fee_pct": 0.15, "sell_fee_pct": 0.15, "min_fee_usd": 3.0},
+        "standard":      {"buy_spread_pct": 0.25, "sell_spread_pct": 0.25, "buy_fee_pct": 0.12, "sell_fee_pct": 0.12, "min_fee_usd": 3.0},
+        "premium":       {"buy_spread_pct": 0.18, "sell_spread_pct": 0.18, "buy_fee_pct": 0.08, "sell_fee_pct": 0.08, "min_fee_usd": 2.0},
+        "vip":           {"buy_spread_pct": 0.10, "sell_spread_pct": 0.10, "buy_fee_pct": 0.06, "sell_fee_pct": 0.06, "min_fee_usd": 1.0},
+        "institucional": {"buy_spread_pct": 0.05, "sell_spread_pct": 0.05, "buy_fee_pct": 0.04, "sell_fee_pct": 0.04, "min_fee_usd": 0.0},
+    }
+    STABLECOINS = ["USDT", "USDC", "DAI", "BUSD"]
+    TOP_COINS = ["BTC", "ETH"]
+    PRODUCTS = ["exchange"]
+
+    now = datetime.now(timezone.utc).isoformat()
+    keep_assets = ["*"] + STABLECOINS + TOP_COINS
+
+    # 1. Identify legacy rows to delete
+    delete_filter = {
+        "migrated_from_trading_fees": True,
+        "asset": {"$nin": keep_assets},
+    }
+    to_delete_count = await db.kbex_rates.count_documents(delete_filter)
+
+    # 2. Build write plan
+    writes_plan = []
+    for product in PRODUCTS:
+        for tier, vals in BASELINE.items():
+            writes_plan.append({"product": product, "tier": tier, "asset": "*", "category": "baseline", **vals})
+        for asset in STABLECOINS:
+            for tier, vals in STABLECOIN_TIGHT.items():
+                writes_plan.append({"product": product, "tier": tier, "asset": asset, "category": "stablecoin", **vals})
+        for asset in TOP_COINS:
+            for tier, vals in TOPCOIN_MODERATE.items():
+                writes_plan.append({"product": product, "tier": tier, "asset": asset, "category": "topcoin", **vals})
+
+    if dry_run:
+        return {
+            "dry_run": True,
+            "to_delete": to_delete_count,
+            "to_write": len(writes_plan),
+            "preview": writes_plan[:8],
+            "note": "Set dry_run=false to apply.",
+        }
+
+    # 3. Execute
+    deleted = await db.kbex_rates.delete_many(delete_filter)
+    writes = 0
+    for w in writes_plan:
+        category = w.pop("category")
+        await db.kbex_rates.update_one(
+            {"product": w["product"], "tier": w["tier"], "asset": w["asset"]},
+            {"$set": {
+                **w,
+                "swap_spread_pct": 0.0,
+                "swap_fee_pct": 0.0,
+                "updated_at": now,
+                "updated_by": admin_id,
+                "migrated_from_trading_fees": False,
+                "baseline_category": category,
+            }},
+            upsert=True,
+        )
+        writes += 1
+
+    await db.kbex_rates_audit.insert_one({
+        "action": "apply_baseline",
+        "updated_by": admin_id,
+        "updated_at": now,
+        "deleted": deleted.deleted_count,
+        "writes": writes,
+    })
+
+    return {
+        "dry_run": False,
+        "deleted": deleted.deleted_count,
+        "writes": writes,
+        "total_after": await db.kbex_rates.count_documents({}),
     }
 
 

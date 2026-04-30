@@ -12,7 +12,7 @@ import { Label } from '../../../components/ui/label';
 import { Card, CardContent } from '../../../components/ui/card';
 import {
   Gem, TrendingUp, Briefcase, Shield, Wallet, Crown, GitBranch,
-  History, FlaskConical, ArrowRight, ExternalLink, Info,
+  History, FlaskConical, ArrowRight, ExternalLink, Info, Wand2, Loader2,
 } from 'lucide-react';
 
 import AdminKBEXRates from './AdminKBEXRates';
@@ -49,6 +49,7 @@ export default function AdminTarifarioPage() {
   const [tab, setTab] = useState('spread');
   const [auditOpen, setAuditOpen] = useState(false);
   const [simOpen, setSimOpen] = useState(false);
+  const [baselineOpen, setBaselineOpen] = useState(false);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-5" data-testid="admin-tarifario-page">
@@ -65,7 +66,16 @@ export default function AdminTarifarioPage() {
             todas as outras tabelas derivam dela em cascata.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setBaselineOpen(true)}
+            className="border-gold-700/40 text-gold-300 hover:bg-gold-950/40"
+            data-testid="tarifario-baseline-btn"
+          >
+            <Wand2 size={14} className="mr-1.5" />
+            Aplicar Baseline
+          </Button>
           <Button
             variant="outline"
             onClick={() => setSimOpen(true)}
@@ -210,6 +220,18 @@ export default function AdminTarifarioPage() {
           <SimulatorPanel />
         </DialogContent>
       </Dialog>
+
+      {/* Baseline dialog */}
+      <Dialog open={baselineOpen} onOpenChange={setBaselineOpen}>
+        <DialogContent className="bg-black border-gold-700/30 max-w-xl" data-testid="tarifario-baseline-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Wand2 size={16} className="text-gold-400" /> Aplicar Baseline KBEX-HNW
+            </DialogTitle>
+          </DialogHeader>
+          <BaselinePanel onClose={() => setBaselineOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -340,7 +362,7 @@ function SimulatorPanel() {
     setError(null);
     try {
       const token = sessionStorage.getItem('kryptobox_token');
-      const url = `${API}/api/kbex-rates/resolve?product=${product}&tier=${tier}&asset=${encodeURIComponent(asset)}&side=${side}`;
+      const url = `${API}/api/kbex-rates/resolve-pricing?product=${product}&tier=${tier}&asset=${encodeURIComponent(asset)}&side=${side}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'resolve failed');
@@ -455,6 +477,159 @@ function SimulatorPanel() {
       </div>
     </div>
   );
+}
+
+function BaselinePanel({ onClose }) {
+  const [step, setStep] = React.useState('intro'); // intro | preview | done
+  const [preview, setPreview] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+  const [error, setError] = React.useState(null);
+
+  const API = process.env.REACT_APP_BACKEND_URL;
+  const headers = () => ({
+    Authorization: `Bearer ${sessionStorage.getItem('kryptobox_token')}`,
+    'Content-Type': 'application/json',
+  });
+
+  const runDryRun = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`${API}/api/kbex-rates/apply-baseline?dry_run=true`, {
+        method: 'POST',
+        headers: headers(),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setPreview(await res.json());
+      setStep('preview');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const apply = async () => {
+    setBusy(true); setError(null);
+    try {
+      const res = await fetch(`${API}/api/kbex-rates/apply-baseline?dry_run=false`, {
+        method: 'POST',
+        headers: headers(),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setResult(await res.json());
+      setStep('done');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (step === 'intro') {
+    return (
+      <div className="space-y-4" data-testid="baseline-step-intro">
+        <div className="text-sm text-zinc-300 leading-relaxed">
+          Aplica a tabela de fees curada da KBEX (posicionamento HNW boutique):
+        </div>
+        <ul className="text-xs text-zinc-400 space-y-1.5 pl-4 list-disc">
+          <li><strong className="text-white">5 defaults</strong> (asset = "*") por tier — cobrem todos os ativos via cascata</li>
+          <li><strong className="text-white">20 stablecoins</strong> com spreads tight (USDT/USDC/DAI/BUSD)</li>
+          <li><strong className="text-white">10 top-coins</strong> com spreads moderados (BTC/ETH)</li>
+        </ul>
+        <div className="rounded-lg border border-amber-700/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-200">
+          Linhas legacy (<code>migrated_from_trading_fees</code>) de outros ativos serão eliminadas. As 35+ criptos restantes passarão a herdar do default em cascata.
+        </div>
+        {error && <div className="text-xs text-red-400">{error}</div>}
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose} className="text-zinc-400">Cancelar</Button>
+          <Button onClick={runDryRun} disabled={busy} className="bg-gold-500 hover:bg-gold-400 text-black font-medium" data-testid="baseline-preview-btn">
+            {busy ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+            Pré-visualizar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'preview' && preview) {
+    return (
+      <div className="space-y-4" data-testid="baseline-step-preview">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-red-700/30 bg-red-500/5 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-wider text-red-300 mb-1">A eliminar</div>
+            <div className="text-2xl font-light text-white">{preview.to_delete}</div>
+            <div className="text-[11px] text-zinc-500">linhas legacy</div>
+          </div>
+          <div className="rounded-lg border border-emerald-700/30 bg-emerald-500/5 px-4 py-3">
+            <div className="text-[10px] uppercase tracking-wider text-emerald-300 mb-1">A escrever</div>
+            <div className="text-2xl font-light text-white">{preview.to_write}</div>
+            <div className="text-[11px] text-zinc-500">linhas baseline</div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-zinc-800 max-h-48 overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-zinc-900/60 text-[10px] uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th className="text-left px-3 py-1.5">Categoria</th>
+                <th className="text-left px-3 py-1.5">Tier</th>
+                <th className="text-left px-3 py-1.5">Ativo</th>
+                <th className="text-right px-3 py-1.5">Spread</th>
+                <th className="text-right px-3 py-1.5">Fee</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.preview.map((p, i) => (
+                <tr key={i} className="border-t border-zinc-900">
+                  <td className="px-3 py-1.5">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      p.category === 'baseline' ? 'bg-zinc-700/30 text-zinc-300' :
+                      p.category === 'stablecoin' ? 'bg-emerald-500/20 text-emerald-300' :
+                      'bg-amber-500/20 text-amber-300'
+                    }`}>{p.category}</span>
+                  </td>
+                  <td className="px-3 py-1.5 text-zinc-300">{p.tier}</td>
+                  <td className="px-3 py-1.5 font-mono text-gold-300">{p.asset}</td>
+                  <td className="px-3 py-1.5 text-right text-zinc-400">{p.buy_spread_pct}%</td>
+                  <td className="px-3 py-1.5 text-right text-zinc-400">{p.buy_fee_pct}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {error && <div className="text-xs text-red-400">{error}</div>}
+        <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
+          <button type="button" onClick={() => setStep('intro')} className="text-xs text-zinc-400 hover:text-white">← Voltar</button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onClose} className="text-zinc-400">Cancelar</Button>
+            <Button onClick={apply} disabled={busy} className="bg-gold-500 hover:bg-gold-400 text-black font-medium" data-testid="baseline-apply-btn">
+              {busy ? <Loader2 size={14} className="animate-spin mr-1.5" /> : null}
+              Confirmar e Aplicar
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'done' && result) {
+    return (
+      <div className="space-y-4 text-center py-4" data-testid="baseline-step-done">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mb-2">
+          <Wand2 size={20} />
+        </div>
+        <div>
+          <div className="text-white text-lg font-light mb-1">Baseline aplicada com sucesso</div>
+          <div className="text-zinc-500 text-sm">
+            {result.deleted} linhas legacy removidas · {result.writes} linhas escritas · {result.total_after} no total
+          </div>
+        </div>
+        <Button onClick={onClose} className="bg-gold-500 hover:bg-gold-400 text-black font-medium">Fechar</Button>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function MiniStat({ label, value, tone = 'zinc' }) {
