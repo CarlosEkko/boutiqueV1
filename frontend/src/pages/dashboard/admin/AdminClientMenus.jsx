@@ -34,6 +34,7 @@ import {
   HardDrive,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -84,6 +85,7 @@ const AVAILABLE_MENUS = [
 
 const AdminClientMenus = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -355,7 +357,7 @@ const AdminClientMenus = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Menu className="text-gold-400" size={20} />
-              Editar Menus - {selectedClient?.name}
+              {t('tier23Modals.adminMenus.edit')} - {selectedClient?.name}
             </DialogTitle>
           </DialogHeader>
 

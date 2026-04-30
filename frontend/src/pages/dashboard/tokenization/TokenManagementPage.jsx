@@ -7,11 +7,13 @@ import { Badge } from '../../../components/ui/badge';
 import { Settings2, Loader2, AlertCircle, Send, Wallet, FileCode2, Copy, ExternalLink, Unlink, RefreshCw, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../components/ui/dialog';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
 const TokenManagementPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -198,7 +200,7 @@ const TokenManagementPage = () => {
       <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Send className="text-[#D4AF37]" size={20} /> Transferir Token</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Send className="text-[#D4AF37]" size={20} /> {t('tier23Modals.transferToken')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>

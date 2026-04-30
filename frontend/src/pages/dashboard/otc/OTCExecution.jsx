@@ -37,11 +37,13 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OTCExecution = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
@@ -507,7 +509,7 @@ const OTCExecution = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <Zap size={20} />
-              {selectedDeal?.stage === 'acceptance' ? 'Iniciar Execução' : 'Gerenciar Execução'}
+              {selectedDeal?.stage === 'acceptance' ? t('tier23Modals.otcExec.start') : t('tier23Modals.otcExec.manage')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {selectedDeal && `Deal ${selectedDeal.deal_number} - ${selectedDeal.client_name}`}

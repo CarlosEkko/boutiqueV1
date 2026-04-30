@@ -40,11 +40,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '../../../utils/formatters';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminAdmissionFees = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [allPayments, setAllPayments] = useState([]);  // All payments for stats
   const [filteredPayments, setFilteredPayments] = useState([]);  // Filtered for table
   const [loading, setLoading] = useState(true);
@@ -344,10 +346,10 @@ const AdminAdmissionFees = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="text-green-400" size={20} />
-              Aprovar Pagamento
+              {t('tier23Modals.adminAdmission.approve')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Confirma a aprovação deste pagamento de taxa de admissão?
+              {t('tier23Modals.adminAdmission.confirm')}
             </DialogDescription>
           </DialogHeader>
           

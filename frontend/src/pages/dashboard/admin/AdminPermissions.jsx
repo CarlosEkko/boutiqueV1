@@ -31,6 +31,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -56,6 +57,7 @@ const departmentColors = {
 
 const AdminPermissions = () => {
   const { token, user: currentUser } = useAuth();
+  const { t } = useLanguage();
   const [staff, setStaff] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -368,7 +370,7 @@ const AdminPermissions = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="text-gold-400" size={20} />
-              Editar Permissões - {selectedUser?.name}
+              {t('tier23Modals.adminPerms.edit')} - {selectedUser?.name}
             </DialogTitle>
           </DialogHeader>
 

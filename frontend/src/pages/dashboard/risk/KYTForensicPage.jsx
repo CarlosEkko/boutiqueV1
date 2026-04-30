@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -31,6 +32,7 @@ const KYT_STATUS_MAP = {
 };
 
 const KYTForensicPage = () => {
+  const { t } = useLanguage();
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('pending');
@@ -225,7 +227,7 @@ const KYTForensicPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSearch className="text-purple-400" size={20} />
-              Análise Forense KYT
+              {t('tier23Modals.kyt.title')}
             </DialogTitle>
             <DialogDescription className="text-zinc-500">
               {selectedWallet?.client_name} — {selectedWallet?.deal_number}

@@ -33,11 +33,13 @@ import {
   Hash
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OTCInvoices = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [deals, setDeals] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -562,7 +564,7 @@ const OTCInvoices = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <Plus size={20} />
-              Criar Fatura
+              {t('tier23Modals.otcInvoice.create')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {selectedDeal && `Deal ${selectedDeal.deal_number} - ${selectedDeal.client_name}`}
@@ -635,7 +637,7 @@ const OTCInvoices = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <FileText size={20} />
-              Fatura {selectedInvoice?.invoice_number}
+              {t('tier23Modals.otcInvoice.detail')} {selectedInvoice?.invoice_number}
             </DialogTitle>
           </DialogHeader>
           

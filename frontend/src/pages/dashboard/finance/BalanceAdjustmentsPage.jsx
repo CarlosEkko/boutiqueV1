@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ReconciliationPanel from './ReconciliationPanel';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -41,6 +42,7 @@ const CATEGORY_COLORS = {
 };
 
 const BalanceAdjustmentsPage = () => {
+  const { t } = useLanguage();
   const [adjustments, setAdjustments] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -418,7 +420,7 @@ const CreateAdjustmentDialog = ({ open, onClose, onSuccess }) => {
         <DialogHeader>
           <DialogTitle className="text-xl font-light flex items-center gap-3">
             <ArrowLeftRight className="text-amber-400" size={22} />
-            Novo Ajuste de Saldo
+            {t('tier23Modals.balanceAdj.new')}
           </DialogTitle>
         </DialogHeader>
 

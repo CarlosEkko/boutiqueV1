@@ -14,6 +14,7 @@ import {
   AlertTriangle, ShieldAlert, Settings, FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '../../../components/ui/dialog';
@@ -43,6 +44,7 @@ const daysUntil = (iso) => {
 
 const AdminBillingPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const headers = { Authorization: `Bearer ${token}` };
 
   const [config, setConfig] = useState(null);
@@ -633,7 +635,7 @@ const AdminBillingPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-gold-400">
               <History size={18} />
-              Histórico: {historyDialog.user?.name || historyDialog.user?.email}
+              {t('tier23Modals.adminBilling.history')}: {historyDialog.user?.name || historyDialog.user?.email}
             </DialogTitle>
           </DialogHeader>
           {historyDialog.loading ? (

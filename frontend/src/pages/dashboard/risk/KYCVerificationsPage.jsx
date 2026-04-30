@@ -12,6 +12,7 @@ import {
   Globe, Mail, Phone, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -38,6 +39,7 @@ const TYPE_TABS = [
 ];
 
 const KYCVerificationsPage = () => {
+  const { t } = useLanguage();
   const [verifications, setVerifications] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -288,7 +290,7 @@ const KYCVerificationsPage = () => {
               ) : (
                 <User className="text-blue-400" size={22} />
               )}
-              Detalhe da Verificação
+              {t('tier23Modals.verifDetail')}
             </DialogTitle>
           </DialogHeader>
 

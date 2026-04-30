@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '../../../utils/formatters';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -38,6 +39,7 @@ const CRYPTOCURRENCIES = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'XRP', 'SOL', 'Ou
 
 const CRMDeals = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState([]);
   const [stages, setStages] = useState([]);
@@ -391,7 +393,7 @@ const CRMDeals = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingDeal ? 'Editar Negociação' : 'Nova Negociação'}</DialogTitle>
+            <DialogTitle>{editingDeal ? t('tier23Modals.crmDeal.edit') : t('tier23Modals.crmDeal.new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

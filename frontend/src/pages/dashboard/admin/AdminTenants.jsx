@@ -14,6 +14,7 @@ import {
   Globe, Plus, Trash2, Edit, Save, Loader2, Shield, Palette, Mail, Users, Briefcase, Wallet,
 } from 'lucide-react';
 import BrandingImageUpload from '../../../components/admin/BrandingImageUpload';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -34,6 +35,7 @@ const emptyTenant = () => ({
 
 export default function AdminTenants() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [tenants, setTenants] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -268,7 +270,7 @@ export default function AdminTenants() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe size={18} className="text-gold-400" />
-              {editing?.is_default ? `Editar ${editing.slug}` : editing?.slug ? `Editar ${editing.slug}` : 'Novo Institucional'}
+              {editing?.slug ? `${t('tier23Modals.adminTenants.edit')} ${editing.slug}` : t('tier23Modals.adminTenants.new')}
             </DialogTitle>
           </DialogHeader>
 

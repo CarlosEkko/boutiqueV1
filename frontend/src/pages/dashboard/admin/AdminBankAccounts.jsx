@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '../../../components/ui/select';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 import { 
   Landmark, CheckCircle, XCircle, Clock, RefreshCw, 
   Search, Filter, User, Building, Globe, Eye,
@@ -32,6 +33,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminBankAccounts = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -381,14 +383,14 @@ const AdminBankAccounts = () => {
           <DialogHeader>
             <DialogTitle className={`flex items-center gap-2 ${actionType === 'reject' ? 'text-red-400' : 'text-emerald-400'}`}>
               {actionType === 'approve' ? (
-                <><CheckCircle size={20} /> Aprovar Conta Bancária</>
+                <><CheckCircle size={20} /> {t('tier23Modals.approveBank')}</>
               ) : (
                 <><XCircle size={20} /> Rejeitar Conta Bancária</>
               )}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {actionType === 'approve' 
-                ? 'Confirma que verificou os dados desta conta bancária?'
+                ? t('tier23Modals.approveBankConfirm')
                 : 'Indique o motivo da rejeição para informar o cliente.'}
             </DialogDescription>
           </DialogHeader>

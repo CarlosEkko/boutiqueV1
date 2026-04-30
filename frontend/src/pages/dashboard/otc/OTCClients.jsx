@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { useLanguage } from '../../../i18n';
 import {
   Select,
   SelectContent,
@@ -68,6 +69,7 @@ const CRYPTO_COLORS = {
 
 const OTCClients = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -651,7 +653,7 @@ const OTCClients = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Shield className="text-gold-400" />
-              Conceder Acesso ao Portal OTC
+              {t('tier23Modals.otcClient.grantAccess')}
             </DialogTitle>
           </DialogHeader>
           

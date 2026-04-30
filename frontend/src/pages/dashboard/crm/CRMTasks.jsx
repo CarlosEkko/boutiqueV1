@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate } from '../../../utils/formatters';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -46,6 +47,7 @@ const TASK_TYPES = [
 
 const CRMTasks = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [priorities, setPriorities] = useState([]);
@@ -440,7 +442,7 @@ const CRMTasks = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTask ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle>
+            <DialogTitle>{editingTask ? t('tier23Modals.crmTask.edit') : t('tier23Modals.crmTask.new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

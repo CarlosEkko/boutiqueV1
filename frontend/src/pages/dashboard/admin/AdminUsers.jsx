@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import { useLanguage } from '../../../i18n';
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminUsers = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -633,7 +635,7 @@ const AdminUsers = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-orange-400">
               <Ban size={20} />
-              Bloquear Utilizador
+              {t('tier23Modals.adminUsers.block')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Tem a certeza que deseja bloquear <span className="text-white font-medium">{selectedUser?.name}</span>?
@@ -665,7 +667,7 @@ const AdminUsers = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-400">
               <AlertTriangle size={20} />
-              Eliminar Utilizador
+              {t('tier23Modals.adminUsers.delete')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Tem a certeza que deseja eliminar permanentemente <span className="text-white font-medium">{selectedUser?.name}</span>?
@@ -798,7 +800,7 @@ const AdminUsers = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-gold-400">
               <Info size={20} />
-              Detalhes do Cliente
+              {t('tier23Modals.clientDetails')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               Informação completa de <span className="text-white font-medium">{selectedUser?.name}</span>
@@ -1183,7 +1185,7 @@ const AdminUsers = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <UserCog className="text-gold-400" />
-              Atribuir Account Manager
+              {t('tier23Modals.adminClients.assignAM')}
             </DialogTitle>
           </DialogHeader>
           

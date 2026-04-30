@@ -43,12 +43,14 @@ import {
   ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CURRENCY_SYMBOLS = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
 
 const OTCQuotes = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [deals, setDeals] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -967,7 +969,7 @@ const OTCQuotes = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <FileText size={20} />
-              Detalhes da Cotação
+              {t('tier23Modals.otcQuote.detail')}
             </DialogTitle>
           </DialogHeader>
           

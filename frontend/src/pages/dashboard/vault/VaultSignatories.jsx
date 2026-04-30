@@ -9,6 +9,7 @@ import { ShieldCheck, Users, Plus, Trash2, Save, Clock, Settings, UserCheck, Mai
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -21,6 +22,7 @@ const roleColors = {
 
 const VaultSignatories = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [signatories, setSignatories] = useState([]);
   const [settings, setSettings] = useState({ required_signatures: 2, transaction_timeout_hours: 48 });
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -185,7 +187,7 @@ const VaultSignatories = () => {
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md" data-testid="add-signatory-dialog">
           <DialogHeader>
             <DialogTitle className="text-lg font-light text-zinc-50 flex items-center gap-2">
-              <Users className="text-amber-400" size={20} /> Adicionar Signatário
+              <Users className="text-amber-400" size={20} /> {t('tier23Modals.addSignatory')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">

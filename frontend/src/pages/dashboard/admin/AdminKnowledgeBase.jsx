@@ -38,11 +38,13 @@ import { formatDate } from '../../../utils/formatters';
 
 // Lazy load the rich text editor
 import RichTextEditor from '../../../components/RichTextEditor';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminKnowledgeBase = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('articles');
   const [loading, setLoading] = useState(false);
   
@@ -724,7 +726,7 @@ const AdminKnowledgeBase = () => {
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              {editingCategory ? t('tier23Modals.adminKb.editCat') : t('tier23Modals.adminKb.newCat')}
             </DialogTitle>
           </DialogHeader>
           

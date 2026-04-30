@@ -33,6 +33,7 @@ import { toast } from 'sonner';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 import { COUNTRIES } from '../../../utils/countries';
+import { useLanguage } from '../../../i18n';
 
 const CONTACT_METHODS = [
   { value: 'email', label: 'Email' },
@@ -43,6 +44,7 @@ const CONTACT_METHODS = [
 
 const CRMContacts = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -357,7 +359,7 @@ const CRMContacts = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingContact ? 'Editar Contacto' : 'Novo Contacto'}</DialogTitle>
+            <DialogTitle>{editingContact ? t('tier23Modals.crmContact.edit') : t('tier23Modals.crmContact.new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

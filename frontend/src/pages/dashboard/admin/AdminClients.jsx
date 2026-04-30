@@ -31,11 +31,13 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminClients = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -310,7 +312,7 @@ const AdminClients = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <UserCog className="text-gold-400" />
-              Atribuir Account Manager
+              {t('tier23Modals.adminClients.assignAM')}
             </DialogTitle>
           </DialogHeader>
           

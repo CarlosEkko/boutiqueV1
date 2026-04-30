@@ -43,11 +43,13 @@ const CRYPTOCURRENCIES = [
 ];
 
 import { COUNTRIES } from '../../../utils/countries';
+import { useLanguage } from '../../../i18n';
 
 const REGIONS = ['Europe', 'Middle East', 'LATAM', 'North America', 'Asia', 'Other'];
 
 const CRMSuppliers = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [suppliers, setSuppliers] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -503,7 +505,7 @@ const CRMSuppliers = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingSupplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</DialogTitle>
+            <DialogTitle>{editingSupplier ? t('tier23Modals.crmSupplier.edit') : t('tier23Modals.crmSupplier.new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6 py-4">

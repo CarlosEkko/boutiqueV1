@@ -41,6 +41,7 @@ import ScheduleMeetingDialog from '../components/ScheduleMeetingDialog';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 import { COUNTRIES } from '../../../utils/countries';
+import { useLanguage } from '../../../i18n';
 
 const REGIONS = ['Europe', 'Middle East', 'LATAM', 'North America', 'Asia', 'Other'];
 
@@ -50,6 +51,7 @@ const CRYPTOCURRENCIES = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'XRP', 'SOL', 'Ou
 
 const CRMLeads = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
   const [statuses, setStatuses] = useState([]);
@@ -571,7 +573,7 @@ const CRMLeads = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingLead ? 'Editar Lead' : 'Novo Lead'}</DialogTitle>
+            <DialogTitle>{editingLead ? t('tier23Modals.crmLead.edit') : t('tier23Modals.crmLead.new')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

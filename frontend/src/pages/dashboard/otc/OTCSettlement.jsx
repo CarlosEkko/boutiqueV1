@@ -39,11 +39,13 @@ import {
   Play
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const OTCSettlement = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [deals, setDeals] = useState([]);
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -542,7 +544,7 @@ const OTCSettlement = () => {
           <DialogHeader>
             <DialogTitle className="text-gold-400 flex items-center gap-2">
               <Wallet size={20} />
-              {settlementData ? 'Gerir Liquidação' : 'Iniciar Liquidação'}
+              {settlementData ? t('tier23Modals.otcSettle.manage') : t('tier23Modals.otcSettle.start')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {selectedDeal && `Deal ${selectedDeal.deal_number}`}

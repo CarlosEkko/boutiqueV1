@@ -12,6 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '../../../components/ui/select';
 import { toast } from 'sonner';
+import { useLanguage } from '../../../i18n';
 import {
   Landmark, RefreshCw, CheckCircle, ArrowDownLeft, ArrowUpRight,
   Link2, Link2Off, Search, UserCheck, Loader2, ExternalLink, Wallet
@@ -57,6 +58,7 @@ const fmtAge = (isoOrSec) => {
 
 const AdminRevolutPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const headers = { Authorization: `Bearer ${token}` };
 
   const [status, setStatus] = useState(null);
@@ -568,7 +570,7 @@ const AdminRevolutPage = () => {
               <UserCheck size={20} /> Reconciliar Depósito
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Atribuir este depósito à carteira fiat de um cliente
+              {t('tier23Modals.adminRevolut.attributeDesc')}
             </DialogDescription>
           </DialogHeader>
 

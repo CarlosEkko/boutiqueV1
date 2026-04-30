@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
+import { useLanguage } from '../../../i18n';
 import {
   Select,
   SelectContent,
@@ -58,6 +59,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const CRMClients = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -450,7 +452,7 @@ const CRMClients = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-gold-400">
               <Eye size={20} />
-              Visão 360° do Cliente
+              {t('tier23Modals.crmClient.view360')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {selectedClient?.name} - {selectedClient?.email}

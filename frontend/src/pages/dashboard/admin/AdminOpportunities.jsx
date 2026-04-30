@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatNumber } from '../../../utils/formatters';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -67,6 +68,7 @@ const STATUSES = [
 
 const AdminOpportunities = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [opportunities, setOpportunities] = useState([]);
   const [filteredOpportunities, setFilteredOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -945,10 +947,10 @@ const AdminOpportunities = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="text-red-400" size={20} />
-              Eliminar Oportunidade
+              {t('tier23Modals.adminOpps.delete')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Tem a certeza que deseja eliminar esta oportunidade?
+              {t('tier23Modals.adminOpps.confirm')}
               Esta ação não pode ser revertida.
             </DialogDescription>
           </DialogHeader>

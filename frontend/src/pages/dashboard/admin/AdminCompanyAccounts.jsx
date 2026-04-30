@@ -31,6 +31,7 @@ import {
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 import { COUNTRIES } from '../../../utils/countries';
+import { useLanguage } from '../../../i18n';
 
 // Country to currency mapping for auto-selection
 const COUNTRY_CURRENCIES = {
@@ -45,6 +46,7 @@ const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'BRL', 'CHF'];
 
 const AdminCompanyAccounts = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -421,10 +423,10 @@ const AdminCompanyAccounts = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="text-gold-400" size={20} />
-              {editingAccount ? 'Editar Conta' : 'Adicionar Conta'}
+              {editingAccount ? t('tier23Modals.adminCompany.edit') : t('tier23Modals.adminCompany.add')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
-              Configure os dados bancários para receber pagamentos
+              {t('tier23Modals.adminCompany.desc')}
             </DialogDescription>
           </DialogHeader>
 

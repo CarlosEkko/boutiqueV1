@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { formatDate } from '../../../utils/formatters';
+import { useLanguage } from '../../../i18n';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ScheduleMeetingDialog = ({ open, onClose, lead, leadType }) => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [meetings, setMeetings] = useState([]);
   const [form, setForm] = useState({
@@ -119,7 +121,7 @@ const ScheduleMeetingDialog = ({ open, onClose, lead, leadType }) => {
         <DialogHeader>
           <DialogTitle className="text-lg font-light text-white flex items-center gap-2">
             <Video className="text-blue-400" size={20} />
-            Agendar Reunião
+            {t('tier23Modals.schedMeeting.title')}
           </DialogTitle>
         </DialogHeader>
 
