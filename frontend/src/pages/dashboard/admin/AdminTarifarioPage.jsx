@@ -18,6 +18,7 @@ import {
 import AdminKBEXRates from './AdminKBEXRates';
 import AdminTradingPage from './AdminTradingPage';
 import AdminEscrowFees from './AdminEscrowFees';
+import MatrixRatesEditor from './MatrixRatesEditor';
 
 /**
  * Tarifário Unificado — central KBEX fees/spreads/rates control panel.
@@ -123,11 +124,26 @@ export default function AdminTarifarioPage() {
           </div>
         )}
 
-        <TabsContent value="spread" className="mt-4">
-          <AdminKBEXRates />
+        <TabsContent value="spread" className="mt-4 space-y-6">
+          <div className="rounded-lg border border-gold-700/30 bg-gold-950/10 px-4 py-2.5 flex items-center gap-3 text-xs">
+            <Info size={13} className="text-gold-400 shrink-0" />
+            <span className="text-zinc-300">
+              <span className="text-gold-400">Nova matriz unificada:</span>
+              <span className="text-zinc-500"> inclui spreads, fees, mínimos e overrides por ativo. A vista clássica (só spreads) continua disponível em </span>
+              <Link to="/dashboard/admin/kbex-rates" className="text-gold-400 hover:underline underline-offset-4">/admin/kbex-rates</Link>.
+            </span>
+          </div>
+          <MatrixRatesEditor />
         </TabsContent>
 
         <TabsContent value="exchange" className="mt-4">
+          <div className="rounded-lg border border-amber-700/30 bg-amber-500/5 px-4 py-3 mb-4 text-xs text-amber-200 flex items-start gap-2">
+            <Info size={13} className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <strong>Modo read-only recomendado.</strong> Os fees por criptomoeda (<code>crypto_fees</code>) e fiat (<code>trading_fees</code>) foram migrados para o KBEX Spread unificado — edite na tab{' '}
+              <button type="button" onClick={() => setTab('spread')} className="text-gold-400 hover:underline underline-offset-4">KBEX Spread</button>. Esta página mantém-se acessível como safety-net durante 30 dias.
+            </div>
+          </div>
           <EmbedRef label="Taxas & Limites" path="/dashboard/admin/trading" />
           <AdminTradingPage />
         </TabsContent>

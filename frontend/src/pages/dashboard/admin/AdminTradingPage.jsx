@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAdminTrading } from './trading/useAdminTrading';
 import CryptoFeesTab from './trading/CryptoFeesTab';
 import FiatFeesTab from './trading/FiatFeesTab';
@@ -7,7 +8,7 @@ import OrdersTab from './trading/OrdersTab';
 import TransfersTab from './trading/TransfersTab';
 import FiatWithdrawalsTab from './trading/FiatWithdrawalsTab';
 import CryptoWithdrawalsTab from './trading/CryptoWithdrawalsTab';
-import { Settings, CheckCircle, AlertCircle, Coins, DollarSign, Users } from 'lucide-react';
+import { Settings, CheckCircle, AlertCircle, Coins, DollarSign, Users, ArrowRight, Archive } from 'lucide-react';
 
 const TabButton = ({ id, icon: Icon, label, activeTab, setActiveTab }) => (
   <button
@@ -34,6 +35,31 @@ const AdminTradingPage = () => {
           <Settings className="text-gold-400" />Configuracoes
         </h1>
         <p className="text-gray-400 mt-1">Configure taxas e limites de trading</p>
+      </div>
+
+      {/* Migration notice — unified pricing moved to Tarifário Unificado */}
+      <div className="rounded-xl border border-amber-700/40 bg-gradient-to-br from-amber-500/10 to-transparent p-5">
+        <div className="flex items-start gap-3">
+          <div className="shrink-0 w-10 h-10 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <Archive size={18} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-amber-200 font-medium text-sm mb-1">
+              Página migrada para o Tarifário Unificado
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed mb-3">
+              Os fees por criptomoeda e fiat foram consolidados na nova matriz <strong className="text-gold-400">KBEX Spread</strong> (produto × tier × ativo).
+              Esta página mantém-se acessível como <strong>safety-net</strong> durante a transição — edite os fees no novo local para garantir consistência.
+            </p>
+            <Link
+              to="/dashboard/admin/tarifario"
+              className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md bg-gold-500 hover:bg-gold-400 text-black font-medium transition-colors"
+              data-testid="trading-migrate-banner-cta"
+            >
+              Abrir Tarifário Unificado <ArrowRight size={12} />
+            </Link>
+          </div>
+        </div>
       </div>
 
       {message && (
