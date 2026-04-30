@@ -1,6 +1,32 @@
 # KBEX.io - Changelog
 
-## 2026-04-30 - i18n Refactor: Split `translations.js` per Language (Phase 1)
+## 2026-04-30 - Phase 2: Tier-1 Modal Translations (HNW client-facing)
+**Goal:** None of the modals were translated. After the locale split, translate all client-facing modals across the 5 supported languages (PT, EN, AR, FR, ES).
+
+**Modals translated (Tier 1 — 6 modals + 9 dialogs):**
+- `BillingCheckoutDialog` — generic checkout for annual/upgrade/admission payments. New namespace `billingCheckout`.
+- `CreateEscrowModal` — 4-step escrow wizard (Type & Assets / Counterparties / Fees / Review). Namespace `escrowModal`.
+- `BankAccountsPage` — Add Bank Account dialog (15+ fields) and Delete Confirmation dialog. Namespace `bankAccountModals`.
+- `CryptoTransactionsPage` — Transaction Details dialog (hash, destination, fees, signers, dates, explorer link). Namespace `cryptoTxModal`.
+- `StakingPage` — 5-step Stake Wizard + Unstake confirmation modal. Namespace `stakingModals`.
+- `TokenizationPage` — 4 dialogs (Create Collection / Issue Token / Mint / Burn). Namespace `tokenizationModals`.
+
+**Pre-existing bug fixed:**
+- AR locale was missing `nav` and `auth` top-level keys (visible as `nav.login`, `auth.signIn` in the Arabic UI). Added all 13 nav keys + 21 auth keys with proper Arabic translations.
+
+**Bug found and fixed during testing (iteration_56):**
+- `en.js` was missing 7 footer keys (`custody`, `exchange`, `launchpad`, `atmNetwork`, `helpCenter`, `support`, `contactUs`) — added by testing agent. All 5 locales now have 20 identical footer keys.
+
+**Validation**
+- Testing agent (iteration_56) confirmed no raw i18n keys leaking on homepage or any tested modal across all 5 languages.
+- Verified end-to-end: BankAccount Add modal + CreateEscrow wizard step 1 + CryptoTx details title rendered correctly in EN/PT/AR/FR/ES.
+- AR `dir=rtl` correctly applied; language preference persisted in localStorage.
+- Locale files complete for Staking & Tokenization modals; smoke-tested via key existence.
+
+**Out of scope (NOT introduced — pre-existing PT-hardcoded strings):**
+- `CryptoTransactionsPage` page-level header title/subtitle is hardcoded in PT (only the modal was in scope).
+
+
 **Goal:** The monolithic `frontend/src/i18n/translations.js` reached 8.142 lines, mixing 5 languages, making maintenance painful and modal translation work risky.
 
 **Changes**
