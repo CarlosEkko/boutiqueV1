@@ -107,6 +107,9 @@ async def public_health():
     # Third-party probes — all fire-and-forget; failure = degraded, not fatal.
     binance = await _probe_url("https://api.binance.com/api/v3/ping")
     stripe = await _probe_stripe()
+    # Digital currencies: CoinGecko ping — the canonical price oracle that
+    # backs the KBEX cross-currency spread engine.
+    digital_currencies = await _probe_url("https://api.coingecko.com/api/v3/ping")
 
     components: Dict[str, Dict] = {
         "api": {"status": "operational", "description": "KBEX REST API"},
@@ -116,10 +119,7 @@ async def public_health():
         "authentication": {"status": "operational", "description": "JWT / session"},
         "trading_engine": {"status": "operational", "description": "Trading & OTC"},
         "kyc": {"status": "operational", "description": "Sumsub KYC / KYB"},
-        "email": {
-            "status": "operational" if os.environ.get("BREVO_API_KEY") else "degraded",
-            "description": "Brevo transactional email",
-        },
+        "digital_currencies": {**digital_currencies, "description": "Digital currencies oracle (CoinGecko)"},
     }
 
     # Roll-up: worst-of

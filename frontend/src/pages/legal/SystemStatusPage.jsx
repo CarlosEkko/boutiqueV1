@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import {
   ArrowLeft, Activity, CheckCircle2, AlertTriangle, XCircle, RefreshCw,
-  Database, CreditCard, ShieldCheck, Server, Mail, LineChart, KeyRound, Loader2,
+  Database, CreditCard, ShieldCheck, Server, Bitcoin, LineChart, KeyRound, Loader2,
 } from 'lucide-react';
 import { useLanguage } from '../../i18n';
 
@@ -27,14 +27,14 @@ const COPY = {
     incidents: { title: 'Incidentes recentes (30 dias)', empty: 'Sem incidentes registados nos últimos 30 dias.' },
     latency: 'Latência',
     components: {
-      api: 'API REST',
+      api: 'KBEX API',
       database: 'Base de Dados',
       market_data: 'Dados de Mercado',
       payments: 'Gateway de Pagamentos',
       authentication: 'Autenticação',
       trading_engine: 'Motor de Trading',
       kyc: 'KYC / KYB',
-      email: 'Email Transacional',
+      digital_currencies: 'Digital Currencies',
     },
   },
   en: {
@@ -49,8 +49,8 @@ const COPY = {
     incidents: { title: 'Recent incidents (30 days)', empty: 'No incidents recorded in the last 30 days.' },
     latency: 'Latency',
     components: {
-      api: 'REST API', database: 'Database', market_data: 'Market Data', payments: 'Payment Gateway',
-      authentication: 'Authentication', trading_engine: 'Trading Engine', kyc: 'KYC / KYB', email: 'Transactional Email',
+      api: 'KBEX API', database: 'Database', market_data: 'Market Data', payments: 'Payment Gateway',
+      authentication: 'Authentication', trading_engine: 'Trading Engine', kyc: 'KYC / KYB', digital_currencies: 'Digital Currencies',
     },
   },
   fr: {
@@ -65,8 +65,8 @@ const COPY = {
     incidents: { title: 'Incidents récents (30 jours)', empty: 'Aucun incident enregistré ces 30 derniers jours.' },
     latency: 'Latence',
     components: {
-      api: 'API REST', database: 'Base de Données', market_data: 'Données de Marché', payments: 'Passerelle de Paiement',
-      authentication: 'Authentification', trading_engine: 'Moteur de Trading', kyc: 'KYC / KYB', email: 'Email Transactionnel',
+      api: 'KBEX API', database: 'Base de Données', market_data: 'Données de Marché', payments: 'Passerelle de Paiement',
+      authentication: 'Authentification', trading_engine: 'Moteur de Trading', kyc: 'KYC / KYB', digital_currencies: 'Cryptoactifs',
     },
   },
   es: {
@@ -81,8 +81,8 @@ const COPY = {
     incidents: { title: 'Incidentes recientes (30 días)', empty: 'Sin incidentes registrados en los últimos 30 días.' },
     latency: 'Latencia',
     components: {
-      api: 'API REST', database: 'Base de Datos', market_data: 'Datos de Mercado', payments: 'Pasarela de Pagos',
-      authentication: 'Autenticación', trading_engine: 'Motor de Trading', kyc: 'KYC / KYB', email: 'Email Transaccional',
+      api: 'KBEX API', database: 'Base de Datos', market_data: 'Datos de Mercado', payments: 'Pasarela de Pagos',
+      authentication: 'Autenticación', trading_engine: 'Motor de Trading', kyc: 'KYC / KYB', digital_currencies: 'Criptoactivos',
     },
   },
   ar: {
@@ -111,7 +111,7 @@ const COMPONENT_ICONS = {
   authentication: KeyRound,
   trading_engine: Activity,
   kyc: ShieldCheck,
-  email: Mail,
+  digital_currencies: Bitcoin,
 };
 
 const STATUS_STYLE = {
