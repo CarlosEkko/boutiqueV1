@@ -308,98 +308,149 @@ function AuditLogPanel() {
 }
 
 function SimulatorPanel() {
-  // Client-side impact projection — a thin lever that lets the admin see the
-  // cascading effect of a new base KBEX spread before committing any change
-  // to the database.
-  const [base, setBase] = React.useState(0.62); // current effective %
-  const [next, setNext] = React.useState(0.80);
+  // Real-time simulator backed by /api/kbex-rates/resolve
+  const [product, setProduct] = React.useState('exchange');
+  const [tier, setTier] = React.useState('vip');
+  const [asset, setAsset] = React.useState('BTC');
+  const [side, setSide] = React.useState('buy');
+  const [result, setResult] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
 
-  const delta = Number((next - base).toFixed(3));
-  const deltaPct = base ? (delta / base) * 100 : 0;
+  const API = process.env.REACT_APP_BACKEND_URL;
 
-  // Rough illustrative model — real numbers should come from audit+analytics
-  // aggregations once available.
-  const rows = [
-    { label: 'Exchange · Tier Broker', current: base + 0.30, next: next + 0.30 },
-    { label: 'Exchange · Tier VIP', current: base + 0.08, next: next + 0.08 },
-    { label: 'OTC Desk · 100k–500k', current: base - 0.22, next: next - 0.22 },
-    { label: 'OTC Desk · >5M (custom)', current: base - 0.40, next: next - 0.40 },
-    { label: 'Escrow standard (effective)', current: base + 0.20, next: next + 0.20 },
-  ];
+  const run = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = sessionStorage.getItem('kryptobox_token');
+      const url = `${API}/api/kbex-rates/resolve?product=${product}&tier=${tier}&asset=${encodeURIComponent(asset)}&side=${side}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'resolve failed');
+      setResult(data);
+    } catch (err) {
+      setError(err.message || 'failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [API, product, tier, asset, side]);
+
+  React.useEffect(() => { run(); }, [run]);
+
+  const PRODUCTS = ['otc', 'exchange', 'escrow', 'spot', 'multisign'];
+  const TIERS = ['broker', 'standard', 'premium', 'vip', 'institucional'];
+  const SIDES = ['buy', 'sell', 'swap'];
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-4" data-testid="simulator-panel">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div>
-          <Label className="text-xs text-zinc-400">Spread efetivo atual (%)</Label>
+          <Label className="text-xs text-zinc-400">Produto</Label>
+          <select
+            value={product}
+            onChange={(e) => setProduct(e.target.value)}
+            className="w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-2 text-sm text-white"
+            data-testid="sim-product"
+          >
+            {PRODUCTS.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label className="text-xs text-zinc-400">Tier</Label>
+          <select
+            value={tier}
+            onChange={(e) => setTier(e.target.value)}
+            className="w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-2 text-sm text-white"
+            data-testid="sim-tier"
+          >
+            {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label className="text-xs text-zinc-400">Ativo</Label>
           <Input
-            type="number"
-            step="0.01"
-            value={base}
-            onChange={(e) => setBase(parseFloat(e.target.value || 0))}
-            className="bg-zinc-900 border-zinc-700 text-white mt-1"
-            data-testid="simulator-base-input"
+            value={asset}
+            onChange={(e) => setAsset(e.target.value.toUpperCase())}
+            placeholder="BTC, ETH, * ..."
+            className="mt-1 bg-zinc-900 border-zinc-700 text-white uppercase"
+            data-testid="sim-asset"
           />
         </div>
         <div>
-          <Label className="text-xs text-zinc-400">Novo spread proposto (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={next}
-            onChange={(e) => setNext(parseFloat(e.target.value || 0))}
-            className="bg-zinc-900 border-sky-700 text-white mt-1 focus:border-sky-400"
-            data-testid="simulator-next-input"
-          />
+          <Label className="text-xs text-zinc-400">Direção</Label>
+          <select
+            value={side}
+            onChange={(e) => setSide(e.target.value)}
+            className="w-full mt-1 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-2 text-sm text-white"
+            data-testid="sim-side"
+          >
+            {SIDES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 text-sm">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-zinc-500">Delta absoluto</span>
-          <span className={`font-mono ${delta > 0 ? 'text-amber-300' : delta < 0 ? 'text-emerald-300' : 'text-zinc-400'}`}>
-            {delta > 0 ? '+' : ''}{delta.toFixed(3)} pp
-          </span>
+      {error && (
+        <div className="rounded-md border border-red-800/50 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          {error}
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-zinc-500">Variação relativa</span>
-          <span className={`font-mono ${deltaPct > 0 ? 'text-amber-300' : deltaPct < 0 ? 'text-emerald-300' : 'text-zinc-400'}`}>
-            {deltaPct > 0 ? '+' : ''}{deltaPct.toFixed(1)} %
-          </span>
-        </div>
-      </div>
+      )}
 
-      <div className="rounded-lg border border-zinc-800 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-900/70 text-[10px] uppercase tracking-wider text-zinc-500">
-            <tr>
-              <th className="px-3 py-2 text-left">Produto</th>
-              <th className="px-3 py-2 text-right">Atual</th>
-              <th className="px-3 py-2 text-right">Projetado</th>
-              <th className="px-3 py-2 text-right">Δ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => {
-              const d = r.next - r.current;
-              return (
-                <tr key={i} className="border-t border-zinc-900">
-                  <td className="px-3 py-2 text-zinc-300">{r.label}</td>
-                  <td className="px-3 py-2 text-right text-zinc-400 font-mono">{r.current.toFixed(2)}%</td>
-                  <td className="px-3 py-2 text-right text-white font-mono">{r.next.toFixed(2)}%</td>
-                  <td className={`px-3 py-2 text-right font-mono ${d > 0 ? 'text-amber-300' : d < 0 ? 'text-emerald-300' : 'text-zinc-500'}`}>
-                    {d > 0 ? '+' : ''}{d.toFixed(2)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {result && (
+        <div className="rounded-xl border border-gold-700/30 bg-gradient-to-br from-gold-950/20 to-zinc-950 p-5">
+          <div className="text-[10px] uppercase tracking-wider text-gold-400/80 mb-1">
+            Resolução do motor
+          </div>
+          <div className="text-3xl font-light text-white">
+            {Number(result.total_pct).toFixed(3)}
+            <span className="text-sm text-zinc-500 ml-1">%</span>
+          </div>
+          <div className="text-[11px] text-zinc-500 mt-1">
+            Cobrado ao cliente · {side} · {product}/{tier}/{result.asset}
+          </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <MiniStat label="Margem KBEX" value={`${Number(result.effective_spread_pct).toFixed(3)}%`} tone="sky" />
+            <MiniStat label="Fee execução" value={`${Number(result.effective_fee_pct).toFixed(3)}%`} tone="violet" />
+            <MiniStat label="Mínimo" value={`$${Number(result.min_fee_usd).toFixed(2)}`} tone="zinc" />
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-[11px]">
+            <div className="text-zinc-500">
+              Fonte:{' '}
+              <span className={result.source === 'override' ? 'text-emerald-300' : 'text-amber-300'}>
+                {result.source === 'override' ? 'override específico' : 'fallback cascata'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={run}
+              disabled={loading}
+              className="text-zinc-400 hover:text-white underline-offset-4 hover:underline"
+            >
+              {loading ? 'a calcular…' : 'Recalcular'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="text-[11px] text-zinc-600 leading-relaxed">
-        Nota: valores ilustrativos. A simulação assume offsets constantes por produto — os desvios reais podem variar consoante a configuração em tempo real de cada Tier e Produto no KBEX Spread.
+        O motor segue a cascata: <code>produto + tier + ativo</code> → <code>produto + tier + *</code> → <code>* + tier + *</code>. Altere qualquer dimensão e o resultado atualiza em tempo real.
       </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, tone = 'zinc' }) {
+  const toneMap = {
+    sky: 'text-sky-300 border-sky-900/40',
+    violet: 'text-violet-300 border-violet-900/40',
+    zinc: 'text-zinc-300 border-zinc-800',
+  };
+  return (
+    <div className={`rounded-md border bg-zinc-900/60 px-3 py-2 ${toneMap[tone] || toneMap.zinc}`}>
+      <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-0.5">{label}</div>
+      <div className="text-sm font-mono">{value}</div>
     </div>
   );
 }

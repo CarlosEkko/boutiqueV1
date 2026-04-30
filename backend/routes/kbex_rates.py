@@ -43,8 +43,16 @@ class RateConfig(BaseModel):
     product: str
     tier: str
     asset: str = "*"
+    # Margem comercial KBEX (spread que o cliente paga sobre o preço de mercado)
     buy_spread_pct: float = 0.0
     sell_spread_pct: float = 0.0
+    # Fee de execução/serviço — migrado de trading_fees (opcional, default 0)
+    buy_fee_pct: Optional[float] = 0.0
+    sell_fee_pct: Optional[float] = 0.0
+    min_fee_usd: Optional[float] = 0.0
+    # Conversão/swap
+    swap_fee_pct: Optional[float] = 0.0
+    swap_spread_pct: Optional[float] = 0.0
 
 
 class RateBulkUpdate(BaseModel):
@@ -101,6 +109,11 @@ async def update_rate_configs(payload: RateBulkUpdate, admin_id: str = Depends(g
                 "asset": rate.asset.upper() if rate.asset != "*" else "*",
                 "buy_spread_pct": rate.buy_spread_pct,
                 "sell_spread_pct": rate.sell_spread_pct,
+                "buy_fee_pct": rate.buy_fee_pct or 0.0,
+                "sell_fee_pct": rate.sell_fee_pct or 0.0,
+                "min_fee_usd": rate.min_fee_usd or 0.0,
+                "swap_fee_pct": rate.swap_fee_pct or 0.0,
+                "swap_spread_pct": rate.swap_spread_pct or 0.0,
                 "updated_by": admin_id,
                 "updated_at": now,
             }},
@@ -137,31 +150,249 @@ async def delete_rate_config(product: str, tier: str, asset: str = "*", admin_id
 # ==================== RESOLVE: Get KBEX Rate ====================
 
 async def resolve_spread(product: str, tier: str, asset: str) -> dict:
-    """Resolve the buy/sell spread for a given product, tier, and asset.
-    Lookup order: product+tier+asset -> product+tier+* -> *+tier+* -> defaults(0%)
+    """Resolve full pricing config for a given product/tier/asset tuple.
+    Returns **both** commercial spread AND execution fee — the unified
+    replacement for the legacy two-query (kbex_rates + trading_fees) flow.
+
+    Lookup order (first match wins, most-specific → most-generic):
+        1. product + tier + asset
+        2. product + tier + *
+        3. * + tier + *
+        4. fallback zeros
+
+    All fields in the response are guaranteed to exist (default 0). Callers
+    can safely compute:  total_pct = buy_spread_pct + buy_fee_pct  (and same
+    for sell).
     """
     db = get_db()
-    asset_upper = asset.upper()
+    asset_upper = (asset or "*").upper()
 
-    rate = await db.kbex_rates.find_one(
-        {"product": product, "tier": tier, "asset": asset_upper}, {"_id": 0}
+    candidates = [
+        {"product": product, "tier": tier, "asset": asset_upper},
+        {"product": product, "tier": tier, "asset": "*"},
+        {"product": "*", "tier": tier, "asset": "*"},
+    ]
+
+    rate = None
+    for q in candidates:
+        rate = await db.kbex_rates.find_one(q, {"_id": 0})
+        if rate:
+            break
+
+    if not rate:
+        rate = {}
+
+    return {
+        "product": rate.get("product", product),
+        "tier": rate.get("tier", tier),
+        "asset": rate.get("asset", asset_upper),
+        "buy_spread_pct": float(rate.get("buy_spread_pct", 0) or 0),
+        "sell_spread_pct": float(rate.get("sell_spread_pct", 0) or 0),
+        "buy_fee_pct": float(rate.get("buy_fee_pct", 0) or 0),
+        "sell_fee_pct": float(rate.get("sell_fee_pct", 0) or 0),
+        "min_fee_usd": float(rate.get("min_fee_usd", 0) or 0),
+        "swap_fee_pct": float(rate.get("swap_fee_pct", 0) or 0),
+        "swap_spread_pct": float(rate.get("swap_spread_pct", 0) or 0),
+        "source": "override" if rate.get("asset") == asset_upper else "fallback",
+    }
+
+
+@router.get("/resolve")
+async def resolve_pricing(
+    product: str,
+    tier: str,
+    asset: str = "*",
+    side: str = "buy",
+    user_id: str = Depends(get_current_user_id),
+):
+    """Public resolver — any authenticated user can query the exact fee/spread
+    that applies to a given product/tier/asset combination. This is the
+    canonical endpoint powering both the client-facing portal and the admin
+    simulator.
+    """
+    if product not in PRODUCTS and product != "*":
+        raise HTTPException(400, f"Invalid product. Use one of: {PRODUCTS}")
+    if tier not in TIERS and tier != "*":
+        raise HTTPException(400, f"Invalid tier. Use one of: {TIERS}")
+
+    resolved = await resolve_spread(product, tier, asset)
+    if side == "sell":
+        spread = resolved["sell_spread_pct"]
+        fee = resolved["sell_fee_pct"]
+    elif side == "swap":
+        spread = resolved["swap_spread_pct"]
+        fee = resolved["swap_fee_pct"]
+    else:
+        spread = resolved["buy_spread_pct"]
+        fee = resolved["buy_fee_pct"]
+
+    resolved["side"] = side
+    resolved["effective_spread_pct"] = spread
+    resolved["effective_fee_pct"] = fee
+    resolved["total_pct"] = round(spread + fee, 6)
+    return resolved
+
+
+@router.post("/migrate-from-trading-fees")
+async def migrate_from_trading_fees(
+    dry_run: bool = True,
+    admin_id: str = Depends(get_current_user_id),
+):
+    """One-shot migration that copies every `crypto_fees` document (per-symbol
+    legacy fees) into the matrix shape used by `kbex_rates`.
+
+    Also migrates the fiat spreads/fees from the single `trading_fees`
+    top-level config doc, mapping them as the default (asset="*") values.
+
+    Behavior:
+      - Idempotent: re-running updates values in place (safe to call many times)
+      - One kbex_rates row per (tier × symbol) combination, plus one default
+        per tier for asset="*"
+      - Preserves any kbex_rates spread values that don't exist in legacy
+      - Default dry_run=true — returns a preview without touching the database
+    """
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
+
+    # --- 1. Pull legacy sources ---
+    per_symbol = await db.crypto_fees.find({}, {"_id": 0}).to_list(5000)
+    global_doc = await db.trading_fees.find_one({}, {"_id": 0}) or {}
+
+    preview: List[dict] = []
+    writes = 0
+    now = datetime.now(timezone.utc).isoformat()
+
+    # --- 2. Per-symbol rows (crypto_fees → kbex_rates with asset=<symbol>) ---
+    for src in per_symbol:
+        symbol = (src.get("symbol") or "").upper()
+        if not symbol:
+            continue
+        fee_payload = {
+            "buy_fee_pct": float(src.get("buy_fee_percent", 0) or 0),
+            "sell_fee_pct": float(src.get("sell_fee_percent", 0) or 0),
+            "min_fee_usd": float(src.get("min_buy_fee", 0) or 0),
+            "swap_fee_pct": float(src.get("swap_fee_percent", 0) or 0),
+            "swap_spread_pct": float(src.get("swap_spread_percent", 0) or 0),
+        }
+        legacy_buy_spread = float(src.get("buy_spread_percent", 0) or 0)
+        legacy_sell_spread = float(src.get("sell_spread_percent", 0) or 0)
+
+        for tier in TIERS:
+            existing = await db.kbex_rates.find_one(
+                {"product": "exchange", "tier": tier, "asset": symbol},
+                {"_id": 0},
+            )
+            preview.append({
+                "tier": tier,
+                "asset": symbol,
+                "source": "crypto_fees",
+                "action": "update" if existing else "insert",
+                "fees": fee_payload,
+            })
+            if dry_run:
+                continue
+
+            update = {
+                "product": "exchange",
+                "tier": tier,
+                "asset": symbol,
+                **fee_payload,
+                "updated_at": now,
+                "migrated_from_trading_fees": True,
+            }
+            if not existing or not existing.get("buy_spread_pct"):
+                update["buy_spread_pct"] = legacy_buy_spread
+            if not existing or not existing.get("sell_spread_pct"):
+                update["sell_spread_pct"] = legacy_sell_spread
+
+            await db.kbex_rates.update_one(
+                {"product": "exchange", "tier": tier, "asset": symbol},
+                {"$set": update},
+                upsert=True,
+            )
+            writes += 1
+
+    # --- 3. Global fallback (trading_fees top-level → kbex_rates asset="*") ---
+    if global_doc:
+        fiat_defaults = {
+            "buy_fee_pct": float(global_doc.get("buy_fee_percent", 0) or 0),
+            "sell_fee_pct": float(global_doc.get("sell_fee_percent", 0) or 0),
+            "min_fee_usd": float(global_doc.get("min_buy_fee_usd", 0) or 0),
+            "swap_fee_pct": float(global_doc.get("swap_fee_percent", 0) or 0),
+            "swap_spread_pct": float(global_doc.get("swap_spread_percent", 0) or 0),
+        }
+        for tier in TIERS:
+            existing = await db.kbex_rates.find_one(
+                {"product": "exchange", "tier": tier, "asset": "*"},
+                {"_id": 0},
+            )
+            preview.append({
+                "tier": tier,
+                "asset": "*",
+                "source": "trading_fees.global",
+                "action": "update" if existing else "insert",
+                "fees": fiat_defaults,
+            })
+            if dry_run:
+                continue
+            update = {
+                "product": "exchange",
+                "tier": tier,
+                "asset": "*",
+                **fiat_defaults,
+                "updated_at": now,
+                "migrated_from_trading_fees": True,
+            }
+            if not existing or not existing.get("buy_spread_pct"):
+                update["buy_spread_pct"] = float(global_doc.get("buy_spread_percent", 0) or 0)
+            if not existing or not existing.get("sell_spread_pct"):
+                update["sell_spread_pct"] = float(global_doc.get("sell_spread_percent", 0) or 0)
+            await db.kbex_rates.update_one(
+                {"product": "exchange", "tier": tier, "asset": "*"},
+                {"$set": update},
+                upsert=True,
+            )
+            writes += 1
+
+    if not dry_run:
+        await db.kbex_rates_audit.insert_one({
+            "action": "migrate_from_trading_fees",
+            "updated_by": admin_id,
+            "updated_at": now,
+            "count": writes,
+            "legacy_symbols": len(per_symbol),
+            "had_global_doc": bool(global_doc),
+        })
+
+    return {
+        "dry_run": dry_run,
+        "legacy_symbols": len(per_symbol),
+        "had_global_doc": bool(global_doc),
+        "kbex_rates_writes": writes if not dry_run else len(preview),
+        "preview": preview[:20],
+        "note": "Set dry_run=false to persist. Migration is idempotent.",
+    }
+
+
+@router.get("/audit")
+async def list_audit(
+    limit: int = 50,
+    admin_id: str = Depends(get_current_user_id),
+):
+    """Return the most recent audit entries for the kbex_rates collection."""
+    db = get_db()
+    admin = await db.users.find_one({"id": admin_id}, {"_id": 0})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
+    entries = (
+        await db.kbex_rates_audit.find({}, {"_id": 0})
+        .sort("updated_at", -1)
+        .limit(min(limit, 500))
+        .to_list(500)
     )
-    if rate:
-        return rate
-
-    rate = await db.kbex_rates.find_one(
-        {"product": product, "tier": tier, "asset": "*"}, {"_id": 0}
-    )
-    if rate:
-        return rate
-
-    rate = await db.kbex_rates.find_one(
-        {"product": "*", "tier": tier, "asset": "*"}, {"_id": 0}
-    )
-    if rate:
-        return rate
-
-    return {"buy_spread_pct": 0, "sell_spread_pct": 0}
+    return {"entries": entries}
 
 
 @router.get("/my-spreads")
