@@ -264,6 +264,16 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Crypto Deposit Screen with QR Codes (2026-04-30)
+- New mobile screen `app/deposit.tsx` — 2-step flow:
+  1. Asset picker (9 networks: BTC, ETH, USDT-ERC20/Polygon/Tron, USDC, SOL, XRP, MATIC) with logos + human-readable network labels.
+  2. Address panel: 220×220 QR code (white card with gold border), monospace address text, **Copy** (gold pill, turns green on success) + **Share** buttons. Live amber "Atenção" warning specifying which asset+network to send.
+- **Reuses existing backend** `GET /api/crypto-wallets/deposit-address/{asset}` (Fireblocks-backed). Auto-initializes vault on first call if response says "not initialized".
+- Wallet "Depositar" Quick Action now routes to this screen.
+- Dependencies installed: `react-native-qrcode-svg@6.3.21`, `expo-clipboard`.
+- i18n: 13 keys `deposit.*` in PT/EN/AR/FR/ES.
+- E2E verified: `GET /api/crypto-wallets/deposit-address/BTC` returns real Fireblocks address `bc1q557tfugsr30v0j4q2eh9x8uaschq2drcuvqgnn`.
+
 ## Mobile App — Phase M4.2 OTC Chat + M4.3 KYC WebView (2026-04-30)
 
 ### M4.2 OTC Chat

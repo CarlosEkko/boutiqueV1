@@ -137,7 +137,7 @@ export default function PortfolioScreen() {
           <ActionButton
             icon={<ArrowDownToLine color={theme.colors.gold} size={20} />}
             label={t('wallet.deposit') || 'Depositar'}
-            onPress={() => router.push('/(tabs)/' as any)}
+            onPress={() => router.push('/deposit' as any)}
             testID="wallet-action-deposit"
           />
           <ActionButton
