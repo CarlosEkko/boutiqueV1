@@ -106,6 +106,7 @@ import AdminMultiSignClients from "./pages/dashboard/admin/AdminMultiSignClients
 import ClientTiersPage from "./pages/dashboard/ClientTiersPage";
 import AdminClientTiers from "./pages/dashboard/admin/AdminClientTiers";
 import AdminBillingPage from "./pages/dashboard/admin/AdminBillingPage";
+import AdminTarifarioPage from "./pages/dashboard/admin/AdminTarifarioPage";
 import AdminCookieConsentPage from "./pages/dashboard/admin/AdminCookieConsentPage";
 import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
@@ -274,6 +275,7 @@ function AppRoutes() {
         <Route path="admin/pipeline" element={<AdminPipeline />} />
         <Route path="admin/settings" element={<AdminSettings />} />
         <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
+        <Route path="admin/tarifario" element={<AdminTarifarioPage />} />
                 <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
                 <Route path="admin/institucional" element={<AdminTenants />} />
                 <Route path="admin/tenants" element={<AdminTenants />} />
