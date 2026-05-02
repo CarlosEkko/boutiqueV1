@@ -264,6 +264,18 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — Push Deep-Linking (2026-04-30)
+- **New `routeFromNotificationData(data)` helper** in `/app/mobile/src/hooks/usePushNotifications.ts`:
+  - `type=price_alert` → `/alerts`
+  - `type=otc_chat` → `/otc/{deal_id}` (falls back to the OTC tab if `deal_id` missing)
+  - `type=order_filled` → `/transactions`
+  - `type=withdrawal_approved` / `type=withdrawal_rejected` → `/transactions`
+- **Handles both warm and cold start**:
+  - Warm: `addNotificationResponseReceivedListener` routes when user taps a banner while the app is already running.
+  - Cold: `getLastNotificationResponseAsync()` (with 300ms grace) routes when the user launches the app by tapping the notification from a fully-closed state.
+- Uses `router` from `expo-router` directly (no hook needed; safe to call outside components).
+- Safe fallback: unknown `type` is ignored silently; routing errors are logged as warnings so the notification never crashes the app.
+
 ## Mobile App — Phase M3.5 Real-time Push on Order / Withdrawal Events (2026-04-30)
 - **Shared helper `/app/backend/utils/push.py`** — `send_push_to_user(db, user_id, title, body, data)` fans out to all active Expo push tokens for a user; best-effort (never raises), consolidates the previous ad-hoc push logic from `price_alerts` and `otc_chat`.
 - **Hooks added** in `routes/trading.py` and `routes/crypto_wallets.py`:

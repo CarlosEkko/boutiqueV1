@@ -3,6 +3,7 @@ import { Platform, Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { api } from '@/api/client';
 
 Notifications.setNotificationHandler({
@@ -13,6 +14,41 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+/**
+ * Route a push notification tap to the correct in-app screen.
+ * Safe to call from cold-start (initial) or warm-start (response listener) paths.
+ */
+export function routeFromNotificationData(data: Record<string, any> | null | undefined): boolean {
+  if (!data || typeof data !== 'object') return false;
+  const type = typeof data.type === 'string' ? data.type : '';
+  try {
+    switch (type) {
+      case 'price_alert':
+        router.push('/alerts' as any);
+        return true;
+      case 'otc_chat': {
+        const dealId = data.deal_id;
+        if (dealId) router.push(`/otc/${dealId}` as any);
+        else router.push('/(tabs)/otc' as any);
+        return true;
+      }
+      case 'order_filled':
+        router.push('/transactions' as any);
+        return true;
+      case 'withdrawal_approved':
+      case 'withdrawal_rejected':
+        router.push('/transactions' as any);
+        return true;
+      default:
+        return false;
+    }
+  } catch (err) {
+     
+    console.warn('[push] deep-link failed:', err);
+    return false;
+  }
+}
 
 async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
@@ -90,10 +126,18 @@ export const usePushNotifications = (signedIn: boolean): PushState => {
     );
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-         
-        console.log('[push] tap response', response);
+        routeFromNotificationData(response.notification.request.content.data);
       }
     );
+
+    // Cold-start case: app was launched by tapping a notification.
+    Notifications.getLastNotificationResponseAsync().then((resp) => {
+      if (cancelled || !resp) return;
+      // Give Expo Router a tick so the root layout is mounted before we push.
+      setTimeout(() => {
+        routeFromNotificationData(resp.notification.request.content.data);
+      }, 300);
+    });
 
     return () => {
       cancelled = true;
