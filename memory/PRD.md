@@ -264,6 +264,15 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Web — Privacy Policy + Terms & Conditions Pages (2026-05-02)
+- **New public legal pages** (5 languages cada: PT/EN/AR/FR/ES):
+  - `/legal/privacy` (+ alias `/privacy`) — `PrivacyPolicyPage.jsx`: 8 secções cobrindo GDPR/UK-GDPR/UAE-PDPL/LGPD — dados recolhidos, finalidades & base legal (art. 6(1)(a-f)), partilha com processadores qualificados (white-label, sem nomes de vendors), transferências internacionais (SCC+TIA), retenção AML (5-7 anos), direitos do titular, segurança (TLS 1.3 / AES-256), contacto DPO (dpo@kbex.io).
+  - `/legal/terms` (+ alias `/terms`) — `TermsPage.jsx`: 10 secções — descrição de serviços (Exchange/OTC/Custody/Fiat/Staking/Launchpad), elegibilidade (sanções/PEPs), KYC/KYB, aviso de risco, usos proibidos, comissões, suspensão, limitação de responsabilidade, lei aplicável (UAE DIFC/ADGM + Suíça Zurique, com 60d de mediação), modificações.
+- Ambas com cross-links para a outra página + para `/legal/cookies`, back-link para home, RTL-aware, 100% compatíveis com o tema "quiet luxury" dourado da plataforma.
+- Rotas registadas em `App.js` (com alias `/privacy` e `/terms` → redirect 302 para `/legal/*`).
+- **Footer atualizado**: substituído `to: '#'` por links reais para **Termos & Condições** e **Privacidade**; mantido link já existente para Cookie Policy. Chaves i18n `footer.legal` (reutilizada com novo valor "Termos & Condições") + nova `footer.privacy` ("Privacidade" etc.) injetadas em 5 locales.
+- **Smoke test**: `GET /legal/privacy`, `/privacy`, `/legal/terms`, `/terms`, `/legal/cookies` todos HTTP 200; screenshot renderizou 10 secções da Terms page com cross-links corretos; lint `ruff`/`eslint` limpo.
+
 ## Mobile App — Push Deep-Linking (2026-04-30)
 - **New `routeFromNotificationData(data)` helper** in `/app/mobile/src/hooks/usePushNotifications.ts`:
   - `type=price_alert` → `/alerts`

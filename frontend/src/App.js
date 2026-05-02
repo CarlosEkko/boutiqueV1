@@ -9,6 +9,8 @@ import PublicTradingPage from "./pages/public/PublicTradingPage";
 import EarnPage from "./pages/EarnPage";
 import InstitutionalPage from "./pages/InstitutionalPage";
 import CookiePolicyPage from "./pages/legal/CookiePolicyPage";
+import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
+import TermsPage from "./pages/legal/TermsPage";
 import SystemStatusPage from "./pages/legal/SystemStatusPage";
 import PublicSecurityPage from "./pages/legal/SecurityPage";
 import CookieConsentBanner from "./components/CookieConsentBanner";
@@ -180,6 +182,10 @@ function AppRoutes() {
       <Route path="/institutional" element={<InstitutionalPage />} />
       <Route path="/legal/cookies" element={<CookiePolicyPage />} />
       <Route path="/cookies" element={<Navigate to="/legal/cookies" replace />} />
+      <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
+      <Route path="/legal/terms" element={<TermsPage />} />
+      <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
       <Route path="/system-status" element={<SystemStatusPage />} />
       <Route path="/status" element={<Navigate to="/system-status" replace />} />
       <Route path="/legal/status" element={<Navigate to="/system-status" replace />} />
