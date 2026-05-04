@@ -2,7 +2,7 @@
   "expo": {
     "name": "KBEX",
     "slug": "kbex-mobile",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "scheme": "kbex",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,14 +18,30 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.kbex.mobile"
+      "bundleIdentifier": "io.kbex.mobile",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "A KBEX usa a câmara para capturar a sua identificação durante a verificação KYC.",
+        "NSPhotoLibraryUsageDescription": "A KBEX precisa de acesso às fotos apenas se quiser anexar comprovativos.",
+        "NSMicrophoneUsageDescription": "A KBEX usa o microfone durante a verificação de prova-de-vida.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a0a0a"
       },
-      "package": "io.kbex.mobile"
+      "package": "io.kbex.mobile",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -35,13 +51,22 @@
       "expo-router",
       "expo-secure-store",
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "color": "#d4af37"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "backendUrl": "https://luxury-crypto.preview.emergentagent.com"
+      "backendUrl": "https://kbex.io",
+      "eas": {
+        "projectId": "REPLACE_AFTER_FIRST_BUILD"
+      }
     }
   }
 }

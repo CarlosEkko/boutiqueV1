@@ -264,6 +264,20 @@ Verified end-to-end:
 ## Supported Fiat (Client-visible)
 EUR, USD, AED, CHF, QAR, SAR, HKD
 
+## Mobile App — EAS Build Configuration (2026-05-04)
+- **`eas.json` created** with 4 profiles:
+  - `development` — dev-client builds for hot reload
+  - `preview` — Android APK + iOS simulator (internal distribution)
+  - `production` — Android APK + iOS device (direct sideload, no store needed)
+  - `production-store` — Android AAB for Play Store when developer account is reactivated
+- **`app.json` upgraded** for production:
+  - Version bumped `0.1.0` → `1.0.0`, `versionCode: 1`, `buildNumber: "1"`
+  - iOS `infoPlist`: NSCameraUsageDescription / NSMicrophoneUsageDescription / NSPhotoLibraryUsageDescription (KYC), `ITSAppUsesNonExemptEncryption: false` (avoids App Store export-compliance prompts).
+  - Android permissions array: CAMERA, RECORD_AUDIO, INTERNET, VIBRATE, RECEIVE_BOOT_COMPLETED, WAKE_LOCK.
+  - `extra.backendUrl: https://kbex.io` (production VPS).
+  - Plugin `expo-notifications` configured with KBEX gold accent (`#d4af37`).
+- **`BUILD.md`** added at `/app/mobile/BUILD.md` with end-to-end instructions: install eas-cli → `eas login` → `eas init` → `eas build --platform android --profile production`. Document also covers iOS path for when Apple Developer Account is reactivated.
+
 ## Web — Privacy Policy + Terms & Conditions Pages (2026-05-02)
 - **New public legal pages** (5 languages cada: PT/EN/AR/FR/ES):
   - `/legal/privacy` (+ alias `/privacy`) — `PrivacyPolicyPage.jsx`: 8 secções cobrindo GDPR/UK-GDPR/UAE-PDPL/LGPD — dados recolhidos, finalidades & base legal (art. 6(1)(a-f)), partilha com processadores qualificados (white-label, sem nomes de vendors), transferências internacionais (SCC+TIA), retenção AML (5-7 anos), direitos do titular, segurança (TLS 1.3 / AES-256), contacto DPO (dpo@kbex.io).
