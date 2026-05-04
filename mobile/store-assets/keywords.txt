@@ -1,0 +1,21 @@
+# Keywords App Store (iOS) — máximo 100 caracteres por idioma, separadas por vírgula SEM espaços
+
+## PT (100 chars)
+cripto,bitcoin,ethereum,trading,otc,exchange,carteira,euro,sepa,kyc,investir,broker,private,wealth
+
+## EN (100 chars)
+crypto,bitcoin,ethereum,trading,otc,exchange,wallet,euro,sepa,kyc,invest,broker,private,wealth,vault
+
+## ES (100 chars)
+cripto,bitcoin,ethereum,trading,otc,exchange,cartera,euro,sepa,kyc,invertir,broker,privado,riqueza
+
+## FR (100 chars)
+crypto,bitcoin,ethereum,trading,otc,exchange,portefeuille,euro,sepa,kyc,investir,courtier,patrimoine
+
+## AR (100 chars)
+كريبتو,بيتكوين,إيثريوم,تداول,محفظة,يورو,استثمار,وسيط,ثروة,خاص
+
+# Notas:
+# - Apple separa por vírgula sem espaço.
+# - Não repetir palavras já no nome ou subtítulo da app (penaliza ranking).
+# - O nome "KBEX" e o subtítulo "Boutique cripto premium" já são indexados.
