@@ -261,7 +261,8 @@ const CONTENT = {
 
 export default function PrivacyPolicyPage() {
   const { language, isRTL } = useLanguage();
-  const c = CONTENT[language] || CONTENT.en;
+  const lang = (language || 'en').toLowerCase();
+  const c = CONTENT[lang] || CONTENT.en;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-black text-gray-200">
@@ -307,17 +308,17 @@ export default function PrivacyPolicyPage() {
 
         <div className="mt-16 pt-8 border-t border-gold-800/20 flex items-center justify-between">
           <Link to="/legal/terms" className="text-sm text-gold-400 hover:text-gold-300 transition-colors">
-            {language === 'pt' ? 'Termos e Condições →' :
-             language === 'fr' ? 'Conditions Générales →' :
-             language === 'es' ? 'Términos y Condiciones →' :
-             language === 'ar' ? '← الشروط والأحكام' :
+            {lang === 'pt' ? 'Termos e Condições →' :
+             lang === 'fr' ? 'Conditions Générales →' :
+             lang === 'es' ? 'Términos y Condiciones →' :
+             lang === 'ar' ? '← الشروط والأحكام' :
              'Terms & Conditions →'}
           </Link>
           <Link to="/legal/cookies" className="text-sm text-gray-400 hover:text-gold-400 transition-colors">
-            {language === 'pt' ? 'Política de Cookies' :
-             language === 'fr' ? 'Politique de Cookies' :
-             language === 'es' ? 'Política de Cookies' :
-             language === 'ar' ? 'سياسة ملفات تعريف الارتباط' :
+            {lang === 'pt' ? 'Política de Cookies' :
+             lang === 'fr' ? 'Politique de Cookies' :
+             lang === 'es' ? 'Política de Cookies' :
+             lang === 'ar' ? 'سياسة ملفات تعريف الارتباط' :
              'Cookie Policy'}
           </Link>
         </div>

@@ -291,7 +291,8 @@ const CONTENT = {
 
 export default function TermsPage() {
   const { language, isRTL } = useLanguage();
-  const c = CONTENT[language] || CONTENT.en;
+  const lang = (language || 'en').toLowerCase();
+  const c = CONTENT[lang] || CONTENT.en;
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-black text-gray-200">
@@ -337,17 +338,17 @@ export default function TermsPage() {
 
         <div className="mt-16 pt-8 border-t border-gold-800/20 flex items-center justify-between">
           <Link to="/legal/privacy" className="text-sm text-gold-400 hover:text-gold-300 transition-colors">
-            {language === 'pt' ? '← Política de Privacidade' :
-             language === 'fr' ? '← Politique de Confidentialité' :
-             language === 'es' ? '← Política de Privacidad' :
-             language === 'ar' ? 'سياسة الخصوصية →' :
+            {lang === 'pt' ? '← Política de Privacidade' :
+             lang === 'fr' ? '← Politique de Confidentialité' :
+             lang === 'es' ? '← Política de Privacidad' :
+             lang === 'ar' ? 'سياسة الخصوصية →' :
              '← Privacy Policy'}
           </Link>
           <Link to="/legal/cookies" className="text-sm text-gray-400 hover:text-gold-400 transition-colors">
-            {language === 'pt' ? 'Política de Cookies' :
-             language === 'fr' ? 'Politique de Cookies' :
-             language === 'es' ? 'Política de Cookies' :
-             language === 'ar' ? 'سياسة ملفات تعريف الارتباط' :
+            {lang === 'pt' ? 'Política de Cookies' :
+             lang === 'fr' ? 'Politique de Cookies' :
+             lang === 'es' ? 'Política de Cookies' :
+             lang === 'ar' ? 'سياسة ملفات تعريف الارتباط' :
              'Cookie Policy'}
           </Link>
         </div>
