@@ -2289,9 +2289,14 @@ const TRANSLATIONS = {
     target: 'Objetivo',
     raised: 'Arrecadado',
     invest: 'Investir',
-    active: 'Ativo',
-    upcoming: 'Próximo',
-    completed: 'Concluído'
+    viewDetails: 'Ver Detalhes',
+    all: 'Todos',
+    active: 'Ativos',
+    upcoming: 'Em Breve',
+    completed: 'Concluídos',
+    listedProjects: 'Projetos Listados',
+    capitalRaised: 'Capital Levantado',
+    activeSales: 'Sales Ativos'
   },
       cryptoAtm: {
     heroTitle: 'Rede Premium de ATMs Crypto',

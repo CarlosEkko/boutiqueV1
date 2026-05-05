@@ -2070,9 +2070,21 @@ const TRANSLATIONS = {
     hardCap: 'Hard Cap',
     participants: 'Participants',
     tokenPrice: 'Prix du Token',
+    network: 'Réseau',
     tokenSales: 'Ventes de Tokens',
     noSales: 'Aucune vente de tokens disponible',
-    invest: 'Investir'
+    comingSoon: 'De nouvelles opportunités seront publiées prochainement',
+    target: 'Objectif',
+    raised: 'Collecté',
+    invest: 'Investir',
+    viewDetails: 'Voir les détails',
+    all: 'Tous',
+    active: 'Actifs',
+    upcoming: 'À venir',
+    completed: 'Terminés',
+    listedProjects: 'Projets listés',
+    capitalRaised: 'Capital levé',
+    activeSales: 'Ventes actives'
   },
       cryptoAtm: {
     heroTitle: 'Réseau Premium de DAB Crypto',

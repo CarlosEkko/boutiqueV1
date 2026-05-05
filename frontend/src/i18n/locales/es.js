@@ -1360,9 +1360,21 @@ const TRANSLATIONS = {
     hardCap: 'Hard Cap',
     participants: 'Participantes',
     tokenPrice: 'Precio del Token',
+    network: 'Red',
     tokenSales: 'Ventas de Tokens',
     noSales: 'No hay ventas de tokens disponibles',
-    invest: 'Invertir'
+    comingSoon: 'Próximamente se publicarán nuevas oportunidades',
+    target: 'Objetivo',
+    raised: 'Recaudado',
+    invest: 'Invertir',
+    viewDetails: 'Ver Detalles',
+    all: 'Todos',
+    active: 'Activos',
+    upcoming: 'Próximos',
+    completed: 'Finalizados',
+    listedProjects: 'Proyectos Listados',
+    capitalRaised: 'Capital Recaudado',
+    activeSales: 'Ventas Activas'
   },
       cryptoAtm: {
     heroTitle: 'Red Premium de Cajeros Crypto',
