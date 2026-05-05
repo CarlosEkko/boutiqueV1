@@ -2275,6 +2275,7 @@ const TRANSLATIONS = {
     apiTitle: 'API Documentation',
     buildWithUs: 'Construa com nossa API',
     apiDescription: 'APIs RESTful e WebSocket de alta performance para integração com seus sistemas de trading.',
+    getApiKey: 'Obter API Key',
     contactTitle: 'Fale com a Nossa Equipa',
     contactDesc: 'A nossa equipa de especialistas está pronta para apoiar a sua instituição.',
     phone: 'Telefone',

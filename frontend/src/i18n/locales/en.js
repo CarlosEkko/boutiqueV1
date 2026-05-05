@@ -2276,6 +2276,7 @@ const TRANSLATIONS = {
     apiTitle: 'API Documentation',
     buildWithUs: 'Build with our API',
     apiDescription: 'High-performance RESTful and WebSocket APIs for integration with your trading systems.',
+    getApiKey: 'Get API Key',
     contactTitle: 'Talk to Our Team',
     contactDesc: 'Our team of specialists is ready to support your institution.',
     phone: 'Phone',
