@@ -177,8 +177,8 @@ const InvestmentsPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-light text-white">Investimentos</h1>
-          <p className="text-gray-400 text-sm mt-1">Explore oportunidades e gira os seus investimentos</p>
+          <h1 className="text-2xl font-light text-white">{t('investments.title', 'Investimentos')}</h1>
+          <p className="text-gray-400 text-sm mt-1">{t('investments.subtitle', 'Explore oportunidades e gira os seus investimentos')}</p>
         </div>
         <Button
           onClick={fetchData}
@@ -186,7 +186,7 @@ const InvestmentsPage = () => {
           className="border-zinc-700 text-gray-300"
         >
           <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar
+          {t('investments.refresh', 'Atualizar')}
         </Button>
       </div>
 
@@ -196,7 +196,7 @@ const InvestmentsPage = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Total Investido</p>
+                <p className="text-gray-400 text-sm">{t('investments.totalInvested', 'Total Investido')}</p>
                 <p className="text-2xl font-light text-white">
                   {formatNumber(totalInvested)} USDT
                 </p>
@@ -209,7 +209,7 @@ const InvestmentsPage = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Retorno Esperado</p>
+                <p className="text-gray-400 text-sm">{t('investments.expectedReturn', 'Retorno Esperado')}</p>
                 <p className="text-2xl font-light text-green-400">
                   +{formatNumber(totalExpectedReturn)} USDT
                 </p>
@@ -222,7 +222,7 @@ const InvestmentsPage = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Investimentos Ativos</p>
+                <p className="text-gray-400 text-sm">{t('investments.activeInvestments', 'Investimentos Ativos')}</p>
                 <p className="text-2xl font-light text-blue-400">{activeInvestments}</p>
               </div>
               <Clock className="text-blue-400" size={24} />
