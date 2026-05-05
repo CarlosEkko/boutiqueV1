@@ -816,7 +816,7 @@ const ExchangePage = () => {
                         data-testid="payment-fiat-balance-btn"
                       >
                         <Wallet className="mx-auto mb-2" size={24} />
-                        <span className="text-sm block">Saldo Fiat</span>
+                        <span className="text-sm block">{t('dashboard.exchange.fiatBalance', 'Saldo Fiat')}</span>
                         <span className="text-[11px] text-zinc-500 block mt-0.5 tabular-nums">
                           {formatCurrency(fiatBalance)}
                         </span>
@@ -946,13 +946,13 @@ const ExchangePage = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Destino</label>
+                    <label className="text-sm text-gray-400 mb-2 block">{t('dashboard.exchange.destination', 'Destino')}</label>
                     <div className="p-4 rounded-lg border border-gold-500 bg-gold-500/10 text-gold-400 flex items-center gap-3" data-testid="sell-destination-fiat-balance">
                       <Wallet size={22} />
                       <div className="flex-1">
-                        <div className="text-sm font-medium">Saldo Fiat · {currency}</div>
+                        <div className="text-sm font-medium">{t('dashboard.exchange.fiatBalance', 'Saldo Fiat')} · {currency}</div>
                         <div className="text-[11px] text-zinc-500 tabular-nums">
-                          Saldo actual: {formatCurrency(fiatBalance)}
+                          {t('dashboard.exchange.currentBalance', 'Saldo actual')}: {formatCurrency(fiatBalance)}
                         </div>
                       </div>
                     </div>
@@ -1277,7 +1277,7 @@ const ExchangePage = () => {
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">{t('dashboard.exchange.tier')}</span>
-                  <span className="text-gold-400 capitalize">{limits.tier}</span>
+                  <span className="text-gold-400 capitalize">{t(`dashboard.exchange.tier${(limits.tier || 'standard').charAt(0).toUpperCase() + (limits.tier || 'standard').slice(1).toLowerCase()}`, limits.tier)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">{t('dashboard.exchange.dailyBuyLimit')}</span>

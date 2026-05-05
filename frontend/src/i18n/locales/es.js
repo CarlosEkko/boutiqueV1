@@ -398,6 +398,8 @@ const TRANSLATIONS = {
     // Team Hub & Multi-Sign
     teamHub: 'Centro de Equipo',
     multiSign: 'Multi-Firma',
+    launchpad: 'Launchpad',
+    trading: 'Trading',
     dashboardFinanceiro: 'Dashboard Financiero',
     clientesMultiSign: 'Clientes Multi-Firma',
     aprovacoes: 'Aprobaciones',
@@ -765,7 +767,15 @@ const TRANSLATIONS = {
       from: 'De',
       to: 'A',
       processing: 'Procesando...',
-      exchangeRate: 'Tipo de cambio'
+      exchangeRate: 'Tipo de cambio',
+      fiatBalance: 'Saldo Fiat',
+      destination: 'Destino',
+      currentBalance: 'Saldo actual',
+      tierStandard: 'Standard',
+      tierGold: 'Oro',
+      tierPlatinum: 'Platino',
+      tierBlack: 'Black',
+      tierVip: 'VIP'
     },
           whitelistPage: {
       title: 'Whitelist de Direcciones',

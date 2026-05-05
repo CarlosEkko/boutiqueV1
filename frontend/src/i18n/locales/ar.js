@@ -452,6 +452,16 @@ const TRANSLATIONS = {
     staking: 'التخزين',
     // Team Hub & Multi-Sign
     teamHub: 'مركز الفريق',
+    multiSign: 'متعدد التوقيع',
+    aprovacoes: 'الموافقات',
+    cofre: 'الخزنة',
+    escrow: 'حساب ضمان',
+    launchpad: 'منصة الإطلاق',
+    trading: 'التداول',
+    tokenSales: 'مبيعات الرموز',
+    gerirTokenSales: 'إدارة مبيعات الرموز',
+    escrowDeals: 'الصفقات',
+    escrowFees: 'إيرادات الرسوم',
     // Section headers
     gestaoLabel: 'الإدارة',
     entity: 'الكيان النشط',
@@ -799,7 +809,15 @@ const TRANSLATIONS = {
       from: 'من',
       to: 'إلى',
       processing: 'جاري المعالجة...',
-      exchangeRate: 'سعر الصرف'
+      exchangeRate: 'سعر الصرف',
+      fiatBalance: 'رصيد فيات',
+      destination: 'الوجهة',
+      currentBalance: 'الرصيد الحالي',
+      tierStandard: 'قياسي',
+      tierGold: 'ذهبي',
+      tierPlatinum: 'بلاتيني',
+      tierBlack: 'أسود',
+      tierVip: 'في آي بي'
     },
           whitelistPage: {
       title: 'قائمة العناوين البيضاء',

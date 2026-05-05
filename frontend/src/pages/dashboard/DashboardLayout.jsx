@@ -254,6 +254,7 @@ const labelTranslationMap = {
   'A Minha Performance': 'sidebar.minhaPerformance',
   'Team Hub': 'sidebar.teamHub',
   'Multi-Sign': 'sidebar.multiSign',
+  'Trading': 'sidebar.trading',
   'Dashboard Financeiro': 'sidebar.dashboardFinanceiro',
   'Clientes Multi-Sign': 'sidebar.clientesMultiSign',
   'Aprovações': 'sidebar.aprovacoes',
