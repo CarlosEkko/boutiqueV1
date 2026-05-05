@@ -389,11 +389,22 @@ EUR, USD, AED, CHF, QAR, SAR, HKD
 - **Backend `POST /api/auth/push-token` + `DELETE /api/auth/push-token`:** new endpoints in `routes/auth.py`. Stores Expo push tokens in dedicated `push_tokens` collection (`{user_id, token, platform, active, created_at, last_seen_at}`). Validates token format (`ExponentPushToken[...]`/`ExpoPushToken[...]`), supports multi-device per user, and reassigns ownership when the same token shows up under a different user (shared device). DELETE soft-deactivates rather than removing, preserving audit trail. E2E tested: invalid format → 400, unauth → 401, valid register → 200 idempotent, delete → marks `active=false` + `deactivated_at`.
 
 ## Pending
-- P1: Safari cursor bug (18+ recurrences)
-- P1: Mobile Phase M4 (OTC chat + KYC with camera + price alerts)
+- P1: Safari cursor bug (19+ recurrences)
+- P1: AdminLaunchpadPage.jsx — translation refactor (admin-side, 554 lines)
+- P1: VPS validation of PDF Viewer fix (`/dashboard/transparency`)
+- P2: Mobile EAS Update (OTA) configuration (`expo-updates` install + `eas update:configure`)
 - P2: White-Label Tenants Phase 3 — tenant-specific tiers/fees, BYO Sumsub, BYO fiat IBAN
 - P2: LATAM local fiat rails (PIX for Brazil, SPEI for Mexico)
 - P2: Replace Crypto ATM mock data with live feeds
+- P3: Withdrawal history on Mobile Wallet
+- P3: Whitelist saved addresses for crypto withdrawal on Mobile
+- P3: Push notifications: OTC deal stage change, KYC approved, new staff invite accepted
+- P3: Golden badge on mobile tabs for unread events
+- P3: CSV Export of Cookie Consents (GDPR audit)
+- P3: RSS Feed for /system-status (`/api/status/rss`)
+
+## Recent (2026-05-05)
+- Translated 4 hardcoded Dashboard pages (Investments, ROI, Launchpad, Staking, Cold Wallet) into 5 locales via `_extras.js`. i18n audit: 100% coverage.
 
 ## VPS Deployment
 - `cd /opt/boutiqueV1 && sudo ./scripts/zero_downtime_deploy.sh` (now uses `--force-recreate` internally)

@@ -80,7 +80,6 @@ const StakingPage = () => {
     }
     setLoading(false);
   };
-
   /* ─── fetch providers for selected asset ─── */
   const fetchProviders = async (chain) => {
     try {
@@ -130,25 +129,25 @@ const StakingPage = () => {
   const validateAmount = (val) => {
     const num = parseFloat(val);
     if (!val || isNaN(num) || num <= 0) {
-      setAmountError('Insira um montante válido');
+      setAmountError(t('staking.invalidAmount', 'Insira um montante válido'));
       return false;
     }
     if (!selectedAsset) return false;
 
     if (num < selectedAsset.min_stake) {
-      setAmountError(`Mínimo: ${selectedAsset.min_stake} ${selectedAsset.symbol}`);
+      setAmountError(`${t('staking.minLabel', 'Mínimo')}: ${selectedAsset.min_stake} ${selectedAsset.symbol}`);
       return false;
     }
 
     if (selectedAsset.id === 'ETH' && selectedValidator) {
       if (selectedValidator.id === 'compounding') {
         if (num < 32 || num > 2048) {
-          setAmountError('Compounding: 32 a 2048 ETH');
+          setAmountError(t('staking.compoundingRange', 'Compounding: 32 a 2048 ETH'));
           return false;
         }
       } else if (selectedValidator.id === 'legacy') {
         if (num < 32 || num % 32 !== 0) {
-          setAmountError('Legacy: múltiplos exatos de 32 ETH');
+          setAmountError(t('staking.legacyMultiples', 'Legacy: múltiplos exatos de 32 ETH'));
           return false;
         }
       }
@@ -164,7 +163,7 @@ const StakingPage = () => {
 
   const goToReview = () => {
     if (!selectedProvider) {
-      toast.error('Selecione um provider');
+      toast.error(t('staking.provError', 'Selecione um provider'));
       return;
     }
     setStep(5);
@@ -188,15 +187,15 @@ const StakingPage = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(data.message || 'Staking iniciado com sucesso');
+        toast.success(data.message || t('staking.stakeSuccess', 'Staking iniciado com sucesso'));
         setWizardOpen(false);
         resetWizard();
         fetchAll();
       } else {
-        toast.error(data.detail || 'Erro ao submeter staking');
+        toast.error(data.detail || t('staking.stakeError', 'Erro ao submeter staking'));
       }
     } catch {
-      toast.error('Erro de conexão');
+      toast.error(t('staking.connError', 'Erro de conexão'));
     }
     setSubmitting(false);
   };
@@ -210,8 +209,8 @@ const StakingPage = () => {
 
   const handleUnstake = async () => {
     const num = parseFloat(unstakeAmount);
-    if (!num || num <= 0) { toast.error('Montante inválido'); return; }
-    if (num > unstakePos.amount) { toast.error('Montante superior ao staked'); return; }
+    if (!num || num <= 0) { toast.error(t('staking.invalidNum', 'Montante inválido')); return; }
+    if (num > unstakePos.amount) { toast.error(t('staking.amountTooBig', 'Montante superior ao staked')); return; }
     setUnstakeLoading(true);
     try {
       const res = await fetch(`${API}/api/staking/unstake`, {
@@ -224,9 +223,9 @@ const StakingPage = () => {
         setUnstakeOpen(false);
         fetchAll();
       } else {
-        toast.error(data.detail || 'Erro');
+        toast.error(data.detail || t('staking.genericError', 'Erro'));
       }
-    } catch { toast.error('Erro de conexão'); }
+    } catch { toast.error(t('staking.connError', 'Erro de conexão')); }
     setUnstakeLoading(false);
   };
 
@@ -239,8 +238,8 @@ const StakingPage = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) { toast.success(data.message); fetchAll(); }
-      else { toast.error(data.detail || 'Erro'); }
-    } catch { toast.error('Erro de conexão'); }
+      else { toast.error(data.detail || t('staking.genericError', 'Erro')); }
+    } catch { toast.error(t('staking.connError', 'Erro de conexão')); }
   };
 
   /* ─── total steps for ETH vs others ─── */
@@ -262,8 +261,8 @@ const StakingPage = () => {
   };
 
   const tabs = [
-    { key: 'positions', label: 'Posições', icon: Layers },
-    { key: 'history', label: 'Histórico', icon: History },
+    { key: 'positions', label: t('staking.tabPositions', 'Posições'), icon: Layers },
+    { key: 'history', label: t('staking.tabHistory', 'Histórico'), icon: History },
   ];
 
   /* ─── RENDER ─── */
@@ -279,10 +278,10 @@ const StakingPage = () => {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-amber-500 uppercase tracking-[0.2em] font-medium mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Delegated Staking
+            {t('staking.eyebrow', 'Delegated Staking')}
           </p>
           <h1 className="text-3xl font-light text-white" style={{ fontFamily: 'Playfair Display, serif' }} data-testid="staking-title">
-            Staking
+            {t('staking.title', 'Staking')}
           </h1>
         </div>
         <Button
@@ -290,16 +289,16 @@ const StakingPage = () => {
           className="bg-amber-500 text-zinc-950 font-medium px-6 hover:bg-amber-400 transition-colors"
           data-testid="new-stake-btn"
         >
-          <ArrowUpCircle size={16} className="mr-2" /> Novo Stake
+          <ArrowUpCircle size={16} className="mr-2" /> {t('staking.newStake', 'Novo Stake')}
         </Button>
       </div>
 
       {/* ═══ SUMMARY CARDS ═══ */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SummaryCard label="Posições Ativas" value={summary?.active_positions ?? 0} testId="summary-active" />
-        <SummaryCard label="Pendentes" value={summary?.pending_positions ?? 0} testId="summary-pending" />
-        <SummaryCard label="Total Posições" value={summary?.total_positions ?? 0} testId="summary-total" />
-        <SummaryCard label="Ativos Staked" value={summary?.by_asset?.length ?? 0} testId="summary-assets" highlight />
+        <SummaryCard label={t('staking.activePositions', 'Posições Ativas')} value={summary?.active_positions ?? 0} testId="summary-active" />
+        <SummaryCard label={t('staking.pendingPositions', 'Pendentes')} value={summary?.pending_positions ?? 0} testId="summary-pending" />
+        <SummaryCard label={t('staking.totalPositions', 'Total Posições')} value={summary?.total_positions ?? 0} testId="summary-total" />
+        <SummaryCard label={t('staking.stakedAssets', 'Ativos Staked')} value={summary?.by_asset?.length ?? 0} testId="summary-assets" highlight />
       </div>
 
       {/* ═══ BY-ASSET BREAKDOWN ═══ */}
@@ -315,7 +314,7 @@ const StakingPage = () => {
                   </div>
                   <div>
                     <p className={`text-sm font-semibold ${colors.text}`}>{a.total_staked} {a.asset}</p>
-                    <p className="text-xs text-zinc-500">{a.count} posição(ões)</p>
+                    <p className="text-xs text-zinc-500">{a.count} {t('staking.positionsLabel', 'posição(ões)')}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -351,8 +350,8 @@ const StakingPage = () => {
             <Card className="bg-zinc-900/40 border-zinc-800">
               <CardContent className="p-12 text-center">
                 <Coins className="mx-auto text-zinc-700 mb-4" size={40} />
-                <p className="text-zinc-400 font-light text-lg">Sem posições de staking</p>
-                <p className="text-xs text-zinc-600 mt-2">Clique em "Novo Stake" para começar</p>
+                <p className="text-zinc-400 font-light text-lg">{t('staking.noPositions', 'Sem posições de staking')}</p>
+                <p className="text-xs text-zinc-600 mt-2">{t('staking.newStakeHint', 'Clique em "Novo Stake" para começar')}</p>
               </CardContent>
             </Card>
           ) : positions.map(pos => {
@@ -384,10 +383,10 @@ const StakingPage = () => {
                       {pos.status === 'active' && (
                         <>
                           <Button size="sm" variant="ghost" className="text-amber-500 hover:bg-amber-500/10 h-8 px-2.5" onClick={() => handleClaim(pos)} data-testid={`claim-${pos.id}`}>
-                            <Gift size={14} className="mr-1" /> Claim
+                            <Gift size={14} className="mr-1" /> {t('staking.claim', 'Claim')}
                           </Button>
                           <Button size="sm" variant="ghost" className="text-rose-400 hover:bg-rose-400/10 h-8 px-2.5" onClick={() => openUnstake(pos)} data-testid={`unstake-${pos.id}`}>
-                            <ArrowDownCircle size={14} className="mr-1" /> Unstake
+                            <ArrowDownCircle size={14} className="mr-1" /> {t('staking.unstake', 'Unstake')}
                           </Button>
                         </>
                       )}
@@ -405,7 +404,7 @@ const StakingPage = () => {
         <div className="space-y-2" data-testid="staking-history">
           {history.length === 0 ? (
             <Card className="bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-12 text-center text-zinc-500">Sem histórico de staking</CardContent>
+              <CardContent className="p-12 text-center text-zinc-500">{t('staking.noHistory', 'Sem histórico de staking')}</CardContent>
             </Card>
           ) : history.map((h, i) => (
             <Card key={h.id || i} className="bg-zinc-900/40 border-zinc-800">

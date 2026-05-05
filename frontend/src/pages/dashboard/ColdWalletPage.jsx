@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
@@ -36,13 +37,14 @@ const EXPLORER_URLS = {
 
 // ─── Receive Modal ───────────────────────────────────────────
 const ReceiveModal = ({ coin, address, onClose }) => {
+  const { t } = useLanguage();
   const meta = COIN_META[coin];
   const cfg = BLOCKCHAIN_CONFIG[coin];
   const qrValue = coin === 'ETH' ? `ethereum:${address}` : coin === 'BTC' ? `bitcoin:${address}` : `litecoin:${address}`;
 
   const copyAddr = () => {
     navigator.clipboard.writeText(address);
-    toast.success('Endereço copiado!');
+    toast.success(t('coldWallet.copyAddrSuccess', 'Endereço copiado!'));
   };
 
   return (
@@ -53,7 +55,7 @@ const ReceiveModal = ({ coin, address, onClose }) => {
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: `${meta.color}20` }}>
               <ArrowDownLeft style={{ color: meta.color }} size={18} />
             </div>
-            <h3 className="text-white text-lg font-medium">Receber {cfg?.name}</h3>
+            <h3 className="text-white text-lg font-medium">{t('coldWallet.receiveTitle', 'Receber')} {cfg?.name}</h3>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={20} /></button>
         </div>
@@ -66,7 +68,7 @@ const ReceiveModal = ({ coin, address, onClose }) => {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-gray-400 text-xs uppercase tracking-wider">Endereço {coin}</Label>
+          <Label className="text-gray-400 text-xs uppercase tracking-wider">{t('coldWallet.address', 'Endereço')} {coin}</Label>
           <div className="flex items-center gap-2 bg-zinc-800/70 rounded-lg p-3 border border-zinc-700">
             <p className="text-white font-mono text-xs break-all flex-1" data-testid="receive-address">{address}</p>
             <button onClick={copyAddr} className="text-emerald-400 hover:text-emerald-300 flex-shrink-0" data-testid="copy-receive-address">
@@ -78,12 +80,12 @@ const ReceiveModal = ({ coin, address, onClose }) => {
         <div className="bg-amber-900/10 border border-amber-800/20 rounded-lg p-3">
           <p className="text-amber-400/80 text-xs flex items-start gap-2">
             <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-            Envie apenas {cfg?.name} ({coin}) para este endereço. Enviar outro ativo pode resultar em perda permanente.
+            {t('coldWallet.sendOnlyWarn', 'Envie apenas')} {cfg?.name} ({coin}) {t('coldWallet.sendOnlyWarn2', 'para este endereço. Enviar outro ativo pode resultar em perda permanente.')}
           </p>
         </div>
 
         <Button onClick={copyAddr} className="w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-600">
-          <Copy size={14} className="mr-2" /> Copiar Endereço
+          <Copy size={14} className="mr-2" /> {t('coldWallet.copy', 'Copiar Endereço')}
         </Button>
       </div>
     </div>
@@ -341,6 +343,7 @@ const AccountItem = ({ coin, wallet, isActive, onClick }) => {
 // ─── Main Cold Wallet Page ───────────────────────────────────
 const ColdWalletPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [device, setDevice] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [wallets, setWallets] = useState({});
@@ -457,8 +460,8 @@ const ColdWalletPage = () => {
         await axios.post(`${API_URL}/api/cold-wallet/addresses`, { coin, address: walletData.address, path: walletData.path, balance: walletData.balance }, { headers });
         fetchSavedAddresses();
       } catch { /* silent */ }
-      toast.success(`${coin} sincronizado com sucesso`);
-    } catch (err) { toast.error(err.message || `Falha ao sincronizar ${coin}`); }
+      toast.success(`${coin} ${t('coldWallet.syncSuccess', 'sincronizado com sucesso')}`);
+    } catch (err) { toast.error(err.message || `${t('coldWallet.syncFailure', 'Falha ao sincronizar')} ${coin}`); }
     setLoadingCoin(null);
   };
 
@@ -470,7 +473,7 @@ const ColdWalletPage = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copiado!');
+    toast.success(t('coldWallet.copied', 'Copiado!'));
   };
 
   const activeWallet = wallets[activeCoin];
@@ -482,8 +485,8 @@ const ColdWalletPage = () => {
   const coinTxHistory = txHistory.filter(tx => tx.coin === activeCoin);
 
   const sidebarTabs = [
-    { key: 'dashboard', label: 'Dashboard', icon: HardDrive },
-    { key: 'activity', label: 'Atividade', icon: Activity },
+    { key: 'dashboard', label: t('coldWallet.tabDashboard', 'Dashboard'), icon: HardDrive },
+    { key: 'activity', label: t('coldWallet.tabActivity', 'Atividade'), icon: Activity },
   ];
 
   return (
@@ -511,13 +514,13 @@ const ColdWalletPage = () => {
             </div>
             <div className="text-left flex-1 min-w-0">
               <p className="text-white text-sm font-medium truncate">
-                {device ? (device.label || 'Trezor') : 'KBEX Vault'}
+                {device ? (device.label || 'Trezor') : t('coldWallet.vaultName', 'KBEX Vault')}
               </p>
               <p className={`text-xs flex items-center gap-1.5 ${device ? 'text-emerald-400' : 'text-gray-500'}`}>
                 {device ? (
-                  <><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Conectado</>
+                  <><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> {t('coldWallet.connected', 'Conectado')}</>
                 ) : (
-                  <><Unplug size={10} /> Desconectado</>
+                  <><Unplug size={10} /> {t('coldWallet.disconnected', 'Desconectado')}</>
                 )}
               </p>
             </div>
@@ -548,12 +551,12 @@ const ColdWalletPage = () => {
         {/* Accounts Section */}
         <div className="flex-1 overflow-y-auto">
           <div className="px-3 pt-4 pb-2 flex items-center justify-between">
-            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">Contas</p>
+            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">{t('coldWallet.accounts', 'Contas')}</p>
             {device && (
               <button
                 onClick={deriveAll}
                 className="text-gray-500 hover:text-gold-400 transition-colors"
-                title="Adicionar todas as contas"
+                title={t('coldWallet.addAllAccounts', 'Adicionar todas as contas')}
                 data-testid="add-accounts-btn"
               >
                 <Plus size={16} />
@@ -579,7 +582,7 @@ const ColdWalletPage = () => {
           <div className="p-3 border-t border-zinc-800">
             <div className="bg-amber-900/10 border border-amber-800/20 rounded-lg p-3">
               <p className="text-amber-400/80 text-[11px] leading-relaxed">
-                Conecte a Trezor via USB para gerir os seus ativos.
+                {t('coldWallet.connectFooter', 'Conecte a Trezor via USB para gerir os seus ativos.')}
               </p>
               <a href="https://suite.trezor.io/web/bridge/" target="_blank" rel="noreferrer"
                 className="text-gold-400 text-[11px] hover:underline mt-1 inline-block">
@@ -596,7 +599,7 @@ const ColdWalletPage = () => {
         <div className="sticky top-0 z-10 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-light text-white tracking-tight">
-              {activeTab === 'dashboard' ? 'Dashboard' : 'Atividade'}
+              {activeTab === 'dashboard' ? t('coldWallet.tabDashboard', 'Dashboard') : t('coldWallet.tabActivity', 'Atividade')}
             </h1>
 
             <div className="flex items-center gap-2">
@@ -604,27 +607,27 @@ const ColdWalletPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (!device) { toast.error('Conecte a Trezor primeiro'); return; }
-                  if (!activeWallet) { toast.error(`Derive o endereco ${activeCoin} primeiro`); return; }
+                  if (!device) { toast.error(t('coldWallet.syncFirst', 'Conecte a Trezor primeiro')); return; }
+                  if (!activeWallet) { toast.error(`${t('coldWallet.deriveFirst', 'Derive o endereço')} ${activeCoin}`); return; }
                   setSendModal({ coin: activeCoin });
                 }}
                 className="border-zinc-700 text-white hover:bg-zinc-800 gap-2 h-9 px-4"
                 data-testid="action-send-btn"
               >
-                <ArrowUpRight size={15} /> Enviar
+                <ArrowUpRight size={15} /> {t('coldWallet.send', 'Enviar')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (!device) { toast.error('Conecte a Trezor primeiro'); return; }
-                  if (!activeWallet) { toast.error(`Derive o endereco ${activeCoin} primeiro`); return; }
+                  if (!device) { toast.error(t('coldWallet.syncFirst', 'Conecte a Trezor primeiro')); return; }
+                  if (!activeWallet) { toast.error(`${t('coldWallet.deriveFirst', 'Derive o endereço')} ${activeCoin}`); return; }
                   setReceiveModal({ coin: activeCoin, address: activeWallet.address });
                 }}
                 className="border-zinc-700 text-white hover:bg-zinc-800 gap-2 h-9 px-4"
                 data-testid="action-receive-btn"
               >
-                <ArrowDownLeft size={15} /> Receber
+                <ArrowDownLeft size={15} /> {t('coldWallet.receive', 'Receber')}
               </Button>
             </div>
           </div>
@@ -637,10 +640,10 @@ const ColdWalletPage = () => {
               {/* Portfolio Overview */}
               <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-gray-400 text-sm">Portfolio</p>
+                  <p className="text-gray-400 text-sm">{t('coldWallet.portfolio', 'Portefólio')}</p>
                   {connecting && loadingCoin && (
                     <span className="text-gold-400 text-xs flex items-center gap-1.5">
-                      <Loader2 size={12} className="animate-spin" /> A sincronizar {loadingCoin}...
+                      <Loader2 size={12} className="animate-spin" /> {t('coldWallet.syncing', 'A sincronizar...')} {loadingCoin}
                     </span>
                   )}
                 </div>
@@ -665,7 +668,7 @@ const ColdWalletPage = () => {
                   </div>
                   <div>
                     <h3 className="text-white text-lg font-medium">{activeMeta.label}</h3>
-                    <p className="text-gray-500 text-sm mt-1">Sincronize o endereco para comecar a usar esta carteira</p>
+                    <p className="text-gray-500 text-sm mt-1">{t('coldWallet.syncAddress', 'Sincronize o endereço para começar a usar esta carteira')}</p>
                   </div>
                   <Button
                     onClick={() => deriveAddress(activeCoin)}
@@ -674,9 +677,9 @@ const ColdWalletPage = () => {
                     data-testid={`derive-${activeCoin}-btn`}
                   >
                     {loadingCoin === activeCoin ? (
-                      <><Loader2 className="animate-spin mr-2" size={16} /> A sincronizar...</>
+                      <><Loader2 className="animate-spin mr-2" size={16} /> {t('coldWallet.syncing', 'A sincronizar...')}</>
                     ) : (
-                      <><HardDrive size={16} className="mr-2" /> Sincronizar {activeCoin}</>
+                      <><HardDrive size={16} className="mr-2" /> {t('coldWallet.syncBtn', 'Sincronizar')} {activeCoin}</>
                     )}
                   </Button>
                 </div>
@@ -689,9 +692,9 @@ const ColdWalletPage = () => {
                     <Shield className="text-gold-400" size={36} />
                   </div>
                   <div>
-                    <h3 className="text-white text-xl font-medium">Conecte a sua Trezor</h3>
+                    <h3 className="text-white text-xl font-medium">{t('coldWallet.connectTrezor', 'Conecte a sua Trezor')}</h3>
                     <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
-                      Para gerir os seus ativos em cold storage, conecte o seu dispositivo Trezor via USB.
+                      {t('coldWallet.connectInstructions', 'Para gerir os seus ativos em cold storage, conecte o seu dispositivo Trezor via USB.')}
                     </p>
                   </div>
                   <div className="flex items-center justify-center gap-3">
@@ -701,13 +704,13 @@ const ColdWalletPage = () => {
                       className="bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-white px-8 py-5"
                     >
                       {connecting ? <Loader2 className="animate-spin mr-2" size={16} /> : <Usb size={16} className="mr-2" />}
-                      {connecting ? 'A conectar...' : 'Conectar Trezor'}
+                      {connecting ? t('coldWallet.connecting', 'A conectar...') : t('coldWallet.connectBtn', 'Conectar Trezor')}
                     </Button>
                   </div>
                   <div className="flex items-center justify-center gap-6 text-gray-500 text-xs pt-2">
                     <span className="flex items-center gap-1.5"><CheckCircle size={12} className="text-emerald-500" /> Trezor Bridge</span>
-                    <span className="flex items-center gap-1.5"><CheckCircle size={12} className="text-emerald-500" /> USB Conectado</span>
-                    <span className="flex items-center gap-1.5"><CheckCircle size={12} className="text-emerald-500" /> PIN Configurado</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle size={12} className="text-emerald-500" /> {t('coldWallet.usbConnected', 'USB Conectado')}</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle size={12} className="text-emerald-500" /> {t('coldWallet.pinSet', 'PIN Configurado')}</span>
                   </div>
                 </div>
               )}
@@ -716,7 +719,7 @@ const ColdWalletPage = () => {
               {device && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-white">Meus Ativos</h2>
+                    <h2 className="text-lg font-medium text-white">{t('coldWallet.myAssets', 'Os Meus Ativos')}</h2>
                     {!connecting && (
                       <Button
                         variant="outline"
@@ -725,7 +728,7 @@ const ColdWalletPage = () => {
                         className="border-zinc-700 text-gray-400 hover:text-white hover:bg-zinc-800 gap-2 h-8 text-xs"
                         data-testid="activate-assets-btn"
                       >
-                        <Plus size={14} /> Ativar mais ativos
+                        <Plus size={14} /> {t('coldWallet.activateAssets', 'Ativar mais ativos')}
                       </Button>
                     )}
                   </div>
@@ -771,7 +774,7 @@ const ColdWalletPage = () => {
                                   className="flex-1 border-zinc-700 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-8"
                                   data-testid={`send-${coin}-btn`}
                                 >
-                                  <ArrowUpRight size={12} className="mr-1" /> Enviar
+                                  <ArrowUpRight size={12} className="mr-1" /> {t('coldWallet.send', 'Enviar')}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -780,7 +783,7 @@ const ColdWalletPage = () => {
                                   className="flex-1 border-zinc-700 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-8"
                                   data-testid={`receive-${coin}-btn`}
                                 >
-                                  <ArrowDownLeft size={12} className="mr-1" /> Receber
+                                  <ArrowDownLeft size={12} className="mr-1" /> {t('coldWallet.receive', 'Receber')}
                                 </Button>
                               </div>
                             </div>
@@ -794,7 +797,7 @@ const ColdWalletPage = () => {
                               data-testid={`derive-${coin}-btn`}
                             >
                               {(loadingCoin === coin || connecting) ? <Loader2 className="animate-spin mr-1" size={12} /> : <HardDrive size={12} className="mr-1" />}
-                              {loadingCoin === coin ? 'A sincronizar...' : connecting ? 'Aguarde...' : 'Sincronizar'}
+                              {loadingCoin === coin ? t('coldWallet.syncing', 'A sincronizar...') : connecting ? t('coldWallet.waiting', 'Aguarde...') : t('coldWallet.syncBtn', 'Sincronizar')}
                             </Button>
                           )}
                         </div>
@@ -808,9 +811,9 @@ const ColdWalletPage = () => {
               {coinTxHistory.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-white">Transacoes Recentes</h2>
+                    <h2 className="text-lg font-medium text-white">{t('coldWallet.recentTx', 'Transações Recentes')}</h2>
                     <button onClick={() => setActiveTab('activity')} className="text-gold-400 text-sm hover:text-gold-300 flex items-center gap-1">
-                      Ver tudo <ChevronRight size={14} />
+                      {t('coldWallet.viewAll', 'Ver tudo')} <ChevronRight size={14} />
                     </button>
                   </div>
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
@@ -824,7 +827,7 @@ const ColdWalletPage = () => {
                             </div>
                             <div>
                               <p className="text-white text-sm">{tx.amount} {tx.coin}</p>
-                              <p className="text-gray-500 text-xs font-mono truncate max-w-[200px]">Para: {tx.to_address}</p>
+                              <p className="text-gray-500 text-xs font-mono truncate max-w-[200px]">{t('coldWallet.forLabel', 'Para:')} {tx.to_address}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -847,28 +850,28 @@ const ColdWalletPage = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-medium text-white">
-                  Historico de Transacoes
+                  {t('coldWallet.activityTitle', 'Histórico de Transações')}
                   {activeCoin && <span className="text-gray-500 ml-2">({activeCoin})</span>}
                 </h2>
                 <Badge className="bg-zinc-800 text-gray-400 border-0">
-                  {coinTxHistory.length} transacoes
+                  {coinTxHistory.length} {t('coldWallet.transactionsCount', 'transações')}
                 </Badge>
               </div>
 
               {coinTxHistory.length === 0 ? (
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-12 text-center">
                   <Activity className="text-gray-600 mx-auto mb-4" size={40} />
-                  <p className="text-gray-400 text-sm">Nenhuma transacao encontrada para {COIN_META[activeCoin]?.label || activeCoin}</p>
+                  <p className="text-gray-400 text-sm">{t('coldWallet.noTransactions', 'Nenhuma transação encontrada para')} {COIN_META[activeCoin]?.label || activeCoin}</p>
                 </div>
               ) : (
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
                   {/* Table Header */}
                   <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-zinc-800/30 text-gray-500 text-xs uppercase tracking-wider">
-                    <div className="col-span-1">Tipo</div>
-                    <div className="col-span-2">Montante</div>
-                    <div className="col-span-4">Destino</div>
-                    <div className="col-span-2">Estado</div>
-                    <div className="col-span-2">TX ID</div>
+                    <div className="col-span-1">{t('coldWallet.colType', 'Tipo')}</div>
+                    <div className="col-span-2">{t('coldWallet.colAmount', 'Montante')}</div>
+                    <div className="col-span-4">{t('coldWallet.colDestination', 'Destino')}</div>
+                    <div className="col-span-2">{t('coldWallet.colState', 'Estado')}</div>
+                    <div className="col-span-2">{t('coldWallet.txid', 'TX ID')}</div>
                     <div className="col-span-1"></div>
                   </div>
 
@@ -908,7 +911,7 @@ const ColdWalletPage = () => {
               {/* All Saved Addresses */}
               {savedAddresses.length > 0 && (
                 <div className="mt-8">
-                  <h2 className="text-lg font-medium text-white mb-4">Enderecos Guardados</h2>
+                  <h2 className="text-lg font-medium text-white mb-4">{t('coldWallet.savedAddresses', 'Endereços Guardados')}</h2>
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl overflow-hidden">
                     {savedAddresses.map((addr, i) => {
                       const addrMeta = COIN_META[addr.coin] || COIN_META.LTC;

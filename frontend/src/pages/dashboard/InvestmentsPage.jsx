@@ -73,7 +73,7 @@ const InvestmentsPage = () => {
       setMyInvestments(invResponse.data);
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      toast.error('Erro ao carregar dados');
+      toast.error(t('investments.loadError', 'Erro ao carregar dados'));
     } finally {
       setLoading(false);
     }
@@ -103,22 +103,22 @@ const InvestmentsPage = () => {
     
     const amount = parseFloat(investAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Insira um valor válido');
+      toast.error(t('investments.enterValid', 'Insira um valor válido'));
       return;
     }
 
     if (amount < selectedOpp.min_investment) {
-      toast.error(`Investimento mínimo é ${formatNumber(selectedOpp.min_investment)} ${selectedOpp.currency}`);
+      toast.error(`${t('investments.minError', 'Investimento mínimo é')} ${formatNumber(selectedOpp.min_investment)} ${selectedOpp.currency}`);
       return;
     }
 
     if (amount > selectedOpp.max_investment) {
-      toast.error(`Investimento máximo é ${formatNumber(selectedOpp.max_investment)} ${selectedOpp.currency}`);
+      toast.error(`${t('investments.maxError', 'Investimento máximo é')} ${formatNumber(selectedOpp.max_investment)} ${selectedOpp.currency}`);
       return;
     }
 
     if (amount > walletBalance) {
-      toast.error('Saldo insuficiente');
+      toast.error(t('investments.insufficientBalance', 'Saldo insuficiente'));
       return;
     }
 
@@ -130,11 +130,11 @@ const InvestmentsPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success('Investimento realizado com sucesso!');
+      toast.success(t('investments.investSuccess', 'Investimento realizado com sucesso!'));
       setShowInvestDialog(false);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao investir');
+      toast.error(err.response?.data?.detail || t('investments.investError', 'Erro ao investir'));
     } finally {
       setInvesting(false);
     }
@@ -233,7 +233,7 @@ const InvestmentsPage = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">ROI Médio</p>
+                <p className="text-gray-400 text-sm">{t('investments.avgRoi', 'ROI Médio')}</p>
                 <p className="text-2xl font-light text-purple-400">
                   {totalInvested > 0 ? ((totalExpectedReturn / totalInvested) * 100).toFixed(1) : 0}%
                 </p>
@@ -248,10 +248,10 @@ const InvestmentsPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-zinc-800 border border-zinc-700">
           <TabsTrigger value="opportunities" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
-            Oportunidades
+            {t('investments.tabOpportunities', 'Oportunidades')}
           </TabsTrigger>
           <TabsTrigger value="my-investments" className="data-[state=active]:bg-gold-500 data-[state=active]:text-black">
-            Os Meus Investimentos
+            {t('investments.tabMyInvestments', 'Os Meus Investimentos')}
           </TabsTrigger>
         </TabsList>
 
@@ -265,9 +265,9 @@ const InvestmentsPage = () => {
             <Card className="bg-zinc-900 border-zinc-800">
               <CardContent className="p-12 text-center">
                 <TrendingUp className="mx-auto text-gray-600 mb-4" size={48} />
-                <h3 className="text-xl text-white mb-2">Sem Oportunidades Disponíveis</h3>
+                <h3 className="text-xl text-white mb-2">{t('investments.noOpportunities', 'Sem Oportunidades Disponíveis')}</h3>
                 <p className="text-gray-400">
-                  Não há oportunidades de investimento disponíveis de momento.
+                  {t('investments.noOpportunitiesDesc', 'Não há oportunidades de investimento disponíveis de momento.')}
                 </p>
               </CardContent>
             </Card>
@@ -293,7 +293,7 @@ const InvestmentsPage = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge className={getRiskColor(opp.risk_level)}>
-                            {opp.risk_level === 'low' ? 'Baixo' : opp.risk_level === 'medium' ? 'Médio' : 'Alto'}
+                            {opp.risk_level === 'low' ? t('investments.riskLow', 'Baixo') : opp.risk_level === 'medium' ? t('investments.riskMedium', 'Médio') : t('investments.riskHigh', 'Alto')}
                           </Badge>
                           <Badge className={getStatusColor(opp.status)}>
                             {opp.status}
@@ -303,21 +303,21 @@ const InvestmentsPage = () => {
 
                       {/* Description */}
                       <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                        {opp.description || 'Oportunidade de investimento com retorno garantido.'}
+                        {opp.description || t('investments.defaultDescription', 'Oportunidade de investimento com retorno garantido.')}
                       </p>
 
                       {/* ROI Breakdown */}
                       <div className="grid grid-cols-3 gap-2 mb-4">
                         <div className="text-center p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
-                          <p className="text-xs text-gray-400 mb-1">Taxa Fixa</p>
+                          <p className="text-xs text-gray-400 mb-1">{t('investments.fixedRate', 'Taxa Fixa')}</p>
                           <p className="text-lg text-green-400 font-semibold">{fixedRate}%</p>
                         </div>
                         <div className="text-center p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
-                          <p className="text-xs text-gray-400 mb-1">Taxa Variável</p>
+                          <p className="text-xs text-gray-400 mb-1">{t('investments.variableRate', 'Taxa Variável')}</p>
                           <p className="text-lg text-yellow-400 font-semibold">{variableRate}%</p>
                         </div>
                         <div className="text-center p-3 bg-gold-500/10 rounded-lg border border-gold-500/30">
-                          <p className="text-xs text-gold-400 mb-1">ROI Total</p>
+                          <p className="text-xs text-gold-400 mb-1">{t('investments.totalROI', 'ROI Total')}</p>
                           <p className="text-lg text-gold-400 font-bold">{totalROI}%</p>
                         </div>
                       </div>
@@ -326,19 +326,19 @@ const InvestmentsPage = () => {
                       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                         <div className="flex items-center gap-2 text-gray-400">
                           <Clock size={14} />
-                          <span>{opp.duration_days} dias</span>
+                          <span>{opp.duration_days} {t('investments.durationDays', 'dias')}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-400">
                           <DollarSign size={14} />
-                          <span>Mín: {formatNumber(opp.min_investment, 0)} {opp.currency}</span>
+                          <span>{t('investments.minLabel', 'Mín')}: {formatNumber(opp.min_investment, 0)} {opp.currency}</span>
                         </div>
                       </div>
 
                       {/* Pool Progress */}
                       <div className="mb-4">
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-400">Pool</span>
-                          <span className="text-white">{progress.toFixed(1)}% preenchido</span>
+                          <span className="text-gray-400">{t('investments.pool', 'Pool')}</span>
+                          <span className="text-white">{progress.toFixed(1)}% {t('investments.poolFilled', 'preenchido')}</span>
                         </div>
                         <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
                           <div 
@@ -357,7 +357,7 @@ const InvestmentsPage = () => {
                         disabled={opp.status !== 'open' && opp.status !== 'active'}
                         className="w-full bg-gold-500 hover:bg-gold-400 text-black disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Investir Agora
+                        {t('investments.investNow', 'Investir Agora')}
                         <ArrowRight size={16} className="ml-2" />
                       </Button>
                     </CardContent>
@@ -374,15 +374,15 @@ const InvestmentsPage = () => {
             <Card className="bg-zinc-900 border-zinc-800">
               <CardContent className="p-12 text-center">
                 <Wallet className="mx-auto text-gray-600 mb-4" size={48} />
-                <h3 className="text-xl text-white mb-2">Sem Investimentos</h3>
+                <h3 className="text-xl text-white mb-2">{t('investments.noInvestments', 'Sem Investimentos')}</h3>
                 <p className="text-gray-400 mb-4">
-                  Ainda não fez nenhum investimento.
+                  {t('investments.noInvestmentsDesc', 'Ainda não fez nenhum investimento.')}
                 </p>
                 <Button
                   onClick={() => setActiveTab('opportunities')}
                   className="bg-gold-500 hover:bg-gold-400 text-black"
                 >
-                  Ver Oportunidades
+                  {t('investments.viewOpportunities', 'Ver Oportunidades')}
                 </Button>
               </CardContent>
             </Card>
@@ -399,34 +399,34 @@ const InvestmentsPage = () => {
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg text-white font-medium">{opp.name || 'Investimento'}</h3>
+                            <h3 className="text-lg text-white font-medium">{opp.name || t('investments.defaultName', 'Investimento')}</h3>
                             <Badge className={getStatusColor(inv.status)}>
-                              {inv.status === 'active' ? 'Ativo' : inv.status === 'completed' ? 'Concluído' : inv.status}
+                              {inv.status === 'active' ? t('investments.tabActive', 'Ativo') : inv.status === 'completed' ? t('status.completed', 'Concluído') : inv.status}
                             </Badge>
                           </div>
                           
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
-                              <p className="text-gray-400">Valor Investido</p>
+                              <p className="text-gray-400">{t('investments.amountInvested', 'Valor Investido')}</p>
                               <p className="text-white font-medium">{formatNumber(inv.amount)} {inv.currency}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Retorno Fixo</p>
+                              <p className="text-gray-400">{t('investments.fixedReturn', 'Retorno Fixo')}</p>
                               <p className="text-green-400 font-medium">+{formatNumber(fixedReturn)} {inv.currency}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Retorno Variável</p>
+                              <p className="text-gray-400">{t('investments.variableReturn', 'Retorno Variável')}</p>
                               <p className="text-yellow-400 font-medium">+{formatNumber(variableReturn)} {inv.currency}</p>
                             </div>
                             <div>
-                              <p className="text-gray-400">Maturidade</p>
+                              <p className="text-gray-400">{t('investments.maturity', 'Maturidade')}</p>
                               <p className="text-white">{formatDate(inv.maturity_date)}</p>
                             </div>
                           </div>
                         </div>
                         
                         <div className="text-right">
-                          <p className="text-gray-400 text-sm">Retorno Total</p>
+                          <p className="text-gray-400 text-sm">{t('investments.totalReturn', 'Retorno Total')}</p>
                           <p className="text-2xl text-gold-400 font-light">
                             +{formatNumber(inv.expected_return)} {inv.currency}
                           </p>
@@ -447,7 +447,7 @@ const InvestmentsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <TrendingUp className="text-gold-400" size={20} />
-              Investir
+              {t('investments.invest', 'Investir')}
             </DialogTitle>
             <DialogDescription className="text-gray-400">
               {selectedOpp?.name}
@@ -459,22 +459,22 @@ const InvestmentsPage = () => {
               {/* ROI Info */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-center p-2 bg-zinc-800 rounded">
-                  <p className="text-xs text-gray-400">Fixo</p>
+                  <p className="text-xs text-gray-400">{t('investments.fixed', 'Fixo')}</p>
                   <p className="text-green-400 font-medium">{selectedOpp.fixed_rate}%</p>
                 </div>
                 <div className="text-center p-2 bg-zinc-800 rounded">
-                  <p className="text-xs text-gray-400">Variável</p>
+                  <p className="text-xs text-gray-400">{t('investments.variable', 'Variável')}</p>
                   <p className="text-yellow-400 font-medium">{selectedOpp.variable_rate}%</p>
                 </div>
                 <div className="text-center p-2 bg-zinc-800 rounded">
-                  <p className="text-xs text-gray-400">Duração</p>
+                  <p className="text-xs text-gray-400">{t('investments.duration', 'Duração')}</p>
                   <p className="text-white font-medium">{selectedOpp.duration_days}d</p>
                 </div>
               </div>
 
               {/* Wallet Balance */}
               <div className="flex justify-between items-center p-3 bg-zinc-800 rounded-lg">
-                <span className="text-gray-400">Saldo Disponível</span>
+                <span className="text-gray-400">{t('investments.availableBalance', 'Saldo Disponível')}</span>
                 <span className="text-white font-medium">
                   {formatNumber(walletBalance)} {selectedOpp.currency}
                 </span>
@@ -482,13 +482,13 @@ const InvestmentsPage = () => {
 
               {/* Amount Input */}
               <div>
-                <Label className="text-gray-300">Valor a Investir</Label>
+                <Label className="text-gray-300">{t('investments.amountToInvest', 'Valor a Investir')}</Label>
                 <div className="relative mt-1">
                   <Input
                     type="number" step="any"
                     value={investAmount}
                     onChange={(e) => setInvestAmount(e.target.value)}
-                    placeholder={`Mín: ${formatNumber(selectedOpp.min_investment, 0)}`}
+                    placeholder={`${t('investments.minLabel', 'Mín')}: ${formatNumber(selectedOpp.min_investment, 0)}`}
                     className="bg-zinc-800 border-zinc-700 text-white pr-16"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -496,8 +496,8 @@ const InvestmentsPage = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>Mín: {formatNumber(selectedOpp.min_investment, 0)}</span>
-                  <span>Máx: {formatNumber(selectedOpp.max_investment, 0)}</span>
+                  <span>{t('investments.minLabel', 'Mín')}: {formatNumber(selectedOpp.min_investment, 0)}</span>
+                  <span>{t('investments.maxLabel', 'Máx')}: {formatNumber(selectedOpp.max_investment, 0)}</span>
                 </div>
               </div>
 
@@ -505,7 +505,7 @@ const InvestmentsPage = () => {
               {investAmount && parseFloat(investAmount) > 0 && (
                 <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                   <div className="flex justify-between items-center">
-                    <span className="text-green-400">Retorno Esperado</span>
+                    <span className="text-green-400">{t('investments.expectedReturnLabel', 'Retorno Esperado')}</span>
                     <span className="text-green-400 font-bold text-lg">
                       +{formatNumber(calculateExpectedReturn())} {selectedOpp.currency}
                     </span>
@@ -517,8 +517,7 @@ const InvestmentsPage = () => {
               <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <AlertTriangle className="text-yellow-400 shrink-0 mt-0.5" size={16} />
                 <p className="text-yellow-400 text-xs">
-                  O retorno variável depende da performance do investimento e pode variar.
-                  O capital investido ficará bloqueado durante {selectedOpp.duration_days} dias.
+                  {t('investments.lockWarning', 'O retorno variável depende da performance do investimento e pode variar. O capital investido ficará bloqueado durante {days} dias.').replace('{days}', selectedOpp.duration_days)}
                 </p>
               </div>
             </div>
@@ -530,7 +529,7 @@ const InvestmentsPage = () => {
               onClick={() => setShowInvestDialog(false)}
               className="border-zinc-700 text-gray-300"
             >
-              Cancelar
+              {t('investments.cancel', 'Cancelar')}
             </Button>
             <Button
               onClick={handleInvest}
@@ -542,7 +541,7 @@ const InvestmentsPage = () => {
               ) : (
                 <CheckCircle size={16} className="mr-2" />
               )}
-              Confirmar Investimento
+              {t('investments.confirmInvestment', 'Confirmar Investimento')}
             </Button>
           </DialogFooter>
         </DialogContent>

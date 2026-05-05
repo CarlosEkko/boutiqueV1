@@ -56,25 +56,25 @@ const Countdown = ({ targetDate, label }) => {
   );
 };
 
-const statusCfg = {
-  upcoming: { label: 'Em Breve', color: 'text-blue-400', bg: 'bg-blue-500/15' },
-  active: { label: 'Ativo', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-  completed: { label: 'Concluído', color: 'text-gray-400', bg: 'bg-gray-500/15' },
-  sold_out: { label: 'Esgotado', color: 'text-red-400', bg: 'bg-red-500/15' },
-  cancelled: { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/15' },
-};
-
-const subStatusCfg = {
-  pending: { label: 'Pendente', color: 'text-amber-400', bg: 'bg-amber-500/15' },
-  confirmed: { label: 'Confirmado', color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
-  distributed: { label: 'Distribuído', color: 'text-blue-400', bg: 'bg-blue-500/15' },
-  refunded: { label: 'Reembolsado', color: 'text-red-400', bg: 'bg-red-500/15' },
-};
-
 const ClientLaunchpadPage = () => {
   const { t } = useLanguage();
   const { token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
+
+  const statusCfg = {
+    upcoming: { label: t('launchpad.statusUpcoming', 'Em Breve'), color: 'text-blue-400', bg: 'bg-blue-500/15' },
+    active: { label: t('launchpad.statusActive', 'Ativo'), color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    completed: { label: t('launchpad.statusCompleted', 'Concluído'), color: 'text-gray-400', bg: 'bg-gray-500/15' },
+    sold_out: { label: t('launchpad.statusSoldOut', 'Esgotado'), color: 'text-red-400', bg: 'bg-red-500/15' },
+    cancelled: { label: t('launchpad.statusCancelled', 'Cancelado'), color: 'text-red-400', bg: 'bg-red-500/15' },
+  };
+
+  const subStatusCfg = {
+    pending: { label: t('launchpad.subStatusPending', 'Pendente'), color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    confirmed: { label: t('launchpad.subStatusConfirmed', 'Confirmado'), color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
+    distributed: { label: t('launchpad.subStatusDistributed', 'Distribuído'), color: 'text-blue-400', bg: 'bg-blue-500/15' },
+    refunded: { label: t('launchpad.subStatusRefunded', 'Reembolsado'), color: 'text-red-400', bg: 'bg-red-500/15' },
+  };
 
   const [sales, setSales] = useState([]);
   const [mySubs, setMySubs] = useState([]);
@@ -112,13 +112,13 @@ const ClientLaunchpadPage = () => {
         { amount_tokens: parseFloat(subAmount), payment_currency: subCurrency },
         { headers }
       );
-      toast.success(`Subscrito com sucesso! ${res.data.amount_tokens} ${selectedSale.symbol}`);
+      toast.success(`${t('launchpad.subscribeSuccess', 'Subscrito com sucesso!')} ${res.data.amount_tokens} ${selectedSale.symbol}`);
       setShowSubscribe(false);
       setSubAmount('');
       setSelectedSale(null);
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Erro ao subscrever');
+      toast.error(err.response?.data?.detail || t('launchpad.subscribeError', 'Erro ao subscrever'));
     } finally {
       setSubmitting(false);
     }
@@ -145,17 +145,17 @@ const ClientLaunchpadPage = () => {
         <div>
           <h1 className="text-2xl font-light text-white flex items-center gap-2">
             <Rocket size={24} className="text-gold-400" />
-            Launchpad
+            {t('launchpad.title', 'Launchpad')}
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Participe em token sales exclusivos</p>
+          <p className="text-gray-400 text-sm mt-1">{t('launchpad.subtitle', 'Participe em token sales exclusivos')}</p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-zinc-900/50 p-1 rounded-lg w-fit">
         {[
-          { id: 'sales', label: 'Token Sales', count: sales.length },
-          { id: 'my', label: 'Minhas Subscrições', count: mySubs.length },
+          { id: 'sales', label: t('launchpad.tabSales', 'Token Sales'), count: sales.length },
+          { id: 'my', label: t('launchpad.tabMy', 'Minhas Subscrições'), count: mySubs.length },
         ].map(tab => (
           <button
             key={tab.id}
@@ -176,7 +176,7 @@ const ClientLaunchpadPage = () => {
           {sales.length === 0 ? (
             <div className="col-span-2 text-center py-16 bg-zinc-900/20 border border-zinc-800/50 rounded-xl">
               <Rocket size={40} className="text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">Nenhum token sale disponível</p>
+              <p className="text-gray-400">{t('launchpad.noSales', 'Nenhum token sale disponível')}</p>
             </div>
           ) : (
             sales.map(sale => {
@@ -219,15 +219,15 @@ const ClientLaunchpadPage = () => {
                     {/* Info */}
                     <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                       <div className="bg-zinc-800/50 rounded-lg py-2">
-                        <p className="text-xs text-gray-500">Preço</p>
+                        <p className="text-xs text-gray-500">{t('launchpad.price', 'Preço')}</p>
                         <p className="text-sm font-medium text-white">${sale.price}</p>
                       </div>
                       <div className="bg-zinc-800/50 rounded-lg py-2">
-                        <p className="text-xs text-gray-500">Hard Cap</p>
+                        <p className="text-xs text-gray-500">{t('launchpad.hardCap', 'Hard Cap')}</p>
                         <p className="text-sm font-medium text-white">${sale.hard_cap?.toLocaleString()}</p>
                       </div>
                       <div className="bg-zinc-800/50 rounded-lg py-2">
-                        <p className="text-xs text-gray-500">Supply</p>
+                        <p className="text-xs text-gray-500">{t('launchpad.supply', 'Supply')}</p>
                         <p className="text-sm font-medium text-white">{sale.total_supply?.toLocaleString()}</p>
                       </div>
                     </div>
@@ -235,12 +235,12 @@ const ClientLaunchpadPage = () => {
                     {/* Countdown */}
                     {sale.computed_status === 'upcoming' && sale.start_date && (
                       <div className="mb-4">
-                        <Countdown targetDate={sale.start_date} label="Começa em" />
+                        <Countdown targetDate={sale.start_date} label={t('launchpad.startsIn', 'Começa em')} />
                       </div>
                     )}
                     {isActive && sale.end_date && (
                       <div className="mb-4">
-                        <Countdown targetDate={sale.end_date} label="Termina em" />
+                        <Countdown targetDate={sale.end_date} label={t('launchpad.endsIn', 'Termina em')} />
                       </div>
                     )}
 
@@ -248,12 +248,12 @@ const ClientLaunchpadPage = () => {
                     <div className="flex gap-2">
                       {isActive && !alreadySubbed && (
                         <Button onClick={() => openSubscribe(sale)} className="flex-1 bg-gold-500 hover:bg-gold-400 text-black" data-testid={`subscribe-${sale.id}`}>
-                          <Rocket size={14} className="mr-1" /> Participar
+                          <Rocket size={14} className="mr-1" /> {t('launchpad.participate', 'Participar')}
                         </Button>
                       )}
                       {alreadySubbed && (
                         <Button disabled className="flex-1 bg-emerald-500/15 text-emerald-400 border-0">
-                          <CheckCircle size={14} className="mr-1" /> Já Subscrito
+                          <CheckCircle size={14} className="mr-1" /> {t('launchpad.alreadySubbed', 'Já Subscrito')}
                         </Button>
                       )}
                       {sale.whitepaper_url && (
@@ -285,7 +285,7 @@ const ClientLaunchpadPage = () => {
           {mySubs.length === 0 ? (
             <div className="text-center py-16 bg-zinc-900/20 border border-zinc-800/50 rounded-xl">
               <Target size={40} className="text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-400">Ainda não participou em nenhum token sale</p>
+              <p className="text-gray-400">{t('launchpad.noSubs', 'Ainda não participou em nenhum token sale')}</p>
             </div>
           ) : (
             mySubs.map(sub => {
@@ -322,7 +322,7 @@ const ClientLaunchpadPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowSubscribe(false)}>
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()} data-testid="subscribe-modal">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-white">Participar em {selectedSale.name}</h3>
+              <h3 className="text-lg font-medium text-white">{t('launchpad.modalTitle', 'Participar em')} {selectedSale.name}</h3>
               <button onClick={() => setShowSubscribe(false)} className="text-gray-400 hover:text-white">
                 <X size={20} />
               </button>
@@ -330,40 +330,40 @@ const ClientLaunchpadPage = () => {
 
             <div className="bg-zinc-800/50 rounded-lg p-3 mb-4">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Token</span>
+                <span className="text-gray-400">{t('launchpad.token', 'Token')}</span>
                 <span className="text-white">{selectedSale.symbol}</span>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-gray-400">Preço por token</span>
+                <span className="text-gray-400">{t('launchpad.pricePerToken', 'Preço por token')}</span>
                 <span className="text-white">${selectedSale.price}</span>
               </div>
               {selectedSale.min_allocation > 0 && (
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-400">Mín. alocação</span>
+                  <span className="text-gray-400">{t('launchpad.minAlloc', 'Mín. alocação')}</span>
                   <span className="text-white">{selectedSale.min_allocation?.toLocaleString()} {selectedSale.symbol}</span>
                 </div>
               )}
               {selectedSale.max_allocation > 0 && (
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-400">Máx. alocação</span>
+                  <span className="text-gray-400">{t('launchpad.maxAlloc', 'Máx. alocação')}</span>
                   <span className="text-white">{selectedSale.max_allocation?.toLocaleString()} {selectedSale.symbol}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-gray-400">Disponível</span>
+                <span className="text-gray-400">{t('launchpad.available', 'Disponível')}</span>
                 <span className="text-white">{(selectedSale.total_supply - (selectedSale.tokens_sold || 0)).toLocaleString()} {selectedSale.symbol}</span>
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Quantidade de tokens</label>
+                <label className="text-sm text-gray-400 mb-1 block">{t('launchpad.tokenAmount', 'Quantidade de tokens')}</label>
                 <Input
                   type="number"
                   value={subAmount}
                   onChange={e => setSubAmount(e.target.value)}
                   className="bg-zinc-800 border-zinc-700 text-white"
-                  placeholder={`Mín: ${selectedSale.min_allocation || 1}`}
+                  placeholder={`${t('investments.minLabel', 'Mín')}: ${selectedSale.min_allocation || 1}`}
                   data-testid="subscribe-amount"
                 />
               </div>
@@ -371,7 +371,7 @@ const ClientLaunchpadPage = () => {
               {subAmount > 0 && (
                 <div className="bg-gold-500/10 border border-gold-500/20 rounded-lg p-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Total a pagar</span>
+                    <span className="text-gray-400">{t('launchpad.totalToPay', 'Total a pagar')}</span>
                     <span className="text-gold-400 font-bold text-lg">
                       ${(parseFloat(subAmount) * selectedSale.price).toLocaleString()}
                     </span>
@@ -386,7 +386,7 @@ const ClientLaunchpadPage = () => {
                 data-testid="confirm-subscribe"
               >
                 {submitting ? <Loader2 size={16} className="animate-spin mr-2" /> : <Rocket size={16} className="mr-2" />}
-                Confirmar Subscrição
+                {t('launchpad.confirmSubscribe', 'Confirmar Subscrição')}
               </Button>
             </div>
           </div>
