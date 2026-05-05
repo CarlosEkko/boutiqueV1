@@ -317,17 +317,17 @@ const AdminUsers = () => {
   );
   const getKYCBadge = (status) => {
     switch (status) {
-      case 'approved': return <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>;
-      case 'pending': return <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>;
-      case 'rejected': return <Badge className="bg-red-900/30 text-red-400">Rejeitado</Badge>;
-      default: return <Badge className="bg-gray-900/30 text-gray-400">Não Iniciado</Badge>;
+      case 'approved': return <Badge className="bg-green-900/30 text-green-400">{t('status.approved')}</Badge>;
+      case 'pending': return <Badge className="bg-gold-800/30 text-gold-400">{t('status.pending')}</Badge>;
+      case 'rejected': return <Badge className="bg-red-900/30 text-red-400">{t('status.rejected')}</Badge>;
+      default: return <Badge className="bg-gray-900/30 text-gray-400">{t('status.notStarted')}</Badge>;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gold-400">Carregando...</div>
+        <div className="text-gold-400">{t('status.loading')}</div>
       </div>
     );
   }
@@ -435,9 +435,9 @@ const AdminUsers = () => {
                     <div className="hidden md:flex items-center gap-2">
                       {getRegionBadge(user.region)}
                       {user.is_approved ? (
-                        <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>
+                        <Badge className="bg-green-900/30 text-green-400">{t('status.approved')}</Badge>
                       ) : (
-                        <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>
+                        <Badge className="bg-gold-800/30 text-gold-400">{t('status.pending')}</Badge>
                       )}
                       {getKYCBadge(user.kyc_status)}
                     </div>
@@ -549,7 +549,7 @@ const AdminUsers = () => {
 
                     {/* KYC Actions */}
                     <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="text-gray-400 text-sm mr-2">Estado KYC:</span>
+                      <span className="text-gray-400 text-sm mr-2">{t('status.kycStatus')}:</span>
                       {['not_started', 'pending', 'approved', 'rejected'].map((status) => (
                         <Button
                           key={status}
@@ -561,16 +561,16 @@ const AdminUsers = () => {
                             : 'border-gold-800/30 text-gray-400 hover:text-white text-xs'
                           }
                         >
-                          {status === 'not_started' ? 'Não Iniciado' : 
-                           status === 'pending' ? 'Pendente' :
-                           status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                          {status === 'not_started' ? t('status.notStarted') : 
+                           status === 'pending' ? t('status.pending') :
+                           status === 'approved' ? t('status.approved') : t('status.rejected')}
                         </Button>
                       ))}
                     </div>
 
                     {/* Block/Delete Actions */}
                     <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gold-800/20">
-                      <span className="text-gray-400 text-sm mr-2">Ações:</span>
+                      <span className="text-gray-400 text-sm mr-2">{t('status.actions')}:</span>
                       
                       {/* Password Reset */}
                       <Button
@@ -888,16 +888,16 @@ const AdminUsers = () => {
                     <div className="p-4 bg-zinc-800/50 rounded-lg">
                       <div className="flex items-center gap-2 text-gray-400 mb-1">
                         <CheckCircle size={14} />
-                        <span className="text-xs uppercase">Estado</span>
+                        <span className="text-xs uppercase">{t('status.state')}</span>
                       </div>
                       <div className="flex gap-2">
                         {clientDetails.is_approved ? (
-                          <Badge className="bg-green-900/30 text-green-400">Aprovado</Badge>
+                          <Badge className="bg-green-900/30 text-green-400">{t('status.approved')}</Badge>
                         ) : (
-                          <Badge className="bg-gold-800/30 text-gold-400">Pendente</Badge>
+                          <Badge className="bg-gold-800/30 text-gold-400">{t('status.pending')}</Badge>
                         )}
                         {clientDetails.is_active === false && (
-                          <Badge className="bg-red-900/30 text-red-400">Bloqueado</Badge>
+                          <Badge className="bg-red-900/30 text-red-400">{t('status.blocked')}</Badge>
                         )}
                       </div>
                     </div>
@@ -907,7 +907,7 @@ const AdminUsers = () => {
                   <div className="p-4 bg-zinc-800/50 rounded-lg">
                     <div className="flex items-center gap-2 text-gray-400 mb-2">
                       <UserCheck size={14} />
-                      <span className="text-xs uppercase">Estado KYC</span>
+                      <span className="text-xs uppercase">{t('status.kycStatus')}</span>
                     </div>
                     <Badge className={
                       clientDetails.kyc_status === 'approved' ? 'bg-green-900/30 text-green-400' :
@@ -915,9 +915,9 @@ const AdminUsers = () => {
                       clientDetails.kyc_status === 'rejected' ? 'bg-red-900/30 text-red-400' :
                       'bg-gray-900/30 text-gray-400'
                     }>
-                      {clientDetails.kyc_status === 'approved' ? 'Aprovado' :
-                       clientDetails.kyc_status === 'pending' ? 'Pendente' :
-                       clientDetails.kyc_status === 'rejected' ? 'Rejeitado' : 'Não Iniciado'}
+                      {clientDetails.kyc_status === 'approved' ? t('status.approved') :
+                       clientDetails.kyc_status === 'pending' ? t('status.pending') :
+                       clientDetails.kyc_status === 'rejected' ? t('status.rejected') : t('status.notStarted')}
                     </Badge>
                   </div>
 

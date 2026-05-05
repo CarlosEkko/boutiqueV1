@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
@@ -65,6 +66,7 @@ const COMPLIANCE_STATUS_COLORS = {
 
 const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [deal, setDeal] = useState(initialDeal);
   const [advancing, setAdvancing] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
@@ -268,7 +270,7 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
           )}
           {!isTerminal && deal.status !== 'settled' && deal.status !== 'disputed' && (
             <Button variant="outline" size="sm" className="border-zinc-500/30 text-zinc-400 hover:bg-zinc-500/10" onClick={() => advanceStatus('cancelled', 'Cancelado pelo admin')} data-testid="cancel-deal-btn">
-              <Ban className="w-4 h-4 mr-1" /> Cancelar
+              <Ban className="w-4 h-4 mr-1" /> {t('common.cancel', 'Cancelar')}
             </Button>
           )}
           {nextStatus && !isTerminal && deal.status !== 'disputed' && (
@@ -318,7 +320,7 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowDeposit(false)}>Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowDeposit(false)}>{t('common.cancel', 'Cancelar')}</Button>
             <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={handleDeposit} disabled={!depositForm.amount} data-testid="submit-deposit-btn">
               Registar
             </Button>
@@ -380,7 +382,7 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
             <textarea value={settleForm.notes} onChange={(e) => setSettleForm({...settleForm, notes: e.target.value})} rows={2} className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm resize-none" placeholder="Notas de settlement..." data-testid="settle-notes" />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowSettle(false)}>Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowSettle(false)}>{t('common.cancel', 'Cancelar')}</Button>
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSettle} disabled={!complianceAllApproved} data-testid="execute-settle-btn">
               Executar Settlement DvP
             </Button>
@@ -397,8 +399,8 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
           </div>
           <textarea value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)} placeholder="Descreva o motivo..." rows={3} className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm resize-none mb-3" data-testid="dispute-reason-input" />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setShowDispute(false)}>Cancelar</Button>
-            <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={openDispute} data-testid="submit-dispute-btn">Confirmar Disputa</Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowDispute(false)}>{t('common.cancel', 'Cancelar')}</Button>
+            <Button size="sm" className="bg-red-600 hover:bg-red-700" onClick={openDispute} data-testid="submit-dispute-btn">{t('common.confirm', 'Confirmar')} Disputa</Button>
           </div>
         </Card>
       )}
@@ -507,7 +509,7 @@ const EscrowDealDetail = ({ deal: initialDeal, onBack, onUpdate }) => {
                         </Badge>
                         <span className="text-sm font-medium">{dep.amount} {dep.asset}</span>
                         <Badge className={dep.confirmed ? 'bg-green-500/20 text-green-400 text-[10px]' : 'bg-amber-500/20 text-amber-400 text-[10px]'}>
-                          {dep.confirmed ? 'Confirmado' : 'Pendente'}
+                          {dep.confirmed ? 'Confirmado' : t('status.pending', 'Pendente')}
                         </Badge>
                       </div>
                       {dep.tx_hash && (

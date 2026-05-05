@@ -62,7 +62,7 @@ const CompliancePage = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        toast.success('Carteira adicionada');
+        toast.success(t('compliance.toast.walletAdded', 'Carteira adicionada'));
         setShowAddWallet(false);
         // Auto-select the newly added wallet
         if (data?.wallet?.id) setSelectedWalletId(data.wallet.id);
@@ -74,7 +74,7 @@ const CompliancePage = () => {
   const verifyWallet = async (walletId, status) => {
     try {
       await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/wallets/${walletId}/verify?status=${status}`, { method: 'PUT', headers });
-      toast.success(status === 'verified' ? 'Carteira verificada' : 'Carteira rejeitada');
+      toast.success(status === 'verified' ? t('compliance.toast.walletVerified', 'Carteira verificada') : t('compliance.toast.walletRejected', 'Carteira rejeitada'));
       fetchData();
     } catch (e) { toast.error('Erro'); }
   };
@@ -154,7 +154,7 @@ const CompliancePage = () => {
 
   const checkReservesOnChain = async () => {
     const walletAddr = selectedWallet?.address;
-    if (!walletAddr) { toast.error('Selecione uma carteira'); return; }
+    if (!walletAddr) { toast.error(t('compliance.toast.selectWallet', 'Selecione uma carteira')); return; }
     setCheckingOnChain(true);
     try {
       const res = await fetch(`${API}/api/otc-deals/deals/${dealId}/compliance/proof/reserves/check`, {
@@ -306,7 +306,7 @@ const CompliancePage = () => {
                         <Badge className="bg-zinc-800 text-zinc-400 text-[10px]">{w.wallet_type}</Badge>
                         {w.kyt_status && (
                           <Badge className={`text-[10px] ${w.kyt_status === 'clean' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : w.kyt_status === 'flagged' ? 'bg-orange-500/15 text-orange-400 border border-orange-500/20' : 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20'}`}>
-                            {w.kyt_status === 'clean' ? 'Limpo' : w.kyt_status === 'flagged' ? 'Sinalizado' : 'Pendente'}
+                            {w.kyt_status === 'clean' ? t('status.clean') : w.kyt_status === 'flagged' ? t('status.flagged') : t('status.pending')}
                           </Badge>
                         )}
                         {w.kyt_score > 0 && (
@@ -372,7 +372,7 @@ const CompliancePage = () => {
                             selectedWallet.kyt_status === 'rejected' ? 'bg-red-500/15 text-red-400 border border-red-500/30' :
                             'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30'
                           }`}>
-                            {selectedWallet.kyt_status === 'clean' ? 'Limpo' : selectedWallet.kyt_status === 'flagged' ? 'Sinalizado' : selectedWallet.kyt_status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                            {selectedWallet.kyt_status === 'clean' ? t('status.clean') : selectedWallet.kyt_status === 'flagged' ? t('status.flagged') : selectedWallet.kyt_status === 'rejected' ? t('status.rejected') : t('status.pending')}
                           </Badge>
                         </div>
                         {(() => {
@@ -421,7 +421,7 @@ const CompliancePage = () => {
             ) : (
               <div className="text-center py-6">
                 <Wallet className="mx-auto text-zinc-600 mb-2" size={28} />
-                <p className="text-zinc-500 text-sm">Selecione uma carteira</p>
+                <p className="text-zinc-500 text-sm">{t('compliance.selectWalletPrompt', 'Selecione uma carteira')}</p>
               </div>
             )}
           </CardContent>
@@ -442,7 +442,7 @@ const CompliancePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {!selectedWallet ? (
-              <div className="text-center py-4 text-zinc-500 text-sm">Selecione uma carteira</div>
+              <div className="text-center py-4 text-zinc-500 text-sm">{t('compliance.selectWalletPrompt', 'Selecione uma carteira')}</div>
             ) : compliance?.satoshi_test?.status === 'not_started' ? (
               <Button onClick={startSatoshiTest} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white" data-testid="start-satoshi-test">
                 <Send size={14} className="mr-2" /> Iniciar Teste para {selectedWallet.address?.substring(0, 8)}...
@@ -510,7 +510,7 @@ const CompliancePage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {!selectedWallet ? (
-              <div className="text-center py-4 text-zinc-500 text-sm">Selecione uma carteira</div>
+              <div className="text-center py-4 text-zinc-500 text-sm">{t('compliance.selectWalletPrompt', 'Selecione uma carteira')}</div>
             ) : (
               <>
                 {/* Prova de Propriedade */}

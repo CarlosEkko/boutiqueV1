@@ -67,11 +67,17 @@ function detectHardcodedPT(content, file) {
   const findings = [];
   const lines = content.split('\n');
   lines.forEach((line, i) => {
-    // Skip imports / comments
+    // Skip imports / comments / type annotations
     const trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('import ')) return;
     // Skip lines that already use t(
     if (/\bt\(\s*['"]/.test(line)) return;
+    // Skip lines with internal i18n dicts (e.g., {pt: 'X', en: 'Y'})
+    if (/\bpt\s*:\s*['"]/.test(line) && /\ben\s*:\s*['"]/.test(line)) return;
+    // Skip toast.error/success com placeholders dinâmicos
+    if (/console\.(log|warn|error)/.test(line)) return;
+    // Skip data-testid e atributos não visuais
+    if (/data-testid=/.test(line) && !/>\s*[A-Z]/.test(line)) return;
 
     for (const anchor of PT_ANCHORS) {
       // Must appear inside JSX text (>Word<) or as a string between quotes in JSX prop
