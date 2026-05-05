@@ -246,7 +246,9 @@ const LaunchpadPage = () => {
               KBEX Launchpad
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light text-white mb-4">
-              Token <span className="text-gold-400">Launchpad</span>
+              <span className="bg-gradient-to-r from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">
+                {t('launchpadPage.title', 'Token Launchpad')}
+              </span>
             </h1>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
               {t('launchpadPage.heroDescription', 'Acesso exclusivo a token sales curados para investidores qualificados. Participe nas oportunidades mais promissoras do mercado.')}
