@@ -5,7 +5,30 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+// Worker setup — try local first, fallback to matching CDN if local fails
+// (production nginx may serve .mjs with wrong Content-Type)
+const PDFJS_VERSION = pdfjsLib.version || '5.6.205';
+const LOCAL_WORKER = '/pdf.worker.min.mjs';
+const CDN_WORKER = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
+
+// Probe local worker; switch to CDN if it returns wrong type or 404
+(async () => {
+  try {
+    const res = await fetch(LOCAL_WORKER, { method: 'HEAD' });
+    const ct = res.headers.get('content-type') || '';
+    const okType = ct.includes('javascript') || ct.includes('module');
+    if (!res.ok || !okType) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = CDN_WORKER;
+      console.warn('[PDFViewer] Local worker invalid, using CDN:', CDN_WORKER);
+    } else {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = LOCAL_WORKER;
+    }
+  } catch {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = CDN_WORKER;
+  }
+})();
+// Set immediate default while probe runs
+pdfjsLib.GlobalWorkerOptions.workerSrc = LOCAL_WORKER;
 
 /**
  * Protected Document Viewer - KBEX
