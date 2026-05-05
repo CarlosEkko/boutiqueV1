@@ -29,6 +29,17 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     setLoading(true);
     setError(null);
     try {
+      // First, do a HEAD to detect 404 / CORS clearly
+      try {
+        const head = await fetch(fullUrl, { method: 'HEAD' });
+        if (!head.ok) {
+          throw new Error(`HTTP ${head.status} (${head.statusText || 'erro'}) — verifique se o ficheiro foi carregado neste servidor`);
+        }
+      } catch (probeErr) {
+        // Ignore CORS-only failures on HEAD; proceed to PDF.js attempt
+        if (probeErr && probeErr.message && probeErr.message.startsWith('HTTP ')) throw probeErr;
+      }
+
       const pdf = await pdfjsLib.getDocument(fullUrl).promise;
       setTotalPages(pdf.numPages);
       const rendered = [];
@@ -38,7 +49,8 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
       setPages(rendered);
     } catch (err) {
       console.error('PDF load error:', err);
-      setError('Falha ao carregar o documento.');
+      const msg = err?.message || 'erro desconhecido';
+      setError(`Falha ao carregar o documento. ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -236,8 +248,22 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
         )}
 
         {error && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-red-400">{error}</p>
+          <div className="flex items-center justify-center h-full px-8">
+            <div className="text-center max-w-xl">
+              <p className="text-red-400 mb-2 font-medium">{error}</p>
+              <p className="text-zinc-500 text-xs mb-4 break-all">{fullUrl}</p>
+              <a
+                href={fullUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-4 py-2 text-sm text-gold-400 border border-gold-500/30 rounded-lg hover:bg-gold-500/10"
+              >
+                Abrir num novo separador
+              </a>
+              <p className="text-zinc-600 text-xs mt-3">
+                Se receber 404, o PDF não está no disco deste servidor. Volte a carregar via Admin → Transparency.
+              </p>
+            </div>
           </div>
         )}
 
