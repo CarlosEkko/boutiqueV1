@@ -67,11 +67,11 @@ const Countdown = ({ targetDate, label }) => {
 };
 
 // Progress bar component
-const ProgressBar = ({ percent, raised, target, currency = 'USD' }) => (
+const ProgressBar = ({ percent, raised, target, currency = 'USD', t }) => (
   <div>
     <div className="flex justify-between text-sm mb-1.5">
       <span className="text-gray-400">
-        {raised?.toLocaleString('en-US', { style: 'currency', currency })} raised
+        {raised?.toLocaleString('en-US', { style: 'currency', currency })} {t ? t('launchpadPage.raised', 'raised') : 'raised'}
       </span>
       <span className="text-gold-400 font-medium">{percent}%</span>
     </div>
@@ -83,22 +83,23 @@ const ProgressBar = ({ percent, raised, target, currency = 'USD' }) => (
     </div>
     <div className="flex justify-between text-xs text-gray-500 mt-1">
       <span>0%</span>
-      <span>Target: {target?.toLocaleString('en-US', { style: 'currency', currency })}</span>
+      <span>{t ? t('launchpadPage.target', 'Target') : 'Target'}: {target?.toLocaleString('en-US', { style: 'currency', currency })}</span>
     </div>
   </div>
 );
 
-const statusConfig = {
-  upcoming: { label: 'Em Breve', color: 'text-blue-400', bg: 'bg-blue-500/15', border: 'border-blue-500/30' },
-  active: { label: 'Ativo', color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' },
-  completed: { label: 'Concluído', color: 'text-gray-400', bg: 'bg-gray-500/15', border: 'border-gray-500/30' },
-  sold_out: { label: 'Esgotado', color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
-  cancelled: { label: 'Cancelado', color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
-};
+const getStatusConfig = (t) => ({
+  upcoming: { label: t('launchpadPage.statusUpcoming', 'Em Breve'), color: 'text-blue-400', bg: 'bg-blue-500/15', border: 'border-blue-500/30' },
+  active: { label: t('launchpadPage.statusActive', 'Ativo'), color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' },
+  completed: { label: t('launchpadPage.statusCompleted', 'Concluído'), color: 'text-gray-400', bg: 'bg-gray-500/15', border: 'border-gray-500/30' },
+  sold_out: { label: t('launchpadPage.statusSoldOut', 'Esgotado'), color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
+  cancelled: { label: t('launchpadPage.statusCancelled', 'Cancelado'), color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
+});
 
 // Token sale card
 const SaleCard = ({ sale, onViewDetails }) => {
   const { t } = useLanguage();
+  const statusConfig = getStatusConfig(t);
   const cfg = statusConfig[sale.computed_status] || statusConfig.upcoming;
   const isActive = sale.computed_status === 'active';
   const isUpcoming = sale.computed_status === 'upcoming';
@@ -148,6 +149,7 @@ const SaleCard = ({ sale, onViewDetails }) => {
           percent={sale.progress_pct || 0}
           raised={sale.raised_amount || 0}
           target={sale.hard_cap}
+          t={t}
         />
 
         {/* Stats Grid */}
@@ -168,10 +170,10 @@ const SaleCard = ({ sale, onViewDetails }) => {
 
         {/* Countdown or status */}
         {isUpcoming && sale.start_date && (
-          <Countdown targetDate={sale.start_date} label="Sale starts in" />
+          <Countdown targetDate={sale.start_date} label={t('launchpadPage.saleStartsIn', 'Sale starts in')} />
         )}
         {isActive && sale.end_date && (
-          <Countdown targetDate={sale.end_date} label="Sale ends in" />
+          <Countdown targetDate={sale.end_date} label={t('launchpadPage.saleEndsIn', 'Sale ends in')} />
         )}
 
         {/* CTA */}
@@ -247,7 +249,7 @@ const LaunchpadPage = () => {
               Token <span className="text-gold-400">Launchpad</span>
             </h1>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Acesso exclusivo a token sales curados para investidores qualificados. Participe nas oportunidades mais promissoras do mercado.
+              {t('launchpadPage.heroDescription', 'Acesso exclusivo a token sales curados para investidores qualificados. Participe nas oportunidades mais promissoras do mercado.')}
             </p>
           </div>
 
@@ -276,11 +278,11 @@ const LaunchpadPage = () => {
             <div className="bg-gradient-to-r from-gold-500/5 to-zinc-900/50 border border-gold-500/20 rounded-2xl p-6 md:p-8">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
-                  <span className={`${statusConfig[featuredSale.computed_status]?.bg} ${statusConfig[featuredSale.computed_status]?.color} text-xs px-2.5 py-1 rounded-full font-medium`}>
-                    {statusConfig[featuredSale.computed_status]?.label}
+                  <span className={`${getStatusConfig(t)[featuredSale.computed_status]?.bg} ${getStatusConfig(t)[featuredSale.computed_status]?.color} text-xs px-2.5 py-1 rounded-full font-medium`}>
+                    {getStatusConfig(t)[featuredSale.computed_status]?.label}
                   </span>
                   <h2 className="text-3xl font-medium text-white mt-3 mb-2">{featuredSale.name}</h2>
-                  <p className="text-gold-400 text-lg mb-3">{featuredSale.symbol} &middot; ${featuredSale.price} per token</p>
+                  <p className="text-gold-400 text-lg mb-3">{featuredSale.symbol} &middot; ${featuredSale.price} {t('launchpadPage.perToken', 'per token')}</p>
                   <p className="text-gray-400 mb-6">{featuredSale.description}</p>
                   <div className="flex gap-3">
                     <Button
@@ -288,25 +290,25 @@ const LaunchpadPage = () => {
                       className="bg-gold-500 hover:bg-gold-400 text-black"
                       data-testid="featured-sale-cta"
                     >
-                      <Rocket size={16} className="mr-2" /> Participar Agora
+                      <Rocket size={16} className="mr-2" /> {t('launchpadPage.participateNow', 'Participar Agora')}
                     </Button>
                     {featuredSale.whitepaper_url && (
                       <Button variant="outline" className="border-zinc-700 text-white hover:bg-zinc-800" asChild>
                         <a href={featuredSale.whitepaper_url} target="_blank" rel="noopener noreferrer">
-                          <FileText size={16} className="mr-2" /> Whitepaper
+                          <FileText size={16} className="mr-2" /> {t('launchpadPage.whitepaper', 'Whitepaper')}
                         </a>
                       </Button>
                     )}
                   </div>
                 </div>
                 <div>
-                  <ProgressBar percent={featuredSale.progress_pct} raised={featuredSale.raised_amount || 0} target={featuredSale.hard_cap} />
+                  <ProgressBar percent={featuredSale.progress_pct} raised={featuredSale.raised_amount || 0} target={featuredSale.hard_cap} t={t} />
                   <div className="mt-6">
                     {featuredSale.computed_status === 'upcoming' && featuredSale.start_date && (
-                      <Countdown targetDate={featuredSale.start_date} label="Sale starts in" />
+                      <Countdown targetDate={featuredSale.start_date} label={t('launchpadPage.saleStartsIn', 'Sale starts in')} />
                     )}
                     {featuredSale.computed_status === 'active' && featuredSale.end_date && (
-                      <Countdown targetDate={featuredSale.end_date} label="Sale ends in" />
+                      <Countdown targetDate={featuredSale.end_date} label={t('launchpadPage.saleEndsIn', 'Sale ends in')} />
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-6">

@@ -2110,6 +2110,7 @@ const TRANSLATIONS = {
   launchpadPage: {
     title: 'منصة إطلاق الرموز',
     subtitle: 'اكتشف عروض الرموز الحصرية',
+    heroDescription: 'وصول حصري إلى مبيعات رموز مختارة للمستثمرين المؤهلين. شارك في أكثر الفرص الواعدة في السوق.',
     supply: 'المعروض',
     hardCap: 'الحد الأقصى',
     participants: 'المشاركون',
@@ -2119,7 +2120,7 @@ const TRANSLATIONS = {
     noSales: 'لا توجد مبيعات رموز متاحة',
     comingSoon: 'سيتم نشر فرص جديدة قريبًا',
     target: 'الهدف',
-    raised: 'تم جمعه',
+    raised: 'تم جمعها',
     invest: 'استثمر',
     viewDetails: 'عرض التفاصيل',
     all: 'الكل',
@@ -2128,7 +2129,17 @@ const TRANSLATIONS = {
     completed: 'مكتمل',
     listedProjects: 'المشاريع المدرجة',
     capitalRaised: 'رأس المال المجمع',
-    activeSales: 'المبيعات النشطة'
+    activeSales: 'المبيعات النشطة',
+    participateNow: 'شارك الآن',
+    perToken: 'لكل رمز',
+    whitepaper: 'الورقة البيضاء',
+    saleStartsIn: 'تبدأ المبيعات خلال',
+    saleEndsIn: 'تنتهي المبيعات خلال',
+    statusUpcoming: 'قادم',
+    statusActive: 'نشط',
+    statusCompleted: 'مكتمل',
+    statusSoldOut: 'نفد',
+    statusCancelled: 'ملغى'
   },
       cryptoAtm: {
     heroTitle: 'شبكة صرافات كريبتو مميزة',

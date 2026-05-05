@@ -1375,6 +1375,7 @@ const TRANSLATIONS = {
   launchpadPage: {
     title: 'Token Launchpad',
     subtitle: 'Descubra ofertas exclusivas de tokens',
+    heroDescription: 'Acceso exclusivo a ventas de tokens seleccionadas para inversores cualificados. Participe en las oportunidades más prometedoras del mercado.',
     supply: 'Supply',
     hardCap: 'Hard Cap',
     participants: 'Participantes',
@@ -1384,7 +1385,7 @@ const TRANSLATIONS = {
     noSales: 'No hay ventas de tokens disponibles',
     comingSoon: 'Próximamente se publicarán nuevas oportunidades',
     target: 'Objetivo',
-    raised: 'Recaudado',
+    raised: 'recaudados',
     invest: 'Invertir',
     viewDetails: 'Ver Detalles',
     all: 'Todos',
@@ -1393,7 +1394,17 @@ const TRANSLATIONS = {
     completed: 'Finalizados',
     listedProjects: 'Proyectos Listados',
     capitalRaised: 'Capital Recaudado',
-    activeSales: 'Ventas Activas'
+    activeSales: 'Ventas Activas',
+    participateNow: 'Participar Ahora',
+    perToken: 'por token',
+    whitepaper: 'Whitepaper',
+    saleStartsIn: 'Inicio de la venta',
+    saleEndsIn: 'Fin de la venta',
+    statusUpcoming: 'Próximo',
+    statusActive: 'Activo',
+    statusCompleted: 'Finalizado',
+    statusSoldOut: 'Agotado',
+    statusCancelled: 'Cancelado'
   },
       cryptoAtm: {
     heroTitle: 'Red Premium de Cajeros Crypto',

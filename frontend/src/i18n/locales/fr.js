@@ -2085,6 +2085,7 @@ const TRANSLATIONS = {
   launchpadPage: {
     title: 'Token Launchpad',
     subtitle: 'Découvrez des offres de tokens exclusives',
+    heroDescription: 'Accès exclusif à des ventes de tokens sélectionnées pour les investisseurs qualifiés. Participez aux opportunités les plus prometteuses du marché.',
     supply: 'Supply',
     hardCap: 'Hard Cap',
     participants: 'Participants',
@@ -2094,7 +2095,7 @@ const TRANSLATIONS = {
     noSales: 'Aucune vente de tokens disponible',
     comingSoon: 'De nouvelles opportunités seront publiées prochainement',
     target: 'Objectif',
-    raised: 'Collecté',
+    raised: 'collectés',
     invest: 'Investir',
     viewDetails: 'Voir les détails',
     all: 'Tous',
@@ -2103,7 +2104,17 @@ const TRANSLATIONS = {
     completed: 'Terminés',
     listedProjects: 'Projets listés',
     capitalRaised: 'Capital levé',
-    activeSales: 'Ventes actives'
+    activeSales: 'Ventes actives',
+    participateNow: 'Participer maintenant',
+    perToken: 'par token',
+    whitepaper: 'Whitepaper',
+    saleStartsIn: 'Début de la vente',
+    saleEndsIn: 'Fin de la vente',
+    statusUpcoming: 'À venir',
+    statusActive: 'Actif',
+    statusCompleted: 'Terminé',
+    statusSoldOut: 'Épuisé',
+    statusCancelled: 'Annulé'
   },
       cryptoAtm: {
     heroTitle: 'Réseau Premium de DAB Crypto',

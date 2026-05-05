@@ -2289,6 +2289,7 @@ const TRANSLATIONS = {
   launchpadPage: {
     title: 'Token Launchpad',
     subtitle: 'Discover exclusive token offerings',
+    heroDescription: 'Exclusive access to curated token sales for qualified investors. Take part in the most promising opportunities in the market.',
     supply: 'Supply',
     hardCap: 'Hard Cap',
     participants: 'Participants',
@@ -2298,7 +2299,7 @@ const TRANSLATIONS = {
     noSales: 'No token sales available',
     comingSoon: 'New opportunities will be published soon',
     target: 'Target',
-    raised: 'Raised',
+    raised: 'raised',
     invest: 'Invest',
     viewDetails: 'View Details',
     all: 'All',
@@ -2307,7 +2308,17 @@ const TRANSLATIONS = {
     completed: 'Completed',
     listedProjects: 'Listed Projects',
     capitalRaised: 'Capital Raised',
-    activeSales: 'Active Sales'
+    activeSales: 'Active Sales',
+    participateNow: 'Participate Now',
+    perToken: 'per token',
+    whitepaper: 'Whitepaper',
+    saleStartsIn: 'Sale starts in',
+    saleEndsIn: 'Sale ends in',
+    statusUpcoming: 'Upcoming',
+    statusActive: 'Active',
+    statusCompleted: 'Completed',
+    statusSoldOut: 'Sold Out',
+    statusCancelled: 'Cancelled'
   },
       cryptoAtm: {
     heroTitle: 'Premium Crypto ATM Network',
