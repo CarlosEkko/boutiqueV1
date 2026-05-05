@@ -698,9 +698,9 @@ const CryptoATMPage = () => {
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-3xl mx-auto cta-content">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-6">
-              Ready to Experience
+              {t('cryptoAtm.readyToExperience', 'Ready to Experience')}
               <span className="block bg-gradient-to-r from-gold-200 via-gold-400 to-gold-200 bg-clip-text text-transparent mt-2">
-                Premium Crypto Access?
+                {t('cryptoAtm.premiumCryptoAccess', 'Premium Crypto Access?')}
               </span>
             </h2>
             <p className="text-gray-400 text-lg mb-8">
