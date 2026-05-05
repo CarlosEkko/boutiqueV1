@@ -466,11 +466,11 @@ const ProfilePage = () => {
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader className="pb-3">
             <CardTitle className="text-white text-sm flex items-center gap-2">
-              <Monitor size={16} className="text-amber-400" /> Modo Demo
+              <Monitor size={16} className="text-amber-400" /> {t('demoMode.title', 'Modo Demo')}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
-            <p className="text-gray-400 text-sm">Ativar dados simulados para demonstracao</p>
+            <p className="text-gray-400 text-sm">{t('demoMode.description', 'Ativar dados simulados para demonstração')}</p>
             <React.Suspense fallback={null}>
               <DemoToggle />
             </React.Suspense>
@@ -487,17 +487,17 @@ const ProfilePage = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
             <Building2 className="text-gold-400" size={20} />
-            {t('profile.business.title', 'Contas Empresariais')}
+            {t('business.title', 'Contas Empresariais')}
           </CardTitle>
           {!showCreateBusiness && (
             <Button onClick={() => setShowCreateBusiness(true)} size="sm" className="bg-gold-500 hover:bg-gold-400 text-black" data-testid="add-business-btn">
-              <Plus size={14} className="mr-1" /> {t('profile.business.addAccount', 'Abrir Conta Business')}
+              <Plus size={14} className="mr-1" /> {t('business.addAccount', 'Abrir Conta Business')}
             </Button>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-gray-400 text-sm">
-            {t('profile.business.description', 'Abra uma conta empresarial para operar em nome da sua empresa. Cada conta tem carteiras e limites independentes.')}
+            {t('business.description', 'Abra uma conta empresarial para operar em nome da sua empresa. Cada conta tem carteiras e limites independentes.')}
           </p>
 
           {/* Create Form */}
@@ -615,7 +615,7 @@ const ProfilePage = () => {
           ) : !showCreateBusiness && (
             <div className="text-center py-6 bg-zinc-800/30 rounded-xl border border-dashed border-zinc-700">
               <Building2 className="mx-auto text-gray-600 mb-3" size={36} />
-              <p className="text-gray-500 text-sm">{t('profile.business.noAccounts', 'Ainda não tem contas empresariais')}</p>
+              <p className="text-gray-500 text-sm">{t('business.noAccounts', 'Ainda não tem contas empresariais')}</p>
             </div>
           )}
         </CardContent>

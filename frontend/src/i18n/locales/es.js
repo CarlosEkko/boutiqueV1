@@ -1393,6 +1393,44 @@ const TRANSLATIONS = {
     joinExclusive: 'Únase a nuestra red exclusiva y disfrute de servicios crypto de nivel institucional'
 
   },
+  billing: {
+    title: 'Facturación y Renovaciones',
+    currentTier: 'Nivel Actual',
+    annualFee: 'Cuota Anual',
+    nextRenewal: 'Próxima Renovación',
+    inDays: 'en {days}d',
+    agoDays: 'hace {days}d',
+    pendingPayment: 'Pago Pendiente',
+    payNow: 'Pagar Ahora',
+    createdOn: 'Creado el',
+    totalPaid: 'Total pagado',
+    renewals: 'Renovaciones',
+    upgrades: 'Mejoras',
+    accountAge: 'Antigüedad de la cuenta',
+    history: 'Historial',
+    type: 'Tipo',
+    tier: 'Nivel',
+    amount: 'Importe',
+    date: 'Fecha',
+    status: 'Estado',
+    paid: 'Pagado',
+    pending: 'Pendiente',
+    noHistory: 'Aún no tienes historial de pagos de facturación.',
+    feeAdmission: 'Admisión',
+    feeAnnual: 'Renovación',
+    feeUpgrade: 'Mejora',
+  },
+  business: {
+    title: 'Cuentas Empresariales',
+    addAccount: 'Abrir Cuenta Business',
+    description: 'Abra una cuenta empresarial para operar en nombre de su empresa. Cada cuenta tiene carteras y límites independientes.',
+    noAccounts: 'Aún no tiene cuentas empresariales',
+    newAccount: 'Nueva Cuenta Empresarial',
+  },
+  demoMode: {
+    title: 'Modo Demo',
+    description: 'Activar datos simulados para demostración',
+  },
 };
 
 export default TRANSLATIONS;
