@@ -434,6 +434,7 @@ const TRANSLATIONS = {
     markets: 'Markets',
     trading: 'Trading',
     earn: 'Earn',
+    launchpad: 'Launchpad',
     institutional: 'Institutional',
     cryptoAtm: 'Crypto ATM',
     whyUs: 'Why Us',

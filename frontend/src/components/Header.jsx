@@ -18,7 +18,7 @@ const Header = () => {
     { name: t('nav.markets'), href: '/markets' },
     { name: t('nav.trading'), href: '/trading' },
     { name: t('nav.earn'), href: '/earn' },
-    { name: 'Launchpad', href: '/launchpad' },
+    { name: t('nav.launchpad', 'Launchpad'), href: '/launchpad' },
     { name: t('nav.institutional'), href: '/institutional' },
     { name: t('nav.cryptoAtm'), href: '/crypto-atm' },
   ];

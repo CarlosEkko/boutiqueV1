@@ -317,6 +317,7 @@ const TRANSLATIONS = {
     markets: 'الأسواق',
     trading: 'التداول',
     earn: 'الأرباح',
+    launchpad: 'منصة الإطلاق',
     institutional: 'مؤسسي',
     cryptoAtm: 'صراف الكريبتو',
     whyUs: 'لماذا نحن',
