@@ -666,7 +666,7 @@ const CryptoATMPage = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
-              Why Choose Our ATMs
+              {t('cryptoAtm.whyChoose', 'Why Choose Our ATMs')}
             </h2>
           </div>
 
