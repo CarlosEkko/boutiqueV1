@@ -2274,7 +2274,16 @@ const TRANSLATIONS = {
     submit: 'Submit Request',
     apiTitle: 'API Documentation',
     buildWithUs: 'Build with our API',
-    apiDescription: 'High-performance RESTful and WebSocket APIs for integration with your trading systems.'
+    apiDescription: 'High-performance RESTful and WebSocket APIs for integration with your trading systems.',
+    contactTitle: 'Talk to Our Team',
+    contactDesc: 'Our team of specialists is ready to support your institution.',
+    phone: 'Phone',
+    available247: '24/7 for clients',
+    emailContact: 'Email',
+    responseTime: 'Reply within 2h',
+    liveChat: 'Priority Chat',
+    liveChatDesc: 'Real-time support',
+    dedicated: 'Dedicated manager'
   },
   launchpadPage: {
     title: 'Token Launchpad',

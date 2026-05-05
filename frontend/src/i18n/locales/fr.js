@@ -2061,7 +2061,16 @@ const TRANSLATIONS = {
     tradingVolume: 'Volume Mensuel',
     whoWeServe: 'Qui Nous Servons',
     contactForm: 'Demander des Informations',
-    submit: 'Envoyer la Demande'
+    submit: 'Envoyer la Demande',
+    contactTitle: 'Contactez Notre Équipe',
+    contactDesc: 'Notre équipe de spécialistes est prête à accompagner votre institution.',
+    phone: 'Téléphone',
+    available247: '24/7 pour les clients',
+    emailContact: 'Email',
+    responseTime: 'Réponse sous 2h',
+    liveChat: 'Chat Prioritaire',
+    liveChatDesc: 'Support en temps réel',
+    dedicated: 'Gestionnaire dédié'
   },
   launchpadPage: {
     title: 'Token Launchpad',

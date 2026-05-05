@@ -2086,7 +2086,16 @@ const TRANSLATIONS = {
     tradingVolume: 'الحجم الشهري',
     whoWeServe: 'من نخدم',
     contactForm: 'طلب معلومات',
-    submit: 'إرسال'
+    submit: 'إرسال',
+    contactTitle: 'تحدث مع فريقنا',
+    contactDesc: 'فريق المتخصصين لدينا جاهز لدعم مؤسستك.',
+    phone: 'الهاتف',
+    available247: '24/7 للعملاء',
+    emailContact: 'البريد الإلكتروني',
+    responseTime: 'رد خلال ساعتين',
+    liveChat: 'محادثة ذات أولوية',
+    liveChatDesc: 'دعم فوري',
+    dedicated: 'مدير مخصص'
   },
   launchpadPage: {
     title: 'منصة إطلاق الرموز',
