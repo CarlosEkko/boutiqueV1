@@ -2071,7 +2071,8 @@ const TRANSLATIONS = {
     days: 'أيام',
     calculator: 'حاسبة الأرباح',
     startStaking: 'بدء الستيكينغ',
-    securityTitle: 'أصولك آمنة'
+    securityTitle: 'أصولك آمنة',
+    securityDescription: 'جميع الأصول المودعة في الستيكينغ محمية بحفظ مؤسسي وتأمين. تستخدم KBEX أفضل ممارسات الأمان في الصناعة لحماية استثماراتك.'
   },
   institutional: {
     badge: 'حلول مؤسسية',

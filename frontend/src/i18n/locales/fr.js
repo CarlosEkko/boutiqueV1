@@ -2044,7 +2044,8 @@ const TRANSLATIONS = {
     defiComingSoon: 'DeFi Staking - Bientôt',
     calculator: 'Calculateur de Rendements',
     startStaking: 'Commencer le Staking',
-    securityTitle: 'Vos Actifs Sont Sécurisés'
+    securityTitle: 'Vos Actifs Sont Sécurisés',
+    securityDescription: 'Tous les actifs en staking sont protégés par une garde institutionnelle et assurés. KBEX applique les meilleures pratiques de sécurité du secteur pour protéger vos investissements.'
   },
   institutional: {
     badge: 'Solutions Institutionnelles',
