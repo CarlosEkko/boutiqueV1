@@ -52,17 +52,6 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     setLoading(true);
     setError(null);
     try {
-      // First, do a HEAD to detect 404 / CORS clearly
-      try {
-        const head = await fetch(fullUrl, { method: 'HEAD' });
-        if (!head.ok) {
-          throw new Error(`HTTP ${head.status} (${head.statusText || 'erro'}) — verifique se o ficheiro foi carregado neste servidor`);
-        }
-      } catch (probeErr) {
-        // Ignore CORS-only failures on HEAD; proceed to PDF.js attempt
-        if (probeErr && probeErr.message && probeErr.message.startsWith('HTTP ')) throw probeErr;
-      }
-
       const pdf = await pdfjsLib.getDocument(fullUrl).promise;
       setTotalPages(pdf.numPages);
       const rendered = [];

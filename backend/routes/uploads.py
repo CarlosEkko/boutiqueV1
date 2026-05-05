@@ -290,9 +290,9 @@ async def upload_public_file(
     }
 
 
-@router.get("/file/{category}/{filename}")
+@router.api_route("/file/{category}/{filename}", methods=["GET", "HEAD"])
 async def get_file(category: str, filename: str):
-    """Serve an uploaded file"""
+    """Serve an uploaded file (supports HEAD for client-side probes)"""
     if category not in UPLOAD_DIRS:
         raise HTTPException(status_code=404, detail="Category not found")
     
