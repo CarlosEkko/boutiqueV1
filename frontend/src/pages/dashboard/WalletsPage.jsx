@@ -578,7 +578,7 @@ const WalletsPage = () => {
                 onClick={() => setShowAddModal(true)}
               >
                 <Plus size={16} className="mr-1" />
-                Adicionar
+                {t('dashboard.wallets.add', 'Adicionar')}
               </Button>
             </div>
             
