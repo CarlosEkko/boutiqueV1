@@ -171,32 +171,46 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Admin-only guard — locks /dashboard/admin/* routes (except where explicitly
-// scoped to a non-admin internal role). Non-admin users are redirected to the
-// dashboard overview with a toast-friendly state. The backend also enforces
-// this on every endpoint, but the route guard prevents internal staff from even
-// seeing the admin pages by typing the URL directly.
-const AdminRoute = () => {
-  const { user, isAuthenticated, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-gold-400">Loading...</div>
-      </div>
-    );
+// ---------------------------------------------------------------------------
+// Department-based route guard
+// ---------------------------------------------------------------------------
+// Reads the effective departments of the current user from
+// /api/permissions/me (which honours both ROLE_PERMISSIONS defaults *and* any
+// custom overrides set in /dashboard/admin/permissions). The route is allowed
+// if the user has ANY of the listed departments.
+//
+// Admin and global_manager always pass (failsafe).
+// ---------------------------------------------------------------------------
+const __permsCache = { promise: null, value: null, at: 0 };
+const PERMS_TTL_MS = 30000;
+const fetchMyPermissions = async (token) => {
+  const now = Date.now();
+  if (__permsCache.value && now - __permsCache.at < PERMS_TTL_MS) {
+    return __permsCache.value;
   }
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  const isAdmin = !!(user?.is_admin || user?.internal_role === 'admin');
-  if (!isAdmin) return <Navigate to="/dashboard" replace />;
-  return <Outlet />;
+  if (__permsCache.promise) return __permsCache.promise;
+  __permsCache.promise = fetch(`${process.env.REACT_APP_BACKEND_URL}/api/permissions/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then((r) => (r.ok ? r.json() : { departments: [], is_admin: false }))
+    .catch(() => ({ departments: [], is_admin: false }));
+  const v = await __permsCache.promise;
+  __permsCache.value = v;
+  __permsCache.at = Date.now();
+  __permsCache.promise = null;
+  return v;
 };
 
-// Internal-staff guard — internal_role !== null OR is_admin OR user_type='internal'.
-// Used for shared admin tools (tickets, regional dashboard) that are intentionally
-// accessible to non-admin internal roles (support, regional manager, etc.).
-const InternalRoute = () => {
-  const { user, isAuthenticated, loading } = useAuth();
-  if (loading) {
+const DeptRoute = ({ depts = [] }) => {
+  const { user, token, isAuthenticated, loading } = useAuth();
+  const [perms, setPerms] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    fetchMyPermissions(token).then(setPerms);
+  }, [isAuthenticated, token]);
+
+  if (loading || (isAuthenticated && perms === null)) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-gold-400">Loading...</div>
@@ -204,12 +218,14 @@ const InternalRoute = () => {
     );
   }
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  const isInternal = !!(
-    user?.is_admin ||
-    user?.internal_role ||
-    user?.user_type === 'internal'
-  );
-  if (!isInternal) return <Navigate to="/dashboard" replace />;
+
+  // Admin / global_manager always pass
+  const isAdmin = !!(user?.is_admin || user?.internal_role === 'admin' || perms?.is_admin || perms?.internal_role === 'admin' || perms?.internal_role === 'global_manager');
+  if (isAdmin) return <Outlet />;
+
+  const userDepts = new Set(perms?.departments || []);
+  const allowed = depts.some((d) => userDepts.has(d));
+  if (!allowed) return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 };
 
@@ -300,27 +316,18 @@ function AppRoutes() {
         {/* Support */}
         <Route path="support" element={<SupportPage />} />
         
-        {/* Admin Routes — admin-only (route-level guard) */}
-        <Route element={<AdminRoute />}>
+        {/* Admin Routes — gated by Department (configurable in /dashboard/admin/permissions).
+            Admin and global_manager always pass. Other roles need at least one of the listed
+            departments granted via ROLE_PERMISSIONS or custom override. */}
+
+        {/* Pure admin (gestão da plataforma) */}
+        <Route element={<DeptRoute depts={["admin"]} />}>
           <Route path="admin" element={<AdminOverview />} />
-          <Route path="admin/regional" element={<RegionalDashboard />} />
           <Route path="admin/staff" element={<AdminStaff />} />
-          <Route path="admin/tickets" element={<TicketsDashboard />} />
           <Route path="admin/users" element={<AdminUsers />} />
-          <Route path="admin/opportunities" element={<AdminOpportunities />} />
-          <Route path="admin/transparency" element={<AdminTransparency />} />
+          <Route path="admin/permissions" element={<AdminPermissions />} />
           <Route path="admin/invites" element={<AdminInvites />} />
           <Route path="admin/security" element={<SecurityDashboardPage />} />
-          <Route path="admin/kyc" element={<AdminKYC />} />
-          <Route path="admin/trading" element={<AdminTradingPage />} />
-          <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
-          <Route path="admin/permissions" element={<AdminPermissions />} />
-          <Route path="admin/orders" element={<AdminOrders />} />
-          <Route path="admin/fiat-deposits" element={<AdminFiatDeposits />} />
-          <Route path="admin/fiat-withdrawals" element={<AdminFiatWithdrawals />} />
-          <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
-          <Route path="admin/clients" element={<AdminClients />} />
-          <Route path="admin/pipeline" element={<AdminPipeline />} />
           <Route path="admin/settings" element={<AdminSettings />} />
           <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
           <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
@@ -328,17 +335,54 @@ function AppRoutes() {
           <Route path="admin/tenants" element={<AdminTenants />} />
           <Route path="admin/escrow-fees" element={<AdminEscrowFees />} />
           <Route path="admin/referrals" element={<AdminReferrals />} />
-          <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
+          <Route path="admin/transparency" element={<AdminTransparency />} />
+          <Route path="admin/opportunities" element={<AdminOpportunities />} />
+          <Route path="admin/regional" element={<RegionalDashboard />} />
           <Route path="admin/client-menus" element={<AdminClientMenus />} />
-          <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
-          <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
-          <Route path="admin/cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><AdminColdWalletPage /></React.Suspense>} />
-          <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
-          <Route path="admin/finance" element={<FinancialDashboard />} />
-          <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
           <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
           <Route path="admin/tiers" element={<AdminClientTiers />} />
           <Route path="admin/billing" element={<AdminBillingPage />} />
+          <Route path="admin/trading" element={<AdminTradingPage />} />
+          <Route path="admin/orders" element={<AdminOrders />} />
+        </Route>
+
+        {/* Finance area */}
+        <Route element={<DeptRoute depts={["finance"]} />}>
+          <Route path="admin/fiat-deposits" element={<AdminFiatDeposits />} />
+          <Route path="admin/fiat-withdrawals" element={<AdminFiatWithdrawals />} />
+          <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
+          <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
+          <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
+          <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
+          <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
+          <Route path="admin/finance" element={<FinancialDashboard />} />
+          <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
+        </Route>
+
+        {/* CRM area */}
+        <Route element={<DeptRoute depts={["crm"]} />}>
+          <Route path="admin/clients" element={<AdminClients />} />
+          <Route path="admin/pipeline" element={<AdminPipeline />} />
+        </Route>
+
+        {/* Risk & Compliance */}
+        <Route element={<DeptRoute depts={["risk_compliance", "admin"]} />}>
+          <Route path="admin/kyc" element={<AdminKYC />} />
+        </Route>
+
+        {/* Support */}
+        <Route element={<DeptRoute depts={["support"]} />}>
+          <Route path="admin/tickets" element={<TicketsDashboard />} />
+          <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
+        </Route>
+
+        {/* Cold Wallet — institutional custody */}
+        <Route element={<DeptRoute depts={["cold_wallet"]} />}>
+          <Route path="admin/cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><AdminColdWalletPage /></React.Suspense>} />
+        </Route>
+
+        {/* Launchpad admin */}
+        <Route element={<DeptRoute depts={["launchpad"]} />}>
           <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
         </Route>
         

@@ -269,6 +269,44 @@ async def get_menu_structure(user_id: str = Depends(get_current_user_id)):
     return {"menus": menus}
 
 
+@router.get("/me")
+async def get_my_permissions(user_id: str = Depends(get_current_user_id)):
+    """Lightweight endpoint — returns the effective departments of the
+    currently authenticated user. Used by the frontend route guards to decide
+    which `/dashboard/admin/*` pages each staff member may access (without
+    fetching the full menu structure)."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    is_admin = bool(user.get("is_admin"))
+    user_type = user.get("user_type", "client")
+    internal_role = user.get("internal_role")
+
+    if not is_admin and user_type != "internal" and not internal_role:
+        # Plain client — no admin departments
+        return {
+            "user_id": user_id,
+            "is_admin": False,
+            "is_internal": False,
+            "internal_role": None,
+            "departments": [],
+        }
+
+    custom_perms = await db.user_permissions.find_one({"user_id": user_id}, {"_id": 0})
+    custom_departments = custom_perms.get("departments") if custom_perms else None
+    role = internal_role or ("admin" if is_admin else "support_agent")
+    departments = get_user_departments(role, custom_departments)
+
+    return {
+        "user_id": user_id,
+        "is_admin": is_admin,
+        "is_internal": True,
+        "internal_role": role,
+        "departments": departments,
+    }
+
+
 @router.get("/user/{user_id}")
 async def get_user_permissions(
     user_id: str,
