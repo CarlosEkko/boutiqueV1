@@ -69,6 +69,7 @@ from routes.finance import router as finance_router, set_db as set_finance_db
 from routes.omnibus import router as omnibus_router, set_db as set_omnibus_db
 from routes.admin_multisign import router as admin_multisign_router, set_db as set_admin_multisign_db
 from routes.otc_deals import router as otc_deals_router, set_db as set_otc_deals_db
+from routes.otc_desk import router as otc_desk_router, set_db as set_otc_desk_db
 from routes.risk_compliance import router as risk_compliance_router, set_db as set_risk_compliance_db
 from routes.staking import router as staking_router, set_db as set_staking_db
 from routes.tokenization import router as tokenization_router, set_db as set_tokenization_db
@@ -118,6 +119,7 @@ set_finance_db(db)
 set_omnibus_db(db)
 set_admin_multisign_db(db)
 set_otc_deals_db(db)
+set_otc_desk_db(db)
 set_risk_compliance_db(db)
 set_security_db(db)
 set_demo_db(db)
@@ -169,6 +171,7 @@ api_router.include_router(finance_router)
 api_router.include_router(omnibus_router)
 api_router.include_router(admin_multisign_router)
 api_router.include_router(otc_deals_router)
+api_router.include_router(otc_desk_router)
 api_router.include_router(risk_compliance_router)
 api_router.include_router(staking_router)
 api_router.include_router(tokenization_router)
@@ -521,3 +524,8 @@ async def startup_background_tasks():
         start_alert_worker()
     except Exception as e:
         logger.warning(f"Failed to start Price-alert worker: {e}")
+    try:
+        from services.otc_desk_engine import get_engine as _get_otc_desk_engine
+        await _get_otc_desk_engine().start()
+    except Exception as e:
+        logger.warning(f"Failed to start OTC Desk engine: {e}")
