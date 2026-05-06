@@ -497,6 +497,15 @@ const EXTRAS = {
     },
     otc: {
       deals: {
+        statusLabels: {
+          rfq: 'RFQ',
+          quote: 'Cotação',
+          acceptance: 'Aceitação',
+          execution: 'Execução',
+          settlement: 'Liquidação',
+          invoice: 'Fatura',
+          completed: 'Concluído',
+        },
         modal: {
           clientSearchPh: 'Pesquisar cliente OTC...',
           refPriceUnit: 'Preço Ref.',
@@ -983,6 +992,15 @@ const EXTRAS = {
     },
     otc: {
       deals: {
+        statusLabels: {
+          rfq: 'RFQ',
+          quote: 'Quote',
+          acceptance: 'Acceptance',
+          execution: 'Execution',
+          settlement: 'Settlement',
+          invoice: 'Invoice',
+          completed: 'Completed',
+        },
         modal: {
           clientSearchPh: 'Search OTC client...',
           refPriceUnit: 'Ref. Price',
@@ -1448,6 +1466,15 @@ const EXTRAS = {
     },
     otc: {
       deals: {
+        statusLabels: {
+          rfq: 'RFQ',
+          quote: 'Cotation',
+          acceptance: 'Acceptation',
+          execution: 'Exécution',
+          settlement: 'Règlement',
+          invoice: 'Facture',
+          completed: 'Terminé',
+        },
         modal: {
           clientSearchPh: 'Rechercher client OTC...',
           refPriceUnit: 'Prix Réf.',
@@ -1897,6 +1924,15 @@ const EXTRAS = {
     },
     otc: {
       deals: {
+        statusLabels: {
+          rfq: 'RFQ',
+          quote: 'Cotización',
+          acceptance: 'Aceptación',
+          execution: 'Ejecución',
+          settlement: 'Liquidación',
+          invoice: 'Factura',
+          completed: 'Completado',
+        },
         modal: {
           clientSearchPh: 'Buscar cliente OTC...',
           refPriceUnit: 'Precio Ref.',
@@ -2358,6 +2394,15 @@ const EXTRAS = {
     },
     otc: {
       deals: {
+        statusLabels: {
+          rfq: 'طلب عرض',
+          quote: 'عرض السعر',
+          acceptance: 'القبول',
+          execution: 'التنفيذ',
+          settlement: 'التسوية',
+          invoice: 'الفاتورة',
+          completed: 'مكتمل',
+        },
         modal: {
           clientSearchPh: 'ابحث عن عميل OTC...',
           refPriceUnit: 'السعر المرجعي',

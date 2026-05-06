@@ -25,6 +25,14 @@ const STATUS_COLORS = {
   settled: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
   closed: 'bg-zinc-500/15 text-zinc-300 border-zinc-600',
   cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+  // RFQ-stage colours (deals originated from client portal)
+  rfq: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  quote: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  acceptance: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  execution: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  settlement: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  invoice: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  completed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 };
 
 const NEXT_STATUS = {
@@ -162,37 +170,44 @@ const OTCDealsPage = () => {
               ) : filteredDeals.length === 0 ? (
                 <tr><td colSpan={12} className="text-center py-8 text-zinc-500">{t('otc.deals.noDeals')}</td></tr>
               ) : filteredDeals.map(deal => {
-                const sc = STATUS_COLORS[deal.status] || STATUS_COLORS.draft;
+                // RFQ-originated deals use `stage` instead of `status`. Fall back gracefully.
+                const effectiveStatus = deal.status || deal.stage || 'draft';
+                const sc = STATUS_COLORS[effectiveStatus] || STATUS_COLORS.draft;
                 const curr = deal.reference_currency || 'EUR';
+                // Some legacy fields differ between RFQ and CRM schemas
+                const dealAsset = deal.asset || deal.base_asset || '-';
+                const dealQty = deal.quantity ?? deal.amount;
+                const dealType = deal.deal_type || deal.transaction_type;
+                const statusLabel = t(`otc.deals.statusLabels.${effectiveStatus}`, effectiveStatus);
                 return (
                   <tr key={deal.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors" data-testid={`deal-row-${deal.id}`}>
                     <td className="px-4 py-3 text-yellow-400 text-sm font-mono">{deal.deal_number}</td>
                     <td className="px-4 py-3 text-white text-sm">{deal.client_name || '-'}</td>
                     <td className="px-4 py-3">
-                      <Badge className={deal.deal_type === 'buy' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-red-500/15 text-red-400 border-red-500/30'}>
-                        {deal.deal_type === 'buy' ? t('otc.deals.buy') : t('otc.deals.sell')}
+                      <Badge className={dealType === 'buy' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-red-500/15 text-red-400 border-red-500/30'}>
+                        {dealType === 'buy' ? t('otc.deals.buy') : t('otc.deals.sell')}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-white text-sm font-medium">{deal.asset}</td>
-                    <td className="px-4 py-3 text-zinc-300 text-sm">{deal.quantity?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-white text-sm font-medium">{dealAsset}</td>
+                    <td className="px-4 py-3 text-zinc-300 text-sm">{dealQty != null ? dealQty.toLocaleString() : '-'}</td>
                     <td className="px-4 py-3 text-white text-sm font-medium">{fmt(deal.total_value, curr)}</td>
-                    <td className="px-4 py-3 text-yellow-400 text-sm">{deal.gross_pct}%</td>
-                    <td className="px-4 py-3 text-zinc-400 text-sm">{deal.net_pct}%</td>
-                    <td className="px-4 py-3 text-emerald-400 text-sm font-medium">{fmt(deal.kbex_margin, curr)}</td>
+                    <td className="px-4 py-3 text-yellow-400 text-sm">{deal.gross_pct != null ? `${deal.gross_pct}%` : '-'}</td>
+                    <td className="px-4 py-3 text-zinc-400 text-sm">{deal.net_pct != null ? `${deal.net_pct}%` : '-'}</td>
+                    <td className="px-4 py-3 text-emerald-400 text-sm font-medium">{deal.kbex_margin != null ? fmt(deal.kbex_margin, curr) : '-'}</td>
                     <td className="px-4 py-3 text-zinc-300 text-sm">{deal.broker_name || '-'}</td>
                     <td className="px-4 py-3">
                       <Badge 
-                        className={`${sc} text-xs border ${['compliance', 'qualification'].includes(deal.status) ? 'cursor-pointer hover:opacity-80' : ''}`}
-                        onClick={() => ['compliance', 'qualification'].includes(deal.status) ? navigate(`/dashboard/crm/compliance/${deal.id}`) : null}
+                        className={`${sc} text-xs border ${['compliance', 'qualification'].includes(effectiveStatus) ? 'cursor-pointer hover:opacity-80' : ''}`}
+                        onClick={() => ['compliance', 'qualification'].includes(effectiveStatus) ? navigate(`/dashboard/crm/compliance/${deal.id}`) : null}
                         data-testid={`status-badge-${deal.id}`}
                       >
-                        {t(`otc.deals.statusLabels.${deal.status}`) || deal.status}
+                        {statusLabel}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        {NEXT_STATUS[deal.status] && (
-                          <Button variant="ghost" size="sm" className="text-yellow-500 hover:text-yellow-400 p-1" title={`${t('otc.deals.advanceTo')} ${t(`otc.deals.statusLabels.${NEXT_STATUS[deal.status]}`) || ''}`} onClick={() => advanceStatus(deal.id, NEXT_STATUS[deal.status])} data-testid={`advance-${deal.id}`}>
+                        {NEXT_STATUS[effectiveStatus] && (
+                          <Button variant="ghost" size="sm" className="text-yellow-500 hover:text-yellow-400 p-1" title={`${t('otc.deals.advanceTo')} ${t(`otc.deals.statusLabels.${NEXT_STATUS[effectiveStatus]}`, NEXT_STATUS[effectiveStatus])}`} onClick={() => advanceStatus(deal.id, NEXT_STATUS[effectiveStatus])} data-testid={`advance-${deal.id}`}>
                             <ChevronRight size={16} />
                           </Button>
                         )}
