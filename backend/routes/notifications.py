@@ -15,6 +15,25 @@ def set_db(database):
     db = database
 
 
+# Roles que vêem notificações de pagamentos/recebimentos
+# (depósitos fiat, taxas de admissão, levantamentos fiat/crypto, contas bancárias)
+FINANCE_NOTIFICATION_ROLES = {
+    "admin",
+    "global_manager",
+    "finance_general",   # Financeiro Global
+    "finance_local",     # Financeiro Local
+    "finance",           # Financeiro
+}
+
+
+def _can_see_finance_notifications(user: dict) -> bool:
+    """True if the user is allowed to see payment/receipt-related notifications."""
+    if user.get("is_admin"):
+        return True
+    role = user.get("internal_role") or ""
+    return role in FINANCE_NOTIFICATION_ROLES
+
+
 def _get_region_filter(user: dict) -> dict:
     """Build a region-based filter for notifications.
     Admin/global_manager sees everything. Others see only their region."""
@@ -58,67 +77,69 @@ async def get_pending_notifications(user: dict = Depends(get_internal_user)):
     if user_region_q:
         region_user_ids = await db.users.find({**user_region_q, "user_type": "client"}, {"id": 1}).to_list(5000)
         region_uids = [u["id"] for u in region_user_ids if u.get("id")]
-    
-    # 1. Pending Fiat Deposits
-    deposit_q = {"status": "pending"}
-    if user_region_q and region_uids:
-        deposit_q["user_id"] = {"$in": region_uids}
-    pending_deposits = await db.bank_transfers.count_documents(deposit_q)
-    if pending_deposits > 0:
-        notifications.append({
-            "type": "fiat_deposit",
-            "title": "Depósitos Fiat Pendentes",
-            "count": pending_deposits,
-            "icon": "ArrowUpToLine",
-            "color": "yellow",
-            "link": "/dashboard/admin/fiat-deposits"
-        })
-    
-    # 2. Pending Admission Fees
-    admission_q = {"status": "pending"}
-    if user_region_q:
-        if region_uids:
+
+    can_see_finance = _can_see_finance_notifications(user)
+
+    # 1. Pending Fiat Deposits  (RECEBIMENTOS — apenas Admin / Global Manager / Financeiro)
+    if can_see_finance:
+        deposit_q = {"status": "pending"}
+        if user_region_q and region_uids:
+            deposit_q["user_id"] = {"$in": region_uids}
+        pending_deposits = await db.bank_transfers.count_documents(deposit_q)
+        if pending_deposits > 0:
+            notifications.append({
+                "type": "fiat_deposit",
+                "title": "Depósitos Fiat Pendentes",
+                "count": pending_deposits,
+                "icon": "ArrowUpToLine",
+                "color": "yellow",
+                "link": "/dashboard/admin/fiat-deposits"
+            })
+
+        # 2. Pending Admission Fees  (RECEBIMENTOS)
+        admission_q = {"status": "pending"}
+        if user_region_q and region_uids:
             admission_q["user_id"] = {"$in": region_uids}
-    pending_admissions = await db.admission_payments.count_documents(admission_q)
-    if pending_admissions > 0:
-        notifications.append({
-            "type": "admission_fee",
-            "title": "Taxas de Admissão Pendentes",
-            "count": pending_admissions,
-            "icon": "CreditCard",
-            "color": "orange",
-            "link": "/dashboard/admin/admission-fees"
-        })
-    
-    # 3. Pending Fiat Withdrawals
-    fiat_wd_q = {"status": "pending"}
-    if user_region_q and region_uids:
-        fiat_wd_q["user_id"] = {"$in": region_uids}
-    pending_fiat_withdrawals = await db.fiat_withdrawals.count_documents(fiat_wd_q)
-    if pending_fiat_withdrawals > 0:
-        notifications.append({
-            "type": "fiat_withdrawal",
-            "title": "Levantamentos Fiat Pendentes",
-            "count": pending_fiat_withdrawals,
-            "icon": "ArrowDownToLine",
-            "color": "red",
-            "link": "/dashboard/admin/fiat-withdrawals"
-        })
-    
-    # 4. Pending Crypto Withdrawals
-    crypto_wd_q = {"status": "pending"}
-    if user_region_q and region_uids:
-        crypto_wd_q["user_id"] = {"$in": region_uids}
-    pending_crypto_withdrawals = await db.crypto_withdrawals.count_documents(crypto_wd_q)
-    if pending_crypto_withdrawals > 0:
-        notifications.append({
-            "type": "crypto_withdrawal",
-            "title": "Levantamentos Crypto Pendentes",
-            "count": pending_crypto_withdrawals,
-            "icon": "Bitcoin",
-            "color": "orange",
-            "link": "/dashboard/admin/crypto-withdrawals"
-        })
+        pending_admissions = await db.admission_payments.count_documents(admission_q)
+        if pending_admissions > 0:
+            notifications.append({
+                "type": "admission_fee",
+                "title": "Taxas de Admissão Pendentes",
+                "count": pending_admissions,
+                "icon": "CreditCard",
+                "color": "orange",
+                "link": "/dashboard/admin/admission-fees"
+            })
+
+        # 3. Pending Fiat Withdrawals  (PAGAMENTOS)
+        fiat_wd_q = {"status": "pending"}
+        if user_region_q and region_uids:
+            fiat_wd_q["user_id"] = {"$in": region_uids}
+        pending_fiat_withdrawals = await db.fiat_withdrawals.count_documents(fiat_wd_q)
+        if pending_fiat_withdrawals > 0:
+            notifications.append({
+                "type": "fiat_withdrawal",
+                "title": "Levantamentos Fiat Pendentes",
+                "count": pending_fiat_withdrawals,
+                "icon": "ArrowDownToLine",
+                "color": "red",
+                "link": "/dashboard/admin/fiat-withdrawals"
+            })
+
+        # 4. Pending Crypto Withdrawals  (PAGAMENTOS)
+        crypto_wd_q = {"status": "pending"}
+        if user_region_q and region_uids:
+            crypto_wd_q["user_id"] = {"$in": region_uids}
+        pending_crypto_withdrawals = await db.crypto_withdrawals.count_documents(crypto_wd_q)
+        if pending_crypto_withdrawals > 0:
+            notifications.append({
+                "type": "crypto_withdrawal",
+                "title": "Levantamentos Crypto Pendentes",
+                "count": pending_crypto_withdrawals,
+                "icon": "Bitcoin",
+                "color": "orange",
+                "link": "/dashboard/admin/crypto-withdrawals"
+            })
     
     # 5. Pending KYC Verifications (filter by user region)
     kyc_q = {"kyc_status": "pending"}
@@ -135,20 +156,21 @@ async def get_pending_notifications(user: dict = Depends(get_internal_user)):
             "link": "/dashboard/admin/kyc"
         })
     
-    # 6. Pending Bank Account Verifications
-    bank_q = {"status": "pending"}
-    if user_region_q and region_uids:
-        bank_q["user_id"] = {"$in": region_uids}
-    pending_bank_accounts = await db.bank_accounts.count_documents(bank_q)
-    if pending_bank_accounts > 0:
-        notifications.append({
-            "type": "bank_account",
-            "title": "Contas Bancárias Pendentes",
-            "count": pending_bank_accounts,
-            "icon": "Landmark",
-            "color": "purple",
-            "link": "/dashboard/admin/bank-accounts"
-        })
+    # 6. Pending Bank Account Verifications (RECEBIMENTOS — pré-requisito para levantamentos)
+    if can_see_finance:
+        bank_q = {"status": "pending"}
+        if user_region_q and region_uids:
+            bank_q["user_id"] = {"$in": region_uids}
+        pending_bank_accounts = await db.bank_accounts.count_documents(bank_q)
+        if pending_bank_accounts > 0:
+            notifications.append({
+                "type": "bank_account",
+                "title": "Contas Bancárias Pendentes",
+                "count": pending_bank_accounts,
+                "icon": "Landmark",
+                "color": "purple",
+                "link": "/dashboard/admin/bank-accounts"
+            })
     
     # 7. Open Support Tickets
     ticket_q = {"status": {"$in": ["open", "in_progress"]}}
@@ -253,17 +275,22 @@ async def get_notifications_summary(user: dict = Depends(get_internal_user)):
         region_uids = [u["id"] for u in region_users if u.get("id")]
     
     uid_filter = {"user_id": {"$in": region_uids}} if user_region_q and region_uids else {}
-    
-    # Count pending items with region filtering
-    total += await db.bank_transfers.count_documents({**{"status": "pending"}, **uid_filter})
-    total += await db.admission_payments.count_documents({**{"status": "pending"}, **uid_filter})
-    total += await db.fiat_withdrawals.count_documents({**{"status": "pending"}, **uid_filter})
-    total += await db.crypto_withdrawals.count_documents({**{"status": "pending"}, **uid_filter})
+
+    can_see_finance = _can_see_finance_notifications(user)
+
+    # Payment/receipt-related counts — only for Admin / Global Manager / Financeiro roles
+    if can_see_finance:
+        total += await db.bank_transfers.count_documents({**{"status": "pending"}, **uid_filter})
+        total += await db.admission_payments.count_documents({**{"status": "pending"}, **uid_filter})
+        total += await db.fiat_withdrawals.count_documents({**{"status": "pending"}, **uid_filter})
+        total += await db.crypto_withdrawals.count_documents({**{"status": "pending"}, **uid_filter})
+        total += await db.bank_accounts.count_documents({**{"status": "pending"}, **uid_filter})
+
+    # Non-financial counts — visible to every internal user (region-filtered)
     total += await db.users.count_documents({**{"kyc_status": "pending"}, **user_region_q})
-    total += await db.bank_accounts.count_documents({**{"status": "pending"}, **uid_filter})
     total += await db.tickets.count_documents({**{"status": {"$in": ["open", "in_progress"]}}, **uid_filter})
     total += await db.otc_deals.count_documents({"status": "awaiting_quote"})
     total += await db.crm_leads.count_documents({**{"status": {"$in": ["new", "contacted"]}}, **country_q})
     total += await db.otc_leads.count_documents({**{"status": {"$in": ["new", "contacted", "pre_qualified"]}}, **country_q})
-    
+
     return {"total": total}
