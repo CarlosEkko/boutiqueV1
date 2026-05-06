@@ -326,7 +326,12 @@ async def list_users(
     tenant_slug: Optional[str] = None,
     internal_user: dict = Depends(get_internal_user)
 ):
-    """List all users with optional filters.
+    """List users with optional filters.
+
+    Access control:
+      - Admin / Global Manager: see all users (with optional region/tenant narrowing)
+      - Other internal staff: blocked (403). Use scoped endpoints (`/api/crm/leads`,
+        `/api/admin/internal-users`, etc.) instead.
 
     Tenant scoping (Phase 2):
       - Requests coming from a sub-tenant (Host != kbex.io) are auto-filtered to
@@ -334,6 +339,12 @@ async def list_users(
       - Requests coming from the default tenant (kbex.io) see ALL users by
         default; may narrow with `?tenant_slug=<slug>` or `?tenant_slug=all`.
     """
+    # Hard role gate — only admin or global_manager may list all users
+    is_admin_user = bool(internal_user.get("is_admin"))
+    role = internal_user.get("internal_role")
+    if not is_admin_user and role not in ("admin", "global_manager"):
+        raise HTTPException(status_code=403, detail="Acesso restrito a Admin / Global Manager")
+
     query = {}
     if is_approved is not None:
         query["is_approved"] = is_approved

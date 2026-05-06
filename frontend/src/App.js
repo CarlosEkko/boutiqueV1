@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import CryptoATMPage from "./pages/CryptoATMPage";
 import MarketsPage from "./pages/MarketsPage";
@@ -171,6 +171,48 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Admin-only guard — locks /dashboard/admin/* routes (except where explicitly
+// scoped to a non-admin internal role). Non-admin users are redirected to the
+// dashboard overview with a toast-friendly state. The backend also enforces
+// this on every endpoint, but the route guard prevents internal staff from even
+// seeing the admin pages by typing the URL directly.
+const AdminRoute = () => {
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-gold-400">Loading...</div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  const isAdmin = !!(user?.is_admin || user?.internal_role === 'admin');
+  if (!isAdmin) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+};
+
+// Internal-staff guard — internal_role !== null OR is_admin OR user_type='internal'.
+// Used for shared admin tools (tickets, regional dashboard) that are intentionally
+// accessible to non-admin internal roles (support, regional manager, etc.).
+const InternalRoute = () => {
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-gold-400">Loading...</div>
+      </div>
+    );
+  }
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  const isInternal = !!(
+    user?.is_admin ||
+    user?.internal_role ||
+    user?.user_type === 'internal'
+  );
+  if (!isInternal) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -258,45 +300,47 @@ function AppRoutes() {
         {/* Support */}
         <Route path="support" element={<SupportPage />} />
         
-        {/* Admin Routes */}
-        <Route path="admin" element={<AdminOverview />} />
-        <Route path="admin/regional" element={<RegionalDashboard />} />
-        <Route path="admin/staff" element={<AdminStaff />} />
-        <Route path="admin/tickets" element={<TicketsDashboard />} />
-        <Route path="admin/users" element={<AdminUsers />} />
-        <Route path="admin/opportunities" element={<AdminOpportunities />} />
-        <Route path="admin/transparency" element={<AdminTransparency />} />
-        <Route path="admin/invites" element={<AdminInvites />} />
-        <Route path="admin/security" element={<SecurityDashboardPage />} />
-        <Route path="admin/kyc" element={<AdminKYC />} />
-        <Route path="admin/trading" element={<AdminTradingPage />} />
-        <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
-        <Route path="admin/permissions" element={<AdminPermissions />} />
-        <Route path="admin/orders" element={<AdminOrders />} />
-        <Route path="admin/fiat-deposits" element={<AdminFiatDeposits />} />
-        <Route path="admin/fiat-withdrawals" element={<AdminFiatWithdrawals />} />
-        <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
-        <Route path="admin/clients" element={<AdminClients />} />
-        <Route path="admin/pipeline" element={<AdminPipeline />} />
-        <Route path="admin/settings" element={<AdminSettings />} />
-        <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
-                <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
-                <Route path="admin/institucional" element={<AdminTenants />} />
-                <Route path="admin/tenants" element={<AdminTenants />} />
-                <Route path="admin/escrow-fees" element={<AdminEscrowFees />} />
-        <Route path="admin/referrals" element={<AdminReferrals />} />
-        <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
-        <Route path="admin/client-menus" element={<AdminClientMenus />} />
-        <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
-        <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
-        <Route path="admin/cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><AdminColdWalletPage /></React.Suspense>} />
-        <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
-        <Route path="admin/finance" element={<FinancialDashboard />} />
-        <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
-        <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
-        <Route path="admin/tiers" element={<AdminClientTiers />} />
-        <Route path="admin/billing" element={<AdminBillingPage />} />
-        <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
+        {/* Admin Routes — admin-only (route-level guard) */}
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<AdminOverview />} />
+          <Route path="admin/regional" element={<RegionalDashboard />} />
+          <Route path="admin/staff" element={<AdminStaff />} />
+          <Route path="admin/tickets" element={<TicketsDashboard />} />
+          <Route path="admin/users" element={<AdminUsers />} />
+          <Route path="admin/opportunities" element={<AdminOpportunities />} />
+          <Route path="admin/transparency" element={<AdminTransparency />} />
+          <Route path="admin/invites" element={<AdminInvites />} />
+          <Route path="admin/security" element={<SecurityDashboardPage />} />
+          <Route path="admin/kyc" element={<AdminKYC />} />
+          <Route path="admin/trading" element={<AdminTradingPage />} />
+          <Route path="admin/knowledge-base" element={<AdminKnowledgeBase />} />
+          <Route path="admin/permissions" element={<AdminPermissions />} />
+          <Route path="admin/orders" element={<AdminOrders />} />
+          <Route path="admin/fiat-deposits" element={<AdminFiatDeposits />} />
+          <Route path="admin/fiat-withdrawals" element={<AdminFiatWithdrawals />} />
+          <Route path="admin/crypto-withdrawals" element={<AdminCryptoWithdrawals />} />
+          <Route path="admin/clients" element={<AdminClients />} />
+          <Route path="admin/pipeline" element={<AdminPipeline />} />
+          <Route path="admin/settings" element={<AdminSettings />} />
+          <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
+          <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
+          <Route path="admin/institucional" element={<AdminTenants />} />
+          <Route path="admin/tenants" element={<AdminTenants />} />
+          <Route path="admin/escrow-fees" element={<AdminEscrowFees />} />
+          <Route path="admin/referrals" element={<AdminReferrals />} />
+          <Route path="admin/admission-fees" element={<AdminAdmissionFees />} />
+          <Route path="admin/client-menus" element={<AdminClientMenus />} />
+          <Route path="admin/bank-accounts" element={<AdminBankAccounts />} />
+          <Route path="admin/contas-bancarias" element={<AdminRevolutPage />} />
+          <Route path="admin/cold-wallet" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><AdminColdWalletPage /></React.Suspense>} />
+          <Route path="admin/company-accounts" element={<AdminCompanyAccounts />} />
+          <Route path="admin/finance" element={<FinancialDashboard />} />
+          <Route path="finance/balance-adjustments" element={<BalanceAdjustmentsPage />} />
+          <Route path="admin/multisign-clients" element={<AdminMultiSignClients />} />
+          <Route path="admin/tiers" element={<AdminClientTiers />} />
+          <Route path="admin/billing" element={<AdminBillingPage />} />
+          <Route path="admin/launchpad" element={<AdminLaunchpadPage />} />
+        </Route>
         
         {/* Commercial Management Routes */}
         <Route path="commercial" element={<React.Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div></div>}><CommercialDashboard /></React.Suspense>} />
