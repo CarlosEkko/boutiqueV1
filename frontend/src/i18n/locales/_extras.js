@@ -503,6 +503,8 @@ const EXTRAS = {
           commissionFormula: 'Bruto - Líquido',
           brokerMarginCard: 'Margem Corretores',
           kbexRevenue: 'Receita KBEX',
+          gross: 'Bruto',
+          net: 'Líquido',
         },
       },
       quotes: {
@@ -987,6 +989,8 @@ const EXTRAS = {
           commissionFormula: 'Gross - Net',
           brokerMarginCard: 'Brokers Margin',
           kbexRevenue: 'KBEX Revenue',
+          gross: 'Gross',
+          net: 'Net',
         },
       },
       quotes: {
@@ -1450,6 +1454,8 @@ const EXTRAS = {
           commissionFormula: 'Brut - Net',
           brokerMarginCard: 'Marge Courtiers',
           kbexRevenue: 'Revenu KBEX',
+          gross: 'Brut',
+          net: 'Net',
         },
       },
       quotes: {
@@ -1897,6 +1903,8 @@ const EXTRAS = {
           commissionFormula: 'Bruto - Neto',
           brokerMarginCard: 'Margen Corredores',
           kbexRevenue: 'Ingresos KBEX',
+          gross: 'Bruto',
+          net: 'Neto',
         },
       },
       quotes: {
@@ -2356,6 +2364,8 @@ const EXTRAS = {
           commissionFormula: 'الإجمالي - الصافي',
           brokerMarginCard: 'هامش الوسطاء',
           kbexRevenue: 'إيرادات KBEX',
+          gross: 'الإجمالي',
+          net: 'الصافي',
         },
       },
       quotes: {
