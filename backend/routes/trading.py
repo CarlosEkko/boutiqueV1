@@ -1460,7 +1460,7 @@ async def cancel_fiat_withdrawal(withdrawal_id: str, user: dict = Depends(get_cu
 async def list_all_orders(
     status: Optional[OrderStatus] = None,
     order_type: Optional[OrderType] = None,
-    admin: dict = Depends(get_internal_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """List all trading orders"""
     query = {}

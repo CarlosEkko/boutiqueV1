@@ -41,7 +41,7 @@ class UpdateClientSettingsRequest(BaseModel):
 # ==================== LIST CLIENTS ====================
 
 @router.get("/clients")
-async def list_multisign_clients(admin: dict = Depends(get_internal_user)):
+async def list_multisign_clients(admin: dict = Depends(get_admin_user)):
     """List all clients with Multi-Sign service"""
     settings = await db.vault_settings.find({}, {"_id": 0}).to_list(500)
 
@@ -92,7 +92,7 @@ async def list_multisign_clients(admin: dict = Depends(get_internal_user)):
 # ==================== AVAILABLE CLIENTS (not yet activated) ====================
 
 @router.get("/available-clients")
-async def list_available_clients(admin: dict = Depends(get_internal_user)):
+async def list_available_clients(admin: dict = Depends(get_admin_user)):
     """List client users who don't have Multi-Sign yet"""
     # Get all user_ids that already have vault_settings
     existing_ids = await db.vault_settings.distinct("user_id")
@@ -182,7 +182,7 @@ async def activate_multisign(data: ActivateMultiSignRequest, admin: dict = Depen
 # ==================== CLIENT DETAIL ====================
 
 @router.get("/clients/{user_id}")
-async def get_client_detail(user_id: str, admin: dict = Depends(get_internal_user)):
+async def get_client_detail(user_id: str, admin: dict = Depends(get_admin_user)):
     """Get detailed Multi-Sign info for a client"""
     settings = await db.vault_settings.find_one({"user_id": user_id}, {"_id": 0})
     if not settings:
