@@ -45,6 +45,8 @@ import {
 import { toast } from 'sonner';
 import { useLanguage } from '../../../i18n';
 
+import OTCDealModal from '../../../components/otc/OTCDealModal';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 const CURRENCY_SYMBOLS = { EUR: '€', USD: '$', AED: 'د.إ', BRL: 'R$' };
 
@@ -158,31 +160,17 @@ const OTCQuotes = () => {
   };
 
   const openCreateDialog = async (deal) => {
+    // Fetch team members on demand for the shared modal
+    if (teamMembers.length === 0) {
+      try {
+        const res = await axios.get(`${API_URL}/api/otc-deals/team-members`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTeamMembers(res.data.members || res.data || []);
+      } catch { /* ignore */ }
+    }
     setSelectedDeal(deal);
-    setNegForm({
-      reference_price: 0,
-      reference_currency: deal.quote_asset || 'EUR',
-      condition: 'premium',
-      condition_pct: 2,
-      gross_pct: 4,
-      net_pct: 2,
-      broker_id: '',
-      broker_name: '',
-      broker_type: 'internal',
-      member_id: '',
-      member_name: '',
-      broker_share_pct: 50,
-      commission_currency: deal.quote_asset || 'EUR',
-      spread_percent: 1.0,
-      fees: 0,
-      valid_for_minutes: 5,
-      notes: ''
-    });
-    setMarketPrice(null);
     setShowCreateDialog(true);
-    
-    // Fetch market price
-    await fetchMarketPrice(deal.base_asset, deal.quote_asset);
   };
 
   // Update negForm reference price when market price changes
@@ -665,303 +653,15 @@ const OTCQuotes = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create Negotiation + Quote Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-5xl max-h-[90vh] overflow-y-auto p-0 gap-0 [&>button]:text-zinc-400" data-testid="create-negotiation-dialog">
-          <div className="p-6 pb-4 border-b border-zinc-800">
-            <div className="flex items-center gap-2 text-xl font-light" style={{ fontFamily: 'Playfair Display, serif' }}>
-              <ArrowLeftRight className="text-yellow-500" size={20} />
-              Criar Negociação & Cotação
-            </div>
-            <p className="text-zinc-500 text-sm mt-1">
-              {selectedDeal && `${selectedDeal.deal_number} — ${selectedDeal.client_name} — ${selectedDeal.amount} ${selectedDeal.base_asset}/${selectedDeal.quote_asset}`}
-            </p>
-          </div>
-          
-          {selectedDeal && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-              {/* Left: Form */}
-              <div className="lg:col-span-2 space-y-4">
-                {/* Deal Info Summary */}
-                <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
-                  <div className="grid grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-zinc-500 text-xs uppercase mb-1">Operação</p>
-                      <Badge className={selectedDeal.transaction_type === 'buy' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-red-900/30 text-red-400'}>
-                        {selectedDeal.transaction_type === 'buy' ? 'COMPRA' : 'VENDA'}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-zinc-500 text-xs uppercase mb-1">Cliente</p>
-                      <p className="text-white text-sm font-medium">{selectedDeal.client_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-500 text-xs uppercase mb-1">Quantidade</p>
-                      <p className="text-white font-mono">{formatNumber(selectedDeal.amount)} {selectedDeal.base_asset}</p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-500 text-xs uppercase mb-1">Moeda</p>
-                      <p className="text-white">{selectedDeal.quote_asset}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Market Price */}
-                <div className="p-4 bg-blue-900/10 rounded-lg border border-blue-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-400 text-sm font-medium flex items-center gap-2">
-                        <Zap size={16} /> Preço de Mercado
-                      </p>
-                      {fetchingPrice ? (
-                        <p className="text-white text-xl font-mono mt-1">Carregando...</p>
-                      ) : marketPrice ? (
-                        <p className="text-white text-xl font-mono mt-1">
-                          {CURRENCY_SYMBOLS[selectedDeal.quote_asset] || '$'}{formatNumber(marketPrice.price)} {selectedDeal.quote_asset}
-                        </p>
-                      ) : (
-                        <p className="text-yellow-400 text-sm mt-1">Insira manualmente</p>
-                      )}
-                    </div>
-                    <Button onClick={() => fetchMarketPrice(selectedDeal.base_asset, selectedDeal.quote_asset)} variant="outline" size="sm" className="border-blue-500/30 text-blue-400" disabled={fetchingPrice}>
-                      <RefreshCw size={14} className={fetchingPrice ? 'animate-spin' : ''} />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Reference Price — with Pair Rate toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Preço de Referência</Label>
-                    <div className="flex rounded overflow-hidden border border-zinc-800 text-xs">
-                      <button type="button" onClick={() => setPriceMode('unit')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'unit' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
-                        Preço / Unidade
-                      </button>
-                      <button type="button" onClick={() => setPriceMode('pair')} className={`px-3 py-1 font-medium transition-colors ${priceMode === 'pair' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-950 text-zinc-500'}`}>
-                        Taxa de Par
-                      </button>
-                    </div>
-                  </div>
-
-                  {priceMode === 'unit' ? (
-                    <div>
-                      <p className="text-xs text-zinc-600 mb-1.5">1 {selectedDeal?.base_asset} = ? {selectedDeal?.quote_asset}</p>
-                      <div className="relative">
-                        <Input type="number" step="any" value={negForm.reference_price} onChange={e => updateNeg('reference_price', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-36" data-testid="neg-ref-price" />
-                        {marketPrice && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-emerald-400 flex items-center gap-1 cursor-pointer" onClick={() => updateNeg('reference_price', marketPrice.price)}>
-                            <TrendingUp size={12} /> Usar mercado
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs text-zinc-600 mb-1.5">Par {selectedDeal?.quote_asset}/{selectedDeal?.base_asset} (1 {selectedDeal?.quote_asset} = ? {selectedDeal?.base_asset})</p>
-                      <Input
-                        type="number"
-                        step="any"
-                        value={pairRate}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setPairRate(val);
-                          const num = parseFloat(val);
-                          if (num && num > 0) {
-                            updateNeg('reference_price', 1 / num);
-                          }
-                        }}
-                        className="bg-zinc-900 border-zinc-800 text-white"
-                        placeholder="ex: 1.1685"
-                        data-testid="neg-pair-rate"
-                      />
-                      {pairRate && parseFloat(pairRate) > 0 && (
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-1.5">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-zinc-400">Par {selectedDeal?.quote_asset}/{selectedDeal?.base_asset}</span>
-                            <span className="text-white font-mono">{parseFloat(pairRate).toFixed(6)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-zinc-400">Preço 1 {selectedDeal?.base_asset}</span>
-                            <span className="text-amber-400 font-mono font-semibold">{CURRENCY_SYMBOLS[selectedDeal?.quote_asset] || ''}{(1 / parseFloat(pairRate)).toFixed(6)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm border-t border-amber-500/20 pt-1.5">
-                            <span className="text-zinc-400">Valor {selectedDeal?.amount} {selectedDeal?.base_asset}</span>
-                            <span className="text-white font-mono font-bold">{CURRENCY_SYMBOLS[selectedDeal?.quote_asset] || ''}{(selectedDeal?.amount * (1 / parseFloat(pairRate))).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Condition */}
-                <div className="space-y-1.5">
-                  <Label className="text-zinc-400 text-xs uppercase tracking-wider">Condição</Label>
-                  <div className="flex gap-3">
-                    <div className="flex rounded-lg overflow-hidden border border-zinc-800 flex-shrink-0">
-                      <button onClick={() => updateNeg('condition', 'premium')} className={`px-4 py-2 text-sm font-medium ${negForm.condition === 'premium' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-950 text-zinc-500'}`}>Premium (+)</button>
-                      <button onClick={() => updateNeg('condition', 'discount')} className={`px-4 py-2 text-sm font-medium ${negForm.condition === 'discount' ? 'bg-red-500/20 text-red-400' : 'bg-zinc-950 text-zinc-500'}`}>Desconto (-)</button>
-                    </div>
-                    <div className="relative flex-1">
-                      <Input type="number" step="0.1" value={negForm.condition_pct} onChange={e => updateNeg('condition_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-condition-pct" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gross/Net */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Gross (%)</Label>
-                    <div className="relative">
-                      <Input type="number" step="0.1" value={negForm.gross_pct} onChange={e => updateNeg('gross_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-gross" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Net (%)</Label>
-                    <div className="relative">
-                      <Input type="number" step="0.1" value={negForm.net_pct} onChange={e => updateNeg('net_pct', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" data-testid="neg-net" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Broker & Member */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor</Label>
-                    <Select value={negForm.broker_id || '_none'} onValueChange={v => {
-                      if (v === '_none') { updateNeg('broker_id', ''); updateNeg('broker_name', ''); return; }
-                      const m = teamMembers.find(t => t.id === v);
-                      updateNeg('broker_id', v); updateNeg('broker_name', m?.name || '');
-                    }}>
-                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800">
-                        <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
-                        {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Corretor KBEX</Label>
-                    <Select value={negForm.member_id || '_none'} onValueChange={v => {
-                      if (v === '_none') { updateNeg('member_id', ''); updateNeg('member_name', ''); return; }
-                      const m = teamMembers.find(t => t.id === v);
-                      updateNeg('member_id', v); updateNeg('member_name', m?.name || '');
-                    }}>
-                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800">
-                        <SelectItem value="_none" className="text-zinc-500">Nenhum</SelectItem>
-                        {teamMembers.map(m => <SelectItem key={m.id} value={m.id} className="text-white">{m.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Broker share */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Margem Corretor (%)</Label>
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-1">
-                        <Input type="number" step="5" value={negForm.broker_share_pct} onChange={e => updateNeg('broker_share_pct', Math.min(100, parseFloat(e.target.value) || 0))} className="bg-zinc-900 border-zinc-800 text-white pr-8" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
-                      </div>
-                      <span className="text-zinc-500 text-xs whitespace-nowrap">KBEX: {100 - negForm.broker_share_pct}%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">Validade Cotação</Label>
-                    <Select value={String(negForm.valid_for_minutes)} onValueChange={v => updateNeg('valid_for_minutes', parseInt(v))}>
-                      <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800">
-                        <SelectItem value="2" className="text-white">2 minutos</SelectItem>
-                        <SelectItem value="5" className="text-white">5 minutos</SelectItem>
-                        <SelectItem value="10" className="text-white">10 minutos</SelectItem>
-                        <SelectItem value="15" className="text-white">15 minutos</SelectItem>
-                        <SelectItem value="30" className="text-white">30 minutos</SelectItem>
-                        <SelectItem value="60" className="text-white">1 hora</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Calculator */}
-              <div className="lg:col-span-1">
-                <Card className="bg-zinc-900 border-yellow-500/30 shadow-lg shadow-yellow-500/5 sticky top-4" data-testid="negotiation-calculator">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-yellow-500 flex items-center gap-2 text-base"><Calculator size={16} /> Calculadora</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                        <span className="text-zinc-500">Preço Ajustado</span>
-                        <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                        <span className="text-zinc-500">Valor Total</span>
-                        <span className="text-white font-bold">{fmtVal(calc.total)}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                        <span className="text-zinc-500">Gross ({negForm.gross_pct}%)</span>
-                        <span className="text-yellow-400 font-medium">{fmtVal(calc.gross)}</span>
-                      </div>
-                      <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                        <span className="text-zinc-500">Net ({negForm.net_pct}%)</span>
-                        <span className="text-zinc-300">{fmtVal(calc.net)}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 space-y-2">
-                      <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">Margem KBEX</p>
-                      <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
-                      <div className="space-y-1.5 pt-2 border-t border-yellow-500/20 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Corretor ({negForm.broker_share_pct}%)</span>
-                          <span className="text-emerald-400 font-medium">{fmtVal(calc.brokerComm)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">KBEX ({100 - negForm.broker_share_pct}%)</span>
-                          <span className="text-emerald-400 font-medium">{fmtVal(calc.memberComm)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quote summary */}
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 space-y-2">
-                      <p className="text-blue-400 text-xs uppercase tracking-wider font-semibold">Cotação ao Cliente</p>
-                      <div className="space-y-1.5 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Spread ({negForm.spread_percent}%)</span>
-                          <span className="text-white">{fmtVal(calc.adj * (negForm.spread_percent / 100))}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-zinc-400">Preço Final</span>
-                          <span className="text-blue-400 font-bold">{fmtVal(calculateFinalPrice())}</span>
-                        </div>
-                        <div className="flex justify-between pt-1 border-t border-blue-500/20">
-                          <span className="text-zinc-400">Valor Total</span>
-                          <span className="text-blue-400 font-bold text-lg">{fmtVal(calculateTotalValue())}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button onClick={handleCreateDealAndQuote} disabled={saving || negForm.reference_price <= 0} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-5" data-testid="create-deal-quote-btn">
-                      {saving ? (
-                        <><RefreshCw size={16} className="animate-spin mr-2" /> A processar...</>
-                      ) : (
-                        <><Send size={16} className="mr-2" /> Criar Negociação & Enviar Cotação</>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Shared OTC Deal Modal in 'quote' mode */}
+      <OTCDealModal
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        deal={selectedDeal}
+        teamMembers={teamMembers}
+        mode="quote"
+        onSaved={() => { setShowCreateDialog(false); fetchData(); }}
+      />
 
       {/* Quote Detail Dialog */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
