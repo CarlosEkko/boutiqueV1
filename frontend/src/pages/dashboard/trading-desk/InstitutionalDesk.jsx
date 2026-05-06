@@ -15,7 +15,7 @@ import { Button } from '../../../components/ui/button';
 import { RotateCcw, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useOTCDeskEngine, DEFAULT_ASSETS } from './useOTCDeskEngine';
+import { useOTCDeskEngine, DEFAULT_ASSETS } from './useOTCDeskBackend';
 import MarketPanel from './components/MarketPanel';
 import RFQPanel from './components/RFQPanel';
 import RiskPanel from './components/RiskPanel';
@@ -70,15 +70,16 @@ export default function InstitutionalDesk() {
         </div>
       </div>
 
-      {/* Mock-mode banner */}
+      {/* Engine status banner */}
       <div className="flex items-start gap-3 bg-gold-500/5 border border-gold-500/20 rounded-md p-3.5">
         <Info size={16} className="text-gold-400 mt-0.5 shrink-0" />
         <div className="text-[12px] text-zinc-300 leading-relaxed">
-          <strong className="text-gold-300">Simulation mode</strong> — market
-          data, hedge latency and slippage are driven locally for UX validation.
-          Backend quant engine (<code className="text-zinc-400">/api/otc-desk/rfq</code>,
-          <code className="text-zinc-400">/api/ws/otc-desk</code>) and venue
-          connectivity (Binance / Fireblocks) ship in the next phase.
+          <strong className="text-gold-300">Live engine</strong> — market data
+          streamed from our price oracle, pricing &amp; risk computed server-side,
+          and desk state persisted on every fill. Hedge execution currently runs
+          in <span className="text-gold-300">simulation mode</span>; venue
+          connectivity (institutional custody / spot execution) activates in the
+          next phase.
         </div>
       </div>
 

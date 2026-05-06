@@ -1,5 +1,31 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — Institutional OTC Desk (Fase 2 — Frontend ↔ Backend Wired)
+
+### What changed
+Swapped the client-side mock engine out for a real backend-driven hook so the cockpit now renders **live** desk state.
+
+### New file
+- **`frontend/src/pages/dashboard/trading-desk/useOTCDeskBackend.js`** — drop-in replacement for `useOTCDeskEngine`:
+  - Polls `GET /api/otc-desk/state` every 2 s (market + inventory + PnL + hedge feed + config)
+  - Polls `GET /api/otc-desk/pnl-series` every 10 s (equity curve)
+  - `getQuote()` → `POST /api/otc-desk/rfq` (returns pending stub + async sets `activeQuote` once server responds)
+  - `executeQuote()` → `POST /api/otc-desk/execute` (async; emits success toast + schedules post-hedge refresh at 700 ms / 1.4 s)
+  - `cancelQuote()` / `resetDesk()` wired to the respective endpoints
+  - Normalises snake_case backend payloads (`spread_bps`, `expires_ms`, `slippage_bps`…) to the camelCase shape the existing components consume — zero edits required in MarketPanel / RFQPanel / RiskPanel / EquityCurve / HedgeFeed
+
+### Wiring
+- `InstitutionalDesk.jsx`: one-line import swap (`useOTCDeskBackend` in, `useOTCDeskEngine` kept as reference)
+- Status banner updated to reflect the new reality: *"Live engine — market data streamed from our price oracle, pricing & risk computed server-side, and desk state persisted on every fill. Hedge execution currently runs in simulation mode"*
+- `RFQPanel.handleExecute` is now async-safe; toasts are owned by the hook (backend flow) so UX stays consistent
+
+### Verification (screenshot tool, full cycle)
+- BTC / ETH / SOL / BNB / XRP pairs show real Binance mids (BTC $81,323.71 live)
+- BUY 1 BTC → Execute → Cash PnL 417.42, Unrealized **0.00** after hedge (cost-basis invariant holds)
+- SELL 1 BTC → Execute → "Trade filled — SELL 1 BTC @ 81,017.23 (spread capture 306.48 USDT)" toast
+- Equity curve populated from `pnl-series`, hedge feed shows both legs (13.2 bps slippage)
+- Lint clean
+
 ## 2026-05-06 — Institutional OTC Desk (Fase 1 — Backend Quant Engine)
 
 ### What shipped

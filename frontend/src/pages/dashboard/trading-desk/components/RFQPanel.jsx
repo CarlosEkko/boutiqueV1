@@ -42,12 +42,10 @@ export default function RFQPanel({
     if (!q) toast.error('Unable to price request');
   };
 
-  const handleExecute = () => {
-    const res = onExecute?.();
-    if (!res) { toast.error('Quote expired — request a new price'); return; }
-    toast.success('Trade filled', {
-      description: `${res.quote.side.toUpperCase()} ${res.quote.size} ${res.quote.symbol} @ ${fmtUsd(res.quote.price)} (spread capture ${fmtUsd(res.spreadCapture)} USDT)`,
-    });
+  const handleExecute = async () => {
+    // Both the mock and the production hook handle their own toasts. We just
+    // trigger the action and let the hook drive UX feedback.
+    await Promise.resolve(onExecute?.());
   };
 
   const validPct = activeQuote
