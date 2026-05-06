@@ -6,30 +6,31 @@ import { Badge } from '../../../components/ui/badge';
 import { Input } from '../../../components/ui/input';
 import {
   ShieldCheck, Clock, CheckCircle, XCircle, Plus, Search,
-  Send, ArrowRight, AlertTriangle, Users, Lock, Wallet, Ban
+  Send, ArrowRight, AlertTriangle, Users, Lock, Ban
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const statusCfg = {
-  pending_signatures: { label: 'Awaiting Signatures', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20', icon: Clock },
-  completed: { label: 'Executed', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', icon: CheckCircle },
-  rejected: { label: 'Rejected', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20', icon: XCircle },
-  cancelled: { label: 'Cancelled', color: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20', icon: Ban },
-};
-
 const VaultDashboard = () => {
   const { token, user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [txs, setTxs] = useState([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const headers = { Authorization: `Bearer ${token}` };
+
+  const statusCfg = {
+    pending_signatures: { label: t('vaultDashboard.stAwaiting', 'A aguardar assinaturas'), color: 'text-amber-400 bg-amber-500/10 border-amber-500/20', icon: Clock },
+    completed: { label: t('vaultDashboard.stExecuted', 'Executada'), color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20', icon: CheckCircle },
+    rejected: { label: t('vaultDashboard.stRejected', 'Rejeitada'), color: 'text-rose-400 bg-rose-500/10 border-rose-500/20', icon: XCircle },
+    cancelled: { label: t('vaultDashboard.stCancelled', 'Cancelada'), color: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20', icon: Ban },
+  };
 
   const fetchAll = useCallback(async () => {
     try {
@@ -39,9 +40,9 @@ const VaultDashboard = () => {
       ]);
       setStats(dashRes.data);
       setTxs(txRes.data.transactions || []);
-    } catch { toast.error('Erro ao carregar vault'); }
+    } catch { toast.error(t('vaultDashboard.loadError', 'Erro ao carregar vault')); }
     finally { setLoading(false); }
-  }, [token, filter]);
+  }, [token, filter, t]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -50,13 +51,6 @@ const VaultDashboard = () => {
     const q = search.toLowerCase();
     return tx.order_number?.toLowerCase().includes(q) || tx.asset?.toLowerCase().includes(q) || tx.destination_name?.toLowerCase().includes(q);
   });
-
-  const getTimeLeft = (exp) => {
-    if (!exp) return '';
-    const d = new Date(exp) - Date.now();
-    if (d <= 0) return 'Expired';
-    return `${Math.floor(d / 3600000)}h ${Math.floor((d % 3600000) / 60000)}m`;
-  };
 
   return (
     <div className="space-y-10" data-testid="vault-dashboard">
@@ -69,12 +63,12 @@ const VaultDashboard = () => {
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
                 <ShieldCheck size={22} className="text-amber-400" />
               </div>
-              Vault Multi-Sign
+              {t('vaultDashboard.title', 'Vault Multi-Sign')}
             </h1>
-            <p className="text-zinc-400 text-sm mt-2 max-w-md">Proteja os seus ativos com assinaturas múltiplas. Cada transação requer aprovação dos seus signatários autorizados.</p>
+            <p className="text-zinc-400 text-sm mt-2 max-w-md">{t('vaultDashboard.subtitle', 'Proteja os seus ativos com assinaturas múltiplas. Cada transação requer aprovação dos seus signatários autorizados.')}</p>
           </div>
           <Button onClick={() => navigate('/dashboard/vault/new')} className="bg-amber-500 text-zinc-950 hover:bg-amber-400 rounded-full px-6 shadow-[0_0_20px_rgba(245,158,11,0.15)]" data-testid="new-vault-tx-btn">
-            <Plus size={18} className="mr-2" /> Nova Transação
+            <Plus size={18} className="mr-2" /> {t('vaultDashboard.newTx', 'Nova Transação')}
           </Button>
         </div>
       </div>
@@ -82,10 +76,10 @@ const VaultDashboard = () => {
       {/* Stats Grid */}
       {stats && (
         <div className="grid grid-cols-4 gap-4 mt-2">
-          <StatCard icon={AlertTriangle} iconColor="text-amber-400" label="Pendentes" value={stats.pending_signatures} accent="amber" />
-          <StatCard icon={CheckCircle} iconColor="text-emerald-400" label="Executadas" value={stats.completed} accent="emerald" />
-          <StatCard icon={Users} iconColor="text-blue-400" label="Signatários" value={stats.signatories_count} accent="blue" extra={<span className="text-zinc-500 text-[10px]">Threshold: {stats.threshold}</span>} />
-          <StatCard icon={Lock} iconColor="text-amber-400" label="Total Protegido" value={`$${new Intl.NumberFormat('pt-PT').format(stats.total_secured_value)}`} accent="amber" isLarge />
+          <StatCard icon={AlertTriangle} iconColor="text-amber-400" label={t('vaultDashboard.pending', 'Pendentes')} value={stats.pending_signatures} />
+          <StatCard icon={CheckCircle} iconColor="text-emerald-400" label={t('vaultDashboard.executed', 'Executadas')} value={stats.completed} />
+          <StatCard icon={Users} iconColor="text-blue-400" label={t('vaultDashboard.signers', 'Signatários')} value={stats.signatories_count} extra={<span className="text-zinc-500 text-[10px]">{t('vaultDashboard.threshold', 'Threshold:')} {stats.threshold}</span>} />
+          <StatCard icon={Lock} iconColor="text-amber-400" label={t('vaultDashboard.totalSecured', 'Total Protegido')} value={`$${new Intl.NumberFormat('pt-PT').format(stats.total_secured_value)}`} isLarge />
         </div>
       )}
 
@@ -93,9 +87,9 @@ const VaultDashboard = () => {
       <div className="flex items-center gap-4">
         <div className="flex gap-1 p-1 bg-zinc-900/70 rounded-full border border-zinc-800/50">
           {[
-            { key: 'all', label: 'Todas' },
-            { key: 'pending_signatures', label: 'Pendentes' },
-            { key: 'completed', label: 'Executadas' },
+            { key: 'all', label: t('vaultDashboard.filterAll', 'Todas') },
+            { key: 'pending_signatures', label: t('vaultDashboard.filterPending', 'Pendentes') },
+            { key: 'completed', label: t('vaultDashboard.filterExecuted', 'Executadas') },
           ].map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)} data-testid={`vault-filter-${f.key}`}
               className={`px-5 py-2 rounded-full text-sm transition-all ${filter === f.key ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'text-zinc-400 hover:text-zinc-200'}`}>
@@ -105,22 +99,22 @@ const VaultDashboard = () => {
         </div>
         <div className="relative flex-1 max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar transações..."
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('vaultDashboard.searchPh', 'Pesquisar transações...')}
             className="bg-zinc-900/50 border-zinc-800 text-white pl-9 text-sm rounded-full" data-testid="vault-search" />
         </div>
       </div>
 
       {/* Transactions */}
       {loading ? (
-        <div className="text-center py-16 text-zinc-500">A carregar...</div>
+        <div className="text-center py-16 text-zinc-500">{t('vaultDashboard.loading', 'A carregar...')}</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <div className="w-20 h-20 mx-auto rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
             <ShieldCheck size={36} className="text-zinc-700" />
           </div>
-          <p className="text-zinc-500 text-sm">Nenhuma transação encontrada</p>
+          <p className="text-zinc-500 text-sm">{t('vaultDashboard.noTx', 'Nenhuma transação encontrada')}</p>
           <Button onClick={() => navigate('/dashboard/vault/new')} variant="outline" className="mt-4 border-amber-500/30 text-amber-400 rounded-full">
-            <Plus size={16} className="mr-1" /> Criar primeira transação
+            <Plus size={16} className="mr-1" /> {t('vaultDashboard.createFirst', 'Criar primeira transação')}
           </Button>
         </div>
       ) : (
@@ -148,9 +142,9 @@ const VaultDashboard = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-zinc-50 font-medium">Send {tx.asset}</span>
+                        <span className="text-zinc-50 font-medium">{t('vaultDashboard.send', 'Enviar')} {tx.asset}</span>
                         <span className="text-zinc-600 text-xs font-mono">{tx.order_number}</span>
-                        {canSign && <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px]">Requer sua assinatura</Badge>}
+                        {canSign && <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px]">{t('vaultDashboard.requiresYourSig', 'Requer a sua assinatura')}</Badge>}
                       </div>
                       <p className="text-zinc-500 text-xs mt-0.5">{tx.source_wallet} → {tx.destination_name}</p>
                     </div>
@@ -186,7 +180,7 @@ const VaultDashboard = () => {
   );
 };
 
-const StatCard = ({ icon: Icon, iconColor, label, value, accent, extra, isLarge }) => (
+const StatCard = ({ icon: Icon, iconColor, label, value, extra, isLarge }) => (
   <Card className="bg-zinc-900 border-zinc-800/50 hover:-translate-y-0.5 transition-all duration-300">
     <CardContent className="p-5">
       <div className="flex items-center justify-between mb-3">
