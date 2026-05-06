@@ -649,9 +649,18 @@ async def get_admission_fee_status(user_id: str):
     
     membership_level = user.get("membership_level", "standard")
     
+    # Filter for admission rows only (the same collection now stores annual_fee too)
+    admission_filter = {
+        "$or": [
+            {"fee_type": "admission"},
+            {"fee_type": {"$exists": False}},
+            {"fee_type": None},
+        ],
+    }
+
     # Check if user has paid
     payment = await db.admission_payments.find_one(
-        {"user_id": user_id, "status": "paid"},
+        {"user_id": user_id, "status": "paid", **admission_filter},
         {"_id": 0}
     )
     
@@ -666,7 +675,7 @@ async def get_admission_fee_status(user_id: str):
     
     # Check for pending payment
     pending = await db.admission_payments.find_one(
-        {"user_id": user_id, "status": "pending"},
+        {"user_id": user_id, "status": "pending", **admission_filter},
         {"_id": 0}
     )
     
@@ -733,10 +742,15 @@ async def request_admission_fee_payment(
     if not admission_config.get("is_active", True):
         return {"success": True, "message": "Taxa de admissão não é necessária"}
     
-    # Check if already paid
+    # Check if already paid (admission only — annual_fee rows live in the same collection)
     existing = await db.admission_payments.find_one({
         "user_id": user_id,
-        "status": {"$in": ["paid", "pending"]}
+        "status": {"$in": ["paid", "pending"]},
+        "$or": [
+            {"fee_type": "admission"},
+            {"fee_type": {"$exists": False}},  # legacy rows default to admission
+            {"fee_type": None},
+        ],
     })
     
     if existing and existing.get("status") == "paid":
