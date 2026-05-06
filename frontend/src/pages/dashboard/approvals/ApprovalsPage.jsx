@@ -10,22 +10,14 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
+import { useLanguage } from '../../../i18n';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const statusConfig = {
-  pending_approval: { label: 'Approval in Progress', color: 'bg-yellow-900/40 text-yellow-400 border-yellow-500/30', icon: Clock },
-  risk_review: { label: 'Risk Review', color: 'bg-blue-900/40 text-blue-400 border-blue-500/30', icon: ShieldCheck },
-  signing: { label: 'A Assinar', color: 'bg-purple-900/40 text-purple-400 border-purple-500/30', icon: ShieldCheck },
-  sending: { label: 'A Enviar', color: 'bg-orange-900/40 text-orange-400 border-orange-500/30', icon: Send },
-  completed: { label: 'Successful', color: 'bg-green-900/40 text-green-400 border-green-500/30', icon: CheckCircle },
-  rejected: { label: 'Rejeitada', color: 'bg-red-900/40 text-red-400 border-red-500/30', icon: XCircle },
-  cancelled: { label: 'Cancelada', color: 'bg-zinc-700/40 text-gray-400 border-zinc-600/30', icon: Ban },
-};
-
 const ApprovalsPage = () => {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -34,6 +26,16 @@ const ApprovalsPage = () => {
   const [search, setSearch] = useState('');
 
   const headers = { Authorization: `Bearer ${token}` };
+
+  const statusConfig = {
+    pending_approval: { label: t('approvalsPage.statusPending', 'Aprovação em curso'), color: 'bg-yellow-900/40 text-yellow-400 border-yellow-500/30', icon: Clock },
+    risk_review: { label: t('approvalsPage.statusRiskReview', 'Revisão de Risco'), color: 'bg-blue-900/40 text-blue-400 border-blue-500/30', icon: ShieldCheck },
+    signing: { label: t('approvalsPage.statusSigning', 'A Assinar'), color: 'bg-purple-900/40 text-purple-400 border-purple-500/30', icon: ShieldCheck },
+    sending: { label: t('approvalsPage.statusSending', 'A Enviar'), color: 'bg-orange-900/40 text-orange-400 border-orange-500/30', icon: Send },
+    completed: { label: t('approvalsPage.statusCompleted', 'Concluída'), color: 'bg-green-900/40 text-green-400 border-green-500/30', icon: CheckCircle },
+    rejected: { label: t('approvalsPage.statusRejected', 'Rejeitada'), color: 'bg-red-900/40 text-red-400 border-red-500/30', icon: XCircle },
+    cancelled: { label: t('approvalsPage.statusCancelled', 'Cancelada'), color: 'bg-zinc-700/40 text-gray-400 border-zinc-600/30', icon: Ban },
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -45,7 +47,7 @@ const ApprovalsPage = () => {
       setTransactions(res.data.transactions || []);
       setPendingCount(res.data.pending_count || 0);
     } catch (err) {
-      toast.error('Erro ao carregar transações');
+      toast.error(t('approvalsPage.loadError', 'Erro ao carregar transações'));
     } finally {
       setLoading(false);
     }
@@ -63,18 +65,18 @@ const ApprovalsPage = () => {
   const getTimeRemaining = (expiresAt) => {
     if (!expiresAt) return '';
     const diff = new Date(expiresAt) - new Date();
-    if (diff <= 0) return 'Expirado';
+    if (diff <= 0) return t('approvalsPage.expired', 'Expirado');
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     return `${h}h ${m}min`;
   };
 
   const filters = [
-    { key: 'all', label: 'Todas' },
-    { key: 'pending_approval', label: 'Pendentes', count: pendingCount },
-    { key: 'completed', label: 'Concluídas' },
-    { key: 'rejected', label: 'Rejeitadas' },
-    { key: 'cancelled', label: 'Canceladas' },
+    { key: 'all', label: t('approvalsPage.filterAll', 'Todas') },
+    { key: 'pending_approval', label: t('approvalsPage.filterPending', 'Pendentes'), count: pendingCount },
+    { key: 'completed', label: t('approvalsPage.filterCompleted', 'Concluídas') },
+    { key: 'rejected', label: t('approvalsPage.filterRejected', 'Rejeitadas') },
+    { key: 'cancelled', label: t('approvalsPage.filterCancelled', 'Canceladas') },
   ];
 
   return (
@@ -84,13 +86,13 @@ const ApprovalsPage = () => {
         <div>
           <h1 className="text-2xl font-light text-white flex items-center gap-3">
             <ShieldCheck className="text-indigo-400" size={28} />
-            Multi-Sign Approvals
+            {t('approvalsPage.title', 'Multi-Sign Approvals')}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Sistema de aprovação multi-assinatura para transações</p>
+          <p className="text-gray-500 text-sm mt-1">{t('approvalsPage.subtitle', 'Sistema de aprovação multi-assinatura para transações')}</p>
         </div>
         {pendingCount > 0 && (
           <Badge className="bg-yellow-900/50 text-yellow-400 border border-yellow-500/30 px-4 py-2 text-sm" data-testid="pending-badge">
-            <AlertTriangle size={14} className="mr-1" /> {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+            <AlertTriangle size={14} className="mr-1" /> {pendingCount} {pendingCount > 1 ? t('approvalsPage.pendingBadgePlural', 'pendentes') : t('approvalsPage.pendingBadge', 'pendente')}
           </Badge>
         )}
       </div>
@@ -117,7 +119,7 @@ const ApprovalsPage = () => {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar..."
+            placeholder={t('approvalsPage.searchPh', 'Pesquisar...')}
             className="bg-zinc-800/50 border-zinc-700 text-white pl-9 text-sm"
             data-testid="search-transactions"
           />
@@ -126,11 +128,11 @@ const ApprovalsPage = () => {
 
       {/* Transactions List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">A carregar...</div>
+        <div className="text-center py-12 text-gray-500">{t('common.loading', 'A carregar...')}</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
           <ShieldCheck size={48} className="mx-auto text-zinc-700 mb-4" />
-          <p className="text-gray-500">Nenhuma transação encontrada</p>
+          <p className="text-gray-500">{t('approvalsPage.noTx', 'Nenhuma transação encontrada')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -149,7 +151,6 @@ const ApprovalsPage = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      {/* Icon */}
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                         tx.status === 'completed' ? 'bg-green-900/30' :
                         tx.status === 'rejected' ? 'bg-red-900/30' :
@@ -164,21 +165,19 @@ const ApprovalsPage = () => {
                         } />
                       </div>
 
-                      {/* Info */}
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-white font-medium">Send {tx.asset}</span>
+                          <span className="text-white font-medium">{t('approvalsPage.send', 'Enviar')} {tx.asset}</span>
                           <span className="text-gray-500 text-xs font-mono">{tx.order_number}</span>
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span>{tx.source_wallet} → {tx.destination_name}</span>
-                          <span>por {tx.created_by_name}</span>
+                          <span>{t('approvalsPage.by', 'por')} {tx.created_by_name}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4">
-                      {/* Amount */}
                       <div className="text-right">
                         <p className="text-white font-mono font-medium text-lg">
                           -{new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2 }).format(tx.amount)}
@@ -186,7 +185,6 @@ const ApprovalsPage = () => {
                         <p className="text-gray-500 text-xs">{tx.asset} ({tx.network})</p>
                       </div>
 
-                      {/* Status & Approvals */}
                       <div className="text-right min-w-[140px]">
                         <Badge className={`${cfg.color} border text-xs`} data-testid={`tx-status-${tx.id}`}>
                           <StatusIcon size={12} className="mr-1" /> {cfg.label}

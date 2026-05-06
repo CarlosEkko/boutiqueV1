@@ -1,22 +1,24 @@
 # KBEX.io - Changelog
 
-## 2026-05-05 — Refactor i18n: 4 Dashboard Pages Translated
+## 2026-05-06 — Refactor i18n: 5 More Dashboard Pages (Approvals, Vault, Bank, Support)
 
-### Refactored Pages (PT/EN/AR/FR/ES)
-- **InvestmentsPage.jsx** — Header, KPI cards (Avg ROI), tabs (Opportunities / My Investments), opportunity cards (risk badges, fixed/variable rate, ROI total, duration days, pool % filled, Invest Now), my investments cards (Amount Invested, Fixed/Variable Return, Maturity, Total Return), invest dialog (Available Balance, Amount to Invest, Min/Max, Expected Return, lock warning, Cancel/Confirm Investment).
-- **ROIPage.jsx** — Completely rewritten using `t()` hooks. Header (Return on Investment / Track your investment performance), 4 KPI cards (Total Invested, Expected Returns, Realized Returns, Overall ROI), Investment Status panel (Active/Completed counts), ROI Comparison panel (Expected/Realized ROI bars), Investment Details table (Investment, Amount, Expected Return, ROI %, Status columns + status badges).
-- **LaunchpadPage.jsx** — Header (Launchpad / Participate in exclusive token sales), tabs (Token Sales / My Subscriptions with counters), status badges (Upcoming/Active/Completed/Sold Out/Cancelled), sub status (Pending/Confirmed/Distributed/Refunded), sale cards (Price, Hard Cap, Supply, "Starts in"/"Ends in" countdown labels, Participate / Already Subscribed), subscribe modal (Token, Price per token, Min/Max allocation, Available, Token amount, Total to pay, Confirm Subscription).
-- **StakingPage.jsx** — Header eyebrow ("Delegated Staking"), title, "New Stake" button, summary cards (Active Positions, Pending, Total Positions, Staked Assets), tabs (Positions/History), empty states (No staking positions / Click 'New Stake' to begin / No staking history), position actions (Claim, Unstake), error toasts (invalidAmount, compoundingRange, legacyMultiples, provError, stakeSuccess/Error, connError, etc.).
-- **ColdWalletPage.jsx** — Sidebar (KBEX Vault, Connected/Disconnected, Accounts, Add all accounts), main panel (Dashboard/Activity tabs, Send/Receive buttons, Portfolio header, "Connect your Trezor" empty state, Trezor Bridge / USB Connected / PIN Set badges, "My Assets" / "Activate more assets", Recent Transactions / View all, "To:" address prefix), Activity tab (Transaction History title, transactions count, "No transactions found for", table headers Type/Amount/Destination/Status/TX ID, Saved Addresses), Receive Modal (Receive {coin} title, Address {coin} label, "Send only ... to this address" warning, Copy Address button), Sync messages and toast translations.
+### Refactored Pages (PT/EN/AR/FR/ES — 100% audit coverage)
+- **ApprovalsPage.jsx** (`/dashboard/approvals`) — Multi-Sign Approvals: header & subtitle, pending badge (singular/plural), 5 filter tabs (All, Pending, Completed, Rejected, Cancelled), search placeholder, status badges (Approval in Progress / Risk Review / Signing / Sending / Successful / Rejected / Cancelled), "Send {asset}", "by {user}", "Expired" countdown.
+- **VaultWallets.jsx** (`/dashboard/vault/wallets`) — Sidebar (VAULTS, Overview, "New Vault" hint), card "Active/Empty" badges, vault detail (Qualified Wallet label, Receive/Send buttons, Coins/Transactions tabs, Search coin, Hide 0 balances, table headers Coin / Total Balance / Available Balance / Actions, "Send/Receive" row buttons, empty states "No coins found" / "No transactions"), Create Vault modal (title, label, placeholder, "vaults used", Cancel/Create Vault).
+- **VaultSignatories.jsx** (`/dashboard/vault/signatories`) — Header (Signatories, "Manage your authorized signatories and threshold settings", Add Signatory), Threshold Configuration card (Required Signatures, Timeout (hours), Save / Saving..., Threshold: X of Y), empty state ("No signatories configured" / "Add first signatory"), role labels (Admin/Signer/Viewer), Add Signatory dialog (Email/Name/Role labels & placeholders, Add button), all toasts (added/removed/saved/errors).
+- **BankAccountsPage.jsx** (`/dashboard/bank-accounts`) — Header (Bank Details, subtitle, Refresh, Add Account), Important Information info card, Primary badge, status badges (Verified/Pending/Rejected), inline labels (IBAN:/SWIFT:/Account:), Set as Primary button, "Rejection reason:" prefix, empty state ("No Bank Accounts" / "Add First Account"), all toasts (load/add/remove/set-primary errors and successes).
+- **SupportPage.jsx** (`/dashboard/support`) — Header (Support, subtitle, New Ticket), Knowledge Base quick link card, New Support Request modal (Subject/Category/Priority/Description with placeholders, category dropdown options General/Technical/Billing/KYC/Trading, priority dropdown Low/Medium/High/Urgent, Cancel/Create Ticket), tabs (Open(N) / Closed(N)), tickets list (Open Tickets / Closed Tickets card title, "messages" suffix, empty state, Create First Ticket), reply textarea placeholder, "Close ticket" tooltip, status badges (Open/In Progress/Awaiting Response/Resolved/Closed), priority badges, all toasts (created/sent/closed/errors).
 
 ### i18n Architecture
-- All new keys placed in `_extras.js` (deep-merged into 5 locales). 100% translation coverage validated by `node /app/scripts/i18n_audit.js`:
-  - PT: 2470 keys, 100%
-  - EN: 2469 keys, 100%
-  - FR: 2462 keys, 100%
-  - ES: 2474 keys, 100%
-  - AR: 2474 keys, 100%
-- Smoke-tested via screenshot tool: PT default + EN switched verified end-to-end on `/dashboard/investments`, `/dashboard/staking`, `/dashboard/launchpad`, `/dashboard/cold-wallet`.
+- ~150 new keys added under `approvalsPage.*`, `vaultWallets.*`, `vaultSignatories.*`, `bankAccountsPage.*`, `supportPage.*` namespaces, plus extending `common.loading`.
+- All PT/EN/AR/FR/ES locales filled. Audit (`node /app/scripts/i18n_audit.js`) reports **100% coverage** across all 5 languages, **0 orphan keys**.
 
-### Earlier sessions (preserved)
+### Verification
+- Lint: 0 issues across all 5 modified pages + `_extras.js`.
+- Smoke-test via screenshot tool: All 5 pages render correctly when language is switched to EN. Status badges, modals, table headers, and toasts all use the `t()` lookup.
+
+## 2026-05-05 — Refactor i18n: Investments / ROI / Launchpad / Staking / Cold Wallet
+- (See above session for full list).
+
+## Earlier
 - Mobile Stores Publishing Prep, i18n Audit Tool, PDF Viewer fix (HEAD method + CDN fallback), AdminUsers/CompliancePage/EscrowDealDetail refactors.

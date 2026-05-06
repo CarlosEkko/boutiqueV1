@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../i18n';
 import { getErrorMessage, formatDate} from '../../utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -27,6 +28,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const SupportPage = () => {
   const { token, user } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('tickets');
   const [loading, setLoading] = useState(false);
   const [tickets, setTickets] = useState([]);
@@ -64,7 +66,7 @@ const SupportPage = () => {
   const createTicket = async (e) => {
     e.preventDefault();
     if (!newTicket.subject || !newTicket.description) {
-      toast.error('Preencha todos os campos');
+      toast.error(t('supportPage.requireFields', 'Preencha todos os campos'));
       return;
     }
 
@@ -73,12 +75,12 @@ const SupportPage = () => {
       const response = await axios.post(`${API_URL}/api/kb/tickets`, newTicket, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Ticket ${response.data.ticket_number} criado com sucesso!`);
+      toast.success(t('supportPage.ticketCreated', 'Ticket {n} criado com sucesso!').replace('{n}', response.data.ticket_number));
       setNewTicket({ subject: '', description: '', category: 'general', priority: 'medium' });
       setShowNewTicket(false);
       fetchTickets();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao criar ticket'));
+      toast.error(getErrorMessage(err, t('supportPage.ticketCreateError', 'Erro ao criar ticket')));
     } finally {
       setSubmitting(false);
     }
@@ -86,7 +88,7 @@ const SupportPage = () => {
 
   const sendReply = async (ticketId) => {
     if (!replyText.trim()) {
-      toast.error('Escreva uma mensagem');
+      toast.error(t('supportPage.replyEmpty', 'Escreva uma mensagem'));
       return;
     }
 
@@ -96,16 +98,16 @@ const SupportPage = () => {
         { message: replyText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Mensagem enviada!');
+      toast.success(t('supportPage.replySent', 'Mensagem enviada!'));
       setReplyText('');
       
       // Reload ticket
       const response = await axios.get(`${API_URL}/api/kb/tickets/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTickets(tickets.map(t => t.id === ticketId ? response.data : t));
+      setTickets(tickets.map(t2 => t2.id === ticketId ? response.data : t2));
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao enviar mensagem'));
+      toast.error(getErrorMessage(err, t('supportPage.replyError', 'Erro ao enviar mensagem')));
     } finally {
       setSubmitting(false);
     }
@@ -116,20 +118,20 @@ const SupportPage = () => {
       await axios.post(`${API_URL}/api/kb/tickets/${ticketId}/close`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Ticket fechado');
+      toast.success(t('supportPage.closed', 'Ticket fechado'));
       fetchTickets();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao fechar ticket'));
+      toast.error(getErrorMessage(err, t('supportPage.closeError', 'Erro ao fechar ticket')));
     }
   };
 
   const getStatusBadge = (status) => {
     const styles = {
-      open: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Aberto' },
-      in_progress: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Em Progresso' },
-      waiting_customer: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: 'Aguardando Resposta' },
-      resolved: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Resolvido' },
-      closed: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Fechado' }
+      open: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: t('supportPage.stOpen', 'Aberto') },
+      in_progress: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: t('supportPage.stInProgress', 'Em Progresso') },
+      waiting_customer: { bg: 'bg-purple-500/20', text: 'text-purple-400', label: t('supportPage.stWaiting', 'Aguardando Resposta') },
+      resolved: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: t('supportPage.stResolved', 'Resolvido') },
+      closed: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: t('supportPage.stClosed', 'Fechado') }
     };
     const style = styles[status] || styles.open;
     return <Badge className={`${style.bg} ${style.text} border-0`}>{style.label}</Badge>;
@@ -137,10 +139,10 @@ const SupportPage = () => {
 
   const getPriorityBadge = (priority) => {
     const styles = {
-      low: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Baixa' },
-      medium: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Média' },
-      high: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Alta' },
-      urgent: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Urgente' }
+      low: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: t('supportPage.priLow', 'Baixa') },
+      medium: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: t('supportPage.priMedium', 'Média') },
+      high: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: t('supportPage.priHigh', 'Alta') },
+      urgent: { bg: 'bg-red-500/20', text: 'text-red-400', label: t('supportPage.priUrgent', 'Urgente') }
     };
     const style = styles[priority] || styles.medium;
     return <Badge className={`${style.bg} ${style.text} border-0`}>{style.label}</Badge>;
@@ -153,15 +155,15 @@ const SupportPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Suporte</h1>
-          <p className="text-gray-400">Gerir os seus pedidos de suporte</p>
+          <h1 className="text-2xl font-bold text-white">{t('supportPage.title', 'Suporte')}</h1>
+          <p className="text-gray-400">{t('supportPage.subtitle', 'Gerir os seus pedidos de suporte')}</p>
         </div>
         <Button
           onClick={() => setShowNewTicket(true)}
           className="bg-emerald-500 hover:bg-emerald-600"
         >
           <Plus size={16} className="mr-2" />
-          Novo Ticket
+          {t('supportPage.newTicket', 'Novo Ticket')}
         </Button>
       </div>
 
@@ -174,8 +176,8 @@ const SupportPage = () => {
                 <HelpCircle className="text-emerald-400" size={20} />
               </div>
               <div>
-                <div className="text-white font-medium">Base de Conhecimento</div>
-                <div className="text-sm text-gray-400">Encontre respostas rápidas</div>
+                <div className="text-white font-medium">{t('supportPage.kbTitle', 'Base de Conhecimento')}</div>
+                <div className="text-sm text-gray-400">{t('supportPage.kbSubtitle', 'Encontre respostas rápidas')}</div>
               </div>
             </CardContent>
           </Card>
@@ -193,16 +195,16 @@ const SupportPage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader>
-              <CardTitle className="text-white">Novo Pedido de Suporte</CardTitle>
+              <CardTitle className="text-white">{t('supportPage.modalTitle', 'Novo Pedido de Suporte')}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={createTicket} className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Assunto</label>
+                  <label className="text-sm text-gray-400 mb-1 block">{t('supportPage.labelSubject', 'Assunto')}</label>
                   <Input
                     value={newTicket.subject}
                     onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                    placeholder="Descreva brevemente o seu problema"
+                    placeholder={t('supportPage.subjectPh', 'Descreva brevemente o seu problema')}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     required
                   />
@@ -210,40 +212,40 @@ const SupportPage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Categoria</label>
+                    <label className="text-sm text-gray-400 mb-1 block">{t('supportPage.labelCategory', 'Categoria')}</label>
                     <select
                       value={newTicket.category}
                       onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
                     >
-                      <option value="general">Geral</option>
-                      <option value="technical">Técnico</option>
-                      <option value="billing">Faturação</option>
-                      <option value="kyc">KYC/Verificação</option>
-                      <option value="trading">Trading</option>
+                      <option value="general">{t('supportPage.catGeneral', 'Geral')}</option>
+                      <option value="technical">{t('supportPage.catTechnical', 'Técnico')}</option>
+                      <option value="billing">{t('supportPage.catBilling', 'Faturação')}</option>
+                      <option value="kyc">{t('supportPage.catKyc', 'KYC/Verificação')}</option>
+                      <option value="trading">{t('supportPage.catTrading', 'Trading')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 mb-1 block">Prioridade</label>
+                    <label className="text-sm text-gray-400 mb-1 block">{t('supportPage.labelPriority', 'Prioridade')}</label>
                     <select
                       value={newTicket.priority}
                       onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white"
                     >
-                      <option value="low">Baixa</option>
-                      <option value="medium">Média</option>
-                      <option value="high">Alta</option>
-                      <option value="urgent">Urgente</option>
+                      <option value="low">{t('supportPage.priLow', 'Baixa')}</option>
+                      <option value="medium">{t('supportPage.priMedium', 'Média')}</option>
+                      <option value="high">{t('supportPage.priHigh', 'Alta')}</option>
+                      <option value="urgent">{t('supportPage.priUrgent', 'Urgente')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">Descrição</label>
+                  <label className="text-sm text-gray-400 mb-1 block">{t('supportPage.labelDescription', 'Descrição')}</label>
                   <Textarea
                     value={newTicket.description}
                     onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                    placeholder="Descreva o seu problema em detalhe..."
+                    placeholder={t('supportPage.descriptionPh', 'Descreva o seu problema em detalhe...')}
                     className="bg-zinc-800 border-zinc-700 text-white"
                     rows={5}
                     required
@@ -257,14 +259,14 @@ const SupportPage = () => {
                     onClick={() => setShowNewTicket(false)}
                     className="flex-1 border-zinc-700"
                   >
-                    Cancelar
+                    {t('supportPage.cancel', 'Cancelar')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={submitting}
                     className="flex-1 bg-emerald-500 hover:bg-emerald-600"
                   >
-                    {submitting ? 'A criar...' : 'Criar Ticket'}
+                    {submitting ? t('supportPage.submitting', 'A criar...') : t('supportPage.submit', 'Criar Ticket')}
                   </Button>
                 </div>
               </form>
@@ -280,14 +282,14 @@ const SupportPage = () => {
           onClick={() => setActiveTab('tickets')}
           className={activeTab === 'tickets' ? 'bg-emerald-500' : 'border-zinc-700'}
         >
-          Abertos ({openTickets.length})
+          {t('supportPage.tabOpen', 'Abertos')} ({openTickets.length})
         </Button>
         <Button
           variant={activeTab === 'closed' ? 'default' : 'outline'}
           onClick={() => setActiveTab('closed')}
           className={activeTab === 'closed' ? 'bg-emerald-500' : 'border-zinc-700'}
         >
-          Fechados ({closedTickets.length})
+          {t('supportPage.tabClosed', 'Fechados')} ({closedTickets.length})
         </Button>
       </div>
 
@@ -295,7 +297,7 @@ const SupportPage = () => {
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-white">
-            {activeTab === 'tickets' ? 'Tickets Abertos' : 'Tickets Fechados'}
+            {activeTab === 'tickets' ? t('supportPage.ticketsOpen', 'Tickets Abertos') : t('supportPage.ticketsClosed', 'Tickets Fechados')}
           </CardTitle>
           <Button variant="outline" size="sm" className="border-zinc-700" onClick={fetchTickets}>
             <RefreshCw size={14} />
@@ -303,18 +305,18 @@ const SupportPage = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-gray-400">A carregar...</div>
+            <div className="text-center py-8 text-gray-400">{t('supportPage.loading', 'A carregar...')}</div>
           ) : (activeTab === 'tickets' ? openTickets : closedTickets).length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-              <p>Nenhum ticket encontrado</p>
+              <p>{t('supportPage.noTickets', 'Nenhum ticket encontrado')}</p>
               {activeTab === 'tickets' && (
                 <Button
                   variant="outline"
                   onClick={() => setShowNewTicket(true)}
                   className="mt-4 border-zinc-700"
                 >
-                  Criar Primeiro Ticket
+                  {t('supportPage.createFirst', 'Criar Primeiro Ticket')}
                 </Button>
               )}
             </div>
@@ -345,7 +347,7 @@ const SupportPage = () => {
                             <>
                               <span>•</span>
                               <MessageSquare size={12} />
-                              {ticket.messages.length} mensagens
+                              {ticket.messages.length} {t('supportPage.messages', 'mensagens')}
                             </>
                           )}
                         </div>
@@ -399,7 +401,7 @@ const SupportPage = () => {
                           <Textarea
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
-                            placeholder="Escreva a sua resposta..."
+                            placeholder={t('supportPage.replyPh', 'Escreva a sua resposta...')}
                             className="bg-zinc-800 border-zinc-700 text-white flex-1"
                             rows={2}
                           />
@@ -415,7 +417,7 @@ const SupportPage = () => {
                               variant="outline"
                               onClick={() => closeTicket(ticket.id)}
                               className="border-zinc-700 text-gray-400"
-                              title="Fechar ticket"
+                              title={t('supportPage.closeTicketTitle', 'Fechar ticket')}
                             >
                               <CheckCircle size={14} />
                             </Button>

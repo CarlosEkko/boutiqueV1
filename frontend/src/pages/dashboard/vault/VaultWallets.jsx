@@ -240,7 +240,7 @@ const VaultWallets = () => {
       <div className="w-56 flex-shrink-0 border-r border-zinc-800/50 bg-zinc-950/50 overflow-y-auto">
         <div className="p-4 border-b border-zinc-800/50 flex items-center justify-between">
           <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider" data-testid="cofres-title">
-            Cofres
+            {t('vaultWallets.cofresTitle', 'Cofres')}
           </h3>
           {isOmnibus && (
             <span className="text-[10px] text-zinc-600">{cofres.length}/{cofresMax}</span>
@@ -259,7 +259,7 @@ const VaultWallets = () => {
           >
             <div className={`w-2 h-2 rounded-sm bg-emerald-500`} />
             <span className={`text-sm ${!selectedCofre ? 'text-white font-medium' : 'text-zinc-400'}`}>
-              Visão Geral
+              {t('vaultWallets.overview', 'Visão Geral')}
             </span>
           </button>
 
@@ -322,7 +322,7 @@ const VaultWallets = () => {
               data-testid="add-cofre-btn"
             >
               <Plus size={14} className="text-zinc-600 group-hover:text-amber-500 transition-colors" />
-              <span className="text-sm text-zinc-600 group-hover:text-zinc-400 transition-colors">Novo Cofre</span>
+              <span className="text-sm text-zinc-600 group-hover:text-zinc-400 transition-colors">{t('vaultWallets.newCofreSidebar', 'Novo Cofre')}</span>
             </button>
           )}
         </div>
@@ -333,9 +333,9 @@ const VaultWallets = () => {
         {isOverview ? (
           /* === VISÃO GERAL === */
           <div className="p-6">
-            <h1 className="text-2xl font-light text-white mb-2" data-testid="overview-title">Visão Geral</h1>
+            <h1 className="text-2xl font-light text-white mb-2" data-testid="overview-title">{t('vaultWallets.overview', 'Visão Geral')}</h1>
             <p className="text-sm text-zinc-500 mb-4">
-              {cofres.length} cofre{cofres.length !== 1 ? 's' : ''} activo{cofres.length !== 1 ? 's' : ''}
+              {cofres.length} {cofres.length !== 1 ? t('vaultWallets.cofresActivePlural', 'cofres ativos') : t('vaultWallets.cofresActiveSingular', 'cofre ativo')}
             </p>
             {isOmnibus && <TierProgressTracker className="mb-6" />}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -355,7 +355,7 @@ const VaultWallets = () => {
                           <span className="text-white font-medium text-sm">{c.name}</span>
                         </div>
                         <Badge className={`text-[10px] ${hasBalance ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-zinc-800 text-zinc-500 border-zinc-700'}`}>
-                          {hasBalance ? 'Activo' : 'Vazio'}
+                          {hasBalance ? t('vaultWallets.stateActive', 'Ativo') : t('vaultWallets.stateEmpty', 'Vazio')}
                         </Badge>
                       </div>
                       <div className="space-y-1">
@@ -366,7 +366,7 @@ const VaultWallets = () => {
                           </div>
                         ))}
                         {(c.balances || []).filter(b => b.balance > 0).length === 0 && (
-                          <p className="text-zinc-600 text-xs">Sem saldo</p>
+                          <p className="text-zinc-600 text-xs">{t('vaultWallets.noBalance', 'Sem saldo')}</p>
                         )}
                       </div>
                     </CardContent>
@@ -381,7 +381,7 @@ const VaultWallets = () => {
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-zinc-500 mb-4" data-testid="cofre-breadcrumb">
               <span className="hover:text-zinc-300 cursor-pointer" onClick={() => setSelectedCofre(null)}>
-                Visão Geral
+                {t('vaultWallets.overview', 'Visão Geral')}
               </span>
               <ChevronRight size={14} />
               <span className="text-white">{selectedCofre.name}</span>
@@ -390,7 +390,7 @@ const VaultWallets = () => {
             {/* Header */}
             <div className="flex items-center gap-2 mb-1">
               <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-              <span className="text-zinc-400 text-sm">Qualified Wallet</span>
+              <span className="text-zinc-400 text-sm">{t('vaultWallets.qualifiedWallet', 'Carteira Qualificada')}</span>
               <Shield size={14} className="text-zinc-600" />
             </div>
             <h1 className="text-2xl font-light text-white mb-6" data-testid="cofre-name">{selectedCofre.name}</h1>
@@ -407,10 +407,10 @@ const VaultWallets = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Button onClick={() => navigate('/dashboard/crypto-deposit')} className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 rounded-lg" data-testid="cofre-receive-btn">
-                  <ArrowDownLeft size={16} className="mr-2" /> Receive
+                  <ArrowDownLeft size={16} className="mr-2" /> {t('vaultWallets.receive', 'Receber')}
                 </Button>
                 <Button onClick={() => navigate('/dashboard/vault/new')} variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white px-6 rounded-lg" data-testid="cofre-send-btn">
-                  <Send size={16} className="mr-2" /> Send
+                  <Send size={16} className="mr-2" /> {t('vaultWallets.send', 'Enviar')}
                 </Button>
               </div>
             </div>
@@ -425,7 +425,7 @@ const VaultWallets = () => {
                     className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                     data-testid={`tab-${tab}`}
                   >
-                    {tab === 'coins' ? 'Coins' : 'Transactions'}
+                    {tab === 'coins' ? t('vaultWallets.tabCoins', 'Moedas') : t('vaultWallets.tabTransactions', 'Transações')}
                     {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500" />}
                   </button>
                 ))}
@@ -438,20 +438,20 @@ const VaultWallets = () => {
                 <div className="flex items-center gap-4 mb-6 p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/50">
                   <div className="relative w-56">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                    <Input value={searchCoin} onChange={e => setSearchCoin(e.target.value)} placeholder="Search coin" className="bg-zinc-800/50 border-zinc-700 text-white pl-9 text-sm h-9" data-testid="search-coin" />
+                    <Input value={searchCoin} onChange={e => setSearchCoin(e.target.value)} placeholder={t('vaultWallets.searchCoin', 'Pesquisar moeda')} className="bg-zinc-800/50 border-zinc-700 text-white pl-9 text-sm h-9" data-testid="search-coin" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Checkbox id="hide-zero" checked={hideZero} onCheckedChange={setHideZero} className="border-zinc-600 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600" data-testid="hide-zero-checkbox" />
-                    <label htmlFor="hide-zero" className="text-sm text-zinc-400 cursor-pointer select-none">Hide 0 balances</label>
+                    <label htmlFor="hide-zero" className="text-sm text-zinc-400 cursor-pointer select-none">{t('vaultWallets.hideZero', 'Ocultar saldos a 0')}</label>
                   </div>
                 </div>
 
                 <div className="border border-zinc-800/50 rounded-xl overflow-hidden">
                   <div className="grid grid-cols-[1fr_180px_180px_140px] gap-4 px-6 py-3 bg-zinc-900/30 border-b border-zinc-800/50">
-                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium">Coin</span>
-                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">Total Balance</span>
-                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">Available Balance</span>
-                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">Actions</span>
+                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium">{t('vaultWallets.colCoin', 'Moeda')}</span>
+                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">{t('vaultWallets.colTotalBalance', 'Saldo Total')}</span>
+                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">{t('vaultWallets.colAvailableBalance', 'Saldo Disponível')}</span>
+                    <span className="text-xs uppercase tracking-wider text-zinc-500 font-medium text-right">{t('vaultWallets.colActions', 'Ações')}</span>
                   </div>
 
                   {loadingBalances ? (
@@ -461,7 +461,7 @@ const VaultWallets = () => {
                   ) : filteredBalances.length === 0 ? (
                     <div className="text-center py-16">
                       <Vault size={32} className="mx-auto text-zinc-700 mb-3" />
-                      <p className="text-zinc-500 text-sm">Sem moedas encontradas</p>
+                      <p className="text-zinc-500 text-sm">{t('vaultWallets.noCoins', 'Sem moedas encontradas')}</p>
                     </div>
                   ) : (
                     filteredBalances.map((coin, index) => {
@@ -494,10 +494,10 @@ const VaultWallets = () => {
                           </div>
                           <div className="flex items-center justify-end gap-2">
                             <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate('/dashboard/crypto-deposit'); }} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8 px-3 rounded" data-testid={`receive-${coin.symbol}`}>
-                              Receive
+                              {t('vaultWallets.receive', 'Receber')}
                             </Button>
                             <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate('/dashboard/vault/new'); }} className="text-zinc-400 hover:text-white text-xs h-8 px-3" data-testid={`send-${coin.symbol}`}>
-                              Send
+                              {t('vaultWallets.send', 'Enviar')}
                             </Button>
                           </div>
                         </div>
@@ -514,7 +514,7 @@ const VaultWallets = () => {
                 {transactions.length === 0 ? (
                   <div className="text-center py-16">
                     <Vault size={32} className="mx-auto text-zinc-700 mb-3" />
-                    <p className="text-zinc-500 text-sm">Sem transações</p>
+                    <p className="text-zinc-500 text-sm">{t('vaultWallets.noTransactions', 'Sem transações')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -525,7 +525,7 @@ const VaultWallets = () => {
                             <Send size={16} className={tx.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'} />
                           </div>
                           <div>
-                            <span className="text-white text-sm font-medium">Send {tx.asset}</span>
+                            <span className="text-white text-sm font-medium">{t('vaultWallets.send', 'Enviar')} {tx.asset}</span>
                             <p className="text-zinc-500 text-xs">{tx.order_number}</p>
                           </div>
                         </div>
@@ -542,7 +542,7 @@ const VaultWallets = () => {
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-500">Selecione um cofre</p>
+            <p className="text-zinc-500">{t('vaultWallets.selectCofre', 'Selecione um cofre')}</p>
           </div>
         )}
       </div>
@@ -551,30 +551,30 @@ const VaultWallets = () => {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-light">Novo Cofre</DialogTitle>
+            <DialogTitle className="text-lg font-light">{t('vaultWallets.newCofreTitle', 'Novo Cofre')}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <label className="text-xs text-zinc-500 uppercase tracking-wider mb-2 block">Nome do Cofre</label>
+            <label className="text-xs text-zinc-500 uppercase tracking-wider mb-2 block">{t('vaultWallets.cofreNameLabel', 'Nome do Cofre')}</label>
             <Input
               value={newCofreName}
               onChange={e => setNewCofreName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateCofre()}
-              placeholder="Ex: Cofre Operacional, Reservas, Trading..."
+              placeholder={t('vaultWallets.cofreNamePh', 'Ex: Cofre Operacional, Reservas, Trading...')}
               className="bg-zinc-800 border-zinc-700 text-white"
               autoFocus
               data-testid="new-cofre-name-input"
             />
             <p className="text-xs text-zinc-600 mt-2">
-              {cofres.length}/{cofresMax} cofres utilizados ({tier})
+              {cofres.length}/{cofresMax} {t('vaultWallets.cofresUsed', 'cofres utilizados')} ({tier})
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateModal(false)} className="border-zinc-700 text-zinc-400 hover:bg-zinc-800">
-              Cancelar
+              {t('vaultWallets.cancel', 'Cancelar')}
             </Button>
             <Button onClick={handleCreateCofre} disabled={creating || !newCofreName.trim()} className="bg-amber-600 hover:bg-amber-500 text-white" data-testid="create-cofre-submit">
               {creating ? <Loader2 size={16} className="animate-spin mr-2" /> : <Plus size={16} className="mr-2" />}
-              Criar Cofre
+              {t('vaultWallets.createCofre', 'Criar Cofre')}
             </Button>
           </DialogFooter>
         </DialogContent>
