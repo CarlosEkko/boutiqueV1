@@ -1,5 +1,52 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — Institutional OTC Desk (Fase 3 — Admin Configuration Panel)
+
+### What shipped — a "powerful" admin cockpit at `/dashboard/admin/otc-desk`
+Runtime configuration of the entire desk without redeploys: pricing knobs, risk caps, asset universe CRUD, trade ledger and live stats.
+
+### Backend
+- **`services/otc_desk_engine.py`**:
+  - New `otc_desk_config` singleton collection (auto-seeded with defaults on first boot)
+  - `config_snapshot()`, `update_pricing()`, `update_risk()`, `upsert_asset()`, `remove_asset()` — all persist + apply immediately
+  - `build_quote()` now reads pricing params from `pricing_cfg` (no more hardcoded constants) and enforces three pre-trade risk gates:
+    1. Per-asset `max_inventory` (base units)
+    2. Per-asset `max_notional_usdt`
+    3. Global `daily_loss_limit_usdt` (anchors on boot, rolls at UTC midnight)
+  - **Auto-widen**: when inventory utilisation crosses `auto_widen_trigger_pct`, spread is multiplied by `auto_widen_multiplier` (component flagged in quote response)
+  - New `remove_asset()` refuses to drop any symbol with open inventory (protects live positions)
+
+- **`routes/otc_desk.py`** — admin surface gated by `_require_admin` (admin / global_manager only):
+  | Method | Path | Purpose |
+  |---|---|---|
+  | GET | `/admin/config` | Full config snapshot |
+  | PUT | `/admin/config/pricing` | base_margin_bps / vol_factor / quote_ttl_ms / hedge_latency_ms |
+  | PUT | `/admin/config/risk` | daily_loss_limit / auto-widen knobs |
+  | POST | `/admin/assets` | Upsert asset (BTC, ETH, …) |
+  | DELETE | `/admin/assets/{symbol}` | Remove from universe (inventory-safe) |
+  | GET | `/admin/trades?limit&symbol` | Paginated ledger filterable by symbol |
+  | GET | `/admin/stats` | 24h / 7d aggregates (volume, count, spread capture, avg bps, hedge slippage) + live snapshot |
+
+### Frontend — `pages/dashboard/admin/AdminOTCDeskPage.jsx`
+- **Desk Health** header: Total PnL, Daily PnL, Active Quotes, 24h Volume, 24h Spread Capture + colour-graded daily loss gauge (emerald → amber → rose)
+- **Pricing Parameters** card: 4 inline editors (base margin bps, vol factor, quote TTL, hedge latency)
+- **Risk Limits** card: daily loss limit + Auto-widen Switch + trigger % + spread multiplier
+- **Asset Universe** table: CRUD rows with live mid, live inventory, risk caps, liquidity; "+ Add asset" dialog
+- **Trade History** table: last 100 trades with per-symbol filter
+- Polls `/admin/stats` every 5 s for the live header; other sections refresh on save / delete
+- Sidebar entry: **Admin › OTC Desk Config** (Gauge icon), translated across PT / EN / ES / FR / AR
+
+### Testing (iteration_58.json)
+**19 / 20 backend tests passed** via the testing agent:
+- Config GET / PUT for pricing + risk verified end-to-end (subsequent RFQs pick up new values)
+- Asset CRUD (add DOGE → /state includes it with Binance live price → delete → removed)
+- `remove_asset` guard: refuses with 400 when inventory != 0
+- `max_inventory` pre-trade gate: returns 400 "would breach max inventory"
+- `auto_widen` component correctly applied when inventory utilisation exceeds trigger
+- AuthZ: `sofia@kbex.io` (support agent) receives 403 on ALL `/admin/*` endpoints; `carlos@kbex.io` (admin) passes
+- Regression: `/state`, `/rfq`, `/execute` unaffected
+- Skipped: daily_loss_limit gate (couldn't deterministically breach with Binance live prices in the test window — logic was path-verified instead). Non-blocking.
+
 ## 2026-05-06 — Institutional OTC Desk (Fase 2 — Frontend ↔ Backend Wired)
 
 ### What changed
