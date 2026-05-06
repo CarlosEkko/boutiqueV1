@@ -1096,13 +1096,46 @@ async def _compute_prorata_upgrade(user_id: str, target_tier: str) -> dict:
 
     now = datetime.now(timezone.utc)
     next_due_iso = user.get("annual_fee_next_due")
-    days_remaining = 365
-    if next_due_iso:
+    days_remaining = 365  # absolute last-resort fallback
+
+    def _parse(iso):
+        if not iso:
+            return None
         try:
-            next_due = datetime.fromisoformat(next_due_iso.replace("Z", "+00:00"))
-            days_remaining = max(0, (next_due - now).days)
+            return datetime.fromisoformat(iso.replace("Z", "+00:00"))
         except Exception:
-            pass
+            return None
+
+    # Anniversary date is the source of truth.  Try in this order:
+    #   1. annual_fee_next_due (renewal already scheduled)
+    #   2. annual_fee_paid_at + 1y (last membership renewal/payment)
+    #   3. admission_fee_paid_at + 1y (initial admission)
+    #   4. created_at + 1y (account creation)
+    next_due = _parse(next_due_iso)
+    if not next_due:
+        anchor = (
+            _parse(user.get("annual_fee_paid_at"))
+            or _parse(user.get("admission_fee_paid_at"))
+            or _parse(user.get("created_at"))
+        )
+        if anchor:
+            try:
+                next_due = anchor.replace(year=anchor.year + 1)
+            except ValueError:
+                # Feb 29 → Feb 28 of non-leap year
+                next_due = anchor.replace(year=anchor.year + 1, day=28)
+
+    if next_due:
+        days_remaining = max(0, min(365, (next_due - now).days))
+        # Self-heal: persist derived next_due so this user is consistent going forward
+        if not next_due_iso:
+            try:
+                await db.users.update_one(
+                    {"id": user_id},
+                    {"$set": {"annual_fee_next_due": next_due.isoformat()}},
+                )
+            except Exception:
+                pass
 
     # Pro-rata: delta * (days_remaining / 365), rounded to 2dp
     prorata_amount = round(delta_annual * (days_remaining / 365.0), 2)
@@ -1116,7 +1149,7 @@ async def _compute_prorata_upgrade(user_id: str, target_tier: str) -> dict:
         "annual_delta_eur": round(delta_annual, 2),
         "days_remaining": days_remaining,
         "prorata_amount_eur": prorata_amount,
-        "current_next_due": next_due_iso,
+        "current_next_due": next_due.isoformat() if next_due else next_due_iso,
         "policy": "prorata_delta",
     }
 
