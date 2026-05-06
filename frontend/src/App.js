@@ -136,6 +136,7 @@ import EscrowDeals from "./pages/dashboard/escrow/EscrowDeals";
 import FeeLedger from "./pages/dashboard/escrow/FeeLedger";
 import EscrowReports from "./pages/dashboard/escrow/EscrowReports";
 import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 import { LanguageProvider } from "./i18n";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
@@ -204,6 +205,7 @@ const fetchMyPermissions = async (token) => {
 const DeptRoute = ({ depts = [] }) => {
   const { user, token, isAuthenticated, loading } = useAuth();
   const [perms, setPerms] = React.useState(null);
+  const location = useLocation();
 
   React.useEffect(() => {
     if (!isAuthenticated || !token) return;
@@ -220,12 +222,34 @@ const DeptRoute = ({ depts = [] }) => {
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
 
   // Admin / global_manager always pass
-  const isAdmin = !!(user?.is_admin || user?.internal_role === 'admin' || perms?.is_admin || perms?.internal_role === 'admin' || perms?.internal_role === 'global_manager');
+  const isAdmin = !!(
+    user?.is_admin ||
+    user?.internal_role === 'admin' ||
+    perms?.is_admin ||
+    perms?.internal_role === 'admin' ||
+    perms?.internal_role === 'global_manager'
+  );
   if (isAdmin) return <Outlet />;
 
   const userDepts = new Set(perms?.departments || []);
   const allowed = depts.some((d) => userDepts.has(d));
-  if (!allowed) return <Navigate to="/dashboard" replace />;
+  if (!allowed) {
+    // Show a toast once per redirect so the user understands why nothing happened.
+    // Guard against the React strict-mode double-effect by using a session marker
+    // keyed on the path.
+    const marker = `__access_denied_${location.pathname}`;
+    if (typeof window !== 'undefined' && !window[marker]) {
+      window[marker] = true;
+      setTimeout(() => { delete window[marker]; }, 5000);
+      toast.error('Sem permissão para esta área. Contacte um administrador.', {
+        description: depts.length === 1
+          ? `Departamento necessário: ${depts[0]}`
+          : `Departamentos aceites: ${depts.join(', ')}`,
+        duration: 4000,
+      });
+    }
+    return <Navigate to="/dashboard" replace />;
+  }
   return <Outlet />;
 };
 
