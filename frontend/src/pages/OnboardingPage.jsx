@@ -383,34 +383,69 @@ const OnboardingPage = () => {
                 </Badge>
               </div>
 
-              {admissionStatus.pending_payment ? (
-                // Payment already requested
+              {admissionStatus.pending_payment && admissionStatus.pending_payment.payment_method ? (
+                // Payment ALREADY initiated with a method — wait for confirmation
                 <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                     <Clock className="text-amber-400" size={24} />
                     <div>
                       <p className="text-amber-400 font-medium">Pagamento Pendente</p>
                       <p className="text-amber-300/80 text-sm">
-                        {admissionStatus.pending_payment.amount} EUR
+                        {admissionStatus.pending_payment.amount} EUR · {(() => {
+                          const m = admissionStatus.pending_payment.payment_method;
+                          if (m === 'fiat_balance') return 'Saldo Fiat';
+                          if (m === 'crypto') return 'Crypto';
+                          if (m === 'stripe') return 'Cartão (Stripe)';
+                          if (m === 'bank_transfer') return 'Transferência Bancária';
+                          return m;
+                        })()}
                       </p>
                     </div>
                   </div>
                   <p className="text-gray-400 text-sm mt-3">
-                    O seu pagamento está a aguardar confirmação do administrador. 
+                    O seu pagamento está a aguardar confirmação do administrador.
                     Será notificado quando for aprovado.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-4 border-zinc-600 text-white"
-                    onClick={checkOnboardingStatus}
-                    disabled={loading}
-                  >
-                    <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    {loading ? 'A verificar...' : 'Verificar Estado'}
-                  </Button>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-zinc-600 text-white"
+                      onClick={checkOnboardingStatus}
+                      disabled={loading}
+                    >
+                      <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+                      {loading ? 'A verificar...' : 'Verificar Estado'}
+                    </Button>
+                    {/* Allow switching method only when nothing was actually charged yet
+                        (Stripe checkout abandonment). Fiat/crypto/manual stay locked. */}
+                    {admissionStatus.pending_payment.payment_method === 'stripe' &&
+                     !admissionStatus.pending_payment.paid_at && (
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-amber-500/40 text-amber-300 hover:bg-amber-900/20"
+                        onClick={async () => {
+                          try {
+                            await axios.post(
+                              `${API_URL}/api/referrals/admission-fee/cancel-pending`,
+                              {},
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            toast.success('Método de pagamento limpo. Pode escolher outro agora.');
+                            await checkOnboardingStatus();
+                            openAdmissionPicker();
+                          } catch (err) {
+                            toast.error(err?.response?.data?.detail || 'Erro a cancelar pagamento pendente');
+                          }
+                        }}
+                        data-testid="onboarding-change-payment-method-btn"
+                      >
+                        Mudar método de pagamento
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : (
-                // Show payment options
+                // No payment yet OR pending without a method chosen — let the user pick again
                 <>
                   <div className="bg-zinc-800/50 rounded-lg p-4 text-center">
                     <p className="text-gray-400 text-sm mb-2">Valor da Taxa de Admissão</p>

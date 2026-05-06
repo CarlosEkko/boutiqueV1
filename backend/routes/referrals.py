@@ -730,6 +730,61 @@ async def get_admission_fee_status(user_id: str):
     }
 
 
+@router.post("/admission-fee/cancel-pending")
+async def cancel_pending_admission(user_id: str = Depends(get_current_user_id)):
+    """Cancel a pending admission_payment that hasn't been settled yet.
+    Lets the client change their mind (Stripe → Crypto → Fiat) without being
+    locked in on a method they never completed.
+
+    Cancelled cases:
+      1. status='pending' AND payment_method is empty/None (picker abandoned)
+      2. status='pending' AND payment_method='stripe' AND paid_at is empty
+         (Stripe checkout abandoned — no funds moved)
+
+    NOT cancelled (admin reconciliation required):
+      - payment_method='fiat_balance' (balance debited)
+      - payment_method='crypto' (intent created)
+      - payment_method='bank_transfer' (manual upload)
+      - any row with paid_at set
+    """
+    base_filter = {
+        "user_id": user_id,
+        "status": "pending",
+        "$or": [
+            {"fee_type": "admission"},
+            {"fee_type": {"$exists": False}},
+            {"fee_type": None},
+        ],
+    }
+    # Delete picker-abandoned rows (no method)
+    no_method = await db.admission_payments.delete_many({
+        **base_filter,
+        "$and": [{
+            "$or": [
+                {"payment_method": {"$exists": False}},
+                {"payment_method": None},
+                {"payment_method": ""},
+            ]
+        }],
+    })
+    # Delete Stripe-abandoned rows (method=stripe, no paid_at)
+    stripe_abandoned = await db.admission_payments.delete_many({
+        **base_filter,
+        "payment_method": "stripe",
+        "$or": [
+            {"paid_at": {"$exists": False}},
+            {"paid_at": None},
+            {"paid_at": ""},
+        ],
+    })
+    return {
+        "success": True,
+        "cancelled": no_method.deleted_count + stripe_abandoned.deleted_count,
+        "no_method_cancelled": no_method.deleted_count,
+        "stripe_abandoned_cancelled": stripe_abandoned.deleted_count,
+    }
+
+
 @router.post("/admission-fee/request")
 async def request_admission_fee_payment(
     currency: str = "EUR",

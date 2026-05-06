@@ -162,6 +162,21 @@ const AdminAdmissionFees = () => {
     return <Badge className={colors[tier] || colors.standard}>{tier?.toUpperCase() || 'STANDARD'}</Badge>;
   };
 
+  const getMethodBadge = (method) => {
+    if (!method) {
+      return <Badge className="bg-zinc-700/40 text-zinc-400 text-xs">— Sem método</Badge>;
+    }
+    const map = {
+      stripe: { label: 'Cartão (Stripe)', cls: 'bg-indigo-500/20 text-indigo-300' },
+      fiat_balance: { label: 'Saldo Fiat', cls: 'bg-emerald-500/20 text-emerald-300' },
+      crypto: { label: 'Crypto', cls: 'bg-orange-500/20 text-orange-300' },
+      bank_transfer: { label: 'Transferência Bancária', cls: 'bg-blue-500/20 text-blue-300' },
+      manual: { label: 'Manual (Admin)', cls: 'bg-purple-500/20 text-purple-300' },
+    };
+    const info = map[method] || { label: method, cls: 'bg-zinc-500/20 text-zinc-300' };
+    return <Badge className={`${info.cls} text-xs`}>{info.label}</Badge>;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -271,6 +286,7 @@ const AdminAdmissionFees = () => {
                   <TableHead className="text-gray-400">Cliente</TableHead>
                   <TableHead className="text-gray-400">Tier</TableHead>
                   <TableHead className="text-gray-400">Valor</TableHead>
+                  <TableHead className="text-gray-400">Método</TableHead>
                   <TableHead className="text-gray-400">Data</TableHead>
                   <TableHead className="text-gray-400">Estado</TableHead>
                   <TableHead className="text-gray-400 text-right">Ações</TableHead>
@@ -294,6 +310,7 @@ const AdminAdmissionFees = () => {
                     <TableCell className="text-white font-medium">
                       {formatAmount(payment.amount, payment.currency)}
                     </TableCell>
+                    <TableCell>{getMethodBadge(payment.payment_method)}</TableCell>
                     <TableCell className="text-gray-400 text-sm">
                       {formatDate(payment.created_at)}
                     </TableCell>
@@ -368,6 +385,10 @@ const AdminAdmissionFees = () => {
                 <span className="text-green-400 font-medium">
                   {formatAmount(selectedPayment.amount, selectedPayment.currency)}
                 </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Método de pagamento:</span>
+                {getMethodBadge(selectedPayment.payment_method)}
               </div>
             </div>
           )}
