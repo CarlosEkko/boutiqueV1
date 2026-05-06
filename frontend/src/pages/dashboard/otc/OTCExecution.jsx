@@ -59,10 +59,25 @@ const OTCExecution = () => {
   const [executedPrice, setExecutedPrice] = useState('');
   const [deliveryTxHash, setDeliveryTxHash] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [checkingFunds, setCheckingFunds] = useState(false);
+  const [autoWatch, setAutoWatch] = useState(true);
+  const [approveComment, setApproveComment] = useState('');
+  const [sendingDelivery, setSendingDelivery] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  // Auto-poll Fireblocks/Revolut for funds while a pending execution is open
+  useEffect(() => {
+    if (!autoWatch || !executionData) return;
+    if (executionData.status !== 'pending_funds') return;
+    const id = setInterval(() => {
+      handleCheckFunds(true); // silent
+    }, 30000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoWatch, executionData?.id, executionData?.status]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -180,6 +195,117 @@ const OTCExecution = () => {
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao completar execução');
+    }
+  };
+
+  const refreshExecution = async (id) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/otc/executions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setExecutionData(res.data);
+      return res.data;
+    } catch (err) {
+      console.error('Failed to refresh execution', err);
+    }
+  };
+
+  const handleSetFundingMode = async (mode) => {
+    if (!executionData) return;
+    try {
+      await axios.post(
+        `${API_URL}/api/otc/executions/${executionData.id}/set-funding-mode`,
+        null,
+        { params: { funding_type: mode }, headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(mode === 'prefunded' ? 'Modo definido: Pre-funded' : 'Modo definido: Post-funded');
+      await refreshExecution(executionData.id);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao definir modo de funding');
+    }
+  };
+
+  const handleCheckFunds = async (silent = false) => {
+    if (!executionData) return;
+    setCheckingFunds(true);
+    try {
+      const res = await axios.get(
+        `${API_URL}/api/otc/executions/${executionData.id}/check-funds`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const { detected, expected, expected_asset, source, funds_ok, auto_advanced } = res.data;
+      if (!silent) {
+        if (funds_ok) toast.success(`Fundos detectados: ${detected} ${expected_asset} via ${source}`);
+        else toast.info(`Detectado ${detected || 0} / esperado ${expected} ${expected_asset} (${source})`);
+      } else if (auto_advanced) {
+        toast.success(`Fundos detectados automaticamente! ${detected} ${expected_asset}`);
+      }
+      await refreshExecution(executionData.id);
+    } catch (err) {
+      if (!silent) toast.error(err.response?.data?.detail || 'Erro na verificação de fundos');
+    } finally {
+      setCheckingFunds(false);
+    }
+  };
+
+  const handleExecuteTrade = async () => {
+    if (!executionData || !executedPrice) return;
+    try {
+      await axios.post(
+        `${API_URL}/api/otc/executions/${executionData.id}/execute-trade`,
+        null,
+        {
+          params: { executed_price: parseFloat(executedPrice) },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success('Trade executado. Aguardando aprovação para entrega.');
+      await refreshExecution(executionData.id);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao executar trade');
+    }
+  };
+
+  const handleApproveDelivery = async () => {
+    if (!executionData) return;
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/otc/executions/${executionData.id}/approve-delivery`,
+        null,
+        {
+          params: { comment: approveComment || null },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      const { approvals_count, approvals_required, fully_approved } = res.data;
+      toast.success(`Aprovação registada (${approvals_count}/${approvals_required})${fully_approved ? ' — pronto para envio' : ''}`);
+      setApproveComment('');
+      await refreshExecution(executionData.id);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao aprovar entrega');
+    }
+  };
+
+  const handleSendDelivery = async () => {
+    if (!executionData) return;
+    setSendingDelivery(true);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/otc/executions/${executionData.id}/send-delivery`,
+        null,
+        {
+          params: { delivery_address: deliveryAddress || null, fee_level: 'MEDIUM' },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      toast.success(`Entrega enviada via ${res.data.venue}. TX: ${res.data.tx_hash || 'manual'}`);
+      setShowExecutionDialog(false);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao enviar entrega');
+    } finally {
+      setSendingDelivery(false);
     }
   };
   const getExecutionStatusBadge = (status) => {
@@ -603,92 +729,205 @@ const OTCExecution = () => {
                     </div>
                   </div>
 
-                  {/* Step 1: Confirm Funds */}
-                  {executionData.status === 'pending_funds' && (
-                    <div className="p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/30">
-                      <h4 className="text-yellow-400 font-medium mb-3 flex items-center gap-2">
-                        <Wallet size={18} />
-                        Passo 1: Confirmar Receção de Fundos
+                  {/* Funding Mode selector — visible until trader confirms */}
+                  {!executionData.funding_type_confirmed && (
+                    <div className="p-4 bg-blue-900/15 rounded-lg border border-blue-500/30">
+                      <h4 className="text-blue-300 font-medium mb-2 flex items-center gap-2">
+                        <Wallet size={18} /> Modo de Funding
                       </h4>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label>Valor Recebido ({executionData.funds_expected_asset})</Label>
-                          <Input
-                            type="number" step="any"
-                            step="0.01"
-                            value={fundsAmount}
-                            onChange={(e) => setFundsAmount(e.target.value)}
-                            placeholder={String(executionData.funds_expected)}
-                            className="bg-zinc-800 border-gold-500/30"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>TX Hash / Referência (opcional)</Label>
-                          <Input
-                            value={fundsTxHash}
-                            onChange={(e) => setFundsTxHash(e.target.value)}
-                            placeholder="0x... ou referência bancária"
-                            className="bg-zinc-800 border-gold-500/30"
-                          />
-                        </div>
+                      <p className="text-gray-400 text-xs mb-3">
+                        {executionData.funding_type_suggested
+                          ? `Sugerido pelo cliente: ${executionData.funding_type_suggested}`
+                          : 'Confirme o fluxo de fundos antes de continuar:'}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
                         <Button
-                          onClick={handleConfirmFunds}
-                          disabled={!fundsAmount}
-                          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black"
+                          onClick={() => handleSetFundingMode('prefunded')}
+                          variant={executionData.funding_type === 'prefunded' ? 'default' : 'outline'}
+                          className={executionData.funding_type === 'prefunded' ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/20'}
+                          data-testid="funding-mode-prefunded"
                         >
-                          <CheckCircle size={16} className="mr-2" />
-                          Confirmar Fundos Recebidos
+                          Pre-funded
+                          <span className="block text-xs opacity-70">Cliente já enviou os fundos</span>
+                        </Button>
+                        <Button
+                          onClick={() => handleSetFundingMode('post_funded')}
+                          variant={executionData.funding_type === 'post_funded' ? 'default' : 'outline'}
+                          className={executionData.funding_type === 'post_funded' ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'border-purple-500/40 text-purple-300 hover:bg-purple-900/20'}
+                          data-testid="funding-mode-post"
+                        >
+                          Post-funded
+                          <span className="block text-xs opacity-70">Cliente envia, depois entregamos</span>
                         </Button>
                       </div>
                     </div>
                   )}
 
-                  {/* Step 2: Complete Execution */}
-                  {executionData.status === 'funds_received' && (
-                    <div className="p-4 bg-green-900/20 rounded-lg border border-green-500/30">
-                      <h4 className="text-green-400 font-medium mb-3 flex items-center gap-2">
-                        <Send size={18} />
-                        Passo 2: Completar Execução e Enviar Entrega
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label>Preço de Execução ({selectedDeal.quote_asset})</Label>
+                  {/* Step 1: Funds detection (auto + manual fallback) */}
+                  {executionData.funding_type_confirmed && executionData.status === 'pending_funds' && (
+                    <div className="p-4 bg-yellow-900/15 rounded-lg border border-yellow-500/30">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-yellow-300 font-medium flex items-center gap-2">
+                          <Wallet size={18} />
+                          Passo 1: Receção de Fundos ({executionData.funding_type === 'prefunded' ? 'Pre-funded' : 'Post-funded'})
+                        </h4>
+                        <label className="text-xs text-gray-400 flex items-center gap-1 cursor-pointer">
+                          <input type="checkbox" checked={autoWatch} onChange={e => setAutoWatch(e.target.checked)} data-testid="auto-watch-toggle" />
+                          Auto-watch (30s)
+                        </label>
+                      </div>
+                      <div className="bg-zinc-900/60 rounded-md p-3 mb-3 grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <p className="text-gray-500 text-xs">Esperado</p>
+                          <p className="text-white font-mono">{formatNumber(executionData.funds_expected)} {executionData.funds_expected_asset}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Detectado</p>
+                          <p className={(executionData.detected_balance || 0) >= (executionData.funds_expected || 0) && executionData.detected_balance > 0 ? 'text-emerald-400 font-mono' : 'text-zinc-300 font-mono'}>
+                            {formatNumber(executionData.detected_balance || 0)} {executionData.funds_expected_asset}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500 text-xs">Fonte</p>
+                          <p className="text-zinc-300 text-xs">{executionData.detected_source || '—'}</p>
+                          {executionData.last_balance_check_at && (
+                            <p className="text-zinc-500 text-xs truncate">{formatDate(executionData.last_balance_check_at)}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mb-3">
+                        <Button
+                          onClick={() => handleCheckFunds(false)}
+                          disabled={checkingFunds}
+                          className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black"
+                          data-testid="btn-check-funds"
+                        >
+                          <RefreshCw size={14} className={`mr-2 ${checkingFunds ? 'animate-spin' : ''}`} />
+                          Verificar Agora ({executionData.funds_expected_asset && ['BTC','ETH','USDT','USDC','BNB','SOL','XRP','ADA','MATIC'].includes(executionData.funds_expected_asset.toUpperCase()) ? 'Cofre' : 'Banco/EMI'})
+                        </Button>
+                      </div>
+                      <details className="text-xs">
+                        <summary className="text-gray-400 cursor-pointer">Confirmar manualmente</summary>
+                        <div className="space-y-2 pt-3">
                           <Input
                             type="number" step="any"
-                            step="0.01"
-                            value={executedPrice}
-                            onChange={(e) => setExecutedPrice(e.target.value)}
-                            placeholder={String(selectedDeal.final_price || 0)}
+                            value={fundsAmount}
+                            onChange={(e) => setFundsAmount(e.target.value)}
+                            placeholder={String(executionData.funds_expected)}
                             className="bg-zinc-800 border-gold-500/30"
                           />
+                          <Input
+                            value={fundsTxHash}
+                            onChange={(e) => setFundsTxHash(e.target.value)}
+                            placeholder="TX hash / referência bancária (opcional)"
+                            className="bg-zinc-800 border-gold-500/30"
+                          />
+                          <Button
+                            onClick={handleConfirmFunds}
+                            disabled={!fundsAmount}
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-yellow-500/40 text-yellow-300"
+                          >
+                            Confirmar Manualmente
+                          </Button>
                         </div>
-                        <div className="space-y-2">
-                          <Label>Endereço de Entrega (opcional)</Label>
+                      </details>
+                    </div>
+                  )}
+
+                  {/* Step 2: Execute Trade (no money moved) */}
+                  {executionData.status === 'funds_received' && (
+                    <div className="p-4 bg-blue-900/15 rounded-lg border border-blue-500/30">
+                      <h4 className="text-blue-300 font-medium mb-3 flex items-center gap-2">
+                        <Zap size={18} /> Passo 2: Executar Trade
+                      </h4>
+                      <p className="text-gray-400 text-xs mb-3">
+                        Marca o trade como executado. <strong>Os fundos só são enviados ao cliente após aprovação no Passo 3.</strong>
+                      </p>
+                      <div className="space-y-2">
+                        <Label>Preço de Execução ({selectedDeal.quote_asset})</Label>
+                        <Input
+                          type="number" step="any"
+                          value={executedPrice}
+                          onChange={(e) => setExecutedPrice(e.target.value)}
+                          placeholder={String(selectedDeal.final_price || 0)}
+                          className="bg-zinc-800 border-gold-500/30"
+                        />
+                        <Button
+                          onClick={handleExecuteTrade}
+                          disabled={!executedPrice}
+                          className="w-full bg-blue-500 hover:bg-blue-400 text-white"
+                          data-testid="btn-execute-trade"
+                        >
+                          <Zap size={16} className="mr-2" /> Executar Trade
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Approve & Send Delivery (multi-sign) */}
+                  {executionData.status === 'executing' && (
+                    <div className="p-4 bg-emerald-900/15 rounded-lg border border-emerald-500/30">
+                      <h4 className="text-emerald-300 font-medium mb-3 flex items-center gap-2">
+                        <Send size={18} /> Passo 3: Aprovar e Enviar Entrega
+                      </h4>
+                      <div className="bg-zinc-900/60 rounded-md p-3 mb-3 text-sm">
+                        <p className="text-gray-500 text-xs mb-1">Aprovações:</p>
+                        {(executionData.delivery_approvals || []).length === 0 ? (
+                          <p className="text-zinc-400 italic text-xs">Nenhuma ainda</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {executionData.delivery_approvals.map((a, i) => (
+                              <li key={i} className="text-emerald-300 text-xs flex items-center gap-2">
+                                <CheckCircle size={12} />
+                                <span>{a.user_name} ({a.role}) — {formatDate(a.approved_at)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      {!executionData.delivery_approved_at && (
+                        <div className="space-y-2 mb-3">
+                          <Input
+                            value={approveComment}
+                            onChange={e => setApproveComment(e.target.value)}
+                            placeholder="Comentário de aprovação (opcional)"
+                            className="bg-zinc-800 border-gold-500/30"
+                          />
+                          <Button
+                            onClick={handleApproveDelivery}
+                            variant="outline"
+                            className="w-full border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/20"
+                            data-testid="btn-approve-delivery"
+                          >
+                            <CheckCircle size={14} className="mr-2" /> Aprovar Entrega
+                          </Button>
+                        </div>
+                      )}
+                      {executionData.delivery_approved_at && (
+                        <div className="space-y-2 pt-2 border-t border-emerald-500/20">
+                          <Label>Endereço/IBAN de Entrega</Label>
                           <Input
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="Endereço crypto ou IBAN"
+                            placeholder={['BTC','ETH','USDT','USDC'].includes((executionData.delivery_asset || '').toUpperCase()) ? 'bc1q... / 0x...' : 'IBAN'}
                             className="bg-zinc-800 border-gold-500/30"
                           />
+                          <Button
+                            onClick={handleSendDelivery}
+                            disabled={sendingDelivery}
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black"
+                            data-testid="btn-send-delivery"
+                          >
+                            <Send size={16} className={`mr-2 ${sendingDelivery ? 'animate-pulse' : ''}`} />
+                            {sendingDelivery ? 'A enviar...' : 'Enviar Agora (Cofre / EMI)'}
+                          </Button>
+                          <p className="text-xs text-gray-500 italic">
+                            Crypto via cofre institucional · Fiat via EMI integrado
+                          </p>
                         </div>
-                        <div className="space-y-2">
-                          <Label>TX Hash de Entrega (opcional)</Label>
-                          <Input
-                            value={deliveryTxHash}
-                            onChange={(e) => setDeliveryTxHash(e.target.value)}
-                            placeholder="0x..."
-                            className="bg-zinc-800 border-gold-500/30"
-                          />
-                        </div>
-                        <Button
-                          onClick={handleCompleteExecution}
-                          disabled={!executedPrice}
-                          className="w-full bg-green-500 hover:bg-green-400 text-black"
-                        >
-                          <CheckCircle size={16} className="mr-2" />
-                          Completar Execução
-                        </Button>
-                      </div>
+                      )}
                     </div>
                   )}
 

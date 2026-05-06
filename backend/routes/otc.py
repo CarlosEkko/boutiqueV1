@@ -2490,6 +2490,384 @@ async def complete_execution(
     return {"success": True, "message": "Execution completed, moved to settlement"}
 
 
+# ==================== NEW: FUNDING MODE + AUTO-DETECT + 2-STEP DELIVERY ====================
+
+# Roles that can confirm funding mode and approve delivery
+EXEC_AUTHORIZED_ROLES = {
+    "admin",
+    "global_manager",
+    "finance_general",   # Financeiro Global
+    "finance_local",     # Financeiro Local
+    "finance",           # Financeiro
+}
+
+
+def _is_exec_authorized(user) -> bool:
+    """True if user can confirm funding/approve delivery."""
+    if not user:
+        return False
+    is_admin = getattr(user, "is_admin", None)
+    if is_admin is None and isinstance(user, dict):
+        is_admin = user.get("is_admin", False)
+    if is_admin:
+        return True
+    role = getattr(user, "internal_role", None)
+    if role is None and isinstance(user, dict):
+        role = user.get("internal_role")
+    return role in EXEC_AUTHORIZED_ROLES
+
+
+def _u(user, key, default=None):
+    """Read field from user that may be either an attribute object or a dict."""
+    if user is None:
+        return default
+    val = getattr(user, key, None)
+    if val is None and isinstance(user, dict):
+        val = user.get(key, default)
+    return val if val is not None else default
+
+
+@router.post("/executions/{execution_id}/set-funding-mode")
+async def set_funding_mode(
+    execution_id: str,
+    funding_type: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Confirm funding mode (prefunded vs post_funded) for an execution.
+    Restricted to Admin / Global Manager / Financeiro roles."""
+    if not _is_exec_authorized(current_user):
+        raise HTTPException(status_code=403, detail="Apenas Admin / Global Manager / Financeiro podem confirmar o modo de funding.")
+
+    if funding_type not in (FundingType.PREFUNDED.value, FundingType.POST_FUNDED.value):
+        raise HTTPException(status_code=400, detail="funding_type deve ser 'prefunded' ou 'post_funded'")
+
+    db = get_db()
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+
+    await db.otc_executions.update_one(
+        {"id": execution_id},
+        {"$set": {
+            "funding_type": funding_type,
+            "funding_type_confirmed": True,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }}
+    )
+
+    # Sync deal too
+    await db.otc_deals.update_one(
+        {"id": execution.get("deal_id")},
+        {"$set": {"funding_type": funding_type, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    updated = await db.otc_executions.find_one({"id": execution_id}, {"_id": 0})
+    return {"success": True, "execution": updated}
+
+
+async def _check_fireblocks_balance(asset_id: str) -> dict:
+    """Query Fireblocks treasury vault balance for a given asset.
+    Treasury vault id from TREASURY_VAULT_ID env, default '0'."""
+    try:
+        from services.fireblocks_service import FireblocksService
+        vault_id = os.environ.get("TREASURY_VAULT_ID", "0")
+        # asset_id mapping: "BTC" -> "BTC", "ETH" -> "ETH", "USDT" -> "USDT_ERC20" (configurable)
+        asset_id_fb = (asset_id or "").upper()
+        # Common aliases for stablecoins
+        fb_aliases = {"USDT": os.environ.get("FB_USDT_ASSET", "USDT_ERC20"),
+                      "USDC": os.environ.get("FB_USDC_ASSET", "USDC")}
+        asset_id_fb = fb_aliases.get(asset_id_fb, asset_id_fb)
+        info = await FireblocksService.get_vault_asset(vault_id, asset_id_fb)
+        bal = float(info.get("available") or info.get("balance") or 0)
+        return {"source": "fireblocks", "available": bal, "vault_id": vault_id, "asset_id": asset_id_fb, "raw": info}
+    except Exception as e:
+        logger.warning(f"Fireblocks balance check failed for {asset_id}: {e}")
+        return {"source": "fireblocks", "available": 0, "error": str(e)}
+
+
+async def _check_revolut_recent(reference: str, since_iso: str, currency: str = None) -> dict:
+    """Look up recent Revolut transactions matching a reference (deal number)."""
+    try:
+        from services.revolut_service import RevolutService
+        svc = RevolutService()
+        svc.set_db(get_db())
+        # Get incoming transactions in the last 30 days
+        from_date = since_iso[:10] if since_iso and len(since_iso) >= 10 else None
+        result = await svc.get_transactions(from_date=from_date, count=100)
+        txs = result.get("transactions") if isinstance(result, dict) else result
+        if not isinstance(txs, list):
+            txs = []
+        ref_norm = (reference or "").lower()
+        matched = []
+        total_in = 0.0
+        for tx in txs:
+            if tx.get("type") not in ("topup", "transfer", "exchange"):
+                continue
+            # Inspect leg amounts (positive = incoming)
+            for leg in (tx.get("legs") or []):
+                amt = leg.get("amount", 0)
+                desc = (leg.get("description") or tx.get("reference") or "").lower()
+                ccy = leg.get("currency")
+                if amt > 0 and (ref_norm in desc or ref_norm in (tx.get("reference") or "").lower()):
+                    if currency is None or (ccy and ccy.upper() == currency.upper()):
+                        matched.append({"tx_id": tx.get("id"), "amount": amt, "currency": ccy, "description": desc, "completed_at": tx.get("completed_at")})
+                        total_in += amt
+        return {"source": "revolut", "available": total_in, "matched_count": len(matched), "matched": matched[:5]}
+    except Exception as e:
+        logger.warning(f"Revolut transactions check failed for ref={reference}: {e}")
+        return {"source": "revolut", "available": 0, "error": str(e)}
+
+
+@router.get("/executions/{execution_id}/check-funds")
+async def check_execution_funds(
+    execution_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Auto-detect funds in Fireblocks (crypto) or Revolut (fiat) for an execution."""
+    db = get_db()
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+
+    deal = await db.otc_deals.find_one({"id": execution.get("deal_id")}) or {}
+    expected = float(execution.get("funds_expected") or 0)
+    expected_asset = (execution.get("funds_expected_asset") or "").upper()
+
+    # Determine if expected is crypto or fiat
+    crypto_assets = {"BTC", "ETH", "USDT", "USDC", "BNB", "SOL", "XRP", "ADA", "MATIC"}
+    is_crypto = expected_asset in crypto_assets
+
+    if is_crypto:
+        result = await _check_fireblocks_balance(expected_asset)
+    else:
+        ref = deal.get("deal_number") or execution.get("deal_id")
+        result = await _check_revolut_recent(ref, execution.get("created_at"), currency=expected_asset)
+
+    detected = float(result.get("available") or 0)
+    funds_ok = detected >= expected and expected > 0
+
+    update = {
+        "last_balance_check_at": datetime.now(timezone.utc).isoformat(),
+        "detected_balance": detected,
+        "detected_source": result.get("source"),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    # If pre-funded and balance >= expected → mark funds received
+    if funds_ok and execution.get("status") == ExecutionStatus.PENDING_FUNDS.value:
+        update.update({
+            "status": ExecutionStatus.FUNDS_RECEIVED.value,
+            "funds_received": detected,
+            "funds_received_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+    await db.otc_executions.update_one({"id": execution_id}, {"$set": update})
+
+    return {
+        "success": True,
+        "expected": expected,
+        "expected_asset": expected_asset,
+        "detected": detected,
+        "funds_ok": funds_ok,
+        "source": result.get("source"),
+        "details": result,
+        "auto_advanced": funds_ok and execution.get("status") == ExecutionStatus.PENDING_FUNDS.value,
+    }
+
+
+@router.post("/executions/{execution_id}/execute-trade")
+async def execute_trade_step1(
+    execution_id: str,
+    executed_price: float,
+    current_user: dict = Depends(get_current_user)
+):
+    """Step 1 of delivery: mark trade as executed (no money moved yet).
+    Requires status FUNDS_RECEIVED."""
+    if not _is_exec_authorized(current_user):
+        raise HTTPException(status_code=403, detail="Apenas roles autorizados podem executar.")
+
+    db = get_db()
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+
+    if execution.get("status") not in (ExecutionStatus.FUNDS_RECEIVED.value, ExecutionStatus.EXECUTING.value):
+        raise HTTPException(status_code=400, detail="Execução tem de estar em FUNDS_RECEIVED para executar trade")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.otc_executions.update_one(
+        {"id": execution_id},
+        {"$set": {
+            "status": ExecutionStatus.EXECUTING.value,
+            "executed_price": executed_price,
+            "executed_amount": execution.get("delivery_amount"),
+            "trade_executed_at": now,
+            "trade_executed_by": _u(current_user, "id"),
+            "updated_at": now,
+        }}
+    )
+    updated = await db.otc_executions.find_one({"id": execution_id}, {"_id": 0})
+    return {"success": True, "execution": updated, "next_step": "approve_delivery"}
+
+
+@router.post("/executions/{execution_id}/approve-delivery")
+async def approve_delivery_step2(
+    execution_id: str,
+    comment: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Step 2 of delivery: approver signs off on delivery.
+    Required: at least 1 approval before send-delivery (configurable threshold)."""
+    if not _is_exec_authorized(current_user):
+        raise HTTPException(status_code=403, detail="Apenas roles autorizados podem aprovar.")
+
+    db = get_db()
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+
+    if not execution.get("trade_executed_at"):
+        raise HTTPException(status_code=400, detail="Trade ainda não foi executado (passo 1).")
+
+    user_id = _u(current_user, "id")
+    approvals = list(execution.get("delivery_approvals") or [])
+    if any(a.get("user_id") == user_id for a in approvals):
+        raise HTTPException(status_code=400, detail="Já aprovou esta entrega.")
+
+    approval = {
+        "user_id": user_id,
+        "user_name": _u(current_user, "name") or _u(current_user, "email"),
+        "role": _u(current_user, "internal_role") or ("admin" if _u(current_user, "is_admin") else None),
+        "approved_at": datetime.now(timezone.utc).isoformat(),
+        "comment": comment,
+    }
+    approvals.append(approval)
+
+    threshold = int(os.environ.get("OTC_DELIVERY_APPROVALS_REQUIRED", "1"))
+    fully_approved = len(approvals) >= threshold
+
+    update = {
+        "delivery_approvals": approvals,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if fully_approved:
+        update["delivery_approved_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.otc_executions.update_one({"id": execution_id}, {"$set": update})
+    updated = await db.otc_executions.find_one({"id": execution_id}, {"_id": 0})
+    return {
+        "success": True,
+        "execution": updated,
+        "approvals_count": len(approvals),
+        "approvals_required": threshold,
+        "fully_approved": fully_approved,
+    }
+
+
+@router.post("/executions/{execution_id}/send-delivery")
+async def send_delivery_step3(
+    execution_id: str,
+    delivery_address: Optional[str] = None,
+    fee_level: str = "MEDIUM",
+    current_user: dict = Depends(get_current_user)
+):
+    """Step 3 of delivery: actually send the assets via Fireblocks (crypto) or Revolut (fiat).
+    Requires `delivery_approved_at`. Returns tx_hash on success."""
+    if not _is_exec_authorized(current_user):
+        raise HTTPException(status_code=403, detail="Apenas roles autorizados podem enviar entrega.")
+
+    db = get_db()
+    execution = await db.otc_executions.find_one({"id": execution_id})
+    if not execution:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+
+    if not execution.get("delivery_approved_at"):
+        raise HTTPException(status_code=400, detail="Entrega ainda não foi aprovada (passo 2).")
+
+    if execution.get("delivery_sent_at"):
+        raise HTTPException(status_code=400, detail="Entrega já foi enviada.")
+
+    delivery_asset = (execution.get("delivery_asset") or "").upper()
+    delivery_amount = float(execution.get("delivery_amount") or 0)
+    crypto_assets = {"BTC", "ETH", "USDT", "USDC", "BNB", "SOL", "XRP", "ADA", "MATIC"}
+    is_crypto = delivery_asset in crypto_assets
+
+    tx_hash = None
+    venue = "internal"
+
+    try:
+        if is_crypto:
+            if not delivery_address:
+                raise HTTPException(status_code=400, detail="delivery_address obrigatório para entrega crypto.")
+            from services.fireblocks_service import FireblocksService
+            vault_id = os.environ.get("TREASURY_VAULT_ID", "0")
+            fb_aliases = {"USDT": os.environ.get("FB_USDT_ASSET", "USDT_ERC20"),
+                          "USDC": os.environ.get("FB_USDC_ASSET", "USDC")}
+            fb_asset = fb_aliases.get(delivery_asset, delivery_asset)
+            tx = await FireblocksService.create_transaction(
+                source_vault_id=vault_id,
+                destination_address=delivery_address,
+                asset_id=fb_asset,
+                amount=str(delivery_amount),
+                note=f"OTC Delivery {execution.get('id')}",
+                fee_level=fee_level,
+            )
+            tx_hash = tx.get("id") or tx.get("txHash")
+            venue = "fireblocks"
+        else:
+            # Fiat delivery via Revolut counterparty payment
+            # NOTE: requires counterparty_id stored on the deal; for MVP we record the request and let finance team execute manually if not configured.
+            deal = await db.otc_deals.find_one({"id": execution.get("deal_id")}) or {}
+            cp_id = deal.get("revolut_counterparty_id") or deal.get("counterparty_id")
+            if cp_id:
+                from services.revolut_service import RevolutService
+                svc = RevolutService()
+                svc.set_db(db)
+                # Minimal transfer call — adjust to your Revolut SDK signature if different
+                payment = await svc._api_call("POST", "/transfer", json_data={
+                    "request_id": str(uuid.uuid4()),
+                    "receiver": {"counterparty_id": cp_id},
+                    "amount": delivery_amount,
+                    "currency": delivery_asset,
+                    "reference": f"OTC {deal.get('deal_number')}"[:140],
+                })
+                tx_hash = payment.get("id")
+                venue = "revolut"
+            else:
+                # Manual fallback — finance team will register tx_hash later
+                venue = "manual_fiat"
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"send-delivery failed for {execution_id}: {e}")
+        raise HTTPException(status_code=502, detail=f"Falha no envio: {e}")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.otc_executions.update_one(
+        {"id": execution_id},
+        {"$set": {
+            "status": ExecutionStatus.EXECUTED.value,
+            "delivery_address": delivery_address,
+            "delivery_tx_hash": tx_hash,
+            "delivery_at": now,
+            "delivery_sent_at": now,
+            "execution_venue": venue,
+            "updated_at": now,
+        }}
+    )
+
+    # Move deal to settlement
+    await db.otc_deals.update_one(
+        {"id": execution.get("deal_id")},
+        {"$set": {
+            "stage": OTCDealStage.SETTLEMENT.value,
+            "settled_at": now,
+            "updated_at": now,
+        }}
+    )
+
+    return {"success": True, "tx_hash": tx_hash, "venue": venue}
+
+
 # ==================== SETTLEMENT ====================
 
 @router.get("/settlements")

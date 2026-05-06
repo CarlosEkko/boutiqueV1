@@ -516,6 +516,25 @@ class OTCExecution(BaseModel):
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     executed_by: Optional[str] = None
 
+    # --- Funds detection (auto-watch) ---
+    last_balance_check_at: Optional[str] = None
+    detected_balance: float = 0
+    detected_source: Optional[str] = None  # "fireblocks" | "revolut"
+
+    # --- Two-step delivery workflow ---
+    # Step 1 – trade executed (no money moved yet)
+    trade_executed_at: Optional[str] = None
+    trade_executed_by: Optional[str] = None
+    # Step 2 – delivery approved (multi-sign)
+    delivery_approvals: List[dict] = Field(default_factory=list)
+    # each approval = { user_id, user_name, role, approved_at, comment }
+    delivery_approved_at: Optional[str] = None
+    delivery_sent_at: Optional[str] = None
+
+    # Suggested by client during RFQ; trader confirms in execution dialog
+    funding_type_suggested: Optional[str] = None  # "prefunded" | "post_funded"
+    funding_type_confirmed: bool = False
+
 
 class OTCSettlement(BaseModel):
     """Settlement record for an OTC deal"""
