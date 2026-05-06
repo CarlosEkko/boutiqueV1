@@ -100,7 +100,19 @@ const OnboardingPage = () => {
       if (!paymentId) throw new Error('payment_id em falta');
       setAdmissionPicker({ paymentId, amount });
     } catch (err) {
-      toast.error(err?.response?.data?.detail || 'Falha ao iniciar pagamento de admissão');
+      // Surface the real backend error so issues are diagnosable in production
+      const detail = err?.response?.data?.detail;
+      const status = err?.response?.status;
+      const fallback = 'Falha ao iniciar pagamento de admissão';
+      const msg = detail
+        ? `${fallback}: ${detail}`
+        : status
+          ? `${fallback} (HTTP ${status})`
+          : err?.message
+            ? `${fallback}: ${err.message}`
+            : fallback;
+      console.error('admission request failed:', err);
+      toast.error(msg);
     } finally {
       setCreatingPicker(false);
     }

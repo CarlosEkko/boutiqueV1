@@ -736,66 +736,85 @@ async def request_admission_fee_payment(
     user_id: str = Depends(get_current_user_id)
 ):
     """Request to pay admission fee"""
-    settings = await get_platform_settings()
-    admission_config = settings.get("admission_fee", {})
-    
-    if not admission_config.get("is_active", True):
-        return {"success": True, "message": "Taxa de admissão não é necessária"}
-    
-    # Check if already paid (admission only — annual_fee rows live in the same collection)
-    existing = await db.admission_payments.find_one({
-        "user_id": user_id,
-        "status": {"$in": ["paid", "pending"]},
-        "$or": [
-            {"fee_type": "admission"},
-            {"fee_type": {"$exists": False}},  # legacy rows default to admission
-            {"fee_type": None},
-        ],
-    })
-    
-    if existing and existing.get("status") == "paid":
-        raise HTTPException(status_code=400, detail="Taxa de admissão já foi paga")
-    
-    if existing and existing.get("status") == "pending":
+    try:
+        settings = await get_platform_settings()
+        admission_config = settings.get("admission_fee", {}) or {}
+
+        if not admission_config.get("is_active", True):
+            return {"success": True, "message": "Taxa de admissão não é necessária"}
+
+        # Check if already paid (admission only — annual_fee rows live in the same collection)
+        existing = await db.admission_payments.find_one({
+            "user_id": user_id,
+            "status": {"$in": ["paid", "pending"]},
+            "$or": [
+                {"fee_type": "admission"},
+                {"fee_type": {"$exists": False}},  # legacy rows default to admission
+                {"fee_type": None},
+            ],
+        })
+
+        if existing and existing.get("status") == "paid":
+            raise HTTPException(status_code=400, detail="Taxa de admissão já foi paga")
+
+        if existing and existing.get("status") == "pending":
+            return {
+                "success": True,
+                "payment_id": existing.get("id"),
+                "amount": float(existing.get("amount") or 0),
+                "currency": existing.get("currency") or "EUR",
+                "message": "Pagamento pendente já existe",
+            }
+
+        # Get user membership level (defensive against missing/None values)
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not user:
+            logger.error(f"admission-fee/request: user {user_id} not found in users collection")
+            raise HTTPException(status_code=404, detail="Utilizador não encontrado")
+
+        ml_raw = user.get("membership_level")
+        membership_level = str(ml_raw).lower() if ml_raw else "standard"
+        # Map institutional → institucional (DB key)
+        if membership_level == "institutional":
+            membership_level = "institucional"
+
+        # Get EUR amount for tier
+        eur_amount = admission_config.get(f"{membership_level}_eur")
+        if eur_amount is None:
+            eur_amount = admission_config.get("standard_eur", 500)
+        eur_amount = float(eur_amount or 0)
+
+        # Create payment request
+        payment = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "user_email": user.get("email"),
+            "user_name": user.get("name"),
+            "fee_type": "admission",  # initial onboarding
+            "membership_level": membership_level,
+            "amount": eur_amount,
+            "currency": "EUR",
+            "status": "pending",
+            "type": "annual_admission",
+            "tenant_slug": user.get("tenant_slug") or "kbex",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        await db.admission_payments.insert_one(payment)
+
         return {
             "success": True,
-            "payment_id": existing.get("id"),
-            "message": "Pagamento pendente já existe"
+            "payment_id": payment["id"],
+            "amount": eur_amount,
+            "currency": "EUR",
+            "membership_level": membership_level,
+            "message": "Solicitação de pagamento criada",
         }
-    
-    # Get user membership level
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    membership_level = user.get("membership_level", "standard") if user else "standard"
-    tier_prefix = membership_level.lower()
-    
-    # Get EUR amount for tier
-    eur_amount = admission_config.get(f"{tier_prefix}_eur", admission_config.get("standard_eur", 500))
-    
-    # Create payment request
-    payment = {
-        "id": str(uuid.uuid4()),
-        "user_id": user_id,
-        "user_email": user.get("email") if user else None,
-        "user_name": user.get("name") if user else None,
-        "fee_type": "admission",  # initial onboarding
-        "membership_level": membership_level,
-        "amount": eur_amount,
-        "currency": "EUR",
-        "status": "pending",
-        "type": "annual_admission",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    await db.admission_payments.insert_one(payment)
-    
-    return {
-        "success": True,
-        "payment_id": payment["id"],
-        "amount": eur_amount,
-        "currency": "EUR",
-        "membership_level": membership_level,
-        "message": "Solicitação de pagamento criada"
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"admission-fee/request failed for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao iniciar pagamento: {e}")
 
 
 @router.post("/admission-fee/{payment_id}/approve")
