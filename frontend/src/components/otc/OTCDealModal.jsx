@@ -154,6 +154,14 @@ const OTCDealModal = ({
 
   const handleSave = async () => {
     setSaving(true);
+    const safeError = async (res, fallback) => {
+      try {
+        const j = await res.json();
+        return j.detail || fallback;
+      } catch {
+        return `${fallback} (HTTP ${res.status})`;
+      }
+    };
     try {
       if (isQuoteMode) {
         // Quote mode: 1) PUT deal with negotiated terms 2) POST quote
@@ -171,14 +179,12 @@ const OTCDealModal = ({
           member_name: form.member_name,
           broker_share_pct: form.broker_share_pct,
           commission_currency: form.commission_currency,
-          total_value: calc.total,
-          adjusted_price: calc.adj,
           notes: form.notes,
         };
         const resDeal = await fetch(`${API}/api/otc-deals/deals/${deal.id}`, {
           method: 'PUT', headers: getHeaders(), body: JSON.stringify(dealUpdate),
         });
-        if (!resDeal.ok) throw new Error((await resDeal.json()).detail || 'Failed to update deal');
+        if (!resDeal.ok) throw new Error(await safeError(resDeal, t('otc.deals.modal.errorSaving', 'Erro ao guardar')));
 
         const quotePayload = {
           deal_id: deal.id,
@@ -191,7 +197,7 @@ const OTCDealModal = ({
         const resQuote = await fetch(`${API}/api/otc/quotes`, {
           method: 'POST', headers: getHeaders(), body: JSON.stringify(quotePayload),
         });
-        if (!resQuote.ok) throw new Error((await resQuote.json()).detail || 'Failed to create quote');
+        if (!resQuote.ok) throw new Error(await safeError(resQuote, t('otc.deals.modal.errorSaving', 'Erro ao guardar')));
 
         toast.success(t('otc.quotes.createdAndSent', 'Negociação criada e cotação enviada ao cliente!'));
         onSaved && onSaved();
@@ -204,7 +210,7 @@ const OTCDealModal = ({
         delete payload.fees;
         delete payload.valid_for_minutes;
         const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error((await res.json()).detail || t('otc.deals.modal.errorSaving', 'Erro ao guardar'));
+        if (!res.ok) throw new Error(await safeError(res, t('otc.deals.modal.errorSaving', 'Erro ao guardar')));
         toast.success(deal ? t('otc.deals.modal.dealUpdated', 'Negociação atualizada') : t('otc.deals.modal.dealCreated', 'Negociação criada'));
         onSaved && onSaved();
       }

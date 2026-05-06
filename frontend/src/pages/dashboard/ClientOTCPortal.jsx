@@ -117,8 +117,19 @@ const ClientOTCPortal = () => {
     pendingLabel: { pt: 'Pendente', en: 'Pending', ar: 'معلق', fr: 'En attente', es: 'Pendiente' },
     rejected: { pt: 'Rejeitada', en: 'Rejected', ar: 'مرفوض', fr: 'Refusée', es: 'Rechazada' },
     expired: { pt: 'Expirada', en: 'Expired', ar: 'منتهي', fr: 'Expirée', es: 'Expirada' },
+    completedCol: { pt: 'Concluído', en: 'Completed', ar: 'مكتمل', fr: 'Terminé', es: 'Completado' },
+    invalidAmount: { pt: 'Insira uma quantidade válida', en: 'Enter a valid amount', ar: 'أدخل كمية صالحة', fr: 'Entrez une quantité valide', es: 'Ingrese una cantidad válida' },
+    rfqSent: { pt: 'Pedido de cotação enviado!', en: 'Quote request sent!', ar: 'تم إرسال طلب عرض الأسعار!', fr: 'Demande envoyée !', es: '¡Solicitud enviada!' },
+    rfqError: { pt: 'Erro ao criar pedido', en: 'Error creating request', ar: 'خطأ في إنشاء الطلب', fr: 'Erreur de création', es: 'Error al crear solicitud' },
+    quoteAccepted: { pt: 'Cotação aceite! A equipa OTC irá processar.', en: 'Quote accepted! The OTC team will process it.', ar: 'تم قبول العرض! سيقوم فريق OTC بمعالجته.', fr: 'Cotation acceptée ! L\'équipe OTC va la traiter.', es: '¡Cotización aceptada! El equipo OTC la procesará.' },
+    quoteAcceptError: { pt: 'Erro ao aceitar cotação', en: 'Error accepting quote', ar: 'خطأ في قبول العرض', fr: 'Erreur d\'acceptation', es: 'Error al aceptar' },
+    quoteRejected: { pt: 'Cotação rejeitada', en: 'Quote rejected', ar: 'تم رفض العرض', fr: 'Cotation refusée', es: 'Cotización rechazada' },
+    quoteRejectError: { pt: 'Erro ao rejeitar cotação', en: 'Error rejecting quote', ar: 'خطأ في رفض العرض', fr: 'Erreur de refus', es: 'Error al rechazar' },
   };
-  const l = (key) => (tx[key] || {})[language] || (tx[key] || {}).pt || key;
+  const l = (key) => {
+    const lang = (language || 'pt').toLowerCase();
+    return (tx[key] || {})[lang] || (tx[key] || {}).pt || key;
+  };
   const [deals, setDeals] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +186,7 @@ const ClientOTCPortal = () => {
 
   const handleCreateRFQ = async () => {
     if (!rfqForm.amount || parseFloat(rfqForm.amount) <= 0) {
-      toast.error('Insira uma quantidade válida');
+      toast.error(l('invalidAmount'));
       return;
     }
     
@@ -187,7 +198,7 @@ const ClientOTCPortal = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success('Pedido de cotação enviado!');
+      toast.success(l('rfqSent'));
       setShowRFQDialog(false);
       setRfqForm({
         transaction_type: 'buy',
@@ -198,7 +209,7 @@ const ClientOTCPortal = () => {
       });
       fetchData();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao criar pedido'));
+      toast.error(getErrorMessage(err, l('rfqError')));
     }
   };
 
@@ -208,11 +219,11 @@ const ClientOTCPortal = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success('Cotação aceite! A equipa OTC irá processar.');
+      toast.success(l('quoteAccepted'));
       setShowQuoteDialog(false);
       fetchData();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao aceitar cotação'));
+      toast.error(getErrorMessage(err, l('quoteAcceptError')));
     }
   };
 
@@ -222,11 +233,11 @@ const ClientOTCPortal = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success('Cotação rejeitada');
+      toast.success(l('quoteRejected'));
       setShowQuoteDialog(false);
       fetchData();
     } catch (err) {
-      toast.error(getErrorMessage(err, 'Erro ao rejeitar cotação'));
+      toast.error(getErrorMessage(err, l('quoteRejectError')));
     }
   };
   const getDealStageBadge = (stage) => {
@@ -254,7 +265,7 @@ const ClientOTCPortal = () => {
   const getQuoteStatusBadge = (status, expiresAt) => {
     const isExpired = expiresAt && new Date(expiresAt) < new Date();
     if (status === 'sent' && isExpired) {
-      return <Badge className="bg-gray-900/30 text-gray-400">Expirada</Badge>;
+      return <Badge className="bg-gray-900/30 text-gray-400">{l('expired')}</Badge>;
     }
     const styles = {
       sent: 'bg-yellow-900/30 text-yellow-400',
@@ -263,10 +274,10 @@ const ClientOTCPortal = () => {
       expired: 'bg-gray-900/30 text-gray-400'
     };
     const labels = {
-      sent: 'Pendente',
-      accepted: 'Aceite',
-      rejected: 'Rejeitada',
-      expired: 'Expirada'
+      sent: l('pendingLabel'),
+      accepted: l('accepted'),
+      rejected: l('rejected'),
+      expired: l('expired')
     };
     return <Badge className={styles[status]}>{labels[status] || status}</Badge>;
   };
@@ -288,9 +299,7 @@ const ClientOTCPortal = () => {
             <Briefcase className="mx-auto mb-4 text-gold-400" size={64} />
             <h2 className="text-2xl text-white mb-4">{l('welcomeOtc')}</h2>
             <p className="text-gray-400 max-w-lg mx-auto mb-6">
-              O nosso serviço OTC é destinado a operações de grande volume (mínimo $50,000). 
-              Se pretende negociar volumes significativos com atendimento personalizado, 
-              contacte-nos para se tornar um cliente OTC.
+              {l('otcDescription')}
             </p>
             <div className="flex gap-4 justify-center">
               <Button 
@@ -329,7 +338,7 @@ const ClientOTCPortal = () => {
             className="border-gold-500/30 text-gold-400 hover:bg-gold-900/20"
           >
             <RefreshCw size={16} className="mr-2" />
-            Atualizar
+            {l('refresh')}
           </Button>
           <Button
             onClick={() => setShowRFQDialog(true)}
@@ -449,12 +458,12 @@ const ClientOTCPortal = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gold-800/20">
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Deal</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Operação</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('deal')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('operation')}</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('quantity')}</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Valor</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Fase</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Data</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('value')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('phase')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('date')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -466,9 +475,9 @@ const ClientOTCPortal = () => {
                           <td className="p-4">
                             <Badge className={deal.transaction_type === 'buy' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}>
                               {deal.transaction_type === 'buy' ? (
-                                <><TrendingUp size={12} className="mr-1" /> COMPRA</>
+                                <><TrendingUp size={12} className="mr-1" /> {l('buyLabel')}</>
                               ) : (
-                                <><TrendingDown size={12} className="mr-1" /> VENDA</>
+                                <><TrendingDown size={12} className="mr-1" /> {l('sellLabel')}</>
                               )}
                             </Badge>
                           </td>
@@ -518,13 +527,13 @@ const ClientOTCPortal = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gold-800/20">
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Deal</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Par</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Preço</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Total</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Expira</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Status</th>
-                        <th className="text-right p-4 text-gray-400 text-sm font-medium">Ações</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('deal')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('pair')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('price')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('total')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('expires')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('status')}</th>
+                        <th className="text-right p-4 text-gray-400 text-sm font-medium">{l('actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -557,7 +566,7 @@ const ClientOTCPortal = () => {
                                   className="bg-green-600 hover:bg-green-500"
                                 >
                                   <CheckCircle size={14} className="mr-1" />
-                                  Aceitar
+                                  {l('accept')}
                                 </Button>
                                 <Button
                                   onClick={() => handleRejectQuote(quote.id)}
@@ -595,11 +604,11 @@ const ClientOTCPortal = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gold-800/20">
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Deal</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Operação</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('deal')}</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('operation')}</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('quantity')}</th>
                         <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('finalValue')}</th>
-                        <th className="text-left p-4 text-gray-400 text-sm font-medium">Concluído</th>
+                        <th className="text-left p-4 text-gray-400 text-sm font-medium">{l('completedCol')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -745,7 +754,7 @@ const ClientOTCPortal = () => {
                 <p className="text-white">
                   {rfqForm.transaction_type === 'buy' ? l('buy') : l('sell')}{' '}
                   <span className="font-mono text-gold-400">{rfqForm.amount} {rfqForm.base_asset}</span>
-                  {' '}em {rfqForm.quote_asset}
+                  {' '}{l('inWord')} {rfqForm.quote_asset}
                 </p>
                 <p className="text-gray-400 text-sm mt-2">
                   {l('teamWillQuote')}

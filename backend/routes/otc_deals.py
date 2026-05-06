@@ -272,14 +272,16 @@ async def update_deal(deal_id: str, update: OTCDealUpdate, user_id: str = Depend
 
     update_data = {k: v for k, v in update.dict().items() if v is not None}
 
-    # Recalculate if financial fields changed
-    qty = update_data.get("quantity", deal["quantity"])
-    ref_price = update_data.get("reference_price", deal["reference_price"])
-    condition = update_data.get("condition", deal["condition"])
-    condition_pct = update_data.get("condition_pct", deal["condition_pct"])
-    gross_pct = update_data.get("gross_pct", deal["gross_pct"])
-    net_pct = update_data.get("net_pct", deal["net_pct"])
-    broker_share = update_data.get("broker_share_pct", deal["broker_share_pct"])
+    # Recalculate if financial fields changed.
+    # Use .get() with defaults so RFQ-originated deals (which use base_asset/quote_asset/amount)
+    # don't crash when missing CRM-style fields.
+    qty = update_data.get("quantity", deal.get("quantity") or deal.get("amount") or 0)
+    ref_price = update_data.get("reference_price", deal.get("reference_price") or 0)
+    condition = update_data.get("condition", deal.get("condition") or "premium")
+    condition_pct = update_data.get("condition_pct", deal.get("condition_pct") or 0)
+    gross_pct = update_data.get("gross_pct", deal.get("gross_pct") or 0)
+    net_pct = update_data.get("net_pct", deal.get("net_pct") or 0)
+    broker_share = update_data.get("broker_share_pct", deal.get("broker_share_pct") or 50)
 
     adjusted_price = ref_price * (1 + condition_pct / 100) if condition == "premium" else ref_price * (1 - condition_pct / 100)
     total_value = qty * adjusted_price
