@@ -1,5 +1,43 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — Institutional OTC Desk (Fase 1 — Backend Quant Engine)
+
+### What shipped
+Full backend counterpart to the mock JS engine. Mirrors the reference architecture from the client's *Documento Técnico – Crypto OTC Desk*. Ships as a module-level singleton with background market-data polling, deterministic pricing, cost-basis-based PnL and simulated hedging.
+
+### New files
+- **`backend/services/otc_desk_engine.py`** (singleton `OTCDeskEngine`):
+  - **Market Data Engine** — background loop polling `GET https://api.binance.com/api/v3/ticker/price` every 2 s (no API key). Realised σ over last 60 log returns. Fallback random walk on network errors.
+  - **Pricing Engine** — `spread = max(0, 25 bps + size/liquidity + vol×0.45 + |inventory|×inv_factor×skew_sign)`. Skew signs push sells in / buys out when desk is long, and vice-versa.
+  - **Inventory Engine** — per-asset state for BTC/ETH/SOL/BNB/XRP.
+  - **Hedge Engine** — simulated venue fill after 600 ms latency with bps slippage proportional to `size/liquidity`. Structured so a `VenueAdapter` can be swapped in (Binance / Fireblocks) in Fase 4.
+  - **PnL Engine** — cost-basis invariant (`unrealized_pnl = qty × mid + cost_basis`). When inventory hits zero for an asset, residual `cost_basis` is moved to `cash_pnl` and the cost basis is reset — cleanly capturing spread + mid-drift + slippage in a single realised number.
+  - **Persistence** — `otc_desk_state` (singleton upsert) + `otc_desk_trades` + `otc_desk_hedge_fills` + `otc_desk_pnl_snapshots`. Flushed every 10 s and on every execute. Hydrated on boot.
+- **`backend/routes/otc_desk.py`** — REST layer with `_require_staff` dependency (admin OR global_manager OR `user_permissions.departments` containing `otc_desk`).
+
+### Endpoints
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/otc-desk/rfq` | staff | Firm quote, TTL 15 s |
+| POST | `/api/otc-desk/execute` | staff | Hit quote, update inventory/PnL, trigger async hedge |
+| GET | `/api/otc-desk/state` | staff | Full snapshot (market + inventory + PnL + hedges + config) |
+| GET | `/api/otc-desk/pnl-series` | staff | Equity curve (300 samples, 2 s cadence) |
+| POST | `/api/otc-desk/reset` | admin | Wipe inventory + PnL + equity curve + snapshots |
+
+### Wiring
+- `server.py`: imports, `set_otc_desk_db(db)`, `include_router`, startup hook `engine.start()`.
+
+### Testing (iteration_57.json)
+16 / 16 backend tests passed via the automated testing agent:
+- Pricing formula components (base, size, vol, inventory skew) math verified
+- Full execute + hedge cycle: inventory returns flat, `unrealized_pnl == 0`, `cash_pnl` matches `(firm_price − hedge_fill_price) × size` within slippage tolerance
+- AuthZ: `sofia@kbex.io` (support agent, no `otc_desk` dept) receives 403 on all 5 endpoints; `carlos@kbex.io` (admin) passes
+- Admin-only reset correctly refuses non-admin tokens
+- Regression: `/api/otc/leads` + CRM OTC routes still serve correctly
+
+### Swap plan (UI → backend) — one-line change
+When ready to retire the client-side mock engine (`useOTCDeskEngine.js`), swap it for a thin hook that polls `GET /api/otc-desk/state` every 2 s and calls `POST /api/otc-desk/rfq` / `execute`. Component shapes already align (FirmQuote, HedgeFill, equity-curve points).
+
 ## 2026-05-06 — Institutional OTC Desk (Fase 3 — UI / Mock Engine)
 
 ### New area — `/dashboard/trading-desk/institutional`
