@@ -434,19 +434,44 @@ class BrevoEmailService:
         tier_fee: str = "",
     ) -> Dict[str, Any]:
         """Send onboarding email to new OTC lead to register on the platform."""
-        
-        # Tier payment configuration
-        TIER_FEES = {
-            "broker": {"label": "Broker", "fee": "25 000", "currency": "EUR"},
-            "standard": {"label": "Standard", "fee": "5 000", "currency": "EUR"},
-            "premium": {"label": "Premium", "fee": "50 000", "currency": "EUR"},
-            "vip": {"label": "VIP", "fee": "250 000", "currency": "EUR"},
-            "institutional": {"label": "Institutional", "fee": "1 000 000", "currency": "EUR"},
-            "institucional": {"label": "Institucional", "fee": "1 000 000", "currency": "EUR"},
+
+        # Resolve real fee from platform_settings.admission_fee (Mongo) — values
+        # match the Admin › Pricing screen. Falls back to provided tier_fee, then 0.
+        tier_label_map = {
+            "broker": "Broker",
+            "standard": "Standard",
+            "premium": "Premium",
+            "vip": "VIP",
+            "institutional": "Institucional",
+            "institucional": "Institucional",
         }
-        tier_info = TIER_FEES.get(tier, TIER_FEES["standard"])
+        tier_key = (tier or "standard").lower()
+        # Map "institutional" → "institucional" for the settings key
+        settings_tier = "institucional" if tier_key in ("institutional", "institucional") else tier_key
+
+        fee_value = None
+        try:
+            from server import db as _db  # type: ignore
+            settings = await _db.platform_settings.find_one({"type": "general"}, {"_id": 0}) or {}
+            adm = settings.get("admission_fee") or {}
+            fee_value = adm.get(f"{settings_tier}_eur")
+        except Exception as e:
+            logger.warning(f"Could not fetch admission_fee from settings: {e}")
+
         if tier_fee:
-            tier_info["fee"] = tier_fee
+            fee_str = tier_fee
+        elif fee_value is not None:
+            # Format with thousands separator (space) — matches existing email style
+            fee_int = int(round(float(fee_value)))
+            fee_str = f"{fee_int:,}".replace(",", " ")
+        else:
+            fee_str = "—"
+
+        tier_info = {
+            "label": tier_label_map.get(tier_key, "Standard"),
+            "fee": fee_str,
+            "currency": "EUR",
+        }
         
         t = lambda key: self._t(country, key)
         lang = self._get_lang(country)
