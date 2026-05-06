@@ -6,7 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 // Worker setup — try local first, fallback to matching CDN if local fails
-// (production nginx may serve .mjs with wrong Content-Type)
+// (production nginx may serve .mjs with wrong Content-Type or block CDN via CSP)
 const PDFJS_VERSION = pdfjsLib.version || '5.6.205';
 const LOCAL_WORKER = '/pdf.worker.min.mjs';
 const CDN_WORKER = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
@@ -18,6 +18,7 @@ const CDN_WORKER = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/bui
     const ct = res.headers.get('content-type') || '';
     const okType = ct.includes('javascript') || ct.includes('module');
     if (!res.ok || !okType) {
+      // Try CDN; if it's blocked by CSP, the loadPdf retry-without-worker will catch it
       pdfjsLib.GlobalWorkerOptions.workerSrc = CDN_WORKER;
       console.warn('[PDFViewer] Local worker invalid, using CDN:', CDN_WORKER);
     } else {
@@ -52,7 +53,15 @@ export default function ProtectedDocViewer({ url, title, userName, onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const pdf = await pdfjsLib.getDocument(fullUrl).promise;
+      // First attempt with worker (whatever was configured globally)
+      let pdf;
+      try {
+        pdf = await pdfjsLib.getDocument({ url: fullUrl }).promise;
+      } catch (workerErr) {
+        // Worker failed (CSP block, missing file, etc.) — retry without worker
+        console.warn('[PDFViewer] Worker path failed, retrying without worker:', workerErr?.message);
+        pdf = await pdfjsLib.getDocument({ url: fullUrl, disableWorker: true }).promise;
+      }
       setTotalPages(pdf.numPages);
       const rendered = [];
       for (let i = 1; i <= pdf.numPages; i++) {
