@@ -188,12 +188,16 @@ async def get_team_filter(current_user) -> dict:
         return {}
 
     # All other roles: filter by assigned_to OR created_by OR client region
+    # OR leads without country (so unrouted leads are still triageable by every staff member)
     conditions = []
-    
+
+    # Always show leads with no country yet (e.g. public form submitted without country)
+    conditions.append({"country": {"$in": [None, ""]}})
+
     if user_id:
         conditions.append({"assigned_to": user_id})
         conditions.append({"created_by": user_id})
-    
+
     if region and region != 'global':
         from models.user import COUNTRY_TO_REGION
         region_countries = [

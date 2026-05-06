@@ -37,6 +37,10 @@ const ContactCTA = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.country) {
+      toast.error(t('contact.form.countryRequired') || 'Por favor selecione o seu país');
+      return;
+    }
     setLoading(true);
     
     try {
