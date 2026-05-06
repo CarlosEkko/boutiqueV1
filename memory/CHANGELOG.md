@@ -1,5 +1,46 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — Institutional OTC Desk (Fase 3 — UI / Mock Engine)
+
+### New area — `/dashboard/trading-desk/institutional`
+Built the staff-facing Trading Cockpit described in the client's *Documento Técnico – Crypto OTC Desk (Arquitetura Profissional)*. Phase 3 ships the full UX with a client-side mock engine so the workflow can be validated before the backend quant service lands. The component API is intentionally aligned with the future `WS /api/ws/otc-desk` payload + `POST /api/otc-desk/{rfq,execute}` REST contracts, so swapping the engine in is a one-line change.
+
+### Files
+- **`useOTCDeskEngine.js`** — mock quant engine:
+  - Market random-walk (500ms ticks) per asset, realised σ from last 60 log returns
+  - Pricing formula: `spread = base(25 bps) + size/liquidity + vol × 0.45 + |inventory| × inv_factor` (inventory skew signed by side)
+  - Firm quote with 15 s TTL + countdown
+  - Execution: inventory delta, cash PnL (spread capture), simulated hedge after 600 ms latency with bps slippage proportional to `size/liquidity`
+  - PnL decomposition: cash + unrealized (marked-to-market) + slippage cost, with a 2 s-cadence equity-curve series
+- **`InstitutionalDesk.jsx`** — page composition (header + simulation banner + responsive 12-col grid)
+- **`components/MarketPanel.jsx`** — live bid/mid/ask + realised σ grid, asset picker with trend arrows
+- **`components/RFQPanel.jsx`** — Buy/Sell toggle, size input, firm-quote card with bps spread, countdown bar, Execute + Cancel
+- **`components/RiskPanel.jsx`** — Total/Cash/Unrealized/Slippage tiles + per-asset inventory table (notional in USDT)
+- **`components/EquityCurve.jsx`** — recharts gold gradient area chart with HH:MM X-axis
+- **`components/HedgeFeed.jsx`** — last-50 venue fills with time / side / size / fill price / bps slippage
+
+### Configuration
+- Default universe: BTC / ETH / SOL / BNB / XRP vs USDT (multi-asset dynamic — admin-editable in Fase 4)
+- Reset Desk button returns inventory + PnL + equity curve to zero (QA helper)
+
+### Wiring
+- `App.js`: lazy-imported `InstitutionalDesk` + route `/dashboard/trading-desk/institutional`
+- `backend/models/permissions.py`: new item "Mesa Institucional" under `OTC_DESK` department (icon `Gauge`)
+- Sidebar: `Gauge` icon added to lucide imports + iconMap + translation key (`sidebar.mesaInstitucional`) for PT/EN/ES/FR/AR
+
+### Verification (smoke-test with screenshot tool)
+- Logged in as `carlos@kbex.io` and opened the desk — Market Panel streams mid/bid/ask for all 5 pairs
+- Clicked **Get Firm Quote** → 40.2 bps spread, 14.2 s countdown displayed
+- Clicked **Execute Trade** → toast "Trade filled — BUY 1 BTC @ 65,148.72 (spread capture 200.93 USDT)", hedge leg appeared with 11.5 bps slippage
+- Second trade on the sell side produced correct PnL decomposition (Total 197.53, Cash 518.55, Unrealized -173.46, Slippage -147.56) and the V-shape equity curve
+- Lint: clean across `trading-desk/**`
+
+### Roadmap for backend (Fase 1+2)
+- `backend/services/otc_desk_engine.py` — port the JS pricing / hedge / PnL math (symmetric API)
+- `backend/routes/otc_desk.py` — `POST /rfq`, `POST /execute`, `GET /state`, `WS /api/ws/otc-desk`
+- Venue adapters: Binance (spot) first, Fireblocks (institutional custody) second
+- Unified with CRM: every `/execute` emits an auditable deal record into `otc_deals` (stage=settled) for compliance
+
 ## 2026-05-06 — Onboarding Email: Quiet Luxury Tone + Spanish Support
 
 ### Changes

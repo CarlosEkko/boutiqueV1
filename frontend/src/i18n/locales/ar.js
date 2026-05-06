@@ -429,6 +429,7 @@ const TRANSLATIONS = {
     negociosOtc: 'الصفقات',
     cotacoes: 'عروض الأسعار',
     execucao: 'التنفيذ',
+    mesaInstitucional: 'منصة التداول المؤسسية',
     liquidacao: 'التسوية',
     faturas: 'الفواتير',
     clientesOtc: 'العملاء',

@@ -75,7 +75,8 @@ import {
   Building2,
   Crown,
   CalendarClock,
-  Cookie
+  Cookie,
+  Gauge
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -92,7 +93,7 @@ const iconMap = {
   Banknote, FileCheck, UserCircle, Briefcase, Activity, Eye, Handshake, UserPlus,
   Target, Contact, CheckSquare, Kanban, FileText, Zap, Building, Mail, ShieldCheck, CheckCircle,
   ArrowLeftRight, FileSearch,
-  ShieldAlert, Gem, FilePlus2, Flame, Coins, Crown, CalendarClock, Cookie
+  ShieldAlert, Gem, FilePlus2, Flame, Coins, Crown, CalendarClock, Cookie, Gauge
 };
 
 // Department icon and color mapping
@@ -212,6 +213,7 @@ const labelTranslationMap = {
   'Negócios': 'sidebar.negocios',
   'Cotações': 'sidebar.cotacoes',
   'Execução': 'sidebar.execucao',
+  'Mesa Institucional': 'sidebar.mesaInstitucional',
   'Liquidação': 'sidebar.liquidacao',
   'Faturas': 'sidebar.faturas',
   'Comissões': 'sidebar.comissoes',

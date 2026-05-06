@@ -117,6 +117,7 @@ import MyLaunchpadInvestments from "./pages/dashboard/launchpad/MyLaunchpadInves
 const CommercialDashboard = React.lazy(() => import("./pages/dashboard/commercial/CommercialDashboard"));
 const MyPerformance = React.lazy(() => import("./pages/dashboard/commercial/MyPerformance"));
 const TradingTerminal = React.lazy(() => import("./pages/dashboard/TradingTerminal"));
+const InstitutionalDesk = React.lazy(() => import("./pages/dashboard/trading-desk/InstitutionalDesk"));
 import StakingPage from "./pages/dashboard/investments/StakingPage";
 import TokensListPage from "./pages/dashboard/tokenization/TokensListPage";
 import IssueTokenPage from "./pages/dashboard/tokenization/IssueTokenPage";
@@ -448,6 +449,20 @@ function AppRoutes() {
         <Route path="otc/pipeline" element={<OTCPipeline />} />
         <Route path="otc/quotes" element={<OTCQuotes />} />
         <Route path="otc/execution" element={<OTCExecution />} />
+        <Route
+          path="trading-desk/institutional"
+          element={
+            <React.Suspense
+              fallback={
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold-400"></div>
+                </div>
+              }
+            >
+              <InstitutionalDesk />
+            </React.Suspense>
+          }
+        />
         <Route path="otc/settlement" element={<OTCSettlement />} />
         <Route path="otc/invoices" element={<OTCInvoices />} />
         <Route path="otc/clients" element={<OTCClients />} />

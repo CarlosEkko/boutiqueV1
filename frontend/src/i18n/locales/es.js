@@ -377,6 +377,7 @@ const TRANSLATIONS = {
     negociosOtc: 'Negocios',
     cotacoes: 'Cotizaciones',
     execucao: 'Ejecución',
+    mesaInstitucional: 'Mesa Institucional',
     liquidacao: 'Liquidación',
     faturas: 'Facturas',
     clientesOtc: 'Clientes',

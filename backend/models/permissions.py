@@ -298,6 +298,7 @@ DEPARTMENT_MENUS = {
         "icon": "Briefcase",
         "items": [
             {"path": "/dashboard/otc", "label": "Dashboard", "icon": "LayoutDashboard"},
+            {"path": "/dashboard/trading-desk/institutional", "label": "Mesa Institucional", "icon": "Gauge"},
             {"path": "/dashboard/otc/pipeline", "label": "Pipeline", "icon": "Kanban"},
             {"path": "/dashboard/otc/clients", "label": "Clientes", "icon": "Building"},
             {"path": "/dashboard/otc/leads", "label": "Leads", "icon": "UserPlus"},
