@@ -291,6 +291,7 @@ const AdjustmentRow = ({ a, formatCurrency, formatDate }) => {
 };
 
 const CreateAdjustmentDialog = ({ open, onClose, onSuccess }) => {
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [wallets, setWallets] = useState([]);
   const [clientSearch, setClientSearch] = useState('');
