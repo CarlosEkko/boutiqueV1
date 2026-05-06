@@ -1,5 +1,18 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — OTCDealModal: Quote Section Removed + Full i18n
+
+### Changes
+- **OTCDealModal.jsx**: Removed the entire "Parâmetros da Cotação" yellow section (Spread / Taxas / Validade inputs) per user request to unify quote-mode formulas with deal-mode. Quotes now save with default `spread_percent=0`, `fees=0`, `valid_for_minutes=60` so the calculation matches the deal-mode formula exactly.
+- **Calculator pane**: Dropped the conditional "Preço Final" row (depended on spread). `Valor Total` now always uses `calc.total` (qty × adjusted price), regardless of mode.
+- **i18n**: Translated remaining hardcoded strings — placeholder "Pesquisar cliente OTC…", calculator labels "Preço Ref.", "Bruto - Líquido", "Margem Corretores", "Receita KBEX". Added quote-specific keys (`otc.quotes.createTitle/subtitle/createdAndSent/sendQuote`) and modal extras (`otc.deals.modal.clientSearchPh/refPriceUnit/commissionFormula/brokerMarginCard/kbexRevenue`) into `_extras.js` for all 5 languages (PT/EN/FR/ES/AR).
+- **Cleanup**: Removed unused `Send` lucide icon import. Calc memo simplified — no more `spreadAmt/finalPrice/totalWithSpread`.
+
+### Verification
+- Lint: clean.
+- `node /app/scripts/i18n_audit.js`: 100% coverage across all 5 locales, 0 orphan keys.
+- Smoke-test (screenshot, deal mode): "Criar Negociação OTC" modal opens, all labels translated, calculator renders correctly without "Preço Final" row.
+
 ## 2026-05-06 — Refactor i18n: 5 More Dashboard Pages (Approvals, Vault, Bank, Support)
 
 ### Refactored Pages (PT/EN/AR/FR/ES — 100% audit coverage)

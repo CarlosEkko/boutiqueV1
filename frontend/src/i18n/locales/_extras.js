@@ -495,6 +495,23 @@ const EXTRAS = {
       closed: 'Ticket fechado', closeError: 'Erro ao fechar ticket',
       loading: 'A carregar...',
     },
+    otc: {
+      deals: {
+        modal: {
+          clientSearchPh: 'Pesquisar cliente OTC...',
+          refPriceUnit: 'Preço Ref.',
+          commissionFormula: 'Bruto - Líquido',
+          brokerMarginCard: 'Margem Corretores',
+          kbexRevenue: 'Receita KBEX',
+        },
+      },
+      quotes: {
+        createTitle: 'Criar Cotação',
+        subtitle: 'Configure as condições da negociação. A cotação será atualizada e enviada ao cliente.',
+        createdAndSent: 'Negociação criada e cotação enviada ao cliente!',
+        sendQuote: 'Enviar Cotação',
+      },
+    },
   },
   en: {
     common: { other: 'Other', select: 'Select', confirm: 'Confirm', delete: 'Delete', edit: 'Edit', add: 'Add', loading: 'Loading...' },
@@ -962,6 +979,23 @@ const EXTRAS = {
       replyError: 'Error sending message', closed: 'Ticket closed',
       closeError: 'Error closing ticket', loading: 'Loading...',
     },
+    otc: {
+      deals: {
+        modal: {
+          clientSearchPh: 'Search OTC client...',
+          refPriceUnit: 'Ref. Price',
+          commissionFormula: 'Gross - Net',
+          brokerMarginCard: 'Brokers Margin',
+          kbexRevenue: 'KBEX Revenue',
+        },
+      },
+      quotes: {
+        createTitle: 'Create Quote',
+        subtitle: 'Configure deal terms. The quote will be updated and sent to the client.',
+        createdAndSent: 'Deal created and quote sent to client!',
+        sendQuote: 'Send Quote',
+      },
+    },
   },
   fr: {
     common: { other: 'Autre', select: 'Sélectionner', confirm: 'Confirmer', delete: 'Supprimer', edit: 'Modifier', add: 'Ajouter', loading: 'Chargement...' },
@@ -1408,6 +1442,23 @@ const EXTRAS = {
       replyError: "Erreur lors de l'envoi", closed: 'Ticket fermé',
       closeError: 'Erreur lors de la fermeture', loading: 'Chargement...',
     },
+    otc: {
+      deals: {
+        modal: {
+          clientSearchPh: 'Rechercher client OTC...',
+          refPriceUnit: 'Prix Réf.',
+          commissionFormula: 'Brut - Net',
+          brokerMarginCard: 'Marge Courtiers',
+          kbexRevenue: 'Revenu KBEX',
+        },
+      },
+      quotes: {
+        createTitle: 'Créer une Cotation',
+        subtitle: "Configurez les conditions de l'affaire. La cotation sera mise à jour et envoyée au client.",
+        createdAndSent: 'Affaire créée et cotation envoyée au client !',
+        sendQuote: 'Envoyer la Cotation',
+      },
+    },
   },
   es: {
     common: { other: 'Otro', select: 'Seleccionar', confirm: 'Confirmar', delete: 'Eliminar', edit: 'Editar', add: 'Añadir', loading: 'Cargando...' },
@@ -1837,6 +1888,23 @@ const EXTRAS = {
       replyEmpty: 'Escriba un mensaje', replySent: '¡Mensaje enviado!',
       replyError: 'Error al enviar el mensaje', closed: 'Ticket cerrado',
       closeError: 'Error al cerrar el ticket', loading: 'Cargando...',
+    },
+    otc: {
+      deals: {
+        modal: {
+          clientSearchPh: 'Buscar cliente OTC...',
+          refPriceUnit: 'Precio Ref.',
+          commissionFormula: 'Bruto - Neto',
+          brokerMarginCard: 'Margen Corredores',
+          kbexRevenue: 'Ingresos KBEX',
+        },
+      },
+      quotes: {
+        createTitle: 'Crear Cotización',
+        subtitle: 'Configure las condiciones del negocio. La cotización se actualizará y se enviará al cliente.',
+        createdAndSent: '¡Negocio creado y cotización enviada al cliente!',
+        sendQuote: 'Enviar Cotización',
+      },
     },
   },
   ar: {
@@ -2279,6 +2347,23 @@ const EXTRAS = {
       replyEmpty: 'اكتب رسالة', replySent: 'تم إرسال الرسالة!',
       replyError: 'خطأ في إرسال الرسالة', closed: 'تم إغلاق التذكرة',
       closeError: 'خطأ في إغلاق التذكرة', loading: 'جاري التحميل...',
+    },
+    otc: {
+      deals: {
+        modal: {
+          clientSearchPh: 'ابحث عن عميل OTC...',
+          refPriceUnit: 'السعر المرجعي',
+          commissionFormula: 'الإجمالي - الصافي',
+          brokerMarginCard: 'هامش الوسطاء',
+          kbexRevenue: 'إيرادات KBEX',
+        },
+      },
+      quotes: {
+        createTitle: 'إنشاء عرض سعر',
+        subtitle: 'قم بتكوين شروط الصفقة. سيتم تحديث عرض السعر وإرساله إلى العميل.',
+        createdAndSent: 'تم إنشاء الصفقة وإرسال عرض السعر إلى العميل!',
+        sendQuote: 'إرسال عرض السعر',
+      },
     },
   },
 };

@@ -15,7 +15,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { FormattedNumberInput } from '../FormattedNumberInput';
-import { ArrowLeftRight, Calculator, TrendingUp, Send } from 'lucide-react';
+import { ArrowLeftRight, Calculator, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../i18n';
 
@@ -44,8 +44,8 @@ const OTCDealModal = ({
     gross_pct: 4, net_pct: 2, broker_id: '', broker_name: '', broker_type: 'internal',
     member_id: '', member_name: '', broker_share_pct: 50, commission_currency: 'EUR',
     client_name: '', client_email: '', notes: '',
-    // quote-only fields
-    spread_percent: 1.0, fees: 0, valid_for_minutes: 5,
+    // quote-only fields (defaults — section removed; formulas unified with deal mode)
+    spread_percent: 0, fees: 0, valid_for_minutes: 60,
   });
   const [saving, setSaving] = useState(false);
   const [livePrice, setLivePrice] = useState(null);
@@ -83,7 +83,7 @@ const OTCDealModal = ({
         client_name: deal.client_name || '',
         client_email: deal.client_email || '',
         reference_price: 0,
-        spread_percent: 1.0, fees: 0, valid_for_minutes: 5, notes: '',
+        spread_percent: 0, fees: 0, valid_for_minutes: 60, notes: '',
       }));
     } else if (deal) {
       setForm({
@@ -99,7 +99,7 @@ const OTCDealModal = ({
         commission_currency: deal.commission_currency || 'EUR',
         client_name: deal.client_name || '', client_email: deal.client_email || '',
         notes: deal.notes || '',
-        spread_percent: 1.0, fees: 0, valid_for_minutes: 5,
+        spread_percent: 0, fees: 0, valid_for_minutes: 60,
       });
     } else {
       setForm(f => ({ ...f, reference_price: 58200 }));
@@ -138,11 +138,7 @@ const OTCDealModal = ({
     const kbexBrokerPct = commissionPct - brokerPct;
     const brokerComm = margin * (form.broker_share_pct / 100);
     const memberComm = margin - brokerComm;
-    // Final price (with spread for quote mode)
-    const spreadAmt = adj * (form.spread_percent / 100);
-    const finalPrice = form.deal_type === 'buy' ? adj + spreadAmt : adj - spreadAmt;
-    const totalWithSpread = form.quantity * finalPrice;
-    return { adj, total, gross, net, margin, brokerComm, memberComm, commissionPct, brokerPct, kbexBrokerPct, finalPrice, totalWithSpread };
+    return { adj, total, gross, net, margin, brokerComm, memberComm, commissionPct, brokerPct, kbexBrokerPct };
   }, [form]);
 
   const sym = CURRENCY_SYMBOLS[form.reference_currency] || '€';
@@ -270,7 +266,7 @@ const OTCDealModal = ({
                     setShowClientDropdown(true);
                   }}
                   onFocus={() => !isQuoteMode && setShowClientDropdown(true)}
-                  placeholder="Pesquisar cliente OTC..."
+                  placeholder={t('otc.deals.modal.clientSearchPh', 'Pesquisar cliente OTC...')}
                   className="bg-zinc-900 border-zinc-800 text-white"
                   readOnly={isQuoteMode}
                   data-testid="modal-client-name"
@@ -452,31 +448,7 @@ const OTCDealModal = ({
               </div>
             </div>
 
-            {/* Quote-only: Spread / Fees / Validity */}
-            {isQuoteMode && (
-              <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 space-y-3">
-                <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
-                  <Send size={12} /> {t('otc.quotes.quoteSection', 'Parâmetros da Cotação')}
-                </p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.quotes.spreadPct', 'Spread')}</Label>
-                    <div className="relative">
-                      <Input type="number" value={form.spread_percent} onChange={e => updateField('spread_percent', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white pr-8" step="0.1" data-testid="quote-spread" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.quotes.fees', 'Taxas')}</Label>
-                    <Input type="number" value={form.fees} onChange={e => updateField('fees', parseFloat(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white" step="any" data-testid="quote-fees" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-zinc-400 text-xs uppercase tracking-wider">{t('otc.quotes.validFor', 'Válida (min)')}</Label>
-                    <Input type="number" value={form.valid_for_minutes} onChange={e => updateField('valid_for_minutes', parseInt(e.target.value) || 0)} className="bg-zinc-900 border-zinc-800 text-white" step="1" data-testid="quote-validity" />
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Quote-only fields removed — formulas unified with deal mode (defaults: spread=0, fees=0, validFor=60min) */}
           </div>
 
           {/* Calculator */}
@@ -488,22 +460,16 @@ const OTCDealModal = ({
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                    <span className="text-zinc-500">Preço Ref. (1 {form.asset})</span>
+                    <span className="text-zinc-500">{t('otc.deals.modal.refPriceUnit', 'Preço Ref.')} (1 {form.asset})</span>
                     <span className="text-white font-mono">{fmtVal(form.reference_price)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.adjPrice', 'Preço Ajust.')} ({form.condition === 'premium' ? '+' : '-'}{form.condition_pct}%)</span>
                     <span className="text-white font-medium">{fmtVal(calc.adj)}</span>
                   </div>
-                  {isQuoteMode && (
-                    <div className="flex justify-between py-1.5 border-b border-zinc-800">
-                      <span className="text-zinc-500">{t('otc.quotes.finalPrice', 'Preço Final')} ({form.deal_type === 'buy' ? '+' : '-'}{form.spread_percent}%)</span>
-                      <span className="text-emerald-400 font-bold">{fmtVal(calc.finalPrice)}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.totalValue', 'Valor Total')}</span>
-                    <span className="text-white font-bold">{fmtVal(isQuoteMode ? calc.totalWithSpread : calc.total)}</span>
+                    <span className="text-white font-bold">{fmtVal(calc.total)}</span>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-zinc-800">
                     <span className="text-zinc-500">{t('otc.deals.modal.gross', 'Bruto')} ({form.gross_pct}%)</span>
@@ -518,7 +484,7 @@ const OTCDealModal = ({
                 <div className="bg-zinc-800/80 border border-zinc-700/50 rounded-xl p-3 space-y-2">
                   <p className="text-yellow-500 text-xs uppercase tracking-wider font-semibold">{t('otc.deals.modal.brokerMarginCard', 'Margem Corretores')}</p>
                   <p className="text-xl font-bold text-white">{fmtVal(calc.margin)}</p>
-                  <p className="text-zinc-500 text-xs">Gross - Net = {form.gross_pct}% - {form.net_pct}% = {calc.commissionPct.toFixed(1)}%</p>
+                  <p className="text-zinc-500 text-xs">{t('otc.deals.modal.commissionFormula', 'Gross - Net')} = {form.gross_pct}% - {form.net_pct}% = {calc.commissionPct.toFixed(1)}%</p>
                   <div className="space-y-1.5 pt-2 border-t border-zinc-700/30 text-sm">
                     <div className="flex justify-between items-center gap-2">
                       <span className="text-zinc-400 whitespace-nowrap">{t('otc.deals.modal.broker', 'Broker')} ({calc.brokerPct.toFixed(1)}%)</span>
