@@ -736,6 +736,7 @@ async def request_admission_fee_payment(
     user_id: str = Depends(get_current_user_id)
 ):
     """Request to pay admission fee"""
+    logger.info(f"admission-fee/request: user_id={user_id} currency={currency}")
     try:
         settings = await get_platform_settings()
         admission_config = settings.get("admission_fee", {}) or {}

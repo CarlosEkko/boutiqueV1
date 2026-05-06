@@ -87,11 +87,16 @@ const OnboardingPage = () => {
     setCreatingPicker(true);
     try {
       // Server returns the existing pending row if there is one.
+      // NOTE: send an empty JSON body (not null) — some Cloudflare WAF
+      // rules block POSTs with empty/null bodies as suspected CSRF.
       const res = await axios.post(
         `${API_URL}/api/referrals/admission-fee/request`,
-        null,
+        { currency: 'EUR' },
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
           params: { currency: 'EUR' },
         }
       );
