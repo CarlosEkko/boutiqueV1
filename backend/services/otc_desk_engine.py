@@ -47,14 +47,28 @@ logger = logging.getLogger(__name__)
 # Configuration — kept symmetric with the frontend engine.
 # ---------------------------------------------------------------------------
 DEFAULT_ASSETS: List[Dict[str, Any]] = [
-    {"symbol": "BTC", "quote": "USDT", "seed": 65000.0,  "liquidity": 800.0,        "inv_factor": 0.00040},
-    {"symbol": "ETH", "quote": "USDT", "seed": 3500.0,   "liquidity": 8000.0,       "inv_factor": 0.00025},
-    {"symbol": "SOL", "quote": "USDT", "seed": 180.0,    "liquidity": 60000.0,      "inv_factor": 0.00020},
-    {"symbol": "BNB", "quote": "USDT", "seed": 620.0,    "liquidity": 12000.0,      "inv_factor": 0.00025},
-    {"symbol": "XRP", "quote": "USDT", "seed": 0.60,     "liquidity": 5_000_000.0,  "inv_factor": 0.00018},
+    {"symbol": "BTC", "quote": "USDT", "seed": 65000.0,  "liquidity": 800.0,        "inv_factor": 0.00040, "max_inventory": 5.0,     "max_notional_usdt": 500_000.0},
+    {"symbol": "ETH", "quote": "USDT", "seed": 3500.0,   "liquidity": 8000.0,       "inv_factor": 0.00025, "max_inventory": 80.0,    "max_notional_usdt": 500_000.0},
+    {"symbol": "SOL", "quote": "USDT", "seed": 180.0,    "liquidity": 60000.0,      "inv_factor": 0.00020, "max_inventory": 2500.0,  "max_notional_usdt": 500_000.0},
+    {"symbol": "BNB", "quote": "USDT", "seed": 620.0,    "liquidity": 12000.0,      "inv_factor": 0.00025, "max_inventory": 700.0,   "max_notional_usdt": 500_000.0},
+    {"symbol": "XRP", "quote": "USDT", "seed": 0.60,     "liquidity": 5_000_000.0,  "inv_factor": 0.00018, "max_inventory": 800_000.0, "max_notional_usdt": 500_000.0},
 ]
 
-BASE_MARGIN_BPS   = 25      # 0.25%
+DEFAULT_PRICING = {
+    "base_margin_bps": 25.0,
+    "vol_factor": 0.45,
+    "quote_ttl_ms": 15_000,
+    "hedge_latency_ms": 600,
+}
+
+DEFAULT_RISK = {
+    "daily_loss_limit_usdt": 50_000.0,
+    "auto_widen_enabled": True,
+    "auto_widen_trigger_pct": 70.0,    # when |inv_notional|/max_notional > 70%, widen
+    "auto_widen_multiplier": 2.0,       # spread × 2 when triggered
+}
+
+BASE_MARGIN_BPS   = 25      # kept as hard fallback if config load fails
 VOL_FACTOR        = 0.45
 QUOTE_TTL_MS      = 15_000
 HEDGE_LATENCY_MS  = 600
@@ -149,6 +163,13 @@ class OTCDeskEngine:
         self.equity_curve: List[Dict[str, float]] = []  # last 300
         self.active_quotes: Dict[str, FirmQuote] = {}  # id -> quote
 
+        # Runtime config (loaded from Mongo; editable via admin panel)
+        self.pricing_cfg: Dict[str, Any] = dict(DEFAULT_PRICING)
+        self.risk_cfg: Dict[str, Any] = dict(DEFAULT_RISK)
+        # Day-anchored PnL tracking for the daily_loss_limit guard.
+        self._day_anchor_pnl: float = 0.0
+        self._day_anchor_ms: int = _now_ms()
+
         # Configurable asset universe (admin-editable later)
         self.assets_cfg = list(DEFAULT_ASSETS)
 
@@ -163,6 +184,9 @@ class OTCDeskEngine:
         if self._started:
             return
         self._started = True
+
+        # Hydrate runtime config BEFORE seeding market so overrides apply.
+        await self._load_config()
 
         # Seed market state
         for a in self.assets_cfg:
@@ -215,6 +239,133 @@ class OTCDeskEngine:
             self.equity_curve = rows
         except Exception as e:
             logger.warning("OTCDeskEngine hydrate failed: %s", e)
+
+    # ------------------------------------------------------------------
+    # Runtime config — loaded from `otc_desk_config` collection (singleton).
+    # Admin panel updates via `update_config`. Changes apply immediately.
+    # ------------------------------------------------------------------
+    async def _load_config(self) -> None:
+        if self._db is None:
+            return
+        try:
+            doc = await self._db.otc_desk_config.find_one({"_id": STATE_ID})
+            if not doc:
+                # First boot: materialise the defaults so the admin panel sees them.
+                await self._db.otc_desk_config.update_one(
+                    {"_id": STATE_ID},
+                    {"$set": {
+                        "assets": self.assets_cfg,
+                        "pricing": self.pricing_cfg,
+                        "risk": self.risk_cfg,
+                        "updated_ms": _now_ms(),
+                    }},
+                    upsert=True,
+                )
+                return
+            if isinstance(doc.get("assets"), list) and doc["assets"]:
+                # Merge: keep any new keys the engine introduces while respecting
+                # any admin overrides.
+                self.assets_cfg = [
+                    {**(next((d for d in DEFAULT_ASSETS if d["symbol"] == a.get("symbol")), {})),
+                     **a}
+                    for a in doc["assets"] if a.get("symbol")
+                ]
+            if isinstance(doc.get("pricing"), dict):
+                self.pricing_cfg = {**DEFAULT_PRICING, **doc["pricing"]}
+            if isinstance(doc.get("risk"), dict):
+                self.risk_cfg = {**DEFAULT_RISK, **doc["risk"]}
+        except Exception as e:
+            logger.warning("OTCDeskEngine config load failed: %s", e)
+
+    async def _save_config(self) -> None:
+        if self._db is None:
+            return
+        try:
+            await self._db.otc_desk_config.update_one(
+                {"_id": STATE_ID},
+                {"$set": {
+                    "assets": self.assets_cfg,
+                    "pricing": self.pricing_cfg,
+                    "risk": self.risk_cfg,
+                    "updated_ms": _now_ms(),
+                }},
+                upsert=True,
+            )
+        except Exception as e:
+            logger.warning("OTCDeskEngine config save failed: %s", e)
+
+    def config_snapshot(self) -> Dict[str, Any]:
+        return {
+            "assets": list(self.assets_cfg),
+            "pricing": dict(self.pricing_cfg),
+            "risk": dict(self.risk_cfg),
+        }
+
+    async def update_pricing(self, patch: Dict[str, Any]) -> Dict[str, Any]:
+        allowed = {"base_margin_bps", "vol_factor", "quote_ttl_ms", "hedge_latency_ms"}
+        for k, v in patch.items():
+            if k in allowed and v is not None:
+                self.pricing_cfg[k] = v
+        await self._save_config()
+        return dict(self.pricing_cfg)
+
+    async def update_risk(self, patch: Dict[str, Any]) -> Dict[str, Any]:
+        allowed = {
+            "daily_loss_limit_usdt", "auto_widen_enabled",
+            "auto_widen_trigger_pct", "auto_widen_multiplier",
+        }
+        for k, v in patch.items():
+            if k in allowed and v is not None:
+                self.risk_cfg[k] = v
+        await self._save_config()
+        return dict(self.risk_cfg)
+
+    async def upsert_asset(self, asset: Dict[str, Any]) -> Dict[str, Any]:
+        sym = (asset.get("symbol") or "").upper().strip()
+        if not sym:
+            raise ValueError("symbol is required")
+        quote = asset.get("quote") or "USDT"
+        merged = {
+            "symbol": sym, "quote": quote,
+            "seed": float(asset.get("seed") or asset.get("seed_price") or 1.0),
+            "liquidity": float(asset.get("liquidity") or 1000.0),
+            "inv_factor": float(asset.get("inv_factor") or 0.0002),
+            "max_inventory": float(asset.get("max_inventory") or 0.0),
+            "max_notional_usdt": float(asset.get("max_notional_usdt") or 0.0),
+        }
+        found = False
+        for i, a in enumerate(self.assets_cfg):
+            if a.get("symbol") == sym:
+                self.assets_cfg[i] = {**a, **merged}
+                found = True
+                break
+        if not found:
+            self.assets_cfg.append(merged)
+            # Seed market + inventory for the new asset
+            self.market[sym] = AssetMarket(
+                symbol=sym, quote=quote, mid=merged["seed"],
+                bid=merged["seed"], ask=merged["seed"], vol=0.0,
+                liquidity=merged["liquidity"], inv_factor=merged["inv_factor"],
+                history=[merged["seed"]],
+            )
+            self.inventory.setdefault(sym, 0.0)
+            self.cost_basis.setdefault(sym, 0.0)
+        # Update the live market object with new liquidity / inv_factor
+        if sym in self.market:
+            self.market[sym].liquidity = merged["liquidity"]
+            self.market[sym].inv_factor = merged["inv_factor"]
+        await self._save_config()
+        return merged
+
+    async def remove_asset(self, symbol: str) -> None:
+        sym = symbol.upper().strip()
+        if abs(self.inventory.get(sym, 0.0)) > 1e-10:
+            raise ValueError(f"Cannot remove {sym}: open inventory position")
+        self.assets_cfg = [a for a in self.assets_cfg if a.get("symbol") != sym]
+        self.market.pop(sym, None)
+        self.inventory.pop(sym, None)
+        self.cost_basis.pop(sym, None)
+        await self._save_config()
 
     async def _persist_state(self) -> None:
         if self._db is None:
@@ -323,13 +474,58 @@ class OTCDeskEngine:
 
         a = self.market[symbol]
         inv = self.inventory.get(symbol, 0.0)
+
+        # -------- Pre-trade risk checks ---------------------------------------
+        asset_cfg = next((c for c in self.assets_cfg if c.get("symbol") == symbol), {})
+        max_inv = float(asset_cfg.get("max_inventory") or 0.0)
+        max_notional = float(asset_cfg.get("max_notional_usdt") or 0.0)
+        new_inv = inv + (-size if side == "buy" else size)
+        if max_inv > 0 and abs(new_inv) > max_inv:
+            raise ValueError(
+                f"Trade rejected: would breach max inventory {max_inv} {symbol} "
+                f"(post-trade |inv| = {abs(new_inv):.6f})"
+            )
+        if max_notional > 0 and abs(new_inv) * a.mid > max_notional:
+            raise ValueError(
+                f"Trade rejected: would breach max notional {max_notional:.0f} USDT "
+                f"(post-trade = {abs(new_inv) * a.mid:.2f})"
+            )
+        # Daily loss guard — rolls at UTC midnight (24h anchor).
+        now_ms = _now_ms()
+        if now_ms - self._day_anchor_ms >= 86_400_000:
+            self._day_anchor_ms = now_ms
+            self._day_anchor_pnl = self.cash_pnl + self.unrealized_pnl()
+        daily_pnl = (self.cash_pnl + self.unrealized_pnl()) - self._day_anchor_pnl
+        daily_loss_limit = float(self.risk_cfg.get("daily_loss_limit_usdt") or 0.0)
+        if daily_loss_limit > 0 and daily_pnl < -daily_loss_limit:
+            raise ValueError(
+                f"Desk halted: daily loss limit {daily_loss_limit:.0f} USDT reached "
+                f"(session PnL = {daily_pnl:.2f})"
+            )
+
+        # -------- Pricing -----------------------------------------------------
+        base_margin_bps = float(self.pricing_cfg.get("base_margin_bps", 25.0))
+        vol_factor      = float(self.pricing_cfg.get("vol_factor", 0.45))
+        quote_ttl_ms    = int(self.pricing_cfg.get("quote_ttl_ms", 15_000))
+
         # long inventory tightens sells (attracts sells out) / widens buys (deters buys in)
         skew_sign = 1 if (side == "buy" and inv < 0) or (side == "sell" and inv > 0) else -1
-        base      = BASE_MARGIN_BPS / 10_000
+        base      = base_margin_bps / 10_000
         size_c    = size / a.liquidity
-        vol_c     = a.vol * VOL_FACTOR
+        vol_c     = a.vol * vol_factor
         inv_c     = abs(inv) * a.inv_factor * skew_sign * -1
         spread    = max(0.0, base + size_c + vol_c + inv_c)
+
+        # Auto-widen: when inventory utilisation crosses trigger, widen spread.
+        auto_widen_applied = False
+        if self.risk_cfg.get("auto_widen_enabled") and max_notional > 0:
+            util_pct = (abs(inv) * a.mid / max_notional) * 100.0 if max_notional else 0.0
+            trigger = float(self.risk_cfg.get("auto_widen_trigger_pct", 70.0))
+            if util_pct >= trigger:
+                mult = float(self.risk_cfg.get("auto_widen_multiplier", 2.0))
+                spread = spread * mult
+                auto_widen_applied = True
+
         price     = a.mid * (1 + spread) if side == "buy" else a.mid * (1 - spread)
         created   = _now_ms()
         q = FirmQuote(
@@ -337,10 +533,13 @@ class OTCDeskEngine:
             mid=a.mid, price=price,
             spread_pct=spread, spread_bps=spread * 10_000,
             notional=price * size,
-            components={"base": base, "size": size_c, "vol": vol_c, "inv": inv_c},
+            components={
+                "base": base, "size": size_c, "vol": vol_c, "inv": inv_c,
+                "auto_widen": 1.0 if auto_widen_applied else 0.0,
+            },
             created_ms=created,
-            expires_ms=created + QUOTE_TTL_MS,
-            valid_for_ms=QUOTE_TTL_MS,
+            expires_ms=created + quote_ttl_ms,
+            valid_for_ms=quote_ttl_ms,
         )
         self.active_quotes[q.id] = q
         # Housekeeping — drop expired quotes
@@ -421,7 +620,8 @@ class OTCDeskEngine:
         """Mock venue hedge: after HEDGE_LATENCY_MS, fill the opposite of client leg
         and book slippage cost. This is a single-adapter swap away from Binance /
         Fireblocks execution — see `services/otc_desk_venue_adapter.py` (future)."""
-        await asyncio.sleep(HEDGE_LATENCY_MS / 1000.0)
+        latency_ms = int(self.pricing_cfg.get("hedge_latency_ms", HEDGE_LATENCY_MS))
+        await asyncio.sleep(latency_ms / 1000.0)
         a = self.market.get(q.symbol)
         if not a:
             return
@@ -486,11 +686,13 @@ class OTCDeskEngine:
             "recent_trades": self.trades[-10:],
             "active_quotes": [q.__dict__ for q in self.active_quotes.values()],
             "config": {
-                "base_margin_bps": BASE_MARGIN_BPS,
-                "vol_factor": VOL_FACTOR,
-                "quote_ttl_ms": QUOTE_TTL_MS,
-                "hedge_latency_ms": HEDGE_LATENCY_MS,
+                "base_margin_bps": float(self.pricing_cfg.get("base_margin_bps", BASE_MARGIN_BPS)),
+                "vol_factor": float(self.pricing_cfg.get("vol_factor", VOL_FACTOR)),
+                "quote_ttl_ms": int(self.pricing_cfg.get("quote_ttl_ms", QUOTE_TTL_MS)),
+                "hedge_latency_ms": int(self.pricing_cfg.get("hedge_latency_ms", HEDGE_LATENCY_MS)),
             },
+            "daily_pnl": (self.cash_pnl + self.unrealized_pnl()) - self._day_anchor_pnl,
+            "daily_loss_limit_usdt": float(self.risk_cfg.get("daily_loss_limit_usdt", 0.0)),
         }
 
     def pnl_series(self) -> List[Dict[str, float]]:

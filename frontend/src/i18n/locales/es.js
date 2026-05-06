@@ -378,6 +378,7 @@ const TRANSLATIONS = {
     cotacoes: 'Cotizaciones',
     execucao: 'Ejecución',
     mesaInstitucional: 'Mesa Institucional',
+    otcDeskConfig: 'Config. Mesa OTC',
     liquidacao: 'Liquidación',
     faturas: 'Facturas',
     clientesOtc: 'Clientes',

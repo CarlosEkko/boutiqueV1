@@ -214,6 +214,7 @@ const labelTranslationMap = {
   'Cotações': 'sidebar.cotacoes',
   'Execução': 'sidebar.execucao',
   'Mesa Institucional': 'sidebar.mesaInstitucional',
+  'OTC Desk Config': 'sidebar.otcDeskConfig',
   'Liquidação': 'sidebar.liquidacao',
   'Faturas': 'sidebar.faturas',
   'Comissões': 'sidebar.comissoes',

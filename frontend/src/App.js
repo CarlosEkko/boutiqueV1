@@ -109,6 +109,7 @@ import ClientTiersPage from "./pages/dashboard/ClientTiersPage";
 import AdminClientTiers from "./pages/dashboard/admin/AdminClientTiers";
 import AdminBillingPage from "./pages/dashboard/admin/AdminBillingPage";
 import AdminCookieConsentPage from "./pages/dashboard/admin/AdminCookieConsentPage";
+import AdminOTCDeskPage from "./pages/dashboard/admin/AdminOTCDeskPage";
 import RegisterPage from "./pages/RegisterPage";
 import LaunchpadPage from "./pages/LaunchpadPage";
 import ClientLaunchpadPage from "./pages/dashboard/LaunchpadPage";
@@ -355,6 +356,7 @@ function AppRoutes() {
           <Route path="admin/security" element={<SecurityDashboardPage />} />
           <Route path="admin/settings" element={<AdminSettings />} />
           <Route path="admin/cookie-consent" element={<AdminCookieConsentPage />} />
+          <Route path="admin/otc-desk" element={<AdminOTCDeskPage />} />
           <Route path="admin/kbex-rates" element={<AdminKBEXRates />} />
           <Route path="admin/institucional" element={<AdminTenants />} />
           <Route path="admin/tenants" element={<AdminTenants />} />
