@@ -1,5 +1,16 @@
 # KBEX.io - Changelog
 
+## 2026-05-06 — Onboarding Email: Quiet Luxury Tone + Spanish Support
+
+### Changes
+- **email_service.py**: Rewrote the `onboard_*` keys for **EN, FR, AR** to match the new "Quiet Luxury" tone applied earlier to PT (sourced from the user's `Onboarding PT.docx`). New subject "Private Clients Access – Next Steps" and structured body: greeting → eligibility statement → tier card → CTA "Complete Private Registration" → 4-step process (registration / KYC / compliance approval / private trading activation) → dedicated account manager closing line.
+- **Spanish (ES) added** as a fully supported email language. New `EMAIL_STRINGS["es"]` block covers `access_*`, `onboard_*`, `team_*`, and `kyc_*` keys. `COUNTRY_LANG` now maps Spain + 19 LATAM Spanish-speaking countries (MX/AR/CO/CL/PE/VE/EC/BO/UY/PY/CR/PA/DO/GT/HN/NI/SV/CU/PR) to `es`. `NAME_TO_ISO` extended with the corresponding country names in EN/PT.
+- **Team labels**: `onboard_team` now uses "OTC Desk" (EN/AR) and "Equipa/Equipo/Équipe OTC" elsewhere — institutional, vendor-agnostic.
+
+### Verification
+- Lint: clean (only pre-existing E731 lambda warnings).
+- Python smoke-test: `_get_lang()` correctly resolves PT/EN/ES/FR/AR; `_t()` returns the new luxury strings; full `send_onboarding_email()` builds without exceptions for all 5 countries (PT/US/ES/FR/AE) — emails enter simulated mode when no Brevo key is configured.
+
 ## 2026-05-06 — OTCDealModal: Quote Section Removed + Full i18n
 
 ### Changes
