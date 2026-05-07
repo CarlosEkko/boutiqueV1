@@ -3384,9 +3384,17 @@ async def create_client_rfq(
     if not client:
         raise HTTPException(status_code=404, detail="Not an OTC client")
 
-    # Resolve client tier (defense-in-depth: never trust the frontend mode choice)
-    user_doc = await db.users.find_one({"id": current_user_id}, {"_id": 0, "membership_level": 1})
-    tier = ((user_doc or {}).get("membership_level") or "standard").lower()
+    # Resolve client tier — prefer otc_clients (operationally maintained by
+    # the OTC desk admin) over users.membership_level which can drift.
+    tier = (
+        client.get("client_tier")
+        or client.get("membership_level")
+        or None
+    )
+    if not tier:
+        user_doc = await db.users.find_one({"id": current_user_id}, {"_id": 0, "membership_level": 1})
+        tier = ((user_doc or {}).get("membership_level") or "standard")
+    tier = str(tier).lower()
 
     # ---------- Instant routing — Institutional Desk firm quote ----------
     if mode == "instant":
@@ -3503,8 +3511,15 @@ async def create_client_rfq(
         deal_dict["quote_id"] = quote_doc.id
         deal_dict["quote_expires_at"] = expires_at
 
-        await db.otc_deals.insert_one(deal_dict)
+        # Persist quote FIRST — if this fails we abort cleanly with no orphaned
+        # deal at stage=quote pointing to a non-existent quote.
         await db.otc_quotes.insert_one(quote_doc.dict())
+        try:
+            await db.otc_deals.insert_one(deal_dict)
+        except Exception:
+            # Roll back the quote on a deal-insert failure to keep DB consistent.
+            await db.otc_quotes.delete_one({"id": quote_doc.id})
+            raise
 
         return {
             "success": True,

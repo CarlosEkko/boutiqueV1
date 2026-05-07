@@ -435,6 +435,24 @@ Frontend (Client — 2026-05-07 part 2):
 Tests:
 - `/app/test_reports/iteration_59.json` — 25/25 backend tests passed.
 - `/app/test_reports/iteration_60.json` — frontend 100% (9/9 requested checks — tier badge, mode cards, notional estimate, disabled Instant card, upgrade CTA, auto-fallback).
+- `/app/test_reports/iteration_61.json` — Phase 2 routing 12/12 passed (mode='instant' returns firm desk quote in <1.5s, atomic deal+quote persistence, tier policy enforced server-side, asset-universe gate, accept-quote works on institutional_desk-sourced quotes).
+
+## OTC Flow Phase 2 — Mode-based RFQ Routing (2026-05-07)
+**Closes the loop**: clients pick `mode` in the modal, backend routes accordingly.
+
+Backend (`/app/backend/routes/otc.py` — `create_client_rfq`):
+- `ClientRFQRequest` extended with `mode: Optional[str] = "white_glove"` (validated to instant|white_glove).
+- **Tier resolution priority**: `otc_clients.client_tier` > `otc_clients.membership_level` > `users.membership_level` > 'standard'. Prevents drift between admin-edited OTC client tier and the user's general membership.
+- **mode='white_glove'** (default) — preserves existing CRM Kanban flow: deal at stage='rfq', no quote, `quote_source='white_glove'`, trader manually quotes via the desk app.
+- **mode='instant'** — calls the Institutional OTC Desk engine (`services.otc_desk_engine.get_engine().build_quote(...)`) and atomically materialises BOTH the deal (stage='quote') AND the OTCQuote (status='sent', `price_source='institutional_desk'`, valid ~15s). Insert order is **quote first, deal second** with rollback on deal-insert failure to prevent orphan deals.
+  - Hard server-side enforcement: `policy_violation` (403) if tier doesn't allow instant or notional > cap; `asset_not_supported_instant` (400) if symbol outside engine universe (BTC/ETH/SOL/BNB/XRP); `desk_capacity` (409) on engine inventory/risk reject.
+  - USDT→quote_asset FX conversion via cached `EXCHANGE_RATES_CACHE` (5-min refresh from exchangerate-api.com).
+  - Deal is tagged `desk_quote_id` (engine FirmQuote.id) for audit reconciliation.
+
+Frontend (`/app/frontend/src/pages/dashboard/ClientOTCPortal.jsx`):
+- `handleCreateRFQ` now reads `data.mode` from response; on instant success it auto-opens the QuoteDialog with the new firm quote (so the user accepts/rejects before the 15s TTL).
+- Backend structured errors (`detail.message` + `detail.suggested_mode`) surface as toasts; if `suggested_mode='white_glove'`, the picker auto-falls back so the next click submits manually.
+- Performance: VIP instant 0.1 BTC → firm quote in **~635ms end-to-end**.
 
 
 ## VPS Deployment
