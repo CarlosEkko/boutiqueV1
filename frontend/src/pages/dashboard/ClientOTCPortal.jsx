@@ -39,7 +39,9 @@ import {
   TrendingDown,
   Eye,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
+  UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -99,6 +101,15 @@ const ClientOTCPortal = () => {
     payCurrency: { pt: 'Moeda de Pagamento', en: 'Payment Currency', ar: 'عملة الدفع', fr: 'Devise de paiement', es: 'Moneda de pago' },
     notes: { pt: 'Notas (opcional)', en: 'Notes (optional)', ar: 'ملاحظات', fr: 'Notes (optionnel)', es: 'Notas (opcional)' },
     notesPlaceholder: { pt: 'Informações adicionais...', en: 'Additional information...', ar: 'معلومات إضافية...', fr: 'Informations supplémentaires...', es: 'Información adicional...' },
+    modeInstantTitle: { pt: 'Cotação Firme Imediata', en: 'Instant Firm Quote', ar: 'عرض سعر ثابت فوري', fr: 'Cotation ferme immédiate', es: 'Cotización firme inmediata' },
+    modeInstantDesc: { pt: 'Preço algorítmico do desk em segundos. Válido 15s.', en: 'Algorithmic desk price in seconds. Valid 15s.', ar: 'سعر خوارزمي فوري.', fr: 'Prix algorithmique en secondes.', es: 'Precio algorítmico en segundos.' },
+    modeWhiteGloveTitle: { pt: 'Serviço White-Glove', en: 'White-Glove Service', ar: 'خدمة مميزة', fr: 'Service white-glove', es: 'Servicio white-glove' },
+    modeWhiteGloveDesc: { pt: 'Trader dedicado responde com cotação personalizada.', en: 'Dedicated trader replies with a bespoke quote.', ar: 'متداول مخصص يرد بعرض أسعار مخصص.', fr: 'Un trader dédié répond avec une cotation sur mesure.', es: 'Un trader dedicado responde con una cotización personalizada.' },
+    modeUnavailable: { pt: 'Não disponível no seu tier', en: 'Not available on your tier', ar: 'غير متاح لمستواك', fr: 'Non disponible à votre niveau', es: 'No disponible en su nivel' },
+    upgradeTierCta: { pt: 'Ver Níveis & Benefícios', en: 'View Tiers & Benefits', ar: 'عرض المستويات', fr: 'Voir les niveaux', es: 'Ver niveles' },
+    selectedModeLabel: { pt: 'Modo seleccionado', en: 'Selected mode', ar: 'الوضع المحدد', fr: 'Mode sélectionné', es: 'Modo seleccionado' },
+    estNotional: { pt: 'Notional estimado', en: 'Estimated notional', ar: 'القيمة الاسمية المقدرة', fr: 'Notionnel estimé', es: 'Nocional estimado' },
+    tierBadge: { pt: 'Tier', en: 'Tier', ar: 'مستوى', fr: 'Niveau', es: 'Nivel' },
     orderSummary: { pt: 'Resumo do Pedido', en: 'Order Summary', ar: 'ملخص الطلب', fr: 'Résumé', es: 'Resumen' },
     teamWillQuote: { pt: 'A equipa OTC irá enviar uma cotação em breve.', en: 'The OTC team will send a quote shortly.', ar: 'سيرسل فريق OTC عرض أسعار قريبا.', fr: 'L\'équipe OTC enverra une cotation.', es: 'El equipo OTC enviará una cotización.' },
     cancel: { pt: 'Cancelar', en: 'Cancel', ar: 'إلغاء', fr: 'Annuler', es: 'Cancelar' },
@@ -144,6 +155,9 @@ const ClientOTCPortal = () => {
     amount: '',
     notes: ''
   });
+  const [rfqMode, setRfqMode] = useState('white_glove'); // 'instant' | 'white_glove'
+  const [policyCheck, setPolicyCheck] = useState(null);
+  const [policyLoading, setPolicyLoading] = useState(false);
   
   // Quote Detail Dialog
   const [showQuoteDialog, setShowQuoteDialog] = useState(false);
@@ -152,6 +166,51 @@ const ClientOTCPortal = () => {
   useEffect(() => {
     fetchData();
   }, [token]);
+
+  // --- Tier policy check — evaluate instant vs white-glove availability ---
+  // Runs when dialog opens, when amount/asset changes (debounced), or when
+  // the user's tier changes. Uses the public price oracle to estimate USDT
+  // notional, then calls POST /api/otc-policies/check for the user's tier.
+  useEffect(() => {
+    if (!showRFQDialog || !token) return undefined;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setPolicyLoading(true);
+      try {
+        const tier = (user?.membership_level || 'standard').toLowerCase();
+        let notionalUsdt = 0;
+        const amt = parseFloat(rfqForm.amount);
+        if (Number.isFinite(amt) && amt > 0 && rfqForm.base_asset) {
+          try {
+            const pr = await axios.get(
+              `${API_URL}/api/trading/price/${rfqForm.base_asset}?currency=USD`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const priceUsd = Number(pr.data?.price_usd || pr.data?.price || 0);
+            notionalUsdt = amt * priceUsd;
+          } catch { /* silent — notional stays 0, instant check still runs against tier gates */ }
+        }
+        const { data } = await axios.post(
+          `${API_URL}/api/otc-policies/check`,
+          { tier, size_usdt: notionalUsdt },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (cancelled) return;
+        setPolicyCheck({ ...data, notional_usdt: notionalUsdt });
+        // If the currently-selected mode is disallowed, auto-fallback to an allowed one.
+        const modes = data?.modes || {};
+        if (rfqMode === 'instant' && !modes.instant?.allowed) {
+          setRfqMode(modes.white_glove?.allowed ? 'white_glove' : 'white_glove');
+        }
+      } catch (err) {
+        if (!cancelled) setPolicyCheck(null);
+      } finally {
+        if (!cancelled) setPolicyLoading(false);
+      }
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showRFQDialog, rfqForm.amount, rfqForm.base_asset, user?.membership_level, token]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -189,11 +248,19 @@ const ClientOTCPortal = () => {
       toast.error(l('invalidAmount'));
       return;
     }
-    
+
+    // Client-side policy guard — backend will enforce again on the desk side.
+    const modeCheck = policyCheck?.modes?.[rfqMode];
+    if (modeCheck && !modeCheck.allowed) {
+      toast.error(modeCheck.reason || l('modeUnavailable'));
+      return;
+    }
+
     try {
       await axios.post(`${API_URL}/api/otc/client/rfq`, {
         ...rfqForm,
-        amount: parseFloat(rfqForm.amount)
+        amount: parseFloat(rfqForm.amount),
+        mode: rfqMode,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -207,6 +274,8 @@ const ClientOTCPortal = () => {
         amount: '',
         notes: ''
       });
+      setRfqMode('white_glove');
+      setPolicyCheck(null);
       fetchData();
     } catch (err) {
       toast.error(getErrorMessage(err, l('rfqError')));
@@ -746,6 +815,96 @@ const ClientOTCPortal = () => {
                 rows={3}
               />
             </div>
+
+            {/* Tier-based mode selector */}
+            <div data-testid="rfq-mode-selector" className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{l('selectedModeLabel')}</Label>
+                {policyCheck?.tier && (
+                  <Badge
+                    data-testid="rfq-policy-tier-badge"
+                    variant="outline"
+                    className="border-gold-500/40 text-gold-300 text-[10px] uppercase tracking-widest"
+                  >
+                    {l('tierBadge')} · {policyCheck.tier}
+                  </Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(() => {
+                  const modes = policyCheck?.modes || {};
+                  const cards = [
+                    {
+                      key: 'instant',
+                      title: l('modeInstantTitle'),
+                      desc: l('modeInstantDesc'),
+                      icon: Zap,
+                      accent: 'from-gold-500/10 border-gold-500/40 text-gold-300',
+                      activeAccent: 'bg-gold-500/15 border-gold-400 text-gold-200 shadow-[0_0_24px_-6px_rgba(212,175,55,0.5)]',
+                    },
+                    {
+                      key: 'white_glove',
+                      title: l('modeWhiteGloveTitle'),
+                      desc: l('modeWhiteGloveDesc'),
+                      icon: UserCheck,
+                      accent: 'from-zinc-500/5 border-zinc-700 text-zinc-300',
+                      activeAccent: 'bg-zinc-800/60 border-gold-400/70 text-zinc-100 shadow-[0_0_24px_-8px_rgba(212,175,55,0.4)]',
+                    },
+                  ];
+                  return cards.map((c) => {
+                    const info = modes[c.key];
+                    // While loading, show default-enabled state (no reason visible).
+                    const allowed = policyLoading ? true : (info ? info.allowed : true);
+                    const selected = rfqMode === c.key;
+                    const Icon = c.icon;
+                    return (
+                      <button
+                        type="button"
+                        key={c.key}
+                        data-testid={`rfq-mode-${c.key}`}
+                        disabled={!allowed}
+                        onClick={() => allowed && setRfqMode(c.key)}
+                        className={`text-left rounded-lg border p-3 transition-all ${
+                          selected && allowed
+                            ? c.activeAccent
+                            : allowed
+                              ? `bg-gradient-to-br ${c.accent} hover:border-gold-500/70`
+                              : 'bg-zinc-900/40 border-zinc-800 opacity-50 cursor-not-allowed text-zinc-500'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Icon size={16} className={selected && allowed ? 'text-gold-300 mt-0.5' : 'mt-0.5'} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium">{c.title}</span>
+                              {selected && allowed && (
+                                <CheckCircle size={12} className="text-gold-300" />
+                              )}
+                            </div>
+                            <p className="text-[11px] leading-snug mt-0.5 opacity-80">{c.desc}</p>
+                            {!allowed && info?.reason && (
+                              <p className="text-[10px] text-rose-400/80 mt-1.5 italic leading-tight">
+                                {info.reason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+              {policyCheck && !policyCheck.modes?.instant?.allowed && (
+                <a
+                  data-testid="rfq-upgrade-cta"
+                  href="/dashboard/tiers"
+                  className="inline-flex items-center gap-1 text-[11px] text-gold-400 hover:text-gold-300 transition-colors"
+                >
+                  <ArrowRight size={11} />
+                  {l('upgradeTierCta')}
+                </a>
+              )}
+            </div>
             
             {/* Summary */}
             {rfqForm.amount && (
@@ -756,6 +915,22 @@ const ClientOTCPortal = () => {
                   <span className="font-mono text-gold-400">{rfqForm.amount} {rfqForm.base_asset}</span>
                   {' '}{l('inWord')} {rfqForm.quote_asset}
                 </p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                  <span className="text-gray-400">
+                    {l('selectedModeLabel')}:{' '}
+                    <span className="text-gold-300">
+                      {rfqMode === 'instant' ? l('modeInstantTitle') : l('modeWhiteGloveTitle')}
+                    </span>
+                  </span>
+                  {policyCheck?.notional_usdt > 0 && (
+                    <span className="text-gray-400" data-testid="rfq-est-notional">
+                      {l('estNotional')}:{' '}
+                      <span className="font-mono text-gold-300">
+                        ${Number(policyCheck.notional_usdt).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </span>
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-400 text-sm mt-2">
                   {l('teamWillQuote')}
                 </p>
