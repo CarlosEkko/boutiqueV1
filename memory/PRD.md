@@ -421,11 +421,20 @@ Backend:
   - `/execute` enforces `auto_execute_enabled` and `auto_execute_max_usdt` against the active quote. If the referenced quote is no longer in `active_quotes`, returns HTTP 404 `code=quote_not_active` (prevents silent bypass through stale quotes).
   - Requests without `client_user_id` preserve the original staff-only preview path.
 
-Frontend:
+Frontend (Admin):
 - New `OTCPoliciesSection.jsx` component — responsive 12-col matrix, toggle+cap per tier, per-row Save, client-side guard for `auto_max ≤ instant_max`, "Effective" summary column.
 - Embedded in **both**: `AdminOTCDeskPage.jsx` (between Asset Universe and Trade History) and `AdminClientTiers.jsx` (below the existing tier feature grid) per user request.
 
-Tests: `/app/test_reports/iteration_59.json` — 25/25 backend tests passed.
+Frontend (Client — 2026-05-07 part 2):
+- `ClientOTCPortal.jsx` RFQ modal now calls `POST /api/otc-policies/check` on dialog open + on amount/asset change (350ms debounce). Uses `/api/trading/price/{base}?currency=USD` to estimate USDT notional.
+- Renders two selectable mode cards: **Instant Firm Quote** (gold/Zap icon) vs **White-Glove Service** (neutral/UserCheck icon). Tier badge shown.
+- Disallowed modes render with opacity-50 + policy reason text + link to `/dashboard/tiers` ("Ver Níveis & Benefícios").
+- Auto-fallback: if user had `instant` selected and a policy change makes it disallowed, selector flips to `white_glove` silently.
+- RFQ payload now includes `mode` field (backend ignores unknown fields for now — reserved for desk-side routing in Phase 2).
+
+Tests:
+- `/app/test_reports/iteration_59.json` — 25/25 backend tests passed.
+- `/app/test_reports/iteration_60.json` — frontend 100% (9/9 requested checks — tier badge, mode cards, notional estimate, disabled Instant card, upgrade CTA, auto-fallback).
 
 
 ## VPS Deployment
