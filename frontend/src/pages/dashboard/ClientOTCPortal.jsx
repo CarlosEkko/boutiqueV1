@@ -103,8 +103,10 @@ const ClientOTCPortal = () => {
     notesPlaceholder: { pt: 'Informações adicionais...', en: 'Additional information...', ar: 'معلومات إضافية...', fr: 'Informations supplémentaires...', es: 'Información adicional...' },
     modeInstantTitle: { pt: 'Cotação Firme Imediata', en: 'Instant Firm Quote', ar: 'عرض سعر ثابت فوري', fr: 'Cotation ferme immédiate', es: 'Cotización firme inmediata' },
     modeInstantDesc: { pt: 'Preço algorítmico do desk em segundos. Válido 15s.', en: 'Algorithmic desk price in seconds. Valid 15s.', ar: 'سعر خوارزمي فوري.', fr: 'Prix algorithmique en secondes.', es: 'Precio algorítmico en segundos.' },
+    modeInstantBadge: { pt: 'Mais rápido · ~300ms', en: 'Fastest · ~300ms', ar: 'الأسرع · ~300ms', fr: 'Plus rapide · ~300ms', es: 'Más rápido · ~300ms' },
     modeWhiteGloveTitle: { pt: 'Serviço White-Glove', en: 'White-Glove Service', ar: 'خدمة مميزة', fr: 'Service white-glove', es: 'Servicio white-glove' },
     modeWhiteGloveDesc: { pt: 'Trader dedicado responde com cotação personalizada.', en: 'Dedicated trader replies with a bespoke quote.', ar: 'متداول مخصص يرد بعرض أسعار مخصص.', fr: 'Un trader dédié répond avec une cotation sur mesure.', es: 'Un trader dedicado responde con una cotización personalizada.' },
+    modeWhiteGloveBadge: { pt: 'Atendimento humano', en: 'Human concierge', ar: 'خدمة بشرية', fr: 'Concierge humain', es: 'Atención humana' },
     modeUnavailable: { pt: 'Não disponível no seu tier', en: 'Not available on your tier', ar: 'غير متاح لمستواك', fr: 'Non disponible à votre niveau', es: 'No disponible en su nivel' },
     upgradeTierCta: { pt: 'Ver Níveis & Benefícios', en: 'View Tiers & Benefits', ar: 'عرض المستويات', fr: 'Voir les niveaux', es: 'Ver niveles' },
     selectedModeLabel: { pt: 'Modo seleccionado', en: 'Selected mode', ar: 'الوضع المحدد', fr: 'Mode sélectionné', es: 'Modo seleccionado' },
@@ -838,22 +840,25 @@ const ClientOTCPortal = () => {
                       key: 'instant',
                       title: l('modeInstantTitle'),
                       desc: l('modeInstantDesc'),
+                      badge: l('modeInstantBadge'),
+                      badgeClass: 'bg-gold-500/20 border-gold-400/50 text-gold-200',
                       icon: Zap,
                       accent: 'from-gold-500/10 border-gold-500/40 text-gold-300',
-                      activeAccent: 'bg-gold-500/15 border-gold-400 text-gold-200 shadow-[0_0_24px_-6px_rgba(212,175,55,0.5)]',
+                      activeAccent: 'bg-gold-500/15 border-gold-400 text-gold-200',
                     },
                     {
                       key: 'white_glove',
                       title: l('modeWhiteGloveTitle'),
                       desc: l('modeWhiteGloveDesc'),
+                      badge: l('modeWhiteGloveBadge'),
+                      badgeClass: 'bg-zinc-800/80 border-zinc-600/60 text-zinc-300',
                       icon: UserCheck,
                       accent: 'from-zinc-500/5 border-zinc-700 text-zinc-300',
-                      activeAccent: 'bg-zinc-800/60 border-gold-400/70 text-zinc-100 shadow-[0_0_24px_-8px_rgba(212,175,55,0.4)]',
+                      activeAccent: 'bg-zinc-800/60 border-gold-400/70 text-zinc-100',
                     },
                   ];
                   return cards.map((c) => {
                     const info = modes[c.key];
-                    // While loading, show default-enabled state (no reason visible).
                     const allowed = policyLoading ? true : (info ? info.allowed : true);
                     const selected = rfqMode === c.key;
                     const Icon = c.icon;
@@ -864,21 +869,34 @@ const ClientOTCPortal = () => {
                         data-testid={`rfq-mode-${c.key}`}
                         disabled={!allowed}
                         onClick={() => allowed && setRfqMode(c.key)}
-                        className={`text-left rounded-lg border p-3 transition-all ${
+                        className={`relative text-left rounded-lg border p-3 transition-all duration-200 ease-out ${
                           selected && allowed
-                            ? c.activeAccent
+                            ? `${c.activeAccent} animate-gold-halo scale-[1.015]`
                             : allowed
-                              ? `bg-gradient-to-br ${c.accent} hover:border-gold-500/70`
+                              ? `bg-gradient-to-br ${c.accent} hover:border-gold-500/70 hover:scale-[1.005]`
                               : 'bg-zinc-900/40 border-zinc-800 opacity-50 cursor-not-allowed text-zinc-500'
                         }`}
                       >
-                        <div className="flex items-start gap-2">
-                          <Icon size={16} className={selected && allowed ? 'text-gold-300 mt-0.5' : 'mt-0.5'} />
+                        {allowed && c.badge && (
+                          <span
+                            data-testid={`rfq-mode-${c.key}-badge`}
+                            className={`absolute top-2 right-2 px-1.5 py-0.5 text-[9px] uppercase tracking-widest rounded-sm border ${c.badgeClass}`}
+                          >
+                            {c.badge}
+                          </span>
+                        )}
+                        <div className="flex items-start gap-2 pr-16">
+                          <Icon
+                            size={16}
+                            className={`mt-0.5 transition-transform duration-200 ${
+                              selected && allowed ? 'text-gold-300 scale-110' : ''
+                            }`}
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm font-medium">{c.title}</span>
                               {selected && allowed && (
-                                <CheckCircle size={12} className="text-gold-300" />
+                                <CheckCircle size={12} className="text-gold-300 animate-fade-in" />
                               )}
                             </div>
                             <p className="text-[11px] leading-snug mt-0.5 opacity-80">{c.desc}</p>

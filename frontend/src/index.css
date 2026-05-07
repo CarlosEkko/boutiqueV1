@@ -378,6 +378,22 @@ a, button, input, select, textarea, [role="button"] {
     animation: scale-in 0.6s ease-out forwards;
 }
 
+/* Subtle gold halo pulse for selected mode cards (OTC modal, billing picker) */
+@keyframes gold-halo-pulse {
+    0%, 100% {
+        box-shadow: 0 0 24px -8px rgba(212, 175, 55, 0.45),
+                    inset 0 0 0 1px rgba(212, 175, 55, 0.55);
+    }
+    50% {
+        box-shadow: 0 0 36px -6px rgba(212, 175, 55, 0.7),
+                    inset 0 0 0 1px rgba(212, 175, 55, 0.85);
+    }
+}
+.animate-gold-halo {
+    animation: gold-halo-pulse 2.4s ease-in-out infinite;
+}
+
+
 .animate-shimmer {
     background-size: 2000px 100%;
     animation: shimmer 3s linear infinite;
