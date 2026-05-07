@@ -24,7 +24,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '../../../components/ui/dialog';
 import {
-  Activity, Save, Plus, Trash2, RefreshCw, ShieldAlert, Coins, Settings2, TrendingUp,
+  Activity, Save, Plus, Trash2, RefreshCw, ShieldAlert, Coins, Settings2, TrendingUp, Link2, Radio,
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -244,6 +244,15 @@ export default function AdminOTCDeskPage() {
   const [symbolFilter, setSymbolFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
+  const [venuesData, setVenuesData] = useState(null);
+
+  const loadVenues = async () => {
+    if (!token) return;
+    try {
+      const { data } = await axios.get(`${API}/api/otc-desk/admin/venues`, { headers });
+      setVenuesData(data);
+    } catch { /* silent */ }
+  };
 
   const load = async () => {
     if (!token) return;
@@ -256,6 +265,7 @@ export default function AdminOTCDeskPage() {
       setConfig(cfg.data);
       setStats(st.data);
       setTrades(tr.data.trades || []);
+      loadVenues();
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Failed to load desk admin data');
     } finally {
@@ -316,6 +326,26 @@ export default function AdminOTCDeskPage() {
       load();
     } catch (err) {
       toast.error(err?.response?.data?.detail || 'Asset save failed');
+    }
+  };
+
+  const setHedgeMode = async (mode) => {
+    try {
+      await axios.put(`${API}/api/otc-desk/admin/venues/mode`, { mode }, { headers });
+      toast.success(`Hedge mode: ${mode}`);
+      loadVenues();
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Mode switch failed');
+    }
+  };
+
+  const refreshVenues = async () => {
+    try {
+      await axios.post(`${API}/api/otc-desk/admin/venues/refresh`, {}, { headers });
+      await loadVenues();
+      toast.success('Venues refreshed from Fireblocks');
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || 'Refresh failed');
     }
   };
 
@@ -458,6 +488,108 @@ export default function AdminOTCDeskPage() {
           </div>
         </Section>
       </div>
+
+      <Section
+        icon={Link2}
+        title="Venues (Fireblocks)"
+        subtitle={`Linked exchange accounts via Fireblocks MPC custody. Current hedge mode controls whether orders are simulated, shadowed or sent live.${venuesData?.last_error ? ' ⚠ ' + venuesData.last_error : ''}`}
+        actions={
+          <Button
+            data-testid="venues-refresh-btn"
+            size="sm"
+            variant="ghost"
+            onClick={refreshVenues}
+            className="text-zinc-400 hover:text-gold-300"
+          >
+            <RefreshCw size={13} className="mr-1.5" />Refresh
+          </Button>
+        }
+      >
+        <div className="mb-5">
+          <Label className="text-[11px] tracking-widest uppercase text-zinc-500 mb-2 block">
+            Hedge Execution Mode
+          </Label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { v: 'simulated', label: 'Simulated', desc: 'Pure in-memory mock' },
+              { v: 'shadow', label: 'Shadow', desc: 'Real venue pick, no order sent' },
+              { v: 'live', label: 'Live', desc: 'Disabled (Phase 4b)', disabled: true },
+            ].map((m) => {
+              const active = venuesData?.mode === m.v;
+              return (
+                <button
+                  key={m.v}
+                  type="button"
+                  disabled={m.disabled}
+                  data-testid={`hedge-mode-${m.v}`}
+                  onClick={() => !m.disabled && setHedgeMode(m.v)}
+                  className={`rounded-md px-3 py-3 text-left transition ${
+                    active
+                      ? 'bg-gold-500/15 ring-1 ring-gold-500/50'
+                      : m.disabled
+                        ? 'bg-zinc-900/40 opacity-40 cursor-not-allowed'
+                        : 'bg-zinc-900 hover:bg-zinc-800/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Radio size={11} className={active ? 'text-gold-400' : 'text-zinc-500'} />
+                    <span className={`text-xs font-medium ${active ? 'text-gold-300' : 'text-zinc-300'}`}>
+                      {m.label}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-zinc-500 mt-1">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {!venuesData || venuesData.venues.length === 0 ? (
+          <div className="py-10 text-center text-xs text-zinc-600">
+            No venues connected. Add exchange accounts in your Fireblocks workspace.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {venuesData.venues.map((v) => (
+              <div
+                key={v.id}
+                data-testid={`venue-row-${v.type}`}
+                className="bg-zinc-950/60 border border-zinc-800 rounded-md p-4"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-white">{v.name}</span>
+                      <span className="text-[10px] tracking-widest uppercase text-zinc-500">{v.type}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                        v.status === 'APPROVED'
+                          ? 'bg-emerald-500/15 text-emerald-300'
+                          : 'bg-amber-500/15 text-amber-300'
+                      }`}>
+                        {v.status}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-zinc-600 mt-1 font-mono">{v.id}</div>
+                  </div>
+                  <div className="text-[10px] tracking-widest uppercase text-zinc-500">
+                    {v.assets.length} asset{v.assets.length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                {v.assets.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {v.assets.filter(a => a.available > 0).slice(0, 8).map((a) => (
+                      <div key={a.id} className="bg-zinc-900 rounded px-2.5 py-1.5 border border-zinc-800/60">
+                        <div className="text-[10px] tracking-widest text-zinc-500">{a.id}</div>
+                        <div className="text-xs text-zinc-200 tabular-nums">{fmt(a.available, 6)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
 
       <Section
         icon={Coins}

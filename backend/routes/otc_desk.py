@@ -281,3 +281,46 @@ async def admin_stats(user: dict = Depends(_require_admin)):
         "inventory": snap["inventory"],
     }
     return result
+
+
+# ---------------------------------------------------------------------------
+# Admin — Fireblocks venue adapter (Phase 4a: shadow mode)
+# ---------------------------------------------------------------------------
+class HedgeModeBody(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    mode: str = Field(..., pattern="^(simulated|shadow|live)$")
+
+
+@router.get("/admin/venues")
+async def admin_list_venues(user: dict = Depends(_require_admin)):
+    """List Fireblocks exchange accounts (Binance / Kraken / …) with live balances."""
+    try:
+        from services.otc_desk_venues import get_venue_adapter
+        adapter = get_venue_adapter()
+        venues = await adapter.list_venues()
+        return {
+            "mode": adapter.mode.value if hasattr(adapter.mode, "value") else str(adapter.mode),
+            "venues": venues,
+            "last_error": adapter.last_error,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/admin/venues/refresh")
+async def admin_refresh_venues(user: dict = Depends(_require_admin)):
+    from services.otc_desk_venues import get_venue_adapter
+    venues = await get_venue_adapter().refresh_venues()
+    return {"ok": True, "count": len(venues)}
+
+
+@router.put("/admin/venues/mode")
+async def admin_set_hedge_mode(body: HedgeModeBody, user: dict = Depends(_require_admin)):
+    """Switch the hedge engine between simulated | shadow | live."""
+    from services.otc_desk_venues import get_venue_adapter, HedgeMode
+    adapter = get_venue_adapter()
+    if body.mode == "live":
+        raise HTTPException(status_code=400, detail="Live mode is disabled until Phase 4b (spot trading API integration).")
+    adapter.mode = HedgeMode(body.mode)
+    logger.info("Hedge mode switched to %s by %s", body.mode, user.get("email"))
+    return {"ok": True, "mode": body.mode}

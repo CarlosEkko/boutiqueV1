@@ -134,6 +134,9 @@ class HedgeFill:
     slippage_cost: float
     hedge_notional: float
     linked_quote_id: str
+    venue_name: Optional[str] = None
+    venue_type: Optional[str] = None
+    hedge_mode: str = "simulated"
 
 
 # ---------------------------------------------------------------------------
@@ -618,10 +621,27 @@ class OTCDeskEngine:
 
     async def _simulate_hedge(self, q: FirmQuote) -> None:
         """Mock venue hedge: after HEDGE_LATENCY_MS, fill the opposite of client leg
-        and book slippage cost. This is a single-adapter swap away from Binance /
-        Fireblocks execution — see `services/otc_desk_venue_adapter.py` (future)."""
+        and book slippage cost. If the Fireblocks adapter is in SHADOW mode, the
+        adapter is called to pick a real venue + log the intent (but no venue
+        order is actually placed). LIVE mode raises (not implemented yet)."""
         latency_ms = int(self.pricing_cfg.get("hedge_latency_ms", HEDGE_LATENCY_MS))
         await asyncio.sleep(latency_ms / 1000.0)
+
+        # Consult the Fireblocks venue adapter (safe no-op in simulated mode).
+        venue_meta: Dict[str, Any] = {}
+        try:
+            from services.otc_desk_venues import get_venue_adapter
+            adapter = get_venue_adapter()
+            intent = await adapter.execute_hedge(q.symbol, q.side, q.size, self.market[q.symbol].mid)
+            if intent.get("mode") in ("shadow", "live"):
+                venue_meta = {
+                    "venue_id": intent.get("venue_id"),
+                    "venue_name": intent.get("venue_name"),
+                    "venue_type": intent.get("venue_type"),
+                    "hedge_mode": intent.get("mode"),
+                }
+        except Exception as exc:
+            logger.warning("Venue adapter call failed; falling back to simulation: %s", exc)
         a = self.market.get(q.symbol)
         if not a:
             return
@@ -652,6 +672,9 @@ class OTCDeskEngine:
                 size=q.size, price=fill_price, slippage_bps=slippage_bps,
                 slippage_cost=slippage_cost, hedge_notional=hedge_notional,
                 linked_quote_id=q.id,
+                venue_name=venue_meta.get("venue_name"),
+                venue_type=venue_meta.get("venue_type"),
+                hedge_mode=venue_meta.get("hedge_mode") or "simulated",
             )
             self.hedge_feed = ([fill] + self.hedge_feed)[:50]
             if self._db is not None:

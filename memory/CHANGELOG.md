@@ -1,5 +1,45 @@
 # KBEX.io - Changelog
 
+## 2026-05-07 — Institutional OTC Desk (Fase 4a — Fireblocks Shadow Mode)
+
+### Why this shipped
+User confirmed that **Fireblocks** is already the KBEX custody/routing layer with **Binance + Kraken** registered as exchange vaults. That removes the need to integrate each venue's API directly — every hedge, transfer and settlement can flow through Fireblocks' single SDK + policy engine + MPC custody (plus insurance coverage + built-in Travel Rule / KYT). This phase wires that reality into the OTC Desk cockpit.
+
+### Backend
+- **New `services/otc_desk_venues.py`** (async wrapper around `fireblocks-sdk` v2.17):
+  - `FireblocksVenueAdapter` singleton — initialises the SDK lazily from `FIREBLOCKS_API_KEY`, `FIREBLOCKS_SECRET_KEY_PATH`, `FIREBLOCKS_BASE_PATH` (already present in `.env`)
+  - `list_venues(force_refresh)` — wraps `get_exchange_accounts()`, caches for 30 s, exposes `{id, name, type, status, assets[{id, balance, available, total}]}`
+  - `pick_best_venue(base_asset, side, size)` — best-liquidity routing: picks the APPROVED venue holding the most of the needle asset (USDT when desk rebuys, base asset when desk resells)
+  - `execute_hedge(symbol, side, size, asset_mid)` — tri-modal:
+    - `simulated`: no SDK call (backward compatible)
+    - `shadow`: real venue pick + intent logged — **NO transaction created** (safe to run on prod keys)
+    - `live`: guarded — raises `NotImplementedError` pending Phase 4b (per-venue spot trading API)
+- **`services/otc_desk_engine.py`**:
+  - `_simulate_hedge` now consults the adapter; a shadow fill is stamped with `venue_id / venue_name / venue_type / hedge_mode`
+  - `HedgeFill` dataclass extended with the three new fields — persisted on each hedge + shown in the live feed
+- **`routes/otc_desk.py`** — 3 new admin endpoints:
+  | Method | Path | Purpose |
+  |---|---|---|
+  | GET | `/admin/venues` | Current mode + venues + balances |
+  | POST | `/admin/venues/refresh` | Force-refresh the Fireblocks cache |
+  | PUT | `/admin/venues/mode` | Switch between simulated / shadow / live (live rejected) |
+
+### Frontend
+- **`pages/dashboard/admin/AdminOTCDeskPage.jsx`** gained a full **Venues (Fireblocks)** section:
+  - 3-card mode switcher (Simulated, Shadow, Live) with the live card disabled + labelled "Phase 4b"
+  - Per-venue panel showing Fireblocks ID, type, APPROVED/PENDING pill, and a grid of asset balances (filtered to `available > 0`)
+  - Refresh button to bust the 30 s cache + error surface from the adapter
+- Lucide icons added: `Link2`, `Radio`
+
+### Live smoke-test (curl + screenshot)
+- `get_exchange_accounts` returned **2 approved venues**: `Biance 1` (BINANCE) + `Kraken` — connected, status APPROVED, live balances showing (EUR 0.742 on Kraken etc.)
+- Switched mode to `shadow` → executed `BUY 0.5 BTC` cycle → `hedge_mode=shadow` stamped on the fill; inventory returned flat after hedge; no Fireblocks transaction created
+- `PUT /admin/venues/mode {mode: "live"}` returned `400 Live mode is disabled until Phase 4b`
+- Frontend screenshot confirms Venues section renders mode switcher + both venues with real balances and Fireblocks UUIDs
+
+### What's NOT live yet
+- **Spot order execution** on Binance/Kraken via Fireblocks: Fireblocks transfers funds between vaults but does NOT place spot orders on third-party venues. True live hedge needs either (a) each venue's direct trading API wired behind the adapter, or (b) Fireblocks Off-Exchange / Network settlement with a venue that supports it. Flagged in the adapter docstring. This is Phase 4b.
+
 ## 2026-05-06 — Institutional OTC Desk (Fase 3 — Admin Configuration Panel)
 
 ### What shipped — a "powerful" admin cockpit at `/dashboard/admin/otc-desk`
