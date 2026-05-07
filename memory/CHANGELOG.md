@@ -1,9 +1,27 @@
 # KBEX.io - Changelog
 
-## 2026-05-07 — Institutional OTC Desk (Fase 4a+ — Venue Health Monitor)
+## 2026-05-07 — Admin OTC Desk: Curated pair picker
 
-### What shipped
-Live operational visibility of the two linked Fireblocks venues (Binance, Kraken) directly in the institutional cockpit. Built as a follow-on to Fase 4a so traders catch venue degradation in seconds — before flipping to live mode.
+### UX
+- **`AdminOTCDeskPage.jsx` AssetDialog**: when adding a new asset, admin now sees a **"Pick a popular pair (optional)"** Select at the top. Grouped by quote currency (USDT / USDC / EUR / BTC). Picking one pre-fills Symbol, Quote, seed price, liquidity, inv_factor, max_inventory, max_notional_usdt — all editable afterwards.
+- 22 curated institutional pairs included: BTC/ETH/SOL/BNB/XRP/ADA/DOGE/AVAX/LINK/DOT/MATIC/TON vs USDT; BTC/ETH/SOL/XRP vs USDC; BTC/ETH/USDT vs EUR; ETH/SOL/BNB vs BTC.
+- Reduces ticker typos + enforces sensible default risk caps.
+
+## 2026-05-07 — Bug fix: "Symbol required" dialog — duplicate-input fix + Binance ticker resolver
+
+### Root cause
+The `AssetDialog` had two overlapping inputs for the Symbol field (a `NumberField` with a no-op `onChange` and an `<Input>` positioned with `-mt-10`). The overlap was visual only — `form.symbol` never updated, so the backend received an empty symbol and returned "Symbol required".
+
+### Fix
+- **Frontend**: single clean `<Input>` for Symbol with Label + hint text explaining that BTC/USDT and BTC/USDC need different symbols. Auto-uppercase + trim.
+- **Backend** `services/otc_desk_engine.py`: market loop now resolves the Binance ticker smartly — `bsym = sym if sym.endswith(quote) else f"{sym}{quote}"`. Lets admins run BTC/USDT and BTCUSDC/USDC in parallel without the old `BTCUSDCUSDC` invalid-ticker bug.
+
+### Validation (curl)
+- POST `/admin/assets` with `BTCUSDC / USDC / seed 82000` ⇒ `/state` then lists 6 pairs with a real live Binance price ($81,046.08)
+- RFQ on BTCUSDC returns a valid firm quote (27 bps spread)
+- DELETE cleans up
+
+## 2026-05-07 — Institutional OTC Desk (Fase 4a+ — Venue Health Monitor)
 
 ### Backend
 - **`services/otc_desk_venues.py`**:

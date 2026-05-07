@@ -24,10 +24,45 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '../../../components/ui/dialog';
 import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel,
+} from '../../../components/ui/select';
+import {
   Activity, Save, Plus, Trash2, RefreshCw, ShieldAlert, Coins, Settings2, TrendingUp, Link2, Radio,
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL;
+
+// Curated list of institutional-grade Binance pairs. Seed prices are
+// placeholders — the engine replaces them with the live Binance mid within 2 s.
+// Grouped by quote currency for the Select dropdown.
+const POPULAR_PAIRS = [
+  // USDT
+  { group: 'USDT',  ticker: 'BTCUSDT',  quote: 'USDT', seed: 82000,  liquidity: 800,       inv_factor: 0.00040, max_inventory: 5,        max_notional_usdt: 500000 },
+  { group: 'USDT',  ticker: 'ETHUSDT',  quote: 'USDT', seed: 3500,   liquidity: 8000,      inv_factor: 0.00025, max_inventory: 80,       max_notional_usdt: 500000 },
+  { group: 'USDT',  ticker: 'SOLUSDT',  quote: 'USDT', seed: 180,    liquidity: 60000,     inv_factor: 0.00020, max_inventory: 2500,     max_notional_usdt: 500000 },
+  { group: 'USDT',  ticker: 'BNBUSDT',  quote: 'USDT', seed: 620,    liquidity: 12000,     inv_factor: 0.00025, max_inventory: 700,      max_notional_usdt: 500000 },
+  { group: 'USDT',  ticker: 'XRPUSDT',  quote: 'USDT', seed: 0.60,   liquidity: 5000000,   inv_factor: 0.00018, max_inventory: 800000,   max_notional_usdt: 500000 },
+  { group: 'USDT',  ticker: 'ADAUSDT',  quote: 'USDT', seed: 0.45,   liquidity: 3000000,   inv_factor: 0.00018, max_inventory: 1000000,  max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'DOGEUSDT', quote: 'USDT', seed: 0.12,   liquidity: 10000000,  inv_factor: 0.00020, max_inventory: 5000000,  max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'AVAXUSDT', quote: 'USDT', seed: 28,     liquidity: 100000,    inv_factor: 0.00025, max_inventory: 15000,    max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'LINKUSDT', quote: 'USDT', seed: 13,     liquidity: 200000,    inv_factor: 0.00025, max_inventory: 40000,    max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'DOTUSDT',  quote: 'USDT', seed: 5,      liquidity: 500000,    inv_factor: 0.00025, max_inventory: 100000,   max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'MATICUSDT',quote: 'USDT', seed: 0.35,   liquidity: 3000000,   inv_factor: 0.00022, max_inventory: 1500000,  max_notional_usdt: 300000 },
+  { group: 'USDT',  ticker: 'TONUSDT',  quote: 'USDT', seed: 5,      liquidity: 300000,    inv_factor: 0.00025, max_inventory: 100000,   max_notional_usdt: 300000 },
+  // USDC
+  { group: 'USDC',  ticker: 'BTCUSDC',  quote: 'USDC', seed: 82000,  liquidity: 500,       inv_factor: 0.00040, max_inventory: 5,        max_notional_usdt: 500000 },
+  { group: 'USDC',  ticker: 'ETHUSDC',  quote: 'USDC', seed: 3500,   liquidity: 5000,      inv_factor: 0.00025, max_inventory: 80,       max_notional_usdt: 500000 },
+  { group: 'USDC',  ticker: 'SOLUSDC',  quote: 'USDC', seed: 180,    liquidity: 40000,     inv_factor: 0.00022, max_inventory: 2500,     max_notional_usdt: 300000 },
+  { group: 'USDC',  ticker: 'XRPUSDC',  quote: 'USDC', seed: 0.60,   liquidity: 2000000,   inv_factor: 0.00020, max_inventory: 500000,   max_notional_usdt: 300000 },
+  // EUR
+  { group: 'EUR',   ticker: 'BTCEUR',   quote: 'EUR',  seed: 75000,  liquidity: 400,       inv_factor: 0.00042, max_inventory: 3,        max_notional_usdt: 300000 },
+  { group: 'EUR',   ticker: 'ETHEUR',   quote: 'EUR',  seed: 3200,   liquidity: 3000,      inv_factor: 0.00028, max_inventory: 50,       max_notional_usdt: 300000 },
+  { group: 'EUR',   ticker: 'USDTEUR',  quote: 'EUR',  seed: 0.92,   liquidity: 1000000,   inv_factor: 0.00015, max_inventory: 500000,   max_notional_usdt: 300000 },
+  // BTC-quoted (altcoin/BTC)
+  { group: 'BTC',   ticker: 'ETHBTC',   quote: 'BTC',  seed: 0.043,  liquidity: 3000,      inv_factor: 0.00025, max_inventory: 50,       max_notional_usdt: 200000 },
+  { group: 'BTC',   ticker: 'SOLBTC',   quote: 'BTC',  seed: 0.0022, liquidity: 30000,     inv_factor: 0.00022, max_inventory: 1000,     max_notional_usdt: 200000 },
+  { group: 'BTC',   ticker: 'BNBBTC',   quote: 'BTC',  seed: 0.0075, liquidity: 5000,      inv_factor: 0.00025, max_inventory: 300,      max_notional_usdt: 200000 },
+];
 
 const fmt = (v, d = 2) => {
   if (v === null || v === undefined || Number.isNaN(v)) return '—';
@@ -155,6 +190,51 @@ const AssetDialog = ({ open, onClose, initial, onSave }) => {
           </DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-2">
+          {!initial?.symbol && (
+            <div className="col-span-2">
+              <Label className="text-[11px] tracking-widest uppercase text-zinc-500 mb-1 block">
+                Pick a popular pair (optional)
+              </Label>
+              <Select
+                onValueChange={(ticker) => {
+                  const p = POPULAR_PAIRS.find((x) => x.ticker === ticker);
+                  if (!p) return;
+                  setForm({
+                    symbol: p.ticker,
+                    quote: p.quote,
+                    seed: p.seed,
+                    liquidity: p.liquidity,
+                    inv_factor: p.inv_factor,
+                    max_inventory: p.max_inventory,
+                    max_notional_usdt: p.max_notional_usdt,
+                  });
+                }}
+              >
+                <SelectTrigger
+                  data-testid="asset-preset-select"
+                  className="bg-zinc-900 border-zinc-800 text-white h-10"
+                >
+                  <SelectValue placeholder="— select from curated list —" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border-zinc-800 text-white max-h-80">
+                  {['USDT', 'USDC', 'EUR', 'BTC'].map((grp) => (
+                    <SelectGroup key={grp}>
+                      <SelectLabel className="text-gold-400">vs {grp}</SelectLabel>
+                      {POPULAR_PAIRS.filter((p) => p.group === grp).map((p) => (
+                        <SelectItem key={p.ticker} value={p.ticker} className="focus:bg-gold-500/15">
+                          <span className="font-mono text-xs">{p.ticker}</span>
+                          <span className="text-zinc-500 ml-2">≈ seed {p.seed} {p.quote}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-zinc-600 mt-1">
+                Selecting a pair pre-fills all fields below. You can still tweak each value before saving.
+              </p>
+            </div>
+          )}
           <div className="col-span-2 md:col-span-1">
             <Label className="text-[11px] tracking-widest uppercase text-zinc-500 mb-1 block">
               Symbol (base)
