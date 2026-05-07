@@ -324,3 +324,17 @@ async def admin_set_hedge_mode(body: HedgeModeBody, user: dict = Depends(_requir
     adapter.mode = HedgeMode(body.mode)
     logger.info("Hedge mode switched to %s by %s", body.mode, user.get("email"))
     return {"ok": True, "mode": body.mode}
+
+
+@router.get("/venue-health")
+async def venue_health(user: dict = Depends(_require_staff)):
+    """Per-venue latency + hedge success telemetry for the institutional cockpit."""
+    from services.otc_desk_venues import get_venue_adapter
+    adapter = get_venue_adapter()
+    # Ensure we have cached venues before the first health call.
+    if not adapter._cached_venues:
+        try:
+            await adapter.list_venues()
+        except Exception:
+            pass
+    return adapter.get_health_snapshot()

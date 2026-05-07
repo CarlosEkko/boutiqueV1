@@ -62,6 +62,16 @@ class FireblocksVenueAdapter:
         self._cached_venues: List[Dict[str, Any]] = []
         self.mode: HedgeMode = HedgeMode.SIMULATED
         self.last_error: Optional[str] = None
+        # Health telemetry — per-venue rolling stats.
+        #   last_ping_ms     → epoch ms of last successful list_venues call
+        #   last_ping_latency_ms → ms taken by that call
+        #   ping_samples     → last 30 latency samples (for avg)
+        #   hedge_count      → successful hedges against this venue
+        #   fail_count       → failed hedges (exceptions)
+        #   last_hedge_ms    → epoch ms of last hedge attempt
+        #   last_error       → short string of last failure (if any)
+        self.health: Dict[str, Dict[str, Any]] = {}
+        self._ping_task: Optional[asyncio.Task] = None
 
     # ------------------------------------------------------------------
     # SDK lifecycle
@@ -100,11 +110,14 @@ class FireblocksVenueAdapter:
                 return list(self._cached_venues)
             try:
                 sdk = self._ensure_sdk()
+                t0 = time.time()
                 raw = await self._run(sdk.get_exchange_accounts)
+                latency_ms = (time.time() - t0) * 1000.0
                 venues: List[Dict[str, Any]] = []
                 for e in raw or []:
+                    vid = e.get("id")
                     venues.append({
-                        "id": e.get("id"),
+                        "id": vid,
                         "name": e.get("name"),
                         "type": e.get("type"),
                         "status": e.get("status"),
@@ -118,6 +131,15 @@ class FireblocksVenueAdapter:
                             for a in (e.get("assets") or [])
                         ],
                     })
+                    # Update health: successful ping for this venue
+                    h = self.health.setdefault(vid, {
+                        "ping_samples": [], "hedge_count": 0, "fail_count": 0,
+                        "last_hedge_ms": 0, "last_error": None,
+                    })
+                    h["last_ping_ms"] = int(time.time() * 1000)
+                    h["last_ping_latency_ms"] = latency_ms
+                    h["ping_samples"] = (h["ping_samples"] + [latency_ms])[-30:]
+                    h["last_status"] = e.get("status")
                 self._cached_venues = venues
                 self._cache_ts = now
                 self.last_error = None
@@ -174,6 +196,14 @@ class FireblocksVenueAdapter:
             return {"mode": "simulated"}
 
         if self.mode == HedgeMode.SHADOW:
+            # Health bookkeeping — count the hedge attempt against the picked venue.
+            if venue:
+                h = self.health.setdefault(venue["id"], {
+                    "ping_samples": [], "hedge_count": 0, "fail_count": 0,
+                    "last_hedge_ms": 0, "last_error": None,
+                })
+                h["hedge_count"] = h.get("hedge_count", 0) + 1
+                h["last_hedge_ms"] = int(time.time() * 1000)
             intent = {
                 "mode": "shadow",
                 "venue_id": venue["id"] if venue else None,
@@ -193,16 +223,85 @@ class FireblocksVenueAdapter:
         if self.mode == HedgeMode.LIVE:
             if not venue:
                 raise RuntimeError("No approved venue available for live hedge")
-            # NOTE: this implementation does vault-to-exchange transfer only.
-            # Executing an actual SPOT ORDER on the exchange still requires the
-            # venue's own trading API. For now, the LIVE path is explicitly
-            # disabled and raises — switching it on is a future ticket.
-            raise NotImplementedError(
-                "Live mode requires spot trading API per venue (Phase 4b). "
-                "Use shadow mode to validate the pipeline first."
-            )
+            try:
+                # NOTE: this implementation does vault-to-exchange transfer only.
+                # Executing an actual SPOT ORDER on the exchange still requires the
+                # venue's own trading API. For now, the LIVE path is explicitly
+                # disabled and raises — switching it on is a future ticket.
+                raise NotImplementedError(
+                    "Live mode requires spot trading API per venue (Phase 4b). "
+                    "Use shadow mode to validate the pipeline first."
+                )
+            except Exception as exc:
+                h = self.health.setdefault(venue["id"], {
+                    "ping_samples": [], "hedge_count": 0, "fail_count": 0,
+                    "last_hedge_ms": 0, "last_error": None,
+                })
+                h["fail_count"] = h.get("fail_count", 0) + 1
+                h["last_error"] = str(exc)[:200]
+                raise
 
         return {"mode": "unknown"}
+
+    # ------------------------------------------------------------------
+    # Health
+    # ------------------------------------------------------------------
+    def get_health_snapshot(self) -> Dict[str, Any]:
+        """Compact per-venue health telemetry for the UI monitor."""
+        out: List[Dict[str, Any]] = []
+        alerts: List[str] = []
+        # Walk the cached venue list so we return rich metadata even if
+        # a venue has not yet seen a hedge.
+        for v in self._cached_venues:
+            vid = v["id"]
+            h = self.health.get(vid, {})
+            samples = h.get("ping_samples") or []
+            avg = (sum(samples) / len(samples)) if samples else None
+            total = (h.get("hedge_count") or 0) + (h.get("fail_count") or 0)
+            success_rate = (h.get("hedge_count", 0) / total * 100.0) if total else None
+            row = {
+                "venue_id": vid,
+                "name": v.get("name"),
+                "type": v.get("type"),
+                "status": v.get("status"),
+                "last_ping_ms": h.get("last_ping_ms"),
+                "last_ping_latency_ms": h.get("last_ping_latency_ms"),
+                "avg_latency_ms": avg,
+                "hedge_count": h.get("hedge_count", 0),
+                "fail_count": h.get("fail_count", 0),
+                "success_rate": success_rate,
+                "last_hedge_ms": h.get("last_hedge_ms"),
+                "last_error": h.get("last_error"),
+                "samples_count": len(samples),
+            }
+            # Derive alert conditions
+            if v.get("status") and v["status"] != "APPROVED":
+                alerts.append(f"{v.get('name')}: status {v['status']}")
+            if avg and avg > 2000:
+                alerts.append(f"{v.get('name')}: high latency ({avg:.0f} ms)")
+            if success_rate is not None and success_rate < 90 and total >= 5:
+                alerts.append(f"{v.get('name')}: success rate {success_rate:.0f}%")
+            out.append(row)
+        return {
+            "mode": self.mode.value if hasattr(self.mode, "value") else str(self.mode),
+            "venues": out,
+            "alerts": alerts,
+            "last_error": self.last_error,
+            "generated_ms": int(time.time() * 1000),
+        }
+
+    async def start_health_loop(self, interval_sec: float = 30.0) -> None:
+        """Optional background pinger to keep latency samples fresh."""
+        if self._ping_task and not self._ping_task.done():
+            return
+        async def _loop():
+            while True:
+                try:
+                    await self.list_venues(force_refresh=True)
+                except Exception:
+                    pass
+                await asyncio.sleep(interval_sec)
+        self._ping_task = asyncio.create_task(_loop())
 
 
 # Singleton

@@ -210,6 +210,13 @@ class OTCDeskEngine:
         self._persist_task = asyncio.create_task(self._persist_loop())
         self._curve_task   = asyncio.create_task(self._equity_loop())
 
+        # Start venue health pinger (safe no-op if Fireblocks creds missing)
+        try:
+            from services.otc_desk_venues import get_venue_adapter
+            await get_venue_adapter().start_health_loop(interval_sec=30.0)
+        except Exception as e:
+            logger.warning("Venue health loop failed to start: %s", e)
+
         logger.info("OTCDeskEngine started (assets=%s)", list(self.market.keys()))
 
     async def stop(self) -> None:

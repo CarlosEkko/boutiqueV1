@@ -21,6 +21,7 @@ import RFQPanel from './components/RFQPanel';
 import RiskPanel from './components/RiskPanel';
 import EquityCurve from './components/EquityCurve';
 import HedgeFeed from './components/HedgeFeed';
+import VenueHealthCard from './components/VenueHealthCard';
 
 export default function InstitutionalDesk() {
   const engine = useOTCDeskEngine(DEFAULT_ASSETS);
@@ -126,6 +127,9 @@ export default function InstitutionalDesk() {
           <HedgeFeed fills={engine.hedgeFeed} />
         </div>
       </div>
+
+      {/* Row 3 — Venue Health */}
+      <VenueHealthCard />
     </div>
   );
 }

@@ -1,5 +1,39 @@
 # KBEX.io - Changelog
 
+## 2026-05-07 — Institutional OTC Desk (Fase 4a+ — Venue Health Monitor)
+
+### What shipped
+Live operational visibility of the two linked Fireblocks venues (Binance, Kraken) directly in the institutional cockpit. Built as a follow-on to Fase 4a so traders catch venue degradation in seconds — before flipping to live mode.
+
+### Backend
+- **`services/otc_desk_venues.py`**:
+  - `FireblocksVenueAdapter.health` telemetry dict — per-venue `{last_ping_ms, last_ping_latency_ms, ping_samples[30], hedge_count, fail_count, last_hedge_ms, last_error, last_status}`
+  - `list_venues()` now timestamps + measures every Fireblocks SDK call — the SDK's wall-clock latency is the ground-truth ping
+  - `execute_hedge()` increments `hedge_count` on shadow/live pick and `fail_count` + `last_error` on exceptions
+  - `get_health_snapshot()` returns `{mode, venues[], alerts[], last_error, generated_ms}`. Alerts derived from: status != APPROVED, avg latency > 2000 ms, success rate < 90% (5+ samples)
+  - `start_health_loop(interval_sec=30)` — optional background pinger so the UI always has fresh data even if no-one is actively trading
+- **`routes/otc_desk.py`** → new `GET /api/otc-desk/venue-health` (staff tier; no admin gate so OTC desk operators see it without sudo)
+- **`services/otc_desk_engine.py`** → `start()` now boots the health loop alongside market/persist/curve loops
+
+### Frontend
+- **New `VenueHealthCard.jsx`** in `trading-desk/components/`:
+  - Header with mode pill (Simulated / Shadow / Live)
+  - Banner: green "All venues healthy" ✓ or red alerts panel with bulleted issues
+  - Per-venue row: pulsing status dot, name + type, ⚡latency (tone-graded < 500 ms green → < 1500 ms amber → ≥ 1500 ms rose), hedge counts with optional fail count, success rate, last-hedge time-ago
+  - Polls `/venue-health` every 8 s (silent on errors)
+- Wired as the last row under EquityCurve/HedgeFeed in `InstitutionalDesk.jsx`
+
+### Live smoke-test (screenshot + curl)
+- `GET /venue-health` returned both venues APPROVED with measured latency (771 ms → 1265 ms in a warmer sample) and zero alerts
+- Switched mode to `shadow` → the card pill flipped to gold `SHADOW`
+- Cockpit screenshot confirms: equity curve + hedge feed + Venue Health card with "All venues healthy", live latency + sample count, and last-hedge placeholders rendered correctly
+- Lint clean
+
+### Operational value
+- Traders now see latency degradation before it becomes a live execution problem
+- Alerts bar surfaces any APPROVED-status regression at the Fireblocks layer immediately
+- Zero config — works out-of-the-box with the credentials already in `.env`
+
 ## 2026-05-07 — Institutional OTC Desk (Fase 4a — Fireblocks Shadow Mode)
 
 ### Why this shipped
