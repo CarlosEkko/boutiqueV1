@@ -408,7 +408,10 @@ class OTCDeskEngine:
                     rows = res.json()
                     by_sym = {r["symbol"]: float(r["price"]) for r in rows if "symbol" in r}
                     for sym, a in self.market.items():
-                        bsym = f"{sym}{a.quote}"
+                        # If the stored symbol already encodes the quote (e.g. "BTCUSDC"),
+                        # use it directly — otherwise concatenate base + quote. This lets
+                        # the admin run BTC/USDT and BTC/USDC in parallel without clashing.
+                        bsym = sym if sym.endswith((a.quote or "").upper()) else f"{sym}{a.quote}"
                         px = by_sym.get(bsym)
                         if px is None or px <= 0:
                             continue

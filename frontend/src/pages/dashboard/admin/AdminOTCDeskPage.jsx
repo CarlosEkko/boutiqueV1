@@ -155,26 +155,30 @@ const AssetDialog = ({ open, onClose, initial, onSave }) => {
           </DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-2">
-          <NumberField
-            label="Symbol (base)"
-            value={form.symbol}
-            onChange={() => {}}
-            testId="asset-symbol-input"
-          />
-          <Input
-            data-testid="asset-symbol-input"
-            value={form.symbol}
-            onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })}
-            className="bg-zinc-900 border-zinc-800 text-white col-start-1 -mt-10"
-            placeholder="BTC"
-            disabled={!!initial?.symbol}
-          />
+          <div className="col-span-2 md:col-span-1">
+            <Label className="text-[11px] tracking-widest uppercase text-zinc-500 mb-1 block">
+              Symbol (base)
+            </Label>
+            <Input
+              data-testid="asset-symbol-input"
+              value={form.symbol}
+              onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase().trim() })}
+              className="bg-zinc-900 border-zinc-800 text-white uppercase"
+              placeholder="BTC"
+              disabled={!!initial?.symbol}
+            />
+            {!initial?.symbol && (
+              <p className="text-[10px] text-zinc-600 mt-1">
+                Unique per pair — BTC/USDT and BTC/USDC are considered different symbols (use BTCUSDC for the second).
+              </p>
+            )}
+          </div>
           <div>
             <Label className="text-[11px] tracking-widest uppercase text-zinc-500 mb-1 block">Quote</Label>
             <Input
               value={form.quote}
-              onChange={(e) => setForm({ ...form, quote: e.target.value.toUpperCase() })}
-              className="bg-zinc-900 border-zinc-800 text-white"
+              onChange={(e) => setForm({ ...form, quote: e.target.value.toUpperCase().trim() })}
+              className="bg-zinc-900 border-zinc-800 text-white uppercase"
             />
           </div>
           <NumberField
