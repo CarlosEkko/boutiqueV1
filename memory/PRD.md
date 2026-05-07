@@ -406,6 +406,28 @@ EUR, USD, AED, CHF, QAR, SAR, HKD
 ## Recent (2026-05-05)
 - Translated 4 hardcoded Dashboard pages (Investments, ROI, Launchpad, Staking, Cold Wallet) into 5 locales via `_extras.js`. i18n audit: 100% coverage.
 
+## OTC Tier Policy Engine — Phase 1 (2026-05-07)
+**Maps client tiers → OTC execution modes** (unified bridge between the fast Institutional Desk and the slow CRM white-glove flow).
+
+Backend:
+- `routes/otc_policies.py` registered in `server.py` (imports + `set_db` + `include_router`). Seeds `otc_tier_policies` collection idempotently on first start with the approved matrix:
+  - **standard**: white_glove only (instant disabled).
+  - **premium**: instant ≤ 100k USDT, no auto-exec.
+  - **vip**: instant ≤ 500k, auto-exec ≤ 250k.
+  - **institutional**: instant ≤ 2M, auto-exec ≤ 1M.
+- Endpoints: `GET /api/otc-policies` (admin) · `PUT /api/otc-policies/{tier}` (admin, partial patch, enforces `auto_execute_max ≤ instant_max`) · `POST /api/otc-policies/check` (any auth).
+- `routes/otc_desk.py` RFQ + execute extended with optional `client_user_id` (+ `mode` on RFQ). When attached:
+  - `/rfq` runs the policy check BEFORE `build_quote` (uses live `engine.market[symbol].mid` for notional preview) so tier caps surface friendly "request white-glove" guidance even when the size would also breach inventory limits. On violation: HTTP 403 `code=policy_violation` + `suggested_mode`.
+  - `/execute` enforces `auto_execute_enabled` and `auto_execute_max_usdt` against the active quote. If the referenced quote is no longer in `active_quotes`, returns HTTP 404 `code=quote_not_active` (prevents silent bypass through stale quotes).
+  - Requests without `client_user_id` preserve the original staff-only preview path.
+
+Frontend:
+- New `OTCPoliciesSection.jsx` component — responsive 12-col matrix, toggle+cap per tier, per-row Save, client-side guard for `auto_max ≤ instant_max`, "Effective" summary column.
+- Embedded in **both**: `AdminOTCDeskPage.jsx` (between Asset Universe and Trade History) and `AdminClientTiers.jsx` (below the existing tier feature grid) per user request.
+
+Tests: `/app/test_reports/iteration_59.json` — 25/25 backend tests passed.
+
+
 ## VPS Deployment
 - `cd /opt/boutiqueV1 && sudo ./scripts/zero_downtime_deploy.sh` (now uses `--force-recreate` internally)
 
