@@ -3655,8 +3655,11 @@ async def client_accept_quote(
         tier = str(tier).lower()
         policy = await get_policy(tier)
 
-        # Notional in USDT — use the engine's mid for the deal symbol; fall back
-        # to total_value if the asset has been removed from the universe.
+        # Notional in USDT — preferred source is the engine's live mid for the
+        # base asset (USDT-quoted by definition). If the asset has been removed
+        # from the universe, fall back to the quote's `total_value` converted
+        # back to USD via FX rates so the cap comparison stays accurate even
+        # for non-USD quote_assets (BRL/EUR/etc).
         engine = get_engine()
         symbol = deal.get("base_asset", "").upper()
         try:
@@ -3665,7 +3668,15 @@ async def client_accept_quote(
             mid_usdt = 0.0
         notional_usdt = float(quote.get("amount", 0)) * mid_usdt
         if notional_usdt <= 0:
-            notional_usdt = float(quote.get("total_value", 0))  # already in quote_asset, rough proxy
+            from routes.trading import get_exchange_rates
+            try:
+                rates = await get_exchange_rates()
+                qa = (quote.get("quote_asset") or "USD").upper()
+                rate = float(rates.get(qa, 1.0) or 1.0)
+                # rates are quoted as "1 USD = N <currency>" — convert back to USD/USDT.
+                notional_usdt = float(quote.get("total_value", 0)) / rate if rate > 0 else float(quote.get("total_value", 0))
+            except Exception:
+                notional_usdt = float(quote.get("total_value", 0))
 
         if not policy.get("auto_execute_enabled"):
             auto_settle_reason = "Tier does not allow auto-execution; trader will settle manually."
@@ -3697,11 +3708,10 @@ async def client_accept_quote(
                     trade_executed_at=now_iso,
                     trade_executed_by=current_user_id,
                     executed_by=current_user_id,
+                    desk_trade_id=exec_result.get("trade_id"),
+                    desk_hedge_mode=exec_result.get("hedge_mode"),
                 )
-                exec_dict = execution.dict()
-                exec_dict["desk_trade_id"] = exec_result.get("trade_id")
-                exec_dict["desk_hedge_mode"] = exec_result.get("hedge_mode")
-                await db.otc_executions.insert_one(exec_dict)
+                await db.otc_executions.insert_one(execution.dict())
 
                 # Advance deal to SETTLEMENT (post-trade reconciliation phase).
                 await db.otc_deals.update_one(

@@ -535,6 +535,10 @@ class OTCExecution(BaseModel):
     funding_type_suggested: Optional[str] = None  # "prefunded" | "post_funded"
     funding_type_confirmed: bool = False
 
+    # --- Institutional Desk auto-execution metadata ---
+    desk_trade_id: Optional[str] = None
+    desk_hedge_mode: Optional[str] = None  # "simulated" | "shadow" | "live"
+
 
 class OTCSettlement(BaseModel):
     """Settlement record for an OTC deal"""

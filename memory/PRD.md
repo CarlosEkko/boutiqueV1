@@ -437,6 +437,26 @@ Tests:
 - `/app/test_reports/iteration_60.json` — frontend 100% (9/9 requested checks — tier badge, mode cards, notional estimate, disabled Instant card, upgrade CTA, auto-fallback).
 - `/app/test_reports/iteration_61.json` — Phase 2 routing 12/12 passed (mode='instant' returns firm desk quote in <1.5s, atomic deal+quote persistence, tier policy enforced server-side, asset-universe gate, accept-quote works on institutional_desk-sourced quotes).
 
+## OTC Flow Phase 3 — Auto-Settlement on Accept (2026-05-07)
+**Closes the full loop**: cliente Premium/VIP/Institutional aceita uma instant quote → engine executa → trade settled — sem intervenção humana.
+
+Backend (`/app/backend/routes/otc.py` — `client_accept_quote`):
+- After existing accept logic (quote→ACCEPTED, deal→ACCEPTANCE), if `quote.price_source == 'institutional_desk'` AND `deal.desk_quote_id` exists:
+  - Resolve tier (otc_clients first, then deal.tier, then 'standard')
+  - Compute USDT notional preferring `engine.market[symbol].mid` × amount; FX-converted total_value fallback when symbol left the universe
+  - If `policy.auto_execute_enabled=True` AND `notional ≤ auto_execute_max_usdt`:
+    - Call `engine.execute(desk_quote_id, user_id)` (async hedge fill)
+    - Insert `OTCExecution` (status=EXECUTED, venue='institutional_desk', `desk_trade_id`, `desk_hedge_mode` — now native model fields)
+    - Advance deal to `OTCDealStage.SETTLEMENT` with `executed_at`, `execution_id`, `desk_trade_id`
+    - Best-effort Expo push (`type='otc_executed'`) + Brevo email with quiet-luxury HTML trade ticket (deal#, side, qty, price, total, trade_id)
+  - Else (auto-disabled or above cap): keep deal at ACCEPTANCE, return `auto_settle_skipped=true` + `auto_settle_reason` for trader follow-up
+- Engine `ValueError` (TTL race, inventory) is caught and surfaces as `auto_settle_skipped` — never breaks the accept itself
+- Push/email failures logged at WARNING — settlement is the source of truth, notifications are best-effort
+
+Performance: VIP accept w/ auto-settle ~609ms end-to-end.
+
+Tests: `/app/test_reports/iteration_62.json` — **8/8 backend tests passed** (happy path, idempotency, cap exceeded, premium auto-disabled, white-glove regression, expired quote, engine reject, perf <1500ms). Schema-drift advisories applied (`desk_trade_id`/`desk_hedge_mode` promoted to OTCExecution model; FX conversion in notional fallback).
+
 ## OTC Flow Phase 2 — Mode-based RFQ Routing (2026-05-07)
 **Closes the loop**: clients pick `mode` in the modal, backend routes accordingly.
 
