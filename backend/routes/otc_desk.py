@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from routes.auth import get_current_user
 from services.otc_desk_engine import get_engine
+from routes.otc_policies import get_policy, check_mode
 
 logger = logging.getLogger(__name__)
 
@@ -80,11 +81,45 @@ class RFQRequest(BaseModel):
     symbol: str = Field(..., description="Base asset symbol (e.g., BTC)")
     size: float = Field(..., gt=0, description="Size in base asset units")
     side: str = Field(..., pattern="^(buy|sell)$")
+    client_user_id: Optional[str] = Field(
+        None, description="If provided, enforce tier policy for this client before quoting.",
+    )
+    mode: Optional[str] = Field(
+        "instant", pattern="^(instant|white_glove)$",
+        description="Requested OTC mode. Default: instant.",
+    )
 
 
 class ExecuteRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
     quote_id: str
+    client_user_id: Optional[str] = None
+
+
+async def _resolve_client_tier(client_user_id: Optional[str]) -> str:
+    """Look up the client's membership_level. Defaults to 'standard' if missing."""
+    if not client_user_id or _db is None:
+        return "standard"
+    try:
+        row = await _db.users.find_one(
+            {"id": client_user_id},
+            {"_id": 0, "membership_level": 1},
+        )
+        return ((row or {}).get("membership_level") or "standard").lower()
+    except Exception as e:
+        logger.warning("tier lookup failed for %s: %s", client_user_id, e)
+        return "standard"
+
+
+def _quote_notional_usdt(q) -> float:
+    """Approximate USDT notional of a quote (size × price).
+    Note: Assets quoted in non-USD pairs (e.g. BTC-quoted alts or EUR pairs) will
+    not be perfectly accurate — phase 1 assumes USDT/USDC/USD-pegged quotes.
+    """
+    try:
+        return float(getattr(q, "notional", None) or (q.size * q.price))
+    except Exception:
+        return 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -92,19 +127,104 @@ class ExecuteRequest(BaseModel):
 # ---------------------------------------------------------------------------
 @router.post("/rfq")
 async def post_rfq(body: RFQRequest, user: dict = Depends(_require_staff)):
-    """Emit a firm quote. Valid for `quote_ttl_ms` (default 15 s)."""
+    """Emit a firm quote. Valid for `quote_ttl_ms` (default 15 s).
+
+    If `client_user_id` is provided, the client's tier policy is enforced:
+      • instant mode with size exceeding `instant_max_usdt` → 403 + suggested white-glove
+      • instant disabled for tier → 403 + suggested white-glove
+      • white-glove disabled for tier → 403 (should never happen: all tiers enabled)
+    """
+    # Fast-path price preview (no policy check) when no client is attached.
     try:
         q = get_engine().build_quote(body.symbol.upper(), body.size, body.side)
-        return {"ok": True, "quote": q.__dict__}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    policy_result: Optional[Dict[str, Any]] = None
+    if body.client_user_id:
+        tier = await _resolve_client_tier(body.client_user_id)
+        policy = await get_policy(tier)
+        notional = _quote_notional_usdt(q)
+        mode = (body.mode or "instant").lower()
+        chk = check_mode(policy, mode, notional)
+        policy_result = {
+            "tier": tier,
+            "mode": mode,
+            "notional_usdt": round(notional, 2),
+            "allowed": chk.get("allowed"),
+            "reason": chk.get("reason"),
+            "suggested_mode": chk.get("suggested_mode"),
+            "policy": policy,
+        }
+        if not chk.get("allowed"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "policy_violation",
+                    "message": chk.get("reason"),
+                    "suggested_mode": chk.get("suggested_mode"),
+                    "tier": tier,
+                    "notional_usdt": round(notional, 2),
+                    "policy": policy,
+                },
+            )
+
+    response: Dict[str, Any] = {"ok": True, "quote": q.__dict__}
+    if policy_result:
+        response["policy"] = policy_result
+    return response
 
 
 @router.post("/execute")
 async def post_execute(body: ExecuteRequest, user: dict = Depends(_require_staff)):
-    """Execute an outstanding firm quote. Triggers simulated hedge asynchronously."""
+    """Execute an outstanding firm quote. Triggers simulated hedge asynchronously.
+
+    If `client_user_id` is provided, auto-execution caps are enforced:
+      • tier must have `auto_execute_enabled=True`
+      • quote notional must be ≤ `auto_execute_max_usdt`
+    """
+    engine = get_engine()
+
+    # Policy gate — only when the caller explicitly attached a client.
+    if body.client_user_id:
+        quote = None
+        try:
+            for q in (engine.snapshot().get("active_quotes") or []):
+                if q.get("id") == body.quote_id:
+                    quote = q
+                    break
+        except Exception:
+            quote = None
+
+        if quote is not None:
+            tier = await _resolve_client_tier(body.client_user_id)
+            policy = await get_policy(tier)
+            notional = float(quote.get("size", 0)) * float(quote.get("price", 0))
+            if not policy.get("auto_execute_enabled"):
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "code": "auto_execute_disabled",
+                        "message": "Auto-execution is not enabled for this tier. Trader approval required via white-glove flow.",
+                        "tier": tier,
+                        "policy": policy,
+                    },
+                )
+            cap = float(policy.get("auto_execute_max_usdt") or 0.0)
+            if notional > cap:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "code": "auto_execute_cap_exceeded",
+                        "message": f"Notional exceeds auto-execution cap ({cap:,.0f} USDT). Please route via white-glove for trader approval.",
+                        "tier": tier,
+                        "notional_usdt": round(notional, 2),
+                        "policy": policy,
+                    },
+                )
+
     try:
-        res = await get_engine().execute(body.quote_id, user_id=user["id"])
+        res = await engine.execute(body.quote_id, user_id=user["id"])
         return {"ok": True, **res}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -22,6 +22,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import OTCPoliciesSection from './OTCPoliciesSection';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -298,6 +299,9 @@ const AdminClientTiers = () => {
           'Valores aceites: "x" (disponível), vazio ou "-" (indisponível), número (ex: 4), ou texto livre (ex: "24h", "ilimitado").'
         )}
       </div>
+
+      {/* Tier-based OTC service model matrix */}
+      <OTCPoliciesSection token={token} />
 
       {/* Upgrade Requests Dialog */}
       <Dialog open={requestsOpen} onOpenChange={setRequestsOpen}>

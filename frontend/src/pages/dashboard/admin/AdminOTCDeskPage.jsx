@@ -29,6 +29,7 @@ import {
 import {
   Activity, Save, Plus, Trash2, RefreshCw, ShieldAlert, Coins, Settings2, TrendingUp, Link2, Radio,
 } from 'lucide-react';
+import OTCPoliciesSection from './OTCPoliciesSection';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -745,6 +746,8 @@ export default function AdminOTCDeskPage() {
           </div>
         </div>
       </Section>
+
+      <OTCPoliciesSection token={token} />
 
       <Section
         icon={TrendingUp}
