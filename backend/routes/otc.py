@@ -4,7 +4,7 @@ API endpoints for the OTC trading desk module
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone, timedelta
 import uuid
 import logging
@@ -3565,12 +3565,22 @@ async def client_accept_quote(
     quote_id: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Accept a quote from client portal"""
+    """Accept a quote from the client portal.
+
+    For quotes minted by the Institutional Desk engine
+    (`price_source='institutional_desk'`), this endpoint goes one step further:
+    it auto-executes the trade via `engine.execute(desk_quote_id)` provided the
+    client's tier policy allows it (auto_execute_enabled + within cap). Trade
+    ticket is persisted as an OTCExecution row, the deal advances to
+    `settlement` stage, and the client receives push + email confirmation.
+    Manually-traded quotes (white-glove) keep the existing accept-then-await
+    behavior — settlement remains a trader action.
+    """
     db = get_db()
-    
+
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
-    
+
     # Find client
     client = await db.otc_clients.find_one(
         {"$or": [
@@ -3578,53 +3588,219 @@ async def client_accept_quote(
             {"contact_email": current_user_email}
         ]}
     )
-    
+
     if not client:
         raise HTTPException(status_code=404, detail="Not an OTC client")
-    
+
     # Get quote
     quote = await db.otc_quotes.find_one({"id": quote_id})
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
-    
+
     # Verify quote belongs to client's deal
     deal = await db.otc_deals.find_one({"id": quote.get("deal_id")})
     if not deal or deal.get("client_id") != client.get("id"):
         raise HTTPException(status_code=403, detail="Quote does not belong to your deals")
-    
+
     if quote.get("status") != QuoteStatus.SENT.value:
         raise HTTPException(status_code=400, detail="Quote is not in pending status")
-    
+
     # Check if expired
     if quote.get("expires_at"):
         expires = datetime.fromisoformat(quote.get("expires_at").replace('Z', '+00:00'))
         if expires < datetime.now(timezone.utc):
             raise HTTPException(status_code=400, detail="Quote has expired")
-    
-    # Accept the quote
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # Mark quote accepted (always)
     await db.otc_quotes.update_one(
         {"id": quote_id},
         {"$set": {
             "status": QuoteStatus.ACCEPTED.value,
             "client_response": "Accepted by client",
-            "response_at": datetime.now(timezone.utc).isoformat()
+            "response_at": now_iso,
         }}
     )
-    
-    # Update deal stage and values
+
+    # Update deal stage to ACCEPTANCE — auto-settle below may bump to SETTLEMENT.
     await db.otc_deals.update_one(
         {"id": quote.get("deal_id")},
         {"$set": {
             "stage": OTCDealStage.ACCEPTANCE.value,
-            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "accepted_at": now_iso,
             "final_price": quote.get("final_price"),
             "total_value": quote.get("total_value"),
             "fees": quote.get("fees", 0),
-            "updated_at": datetime.now(timezone.utc).isoformat()
+            "updated_at": now_iso,
         }}
     )
-    
-    return {"success": True, "message": "Quote accepted"}
+
+    # ---------- Auto-settlement for institutional_desk quotes ----------
+    auto_settled: Optional[Dict[str, Any]] = None
+    auto_settle_reason: Optional[str] = None
+    is_desk_quote = (quote.get("price_source") == "institutional_desk") and bool(deal.get("desk_quote_id"))
+
+    if is_desk_quote:
+        from routes.otc_policies import get_policy
+        from services.otc_desk_engine import get_engine
+
+        # Resolve tier the same way the RFQ endpoint did (otc_clients first).
+        tier = (
+            client.get("client_tier")
+            or client.get("membership_level")
+            or deal.get("tier")
+            or "standard"
+        )
+        tier = str(tier).lower()
+        policy = await get_policy(tier)
+
+        # Notional in USDT — use the engine's mid for the deal symbol; fall back
+        # to total_value if the asset has been removed from the universe.
+        engine = get_engine()
+        symbol = deal.get("base_asset", "").upper()
+        try:
+            mid_usdt = float(getattr(engine.market.get(symbol), "mid", 0) or 0)
+        except Exception:
+            mid_usdt = 0.0
+        notional_usdt = float(quote.get("amount", 0)) * mid_usdt
+        if notional_usdt <= 0:
+            notional_usdt = float(quote.get("total_value", 0))  # already in quote_asset, rough proxy
+
+        if not policy.get("auto_execute_enabled"):
+            auto_settle_reason = "Tier does not allow auto-execution; trader will settle manually."
+        elif notional_usdt > float(policy.get("auto_execute_max_usdt") or 0):
+            auto_settle_reason = (
+                f"Notional exceeds the tier auto-execution cap "
+                f"({float(policy.get('auto_execute_max_usdt') or 0):,.0f} USDT); trader will settle manually."
+            )
+        else:
+            try:
+                exec_result = await engine.execute(
+                    deal.get("desk_quote_id"),
+                    user_id=current_user_id,
+                )
+
+                # Persist OTCExecution row for audit + downstream settlement.
+                execution = OTCExecution(
+                    deal_id=deal.get("id"),
+                    quote_id=quote_id,
+                    status=ExecutionStatus.EXECUTED,
+                    funding_type=FundingType.PREFUNDED,
+                    funds_expected=float(quote.get("total_value", 0)),
+                    funds_expected_asset=quote.get("quote_asset", "USD"),
+                    executed_amount=float(quote.get("amount", 0)),
+                    executed_price=float(quote.get("final_price", 0)),
+                    execution_venue="institutional_desk",
+                    delivery_amount=float(quote.get("amount", 0)),
+                    delivery_asset=quote.get("base_asset", ""),
+                    trade_executed_at=now_iso,
+                    trade_executed_by=current_user_id,
+                    executed_by=current_user_id,
+                )
+                exec_dict = execution.dict()
+                exec_dict["desk_trade_id"] = exec_result.get("trade_id")
+                exec_dict["desk_hedge_mode"] = exec_result.get("hedge_mode")
+                await db.otc_executions.insert_one(exec_dict)
+
+                # Advance deal to SETTLEMENT (post-trade reconciliation phase).
+                await db.otc_deals.update_one(
+                    {"id": deal.get("id")},
+                    {"$set": {
+                        "stage": OTCDealStage.SETTLEMENT.value,
+                        "executed_at": now_iso,
+                        "execution_id": execution.id,
+                        "desk_trade_id": exec_result.get("trade_id"),
+                        "updated_at": now_iso,
+                    }}
+                )
+
+                auto_settled = {
+                    "execution_id": execution.id,
+                    "desk_trade_id": exec_result.get("trade_id"),
+                    "hedge_mode": exec_result.get("hedge_mode"),
+                    "executed_amount": float(quote.get("amount", 0)),
+                    "executed_price": float(quote.get("final_price", 0)),
+                    "asset": quote.get("base_asset"),
+                    "quote_asset": quote.get("quote_asset"),
+                    "total_value": float(quote.get("total_value", 0)),
+                }
+
+                # Best-effort push + email — never let a notification failure
+                # break the trade itself.
+                try:
+                    from utils.push import send_push_to_user
+                    side_label = "compra" if (deal.get("transaction_type") == TransactionType.BUY.value) else "venda"
+                    title = f"Trade OTC concluído — {deal.get('deal_number')}"
+                    body = (
+                        f"Sua {side_label} de {float(quote.get('amount', 0)):.6f} "
+                        f"{quote.get('base_asset')} a {float(quote.get('final_price', 0)):,.2f} "
+                        f"{quote.get('quote_asset')} foi executada."
+                    )
+                    await send_push_to_user(
+                        db, current_user_id, title, body,
+                        data={
+                            "type": "otc_executed",
+                            "deal_id": deal.get("id"),
+                            "deal_number": deal.get("deal_number"),
+                        },
+                    )
+                except Exception as push_err:  # noqa: BLE001
+                    logger.warning("OTC auto-settle push failed: %s", push_err)
+
+                try:
+                    from services.email_service import email_service
+                    side_label = "compra" if (deal.get("transaction_type") == TransactionType.BUY.value) else "venda"
+                    subject = f"KBEX — Trade OTC concluído ({deal.get('deal_number')})"
+                    html = (
+                        f"<div style='font-family:Helvetica,Arial,sans-serif;color:#1a1a1a;line-height:1.6'>"
+                        f"<p>Caro(a) cliente,</p>"
+                        f"<p>Confirmamos a execução do seu trade OTC:</p>"
+                        f"<table style='border-collapse:collapse;margin:18px 0;font-size:14px'>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Deal</td>"
+                        f"<td style='padding:6px 14px'><b>{deal.get('deal_number')}</b></td></tr>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Operação</td>"
+                        f"<td style='padding:6px 14px'>{side_label.title()}</td></tr>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Quantidade</td>"
+                        f"<td style='padding:6px 14px'>{float(quote.get('amount', 0)):.6f} {quote.get('base_asset')}</td></tr>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Preço firme</td>"
+                        f"<td style='padding:6px 14px'>{float(quote.get('final_price', 0)):,.2f} {quote.get('quote_asset')}</td></tr>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Total</td>"
+                        f"<td style='padding:6px 14px'><b>{float(quote.get('total_value', 0)):,.2f} {quote.get('quote_asset')}</b></td></tr>"
+                        f"<tr><td style='padding:6px 14px;color:#666'>Trade ID</td>"
+                        f"<td style='padding:6px 14px'><code>{exec_result.get('trade_id')}</code></td></tr>"
+                        f"</table>"
+                        f"<p style='color:#666;font-size:13px'>Settlement será concluído brevemente. "
+                        f"Acompanhe pelo seu portal OTC.</p>"
+                        f"<p>— Equipa KBEX</p></div>"
+                    )
+                    await email_service.send_email(
+                        to_email=client.get("contact_email") or current_user_email,
+                        to_name=client.get("entity_name") or "Cliente",
+                        subject=subject,
+                        html_content=html,
+                    )
+                except Exception as mail_err:  # noqa: BLE001
+                    logger.warning("OTC auto-settle email failed: %s", mail_err)
+
+            except ValueError as ve:
+                # Engine refused (quote expired between accept and execute,
+                # inventory breach, etc.) — keep deal at ACCEPTANCE for trader
+                # follow-up, surface a friendly reason.
+                auto_settle_reason = f"Auto-execution declined by desk: {ve}. Trader will follow up."
+                logger.warning("OTC auto-settle engine reject for %s: %s", deal.get("deal_number"), ve)
+            except Exception as exc:  # noqa: BLE001
+                auto_settle_reason = "Auto-execution failed; trader will settle manually."
+                logger.exception("OTC auto-settle unexpected error: %s", exc)
+
+    response: Dict[str, Any] = {"success": True, "message": "Quote accepted"}
+    if auto_settled:
+        response["auto_settled"] = auto_settled
+        response["message"] = "Quote accepted and auto-settled."
+    elif is_desk_quote and auto_settle_reason:
+        response["auto_settle_skipped"] = True
+        response["auto_settle_reason"] = auto_settle_reason
+    return response
 
 
 @router.post("/client/quotes/{quote_id}/reject")
