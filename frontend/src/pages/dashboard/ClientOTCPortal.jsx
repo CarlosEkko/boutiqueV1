@@ -107,6 +107,7 @@ const ClientOTCPortal = () => {
     modeWhiteGloveTitle: { pt: 'Serviço White-Glove', en: 'White-Glove Service', ar: 'خدمة مميزة', fr: 'Service white-glove', es: 'Servicio white-glove' },
     modeWhiteGloveDesc: { pt: 'Trader dedicado responde com cotação personalizada.', en: 'Dedicated trader replies with a bespoke quote.', ar: 'متداول مخصص يرد بعرض أسعار مخصص.', fr: 'Un trader dédié répond avec une cotation sur mesure.', es: 'Un trader dedicado responde con una cotización personalizada.' },
     modeWhiteGloveBadge: { pt: 'Atendimento humano', en: 'Human concierge', ar: 'خدمة بشرية', fr: 'Concierge humain', es: 'Atención humana' },
+    instantQuoteReady: { pt: 'Cotação imediata pronta — aceite antes de expirar', en: 'Instant firm quote ready — accept before it expires', ar: 'عرض سعر فوري جاهز', fr: 'Cotation ferme prête', es: 'Cotización inmediata lista' },
     modeUnavailable: { pt: 'Não disponível no seu tier', en: 'Not available on your tier', ar: 'غير متاح لمستواك', fr: 'Non disponible à votre niveau', es: 'No disponible en su nivel' },
     upgradeTierCta: { pt: 'Ver Níveis & Benefícios', en: 'View Tiers & Benefits', ar: 'عرض المستويات', fr: 'Voir les niveaux', es: 'Ver niveles' },
     selectedModeLabel: { pt: 'Modo seleccionado', en: 'Selected mode', ar: 'الوضع المحدد', fr: 'Mode sélectionné', es: 'Modo seleccionado' },
@@ -259,14 +260,36 @@ const ClientOTCPortal = () => {
     }
 
     try {
-      await axios.post(`${API_URL}/api/otc/client/rfq`, {
+      const { data } = await axios.post(`${API_URL}/api/otc/client/rfq`, {
         ...rfqForm,
         amount: parseFloat(rfqForm.amount),
         mode: rfqMode,
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
+      // Instant routing returned a firm quote — switch the user straight to
+      // the quote dialog so they can accept/reject before it expires (~15 s).
+      if (data?.mode === 'instant' && data?.quote) {
+        toast.success(l('instantQuoteReady') || 'Cotação imediata pronta!');
+        setShowRFQDialog(false);
+        setRfqForm({
+          transaction_type: 'buy',
+          base_asset: 'BTC',
+          quote_asset: 'EUR',
+          amount: '',
+          notes: ''
+        });
+        setRfqMode('white_glove');
+        setPolicyCheck(null);
+        // Reload then open the quote dialog with the freshly created quote.
+        await fetchData();
+        setSelectedQuote({ ...data.quote, deal_number: data.deal?.deal_number });
+        setShowQuoteDialog(true);
+        setActiveTab('quotes');
+        return;
+      }
+
       toast.success(l('rfqSent'));
       setShowRFQDialog(false);
       setRfqForm({
@@ -280,6 +303,17 @@ const ClientOTCPortal = () => {
       setPolicyCheck(null);
       fetchData();
     } catch (err) {
+      // Backend can return a structured policy_violation / desk_capacity error.
+      const detail = err?.response?.data?.detail;
+      if (detail && typeof detail === 'object' && detail.message) {
+        toast.error(detail.message);
+        // If the suggested_mode is white_glove, auto-fallback the picker so the
+        // next click submits via the manual flow.
+        if (detail.suggested_mode === 'white_glove') {
+          setRfqMode('white_glove');
+        }
+        return;
+      }
       toast.error(getErrorMessage(err, l('rfqError')));
     }
   };

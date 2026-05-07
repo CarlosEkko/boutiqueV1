@@ -95,6 +95,7 @@ class ClientRFQRequest(BaseModel):
     quote_asset: str
     amount: float
     notes: Optional[str] = None
+    mode: Optional[str] = "white_glove"  # "instant" | "white_glove"
 
 
 # ==================== OTC LEADS ====================
@@ -3348,18 +3349,30 @@ async def create_client_rfq(
     request: ClientRFQRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a new RFQ (Request for Quote) from client portal"""
+    """Create a new RFQ from client portal.
+
+    Routing depends on `mode`:
+      • mode="white_glove" (default) — creates an RFQ stage deal in the CRM
+        Kanban for a trader to manually quote (existing flow).
+      • mode="instant" — calls the Institutional OTC Desk engine, gets a firm
+        algorithmic quote in <1s, materialises BOTH the deal AND the quote
+        atomically, and returns them so the client can accept/reject right away.
+        Tier policy is enforced server-side as defense-in-depth.
+    """
     db = get_db()
-    
+
     transaction_type = request.transaction_type
     base_asset = request.base_asset
     quote_asset = request.quote_asset
     amount = request.amount
     notes = request.notes
-    
+    mode = (request.mode or "white_glove").lower()
+    if mode not in ("instant", "white_glove"):
+        mode = "white_glove"
+
     current_user_id = getattr(current_user, 'id', None) if hasattr(current_user, 'id') else current_user.get("id")
     current_user_email = getattr(current_user, 'email', None) if hasattr(current_user, 'email') else current_user.get("email")
-    
+
     # Find client
     client = await db.otc_clients.find_one(
         {"$or": [
@@ -3367,16 +3380,145 @@ async def create_client_rfq(
             {"contact_email": current_user_email}
         ]}
     )
-    
+
     if not client:
         raise HTTPException(status_code=404, detail="Not an OTC client")
-    
-    # Generate deal number
+
+    # Resolve client tier (defense-in-depth: never trust the frontend mode choice)
+    user_doc = await db.users.find_one({"id": current_user_id}, {"_id": 0, "membership_level": 1})
+    tier = ((user_doc or {}).get("membership_level") or "standard").lower()
+
+    # ---------- Instant routing — Institutional Desk firm quote ----------
+    if mode == "instant":
+        from routes.otc_policies import get_policy, check_mode
+        from services.otc_desk_engine import get_engine
+
+        engine = get_engine()
+        symbol = base_asset.upper()
+
+        # Asset universe check — desk only quotes BTC/ETH/SOL/BNB/XRP today.
+        if symbol not in engine.market:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "asset_not_supported_instant",
+                    "message": f"Instant quotes are not available for {symbol}. Please switch to white-glove.",
+                    "suggested_mode": "white_glove",
+                },
+            )
+
+        # Estimate USDT notional from live mid (engine source of truth).
+        mid_usdt = float(getattr(engine.market[symbol], "mid", 0) or 0)
+        est_notional_usdt = float(amount) * mid_usdt
+
+        # Policy gate
+        policy = await get_policy(tier)
+        chk = check_mode(policy, "instant", est_notional_usdt)
+        if not chk.get("allowed"):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "policy_violation",
+                    "message": chk.get("reason"),
+                    "suggested_mode": chk.get("suggested_mode") or "white_glove",
+                    "tier": tier,
+                    "notional_usdt": round(est_notional_usdt, 2),
+                },
+            )
+
+        # Build firm quote on the desk engine (live Binance mid + dynamic spread)
+        try:
+            firm = engine.build_quote(symbol, float(amount), transaction_type)
+        except ValueError as ve:
+            # Inventory or risk reject — fall back to white-glove guidance.
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "desk_capacity",
+                    "message": f"Desk cannot price this size right now ({ve}). Please switch to white-glove.",
+                    "suggested_mode": "white_glove",
+                },
+            )
+
+        # Convert USDT price → client's quote_asset using cached FX rates.
+        # Engine returns USDT/USD-pegged price. We assume USD≈USDT (1:1 stable).
+        from routes.trading import get_exchange_rates, convert_price
+        rates = await get_exchange_rates()
+        final_price = convert_price(float(firm.price), quote_asset.upper(), rates) \
+            if quote_asset.upper() != "USD" else float(firm.price)
+        market_price = convert_price(float(firm.mid), quote_asset.upper(), rates) \
+            if quote_asset.upper() != "USD" else float(firm.mid)
+        total_value = final_price * float(amount)
+
+        # Persist deal + quote in a single shot (stage=QUOTE).
+        year = datetime.now().year
+        count = await db.otc_deals.count_documents({})
+        deal_number = f"OTC-{year}-{str(count + 1).zfill(4)}"
+
+        deal = OTCDeal(
+            deal_number=deal_number,
+            client_id=client.get("id"),
+            client_name=client.get("entity_name"),
+            transaction_type=TransactionType(transaction_type),
+            base_asset=symbol,
+            quote_asset=quote_asset.upper(),
+            amount=float(amount),
+            stage=OTCDealStage.QUOTE,
+            notes=notes,
+            rfq_received_at=datetime.now(timezone.utc).isoformat(),
+            market_price=market_price,
+            spread_percent=round(float(firm.spread_pct) * 100.0, 4),
+            final_price=final_price,
+            total_value=total_value,
+            quote_sent_at=datetime.now(timezone.utc).isoformat(),
+        )
+        deal_dict = deal.dict()
+        deal_dict["quote_source"] = "institutional_desk"
+        deal_dict["desk_quote_id"] = firm.id
+        deal_dict["tier"] = tier
+
+        # Quote validity matches engine TTL (~15s) — short window forces quick decisions.
+        valid_seconds = max(1, int(getattr(firm, "valid_for_ms", 15_000) / 1000))
+        expires_at = (datetime.now(timezone.utc) + timedelta(seconds=valid_seconds)).isoformat()
+
+        quote_doc = OTCQuote(
+            deal_id=deal.id,
+            base_asset=symbol,
+            quote_asset=quote_asset.upper(),
+            amount=float(amount),
+            market_price=market_price,
+            spread_percent=round(float(firm.spread_pct) * 100.0, 4),
+            final_price=final_price,
+            total_value=total_value,
+            fees=0,
+            is_manual=False,
+            price_source="institutional_desk",
+            valid_for_minutes=max(1, valid_seconds // 60) if valid_seconds >= 60 else 1,
+            expires_at=expires_at,
+            status=QuoteStatus.SENT,
+            created_by=current_user_id,
+        )
+
+        # Patch deal with the quote_id + correct expiry
+        deal_dict["quote_id"] = quote_doc.id
+        deal_dict["quote_expires_at"] = expires_at
+
+        await db.otc_deals.insert_one(deal_dict)
+        await db.otc_quotes.insert_one(quote_doc.dict())
+
+        return {
+            "success": True,
+            "mode": "instant",
+            "deal": {k: v for k, v in deal_dict.items() if k != "_id"},
+            "quote": quote_doc.dict(),
+            "message": "Instant firm quote available. Accept before it expires.",
+        }
+
+    # ---------- White-Glove routing — existing CRM Kanban flow -----------
     year = datetime.now().year
     count = await db.otc_deals.count_documents({})
     deal_number = f"OTC-{year}-{str(count + 1).zfill(4)}"
-    
-    # Create the deal (RFQ)
+
     deal = OTCDeal(
         deal_number=deal_number,
         client_id=client.get("id"),
@@ -3389,10 +3531,18 @@ async def create_client_rfq(
         notes=notes,
         rfq_received_at=datetime.now(timezone.utc).isoformat()
     )
-    
-    await db.otc_deals.insert_one(deal.dict())
-    
-    return {"success": True, "deal": deal.dict(), "message": "RFQ criado com sucesso"}
+    deal_dict = deal.dict()
+    deal_dict["quote_source"] = "white_glove"
+    deal_dict["tier"] = tier
+
+    await db.otc_deals.insert_one(deal_dict)
+
+    return {
+        "success": True,
+        "mode": "white_glove",
+        "deal": {k: v for k, v in deal_dict.items() if k != "_id"},
+        "message": "RFQ criado com sucesso",
+    }
 
 
 @router.post("/client/quotes/{quote_id}/accept")
